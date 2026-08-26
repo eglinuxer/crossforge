@@ -287,8 +287,27 @@ impl<'a, R: Runner> CheckRunner<'a, R> {
                     .to_string(),
             ),
             // User-mode qemu with the toolchain sysroot as the loader prefix.
+            // Testsuites link against the freshly built runtime libs (newer
+            // than the baseline ones in the sysroot), so those directories
+            // must be on the emulated LD_LIBRARY_PATH.
             TargetArch::Aarch64 => {
                 let sysroot = compiler.prefix.join(&compiler.triple).join("sysroot");
+                let build_gcc = self
+                    .work_dir
+                    .join("build")
+                    .join(format!("build-gcc-{}", spec.id()));
+                let lib_path = format!(
+                    "{}:{}",
+                    build_gcc
+                        .join(&compiler.triple)
+                        .join("libstdc++-v3/src/.libs")
+                        .display(),
+                    compiler
+                        .prefix
+                        .join(&compiler.triple)
+                        .join("lib64")
+                        .display()
+                );
                 (
                     "crossforge-qemu-aarch64".to_string(),
                     format!(
@@ -296,10 +315,11 @@ impl<'a, R: Runner> CheckRunner<'a, R> {
                          process_multilib_options \"\"\n\
                          set_board_info is_simulator 1\n\
                          set_board_info sim \"qemu-aarch64\"\n\
-                         set_board_info sim,options \"-L {}\"\n\
+                         set_board_info sim,options \"-L {} -E LD_LIBRARY_PATH={}\"\n\
                          set_board_info sim_time_limit 300\n\
                          set_board_info gcc,stack_size 16384\n",
-                        sysroot.display()
+                        sysroot.display(),
+                        lib_path
                     ),
                 )
             }

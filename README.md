@@ -51,9 +51,10 @@ $ ./target/release/crossforge check --baseline el8 --target x86_64   # GCC tests
 `check` runs the upstream GCC DejaGnu testsuites (`check-gcc`, `check-c++`,
 `check-target-libstdc++-v3`) against a built toolchain, with generated board
 files (direct execution for x86_64, user-mode qemu for aarch64). The default
-el8/x86_64 toolchain scores 465k passes with zero toolchain-attributable
-failures (the handful of remaining FAILs are container locale/network noise
-and RH-documented baseline semantics differences).
+el8/x86_64 toolchain scores 466,138 passes with ZERO unexpected failures in
+the gcc and c++ suites; the three remaining libstdc++ FAILs are RH-documented
+baseline-semantics differences (old-baseline string::reserve behavior -- the
+nonshared design goal) plus one no-network DNS test.
 
 The result is a fully relocatable prefix — tar it up, unpack anywhere, no
 configuration needed. `--pack` produces a distributable `tar.zst` + TOML
