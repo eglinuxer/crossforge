@@ -229,7 +229,14 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
             &["all-libsframe"],
         );
         self.make(&build_binutils, &logs, "binutils-make.log", &[])?;
-        self.make(&build_binutils, &logs, "binutils-install.log", &["install"])?;
+        // install-strip keeps host executables free of debug info (a stripped
+        // cc1plus is ~35MB instead of ~450MB); target libraries keep theirs.
+        self.make(
+            &build_binutils,
+            &logs,
+            "binutils-install.log",
+            &["install-strip"],
+        )?;
 
         // 4. GCC (compiler + target runtime libs in one pass; the sysroot
         // already provides a complete glibc). PATH must expose the freshly
@@ -279,7 +286,7 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
             &build_gcc,
             &logs,
             "gcc-install.log",
-            &["install"],
+            &["install-strip"],
             &path_env,
         )?;
 
