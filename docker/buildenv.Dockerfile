@@ -4,7 +4,7 @@
 # - glibc-gconv-extra: without the full gconv module set, GCC's working-iconv
 #   configure probe fails and cc1 loses -fexec-charset support entirely
 # - dejagnu (PowerTools): `crossforge check` (GCC upstream testsuite)
-FROM almalinux:8
+FROM rockylinux:8
 
 RUN dnf install -y \
         gcc gcc-c++ make tar xz bzip2 file diffutils patch flex bison \

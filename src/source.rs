@@ -10,7 +10,7 @@ use crate::target::TargetArch;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceDef {
-    /// Source id referenced by `BaselineDef::source`, e.g. `almalinux-8`.
+    /// Source id referenced by `BaselineDef::source`, e.g. `rocky-8`.
     pub id: String,
     /// Default base URL; a configured mirror replaces it.
     pub base: String,
@@ -99,12 +99,12 @@ mod tests {
     #[test]
     fn builtin_contains_el8_and_el7_sources() {
         let registry = SourceRegistry::builtin();
-        let el8 = registry.get("almalinux-8").unwrap();
+        let el8 = registry.get("rocky-8").unwrap();
         assert!(el8.packages.iter().any(|p| p == "glibc-devel"));
         let urls = el8.repo_urls(TargetArch::Aarch64, None);
         assert_eq!(
             urls[0],
-            "https://repo.almalinux.org/almalinux/8/BaseOS/aarch64/os/"
+            "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/"
         );
         assert!(registry.get("centos-7").is_some());
     }
@@ -112,11 +112,14 @@ mod tests {
     #[test]
     fn mirror_overrides_base() {
         let registry = SourceRegistry::builtin();
-        let el8 = registry.get("almalinux-8").unwrap();
-        let urls = el8.repo_urls(TargetArch::X86_64, Some("https://mirror.example.com/alma/"));
+        let el8 = registry.get("rocky-8").unwrap();
+        let urls = el8.repo_urls(
+            TargetArch::X86_64,
+            Some("https://mirror.example.com/rocky/"),
+        );
         assert_eq!(
             urls[0],
-            "https://mirror.example.com/alma/8/BaseOS/x86_64/os/"
+            "https://mirror.example.com/rocky/8/BaseOS/x86_64/os/"
         );
     }
 }

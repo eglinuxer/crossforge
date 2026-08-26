@@ -9,7 +9,7 @@ kernel_headers = "4.18"
 glibcxx = "3.4.25"
 cxxabi = "1.3.11"
 cxx11_abi = true
-source = "almalinux-8"
+source = "rocky-8"
 rh_nonshared = "80"
 arches = ["x86_64", "aarch64"]
 

@@ -3,8 +3,8 @@
 # `{arch}` by the target architecture.
 
 [[source]]
-id = "almalinux-8"
-base = "https://repo.almalinux.org/almalinux"
+id = "rocky-8"
+base = "https://download.rockylinux.org/pub/rocky"
 repos = [
     "{base}/8/BaseOS/{arch}/os/",
     "{base}/8/AppStream/{arch}/os/",

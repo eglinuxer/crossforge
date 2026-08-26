@@ -20,7 +20,7 @@
 | # | 决策 | 内容 |
 |---|------|------|
 | D1 | 技术路线 | **路线 A：交叉化 devtoolset** —— 旧 glibc 二进制 sysroot（解 glibc）+ `libstdc++_nonshared.a` 混合链接（解 libstdc++）。产物与用户侧系统 libstdc++ 完全 ABI 互操作，适配「被用户程序链接的闭源 C++ SDK」形态 |
-| D2 | 编译器主体 | **GCC**，默认源码基线 **RH gcc-toolset-14**（GCC 14.2.1，2025-01 快照 + RH 补丁集，Rocky 8 镜像 SRPM；2026-08-26 修订，原为 FSF 11.5.0）。配 binutils 2.40；FSF tarball 组件已随 2026-08-26 重构移除（fallback 由对象级裁剪承担）；Clang 可作为后续副轨接入同一套 sysroot / compat-pack |
+| D2 | 编译器主体 | **GCC**，默认源码基线 **RH gcc-toolset-14**（GCC 14.2.1，2025-01 快照 + RH 补丁集，Rocky 8 SRPM（bug-for-bug RHEL 复刻）；2026-08-26 修订，原为 FSF 11.5.0）。配 binutils 2.40；FSF tarball 组件已随 2026-08-26 重构移除（fallback 由对象级裁剪承担）；Clang 可作为后续副轨接入同一套 sysroot / compat-pack |
 | D3 | 默认基线 | **el8**（glibc 2.28 + GLIBCXX 3.4.25，CXX11 ABI）。**el7**（glibc 2.17 + GLIBCXX 3.4.19）作为可选长尾基线，明示其强制 `_GLIBCXX_USE_CXX11_ABI=0` 的代价 |
 | D4 | Host / Target | Host 仅 **x86_64-linux**（manifest 预留 host 维度）；Target 首发 **x86_64 + aarch64**，架构维度预留（LoongArch 等后续接入） |
 | D5 | 配置格式 | 全部配置文件统一 **TOML**：分发 manifest、基线注册表、sysroot / compat-pack 元数据、用户侧 `~/.crossforge/config.toml` |
@@ -65,7 +65,7 @@ aarch64-unknown-linux-gnu
 
 | 别名 | glibc | kernel headers | libstdc++ 基线 | CXXABI | Dual ABI | 包源 |
 |------|-------|----------------|----------------|--------|----------|------|
-| `el8`（默认） | 2.28 | 4.18 | GLIBCXX_3.4.25（GCC 8.5） | 1.3.11 | `_GLIBCXX_USE_CXX11_ABI=1` | AlmaLinux 8（x86_64 / aarch64） |
+| `el8`（默认） | 2.28 | 4.18 | GLIBCXX_3.4.25（GCC 8.5） | 1.3.11 | `_GLIBCXX_USE_CXX11_ABI=1` | Rocky Linux 8（x86_64 / aarch64，2026-08-26 修订：原 AlmaLinux——Rocky 坚持 bug-for-bug 复刻 RHEL，Alma 仅承诺 ABI 兼容且带自有修订） |
 | `el7` | 2.17 | 3.10 | GLIBCXX_3.4.19（GCC 4.8.5） | 1.3.7 | 强制 `=0` | CentOS 7 vault（x86_64）、AltArch（aarch64） |
 
 预留：`u20`（glibc 2.31）、`el9`（2.34）、欧拉/龙蜥（LoongArch 基线）等，注册表数据化（TOML），新增基线不改代码。
@@ -206,7 +206,7 @@ sha256 = "…"
 baseline = "el8"
 arch = "aarch64"
 glibc = "2.28"
-source = "almalinux-8.10"
+source = "rocky-8.10"
 url = "…"
 sha256 = "…"
 

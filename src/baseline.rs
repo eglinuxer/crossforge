@@ -23,7 +23,7 @@ pub struct BaselineDef {
     /// Value of `_GLIBCXX_USE_CXX11_ABI`; false on el7 (the baseline library
     /// has no `__cxx11` symbols).
     pub cxx11_abi: bool,
-    /// Sysroot package source id, e.g. `almalinux-8`.
+    /// Sysroot package source id, e.g. `rocky-8`.
     pub source: String,
     /// RH nonshared level for this baseline (`80` = RHEL 8, `48` = RHEL 7):
     /// when the toolchain sources carry the gcc-toolset compat patches, the
