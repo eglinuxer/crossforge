@@ -1,0 +1,43 @@
+# Built-in upstream source components for compiler builds (design doc §5.2).
+# GCC prerequisite versions follow GCC 11's contrib/download_prerequisites.
+
+[[component]]
+name = "binutils"
+version = "2.40"
+url = "https://mirrors.kernel.org/gnu/binutils/binutils-{version}.tar.xz"
+sha256 = "0f8a4c272d7f17f369ded10a4aca28b8e304828e95526da482b0ccc4dfc9d8e1"
+
+# RH gcc-toolset-14: GCC 14.2.1 (2025-01-10 snapshot) + Red Hat patch series,
+# including the libstdc++/libgfortran nonshared compat machinery (design doc
+# §4.2). Sourced from the Rocky Linux 8 mirror of the RHEL SRPM.
+[[component]]
+name = "gcc"
+version = "14.2.1"
+kind = "srpm"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/source/tree/Packages/g/gcc-toolset-14-gcc-{version}-11.el8_10.src.rpm"
+sha256 = "fabd21d53718b7a75100536711fd2d5ef61e1f6a1320837985fd5ae7ced852cc"
+# Conditional patches for features we do not build (isl graphite, docs).
+skip_patches = [
+    "gcc14-isl-dl.patch",
+    "gcc14-isl-dl2.patch",
+    "gcc14-libstdc++-docs.patch",
+    "isl-rh2155127.patch",
+]
+
+[[component]]
+name = "gmp"
+version = "6.1.0"
+url = "https://gcc.gnu.org/pub/gcc/infrastructure/gmp-{version}.tar.bz2"
+sha256 = "498449a994efeba527885c10405993427995d3f86b8768d8cdf8d9dd7c6b73e8"
+
+[[component]]
+name = "mpfr"
+version = "3.1.4"
+url = "https://gcc.gnu.org/pub/gcc/infrastructure/mpfr-{version}.tar.bz2"
+sha256 = "d3103a80cdad2407ed581f3618c4bed04e0c92d1cf771a65ead662cc397f7775"
+
+[[component]]
+name = "mpc"
+version = "1.0.3"
+url = "https://gcc.gnu.org/pub/gcc/infrastructure/mpc-{version}.tar.gz"
+sha256 = "617decc6ea09889fb08ede330917a00b16809b8db88c29c31bfbb49cbf88ecc3"

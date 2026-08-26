@@ -1,0 +1,46 @@
+# Built-in package sources for sysroot generation (design doc §5.1).
+# `{base}` is replaced by the source base URL (or the configured mirror);
+# `{arch}` by the target architecture.
+
+[[source]]
+id = "almalinux-8"
+base = "https://repo.almalinux.org/almalinux"
+repos = [
+    "{base}/8/BaseOS/{arch}/os/",
+    "{base}/8/AppStream/{arch}/os/",
+]
+packages = [
+    "glibc",
+    "glibc-devel",
+    "glibc-headers",
+    "kernel-headers",
+    "libgcc",
+    "libstdc++",
+    "libstdc++-devel",
+    "libxcrypt",
+    "libxcrypt-devel",
+]
+
+[[source]]
+id = "centos-7"
+base = "https://vault.centos.org"
+repos = [
+    "{base}/7.9.2009/os/{arch}/",
+    "{base}/7.9.2009/updates/{arch}/",
+]
+packages = [
+    "glibc",
+    "glibc-devel",
+    "glibc-headers",
+    "kernel-headers",
+    "libgcc",
+    "libstdc++",
+    "libstdc++-devel",
+]
+
+# aarch64 lived in the AltArch tree on CentOS 7.
+[source.arch_repos]
+aarch64 = [
+    "{base}/altarch/7.9.2009/os/{arch}/",
+    "{base}/altarch/7.9.2009/updates/{arch}/",
+]

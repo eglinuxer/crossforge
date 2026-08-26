@@ -1,0 +1,74 @@
+# Builds full cross toolchains with crossforge and publishes ready-to-use
+# Docker images to GHCR: ghcr.io/<owner>/<repo>/toolchain:<baseline>-<target>
+name: toolchain-images
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { baseline: el8, target: x86_64 }
+          - { baseline: el8, target: aarch64 }
+          - { baseline: el7, target: x86_64 }
+          - { baseline: el7, target: aarch64 }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
+          df -h /
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build crossforge
+        run: cargo build --release
+
+      - name: Build el8 build environment image
+        run: docker build -t crossforge-buildenv:el8 -f docker/buildenv.Dockerfile docker
+
+      - name: Build toolchain (${{ matrix.baseline }} ${{ matrix.target }})
+        run: |
+          ./target/release/crossforge build \
+            --baseline ${{ matrix.baseline }} \
+            --target ${{ matrix.target }} \
+            --image crossforge-buildenv:el8 \
+            --work-dir "$PWD/work"
+
+      - name: Audit smoke test
+        run: |
+          ID=$(ls work/toolchains)
+          printf '#include <cstdio>\nint main(){puts("ok");return 0;}\n' > smoke.c
+          "work/toolchains/$ID/bin/${{ matrix.target }}-unknown-linux-gnu-gcc" smoke.c -o smoke
+          ./target/release/crossforge audit \
+            --sysroot "work/sysroots/${{ matrix.baseline }}-${{ matrix.target }}" \
+            --arch ${{ matrix.target }} smoke
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push toolchain image
+        run: |
+          ID=$(ls work/toolchains)
+          GCC=${ID%%-*}   # e.g. gcc14.2.1
+          IMAGE="ghcr.io/${{ github.repository }}/toolchain"
+          TAG="${{ matrix.baseline }}-${{ matrix.target }}"
+          docker build -f docker/toolchain.Dockerfile \
+            --build-arg TOOLCHAIN_ID="$ID" \
+            -t "$IMAGE:$TAG" -t "$IMAGE:$TAG-$GCC" work/toolchains
+          docker push "$IMAGE:$TAG"
+          docker push "$IMAGE:$TAG-$GCC"
