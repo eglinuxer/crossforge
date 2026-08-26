@@ -7,6 +7,26 @@ version = "2.40"
 url = "https://mirrors.kernel.org/gnu/binutils/binutils-{version}.tar.xz"
 sha256 = "0f8a4c272d7f17f369ded10a4aca28b8e304828e95526da482b0ccc4dfc9d8e1"
 
+# RH gcc-toolset-11: GCC 11.2.1 (2022-01-27 snapshot) + Red Hat patch series.
+# Its compat patch builds nonshared levels 44/48/80, giving the el7 baseline
+# an RH-tuned nonshared48 (gcc-toolset-14 only builds 80/110).
+[[component]]
+name = "gcc"
+version = "11.2.1"
+kind = "srpm"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/source/tree/Packages/g/gcc-toolset-11-gcc-{version}-9.2.el8_9.src.rpm"
+sha256 = "9f32e50b1fa303bebe1edaac62543d6a1c3704e74b3825eb1fec1c623a6e0d77"
+# Conditional patches for features we do not build (isl graphite, docs, and
+# the doxygen tree only used on rhel < 7).
+skip_patches = [
+    "gcc11-isl-dl.patch",
+    "gcc11-isl-dl2.patch",
+    "gcc11-libstdc++-docs.patch",
+    "doxygen-1.7.1-config.patch",
+    "doxygen-1.7.5-timestamp.patch",
+    "doxygen-1.8.0-rh856725.patch",
+]
+
 # RH gcc-toolset-14: GCC 14.2.1 (2025-01-10 snapshot) + Red Hat patch series,
 # including the libstdc++/libgfortran nonshared compat machinery (design doc
 # §4.2). Sourced from the Rocky Linux 8 mirror of the RHEL SRPM.

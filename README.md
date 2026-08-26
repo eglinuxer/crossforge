@@ -50,6 +50,11 @@ configuration needed. `--pack` produces a distributable `tar.zst` + TOML
 manifest. Building inside the el8 container keeps the toolchain's own host
 requirement at glibc ≥ 2.28.
 
+Available compilers (`--gcc`): `14.2.1` (default, RH gcc-toolset-14) and
+`11.2.1` (RH gcc-toolset-11 — its compat patches also provide the RH-tuned
+nonshared48 for the el7 baseline). More versions are a TOML registry entry
+away (`src/registry/toolchain-sources.toml`).
+
 ## Pipeline
 
 ```

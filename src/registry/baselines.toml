@@ -23,6 +23,8 @@ cxxabi = "1.3.7"
 # string ABI is forced. See design doc §3.2.
 cxx11_abi = false
 source = "centos-7"
-# No rh_nonshared: gcc-toolset-14 only builds the 80/110 levels (RHEL 8/9),
-# so el7 uses crossforge's object-level pruning fallback (verified on centos:7).
+# Provided by gcc-toolset-11 sources (levels 44/48/80). gcc-toolset-14 only
+# builds 80/110, so el7 + gcc 14 falls back to object-level pruning with a
+# warning (verified working on centos:7 either way).
+rh_nonshared = "48"
 arches = ["x86_64", "aarch64"]

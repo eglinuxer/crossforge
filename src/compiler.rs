@@ -468,9 +468,11 @@ pub(crate) struct SpecPatch {
     pub strip: u32,
 }
 
-/// Parses `PatchN:` definitions and the `%prep` `%patch -PN -pM` application
-/// order from an RPM spec. Conditional (`%if`) guards are not evaluated —
-/// unwanted conditional patches are excluded via `skip_patches`.
+/// Parses `PatchN:` definitions and the `%prep` patch application order from
+/// an RPM spec. Both application styles are supported: modern
+/// `%patch -PN -pM` (gcc-toolset-14) and legacy `%patchN -pM`
+/// (gcc-toolset-11). Conditional (`%if`) guards are not evaluated — unwanted
+/// conditional patches are excluded via `skip_patches`.
 pub(crate) fn parse_spec_patches(spec: &str) -> Vec<SpecPatch> {
     let mut defs: BTreeMap<u32, String> = BTreeMap::new();
     for line in spec.lines() {
@@ -485,12 +487,16 @@ pub(crate) fn parse_spec_patches(spec: &str) -> Vec<SpecPatch> {
     let mut ordered = Vec::new();
     for line in spec.lines() {
         let line = line.trim();
-        if !line.starts_with("%patch") {
+        let Some(rest) = line.strip_prefix("%patch") else {
             continue;
-        }
-        let mut number = None;
+        };
+        // Legacy style carries the number glued to the macro: `%patch7 -p0`.
+        let mut number = rest
+            .split_whitespace()
+            .next()
+            .and_then(|t| t.parse::<u32>().ok());
         let mut strip = 1u32;
-        for token in line.split_whitespace() {
+        for token in rest.split_whitespace() {
             if let Some(n) = token.strip_prefix("-P") {
                 number = n.parse::<u32>().ok();
             } else if let Some(p) = token.strip_prefix("-p") {
@@ -512,7 +518,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn spec_patch_parsing() {
+    fn spec_patch_parsing_modern_style() {
         let spec = "\
 Patch0: gcc14-hack.patch
 Patch1000: gcc14-libstdc++-compat.patch
@@ -540,6 +546,38 @@ Patch5: gcc14-isl-dl.patch
                 SpecPatch {
                     file: "gcc14-libstdc++-compat.patch".to_string(),
                     strip: 0
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn spec_patch_parsing_legacy_style() {
+        let spec = "\
+Patch0: gcc11-hack.patch
+Patch100: gcc11-fortran-fdec.patch
+Patch2001: doxygen-1.7.1-config.patch
+
+%prep
+%patch0 -p0 -b .hack~
+%patch100 -p1 -b .fdec~
+%patch2001 -p1 -b .config~
+";
+        let patches = parse_spec_patches(spec);
+        assert_eq!(
+            patches,
+            vec![
+                SpecPatch {
+                    file: "gcc11-hack.patch".to_string(),
+                    strip: 0
+                },
+                SpecPatch {
+                    file: "gcc11-fortran-fdec.patch".to_string(),
+                    strip: 1
+                },
+                SpecPatch {
+                    file: "doxygen-1.7.1-config.patch".to_string(),
+                    strip: 1
                 },
             ]
         );
