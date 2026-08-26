@@ -8,7 +8,7 @@
 # Usage:
 #   docker run --rm -v "$PWD:/src" -w /src ghcr.io/eglinuxer/crossforge/toolchain:el8-x86_64 \
 #     x86_64-unknown-linux-gnu-g++ -std=c++20 hello.cpp -o hello
-FROM rockylinux:8
+FROM quay.io/rockylinux/rockylinux:8
 
 ARG TOOLCHAIN_ID
 RUN test -n "$TOOLCHAIN_ID"

@@ -1,13 +1,19 @@
 # crossforge build environment: el8 base so produced toolchains only require
 # glibc >= 2.28 on the host, plus everything GCC's build needs.
 # - flex/bison: RH snapshot tarballs ship without pre-generated scanner sources
+# - findutils: Rocky images ship without `find`; libtool silently collects an
+#   empty object list when merging convenience archives (libsframe never makes
+#   it into libbfd.a and gas/ld fail with undefined sframe_* references)
 # - glibc-gconv-extra: without the full gconv module set, GCC's working-iconv
 #   configure probe fails and cc1 loses -fexec-charset support entirely
 # - dejagnu (PowerTools): `crossforge check` (GCC upstream testsuite)
-FROM rockylinux:8
+# The quay.io image is Rocky's continuously updated one; the docker.io
+# `rockylinux:8` tag is a stale 8.9 snapshot.
+FROM quay.io/rockylinux/rockylinux:8
 
 RUN dnf install -y \
         gcc gcc-c++ make tar xz bzip2 file diffutils patch flex bison \
+        findutils \
         glibc-gconv-extra \
     && dnf install -y --enablerepo=powertools dejagnu \
     && dnf clean all
