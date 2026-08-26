@@ -1,6 +1,6 @@
 # crossforge 交叉编译工具链构建引擎 · 设计文档
 
-- 版本：v0.6（2026-08-26）
+- 版本：v0.7（2026-08-26）
 - 状态：评审中
 - 范围：开源的交叉编译工具链**构建引擎**（CLI 工具 + Rust library API）——解决 C/C++ 产物在旧 Linux 发行版上的 glibc / libstdc++ 兼容问题，构建任意（编译器 × target × 基线）组合的可重定位工具链，经 GHCR 分发预构建镜像
 
@@ -275,7 +275,32 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 4. **host 兼容门槛**：v1 要求宿主 glibc ≥ 2.28（el8 构建）；如需覆盖更旧 CI 宿主，启用静态 host 工具选项。
 5. **LoongArch 基线**：欧拉/龙蜥的包源与 abilist 差异待调研，仅保留架构接口。
 
-## 9. 参考
+## 9. Python wheel 支持（2026-08-26 逐项评审定案）
+
+目标：crossforge 具备「交叉构建 manylinux 合规、多版本 Python wheel」的**通用基础设施能力**（不绑定具体项目），支撑公开 PyPI 与自建 index 双渠道分发。八项决策（T1-T8）：
+
+| # | 议题 | 决策 |
+|---|------|------|
+| T1 | 需求画像 | 通用能力；绑定层未选定（倾向 nanobind）；CPython 3.9–3.13（不含 free-threaded）；PyPI + 自建源 |
+| T2 | manylinux 基线 | **仅 manylinux_2_28**（= el8 基线，工具链同款 gts14）；el7 不进 wheel 范围（旧 COW-ABI 税实证）；musllinux 不做（dlopen 冲突） |
+| T3 | Python 物料 | **自建交叉 CPython**（供应链自主）：每版本先原生构建 x86_64（兼作 build-python 与 x86 物料）再交叉构建 aarch64；cp311+ 走官方 `--with-build-python`，cp39/310 走 CONFIG_SITE 老式 cross；五版本一次性交付；configure 对齐 manylinux 口径（`--disable-shared --with-ensurepip=no`）；目标依赖（openssl/libffi/zlib 等 -devel）经现有 sysroot 包列表机制提供；官方 manylinux 镜像提取版仅作 CI 对照基准（diff pyconfig.h/sysconfigdata） |
+| T4 | ABI 策略 | 双路线：per-version 默认（5 版本 × 2 架构）；abi3 作构建选项（近零成本，验证侧展开多解释器 import）；cp39 档 Limited API 缺 buffer protocol（3.11 才有），分档策略留给具体项目 |
+| T5 | 能力层级 | **端到端 `crossforge wheel`**（交叉版 cibuildwheel）：项目目录 → 全矩阵 wheel + 审计；环境生成器（crossenv 伪 venv + CMake/Meson cross 文件 + PYO3 变量，四类构建后端通吃）作为内部层 |
+| T6 | 合规审计 | **自研 wheel 审计 + 自研 vendor**：内嵌 manylinux policy 数据表（注意 _2_28 的 GLIBCXX 上限 3.4.24 比 el8 系统库严一档，与 auditwheel JSON 做 CI 对照）；检查符号上限/23 库白名单/禁链 libpython/EXT_SUFFIX-tag 一致/RECORD；vendor 含 patchelf 级 soname/RPATH ELF 改写（纯 Rust）；`--exclude` 驱动库机制（libcuda 类） |
+| T7 | 验证矩阵 | 三层：静态审计（必过）→ qemu/本机 import 冒烟（必过，用自建 CPython 执行）→ `--verify-images` 装机层（manylinux 容器全矩阵 + 发行版容器抽样，可选）；abi3 自动展开五解释器 |
+| T8 | CI 分工 | **交叉构建、原生终检**：构建与前两层验证全在 x86 交叉完成（内网/GitHub 通用）；原生 arm（GH arm64 runner 已 GA）只做发布前装机终检与性能测试 |
+
+关键调研结论（支撑上述决策）：manylinux_2_28 镜像 = AlmaLinux 8 + gcc-toolset-14（与我们同款）；Linux 扩展交叉物料仅需目标 `pyconfig.h` + `_sysconfigdata_*.py`（不链 libpython）；setuptools 交叉唯一通路是 `_PYTHON_SYSCONFIGDATA_NAME` + `_PYTHON_HOST_PLATFORM` + crossenv（conda-forge 生产验证，PEP 720 仍 Draft）；pybind11 至今无 abi3，nanobind 2.0+/PyO3 支持良好；free-threaded（cp313t/cp314t）与 abi3 不兼容，PEP 803（abi3t）落地 3.15，暂不入范围。
+
+### 9.1 里程碑
+
+| 里程碑 | 内容 | 验收 |
+|--------|------|------|
+| M6 | python-pack：交叉 CPython 构建流水线（cp39–cp313 × x86_64/aarch64），sysroot 包列表扩展（openssl-devel 等），官方镜像对照门禁 | 十个 python-pack 产出；pyconfig.h/sysconfigdata 与官方 manylinux 对照 diff 清洁；aarch64 树在 qemu 下可执行 import |
+| M7 | `crossforge wheel` 端到端：环境组装（crossenv/cross files/PYO3）+ 四类后端编排 + wheel 静态审计（policy 表）+ import 冒烟 + abi3 展开 | 一个 pybind11/nanobind 样例项目与一个 setuptools 样例项目，一条命令产出全矩阵合规 wheel，manylinux 容器全版本 import 通过 |
+| M8 | 自研 vendor（ELF soname/RPATH 改写）+ `--verify-images` 装机层 + CI 集成（wheel 维度产物与 arm 终检 job） | vendor 结果与 auditwheel repair 产物等价性对照；CI 全绿 |
+
+## 10. 参考
 
 - RH gcc-toolset 机制：CentOS Stream dist-git `gcc-toolset-*-gcc` spec；LWN 862013
 - 符号版本机制与断点：glibc 2.34 libpthread 合并（LWN 864920）、DT_RELR lockout（sourceware libc-alpha 2022-03）
