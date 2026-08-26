@@ -48,7 +48,7 @@ jobs:
       - name: Audit smoke test
         run: |
           ID=$(ls work/toolchains)
-          printf '#include <cstdio>\nint main(){puts("ok");return 0;}\n' > smoke.c
+          printf '#include <stdio.h>\nint main(){puts("ok");return 0;}\n' > smoke.c
           "work/toolchains/$ID/bin/${{ matrix.target }}-unknown-linux-gnu-gcc" smoke.c -o smoke
           ./target/release/crossforge audit \
             --sysroot "work/sysroots/${{ matrix.baseline }}-${{ matrix.target }}" \
