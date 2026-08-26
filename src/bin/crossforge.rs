@@ -5,9 +5,9 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use crossforge::{
-    Auditor, BaselineRegistry, BuildConfig, BuildEngine, ContainerRunner, Fetcher, Severity,
-    SourceRegistry, SysrootGenerator, TargetArch, ToolchainSpec, pack_toolchain,
-    verify_in_containers, write_manifest,
+    Auditor, BaselineRegistry, BuildConfig, BuildEngine, CheckRunner, CheckSuite, CompilerArtifact,
+    ContainerRunner, Fetcher, LocalRunner, Runner, Severity, SourceRegistry, SysrootGenerator,
+    TargetArch, ToolchainSpec, pack_toolchain, verify_in_containers, write_manifest,
 };
 
 #[derive(Parser)]
@@ -67,6 +67,29 @@ enum Command {
         allow_needed: Vec<String>,
         #[arg(required = true)]
         files: Vec<PathBuf>,
+    },
+    /// Run the GCC upstream testsuite against a built toolchain.
+    Check {
+        #[arg(long, default_value = crossforge::DEFAULT_GCC)]
+        gcc: String,
+        #[arg(long, default_value = crossforge::DEFAULT_BASELINE)]
+        baseline: String,
+        #[arg(long, default_value = "x86_64")]
+        target: String,
+        /// Testsuites to run (gcc, c++, libstdc++); default: all.
+        #[arg(long, value_delimiter = ',')]
+        suites: Vec<String>,
+        /// Container image for the test environment (needs dejagnu; qemu-user
+        /// for aarch64 targets); omit to run directly on the host.
+        #[arg(long, env = "CROSSFORGE_IMAGE")]
+        image: Option<String>,
+        #[arg(long, default_value = "/tmp/crossforge")]
+        work_dir: PathBuf,
+        #[arg(long)]
+        jobs: Option<usize>,
+        /// Exit non-zero if unexpected failures exceed this count.
+        #[arg(long)]
+        max_unexpected_failures: Option<u64>,
     },
     /// Run a binary across distro container images (exit 1 on failures).
     Verify {
@@ -180,6 +203,72 @@ fn main() -> crossforge::Result<()> {
                 std::process::exit(1);
             }
         }
+        Command::Check {
+            gcc,
+            baseline,
+            target,
+            suites,
+            image,
+            work_dir,
+            jobs,
+            max_unexpected_failures,
+        } => {
+            let registry = BaselineRegistry::builtin();
+            let spec = ToolchainSpec::builder()
+                .gcc(gcc)
+                .baseline(baseline)
+                .target(target.parse::<TargetArch>()?)
+                .build(&registry)?;
+            let suites: Vec<CheckSuite> = if suites.is_empty() {
+                CheckSuite::ALL.to_vec()
+            } else {
+                suites
+                    .iter()
+                    .map(|s| s.parse())
+                    .collect::<crossforge::Result<_>>()?
+            };
+            let prefix = work_dir.join("toolchains").join(spec.id());
+            let compiler = CompilerArtifact {
+                prefix,
+                triple: spec.target.triple(),
+            };
+            let jobs = jobs.unwrap_or_else(|| {
+                std::thread::available_parallelism()
+                    .map(|n| n.get())
+                    .unwrap_or(4)
+            });
+            let summaries = match image {
+                Some(image) => {
+                    let me = std::fs::metadata("/proc/self")?;
+                    let runner = ContainerRunner {
+                        engine: "docker".to_string(),
+                        image,
+                        binds: vec![work_dir.clone()],
+                        user: Some(format!("{}:{}", me.uid(), me.gid())),
+                    };
+                    run_check(&runner, work_dir, jobs, &spec, &compiler, &suites)?
+                }
+                None => run_check(&LocalRunner, work_dir, jobs, &spec, &compiler, &suites)?,
+            };
+            let mut over_limit = false;
+            for s in &summaries {
+                println!(
+                    "{:>10}: {} passes, {} unexpected failures, {} expected failures, {} unresolved, {} unsupported",
+                    s.suite,
+                    s.expected_passes,
+                    s.unexpected_failures,
+                    s.expected_failures,
+                    s.unresolved,
+                    s.unsupported
+                );
+                if let Some(max) = max_unexpected_failures {
+                    over_limit |= s.unexpected_failures > max;
+                }
+            }
+            if over_limit {
+                std::process::exit(1);
+            }
+        }
         Command::Verify {
             binary,
             images,
@@ -200,4 +289,20 @@ fn main() -> crossforge::Result<()> {
         }
     }
     Ok(())
+}
+
+fn run_check(
+    runner: &impl Runner,
+    work_dir: PathBuf,
+    jobs: usize,
+    spec: &ToolchainSpec,
+    compiler: &CompilerArtifact,
+    suites: &[CheckSuite],
+) -> crossforge::Result<Vec<crossforge::CheckSummary>> {
+    CheckRunner {
+        runner,
+        work_dir,
+        jobs,
+    }
+    .run(spec, compiler, suites)
 }

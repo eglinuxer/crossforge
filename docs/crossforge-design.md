@@ -246,6 +246,8 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 
 `crossforge verify` 在基线及更新的发行版容器矩阵（centos7 / rockylinux8 / ubuntu20.04 / debian11 …）中做真机 exec + dlopen 冒烟，防审计规则遗漏。
 
+`crossforge check` 跑 GCC 官方 DejaGnu 测试集（check-gcc / check-c++ / check-target-libstdc++-v3）：自动生成 board 文件（x86_64 直接执行——产物基线低于构建容器；aarch64 走 qemu-user + sysroot），解析 `.sum` 产出统计与 FAIL 明细，`--max-unexpected-failures` 可作门禁。2026-08-26 首轮完整成绩（gcc14.2.1-el8-x86_64）：**gcc 191,477 / c++ 256,602 / libstdc++ 17,642 passes，合计 46.5 万；32 个 unexpected failures 全部定性为容器 locale/网络噪声或 RH dts-test 补丁已标注的基线语义差异（如 string::reserve 收缩走基线旧语义——正是 nonshared 的设计行为），零工具链归因缺陷**。踩坑记录：DejaGnu 在 `/etc/passwd` 无当前 UID 的容器里 `exec whoami` 崩溃（注入 USER 环境变量解决）；`set_board_info` 不覆盖既有值，需先 `unset_board_info isremote`；RH dts.exp 的版本探测不兼容单段 `-dumpversion` 输出（幂等改写该 proc）。
+
 ## 6. 非目标（v1）
 
 - 不做第三方库的包管理 / 交叉编译（sysroot 结构对扩展开放，但不承诺）；

@@ -35,6 +35,7 @@
 mod ar;
 mod audit;
 mod baseline;
+mod check;
 mod compat;
 mod compiler;
 mod elfdyn;
@@ -52,6 +53,7 @@ mod verify;
 
 pub use audit::{AuditReport, Auditor, Finding, Severity};
 pub use baseline::{BaselineDef, BaselineRegistry};
+pub use check::{CheckRunner, CheckSuite, CheckSummary};
 pub use compat::{CompatArtifact, CompatBuilder, NonsharedSource};
 pub use compiler::{
     CompilerArtifact, CompilerBuilder, ComponentDef, ComponentKind, ToolchainSources,

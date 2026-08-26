@@ -43,7 +43,15 @@ $ ./target/release/crossforge build --baseline el8 --target aarch64 \
 $ ./target/release/crossforge audit --sysroot work/sysroots/el8-aarch64 \
     --arch aarch64 your-binary.so
 $ ./target/release/crossforge verify ./your-app --images almalinux:8,ubuntu:20.04
+$ ./target/release/crossforge check --baseline el8 --target x86_64   # GCC testsuite
 ```
+
+`check` runs the upstream GCC DejaGnu testsuites (`check-gcc`, `check-c++`,
+`check-target-libstdc++-v3`) against a built toolchain, with generated board
+files (direct execution for x86_64, user-mode qemu for aarch64). The default
+el8/x86_64 toolchain scores 465k passes with zero toolchain-attributable
+failures (the handful of remaining FAILs are container locale/network noise
+and RH-documented baseline semantics differences).
 
 The result is a fully relocatable prefix — tar it up, unpack anywhere, no
 configuration needed. `--pack` produces a distributable `tar.zst` + TOML

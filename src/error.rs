@@ -56,6 +56,9 @@ pub enum Error {
     #[error("unknown source component: {name} {version}")]
     UnknownComponent { name: String, version: String },
 
+    #[error("unknown testsuite: {0} (expected gcc, c++ or libstdc++)")]
+    UnknownSuite(String),
+
     #[error("malformed repo metadata: {0}")]
     RepoMetadata(String),
 
