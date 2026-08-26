@@ -1,11 +1,19 @@
-# Builds full cross toolchains with crossforge and publishes ready-to-use
-# Docker images to GHCR: ghcr.io/<owner>/<repo>/toolchain:<baseline>-<target>
+# Builds every supported toolchain combination on each commit to main and
+# publishes ready-to-use Docker images to GHCR:
+#   ghcr.io/<owner>/<repo>/toolchain:<baseline>-<target>            (default gcc)
+#   ghcr.io/<owner>/<repo>/toolchain:<baseline>-<target>-gcc<ver>   (all)
+#   ghcr.io/<owner>/<repo>/toolchain:<baseline>-<target>-gcc<ver>-<sha>
 name: toolchain-images
 
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags: ["v*"]
+
+concurrency:
+  group: toolchain-images-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -16,11 +24,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { baseline: el8, target: x86_64 }
-          - { baseline: el8, target: aarch64 }
-          - { baseline: el7, target: x86_64 }
-          - { baseline: el7, target: aarch64 }
+        gcc: ["14.2.1", "11.2.1"]
+        baseline: [el8, el7]
+        target: [x86_64, aarch64]
     steps:
       - uses: actions/checkout@v4
 
@@ -37,9 +43,10 @@ jobs:
       - name: Build el8 build environment image
         run: docker build -t crossforge-buildenv:el8 -f docker/buildenv.Dockerfile docker
 
-      - name: Build toolchain (${{ matrix.baseline }} ${{ matrix.target }})
+      - name: Build toolchain (gcc ${{ matrix.gcc }}, ${{ matrix.baseline }}, ${{ matrix.target }})
         run: |
           ./target/release/crossforge build \
+            --gcc ${{ matrix.gcc }} \
             --baseline ${{ matrix.baseline }} \
             --target ${{ matrix.target }} \
             --image crossforge-buildenv:el8 \
@@ -65,10 +72,15 @@ jobs:
         run: |
           ID=$(ls work/toolchains)
           GCC=${ID%%-*}   # e.g. gcc14.2.1
+          SHA=${GITHUB_SHA::7}
           IMAGE="ghcr.io/${{ github.repository }}/toolchain"
           TAG="${{ matrix.baseline }}-${{ matrix.target }}"
+          TAGS=(-t "$IMAGE:$TAG-$GCC" -t "$IMAGE:$TAG-$GCC-$SHA")
+          # The default compiler also owns the short baseline-target tag.
+          if [ "${{ matrix.gcc }}" = "14.2.1" ]; then
+            TAGS+=(-t "$IMAGE:$TAG")
+          fi
           docker build -f docker/toolchain.Dockerfile \
             --build-arg TOOLCHAIN_ID="$ID" \
-            -t "$IMAGE:$TAG" -t "$IMAGE:$TAG-$GCC" work/toolchains
-          docker push "$IMAGE:$TAG"
-          docker push "$IMAGE:$TAG-$GCC"
+            "${TAGS[@]}" work/toolchains
+          docker push --all-tags "$IMAGE"

@@ -28,10 +28,12 @@ $ docker run --rm -v "$PWD:/src" -w /src \
     x86_64-unknown-linux-gnu-g++ -std=c++20 hello.cpp -o hello
 ```
 
-Available tags: `el8-x86_64`, `el8-aarch64`, `el7-x86_64`, `el7-aarch64`
-(el8 = glibc 2.28 / GLIBCXX 3.4.25 baseline; el7 = glibc 2.17 / GLIBCXX 3.4.19,
-old `std::string` ABI forced). Images are built by the `toolchain-images`
-GitHub Actions workflow.
+Every commit to `main` publishes all supported combinations
+(gcc 14.2.1 + 11.2.1 × el7/el8 × x86_64/aarch64) via the `toolchain-images`
+workflow. Tags: `<baseline>-<target>` (default gcc),
+`<baseline>-<target>-gcc<version>`, and a `-<sha>` suffix for pinning exact
+builds. el8 = glibc 2.28 / GLIBCXX 3.4.25 baseline; el7 = glibc 2.17 /
+GLIBCXX 3.4.19 with the old `std::string` ABI forced.
 
 ## Build a toolchain yourself
 
@@ -56,7 +58,10 @@ and RH-documented baseline semantics differences).
 The result is a fully relocatable prefix — tar it up, unpack anywhere, no
 configuration needed. `--pack` produces a distributable `tar.zst` + TOML
 manifest. Building inside the el8 container keeps the toolchain's own host
-requirement at glibc ≥ 2.28.
+requirement at glibc ≥ 2.28. See `docker/buildenv.Dockerfile` for the build
+environment's package rationale (notably `glibc-gconv-extra`: without the full
+gconv module set, GCC's configure probe disables iconv and the built cc1
+silently loses `-fexec-charset` support).
 
 Available compilers (`--gcc`): `14.2.1` (default, RH gcc-toolset-14) and
 `11.2.1` (RH gcc-toolset-11 — its compat patches also provide the RH-tuned
