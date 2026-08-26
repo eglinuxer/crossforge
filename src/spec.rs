@@ -8,7 +8,7 @@ use crate::target::TargetArch;
 /// gcc-toolset-14 snapshot, carrying the nonshared compat patch series.
 pub const DEFAULT_GCC: &str = "14.2.1";
 /// Default binutils version (decision D2).
-pub const DEFAULT_BINUTILS: &str = "2.40";
+pub const DEFAULT_BINUTILS: &str = "2.41";
 /// Default baseline (decision D3).
 pub const DEFAULT_BASELINE: &str = "el8";
 
@@ -105,7 +105,7 @@ mod tests {
         let registry = BaselineRegistry::builtin();
         let spec = ToolchainSpec::builder().build(&registry).unwrap();
         assert_eq!(spec.gcc, "14.2.1");
-        assert_eq!(spec.binutils, "2.40");
+        assert_eq!(spec.binutils, "2.41");
         assert_eq!(spec.baseline, "el8");
         assert_eq!(spec.target, TargetArch::X86_64);
         assert_eq!(spec.id(), "gcc14.2.1-el8-x86_64");

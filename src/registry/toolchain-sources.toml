@@ -1,6 +1,15 @@
 # Built-in upstream source components for compiler builds (design doc §5.2).
 # GCC prerequisite versions follow GCC 11's contrib/download_prerequisites.
 
+# 2.41 matches RH gcc-toolset-14's official binutils pairing; 2.40 kept for
+# reference but its libsframe static-link integration is fragile (gas/ld can
+# end up missing sframe_* symbols depending on libtool ordering).
+[[component]]
+name = "binutils"
+version = "2.41"
+url = "https://mirrors.kernel.org/gnu/binutils/binutils-{version}.tar.xz"
+sha256 = "ae9a5789e23459e59606e6714723f2d3ffc31c03174191ef0d015bdf06007450"
+
 [[component]]
 name = "binutils"
 version = "2.40"

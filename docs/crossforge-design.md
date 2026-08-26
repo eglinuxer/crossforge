@@ -20,7 +20,7 @@
 | # | 决策 | 内容 |
 |---|------|------|
 | D1 | 技术路线 | **路线 A：交叉化 devtoolset** —— 旧 glibc 二进制 sysroot（解 glibc）+ `libstdc++_nonshared.a` 混合链接（解 libstdc++）。产物与用户侧系统 libstdc++ 完全 ABI 互操作，适配「被用户程序链接的闭源 C++ SDK」形态 |
-| D2 | 编译器主体 | **GCC**，默认源码基线 **RH gcc-toolset-14**（GCC 14.2.1，2025-01 快照 + RH 补丁集，Rocky 8 SRPM（bug-for-bug RHEL 复刻）；2026-08-26 修订，原为 FSF 11.5.0）。配 binutils 2.40；FSF tarball 组件已随 2026-08-26 重构移除（fallback 由对象级裁剪承担）；Clang 可作为后续副轨接入同一套 sysroot / compat-pack |
+| D2 | 编译器主体 | **GCC**，默认源码基线 **RH gcc-toolset-14**（GCC 14.2.1，2025-01 快照 + RH 补丁集，Rocky 8 SRPM（bug-for-bug RHEL 复刻）；2026-08-26 修订，原为 FSF 11.5.0）。配 binutils 2.41（gcc-toolset-14 官方搭配版本；2026-08-26 由 2.40 升级——其 libsframe 静态链接集成脆弱）；FSF tarball 组件已随 2026-08-26 重构移除（fallback 由对象级裁剪承担）；Clang 可作为后续副轨接入同一套 sysroot / compat-pack |
 | D3 | 默认基线 | **el8**（glibc 2.28 + GLIBCXX 3.4.25，CXX11 ABI）。**el7**（glibc 2.17 + GLIBCXX 3.4.19）作为可选长尾基线，明示其强制 `_GLIBCXX_USE_CXX11_ABI=0` 的代价 |
 | D4 | Host / Target | Host 仅 **x86_64-linux**（manifest 预留 host 维度）；Target 首发 **x86_64 + aarch64**，架构维度预留（LoongArch 等后续接入） |
 | D5 | 配置格式 | 全部配置文件统一 **TOML**：分发 manifest、基线注册表、sysroot / compat-pack 元数据、用户侧 `~/.crossforge/config.toml` |
@@ -106,7 +106,7 @@ wrapper（或生成的 toolchain file）按基线注入：
 | 选项 | 原因 |
 |------|------|
 | `--sysroot=<sysroot>` | 基线头文件与链接库（实现：GCC `--with-sysroot` 烧入，无需 wrapper 注入） |
-| `-Wl,-z,nopack-relative-relocs` | 阻断 DT_RELR → `GLIBC_ABI_DT_RELR` 版本依赖（binutils ≥2.38 环境下旧机器的隐形地雷；工具链自带 binutils 2.40 默认不开 DT_RELR，audit 兜底检查） |
+| `-Wl,-z,nopack-relative-relocs` | 阻断 DT_RELR → `GLIBC_ABI_DT_RELR` 版本依赖（binutils ≥2.38 环境下旧机器的隐形地雷；工具链自带 binutils 2.41 默认不开 DT_RELR，audit 兜底检查） |
 | 旧 string ABI（仅 el7） | 实现为 GCC configure `--with-default-libstdcxx-abi=gcc4-compatible`（编译器默认 `_GLIBCXX_USE_CXX11_ABI=0`，比 wrapper 注入宏更不可绕过），构建时输出 WARN 警示 |
 
 注意不强制 `-std=`：默认 toolchain（GCC 14，默认 `gnu17`）不受 C23 符号重定向影响；后续 GCC 15+ toolchain 默认 `gnu23`，会使 `strtol` 等重定向到 `__isoc23_*@GLIBC_2.38`——el7/el8 sysroot 的旧头文件天然不含该重定向，此风险仅存在于误用宿主头文件时，由 audit 兜底检出。

@@ -219,6 +219,15 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
             .cwd(&build_binutils)
             .log(logs.join("binutils-configure.log")),
         )?;
+        // binutils 2.40's toplevel has a dependency race under high -j: gas
+        // can link before libsframe is archived. Build libsframe first
+        // (ignore failure on versions without the target).
+        let _ = self.make(
+            &build_binutils,
+            &logs,
+            "binutils-make.log",
+            &["all-libsframe"],
+        );
         self.make(&build_binutils, &logs, "binutils-make.log", &[])?;
         self.make(&build_binutils, &logs, "binutils-install.log", &["install"])?;
 
