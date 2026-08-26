@@ -91,6 +91,26 @@ enum Command {
         #[arg(long)]
         max_unexpected_failures: Option<u64>,
     },
+    /// Run the built-in toolchain smoke test: compile a dlopen'd plugin with
+    /// cross-DSO exception matching of nonshared-provided types, audit the
+    /// artifacts, and execute on baseline runtimes (exit 1 on failure).
+    Smoke {
+        #[arg(long, default_value = crossforge::DEFAULT_GCC)]
+        gcc: String,
+        #[arg(long, default_value = crossforge::DEFAULT_BASELINE)]
+        baseline: String,
+        #[arg(long, default_value = "x86_64")]
+        target: String,
+        /// Container images to execute on (x86_64 targets only).
+        #[arg(
+            long,
+            value_delimiter = ',',
+            default_value = "rockylinux:8,ubuntu:20.04,debian:11"
+        )]
+        images: Vec<String>,
+        #[arg(long, default_value = "/tmp/crossforge")]
+        work_dir: PathBuf,
+    },
     /// Run a binary across distro container images (exit 1 on failures).
     Verify {
         binary: PathBuf,
@@ -266,6 +286,33 @@ fn main() -> crossforge::Result<()> {
                 }
             }
             if over_limit {
+                std::process::exit(1);
+            }
+        }
+        Command::Smoke {
+            gcc,
+            baseline,
+            target,
+            images,
+            work_dir,
+        } => {
+            let registry = BaselineRegistry::builtin();
+            let spec = ToolchainSpec::builder()
+                .gcc(gcc)
+                .baseline(baseline)
+                .target(target.parse::<TargetArch>()?)
+                .build(&registry)?;
+            let prefix = work_dir.join("toolchains").join(spec.id());
+            let runner = crossforge::LocalRunner;
+            let outcome = crossforge::SmokeRunner {
+                runner: &runner,
+                work_dir: work_dir.clone(),
+            }
+            .run(&spec, &prefix, &images)?;
+            for r in &outcome.runs {
+                println!("{} {}", if r.passed { "PASS" } else { "FAIL" }, r.image);
+            }
+            if !outcome.passed() {
                 std::process::exit(1);
             }
         }

@@ -56,6 +56,18 @@ the gcc and c++ suites; the three remaining libstdc++ FAILs are RH-documented
 baseline-semantics differences (old-baseline string::reserve behavior -- the
 nonshared design goal) plus one no-network DNS test.
 
+Each prefix ships a `toolchain.cmake` for CMake projects:
+
+```console
+$ cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=/opt/crossforge/<id>/toolchain.cmake
+```
+
+Always use it when cross-compiling: without CMAKE_SYSTEM_NAME/PROCESSOR,
+CMake treats the cross compiler as native and host-arch-sensitive project
+logic misfires (vcpkg-tool, for example, then selects x86-era libcurl
+headers for an aarch64 build). `crossforge smoke` runs the built-in
+dlopen + cross-DSO-exception health check for any built toolchain.
+
 The result is a fully relocatable prefix — tar it up, unpack anywhere, no
 configuration needed. `--pack` produces a distributable `tar.zst` + TOML
 manifest. Building inside the el8 container keeps the toolchain's own host

@@ -59,6 +59,9 @@ pub enum Error {
     #[error("unknown testsuite: {0} (expected gcc, c++ or libstdc++)")]
     UnknownSuite(String),
 
+    #[error("smoke test artifact {artifact} failed the baseline audit: {details}")]
+    SmokeAudit { artifact: String, details: String },
+
     #[error("malformed repo metadata: {0}")]
     RepoMetadata(String),
 

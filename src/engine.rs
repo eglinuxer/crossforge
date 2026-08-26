@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
 use crate::baseline::BaselineRegistry;
@@ -244,11 +244,46 @@ impl<R: Runner> BuildEngine<R> {
         };
         compat.build(spec, baseline, &compiler)?;
 
+        write_cmake_toolchain_file(&compiler.prefix, spec)?;
+
         Ok(ToolchainArtifact {
             root: compiler.prefix,
             spec: spec.clone(),
         })
     }
+}
+
+/// Writes `toolchain.cmake` into the prefix so CMake projects cross-compile
+/// correctly out of the box. Without CMAKE_SYSTEM_NAME/PROCESSOR CMake treats
+/// a cross compiler as native and host-arch-sensitive logic misfires (e.g.
+/// vcpkg-tool selects x86-era libcurl headers for an aarch64 build). Paths
+/// are derived from the file's own location, keeping the prefix relocatable.
+fn write_cmake_toolchain_file(prefix: &Path, spec: &ToolchainSpec) -> Result<()> {
+    let triple = spec.target.triple();
+    let content = format!(
+        "# crossforge toolchain file for {triple} (baseline {baseline}).\n\
+         # Usage: cmake -DCMAKE_TOOLCHAIN_FILE=<prefix>/toolchain.cmake ...\n\
+         set(CMAKE_SYSTEM_NAME Linux)\n\
+         set(CMAKE_SYSTEM_PROCESSOR {arch})\n\
+         get_filename_component(_crossforge_root \"${{CMAKE_CURRENT_LIST_DIR}}\" ABSOLUTE)\n\
+         set(CMAKE_C_COMPILER \"${{_crossforge_root}}/bin/{triple}-gcc\")\n\
+         set(CMAKE_CXX_COMPILER \"${{_crossforge_root}}/bin/{triple}-g++\")\n\
+         set(CMAKE_AR \"${{_crossforge_root}}/bin/{triple}-ar\")\n\
+         set(CMAKE_RANLIB \"${{_crossforge_root}}/bin/{triple}-ranlib\")\n\
+         set(CMAKE_STRIP \"${{_crossforge_root}}/bin/{triple}-strip\")\n\
+         set(CMAKE_FIND_ROOT_PATH \"${{_crossforge_root}}/{triple}/sysroot\")\n\
+         set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)\n\
+         set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)\n\
+         set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)\n\
+         set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)\n",
+        triple = triple,
+        baseline = spec.baseline,
+        arch = spec.target.as_str(),
+    );
+    let path = prefix.join("toolchain.cmake");
+    std::fs::write(&path, content)?;
+    tracing::info!(file = %path.display(), "CMake toolchain file written");
+    Ok(())
 }
 
 #[cfg(test)]

@@ -45,6 +45,7 @@ mod fetch;
 mod pack;
 mod repodata;
 mod rpm;
+mod smoke;
 mod source;
 mod spec;
 mod sysroot;
@@ -68,6 +69,7 @@ pub use engine::{
 pub use error::{Error, Result};
 pub use fetch::Fetcher;
 pub use pack::{BundleEntry, PackedToolchain, pack_toolchain, write_manifest};
+pub use smoke::{SmokeOutcome, SmokeRunner};
 pub use source::{SourceDef, SourceRegistry};
 pub use spec::{
     DEFAULT_BASELINE, DEFAULT_BINUTILS, DEFAULT_GCC, ToolchainSpec, ToolchainSpecBuilder,
