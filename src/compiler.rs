@@ -18,6 +18,9 @@ use crate::sysroot::SysrootArtifact;
 
 /// GCC in-tree prerequisite libraries, pinned to the versions listed by
 /// GCC's `contrib/download_prerequisites` (11.x list; satisfies GCC 14 minimums).
+/// gdb version built alongside each toolchain.
+pub const DEFAULT_GDB: &str = "17.2";
+
 const GCC_PREREQS: &[(&str, &str)] = &[("gmp", "6.1.0"), ("mpfr", "3.1.4"), ("mpc", "1.0.3")];
 
 /// How a source component is packaged upstream.
@@ -318,6 +321,10 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
             install_native_aliases(&prefix.join("bin"), &triple)?;
         }
 
+        // 4d. Cross gdb. A toolchain that can build for another
+        // architecture but cannot inspect what it built is half a tool.
+        self.build_gdb(spec, &sysroot_dest, prefix, &logs)?;
+
         // 5. Smoke check.
         self.runner.exec(
             &Cmd::new(gcc_bin.display().to_string())
@@ -329,6 +336,101 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
             prefix: prefix.to_path_buf(),
             triple,
         })
+    }
+
+    /// Builds expat and MPFR as static host libraries, once per work dir.
+    ///
+    /// gdb needs both. The build container has them as packages, but linking
+    /// against those would tie the debugger to `libmpfr.so.4` — an el8-only
+    /// soname absent from Ubuntu and Debian — while everything else in the
+    /// prefix runs on any host with glibc >= 2.28. Static keeps gdb as
+    /// portable as the compiler beside it.
+    fn build_host_deps(&self, logs: &Path) -> Result<PathBuf> {
+        let out = self.work_dir.join("hostdeps");
+        if out.join("lib/libexpat.a").is_file() && out.join("lib/libmpfr.a").is_file() {
+            return Ok(out);
+        }
+        let src_dir = self.work_dir.join("src");
+        for (name, version, extra) in [
+            (
+                "expat",
+                "2.8.3",
+                vec!["--without-docbook", "--without-tests"],
+            ),
+            ("mpfr", "3.1.4", vec![]),
+        ] {
+            let component = self.sources.get(name, version)?.clone();
+            let source = self.unpack(&component, &src_dir, logs)?;
+            let build = self.work_dir.join(format!("build-{name}-host"));
+            if build.exists() {
+                std::fs::remove_dir_all(&build)?;
+            }
+            std::fs::create_dir_all(&build)?;
+            tracing::info!(component = %component.dir_name(), "building host dependency");
+            let mut args = vec![
+                format!("--prefix={}", out.display()),
+                "--disable-shared".to_string(),
+                "--enable-static".to_string(),
+            ];
+            args.extend(extra.into_iter().map(String::from));
+            self.runner.exec(
+                &Cmd::new(source.join("configure").display().to_string())
+                    .args(args)
+                    .cwd(&build)
+                    .log(logs.join("hostdeps.log")),
+            )?;
+            self.make(&build, logs, "hostdeps.log", &[])?;
+            self.make(&build, logs, "hostdeps.log", &["install"])?;
+        }
+        Ok(out)
+    }
+
+    /// Builds `<triple>-gdb` into the prefix.
+    fn build_gdb(
+        &self,
+        spec: &ToolchainSpec,
+        sysroot: &Path,
+        prefix: &Path,
+        logs: &Path,
+    ) -> Result<()> {
+        let triple = spec.target.triple();
+        if prefix.join("bin").join(format!("{triple}-gdb")).is_file() {
+            return Ok(());
+        }
+        let deps = self.build_host_deps(logs)?;
+        let component = self.sources.get("gdb", DEFAULT_GDB)?.clone();
+        let source = self.unpack(&component, &self.work_dir.join("src"), logs)?;
+        let build = self.work_dir.join(format!("build-gdb-{}", spec.id()));
+        if build.exists() {
+            std::fs::remove_dir_all(&build)?;
+        }
+        std::fs::create_dir_all(&build)?;
+        tracing::info!(version = %component.version, triple = %triple, "building gdb");
+        self.runner.exec(
+            &Cmd::new(source.join("configure").display().to_string())
+                .args([
+                    format!("--target={triple}"),
+                    format!("--prefix={}", prefix.display()),
+                    format!("--with-sysroot={}", sysroot.display()),
+                    format!("--with-libexpat-prefix={}", deps.display()),
+                    format!("--with-mpfr={}", deps.display()),
+                    "--disable-nls".to_string(),
+                    "--disable-werror".to_string(),
+                    // binutils, ld and gas come from the binutils build; the
+                    // gdb tarball carries its own copies of all three.
+                    "--disable-binutils".to_string(),
+                    "--disable-ld".to_string(),
+                    "--disable-gas".to_string(),
+                    "--disable-gprofng".to_string(),
+                    "--disable-sim".to_string(),
+                    "--without-python".to_string(),
+                ])
+                .cwd(&build)
+                .log(logs.join("gdb-configure.log")),
+        )?;
+        self.make(&build, logs, "gdb-make.log", &["all-gdb"])?;
+        self.make(&build, logs, "gdb-install.log", &["install-strip-gdb"])?;
+        Ok(())
     }
 
     /// Fetches a component and unpacks it under `dest`, returning the source

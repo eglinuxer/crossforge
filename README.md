@@ -80,6 +80,14 @@ environment's package rationale (notably `glibc-gconv-extra`: without the full
 gconv module set, GCC's configure probe disables iconv and the built cc1
 silently loses `-fexec-charset` support).
 
+Each toolchain ships `<triple>-gdb` (GDB 17.2). It links expat and MPFR
+statically on purpose: the el8 build container has both as packages, but
+linking them dynamically would leave the debugger needing
+`libmpfr.so.4` — an el8-only soname Ubuntu and Debian do not carry —
+while everything else in the prefix runs anywhere with glibc >= 2.28.
+Verified running on rockylinux:8, ubuntu:20.04 and debian:11, reading and
+disassembling aarch64 binaries from an x86_64 host.
+
 Sanitizers are built in (ASan, UBSan, TSan, LSan, HWASan). The baseline's
 own `libasan.so.5` predates GCC 14's `libasan.so.8`, so link them statically
 to stay inside the baseline — `-fsanitize=address -static-libasan` runs and

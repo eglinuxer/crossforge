@@ -99,6 +99,24 @@ version = "3.13.15"
 url = "https://www.python.org/ftp/python/{version}/Python-{version}.tar.xz"
 sha256 = "1e66a7945a48390ee4c2a4268a0e4185884059a13c4aab6d148aa208deea4a76"
 
+# Cross gdb, plus the two host libraries it needs statically. The el8 build
+# container has both as packages, but linking them dynamically would give the
+# debugger a dependency on libmpfr.so.4 — an el8-only soname that Ubuntu and
+# Debian do not carry — while the rest of the toolchain runs anywhere with
+# glibc >= 2.28. Built static, gdb keeps that property (verified on
+# rockylinux:8, ubuntu:20.04 and debian:11).
+[[component]]
+name = "gdb"
+version = "17.2"
+url = "https://mirrors.kernel.org/gnu/gdb/gdb-{version}.tar.xz"
+sha256 = "1c036c0d72e4b3d1fb5c94c88632add6f9d76f4d7c4d2ea793c12a9f19a3228c"
+
+[[component]]
+name = "expat"
+version = "2.8.3"
+url = "https://github.com/libexpat/libexpat/releases/download/R_2_8_3/expat-{version}.tar.xz"
+sha256 = "f6256df90c906773d344da084402b7d3e4f22ed41b1a59c989098a83d3ea0c85"
+
 [[component]]
 name = "gmp"
 version = "6.1.0"

@@ -14,6 +14,7 @@
 #   skipped and the loop's leftover variable silently selects bare `python`
 # - cmake + ninja-build (PowerTools): CMake-backend wheels
 #   (scikit-build-core / nanobind)
+# - expat/gmp/mpfr-devel: cross gdb needs all three
 # - *-devel: native (x86_64) CPython builds probe the build host's system
 #   dirs (not the sysroot) for optional stdlib modules; the set matches the
 #   sysroot package list exactly (same el8 NVRs) so native and cross packs
@@ -29,6 +30,7 @@ RUN dnf install -y \
         pkgconf-pkg-config \
         which \
         cmake \
+        expat-devel gmp-devel mpfr-devel \
         zlib-devel bzip2-devel xz-devel libffi-devel openssl-devel \
         sqlite-devel libuuid-devel \
     && dnf install -y --enablerepo=powertools dejagnu ninja-build \
