@@ -273,7 +273,7 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 2. `GLIBCXX_*` / `CXXABI_*` ≤ 基线；`GCC_*`（libgcc_s）≤ 基线；
 3. 版本需求中不含 `GLIBC_ABI_DT_RELR`；
 4. 不含 `__isoc23_*` 等宿主头文件泄漏特征（提示 sysroot 未生效）；
-5. `DT_NEEDED` 白名单（libc/libm/libpthread/libdl/librt/libgcc_s/libstdc++ + 声明的自带库）；
+5. `DT_NEEDED` 白名单 = **sysroot 中实际存在的共享库** + 声明的自带库（`--allow-needed`）。注意白名单不能只取 abilist 覆盖的那 11 个核心运行库：abilist 是「值得逐版本比对」的子集，而 DT_NEEDED 只要目标上有这个库就成立。早期按 abilist 推导，导致 sysroot 自己的动态加载器、以及 profile 引入的 zlib/glib/pcre2 等全被误报为越基线（Qt 6 样例暴露，2026-08-27 修正）；符号版本检查仍只用 abilist，无数据的库降级为 WARN「不可验证」；
 6. 可执行文件 `PT_INTERP` 合法性。
 
 `--fix` 预留接 polyfill-glibc（链接后降级符号版本），定位为存量二进制救急，不进默认流水线。

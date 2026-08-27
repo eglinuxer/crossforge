@@ -96,6 +96,7 @@ impl Auditor {
             allowed_needed.insert(soname.to_string());
             versions.insert(soname.to_string(), set);
         }
+        collect_sysroot_sonames(sysroot_root, &mut allowed_needed);
         Ok(Self {
             arch,
             versions,
@@ -237,6 +238,34 @@ impl Auditor {
             }
         }
         findings
+    }
+}
+
+/// Adds every shared library the sysroot actually contains to the DT_NEEDED
+/// whitelist.
+///
+/// The abilists cover the handful of runtime libraries whose symbol versions
+/// are worth comparing. That makes them the right basis for the
+/// symbol-version check and the wrong one for this one: a DT_NEEDED soname is
+/// satisfiable whenever the target has the library, whether or not crossforge
+/// generated version data for it. Deriving the whitelist from the abilists
+/// alone reported the sysroot's own dynamic loader — and every library a
+/// profile pulls in, zlib and glib and pcre2 for qt6 — as off-baseline.
+///
+/// File names stand in for sonames, which holds for the `libfoo.so.N` links a
+/// distro ships. The unversioned devel symlink beside them is harmless to
+/// allow: nothing records it in DT_NEEDED.
+fn collect_sysroot_sonames(sysroot_root: &Path, out: &mut BTreeSet<String>) {
+    for dir in ["usr/lib64", "usr/lib", "lib64", "lib"] {
+        let Ok(entries) = std::fs::read_dir(sysroot_root.join(dir)) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if name.contains(".so") {
+                out.insert(name);
+            }
+        }
     }
 }
 
@@ -398,6 +427,24 @@ mod tests {
         );
         auditor.allow_needed("libmusa.so.1");
         assert!(auditor.evaluate(&info).is_empty());
+    }
+
+    #[test]
+    fn sysroot_libraries_without_an_abilist_are_still_allowed() {
+        // The loader and whatever a sysroot profile pulls in (zlib here) have
+        // no abilist, but they are on the target all the same.
+        let dir = tempfile::tempdir().unwrap();
+        let libdir = dir.path().join("usr/lib64");
+        std::fs::create_dir_all(&libdir).unwrap();
+        for name in ["libz.so.1", "libz.so", "ld-linux-aarch64.so.1", "notalib"] {
+            std::fs::write(libdir.join(name), b"").unwrap();
+        }
+        let mut allowed = BTreeSet::new();
+        collect_sysroot_sonames(dir.path(), &mut allowed);
+
+        assert!(allowed.contains("libz.so.1"));
+        assert!(allowed.contains("ld-linux-aarch64.so.1"));
+        assert!(!allowed.contains("notalib"));
     }
 
     #[test]
