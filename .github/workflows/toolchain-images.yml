@@ -61,6 +61,28 @@ jobs:
             --sysroot "work/sysroots/${{ matrix.baseline }}-${{ matrix.target }}" \
             --arch ${{ matrix.target }} smoke
 
+      # The C smoke above cannot catch a missing libgcc compat script: gcc
+      # puts the static archive ahead of -lgcc_s and resolves the newer
+      # helpers on its own. Only g++ is exposed, because -shared-libgcc
+      # reaches for the shared object first. Converting _Float16 to long
+      # double is the smallest thing that needs a helper on both arches
+      # (__extendhfxf2 on x86_64, __extendhftf2 on aarch64) — neither is in
+      # the el8 baseline, so an unshadowed -lgcc_s fails the audit here.
+      - name: Audit smoke test (C++ against the newer libgcc runtime)
+        run: |
+          ID=$(ls work/toolchains)
+          CXX="work/toolchains/$ID/bin/${{ matrix.target }}-unknown-linux-gnu-g++"
+          cat > smoke_libgcc.cpp <<'EOF'
+          extern "C" long double widen(_Float16 x) { return (long double)x; }
+          extern "C" _Float16 narrow(long double x) { return (_Float16)x; }
+          int main() { return widen(narrow(1.0L)) == 1.0L ? 0 : 1; }
+          EOF
+          "$CXX" -shared -fPIC -O2 smoke_libgcc.cpp -o libsmoke_libgcc.so
+          "$CXX" -O2 smoke_libgcc.cpp -o smoke_libgcc
+          ./target/release/crossforge audit \
+            --sysroot "work/sysroots/${{ matrix.baseline }}-${{ matrix.target }}" \
+            --arch ${{ matrix.target }} libsmoke_libgcc.so smoke_libgcc
+
       # A bounded slice of the upstream GCC testsuite, in the job that still
       # has the build tree. dg.exp is ~38k tests and runs in minutes, which
       # is what makes it affordable per commit; the full three suites (and

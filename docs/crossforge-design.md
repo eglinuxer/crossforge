@@ -100,6 +100,39 @@ nonshared 归档有**两个来源**（v0.5 起，`NonsharedSource` 枚举）：
 
 ABI 不稳定的次要运行库（libgfortran 等）按 devtoolset 同款策略纯静态处理（v1 不含 Fortran，预留）。
 
+### 4.2.1 libgcc 侧：同构的混合链接（2026-08-27）
+
+libstdc++ 不是唯一会「编出基线跑不了的产物」的运行库，`libgcc_s` 有完全相同的问题，此前被漏掉。由 Qt 6 端到端样例暴露：阶段 1 产出的 host 工具启动即死于
+
+```
+rcc: /lib64/libgcc_s.so.1: version `GCC_12.0.0' not found (required by libQt6Core.so.6)
+```
+
+**缺口范围**（工具链 GCC 14.2.1 的 `libgcc_s` 导出集 减 el8 基线导出集）：
+
+| 架构 | 新导出 | el8 基线 | 基线缺失 |
+|------|--------|----------|----------|
+| x86_64 | 183 | 139 | **44** |
+| aarch64 | 155 | 122 | **33** |
+
+缺失符号分四类：`_Float16` 转换助手（GCC 12）、`bfloat16` 转换（GCC 13）、`_BitInt` 运行时（GCC 14 的 `__mulbitint3` / `__divmodbitint4`）、以及 `__strub_*` / `__hardcfr_check`（GCC 14 加固设施）。Qt 6 经 `qfloat16` 命中第一类——且**只在 x86_64 命中**：aarch64 的半精度转换走硬件 `fcvt`，编译器不发 libgcc 调用，故其 libgcc.a 里根本没有这些成员。但 aarch64 同样有 33 个缺口（如 `__extendhftf2`、`_BitInt`），只是 Qt 没触发，属潜在雷。
+
+**只有 C++ 受影响**，这是漏检这么久的原因。`gcc` 的 libgcc spec 是 `-lgcc --as-needed -lgcc_s --no-as-needed`，静态归档排在前面，缺失符号早就被静态解析掉了；而 `g++` 默认 `-shared-libgcc`，其 spec 在构建共享库时**只给 `-lgcc_s`**，libgcc.a 根本不上链接行，于是只能动态绑定到新版本号。
+
+**修法**与 4.2 同构——在工具链内部搜索路径安装链接脚本 `libgcc_s.so` 遮蔽真实库：
+
+```
+INPUT ( =/usr/lib64/libgcc_s.so.1 -lgcc )
+```
+
+三点值得记：
+
+1. **不需要裁剪归档**。libstdc++ 必须裁剪（静态链入整个 `libstdc++.a` 会造成 `std::string` 等多副本与全局状态分裂）；libgcc 不必：归档的惰性提取语义天然只捞「当前仍未定义」的成员，基线 `.so` 排在前面已把能答的都答了，剩下的才从归档取，并自动拉入传递依赖（实测 `__sfp_handle_exceptions` 被自动带入）。所以这里零构建步骤，只有一个静态文本文件。
+2. **unwinder 必须保持共享**，否则跨 DSO 抛异常会因多份 FDE 注册表而失效——这正是 `-shared-libgcc` 存在的理由。此处的保证是**结构性**的而非靠约定：`_Unwind_*` 只存在于 `libgcc_eh.a`，`libgcc.a` 里一个都没有（实测 0 vs 31），归档根本无法提供它，只能来自基线 `.so`。实测产物 `_Unwind_Resume@GCC_3.0` 保持 UND。
+3. **静态链入的成员是 PIC 安全的**。这些转换函数代码段内只有 `R_X86_64_PLT32` / `R_X86_64_PC32`，绝对重定位全在 `.debug_*` 段。
+
+**验证**：`crossforge audit` 本就能检出此问题（`[symbol-version] requires libgcc_s.so.1@GCC_12.0.0 but the baseline does not provide it`）——即工具链一直在生产自己 audit 会拒收的产物。修复后两架构均 PASS，产物版本依赖回落到 `GCC_3.0` / `GLIBC_2.2.5` / `GLIBCXX_3.4.21` / `CXXABI_1.3`，全部在基线内。
+
 ### 4.3 默认注入的编译/链接选项
 
 wrapper（或生成的 toolchain file）按基线注入：
