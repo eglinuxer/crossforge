@@ -72,6 +72,14 @@ jobs:
         run: |
           ID=$(ls work/toolchains)
           CXX="work/toolchains/$ID/bin/${{ matrix.target }}-unknown-linux-gnu-g++"
+          # _Float16 reached C++ in GCC 12. An older compiler in the matrix
+          # cannot emit these calls at all, so there is nothing here to
+          # resolve within the baseline -- probe rather than pin a version.
+          if ! echo 'extern "C" long double w(_Float16 x){return (long double)x;}' \
+               | "$CXX" -x c++ -fsyntax-only - 2>/dev/null; then
+            echo "no _Float16 in C++ for this compiler; nothing to exercise"
+            exit 0
+          fi
           cat > smoke_libgcc.cpp <<'EOF'
           extern "C" long double widen(_Float16 x) { return (long double)x; }
           extern "C" _Float16 narrow(long double x) { return (_Float16)x; }
