@@ -394,6 +394,25 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 
 CI 每次提交为 el8 × aarch64 组合 bundle 并做双向验证（裸 `gcc` 必须是 14.2.1 且为 x86_64、原生 C++17 编译执行、交叉产物 `file` 校验为 aarch64、cmake 可用）。
 
+### 10.6 sysroot 精简与编译器跨 profile 复用（2026-08-27）
+
+**只抽取链接需要的内容**：sysroot 是链接期树，文档、翻译、目标架构可执行文件都是死重，且**逐层放大**（prefix 内嵌 sysroot → 镜像内嵌 prefix → crossenv 内嵌两个 prefix）。在抽取时过滤（而非事后删除）：qt6 aarch64 sysroot **452MB → 271MB**、其 prefix **~770MB → 545MB**，同时 192 个 pkg-config、3168 个 CMake 包配置、28 份 wayland 协议 XML 完整保留，X11+wayland+xkbcommon+EGL+freetype 交叉链接照常成功。
+
+排除表刻意是**黑名单而非白名单**——`usr/share` 下既有可弃的（doc/man/locale/icons）也有必需的（CMake 配置、pkg-config、aclocal 宏、wayland 协议、GIR），白名单会静默切断依赖发现。
+
+过程中暴露两个缺陷：
+
+- **TOML 顺序陷阱**：`exclude` 键写在了 `[source.arch_packages]` **之后**，于是被解析成那张表的一项（一个名叫 `exclude` 的"架构"）——解析器此前**根本没有排除任何东西**，filesystem/tzdata 等 bootstrap 链一直被静默拉进 sysroot。因为架构表接受任意键，`deny_unknown_fields` 与类型系统都看不见，故 `merge_toml` 现在拒绝非架构名的键。
+- filesystem 恢复排除后，它的 UsrMove 符号链接（`lib64` → `usr/lib64`）不再最先到达，后续包以真实目录形式提供同一路径导致抽取 EEXIST 失败。现在符号链接成员落在已抽取目录上时跳过（布局修复阶段随后归一化），且 cpio 错误携带出错路径。
+
+**编译器跨 profile 复用**：构建 qt6 profile 曾花约 3 分钟重新产出一个已经存在的编译器。不变式是——**工具链本体与目标运行库只依赖 (gcc, binutils, baseline, target)**，更深的 sysroot 增加的是*用户代码*的头文件与库，libstdc++/libgcc 只需要 glibc，而 glibc 由基线固定。
+
+依赖此假设前先做了实证对比（minimal vs qt6 两个 prefix）：`c++config.h` 完全一致、libstdc++ 导出符号集完全一致（6274 个）、预定义宏完全一致、configure 参数仅 prefix/sysroot 路径不同。二进制逐字节不同，但只因各自在不同构建目录完成——GCC 会烧入构建路径，那是另一个议题（可复现性），不构成编译器不同的证据。
+
+因此非默认 profile 改为**克隆基础工具链并替换 sysroot**。GCC 按自身位置解析 `--with-sysroot`（可重定位 prefix 本就依赖这一性质），故克隆体直接指向新内容而无需重建：**0.8 秒**取代整轮构建，并经 `-print-sysroot` 指向自身、X11/wayland/EGL 链接、`std::format`+`std::filesystem` 经 nonshared 通过 audit 三项验证。
+
+一个需知的后果：GCC 构建树属于基础工具链，故 `crossforge check` 跑的是那一份——这是正确的（本就是同一个编译器），但意味着克隆出的 profile 没有自己的构建树。
+
 ### 10.5 对 issue #1 的影响
 
 「Native companion」一节需升级：不只是「manifest 暴露足够身份让下游判断可组合」，而是 crossforge 直接交付**已组合**的环境。另有一条原文未覆盖：**sysroot profile 必须进入 manifest 身份**——同一 (gcc, baseline, target) 而 profile 不同即为不同构建环境，下游必须能区分并 fail closed，否则 Qt 构建会拖到链接期才暴露缺包。
