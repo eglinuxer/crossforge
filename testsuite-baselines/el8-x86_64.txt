@@ -1,0 +1,19 @@
+# Known testsuite failures for the el8 / x86_64 toolchain (gcc 14.2.1).
+#
+# One test name per line, exactly as it appears after `FAIL: ` in the .sum
+# file. `crossforge check --expected-failures` fails the run on anything not
+# listed here — which is what a count threshold cannot do, since it accepts a
+# brand-new failure as long as an old one disappeared.
+#
+# Deliberately empty of active entries: the compiler suites on x86_64 are
+# clean, and that is the property worth protecting.
+#   gcc dg.exp   37,841 passes, 0 unexpected failures   (measured 2026-08-27)
+#   gcc  (full)  191,591 passes, 0 unexpected failures  (measured 2026-08-26)
+#   c++  (full)  256,746 passes, 0 unexpected failures  (measured 2026-08-26)
+#
+# libstdc++ has three long-standing failures — two are the old-baseline
+# string::reserve semantics the nonshared design keeps on purpose (Red Hat
+# documents the same divergence for devtoolset), one needs working DNS. They
+# are not listed here because their exact .sum names have never been
+# captured; the weekly run gates that suite by count (3) and uploads the .sum
+# files, which is what will let them be written down precisely.

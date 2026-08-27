@@ -105,6 +105,12 @@ enum Command {
         /// suite). Repeatable.
         #[arg(long = "runtest-arg")]
         runtest_args: Vec<String>,
+        /// Baseline of known failures, one test name per line (`#` comments
+        /// allowed). Any failure not listed there fails the run — which is
+        /// what a count-based threshold cannot do, since it happily accepts
+        /// a new failure as long as an old one disappeared.
+        #[arg(long)]
+        expected_failures: Option<PathBuf>,
     },
     /// Run the built-in toolchain smoke test: compile a dlopen'd plugin with
     /// cross-DSO exception matching of nonshared-provided types, audit the
@@ -362,6 +368,7 @@ fn main() -> crossforge::Result<()> {
             jobs,
             max_unexpected_failures,
             runtest_args,
+            expected_failures,
         } => {
             let registry = BaselineRegistry::builtin();
             let spec = ToolchainSpec::builder()
@@ -431,6 +438,34 @@ fn main() -> crossforge::Result<()> {
                     over_limit |= s.unexpected_failures > max;
                 }
             }
+
+            if let Some(path) = &expected_failures {
+                let text = std::fs::read_to_string(path)?;
+                let known: std::collections::BTreeSet<&str> = text
+                    .lines()
+                    .map(str::trim)
+                    .filter(|l| !l.is_empty() && !l.starts_with('#'))
+                    .collect();
+                let observed: std::collections::BTreeSet<&str> = summaries
+                    .iter()
+                    .flat_map(|s| s.failures.iter())
+                    .map(|f| f.trim_start_matches("FAIL: ").trim())
+                    .collect();
+                let unexpected: Vec<&&str> = observed.difference(&known).collect();
+                // Absence is not proof of a fix: a subsetted run simply may
+                // not have reached that test. Say what is actually known.
+                for gone in known.difference(&observed) {
+                    println!("not observed in this run (fixed, or its suite did not run): {gone}");
+                }
+                for new in &unexpected {
+                    println!("NEW FAILURE: {new}");
+                }
+                if !unexpected.is_empty() {
+                    eprintln!("{} failure(s) not in {}", unexpected.len(), path.display());
+                    over_limit = true;
+                }
+            }
+
             if over_limit {
                 std::process::exit(1);
             }
