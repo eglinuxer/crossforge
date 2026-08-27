@@ -80,6 +80,29 @@ environment's package rationale (notably `glibc-gconv-extra`: without the full
 gconv module set, GCC's configure probe disables iconv and the built cc1
 silently loses `-fexec-charset` support).
 
+Sanitizers are built in (ASan, UBSan, TSan, LSan, HWASan). The baseline's
+own `libasan.so.5` predates GCC 14's `libasan.so.8`, so link them statically
+to stay inside the baseline — `-fsanitize=address -static-libasan` runs and
+passes the audit, while the dynamic form is correctly rejected as needing a
+library the target does not have.
+
+Hardening is opt-in rather than baked in, because silently changing what a
+compiler emits is how build systems acquire mysteries:
+
+```console
+$ gcc -specs=<prefix>/share/crossforge/hardened.specs -O2 ...
+```
+
+That adds `-fstack-protector-strong`, `-D_FORTIFY_SOURCE=2` (only while
+optimizing, never overriding a level you set) and full RELRO. PIE is left
+out on purpose: it is the one option that breaks projects with non-PIC
+static libraries, so add `-fPIE -pie` deliberately.
+
+What is *not* a policy question the audit now rejects outright: an
+executable stack (`PT_GNU_STACK` with the execute bit — hardened kernels
+refuse to load it, and GCC emits one for nested functions) and text
+relocations.
+
 Available compilers (`--gcc`): `14.2.1` (default, RH gcc-toolset-14) and
 `11.2.1` (RH gcc-toolset-11) for projects that need the older compiler.
 More versions are a TOML registry entry away

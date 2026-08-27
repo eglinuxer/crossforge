@@ -261,7 +261,6 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
             "--disable-multilib".to_string(),
             "--disable-bootstrap".to_string(),
             "--disable-nls".to_string(),
-            "--disable-libsanitizer".to_string(),
             "--without-isl".to_string(),
         ];
         if !baseline.cxx11_abi {
