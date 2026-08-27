@@ -28,6 +28,19 @@ pub enum Severity {
     Warning,
 }
 
+/// Baseline libraries that ship as *separate, optional* packages rather than
+/// as part of a base install. The baseline provides them — so their symbol
+/// versions are checked like any other — but a target system will only have
+/// them if someone installed the package. Verified on a stock
+/// `rockylinux:8` image: libc, libstdc++ and libgcc_s are present, these
+/// four are not.
+const OPTIONAL_RUNTIME_LIBS: &[&str] = &[
+    "libgomp.so.1",
+    "libatomic.so.1",
+    "libquadmath.so.0",
+    "libitm.so.1",
+];
+
 /// One audit finding.
 #[derive(Debug, Clone)]
 pub struct Finding {
@@ -148,6 +161,15 @@ impl Auditor {
                         "DT_NEEDED {soname} is not a baseline library (use allow_needed() if shipped alongside)"
                     ),
                 ));
+            } else if OPTIONAL_RUNTIME_LIBS.contains(&soname.as_str()) {
+                findings.push(warn(
+                    "optional-runtime",
+                    format!(
+                        "DT_NEEDED {soname} is a baseline library but ships as a separate package, \
+                         so a minimal target install will not have it; either require that package \
+                         or link it statically (e.g. -l:libgomp.a with -Wl,--as-needed)"
+                    ),
+                ));
             }
         }
         for need in &info.version_needs {
@@ -234,6 +256,51 @@ mod tests {
     fn clean_binary_passes() {
         let findings = test_auditor().evaluate(&clean_info());
         assert!(findings.is_empty(), "{findings:?}");
+    }
+
+    #[test]
+    fn optional_runtime_warns_but_passes() {
+        // libgomp is a baseline library, but a separate package: a target
+        // may not have it, so the gate warns instead of passing silently —
+        // and still refuses anything over the baseline.
+        let mut auditor = test_auditor();
+        auditor.allowed_needed.insert("libgomp.so.1".to_string());
+        auditor.versions.insert(
+            "libgomp.so.1".to_string(),
+            BTreeSet::from(["OMP_1.0".to_string(), "GOMP_4.0".to_string()]),
+        );
+
+        let mut info = clean_info();
+        info.needed.push("libgomp.so.1".to_string());
+        info.version_needs.push(VersionNeed {
+            file: "libgomp.so.1".to_string(),
+            version: "GOMP_4.0".to_string(),
+        });
+        let findings = auditor.evaluate(&info);
+        let report = AuditReport {
+            path: PathBuf::from("t"),
+            findings,
+        };
+        assert!(report.passed(), "baseline-compatible OpenMP must not fail");
+        assert!(
+            report
+                .findings
+                .iter()
+                .any(|f| f.check == "optional-runtime" && f.severity == Severity::Warning)
+        );
+
+        // The same library one version too new is still an error.
+        let mut newer = info.clone();
+        newer.version_needs.push(VersionNeed {
+            file: "libgomp.so.1".to_string(),
+            version: "OMP_5.1".to_string(),
+        });
+        let findings = auditor.evaluate(&newer);
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.check == "symbol-version" && f.severity == Severity::Error)
+        );
     }
 
     #[test]

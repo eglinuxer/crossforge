@@ -23,6 +23,10 @@ pub struct SourceDef {
     /// Package names to extract into the sysroot: the base seed set every
     /// profile starts from.
     pub packages: Vec<String>,
+    /// Extra packages that only exist on, or only make sense for, certain
+    /// architectures (libquadmath is x86-only, for instance).
+    #[serde(default)]
+    pub arch_packages: BTreeMap<String, Vec<String>>,
     /// Packages never selected by dependency resolution (a sysroot is a
     /// link-time tree, so the runtime/bootstrap chain is dead weight).
     /// A trailing `*` matches by prefix.
@@ -86,6 +90,20 @@ impl ExpandedProfile {
 }
 
 impl SourceDef {
+    /// The base seed set for `arch`: the common packages plus any
+    /// arch-specific additions.
+    pub fn packages_for(&self, arch: TargetArch) -> Vec<String> {
+        let mut out = self.packages.clone();
+        if let Some(extra) = self.arch_packages.get(arch.as_str()) {
+            for pkg in extra {
+                if !out.contains(pkg) {
+                    out.push(pkg.clone());
+                }
+            }
+        }
+        out
+    }
+
     /// Expands repo templates for `arch`, with `mirror` overriding the base URL.
     pub fn repo_urls(&self, arch: TargetArch, mirror: Option<&str>) -> Vec<String> {
         let base = mirror.unwrap_or(&self.base);

@@ -26,6 +26,13 @@ const ABILIST_LIBS: &[&str] = &[
     "libcrypt.so.1",
     "libgcc_s.so.1",
     "libstdc++.so.6",
+    // GCC secondary runtimes: the toolchain ships newer builds of these, so
+    // the baseline's abilist is what tells over-baseline usage apart from
+    // ordinary use.
+    "libgomp.so.1",
+    "libatomic.so.1",
+    "libquadmath.so.0",
+    "libitm.so.1",
 ];
 
 const LIB_DIRS: &[&str] = &["lib64", "usr/lib64", "lib", "usr/lib"];
@@ -133,7 +140,7 @@ impl<'a> SysrootGenerator<'a> {
 
         // The source's curated list is always the seed base; a profile adds
         // depth on top of it.
-        let mut seeds = source.packages.clone();
+        let mut seeds = source.packages_for(arch);
         for pkg in &profile.packages {
             if !seeds.contains(pkg) {
                 seeds.push(pkg.clone());

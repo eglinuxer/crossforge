@@ -18,6 +18,16 @@ packages = [
     "libgcc",
     "libstdc++",
     "libstdc++-devel",
+    # The GCC secondary runtimes. The toolchain builds its own newer copies
+    # and links against those, so without the baseline versions here the
+    # audit has no abilist to check them against and rejects every OpenMP
+    # binary (and every aarch64 16-byte atomic, which needs -latomic)
+    # outright — even when the baseline provides the symbols. With them,
+    # the whitelist accepts the library and the symbol-version check
+    # decides, which is the distinction that actually matters.
+    "libgomp",
+    "libatomic",
+    "libitm",
     "libxcrypt",
     "libxcrypt-devel",
     # Common C dependencies, also required by the cross CPython builds
@@ -38,6 +48,11 @@ packages = [
     "libuuid",
     "libuuid-devel",
 ]
+
+# libquadmath backs __float128, which only exists on x86.
+[source.arch_packages]
+x86_64 = ["libquadmath"]
+
 # Never pulled in by dependency resolution: a sysroot is a link-time tree,
 # so the bootstrap/runtime chain (shells, coreutils, locales, daemons,
 # interpreters) is dead weight. A trailing `*` matches by prefix.
