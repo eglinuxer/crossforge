@@ -413,6 +413,19 @@ CI 每次提交为 el8 × aarch64 组合 bundle 并做双向验证（裸 `gcc` �
 
 一个需知的后果：GCC 构建树属于基础工具链，故 `crossforge check` 跑的是那一份——这是正确的（本就是同一个编译器），但意味着克隆出的 profile 没有自己的构建树。
 
+### 10.7 生产级补全：sanitizer / 加固 / cross-gdb（2026-08-27）
+
+**Sanitizer**：`--disable-libsanitizer` 自首次编译器构建起就在，`-fsanitize=address` 直接 `cannot find -lasan`。实验证明代价很小——strip 后 prefix **+8MB**、GCC 构建 32 核下 **2m38s → 3m47s**——五套（ASan/HWASan/LSan/TSan/UBSan）全部构建成功且实测有效（ASan 抓到堆溢出、UBSan 抓到移位溢出）。基线相关的用法要点：el8 自带 `libasan.so.5`、GCC 14 产出 `libasan.so.8`，故**动态形式合理地被 audit 拒绝**，`-fsanitize=address -static-libasan` 既能运行又通过审计。
+
+**加固分两类处理**：
+
+- **真缺陷进 audit（错误级）**：可执行栈（`PT_GNU_STACK` 带 X 位——加固内核与 SELinux 直接拒绝加载；GCC 对使用嵌套函数的代码就会产出，链接器当场警告而此前无人下游检查）与文本重定位（`DT_TEXTREL`）。用嵌套函数产物实证（`GNU_STACK` 变为 RWE），且对包括 wheel 样例在内的正常产物零误报。
+- **策略做成可选 specs**：`<prefix>/share/crossforge/hardened.specs`，用 `-specs=` 开启，含 `-fstack-protector-strong`、`-D_FORTIFY_SOURCE=2`、完整 RELRO。**不默认注入**——静默改变编译器产出正是构建系统积累谜团的方式；RH 系统编译器烧入这些是发行版政策而非编译器职责。文件里每个条件都对着本编译器验证过：C/C++ 优化时注入 FORTIFY、`-O0` 跳过（否则 glibc 警告）、用户已指定级别时让位。**PIE 刻意不含**——它是唯一会因非 PIC 静态库而破坏他人构建的加固项，需显式 `-fPIE -pie`。
+
+**cross-gdb**：每条工具链现在附带 `<triple>-gdb`（17.2，strip 后 10MB，约占构建 90 秒）。关键在于它链什么：按常规方式对着容器内的包构建，产出的 gdb 需要 `libmpfr.so.4`（el8 专有 soname）与 `libexpat.so.1`（最小镜像没有）——**在 rockylinux:8 能跑，在 ubuntu:20.04 与 debian:11 直接失败**，而旁边的编译器三个都能跑。那等于悄悄让渡掉整个项目赖以存在的性质。故先把 expat 与 MPFR 构建为静态宿主库（每个 work dir 一次）再链入；余下的 lzma/gmp/libstdc++ 到处都有。三个发行版实测可运行，并能在 x86_64 宿主上反汇编 aarch64 产物。
+
+顺带一个踩坑：`--without-mpfr` 看似更省事（两个目标都是 IEEE 浮点，MPFR 只在模拟异构浮点格式时才有用），但它在 gdb 17.2 里是坏的——configure 把路径留成字面量 `no`，libtool 随后在 `cd no/lib` 处失败。
+
 ### 10.5 对 issue #1 的影响
 
 「Native companion」一节需升级：不只是「manifest 暴露足够身份让下游判断可组合」，而是 crossforge 直接交付**已组合**的环境。另有一条原文未覆盖：**sysroot profile 必须进入 manifest 身份**——同一 (gcc, baseline, target) 而 profile 不同即为不同构建环境，下游必须能区分并 fail closed，否则 Qt 构建会拖到链接期才暴露缺包。
