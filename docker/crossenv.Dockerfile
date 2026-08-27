@@ -39,8 +39,8 @@ ARG SYSROOT_PROFILE
 # ordinary x86_64 packages — target dependencies live in the sysroot instead.
 RUN dnf install -y \
         make cmake perl python3 pkgconf-pkg-config git patch which findutils \
-        tar xz bzip2 gzip diffutils file bison flex gperf \
-    && dnf install -y --enablerepo=powertools ninja-build \
+        tar xz bzip2 gzip diffutils file bison flex \
+    && dnf install -y --enablerepo=powertools ninja-build gperf \
     && dnf clean all
 
 # Distinct subdirectories, so the two copies merge rather than collide.
