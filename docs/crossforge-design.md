@@ -426,6 +426,18 @@ CI 每次提交为 el8 × aarch64 组合 bundle 并做双向验证（裸 `gcc` �
 
 顺带一个踩坑：`--without-mpfr` 看似更省事（两个目标都是 IEEE 浮点，MPFR 只在模拟异构浮点格式时才有用），但它在 gdb 17.2 里是坏的——configure 把路径留成字面量 `no`，libtool 随后在 `cd no/lib` 处失败。
 
+### 10.8 供应链：能钉的钉住，钉不住的记录（2026-08-27）
+
+三条线索指向同一个问题——构建的输入全是移动靶，而它的输出把构建机带进了别人的产物。
+
+**sysroot lockfile**：解析取每个包的最新构建，同一 crossforge revision 下个月产出的 sysroot 就不同。`--lock` 写出解析结果（NEVRA + 内容哈希 + URL），`--locked` 回放且**完全不读仓库元数据**。逐文件验证：11,125 个条目、集合完全一致、内容抽样一致，且耗时 **5 秒**——相比每个仓库解析数 MB 的 primary.xml 是数量级差异。`sysroot-locks/` 收录当前 el8 的 minimal 与 qt6 两份答案。
+
+**不可变引用**：父镜像按 digest 钉（用的是 index digest，故 `--platform` 仍能解析双架构——已用 arm64 pack 镜像实测）；actions 钉到 commit SHA 并把 tag 留作注释；`rust-toolchain.toml` 使 "stable" 不会在两次运行之间悄悄换掉编译器。
+
+**构建路径**：nonshared 归档会被**静态链进用户二进制**，所以烧在里面的路径会一路旅行到别人的产物里——`/tmp/crossforge/build/src/...` 原样出现在编译好的程序中。现以 `-ffile-prefix-map` 把构建树映射到 `/usr/src/crossforge`（发行版放调试源码的惯用形状）。用户二进制里剩下的是他们自己工具链安装位置的路径，那本就是他们的。
+
+**一个买不到的东西：可复现的编译器。** 同一 spec 在**同一路径**下构建两次，驱动 `gcc` 逐字节一致，而 `cc1plus` 不一致——说明非确定性并不只是路径，固定构建目录也解决不了。因此身份必须来自**记录输入 + 对产物树取哈希**，而不是"重建并比对"。这一条直接决定了 issue #1 的资格化层该怎么设计（见 §10.5）。
+
 ### 10.5 对 issue #1 的影响
 
 「Native companion」一节需升级：不只是「manifest 暴露足够身份让下游判断可组合」，而是 crossforge 直接交付**已组合**的环境。另有一条原文未覆盖：**sysroot profile 必须进入 manifest 身份**——同一 (gcc, baseline, target) 而 profile 不同即为不同构建环境，下游必须能区分并 fail closed，否则 Qt 构建会拖到链接期才暴露缺包。
