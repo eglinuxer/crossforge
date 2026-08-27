@@ -78,6 +78,16 @@ const SYSROOT_EXCLUDE: &[&str] = &[
     "run/",
 ];
 
+/// Soname of the dynamic loader for `arch`, derived from the interpreter
+/// path the baseline uses (`/lib64/ld-linux-x86-64.so.2` -> the file name).
+fn loader_soname(arch: TargetArch) -> &'static str {
+    let interp = arch.interp();
+    match interp.rsplit_once('/') {
+        Some((_, name)) => name,
+        None => interp,
+    }
+}
+
 /// Whether an archive-relative path belongs in a sysroot.
 fn wanted_in_sysroot(path: &str) -> bool {
     !SYSROOT_EXCLUDE
@@ -369,7 +379,14 @@ impl<'a> SysrootGenerator<'a> {
         let abilist_dir = out_dir.join(META_DIR).join("abilists");
         std::fs::create_dir_all(&abilist_dir)?;
         let mut abilists = Vec::new();
-        for lib in ABILIST_LIBS {
+        // The dynamic loader belongs in the list too. Some link
+        // configurations put an explicit DT_NEEDED on it — `-static-libstdc++`
+        // does — and without its abilist the audit has nothing to check it
+        // against, so it rejects the binary as needing a non-baseline
+        // library. Its name is architecture-specific, hence not in the
+        // constant above.
+        let loader = loader_soname(arch);
+        for lib in ABILIST_LIBS.iter().copied().chain(std::iter::once(loader)) {
             let Some(path) = find_lib(out_dir, lib) else {
                 continue;
             };
@@ -501,6 +518,12 @@ fn find_lib(root: &Path, name: &str) -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn loader_soname_is_the_interpreter_file_name() {
+        assert_eq!(loader_soname(TargetArch::X86_64), "ld-linux-x86-64.so.2");
+        assert_eq!(loader_soname(TargetArch::Aarch64), "ld-linux-aarch64.so.1");
+    }
 
     #[test]
     fn sysroot_filter_keeps_what_a_build_needs() {
