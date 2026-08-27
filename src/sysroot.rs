@@ -289,7 +289,7 @@ impl<'a> SysrootGenerator<'a> {
     }
 }
 
-/// el7+/el8 use the UsrMove layout where `/lib{,64}` are symlinks into `/usr`.
+/// el8 uses the UsrMove layout where `/lib{,64}` are symlinks into `/usr`.
 /// Packages may materialize real `lib64/` dirs during extraction (rpm records
 /// paths through the symlink); merge those into `usr/` and restore the links.
 fn ensure_usrmove_links(root: &Path) -> Result<()> {

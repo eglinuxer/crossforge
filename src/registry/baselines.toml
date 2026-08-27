@@ -1,6 +1,11 @@
 # Built-in baseline registry (design doc §3.2).
 # Each baseline is an immutable set of version ceilings plus a package source;
 # adding a baseline is a data change, not a code change.
+#
+# el7 was removed on 2026-08-27: Rocky Linux starts at 8, so an el7 baseline
+# could only come from the EOL CentOS 7 vault — the one source outside the
+# Rocky/RHEL chain the rest of this project is built on. Downstreams that
+# still need it can re-add the baseline through `merge_toml`.
 
 [[baseline]]
 alias = "el8"
@@ -11,20 +16,4 @@ cxxabi = "1.3.11"
 cxx11_abi = true
 source = "rocky-8"
 rh_nonshared = "80"
-arches = ["x86_64", "aarch64"]
-
-[[baseline]]
-alias = "el7"
-glibc = "2.17"
-kernel_headers = "3.10"
-glibcxx = "3.4.19"
-cxxabi = "1.3.7"
-# The baseline library (GCC 4.8.5) has no __cxx11 symbols at all, so the old
-# string ABI is forced. See design doc §3.2.
-cxx11_abi = false
-source = "centos-7"
-# Provided by gcc-toolset-11 sources (levels 44/48/80). gcc-toolset-14 only
-# builds 80/110, so el7 + gcc 14 falls back to object-level pruning with a
-# warning (verified working on centos:7 either way).
-rh_nonshared = "48"
 arches = ["x86_64", "aarch64"]

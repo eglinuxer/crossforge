@@ -20,7 +20,7 @@ pub struct BaselineDef {
     pub glibcxx: String,
     /// CXXABI symbol-version ceiling, e.g. `1.3.11`.
     pub cxxabi: String,
-    /// Value of `_GLIBCXX_USE_CXX11_ABI`; false on el7 (the baseline library
+    /// Value of `_GLIBCXX_USE_CXX11_ABI`; false for baselines whose library
     /// has no `__cxx11` symbols).
     pub cxx11_abi: bool,
     /// Sysroot package source id, e.g. `rocky-8`.
@@ -46,7 +46,7 @@ struct RegistryFile {
     baseline: Vec<BaselineDef>,
 }
 
-/// Baseline registry: ships with el7/el8 built in; callers can add or override
+/// Baseline registry: ships with el8 built in; callers can add or override
 /// baselines via [`BaselineRegistry::merge_toml`].
 #[derive(Debug, Clone, Default)]
 pub struct BaselineRegistry {
@@ -97,17 +97,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn builtin_contains_el7_el8() {
+    fn builtin_contains_el8_only() {
         let registry = BaselineRegistry::builtin();
         let el8 = registry.get("el8").unwrap();
         assert_eq!(el8.glibc, "2.28");
         assert_eq!(el8.glibcxx, "3.4.25");
         assert!(el8.cxx11_abi);
         assert!(el8.supports(TargetArch::Aarch64));
+        assert_eq!(el8.source, "rocky-8");
 
-        let el7 = registry.get("el7").unwrap();
-        assert_eq!(el7.glibc, "2.17");
-        assert!(!el7.cxx11_abi, "el7 baseline must force the old string ABI");
+        // el7 was dropped with its off-chain CentOS source; the registry is
+        // still extensible, so a caller can bring its own.
+        assert!(registry.get("el7").is_none());
     }
 
     #[test]

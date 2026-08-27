@@ -52,30 +52,6 @@ exclude = [
     "adwaita-*", "gnome-*", "desktop-file-utils", "shared-mime-info",
 ]
 
-[[source]]
-id = "centos-7"
-base = "https://vault.centos.org"
-repos = [
-    "{base}/7.9.2009/os/{arch}/",
-    "{base}/7.9.2009/updates/{arch}/",
-]
-packages = [
-    "glibc",
-    "glibc-devel",
-    "glibc-headers",
-    "kernel-headers",
-    "libgcc",
-    "libstdc++",
-    "libstdc++-devel",
-]
-
-# aarch64 lived in the AltArch tree on CentOS 7.
-[source.arch_repos]
-aarch64 = [
-    "{base}/altarch/7.9.2009/os/{arch}/",
-    "{base}/altarch/7.9.2009/updates/{arch}/",
-]
-
 # --- Sysroot content profiles (design doc §5.1) -----------------------------
 # Tiered on purpose: a project pulls in the depth it needs, and the profile id
 # is part of the environment identity (same gcc/baseline/target but a

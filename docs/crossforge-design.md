@@ -21,7 +21,7 @@
 |---|------|------|
 | D1 | 技术路线 | **路线 A：交叉化 devtoolset** —— 旧 glibc 二进制 sysroot（解 glibc）+ `libstdc++_nonshared.a` 混合链接（解 libstdc++）。产物与用户侧系统 libstdc++ 完全 ABI 互操作，适配「被用户程序链接的闭源 C++ SDK」形态 |
 | D2 | 编译器主体 | **GCC**，默认源码基线 **RH gcc-toolset-14**（GCC 14.2.1，2025-01 快照 + RH 补丁集，Rocky 8 SRPM（bug-for-bug RHEL 复刻）；2026-08-26 修订，原为 FSF 11.5.0）。配 binutils 2.41（gcc-toolset-14 官方搭配版本；2026-08-26 由 2.40 升级——其 libsframe 静态链接集成脆弱）；FSF tarball 组件已随 2026-08-26 重构移除（fallback 由对象级裁剪承担）；Clang 可作为后续副轨接入同一套 sysroot / compat-pack |
-| D3 | 默认基线 | **el8**（glibc 2.28 + GLIBCXX 3.4.25，CXX11 ABI）。**el7**（glibc 2.17 + GLIBCXX 3.4.19）作为可选长尾基线，明示其强制 `_GLIBCXX_USE_CXX11_ABI=0` 的代价 |
+| D3 | 默认基线 | **el8**（glibc 2.28 + GLIBCXX 3.4.25，CXX11 ABI），且为唯一内置基线。**el7 已于 2026-08-27 移除**：Rocky Linux 从 8 起步、不存在 7，el7 只能取自已 EOL 的 CentOS 7 vault——那是整个项目里唯一游离于 Rocky/RHEL 链外的来源。基线注册表是 TOML 数据，下游若仍需 el7 可自带 source 注册，无需改代码 |
 | D4 | Host / Target | Host 仅 **x86_64-linux**（manifest 预留 host 维度）；Target 首发 **x86_64 + aarch64**，架构维度预留（LoongArch 等后续接入） |
 | D5 | 配置格式 | 全部配置文件统一 **TOML**：分发 manifest、基线注册表、sysroot / compat-pack 元数据、用户侧 `~/.crossforge/config.toml` |
 | D6 | 交付形态 | **GitHub 开源工具**（2026-08-26 修订，原为 crates.io library-first）：CLI 为默认交付形态，GitHub Actions 构建**预装工具链的 Docker 镜像**发布到 GHCR（`ghcr.io/eglinuxer/crossforge/toolchain:<baseline>-<target>`）供用户直接下载使用；library API 完整保留（`--no-default-features`），但不发布 crates.io（`publish = false`） |
@@ -44,7 +44,7 @@ compat-pack libstdc++ 兼容包   per (toolchain, baseline, target-arch)
 
 实现注记（v0.4）：当前实现中每个 `spec.id()`（gcc × baseline × target）产出一个自包含的
 relocatable prefix（内嵌 sysroot 与 compat-pack），「编译器本体跨基线共享」保留为后续
-store 层的去重优化；概念模型不变。此外 el7 这类强制旧 ABI 的基线会把
+store 层的去重优化；概念模型不变。此外强制旧 ABI 的基线（`cxx11_abi = false`）会把
 `--with-default-libstdcxx-abi=gcc4-compatible` 烧入该基线的编译器构建（见 §4.3），
 编译器本体因此本就与基线相关。
 
@@ -65,12 +65,13 @@ aarch64-unknown-linux-gnu
 
 | 别名 | glibc | kernel headers | libstdc++ 基线 | CXXABI | Dual ABI | 包源 |
 |------|-------|----------------|----------------|--------|----------|------|
-| `el8`（默认） | 2.28 | 4.18 | GLIBCXX_3.4.25（GCC 8.5） | 1.3.11 | `_GLIBCXX_USE_CXX11_ABI=1` | Rocky Linux 8（x86_64 / aarch64，2026-08-26 修订：原 AlmaLinux——Rocky 坚持 bug-for-bug 复刻 RHEL，Alma 仅承诺 ABI 兼容且带自有修订） |
-| `el7` | 2.17 | 3.10 | GLIBCXX_3.4.19（GCC 4.8.5） | 1.3.7 | 强制 `=0` | CentOS 7 vault（x86_64）、AltArch（aarch64） |
+| `el8`（默认，唯一内置） | 2.28 | 4.18 | GLIBCXX_3.4.25（GCC 8.5） | 1.3.11 | `_GLIBCXX_USE_CXX11_ABI=1` | Rocky Linux 8（x86_64 / aarch64，2026-08-26 修订：原 AlmaLinux——Rocky 坚持 bug-for-bug 复刻 RHEL，Alma 仅承诺 ABI 兼容且带自有修订） |
 
-预留：`u20`（glibc 2.31）、`el9`（2.34）、欧拉/龙蜥（LoongArch 基线）等，注册表数据化（TOML），新增基线不改代码。
+**供应链单一化（2026-08-27）**：容器基底、sysroot 包源、gcc-toolset SRPM 现已全部来自 Rocky Linux，无一例外。原 `el7` 基线随之移除——Rocky 只发布 8/9/10，el7 内容只能取自 EOL 的 CentOS 7 vault，为一条已停止维护的链外来源；与其长期维持"容器 Rocky、sysroot CentOS"的割裂，不如收敛。
 
-关于 el7 的 Dual ABI 说明：基线库完全没有 `__cxx11` 符号，若允许 CXX11 ABI 则全部字符串相关符号进入 nonshared 静态段，体积暴涨且与用户系统 GCC 编译的代码无法互传 `std::string`——与 RH devtoolset 的取舍一致，强制旧 ABI 并在文档与构建日志（WARN）中显著警示。
+预留：`el9`（Rocky 9，glibc 2.34，正好对应 manylinux_2_34）、`el10`、`u20`（glibc 2.31）、欧拉/龙蜥（LoongArch 基线）等，注册表数据化（TOML），新增基线不改代码。
+
+关于强制旧 ABI 的基线（`cxx11_abi = false`）：若基线库完全没有 `__cxx11` 符号（如 GCC 4.8 时代的 el7），允许 CXX11 ABI 会让全部字符串相关符号进入 nonshared 静态段，体积暴涨且与用户系统 GCC 编译的代码无法互传 `std::string`。机制保留在 §4.3，供下游自行注册这类基线时使用。
 
 ## 4. 关键机制
 
@@ -84,7 +85,7 @@ sysroot 由旧发行版**二进制包**（RPM）抽取拼装：`glibc`、`glibc-
 
 nonshared 归档有**两个来源**（v0.5 起，`NonsharedSource` 枚举）：
 
-- **RedHat（默认基线优先）**：默认源码基线是 RH gcc-toolset-14 的 SRPM（GCC 14.2.1 + 42 个补丁），其中 `gcc14-libstdc++-compat.patch`（万行级）在 libstdc++ 源码树内新增 `src/nonshared{98,11,17,20}/` 目录——人工精修的显式实例化文件、按架构条件的 `asm(".hidden <sym>")` 可见性清单、RTTI 汇编 stub——构建期直接产出 `libstdc++_nonshared{44,48,80,110}.a` 四级基线归档（RHEL 6/7/8/9）。基线注册表以 `rh_nonshared` 字段（el8→`80`、el7→`48`）声明采用哪级。**关键构建约束**：target 库必须带 `-D_GLIBCXX_ASSERTIONS` 编译（RH optflags 隐式约定）——它禁用 libstdc++ 头文件的 extern-template 声明，RH 的 `.hidden` 清单依赖 nonshared 对象据此自行发射 weak hidden 实例化；缺了它链接期会出现无定义的 hidden 符号（已实测踩坑并修复，CXXFLAGS_FOR_TARGET 注入）。
+- **RedHat（默认基线优先）**：默认源码基线是 RH gcc-toolset-14 的 SRPM（GCC 14.2.1 + 42 个补丁），其中 `gcc14-libstdc++-compat.patch`（万行级）在 libstdc++ 源码树内新增 `src/nonshared{98,11,17,20}/` 目录——人工精修的显式实例化文件、按架构条件的 `asm(".hidden <sym>")` 可见性清单、RTTI 汇编 stub——构建期直接产出 `libstdc++_nonshared{44,48,80,110}.a` 四级基线归档（RHEL 6/7/8/9）。基线注册表以 `rh_nonshared` 字段（el8→`80`）声明采用哪级。**关键构建约束**：target 库必须带 `-D_GLIBCXX_ASSERTIONS` 编译（RH optflags 隐式约定）——它禁用 libstdc++ 头文件的 extern-template 声明，RH 的 `.hidden` 清单依赖 nonshared 对象据此自行发射 weak hidden 实例化；缺了它链接期会出现无定义的 hidden 符号（已实测踩坑并修复，CXXFLAGS_FOR_TARGET 注入）。
 - **Pruned（fallback）**：对无 RH 补丁的源码组合（如 FSF tarball），用完整 `libstdc++.a` 按基线 abilist 做对象级自动裁剪——剔除「只含基线已有符号」的对象。精度低于 RH 方案（保留对象内混有基线符号、多 DSO 副本面更大），但任意 (GCC × 基线) 组合零人工。
 2. **linker script `libstdc++.so`**：
 
@@ -107,9 +108,9 @@ wrapper（或生成的 toolchain file）按基线注入：
 |------|------|
 | `--sysroot=<sysroot>` | 基线头文件与链接库（实现：GCC `--with-sysroot` 烧入，无需 wrapper 注入） |
 | `-Wl,-z,nopack-relative-relocs` | 阻断 DT_RELR → `GLIBC_ABI_DT_RELR` 版本依赖（binutils ≥2.38 环境下旧机器的隐形地雷；工具链自带 binutils 2.41 默认不开 DT_RELR，audit 兜底检查） |
-| 旧 string ABI（仅 el7） | 实现为 GCC configure `--with-default-libstdcxx-abi=gcc4-compatible`（编译器默认 `_GLIBCXX_USE_CXX11_ABI=0`，比 wrapper 注入宏更不可绕过），构建时输出 WARN 警示 |
+| 旧 string ABI（`cxx11_abi = false` 的基线） | 实现为 GCC configure `--with-default-libstdcxx-abi=gcc4-compatible`（编译器默认 `_GLIBCXX_USE_CXX11_ABI=0`，比 wrapper 注入宏更不可绕过），构建时输出 WARN 警示 |
 
-注意不强制 `-std=`：默认 toolchain（GCC 14，默认 `gnu17`）不受 C23 符号重定向影响；后续 GCC 15+ toolchain 默认 `gnu23`，会使 `strtol` 等重定向到 `__isoc23_*@GLIBC_2.38`——el7/el8 sysroot 的旧头文件天然不含该重定向，此风险仅存在于误用宿主头文件时，由 audit 兜底检出。
+注意不强制 `-std=`：默认 toolchain（GCC 14，默认 `gnu17`）不受 C23 符号重定向影响；后续 GCC 15+ toolchain 默认 `gnu23`，会使 `strtol` 等重定向到 `__isoc23_*@GLIBC_2.38`——el8 sysroot 的旧头文件天然不含该重定向，此风险仅存在于误用宿主头文件时，由 audit 兜底检出。
 
 ## 5. crate 架构
 
@@ -153,7 +154,7 @@ crossforge (lib)
 ```rust
 use crossforge::{BaselineRegistry, BuildEngine, BuildConfig, TargetArch, ToolchainSpec};
 
-let registry = BaselineRegistry::builtin();      // 内嵌 el7/el8，可 merge_toml() 扩展
+let registry = BaselineRegistry::builtin();      // 内嵌 el8 内置，可 merge_toml() 扩展
 let spec = ToolchainSpec::builder()
     .gcc("14.2.1")                               // 默认即 gcc-toolset-14，可省略
     .target(TargetArch::Aarch64)
@@ -244,7 +245,7 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 
 `--fix` 预留接 polyfill-glibc（链接后降级符号版本），定位为存量二进制救急，不进默认流水线。
 
-`crossforge verify` 在基线及更新的发行版容器矩阵（centos7 / rockylinux8 / ubuntu20.04 / debian11 …）中做真机 exec + dlopen 冒烟，防审计规则遗漏。
+`crossforge verify` 在基线及更新的发行版容器矩阵（rockylinux8 / ubuntu20.04 / debian11 …）中做真机 exec + dlopen 冒烟，防审计规则遗漏。
 
 `crossforge check` 跑 GCC 官方 DejaGnu 测试集（check-gcc / check-c++ / check-target-libstdc++-v3）：自动生成 board 文件（x86_64 直接执行——产物基线低于构建容器；aarch64 走 qemu-user + sysroot），解析 `.sum` 产出统计与 FAIL 明细，`--max-unexpected-failures` 可作门禁。2026-08-26 最终成绩（gcc14.2.1-el8-x86_64，Rocky 供应链 + 全部环境修复后）：**gcc 191,591 / c++ 256,746 / libstdc++ 17,801 passes（合计 466,138），gcc 与 c++ 两大 suite 零 unexpected failures**；libstdc++ 仅余 3 个：2 个为 RH dts-test 补丁标注的基线语义差异（string::reserve 收缩走基线旧语义——正是 nonshared 的设计行为）+ 1 个容器无 DNS 的网络测试，零工具链归因缺陷。首轮测试集还抓出一个真实功能缺陷：构建容器缺完整 gconv 模块导致 GCC configure 禁用 iconv、cc1 静默丢失 -fexec-charset（已修，见 buildenv 依赖）。踩坑记录：DejaGnu 在 `/etc/passwd` 无当前 UID 的容器里 `exec whoami` 崩溃（注入 USER 环境变量解决）；`set_board_info` 不覆盖既有值，需先 `unset_board_info isremote`；RH dts.exp 的版本探测不兼容单段 `-dumpversion` 输出（幂等改写该 proc）。
 
@@ -265,7 +266,7 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 | M2 | compiler 模块：容器 Runner 构建 binutils 2.40 + GCC 11.5 双 target；重定位验证 | 任意目录解包可编 hello world | ✅ 2026-08-26（重定位零参数编译；aarch64 经 qemu 运行） |
 | M3 | compat 模块：nonshared 裁剪 + 链接脚本集成 | C++17/20 样例在 el8 容器运行；`objdump -T` 无超基线符号 | ✅ 2026-08-26（186 成员保留 109；GLIBCXX 需求 3.4.29→3.4.21） |
 | M4 | audit 模块 + verify 容器矩阵 | 检查项覆盖 §5.5；可作调用方 CI 门禁 | ✅ 2026-08-26（almalinux8/rocky8/ubuntu20.04/debian11 全 PASS） |
-| M5 | el7 基线（含强制旧 ABI 与警示）、pack/manifest 稳定化、feature "cli" 薄封装、GitHub 开源 + GHCR 镜像流水线 | 双基线双 target 全矩阵绿 | ✅ 2026-08-26（el7 产物 centos:7→debian:11 全 PASS；CI/toolchain-images workflows 就位） |
+| M5 | el7 基线（含强制旧 ABI 与警示）、pack/manifest 稳定化、feature "cli" 薄封装、GitHub 开源 + GHCR 镜像流水线 | 双基线双 target 全矩阵绿 | ✅ 2026-08-26（el7 产物 centos:7→debian:11 全 PASS；CI/toolchain-images workflows 就位）。**注**：el7 基线已于 2026-08-27 随供应链单一化移除，机制（强制旧 ABI、nonshared48）保留 |
 
 ## 8. 风险与开放问题
 
@@ -282,7 +283,7 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 | # | 议题 | 决策 |
 |---|------|------|
 | T1 | 需求画像 | 通用能力；绑定层未选定（倾向 nanobind）；CPython 3.9–3.13（不含 free-threaded）；PyPI + 自建源 |
-| T2 | manylinux 基线 | **仅 manylinux_2_28**（= el8 基线，工具链同款 gts14）；el7 不进 wheel 范围（旧 COW-ABI 税实证）；musllinux 不做（dlopen 冲突） |
+| T2 | manylinux 基线 | **仅 manylinux_2_28**（= el8 基线，工具链同款 gts14）；el7 本就不在 wheel 范围（旧 COW-ABI 税实证），后已整体移除；musllinux 不做（dlopen 冲突） |
 | T3 | Python 物料 | **自建交叉 CPython**（供应链自主）：每版本先原生构建 x86_64（兼作 build-python 与 x86 物料）再交叉构建 aarch64；cp311+ 走官方 `--with-build-python`，cp39/310 走 CONFIG_SITE 老式 cross；五版本一次性交付；configure 对齐 manylinux 口径（`--disable-shared --with-ensurepip=no`）；目标依赖（openssl/libffi/zlib 等 -devel）经现有 sysroot 包列表机制提供；官方 manylinux 镜像提取版仅作 CI 对照基准（diff pyconfig.h/sysconfigdata） |
 | T4 | ABI 策略 | 双路线：per-version 默认（5 版本 × 2 架构）；abi3 作构建选项（近零成本，验证侧展开多解释器 import）；cp39 档 Limited API 缺 buffer protocol（3.11 才有），分档策略留给具体项目 |
 | T5 | 能力层级 | **端到端 `crossforge wheel`**（交叉版 cibuildwheel）：项目目录 → 全矩阵 wheel + 审计；环境生成器（crossenv 伪 venv + CMake/Meson cross 文件 + PYO3 变量，四类构建后端通吃）作为内部层 |
@@ -391,7 +392,7 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 
 `docker/crossenv.Dockerfile` 把 **target 交叉工具链 + x86_64 原生 companion** 组合进一个镜像，两个来源镜像**按 digest 钉住**（多阶段 `COPY --from`，两份 `/opt/crossforge/<id>` 天然合并不冲突）。PATH 顺序为 host 优先——裸 `gcc` 必须解析到原生 companion。这不违反 issue #1 的「不做胖矩阵镜像」：它不是全矩阵，而是**真实交叉构建的最小可用单元**，且下游只需钉一个 digest。单工具链镜像继续保留（身份与自由组合用途）。
 
-CI 每次提交为 el7/el8 × aarch64 组合 bundle 并做双向验证（裸 `gcc` 必须是 14.2.1 且为 x86_64、原生 C++17 编译执行、交叉产物 `file` 校验为 aarch64、cmake 可用）。
+CI 每次提交为 el8 × aarch64 组合 bundle 并做双向验证（裸 `gcc` 必须是 14.2.1 且为 x86_64、原生 C++17 编译执行、交叉产物 `file` 校验为 aarch64、cmake 可用）。
 
 ### 10.5 对 issue #1 的影响
 

@@ -3,7 +3,7 @@
 Build once, run on old Linux. crossforge is an open-source tool that **builds
 cross-compilation toolchains** solving the classic glibc / libstdc++
 compatibility problem: binaries compiled with a modern GCC that run unmodified
-on distributions as old as CentOS 7.
+on distributions as old as RHEL 8 / Rocky 8 (glibc 2.28).
 
 - **glibc** is pinned by linking against a binary **sysroot** assembled from an
   old distro's packages — no from-source glibc builds, no multi-stage bootstrap.
@@ -16,8 +16,7 @@ on distributions as old as CentOS 7.
   baseline (symbol versions, DT_NEEDED whitelist, DT_RELR, interpreter, arch).
 
 Verified end to end: C++20 (`std::format`, ranges) binaries built by these
-toolchains run on stock CentOS 7, AlmaLinux/Rocky 8, Ubuntu 20.04 and
-Debian 11.
+toolchains run on stock AlmaLinux/Rocky 8, Ubuntu 20.04 and Debian 11.
 
 ## Use a prebuilt toolchain (Docker)
 
@@ -29,11 +28,16 @@ $ docker run --rm -v "$PWD:/src" -w /src \
 ```
 
 Every commit to `main` publishes all supported combinations
-(gcc 14.2.1 + 11.2.1 × el7/el8 × x86_64/aarch64) via the `toolchain-images`
+(gcc 14.2.1 + 11.2.1 × el8 × x86_64/aarch64) via the `toolchain-images`
 workflow. Tags: `<baseline>-<target>` (default gcc),
 `<baseline>-<target>-gcc<version>`, and a `-<sha>` suffix for pinning exact
-builds. el8 = glibc 2.28 / GLIBCXX 3.4.25 baseline; el7 = glibc 2.17 /
-GLIBCXX 3.4.19 with the old `std::string` ABI forced.
+builds. el8 = glibc 2.28 / GLIBCXX 3.4.25.
+
+The whole supply chain is Rocky Linux — container bases, sysroot packages
+and the gcc-toolset SRPMs alike. An el7 baseline was dropped for that
+reason: Rocky starts at 8, so it could only have come from the EOL CentOS 7
+vault. The baseline registry is a TOML table, so a downstream that still
+needs el7 can register it (with its own source) without touching code.
 
 ## Build a toolchain yourself
 
@@ -77,9 +81,9 @@ gconv module set, GCC's configure probe disables iconv and the built cc1
 silently loses `-fexec-charset` support).
 
 Available compilers (`--gcc`): `14.2.1` (default, RH gcc-toolset-14) and
-`11.2.1` (RH gcc-toolset-11 — its compat patches also provide the RH-tuned
-nonshared48 for the el7 baseline). More versions are a TOML registry entry
-away (`src/registry/toolchain-sources.toml`).
+`11.2.1` (RH gcc-toolset-11) for projects that need the older compiler.
+More versions are a TOML registry entry away
+(`src/registry/toolchain-sources.toml`).
 
 ## Python packs (cross wheel building, M6)
 

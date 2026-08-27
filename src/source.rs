@@ -16,8 +16,8 @@ pub struct SourceDef {
     pub base: String,
     /// Repo URL templates with `{base}` / `{arch}` placeholders.
     pub repos: Vec<String>,
-    /// Per-arch repo template overrides (e.g. CentOS 7 AltArch for aarch64);
-    /// arches not listed fall back to `repos`.
+    /// Per-arch repo template overrides for distributions that split
+    /// architectures across trees; arches not listed fall back to `repos`.
     #[serde(default)]
     pub arch_repos: std::collections::BTreeMap<String, Vec<String>>,
     /// Package names to extract into the sysroot: the base seed set every
@@ -110,7 +110,7 @@ struct SourcesFile {
     profile: Vec<ProfileDef>,
 }
 
-/// Registry of package sources: ships with el7/el8 sources built in; callers
+/// Registry of package sources: ships with the el8 source built in; callers
 /// can add or override via [`SourceRegistry::merge_toml`].
 #[derive(Debug, Clone, Default)]
 pub struct SourceRegistry {
@@ -219,7 +219,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn builtin_contains_el8_and_el7_sources() {
+    fn builtin_contains_the_el8_source() {
         let registry = SourceRegistry::builtin();
         let el8 = registry.get("rocky-8").unwrap();
         assert!(el8.packages.iter().any(|p| p == "glibc-devel"));
@@ -228,7 +228,8 @@ mod tests {
             urls[0],
             "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/"
         );
-        assert!(registry.get("centos-7").is_some());
+        // The supply chain is Rocky end to end: no other source ships.
+        assert_eq!(registry.iter().count(), 1);
     }
 
     #[test]

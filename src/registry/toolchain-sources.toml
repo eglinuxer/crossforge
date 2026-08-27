@@ -16,9 +16,10 @@ version = "2.40"
 url = "https://mirrors.kernel.org/gnu/binutils/binutils-{version}.tar.xz"
 sha256 = "0f8a4c272d7f17f369ded10a4aca28b8e304828e95526da482b0ccc4dfc9d8e1"
 
-# RH gcc-toolset-11: GCC 11.2.1 (2022-01-27 snapshot) + Red Hat patch series.
-# Its compat patch builds nonshared levels 44/48/80, giving the el7 baseline
-# an RH-tuned nonshared48 (gcc-toolset-14 only builds 80/110).
+# RH gcc-toolset-11: GCC 11.2.1 (2022-01-27 snapshot) + Red Hat patch series,
+# offered as the older compiler choice for projects that need it. Its compat
+# patch builds nonshared levels 44/48/80, so it covers the el8 baseline (80)
+# as well as older ones a caller may register.
 # The whole supply chain is Rocky Linux: it rebuilds RHEL bug-for-bug
 # (AlmaLinux only targets ABI compatibility and carries its own revisions,
 # e.g. its gts11 is an older 9.2.el8_6.alma.1).
