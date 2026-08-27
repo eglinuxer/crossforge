@@ -28,7 +28,9 @@ ARG TARGET_IMAGE
 FROM ${HOST_IMAGE} AS host
 FROM ${TARGET_IMAGE} AS target
 
-FROM quay.io/rockylinux/rockylinux:8
+# Pinned by digest like the other parents; HOST_IMAGE and TARGET_IMAGE are
+# already digest references supplied by the caller.
+FROM quay.io/rockylinux/rockylinux:8@sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6
 
 ARG HOST_ID
 ARG TARGET_ID

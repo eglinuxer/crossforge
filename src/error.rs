@@ -31,6 +31,9 @@ pub enum Error {
     #[error("unknown sysroot profile: {0}")]
     UnknownProfile(String),
 
+    #[error("sysroot lockfile: {0}")]
+    Lockfile(String),
+
     #[error("duplicate package source id: {0}")]
     DuplicateSource(String),
 

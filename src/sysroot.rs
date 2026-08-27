@@ -10,6 +10,7 @@ use crate::baseline::BaselineDef;
 use crate::elfdyn;
 use crate::error::{Error, Result};
 use crate::fetch::Fetcher;
+use crate::lockfile::SysrootLock;
 use crate::repodata::{self, RepoPackage, ResolveOutcome};
 use crate::rpm;
 use crate::source::{ExpandedProfile, SourceRegistry};
@@ -231,6 +232,56 @@ impl<'a> SysrootGenerator<'a> {
         Ok(SysrootPlan { packages, outcome })
     }
 
+    /// Builds a sysroot from a lockfile: no repository metadata is read and
+    /// no resolution happens, so the result is exactly the one the lock was
+    /// taken from.
+    pub fn generate_locked(
+        &self,
+        baseline: &BaselineDef,
+        arch: TargetArch,
+        lock: &SysrootLock,
+        out_dir: &Path,
+    ) -> Result<SysrootArtifact> {
+        lock.check_matches(&baseline.alias, arch, &lock.profile.clone())?;
+        let meta_path = out_dir.join(META_DIR).join("sysroot.toml");
+        if meta_path.is_file() {
+            tracing::info!(root = %out_dir.display(), "sysroot already generated, skipping");
+            let text = std::fs::read_to_string(&meta_path)?;
+            return Ok(SysrootArtifact {
+                root: out_dir.to_path_buf(),
+                metadata: toml::from_str(&text).map_err(Error::Registry)?,
+            });
+        }
+        std::fs::create_dir_all(out_dir)?;
+        tracing::info!(
+            profile = %lock.profile,
+            packages = lock.package.len(),
+            "extracting sysroot from lockfile"
+        );
+        let mut records = Vec::new();
+        for entry in &lock.package {
+            let path = self.fetcher.fetch_cached(&entry.url, &entry.sha256)?;
+            let data = std::fs::read(&path)?;
+            let n = rpm::extract_rpm_filtered(&data, out_dir, wanted_in_sysroot)?;
+            tracing::debug!(package = %entry.name, evr = %entry.evr, entries = n, "extracted");
+            records.push(PackageRecord {
+                name: entry.name.clone(),
+                evr: entry.evr.clone(),
+                sha256: entry.sha256.clone(),
+                location: entry.url.clone(),
+            });
+        }
+        self.finish(
+            baseline,
+            arch,
+            &lock.source,
+            &lock.profile,
+            records,
+            &lock.unresolved,
+            out_dir,
+        )
+    }
+
     pub fn generate(
         &self,
         baseline: &BaselineDef,
@@ -288,11 +339,33 @@ impl<'a> SysrootGenerator<'a> {
             });
         }
 
-        // 4. Layout fixups.
+        self.finish(
+            baseline,
+            arch,
+            &source.id.clone(),
+            &profile.id,
+            records,
+            &plan.outcome.unresolved,
+            out_dir,
+        )
+    }
+
+    /// Layout fixups, abilist extraction and metadata — shared by the
+    /// resolved and locked paths.
+    #[allow(clippy::too_many_arguments)]
+    fn finish(
+        &self,
+        baseline: &BaselineDef,
+        arch: TargetArch,
+        source: &str,
+        profile: &str,
+        records: Vec<PackageRecord>,
+        unresolved: &[String],
+        out_dir: &Path,
+    ) -> Result<SysrootArtifact> {
         ensure_usrmove_links(out_dir)?;
         relativize_symlinks(out_dir)?;
 
-        // 5. Abilists.
         let abilist_dir = out_dir.join(META_DIR).join("abilists");
         std::fs::create_dir_all(&abilist_dir)?;
         let mut abilists = Vec::new();
@@ -309,18 +382,18 @@ impl<'a> SysrootGenerator<'a> {
             abilists.push(lib.to_string());
         }
 
-        // 6. Metadata.
         let metadata = SysrootMetadata {
             baseline: baseline.alias.clone(),
             arch: arch.to_string(),
-            source: source.id.clone(),
+            source: source.to_string(),
             glibc: baseline.glibc.clone(),
-            profile: profile.id.clone(),
+            profile: profile.to_string(),
             generator: format!("crossforge {}", env!("CARGO_PKG_VERSION")),
             packages: records,
             abilists,
-            unresolved: plan.outcome.unresolved.clone(),
+            unresolved: unresolved.to_vec(),
         };
+        let meta_path = out_dir.join(META_DIR).join("sysroot.toml");
         std::fs::create_dir_all(meta_path.parent().unwrap())?;
         std::fs::write(&meta_path, toml::to_string_pretty(&metadata)?)?;
         tracing::info!(root = %out_dir.display(), "sysroot generated");

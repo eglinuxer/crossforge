@@ -16,7 +16,10 @@
 #
 # COPY-only by design: no RUN steps, so the aarch64 variant can be built on
 # an x86_64 host without emulation.
-FROM quay.io/rockylinux/rockylinux:8
+# Parent images are pinned by digest: a tag is a moving target, and a
+# toolchain's whole claim is that its inputs are known. Refresh with
+# `docker buildx imagetools inspect <image>:<tag> --format '{{.Manifest.Digest}}'`.
+FROM quay.io/rockylinux/rockylinux:8@sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6
 
 ARG PACK_ID
 ARG PYTHON_VERSION

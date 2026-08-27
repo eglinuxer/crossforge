@@ -18,6 +18,10 @@ use crate::sysroot::SysrootArtifact;
 
 /// GCC in-tree prerequisite libraries, pinned to the versions listed by
 /// GCC's `contrib/download_prerequisites` (11.x list; satisfies GCC 14 minimums).
+/// Where the build tree is recorded as living, in anything the toolchain
+/// ships. Distributions use `/usr/src/debug/...` for the same purpose.
+const CANONICAL_BUILD_ROOT: &str = "/usr/src/crossforge";
+
 /// gdb version built alongside each toolchain.
 pub const DEFAULT_GDB: &str = "17.2";
 
@@ -279,13 +283,27 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
         // disables libstdc++'s extern-template declarations, which the RH
         // nonshared objects rely on to emit their hidden weak instantiations
         // (without it, `.hidden` references stay undefined and links fail).
-        let target_cxxflags = "-g -O2 -D_GLIBCXX_ASSERTIONS";
+        // The nonshared archive is linked *into user binaries*, so any path
+        // baked into it travels there — this build machine's directory
+        // layout would end up inside everyone's artifacts, and would differ
+        // between two builds of the same source. Mapping the whole build
+        // tree to a canonical location fixes both: the recorded paths become
+        // stable and meaningful (the shape distributions use for debug
+        // sources) rather than an accident of where crossforge happened to
+        // run.
+        let prefix_map = format!(
+            "-ffile-prefix-map={}={CANONICAL_BUILD_ROOT}",
+            self.work_dir.display()
+        );
+        let target_cxxflags = format!("-g -O2 -D_GLIBCXX_ASSERTIONS {prefix_map}");
+        let target_cflags = format!("-g -O2 {prefix_map}");
         self.runner.exec(
             &Cmd::new(gcc_src.join("configure").display().to_string())
                 .args(configure_args)
                 .cwd(&build_gcc)
                 .env("PATH", &path_env)
-                .env("CXXFLAGS_FOR_TARGET", target_cxxflags)
+                .env("CXXFLAGS_FOR_TARGET", &target_cxxflags)
+                .env("CFLAGS_FOR_TARGET", &target_cflags)
                 .log(logs.join("gcc-configure.log")),
         )?;
         self.make_with_env(&build_gcc, &logs, "gcc-make.log", &[], &path_env)?;

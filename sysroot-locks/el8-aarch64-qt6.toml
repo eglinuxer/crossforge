@@ -1,0 +1,2245 @@
+# crossforge sysroot lock: el8 / aarch64 / profile qt6
+# Every package pinned by NEVRA, content hash and URL. Replay with
+# `crossforge sysroot --locked <this file>`, which skips resolution
+# entirely and therefore needs no repository metadata.
+# Regenerate with `crossforge sysroot --lock <this file>`.
+
+schema = 1
+baseline = "el8"
+arch = "aarch64"
+profile = "qt6"
+source = "rocky-8"
+generator = "crossforge 0.1.0"
+unresolved = [
+    "/bin/bash",
+    "/bin/sh",
+    "/etc/crypto-policies/back-ends/krb5.config",
+    "/sbin/install-info",
+    "/usr/bin/bash",
+    "/usr/bin/update-crypto-policies",
+    "/usr/libexec/platform-python",
+    "ca-certificates",
+    "coreutils",
+    "crypto-policies",
+    "dbus",
+    "dbus-daemon",
+    "gawk",
+    "glibc-common",
+    "grep",
+    "info",
+    "libpython3.6m.so.1.0()(64bit)",
+    "sed",
+    "systemd",
+]
+
+[[package]]
+name = "alsa-lib"
+evr = "1.2.10-2.el8"
+arch = "aarch64"
+sha256 = "6f47e9f77b98c7cabb54573689a2b42004b814f401ac4c723fe3fe7e18bd43c8"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/a/alsa-lib-1.2.10-2.el8.aarch64.rpm"
+
+[[package]]
+name = "alsa-lib-devel"
+evr = "1.2.10-2.el8"
+arch = "aarch64"
+sha256 = "23b95b9ab7152047a8627280c197ec53c02c1e602538165f552f8ea22a38f084"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/a/alsa-lib-devel-1.2.10-2.el8.aarch64.rpm"
+
+[[package]]
+name = "at-spi2-core"
+evr = "2.28.0-1.el8"
+arch = "aarch64"
+sha256 = "ce49ea87477cbb515d99d553d6008c4938e483495915a1ac2157971a2c843603"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/a/at-spi2-core-2.28.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "at-spi2-core-devel"
+evr = "2.28.0-1.el8"
+arch = "aarch64"
+sha256 = "0382bab943e86301b32cad60e58ac89c6bf2a4fdcec5a72a8b1696e3bfaad2a1"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/a/at-spi2-core-devel-2.28.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "atk"
+evr = "2.28.1-1.el8"
+arch = "aarch64"
+sha256 = "f4c86e7c30b7c32b74cde902e6e3c62b2bc94a8dfd90b2f84ff91f36a888cb3f"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/a/atk-2.28.1-1.el8.aarch64.rpm"
+
+[[package]]
+name = "atk-devel"
+evr = "2.28.1-1.el8"
+arch = "aarch64"
+sha256 = "27020ddbf78638de0291a8e867d21d130b3cae645db579aa284d11a90e6c0262"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/a/atk-devel-2.28.1-1.el8.aarch64.rpm"
+
+[[package]]
+name = "audit-libs"
+evr = "3.1.2-1.el8_10.1"
+arch = "aarch64"
+sha256 = "3978ae37f5d8729b9550dd7e866d955603a2bb8424f2efb078d18615e7ff80aa"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/a/audit-libs-3.1.2-1.el8_10.1.aarch64.rpm"
+
+[[package]]
+name = "avahi-libs"
+evr = "0.7-27.el8_10.1"
+arch = "aarch64"
+sha256 = "bbe19406e78b900ef1243febbe82683d55de89db574adf8c22bd59faf21255af"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/a/avahi-libs-0.7-27.el8_10.1.aarch64.rpm"
+
+[[package]]
+name = "bluez-libs"
+evr = "5.63-5.el8_10"
+arch = "aarch64"
+sha256 = "751f1ced69bce22f11f7f8c5e2bb79f7349b79fc08af6ccfd15b9981c4bb6f66"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/b/bluez-libs-5.63-5.el8_10.aarch64.rpm"
+
+[[package]]
+name = "bluez-libs-devel"
+evr = "5.63-5.el8_10"
+arch = "aarch64"
+sha256 = "a6faf4f8e13d8cc565791ecf305c15aff3da9e0df1ec6dfd38f03d32e4f4f78c"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/b/bluez-libs-devel-5.63-5.el8_10.aarch64.rpm"
+
+[[package]]
+name = "brotli"
+evr = "1.0.6-4.el8_10"
+arch = "aarch64"
+sha256 = "ef26ddb475734280a40a05d1deafff503be399547dbb225b46b2ab47a856b304"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/b/brotli-1.0.6-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "brotli-devel"
+evr = "1.0.6-4.el8_10"
+arch = "aarch64"
+sha256 = "f38dde97f02b48311d4dc13562145da65f4983dbb18a79c6386da0e3cf18e207"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/b/brotli-devel-1.0.6-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "bzip2-devel"
+evr = "1.0.6-28.el8_10"
+arch = "aarch64"
+sha256 = "4fdfd395aec5050ccdcb8d0affa7fc802784a90c8132d55422225b53e5adf466"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/b/bzip2-devel-1.0.6-28.el8_10.aarch64.rpm"
+
+[[package]]
+name = "bzip2-libs"
+evr = "1.0.6-28.el8_10"
+arch = "aarch64"
+sha256 = "717c4f0cacb8e8db90557145fa5252d0c596bd1babcd3aa16c891ed8a04047b0"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/b/bzip2-libs-1.0.6-28.el8_10.aarch64.rpm"
+
+[[package]]
+name = "cairo"
+evr = "1.15.12-6.el8"
+arch = "aarch64"
+sha256 = "a2f61c36e8e33f99be42c3f06a6bf00a8291c5d4b82dd26d46678e6c37aa7da6"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/c/cairo-1.15.12-6.el8.aarch64.rpm"
+
+[[package]]
+name = "check"
+evr = "0.12.0-2.el8"
+arch = "aarch64"
+sha256 = "1d41aa8752ae52110b1c444318797a8c5b845fff341fe6b4d9f56efb354cd91b"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/c/check-0.12.0-2.el8.aarch64.rpm"
+
+[[package]]
+name = "check-devel"
+evr = "0.12.0-2.el8"
+arch = "aarch64"
+sha256 = "8fc38a56155e5a57af159308b368968ef69d0efb35dddf4b83f94bf29a1a09ce"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/c/check-devel-0.12.0-2.el8.aarch64.rpm"
+
+[[package]]
+name = "chkconfig"
+evr = "1.19.2-1.el8"
+arch = "aarch64"
+sha256 = "15fe95de24f6d84d60d1350b7311c27da4578ae6a5ce77bf9a7c877a2efed6fd"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/c/chkconfig-1.19.2-1.el8.aarch64.rpm"
+
+[[package]]
+name = "cmake"
+evr = "3.26.5-2.el8"
+arch = "aarch64"
+sha256 = "1c06c7dbc4559d94a025dc56e54a2a14ab6f36d8fb75c1b3f2a715559e30fc1e"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/c/cmake-3.26.5-2.el8.aarch64.rpm"
+
+[[package]]
+name = "cmake-data"
+evr = "3.26.5-2.el8"
+arch = "noarch"
+sha256 = "c9e57f4de28822e6c85bce0c640ba0fcad0fbec348811681dda45d0cd3c95636"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/c/cmake-data-3.26.5-2.el8.noarch.rpm"
+
+[[package]]
+name = "cmake-filesystem"
+evr = "3.26.5-2.el8"
+arch = "aarch64"
+sha256 = "dbce844d122923a9ea02a46ccca1a82a46e5925a051b2ef4f7dca8a59a76c2b3"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/c/cmake-filesystem-3.26.5-2.el8.aarch64.rpm"
+
+[[package]]
+name = "cmake-rpm-macros"
+evr = "3.26.5-2.el8"
+arch = "noarch"
+sha256 = "26013614c3877a8671ee7341a46b0ab3cf7ada6c73f602496e5d51bc3620a78f"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/c/cmake-rpm-macros-3.26.5-2.el8.noarch.rpm"
+
+[[package]]
+name = "cracklib"
+evr = "2.9.6-15.el8"
+arch = "aarch64"
+sha256 = "7850e3b197ca42eb625e524573e38e0bf3366b8da69b9c5cd08efdbb57439994"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/c/cracklib-2.9.6-15.el8.aarch64.rpm"
+
+[[package]]
+name = "cracklib-dicts"
+evr = "2.9.6-15.el8"
+arch = "aarch64"
+sha256 = "3de7f7a185d72b768965b67eb00290f3cf4a27ea169009fbaab5a4cd0f39ab9c"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/c/cracklib-dicts-2.9.6-15.el8.aarch64.rpm"
+
+[[package]]
+name = "cups-devel"
+evr = "1:2.2.6-68.el8_10"
+arch = "aarch64"
+sha256 = "ca99fa1128f2cde9a34bd34aa5a62d849cdfd07a86a1c8c6ccdfdf3f7187ffed"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/c/cups-devel-2.2.6-68.el8_10.aarch64.rpm"
+
+[[package]]
+name = "cups-libs"
+evr = "1:2.2.6-68.el8_10"
+arch = "aarch64"
+sha256 = "e47989925ac52cdbf7bb10573040cff1b88d0355f050d22646e6ccc2f5011a71"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/c/cups-libs-2.2.6-68.el8_10.aarch64.rpm"
+
+[[package]]
+name = "curl"
+evr = "7.61.1-34.el8_10.13"
+arch = "aarch64"
+sha256 = "d4ab416b572667fff0cb9da9a94b9f2a6bed3df82c76da3cb282df02ff28a5df"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/c/curl-7.61.1-34.el8_10.13.aarch64.rpm"
+
+[[package]]
+name = "cyrus-sasl-lib"
+evr = "2.1.27-6.el8_5"
+arch = "aarch64"
+sha256 = "41972a29bcab934002e888d22b87226491ac4bc08bc43ef020aa3d8304049e4a"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/c/cyrus-sasl-lib-2.1.27-6.el8_5.aarch64.rpm"
+
+[[package]]
+name = "dbus-devel"
+evr = "1:1.12.8-28.el8_10"
+arch = "aarch64"
+sha256 = "0224f8e5f2005f455eca0f421478b5b5dd245031e009180e320e162e9f470301"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/d/dbus-devel-1.12.8-28.el8_10.aarch64.rpm"
+
+[[package]]
+name = "dbus-libs"
+evr = "1:1.12.8-28.el8_10"
+arch = "aarch64"
+sha256 = "15c9ac45196c7d0e7f2bacb6ba01d8e15b45971ada1803aece475fd6e4ba33b6"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/d/dbus-libs-1.12.8-28.el8_10.aarch64.rpm"
+
+[[package]]
+name = "dotconf"
+evr = "1.3-18.el8"
+arch = "aarch64"
+sha256 = "9b0c2d28823f512e0c91b1dcc0287c4fba00162b7c9af90a40031c1bb5d45e84"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/d/dotconf-1.3-18.el8.aarch64.rpm"
+
+[[package]]
+name = "elfutils-libelf"
+evr = "0.190-2.el8"
+arch = "aarch64"
+sha256 = "99e237fd0357b574c0f8ff4805a9b9a3a64cdfe87c49be34b97f3164e63ef817"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/e/elfutils-libelf-0.190-2.el8.aarch64.rpm"
+
+[[package]]
+name = "emacs-filesystem"
+evr = "1:26.1-15.el8_10"
+arch = "noarch"
+sha256 = "206c53ad11e5c2d26e959af4af07ba78fd4f67a6dbc8624ba90d1030f41aaf23"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/e/emacs-filesystem-26.1-15.el8_10.noarch.rpm"
+
+[[package]]
+name = "espeak-ng"
+evr = "1.49.2-4.el8"
+arch = "aarch64"
+sha256 = "6d8108598791e31d06726063b8f2109eb2ffea0a6f87e42403dae67f31e73bc1"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/e/espeak-ng-1.49.2-4.el8.aarch64.rpm"
+
+[[package]]
+name = "expat"
+evr = "2.5.0-2.el8_10"
+arch = "aarch64"
+sha256 = "335ca219581651c0e1434e7aa57143b7ea4799944b840092da5e4fb359a404db"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/e/expat-2.5.0-2.el8_10.aarch64.rpm"
+
+[[package]]
+name = "expat-devel"
+evr = "2.5.0-2.el8_10"
+arch = "aarch64"
+sha256 = "cdb8c60bc02e9dfcc51fe4cd59bf8e8b3c12eada4c76f6f02921cbb313664d44"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/e/expat-devel-2.5.0-2.el8_10.aarch64.rpm"
+
+[[package]]
+name = "flac-libs"
+evr = "1.3.2-11.el8"
+arch = "aarch64"
+sha256 = "4fd7bf0159922d793235a9efce285f2bb87a45c2069c77239477d3daff2e4477"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/f/flac-libs-1.3.2-11.el8.aarch64.rpm"
+
+[[package]]
+name = "fontconfig"
+evr = "2.13.1-4.el8"
+arch = "aarch64"
+sha256 = "5ef0bde77e19628d72c91a9c4eac7c2a220587aa5c260f7cb2da20e818352ed2"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/f/fontconfig-2.13.1-4.el8.aarch64.rpm"
+
+[[package]]
+name = "fontconfig-devel"
+evr = "2.13.1-4.el8"
+arch = "aarch64"
+sha256 = "29cdf2426574c666841640752a84e50dea4f7d23531e17ae48973c4902ca191f"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/f/fontconfig-devel-2.13.1-4.el8.aarch64.rpm"
+
+[[package]]
+name = "fontpackages-filesystem"
+evr = "1.44-22.el8"
+arch = "noarch"
+sha256 = "ecf3b428e9fcc44177c12d85122aabd775db4531bf4599f5f99de99bc5cc3925"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/f/fontpackages-filesystem-1.44-22.el8.noarch.rpm"
+
+[[package]]
+name = "freetype"
+evr = "2.9.1-10.el8_10"
+arch = "aarch64"
+sha256 = "867f6909ef1fb9e7726904d3669c6318d303cab6392f32fcb6f255aba02bc505"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/f/freetype-2.9.1-10.el8_10.aarch64.rpm"
+
+[[package]]
+name = "freetype-devel"
+evr = "2.9.1-10.el8_10"
+arch = "aarch64"
+sha256 = "717fafc7a3959cf08257bfc2429da638ac92e6ea0cb46919c8a4e2b0fa906d58"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/f/freetype-devel-2.9.1-10.el8_10.aarch64.rpm"
+
+[[package]]
+name = "fribidi"
+evr = "1.0.4-9.el8"
+arch = "aarch64"
+sha256 = "7964d32719cc4394bad28738c243f34d3a19768d1983cf75cea778c30c5f38e8"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/f/fribidi-1.0.4-9.el8.aarch64.rpm"
+
+[[package]]
+name = "gettext"
+evr = "0.19.8.1-17.el8"
+arch = "aarch64"
+sha256 = "1eff0d87b3a2c04af01d5366fa2b0e0e44d04c1d8d817303034d4957bc92446e"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/gettext-0.19.8.1-17.el8.aarch64.rpm"
+
+[[package]]
+name = "gettext-libs"
+evr = "0.19.8.1-17.el8"
+arch = "aarch64"
+sha256 = "a6b06b4f33a3d0de31e4bcfac261ba4606105c437da6ba3cdf2ffd4fca3bef1d"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/gettext-libs-0.19.8.1-17.el8.aarch64.rpm"
+
+[[package]]
+name = "glib2"
+evr = "2.56.4-170.el8_10"
+arch = "aarch64"
+sha256 = "d5f729de340eac89cde958069424ca9aa8aeaa41ed5fd1319c85b21515aed792"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/glib2-2.56.4-170.el8_10.aarch64.rpm"
+
+[[package]]
+name = "glib2-devel"
+evr = "2.56.4-170.el8_10"
+arch = "aarch64"
+sha256 = "25176093eb063424412f5a011d9fd2b4c9e5ee0b4beb5cc8415110629c523b8f"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/glib2-devel-2.56.4-170.el8_10.aarch64.rpm"
+
+[[package]]
+name = "glibc"
+evr = "2.28-251.el8_10.40"
+arch = "aarch64"
+sha256 = "b34e019d36f426aa864380d60b9d416abc8b812bc905a7e0cf1ea0a769b26ad4"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/glibc-2.28-251.el8_10.40.aarch64.rpm"
+
+[[package]]
+name = "glibc-devel"
+evr = "2.28-251.el8_10.40"
+arch = "aarch64"
+sha256 = "0d50d3f3f7535153702eb86b58da116cf78550cb8bd075ad507846336907c235"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/glibc-devel-2.28-251.el8_10.40.aarch64.rpm"
+
+[[package]]
+name = "glibc-headers"
+evr = "2.28-251.el8_10.40"
+arch = "aarch64"
+sha256 = "adcee740316cd30e04790dc27d01cc3256a727ddb7690bd425d443888dedce78"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/glibc-headers-2.28-251.el8_10.40.aarch64.rpm"
+
+[[package]]
+name = "glibc-minimal-langpack"
+evr = "2.28-251.el8_10.40"
+arch = "aarch64"
+sha256 = "0a03da9a9295443cc7236e3e6de1af67844bb14adbdb92acd982bd1909aaf546"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/glibc-minimal-langpack-2.28-251.el8_10.40.aarch64.rpm"
+
+[[package]]
+name = "gmp"
+evr = "1:6.1.2-12.el8"
+arch = "aarch64"
+sha256 = "e8e0dc01c5ee987bc3a2cbc918ad8df68d140c2b3b796bd9c874c449682580f6"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/gmp-6.1.2-12.el8.aarch64.rpm"
+
+[[package]]
+name = "gmp-c++"
+evr = "1:6.1.2-12.el8"
+arch = "aarch64"
+sha256 = "9950aaf3d053878a869ac6c694ba9a2350b93995aa5e83d596068b86d5b41475"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/gmp-c++-6.1.2-12.el8.aarch64.rpm"
+
+[[package]]
+name = "gmp-devel"
+evr = "1:6.1.2-12.el8"
+arch = "aarch64"
+sha256 = "c1578b5c59296ac51a83bed526e48d717e04ae4822471b94371f74c646ad219d"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/gmp-devel-6.1.2-12.el8.aarch64.rpm"
+
+[[package]]
+name = "gnutls"
+evr = "3.6.16-8.el8_10.6"
+arch = "aarch64"
+sha256 = "7ed1ba74a22e6580d42f886c4f2b06d5856b06f9b0cafd3d5698aa1ecd431f7c"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/gnutls-3.6.16-8.el8_10.6.aarch64.rpm"
+
+[[package]]
+name = "gnutls-c++"
+evr = "3.6.16-8.el8_10.6"
+arch = "aarch64"
+sha256 = "cd972c70fc095b7f546aa7c20605990e9137fb51aaa4981158fa563562c741d4"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/g/gnutls-c++-3.6.16-8.el8_10.6.aarch64.rpm"
+
+[[package]]
+name = "gnutls-dane"
+evr = "3.6.16-8.el8_10.6"
+arch = "aarch64"
+sha256 = "ee6a8684d477fb2d3eba4a9c5d7944f816629cde9f1b6eaaee0cbd886b9215ec"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/g/gnutls-dane-3.6.16-8.el8_10.6.aarch64.rpm"
+
+[[package]]
+name = "gnutls-devel"
+evr = "3.6.16-8.el8_10.6"
+arch = "aarch64"
+sha256 = "3720c00bb396115d42425ee16cde26c79d3ebad33d2b110820ecbd2deaa1f3cb"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/g/gnutls-devel-3.6.16-8.el8_10.6.aarch64.rpm"
+
+[[package]]
+name = "graphite2"
+evr = "1.3.10-10.el8"
+arch = "aarch64"
+sha256 = "1129048fc6126041282299b03c3a9accf963e350f475420b4077c3ce3316eea6"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/g/graphite2-1.3.10-10.el8.aarch64.rpm"
+
+[[package]]
+name = "graphite2-devel"
+evr = "1.3.10-10.el8"
+arch = "aarch64"
+sha256 = "a237416bc0911b8d11f31c86030ed96e565964f834d2ea6c65fd2b5343e64cd3"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/g/graphite2-devel-1.3.10-10.el8.aarch64.rpm"
+
+[[package]]
+name = "gsm"
+evr = "1.0.17-5.el8"
+arch = "aarch64"
+sha256 = "db21971cf472fcc2d4f1da67b69020f796dd949afc82c73f299115c50a030e78"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/g/gsm-1.0.17-5.el8.aarch64.rpm"
+
+[[package]]
+name = "gstreamer1"
+evr = "1.16.1-2.el8"
+arch = "aarch64"
+sha256 = "1da07afcb7827d22a0c825fee89f82f879b3a38b9ee4576aa0440c52eca3dce0"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/g/gstreamer1-1.16.1-2.el8.aarch64.rpm"
+
+[[package]]
+name = "gstreamer1-devel"
+evr = "1.16.1-2.el8"
+arch = "aarch64"
+sha256 = "49fb827a3dedfa4c7c9dc0c86560ce975836b07e8db5b80272e3e507691dc4b2"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/g/gstreamer1-devel-1.16.1-2.el8.aarch64.rpm"
+
+[[package]]
+name = "gstreamer1-plugins-base"
+evr = "1.16.1-6.el8_10.1"
+arch = "aarch64"
+sha256 = "f9ad304906041d1e541b1072458834000c6e11cdc1562e19230a20b3f0fed40d"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/g/gstreamer1-plugins-base-1.16.1-6.el8_10.1.aarch64.rpm"
+
+[[package]]
+name = "gstreamer1-plugins-base-devel"
+evr = "1.16.1-6.el8_10.1"
+arch = "aarch64"
+sha256 = "d205743b1a68a35bd183a719d0d0d4f958b87e3c868587f615c035ed3716ccd8"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/g/gstreamer1-plugins-base-devel-1.16.1-6.el8_10.1.aarch64.rpm"
+
+[[package]]
+name = "gzip"
+evr = "1.9-13.el8_5"
+arch = "aarch64"
+sha256 = "f106a7f7904c1caf97eead75f1fa6031aa6d2ca66b77b3b65fa5671976700ac1"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/g/gzip-1.9-13.el8_5.aarch64.rpm"
+
+[[package]]
+name = "harfbuzz"
+evr = "1.7.5-4.el8"
+arch = "aarch64"
+sha256 = "88d1d6cba1c9f6f6b04c2e63a4d5af32c287bdfff9ae39cb4d486d581f217d18"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/h/harfbuzz-1.7.5-4.el8.aarch64.rpm"
+
+[[package]]
+name = "harfbuzz-devel"
+evr = "1.7.5-4.el8"
+arch = "aarch64"
+sha256 = "5842ba21e2a0afae535befc56959ee3b5c2bc49fd634976a31e2e0fda39250a4"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/h/harfbuzz-devel-1.7.5-4.el8.aarch64.rpm"
+
+[[package]]
+name = "harfbuzz-icu"
+evr = "1.7.5-4.el8"
+arch = "aarch64"
+sha256 = "b3c2b1ef88dbeedb84a43b96168d0d33b087353fb8048ab0a78e089f939bc936"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/h/harfbuzz-icu-1.7.5-4.el8.aarch64.rpm"
+
+[[package]]
+name = "iso-codes"
+evr = "3.79-2.el8"
+arch = "noarch"
+sha256 = "b8404250d7d959fb605ea6617335671c2fa47e7a19cdc3d21fa2f99230fe8385"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/i/iso-codes-3.79-2.el8.noarch.rpm"
+
+[[package]]
+name = "jbigkit-libs"
+evr = "2.1-14.el8"
+arch = "aarch64"
+sha256 = "3e8cab7d05c7a9a77242df335ca7ea852cc48800898af93721f82caae491b476"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/j/jbigkit-libs-2.1-14.el8.aarch64.rpm"
+
+[[package]]
+name = "kernel-headers"
+evr = "4.18.0-553.158.1.el8_10"
+arch = "aarch64"
+sha256 = "e47424713c2278b7fddde090185813c3be2cd2fdd46a121adb84b451278f1291"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/k/kernel-headers-4.18.0-553.158.1.el8_10.aarch64.rpm"
+
+[[package]]
+name = "keyutils-libs"
+evr = "1.5.10-9.el8"
+arch = "aarch64"
+sha256 = "e292a3399c4f77784ec88a2a0429ca018de5dcdb8bede782bed68b81a27d45fa"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/k/keyutils-libs-1.5.10-9.el8.aarch64.rpm"
+
+[[package]]
+name = "keyutils-libs-devel"
+evr = "1.5.10-9.el8"
+arch = "aarch64"
+sha256 = "e8203f5aba3186e1b55a5c356441051b4dddf3e1f1e1bbb54a42cb45d5a43587"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/k/keyutils-libs-devel-1.5.10-9.el8.aarch64.rpm"
+
+[[package]]
+name = "krb5-devel"
+evr = "1.18.2-34.el8_10"
+arch = "aarch64"
+sha256 = "54b2f733af2e80eb7d54b2e16c7efdb10fe02c3e948b3e57f63fd7e0963faf89"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/k/krb5-devel-1.18.2-34.el8_10.aarch64.rpm"
+
+[[package]]
+name = "krb5-libs"
+evr = "1.18.2-34.el8_10"
+arch = "aarch64"
+sha256 = "4c046ec2fb32c4f5d8742e86139ae74a1e4d3c71846db3a9b95f51d52783387e"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/k/krb5-libs-1.18.2-34.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libICE"
+evr = "1.0.9-15.el8"
+arch = "aarch64"
+sha256 = "d193bc208626be4a18200b3fa967f1af603b3f4e1fd3edde46e36a5c64b4c20c"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libICE-1.0.9-15.el8.aarch64.rpm"
+
+[[package]]
+name = "libICE-devel"
+evr = "1.0.9-15.el8"
+arch = "aarch64"
+sha256 = "3c2e438043fef6ebe5da07d361e6ac1337bee0723b0e219eaaf5edc58074cb0a"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libICE-devel-1.0.9-15.el8.aarch64.rpm"
+
+[[package]]
+name = "libSM"
+evr = "1.2.3-1.el8"
+arch = "aarch64"
+sha256 = "7cbd0125b7109fa70ba746254c6f567dde44457b3f65cb92cec12bc53fd34a5a"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libSM-1.2.3-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libSM-devel"
+evr = "1.2.3-1.el8"
+arch = "aarch64"
+sha256 = "ae9fcb55eb2c48630c1f963eabcf70b6d44103174f8491445642cb7fe05ecf49"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libSM-devel-1.2.3-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libX11"
+evr = "1.6.8-9.el8_10"
+arch = "aarch64"
+sha256 = "355ba1be15738c2f0ffa19683488ac5f25194c18011dd524c92e4f78c3f325f0"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libX11-1.6.8-9.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libX11-common"
+evr = "1.6.8-9.el8_10"
+arch = "noarch"
+sha256 = "335927ff66f4f15c767ac03f305fe047b8578dcb002c0fed9c56059ab7080f89"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libX11-common-1.6.8-9.el8_10.noarch.rpm"
+
+[[package]]
+name = "libX11-devel"
+evr = "1.6.8-9.el8_10"
+arch = "aarch64"
+sha256 = "53b7a960a74ab3e465b35ccdb383940c7f505e273875d00c23e29819627f133e"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libX11-devel-1.6.8-9.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libX11-xcb"
+evr = "1.6.8-9.el8_10"
+arch = "aarch64"
+sha256 = "611f59cd8ed2593cdda8c9e71b20cb20a58b218a9838860c803e9ef1de4ae262"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libX11-xcb-1.6.8-9.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libXScrnSaver"
+evr = "1.2.3-1.el8"
+arch = "aarch64"
+sha256 = "b54e353591eb73260f81e54e12b66581249466698fcea9656e3414ee9a94979b"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXScrnSaver-1.2.3-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libXScrnSaver-devel"
+evr = "1.2.3-1.el8"
+arch = "aarch64"
+sha256 = "76f2ec53a4c732c9b8e03493543bc240038a13d8a89b3a7d01f4aaa0a7c914f8"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXScrnSaver-devel-1.2.3-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libXau"
+evr = "1.0.9-3.el8"
+arch = "aarch64"
+sha256 = "65137a5358789d01fbf2d44b86470c3c07b5256843a2decb4c1bafd5437e03be"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXau-1.0.9-3.el8.aarch64.rpm"
+
+[[package]]
+name = "libXau-devel"
+evr = "1.0.9-3.el8"
+arch = "aarch64"
+sha256 = "2f4328ac4be0eec1967bea70cfdc6b48a1202e2d351959a39fce88d171f6d8c3"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXau-devel-1.0.9-3.el8.aarch64.rpm"
+
+[[package]]
+name = "libXcomposite"
+evr = "0.4.4-14.el8"
+arch = "aarch64"
+sha256 = "84317213c36de5f00f1e794d0d3c18925ea726511855e43dd79a90988f4c292e"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXcomposite-0.4.4-14.el8.aarch64.rpm"
+
+[[package]]
+name = "libXcomposite-devel"
+evr = "0.4.4-14.el8"
+arch = "aarch64"
+sha256 = "083d5d23f42fc3c9f4204d0e92e40eedbcbaa011a7c09d50809da34f87963d63"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXcomposite-devel-0.4.4-14.el8.aarch64.rpm"
+
+[[package]]
+name = "libXcursor"
+evr = "1.1.15-3.el8"
+arch = "aarch64"
+sha256 = "3a68834e855da960ee5de0a8b16d97e3d00d0aea5febeadbb6a1ccba636472fd"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXcursor-1.1.15-3.el8.aarch64.rpm"
+
+[[package]]
+name = "libXcursor-devel"
+evr = "1.1.15-3.el8"
+arch = "aarch64"
+sha256 = "095949f46938d8bd8c87b498bb0b4507e9882fa4fd281a92574588ea9e7ca9ba"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXcursor-devel-1.1.15-3.el8.aarch64.rpm"
+
+[[package]]
+name = "libXdamage"
+evr = "1.1.4-14.el8"
+arch = "aarch64"
+sha256 = "f766446d5270c5cf7326bb6987c6779a705261cf0dca38bdbfa4df0a78cee3fd"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXdamage-1.1.4-14.el8.aarch64.rpm"
+
+[[package]]
+name = "libXdamage-devel"
+evr = "1.1.4-14.el8"
+arch = "aarch64"
+sha256 = "b20a49df9007eec28333de3bb508460fc63ba8090707075631dead75b68d58b2"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXdamage-devel-1.1.4-14.el8.aarch64.rpm"
+
+[[package]]
+name = "libXext"
+evr = "1.3.4-1.el8"
+arch = "aarch64"
+sha256 = "04014cbecef59b96e53390b57eb6b2d99d4b5aac01967c70906d9f5fc65545df"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXext-1.3.4-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libXext-devel"
+evr = "1.3.4-1.el8"
+arch = "aarch64"
+sha256 = "a9c90784bec4df16e046b362a2973b37bf0af4f2bbda65a91511ca46f936185a"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXext-devel-1.3.4-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libXfixes"
+evr = "5.0.3-7.el8"
+arch = "aarch64"
+sha256 = "bfcf73a30f6dc9a35ea463d532af25450267763654afd600dc50912c01318b0a"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXfixes-5.0.3-7.el8.aarch64.rpm"
+
+[[package]]
+name = "libXfixes-devel"
+evr = "5.0.3-7.el8"
+arch = "aarch64"
+sha256 = "d6e5a2f294564a00716596c051999fd6982d6e46beb443e940ced482c4f0c4c1"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXfixes-devel-5.0.3-7.el8.aarch64.rpm"
+
+[[package]]
+name = "libXft"
+evr = "2.3.3-1.el8"
+arch = "aarch64"
+sha256 = "beba3d59eb167e557966466e1ffe40d1fd2855ec555023399b5103854e4cf31b"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXft-2.3.3-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libXi"
+evr = "1.7.10-1.el8"
+arch = "aarch64"
+sha256 = "16912b941e95518c407e230c8ae0f1cdb7b96a0e8ad4ac5ac401a2f696db442c"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXi-1.7.10-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libXi-devel"
+evr = "1.7.10-1.el8"
+arch = "aarch64"
+sha256 = "70c93b1817c4cd61777f886b6dcd0a5dbc1f062061d1c8172b8da89677c9a7d5"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXi-devel-1.7.10-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libXrandr"
+evr = "1.5.2-1.el8"
+arch = "aarch64"
+sha256 = "8652123d8c1cd8afd548e758086467d652217219dfc8c6e22e921d7dc1bedc72"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXrandr-1.5.2-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libXrandr-devel"
+evr = "1.5.2-1.el8"
+arch = "aarch64"
+sha256 = "eb0ea233cf710ce4ac791a03280511e814dfb33c8b5d432b730b0fba718a2958"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXrandr-devel-1.5.2-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libXrender"
+evr = "0.9.10-7.el8"
+arch = "aarch64"
+sha256 = "6f7fec3924c0efeb10b3f694d1b41a7252aa9662e7dd93614ceaa86bfd5421e2"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXrender-0.9.10-7.el8.aarch64.rpm"
+
+[[package]]
+name = "libXrender-devel"
+evr = "0.9.10-7.el8"
+arch = "aarch64"
+sha256 = "a88a8636ff073fb434f7449de70003cb296d9bc1c071c9af737cc64af9bef786"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXrender-devel-0.9.10-7.el8.aarch64.rpm"
+
+[[package]]
+name = "libXtst"
+evr = "1.2.3-7.el8"
+arch = "aarch64"
+sha256 = "9dac5c40c9b64d23ac84962353dad4988487542e36772f82fcb751f42915d81f"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXtst-1.2.3-7.el8.aarch64.rpm"
+
+[[package]]
+name = "libXtst-devel"
+evr = "1.2.3-7.el8"
+arch = "aarch64"
+sha256 = "3a93c491b529710e46931348a4c80398649a84718e170dd20ab27cd61531298d"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXtst-devel-1.2.3-7.el8.aarch64.rpm"
+
+[[package]]
+name = "libXv"
+evr = "1.0.11-7.el8"
+arch = "aarch64"
+sha256 = "2516a0ae165d9d2cadf712af88e30a7261d7897510b1228937f4bf53cf1ecf28"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXv-1.0.11-7.el8.aarch64.rpm"
+
+[[package]]
+name = "libXxf86vm"
+evr = "1.1.4-9.el8"
+arch = "aarch64"
+sha256 = "85a75c293249147a1ab33bbf2087cdb806bbcbbb37917a0c53fe0008d627699c"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libXxf86vm-1.1.4-9.el8.aarch64.rpm"
+
+[[package]]
+name = "libacl"
+evr = "2.4.0-1.el8_10"
+arch = "aarch64"
+sha256 = "6cd667840d1906d5c810ba2cffbb4b93f456f7c6682aa8b43d098cdaf8b9f603"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libacl-2.4.0-1.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libao"
+evr = "1.2.0-10.el8"
+arch = "aarch64"
+sha256 = "11a614b2db75d6df38986e0c2e5d19f61723de9518eef59815c84741f464cb82"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libao-1.2.0-10.el8.aarch64.rpm"
+
+[[package]]
+name = "libarchive"
+evr = "3.3.3-7.el8_10"
+arch = "aarch64"
+sha256 = "bc595677bb34d77877d3958d3427d3e9bf59a66d5c8d3cec2c9d52dffb06a0d5"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libarchive-3.3.3-7.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libasyncns"
+evr = "0.8-14.el8"
+arch = "aarch64"
+sha256 = "312fac7bc26b56b4169c57b2f6dd4c9927f075987f9d12a8d3fb43565bd35704"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libasyncns-0.8-14.el8.aarch64.rpm"
+
+[[package]]
+name = "libatomic"
+evr = "8.5.0-28.el8_10"
+arch = "aarch64"
+sha256 = "177ea1f700b8b7292e96dffafe0298939504462d23408135afabf33780b40360"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libatomic-8.5.0-28.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libblkid"
+evr = "2.32.1-48.el8_10"
+arch = "aarch64"
+sha256 = "d3f610520255252288711f4e2b6cb962adde23a472f2c1f99f374aa0a889fc65"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libblkid-2.32.1-48.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libbsd"
+evr = "0.12.2-1.el8"
+arch = "aarch64"
+sha256 = "320009eaf1394e58c7f7e0f210bfb6d467eb1c614e0686197e1826c71f53db92"
+url = "https://dl.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/l/libbsd-0.12.2-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libcap"
+evr = "2.48-6.el8_10.1"
+arch = "aarch64"
+sha256 = "50bb67dd5e35184330ad3a31141a73d9ed7aaa3ea83cd357ad76a243cb728d6c"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libcap-2.48-6.el8_10.1.aarch64.rpm"
+
+[[package]]
+name = "libcap-devel"
+evr = "2.48-6.el8_10.1"
+arch = "aarch64"
+sha256 = "8987c121ff0bac53f85d79578da20c1229ad1ffb023c3e17beb0b4e0c77e9a26"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libcap-devel-2.48-6.el8_10.1.aarch64.rpm"
+
+[[package]]
+name = "libcap-ng"
+evr = "0.7.11-1.el8"
+arch = "aarch64"
+sha256 = "ca0c5cd3a6ff1505113b2b220844603077d282b81f790a205e7d23ab6cf68a61"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libcap-ng-0.7.11-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libcom_err"
+evr = "1.45.6-7.el8_10"
+arch = "aarch64"
+sha256 = "5470171e197f6b99945ed4338117168866d61e3f20b79fdd296e43e6154364e8"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libcom_err-1.45.6-7.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libcom_err-devel"
+evr = "1.45.6-7.el8_10"
+arch = "aarch64"
+sha256 = "80ea7cc4ff4a29dd083f0aa001c22c5d13c177d33f4b96ad3fb651b5b26fe73b"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libcom_err-devel-1.45.6-7.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libcroco"
+evr = "0.6.12-4.el8_2.1"
+arch = "aarch64"
+sha256 = "073f402932fa613540e4ebefa3c221df051ded054eaf44be03b590699c3e77e7"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libcroco-0.6.12-4.el8_2.1.aarch64.rpm"
+
+[[package]]
+name = "libcurl"
+evr = "7.61.1-34.el8_10.13"
+arch = "aarch64"
+sha256 = "048fa28b2a23382d122f1d89f1e3908b898ddd2a2522f7934d43b65028e90346"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libcurl-7.61.1-34.el8_10.13.aarch64.rpm"
+
+[[package]]
+name = "libdatrie"
+evr = "0.2.9-7.el8"
+arch = "aarch64"
+sha256 = "b681321215e0b6e09d8e9bf0ccb5bf3ea3ce4c9f340f1d7b8c5e26a187dad2cc"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libdatrie-0.2.9-7.el8.aarch64.rpm"
+
+[[package]]
+name = "libdb"
+evr = "5.3.28-42.el8_4"
+arch = "aarch64"
+sha256 = "f1b46b46efe469ee828526cc8840a0491b454c9f8bd55a89a91313111176d02e"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libdb-5.3.28-42.el8_4.aarch64.rpm"
+
+[[package]]
+name = "libdb-utils"
+evr = "5.3.28-42.el8_4"
+arch = "aarch64"
+sha256 = "837085b66d2b6498e6c67b92eb52b4589c557f207cc11769b2774bb2acaf33fd"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libdb-utils-5.3.28-42.el8_4.aarch64.rpm"
+
+[[package]]
+name = "libdrm"
+evr = "2.4.115-2.el8"
+arch = "aarch64"
+sha256 = "0617d33dae9769fbe5e42a96d85f898963829f7f63657b732ae0aca099ee06cc"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libdrm-2.4.115-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libdrm-devel"
+evr = "2.4.115-2.el8"
+arch = "aarch64"
+sha256 = "5ed61fb7342834cb177a51b2ea33f1a55bfe9f9770927236e0c195365760c830"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libdrm-devel-2.4.115-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libevdev"
+evr = "1.10.0-1.el8"
+arch = "aarch64"
+sha256 = "5c661690ee0361ebf0e38f885aaf6bb9130dafc7e9ffbe7971fdbaeff02dce67"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libevdev-1.10.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libevdev-devel"
+evr = "1.10.0-1.el8"
+arch = "aarch64"
+sha256 = "a7ff1a93aa3e55bdb6c611d7a339c89b0d47d60d631daf43b011750b436c35ee"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/l/libevdev-devel-1.10.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libevent"
+evr = "2.1.8-5.el8"
+arch = "aarch64"
+sha256 = "8a4b25f36b685a2e716fa104310b26d54f72b3088a0a0d6ac6a4f40fd9c5782e"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libevent-2.1.8-5.el8.aarch64.rpm"
+
+[[package]]
+name = "libffi"
+evr = "3.1-24.el8"
+arch = "aarch64"
+sha256 = "fad785b129f8a1892cf759a08ccdb879e6ec846a65ffa977409124e67e744266"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libffi-3.1-24.el8.aarch64.rpm"
+
+[[package]]
+name = "libffi-devel"
+evr = "3.1-24.el8"
+arch = "aarch64"
+sha256 = "9e21cfb31d0b3d62acc837f1144a23af8c15802f29eb9be43740b234f215eeac"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libffi-devel-3.1-24.el8.aarch64.rpm"
+
+[[package]]
+name = "libgcc"
+evr = "8.5.0-28.el8_10"
+arch = "aarch64"
+sha256 = "0ce6acc13ed787c616201eeb4a2b292f63f17de3e5c8eccd773016482e0ec6df"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libgcc-8.5.0-28.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libgcrypt"
+evr = "1.8.5-8.el8_10"
+arch = "aarch64"
+sha256 = "ead3e8122e50e74bc8bb4c4ed8240dd2c9ce93f6e93a21bfd6d8e39b35e7fbf1"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libgcrypt-1.8.5-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libgcrypt-devel"
+evr = "1.8.5-8.el8_10"
+arch = "aarch64"
+sha256 = "4338c3017257d2a3381f2a1c9377ed7c37680d88f985325179e8e6b202bd30a8"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libgcrypt-devel-1.8.5-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libglvnd"
+evr = "1:1.3.4-2.el8"
+arch = "aarch64"
+sha256 = "c549a553d39007b6e5305cdabd52ce194850d80c3fba816b352b1d3b104a10c8"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libglvnd-1.3.4-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libglvnd-core-devel"
+evr = "1:1.3.4-2.el8"
+arch = "aarch64"
+sha256 = "b0a543f838107f573db8fd2885601490f31406f7647b42ff0ecb164d7c64edac"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libglvnd-core-devel-1.3.4-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libglvnd-devel"
+evr = "1:1.3.4-2.el8"
+arch = "aarch64"
+sha256 = "429e34bb9f4d8d7c8859099cb30504d40f022a7888083fc1b72f4ab1da423a5b"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libglvnd-devel-1.3.4-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libglvnd-egl"
+evr = "1:1.3.4-2.el8"
+arch = "aarch64"
+sha256 = "626e9085a3770e6255a7091f6d5b1e3a1193cc3d4461af1ad7937562b1b4d9fd"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libglvnd-egl-1.3.4-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libglvnd-gles"
+evr = "1:1.3.4-2.el8"
+arch = "aarch64"
+sha256 = "9081004b48e19abe7346d9a7f901671754b84c1294e2e4d01e229c8466e2c0f5"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libglvnd-gles-1.3.4-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libglvnd-glx"
+evr = "1:1.3.4-2.el8"
+arch = "aarch64"
+sha256 = "4d58933d7ee9fee47ae0cfced297df02df622770d572d824309c292c80e15dc8"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libglvnd-glx-1.3.4-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libglvnd-opengl"
+evr = "1:1.3.4-2.el8"
+arch = "aarch64"
+sha256 = "a292d8b70d8a319a0d498da394012d3230f9056ded3bb922ca8a1f9758a938a7"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libglvnd-opengl-1.3.4-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libgomp"
+evr = "8.5.0-28.el8_10"
+arch = "aarch64"
+sha256 = "33bb647483ef815a26f3952b9ac5658237908007972b5a4cb604b3929319ebf3"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libgomp-8.5.0-28.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libgpg-error"
+evr = "1.31-1.el8"
+arch = "aarch64"
+sha256 = "5f50acbe7ca1061b08621b3e9e72360811ceafaa34626cb13aa153b9fcef5dd4"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libgpg-error-1.31-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libgpg-error-devel"
+evr = "1.31-1.el8"
+arch = "aarch64"
+sha256 = "9eebcfe6d4f513641f42b8ab750b85aa0d6c1f6c3779a21466ec338d530e3a4b"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libgpg-error-devel-1.31-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libgudev"
+evr = "232-4.el8"
+arch = "aarch64"
+sha256 = "f52f502194242ad10be75b7911ccb58dfc2a8670ffcb3f29cbfc7f64efcc4008"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libgudev-232-4.el8.aarch64.rpm"
+
+[[package]]
+name = "libicu"
+evr = "60.3-2.el8_1"
+arch = "aarch64"
+sha256 = "cf3e51d81ade44c08d4e0656622e72182ac946ef2dc13e69c7219b6c87b451bd"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libicu-60.3-2.el8_1.aarch64.rpm"
+
+[[package]]
+name = "libicu-devel"
+evr = "60.3-2.el8_1"
+arch = "aarch64"
+sha256 = "b1f56820b30ab248d7c27c2eef95a93c33fe13bfc9f903105749b558c71401a6"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libicu-devel-60.3-2.el8_1.aarch64.rpm"
+
+[[package]]
+name = "libidn2"
+evr = "2.2.0-1.el8"
+arch = "aarch64"
+sha256 = "aa0cb5360ef9778dcc983ec8bb5e007829fd6345b855506ce807c760cef9b394"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libidn2-2.2.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libidn2-devel"
+evr = "2.2.0-1.el8"
+arch = "aarch64"
+sha256 = "26ce0b2d7a3ed88a011da1022a8f9ed6f07490cbb9df711934a4b43b9b7924f8"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libidn2-devel-2.2.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libinput"
+evr = "1.16.3-3.el8_6"
+arch = "aarch64"
+sha256 = "be78e53edf9ba8666802b546afebe5c5f49f95ee8e6470108450ddbafb280d42"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libinput-1.16.3-3.el8_6.aarch64.rpm"
+
+[[package]]
+name = "libinput-devel"
+evr = "1.16.3-3.el8_6"
+arch = "aarch64"
+sha256 = "bde3d4d77bd661d9256d7f2dec8e7353274f7b5eeafbf0673704413b022668aa"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/l/libinput-devel-1.16.3-3.el8_6.aarch64.rpm"
+
+[[package]]
+name = "libitm"
+evr = "8.5.0-28.el8_10"
+arch = "aarch64"
+sha256 = "9b15004e452643ab71691ec3659241f8993aaa0cfda023910cd618e0f6493e7b"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libitm-8.5.0-28.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libjpeg-turbo"
+evr = "1.5.3-14.el8_10"
+arch = "aarch64"
+sha256 = "7774068002e7095e000a4d6f08db7f495b2582936fd1a2bd858034ab94540a02"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libjpeg-turbo-1.5.3-14.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libjpeg-turbo-devel"
+evr = "1.5.3-14.el8_10"
+arch = "aarch64"
+sha256 = "498949447495ebc09a5baa463cdbc8486fd7e783ff4316d70d5fdc144f44a5dc"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libjpeg-turbo-devel-1.5.3-14.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libkadm5"
+evr = "1.18.2-34.el8_10"
+arch = "aarch64"
+sha256 = "66c9f3b20414b7d4d7ada3c99d111352358dbe9193b4af2d12edeef72b9c66b8"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libkadm5-1.18.2-34.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libmd"
+evr = "1.2.0-1.el8"
+arch = "aarch64"
+sha256 = "98fe66bca744032ec3bcb1c89b82ac59bcf7bc53b09b7e7d1ccddc46f97884e6"
+url = "https://dl.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/l/libmd-1.2.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libmodman"
+evr = "2.0.1-17.el8"
+arch = "aarch64"
+sha256 = "13e8b618827ca34a80de23cc64a8858d1996d27cb9018fc0c47e8863a3f6ce91"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libmodman-2.0.1-17.el8.aarch64.rpm"
+
+[[package]]
+name = "libmount"
+evr = "2.32.1-48.el8_10"
+arch = "aarch64"
+sha256 = "22b0a67000bba9c24670bc10e30963bb0b48c3da90e134f3aed7e1d46c3106e3"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libmount-2.32.1-48.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libnghttp2"
+evr = "1.33.0-6.el8_10.3"
+arch = "aarch64"
+sha256 = "6fb35157d0d473bb7659d84211f143b3322d3985e8d3248caa61a5f3526fff06"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libnghttp2-1.33.0-6.el8_10.3.aarch64.rpm"
+
+[[package]]
+name = "libnsl2"
+evr = "1.2.0-2.20180605git4a062cf.el8"
+arch = "aarch64"
+sha256 = "82a4883165f23c8a7bbc1e4aa2b385fa2f0414e03002a263d4eec3a0edf8580d"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libnsl2-1.2.0-2.20180605git4a062cf.el8.aarch64.rpm"
+
+[[package]]
+name = "libogg"
+evr = "2:1.3.2-10.el8"
+arch = "aarch64"
+sha256 = "7a39f1953ba2c4d4c0f8d31f00ad974ccb27f8572ebd722187ffc9bc65a380de"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libogg-1.3.2-10.el8.aarch64.rpm"
+
+[[package]]
+name = "libpkgconf"
+evr = "1.4.2-1.el8"
+arch = "aarch64"
+sha256 = "f216bb35e4ee9f8fc95fad5b5522065898ebc269cde48a748d048e46dcb91902"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libpkgconf-1.4.2-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libpng"
+evr = "2:1.6.34-11.el8_10"
+arch = "aarch64"
+sha256 = "e13f61ca5028b42e2b791dd0d7199fc6267feee2c95d385ca3cf9e272a88413f"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libpng-1.6.34-11.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libpng-devel"
+evr = "2:1.6.34-11.el8_10"
+arch = "aarch64"
+sha256 = "582df151b5de4857b531d1eacad1b76f714dc7499c78b6a76beda64a07cc912b"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libpng-devel-1.6.34-11.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libproxy"
+evr = "0.4.15-5.5.el8_10"
+arch = "aarch64"
+sha256 = "98abb8856c9d5473ed9d6026b1b88b87e73deafff1aadf27c6237a5a1ab639a8"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libproxy-0.4.15-5.5.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libproxy-devel"
+evr = "0.4.15-5.5.el8_10"
+arch = "aarch64"
+sha256 = "b1985b43314e84124e9f346c8316b4d513d5e2494f8c6dc147c226d37ac4f372"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/l/libproxy-devel-0.4.15-5.5.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libpsl"
+evr = "0.20.2-6.el8"
+arch = "aarch64"
+sha256 = "7ea182e4df97af9e073eedec5717ac3ade26bf1a0e8e166f527c2a5eca5493c6"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libpsl-0.20.2-6.el8.aarch64.rpm"
+
+[[package]]
+name = "libpwquality"
+evr = "1.4.4-6.el8"
+arch = "aarch64"
+sha256 = "e490223a9b8a3c494f190487d10290115b60bc42cced7bf772c062edad08abed"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libpwquality-1.4.4-6.el8.aarch64.rpm"
+
+[[package]]
+name = "libselinux"
+evr = "2.9-11.el8_10"
+arch = "aarch64"
+sha256 = "d2a988504e6da4e9e49cddf631341005dfc5da71679649ea0466ae15e00e41a2"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libselinux-2.9-11.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libselinux-devel"
+evr = "2.9-11.el8_10"
+arch = "aarch64"
+sha256 = "e79aae78f28c3ddd72bf71f365c4cefba6b9ab6b1af4090fdbfd162b19b8acad"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libselinux-devel-2.9-11.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libsepol"
+evr = "2.9-3.el8"
+arch = "aarch64"
+sha256 = "e2c55fc5738b9129c59a4fb29fd81be32ee242380398dc007f88ef19429cb747"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libsepol-2.9-3.el8.aarch64.rpm"
+
+[[package]]
+name = "libsepol-devel"
+evr = "2.9-3.el8"
+arch = "aarch64"
+sha256 = "317705b5f8b8a267fa79aa17d581fd13d8d7b40cf94a538d7b9a9dfef9394933"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libsepol-devel-2.9-3.el8.aarch64.rpm"
+
+[[package]]
+name = "libsndfile"
+evr = "1.0.28-17.el8_10"
+arch = "aarch64"
+sha256 = "793ca03b125e93723bb84491892a6037de1b77b5c445ac655dd113a314aad598"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libsndfile-1.0.28-17.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libssh"
+evr = "0.9.6-16.el8_10"
+arch = "aarch64"
+sha256 = "515fc7fd1bff7171bb4617b1ef3084df80dc24af2a6cdce062026c5c59f2b691"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libssh-0.9.6-16.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libssh-config"
+evr = "0.9.6-16.el8_10"
+arch = "noarch"
+sha256 = "309e16b9330a518cee8c9df1ecde89c8d784a47d89d077c10e6c24472de59fd8"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libssh-config-0.9.6-16.el8_10.noarch.rpm"
+
+[[package]]
+name = "libstdc++"
+evr = "8.5.0-28.el8_10"
+arch = "aarch64"
+sha256 = "b5aed4cfc685d99d4de12bb30723f879e1596d00c22879a65f258e079bf5700a"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libstdc++-8.5.0-28.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libstdc++-devel"
+evr = "8.5.0-28.el8_10"
+arch = "aarch64"
+sha256 = "0ee0d65decbdcb3aaa02706fff3a2bcd0577a77aa412c9e9fcb5d5f53bd6ab5c"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libstdc++-devel-8.5.0-28.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libtasn1"
+evr = "4.13-6.el8_10"
+arch = "aarch64"
+sha256 = "dce6d632e2e4c0023b654fe20b42eb4026eae5c1f965354053efad8bf9eb6fbd"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libtasn1-4.13-6.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libtasn1-devel"
+evr = "4.13-6.el8_10"
+arch = "aarch64"
+sha256 = "2da459fa6c95da6cf6a2cdaff63a45236bfd6c3441093b16df9b02ccebe56c37"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libtasn1-devel-4.13-6.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libthai"
+evr = "0.1.27-2.el8"
+arch = "aarch64"
+sha256 = "8be3fbf7fb24f3f58f36c57dbc5fe84925ad936aec239554f7192c0f67e3cffd"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libthai-0.1.27-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libtheora"
+evr = "1:1.1.1-21.el8"
+arch = "aarch64"
+sha256 = "dc613706600e56332bb83a2f3656c2d69f0057d759a6c175301b4b30ac08b0b7"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libtheora-1.1.1-21.el8.aarch64.rpm"
+
+[[package]]
+name = "libtiff"
+evr = "4.0.9-38.el8_10"
+arch = "aarch64"
+sha256 = "f4bd0c4ae63f57595cb60a74dee2015ca41fa4a335290047297173b114ee229f"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libtiff-4.0.9-38.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libtiff-devel"
+evr = "4.0.9-38.el8_10"
+arch = "aarch64"
+sha256 = "dd8b3956ebf8e759fa25319773ea0eca72556b72136c10ddf1c80b48449f524c"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libtiff-devel-4.0.9-38.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libtirpc"
+evr = "1.1.4-12.el8_10"
+arch = "aarch64"
+sha256 = "a963cafad28e91b64cf08450114b39b85d7905496b2f8869f1c947b5a8fd1ec4"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libtirpc-1.1.4-12.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libtool-ltdl"
+evr = "2.4.6-25.el8"
+arch = "aarch64"
+sha256 = "81561bed74e6540dcbc97e17f864d80328c86bc4572f1dc4b1bd00e9ef0a0a99"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libtool-ltdl-2.4.6-25.el8.aarch64.rpm"
+
+[[package]]
+name = "libunistring"
+evr = "0.9.9-3.el8"
+arch = "aarch64"
+sha256 = "d301863174a399aa70dbab12b92a6a8d709c5bb8001ae4a1501ebf19ef3e8a01"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libunistring-0.9.9-3.el8.aarch64.rpm"
+
+[[package]]
+name = "libuuid"
+evr = "2.32.1-48.el8_10"
+arch = "aarch64"
+sha256 = "b1d139a5519ba83e6f333ea70a09bdc71cff588443f735b81e743d4c2fb09ad4"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libuuid-2.32.1-48.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libuuid-devel"
+evr = "2.32.1-48.el8_10"
+arch = "aarch64"
+sha256 = "1f1b2fe18fcb55c51615923ccc5bb9945a795fcfaec27af0bc71e13af604bba6"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libuuid-devel-2.32.1-48.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libuv"
+evr = "1:1.41.1-2.el8_10"
+arch = "aarch64"
+sha256 = "193405c4cb24b86df8b05902918f16c27b45770add5a4634607efd295836a414"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libuv-1.41.1-2.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libverto"
+evr = "0.3.2-2.el8"
+arch = "aarch64"
+sha256 = "e4ddc4cd25f70d80627e43a09ac1ad358910f1ea99404e429dcef457951ebebb"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libverto-0.3.2-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libverto-devel"
+evr = "0.3.2-2.el8"
+arch = "aarch64"
+sha256 = "971b5295750d252cbaf71e7c31a5157d50bb2546a0e2318b3c860bc71a5164d6"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libverto-devel-0.3.2-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libvisual"
+evr = "1:0.4.0-25.el8"
+arch = "aarch64"
+sha256 = "726453831eef6f079cd7248861cb6820b402538b619ad07f66e794f17e7a9c86"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libvisual-0.4.0-25.el8.aarch64.rpm"
+
+[[package]]
+name = "libvorbis"
+evr = "1:1.3.6-2.el8"
+arch = "aarch64"
+sha256 = "1f24d8c4f3a5f1f8d43e7725f75e1d21f79ddfdad23e2debef50fcb24ce48d08"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libvorbis-1.3.6-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libwacom"
+evr = "1.6-3.el8"
+arch = "aarch64"
+sha256 = "aae51db7035bf1aabdd61d742b6441a6a2eabf880f3cb21afd4ca3698f12f154"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libwacom-1.6-3.el8.aarch64.rpm"
+
+[[package]]
+name = "libwacom-data"
+evr = "1.6-3.el8"
+arch = "noarch"
+sha256 = "7e5450f5dc8a0ebb6181f737709bfa81cd5879251d77ccf6aa28b1b8024e5f11"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libwacom-data-1.6-3.el8.noarch.rpm"
+
+[[package]]
+name = "libwayland-client"
+evr = "1.21.0-1.el8"
+arch = "aarch64"
+sha256 = "0fd6c5ef5d0d36b633f9640663e658f362325aba62016efd82370a94c24e0122"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libwayland-client-1.21.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libwayland-cursor"
+evr = "1.21.0-1.el8"
+arch = "aarch64"
+sha256 = "cd77037252c079a8aec5cdced26d39f0916d2ffcb59a92cddb45f4a11cd3accc"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libwayland-cursor-1.21.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libwayland-egl"
+evr = "1.21.0-1.el8"
+arch = "aarch64"
+sha256 = "248a2fba37f1f8326d3f55583dd24675b3a5941e56ce8531eab6941a68b9d892"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libwayland-egl-1.21.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libwayland-server"
+evr = "1.21.0-1.el8"
+arch = "aarch64"
+sha256 = "4c9138f140d7f2e90ab33630f1347be3a4c564272ff0c5bdb59087fb0478d31a"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libwayland-server-1.21.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libwebp"
+evr = "1.0.0-11.el8_10"
+arch = "aarch64"
+sha256 = "368977f204d3ee31f7f51229e57e8221c8e637319ac9cf947ddcda023fed7d19"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libwebp-1.0.0-11.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libwebp-devel"
+evr = "1.0.0-11.el8_10"
+arch = "aarch64"
+sha256 = "7cf7c79b48362135c01316bd9633313025a10e9d0f3a3b0c36e61f47c61d18fb"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libwebp-devel-1.0.0-11.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libxcb"
+evr = "1.13.1-1.el8"
+arch = "aarch64"
+sha256 = "22cd6b4ee21ed95199ad537921c8d2169c5ba039ab1e024b0da86b79a4e7c4c0"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libxcb-1.13.1-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libxcb-devel"
+evr = "1.13.1-1.el8"
+arch = "aarch64"
+sha256 = "daa9ed189a924c5df2a6d5f33d2c76dec679ae784c0d831fc13fb11e5417dc34"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libxcb-devel-1.13.1-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libxcrypt"
+evr = "4.1.1-6.el8"
+arch = "aarch64"
+sha256 = "4297629a9d4951880629af6c9c87f48bc6b785577196fa690b377dbd48a513fd"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libxcrypt-4.1.1-6.el8.aarch64.rpm"
+
+[[package]]
+name = "libxcrypt-devel"
+evr = "4.1.1-6.el8"
+arch = "aarch64"
+sha256 = "da9307e19104245a81d4174b81135d92376dfd15397383245532001838a2de19"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libxcrypt-devel-4.1.1-6.el8.aarch64.rpm"
+
+[[package]]
+name = "libxkbcommon"
+evr = "0.9.1-1.el8"
+arch = "aarch64"
+sha256 = "a0d5180639b9b1d89545bfd2f3490b05cd0f091a318cc320ba66e483e164a2cc"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libxkbcommon-0.9.1-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libxkbcommon-devel"
+evr = "0.9.1-1.el8"
+arch = "aarch64"
+sha256 = "1eddfce5ef8588ecf9b2ac26a09ac6ba771f031eb605126bca35d129380d10fb"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libxkbcommon-devel-0.9.1-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libxml2"
+evr = "2.9.7-21.el8_10.6"
+arch = "aarch64"
+sha256 = "c88f7f9a218c1c4bdfe82d92313a35118f275803a0d37c312a74f7cc6ced2ebc"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libxml2-2.9.7-21.el8_10.6.aarch64.rpm"
+
+[[package]]
+name = "libxml2-devel"
+evr = "2.9.7-21.el8_10.6"
+arch = "aarch64"
+sha256 = "6661d397e1876e3118a1cec98da6a52c02af56239e03e7658d19c3472a95560e"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libxml2-devel-2.9.7-21.el8_10.6.aarch64.rpm"
+
+[[package]]
+name = "libxshmfence"
+evr = "1.3-2.el8"
+arch = "aarch64"
+sha256 = "6d6656f18fa4bb894f07d0ebbef5a60e924e80dbbaab69f43a5604268986d3d5"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libxshmfence-1.3-2.el8.aarch64.rpm"
+
+[[package]]
+name = "libxslt"
+evr = "1.1.32-6.4.el8_10"
+arch = "aarch64"
+sha256 = "c6935e0f0f9e462c53f329a005296626be3d63279d0c021ca7367a141b7601ed"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libxslt-1.1.32-6.4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libxslt-devel"
+evr = "1.1.32-6.4.el8_10"
+arch = "aarch64"
+sha256 = "625a5a1fe7fef96fcddccb397a82c1474f78d85f63b385158507a1bb0859b51c"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/l/libxslt-devel-1.1.32-6.4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "libzstd"
+evr = "1.4.4-1.el8"
+arch = "aarch64"
+sha256 = "44d11e194b4d5ebf9bad5f1dc8adb136061e747c68a20bc14034359c98feda87"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libzstd-1.4.4-1.el8.aarch64.rpm"
+
+[[package]]
+name = "libzstd-devel"
+evr = "1.4.4-1.el8"
+arch = "aarch64"
+sha256 = "b3befd27564abf4dcca29cbc7d236f7d2def40b3a3b6060ea5ba3ec47e978b50"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/libzstd-devel-1.4.4-1.el8.aarch64.rpm"
+
+[[package]]
+name = "lua-libs"
+evr = "5.3.4-12.el8"
+arch = "aarch64"
+sha256 = "c1c84a33cec9d1a40de3b87b2c2607078137cf6491b638f97fb5b89670ec5e3a"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/lua-libs-5.3.4-12.el8.aarch64.rpm"
+
+[[package]]
+name = "lyx-fonts"
+evr = "2.3.6-2.el8"
+arch = "noarch"
+sha256 = "96431fed80e80ff697b0a095fd770db447665cfd6871b611e11b1ff42be099b2"
+url = "https://dl.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/l/lyx-fonts-2.3.6-2.el8.noarch.rpm"
+
+[[package]]
+name = "lz4-libs"
+evr = "1.8.3-5.el8_10"
+arch = "aarch64"
+sha256 = "d5241a1d2801500e949b2fdd6b5092be78dcda8da354ed0c9fd900bd39f6d369"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/l/lz4-libs-1.8.3-5.el8_10.aarch64.rpm"
+
+[[package]]
+name = "make"
+evr = "1:4.2.1-11.el8"
+arch = "aarch64"
+sha256 = "2b734a70ce6b5a957b3c302c77f0c07d7ab57b5c2ebd9c9bcd79df37d744667d"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/m/make-4.2.1-11.el8.aarch64.rpm"
+
+[[package]]
+name = "mesa-libEGL"
+evr = "23.1.4-4.el8_10"
+arch = "aarch64"
+sha256 = "2129b479eb94f476bc1647e3f4518159e57d55bab060dea04f05d80cc72c8065"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/m/mesa-libEGL-23.1.4-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "mesa-libEGL-devel"
+evr = "23.1.4-4.el8_10"
+arch = "aarch64"
+sha256 = "0e548d878b29972fe4bae7731e6ba392f51000d59400fca2af15138a1fbea314"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/m/mesa-libEGL-devel-23.1.4-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "mesa-libGL"
+evr = "23.1.4-4.el8_10"
+arch = "aarch64"
+sha256 = "6a92ccfdb682010e5a145e4696969199da82e0f1ce14502bc54b242c2fc1832a"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/m/mesa-libGL-23.1.4-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "mesa-libGL-devel"
+evr = "23.1.4-4.el8_10"
+arch = "aarch64"
+sha256 = "7ecd5460951f8c7b0288b0b7694a18c379eceac43cc6b66ae19fad071b06ec8e"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/m/mesa-libGL-devel-23.1.4-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "mesa-libgbm"
+evr = "23.1.4-4.el8_10"
+arch = "aarch64"
+sha256 = "5ed31c0909d0ddff3cb3911c01e0f8911d00efa74c1a447d20db525c9136f06f"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/m/mesa-libgbm-23.1.4-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "mesa-libgbm-devel"
+evr = "23.1.4-4.el8_10"
+arch = "aarch64"
+sha256 = "e9bbd1c929aebf08b29f42704a186b8a9abc58ad9813b94b9221740dbf37d929"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/m/mesa-libgbm-devel-23.1.4-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "mesa-libglapi"
+evr = "23.1.4-4.el8_10"
+arch = "aarch64"
+sha256 = "22bcc364470bdb3b146671a04b3f5e04da84b415e1820882da1cf9c15a120989"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/m/mesa-libglapi-23.1.4-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "minizip"
+evr = "2.8.9-2.el8"
+arch = "aarch64"
+sha256 = "11177bdc078e852d495508569265572e63d8fe9586507204b23cbbba6b94b153"
+url = "https://dl.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/m/minizip-2.8.9-2.el8.aarch64.rpm"
+
+[[package]]
+name = "minizip-devel"
+evr = "2.8.9-2.el8"
+arch = "aarch64"
+sha256 = "54716ff4ea90ef8f8f74757e43843ada28ea3642907e4cd2361ec388e6bdb447"
+url = "https://dl.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/m/minizip-devel-2.8.9-2.el8.aarch64.rpm"
+
+[[package]]
+name = "mtdev"
+evr = "1.1.5-12.el8"
+arch = "aarch64"
+sha256 = "023b076486a6ec4d0621ec49341b761e8cdfccd640fa9c2a3240918eef0747dd"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/m/mtdev-1.1.5-12.el8.aarch64.rpm"
+
+[[package]]
+name = "mtdev-devel"
+evr = "1.1.5-12.el8"
+arch = "aarch64"
+sha256 = "6c98883f8edc5aaaae5f98996b6427f825e1f6745f8ecf3c8910888eb1d1ab59"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/m/mtdev-devel-1.1.5-12.el8.aarch64.rpm"
+
+[[package]]
+name = "ncurses-base"
+evr = "6.1-10.20180224.el8"
+arch = "noarch"
+sha256 = "647aca6251968e8285c4a0b72670b85a3449096daf196807e9d85a19eacd0c2c"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/n/ncurses-base-6.1-10.20180224.el8.noarch.rpm"
+
+[[package]]
+name = "ncurses-libs"
+evr = "6.1-10.20180224.el8"
+arch = "aarch64"
+sha256 = "0fb33a2d911f4d47dc5fff9465db1641a20691dd23c16798974b2da5b4b560eb"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/n/ncurses-libs-6.1-10.20180224.el8.aarch64.rpm"
+
+[[package]]
+name = "nettle"
+evr = "3.4.1-7.el8"
+arch = "aarch64"
+sha256 = "51eabb0ae5bf19165967d8926043b01302dd36590a0333126ca88b43c480afe8"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/n/nettle-3.4.1-7.el8.aarch64.rpm"
+
+[[package]]
+name = "nettle-devel"
+evr = "3.4.1-7.el8"
+arch = "aarch64"
+sha256 = "29cbbf93ad9a8e3a71f337af29bbaf4b6c2b1c853ab35a09d7b8540b97144459"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nettle-devel-3.4.1-7.el8.aarch64.rpm"
+
+[[package]]
+name = "nspr"
+evr = "4.36.0-2.el8_10"
+arch = "aarch64"
+sha256 = "daa48e945ebbdbb6e53f90ba9746c542e5ca177a8a2efa42a87b693933f36887"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nspr-4.36.0-2.el8_10.aarch64.rpm"
+
+[[package]]
+name = "nspr-devel"
+evr = "4.36.0-2.el8_10"
+arch = "aarch64"
+sha256 = "ee475411eb6027ce1780236384861fe0240e2c744c26e47155b696994f2ff852"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nspr-devel-4.36.0-2.el8_10.aarch64.rpm"
+
+[[package]]
+name = "nss"
+evr = "3.112.0-8.el8_10"
+arch = "aarch64"
+sha256 = "3a977bf64240673225a2d4d51ab91da471cc554ba6f3e0a6f09c8463225440bc"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nss-3.112.0-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "nss-devel"
+evr = "3.112.0-8.el8_10"
+arch = "aarch64"
+sha256 = "66fa354e714b89be6e7395fb23fe4166b456b4afc9f52b2d306a6ed75c9e0029"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nss-devel-3.112.0-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "nss-softokn"
+evr = "3.112.0-8.el8_10"
+arch = "aarch64"
+sha256 = "7cf48f79e9501e72498a9bbf520928c81f275e39421fd7fa968ce8774b0d2ebd"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nss-softokn-3.112.0-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "nss-softokn-devel"
+evr = "3.112.0-8.el8_10"
+arch = "aarch64"
+sha256 = "4f2e91f881e6ecdd6506c2c3f5a5b915bf99a517d56462771dd89710d7f794c0"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nss-softokn-devel-3.112.0-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "nss-softokn-freebl"
+evr = "3.112.0-8.el8_10"
+arch = "aarch64"
+sha256 = "802eb79261a19e9e04a65322c44e5717a2f9e7aa5a021a9c8f8014cf55381300"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nss-softokn-freebl-3.112.0-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "nss-softokn-freebl-devel"
+evr = "3.112.0-8.el8_10"
+arch = "aarch64"
+sha256 = "3ed53b210a3d7ba90649ab020855e717ee36bfbb1919f0d9cbdb93e39873cb46"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nss-softokn-freebl-devel-3.112.0-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "nss-sysinit"
+evr = "3.112.0-8.el8_10"
+arch = "aarch64"
+sha256 = "a6f140a942bddc9d4886a7fa17fe21339fee3a01411cb2503214e0a72718df9d"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nss-sysinit-3.112.0-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "nss-util"
+evr = "3.112.0-8.el8_10"
+arch = "aarch64"
+sha256 = "6191de3c0e998bdbf3f60f75f2b014c55d59e0ac1036863b42d430a4acb92667"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nss-util-3.112.0-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "nss-util-devel"
+evr = "3.112.0-8.el8_10"
+arch = "aarch64"
+sha256 = "7fd30b78909bbf80a6ad7f94fb197d8ef850329f7b61c6f6f8e0615d66057264"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/n/nss-util-devel-3.112.0-8.el8_10.aarch64.rpm"
+
+[[package]]
+name = "openldap"
+evr = "2.4.46-21.el8_10"
+arch = "aarch64"
+sha256 = "cbd71f9b14565f5e21b5691d3a40c05c347271cae68b9f0cdd126234e2f00ff1"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/o/openldap-2.4.46-21.el8_10.aarch64.rpm"
+
+[[package]]
+name = "openssl-devel"
+evr = "1:1.1.1k-17.el8_10"
+arch = "aarch64"
+sha256 = "7991082a7d0c1f4f5e589991444e6cc23d7b8a8d768d7b089d6e0ebd9755dec9"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/o/openssl-devel-1.1.1k-17.el8_10.aarch64.rpm"
+
+[[package]]
+name = "openssl-libs"
+evr = "1:1.1.1k-17.el8_10"
+arch = "aarch64"
+sha256 = "fa7b3c7ce88ef2ee8b6343340d71bc1cc5bf8187c29d87294d7d2c3aede294e7"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/o/openssl-libs-1.1.1k-17.el8_10.aarch64.rpm"
+
+[[package]]
+name = "opus"
+evr = "1.3-0.4.beta.el8"
+arch = "aarch64"
+sha256 = "9b9a474a34157288f9db063ad692d8080cbea2bf2b87c8a025cf16257e35e0b3"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/o/opus-1.3-0.4.beta.el8.aarch64.rpm"
+
+[[package]]
+name = "orc"
+evr = "0.4.28-4.el8_10"
+arch = "aarch64"
+sha256 = "bffff46cf248a8648814c458e1db1f46fba7d75bad76238e3e5994d5da4e8b2e"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/o/orc-0.4.28-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "orc-compiler"
+evr = "0.4.28-4.el8_10"
+arch = "aarch64"
+sha256 = "5c0221aace57d1cfc8d593f5014865f50487196d915594ebe08f5fe3b19b0734"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/o/orc-compiler-0.4.28-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "orc-devel"
+evr = "0.4.28-4.el8_10"
+arch = "aarch64"
+sha256 = "8727fa1f78ab9ea541208f552ca633d5aa9539fea1d4aed5cd27a064b8c5f0f2"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/o/orc-devel-0.4.28-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "p11-kit"
+evr = "0.23.22-2.el8"
+arch = "aarch64"
+sha256 = "b8e63efa3d10d30a54454885d7ade63eca35edcaf0c15eee78f1d64fd87dad66"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/p11-kit-0.23.22-2.el8.aarch64.rpm"
+
+[[package]]
+name = "p11-kit-devel"
+evr = "0.23.22-2.el8"
+arch = "aarch64"
+sha256 = "757e14a9594c72b853dafa5565dd9dfab1ae0db1c9c7e4ebd1aa56dd48374c3c"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/p11-kit-devel-0.23.22-2.el8.aarch64.rpm"
+
+[[package]]
+name = "p11-kit-trust"
+evr = "0.23.22-2.el8"
+arch = "aarch64"
+sha256 = "e27b99af3f02a025a3db9fae4afc9d09980f5e17f974c405874a4ca57adf3243"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/p11-kit-trust-0.23.22-2.el8.aarch64.rpm"
+
+[[package]]
+name = "pam"
+evr = "1.3.1-40.el8_10"
+arch = "aarch64"
+sha256 = "c14125fb470f86a7f7258a427c9336ad3f3cfa4ee41675da3cd1260663f6ba13"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pam-1.3.1-40.el8_10.aarch64.rpm"
+
+[[package]]
+name = "pango"
+evr = "1.42.4-8.el8"
+arch = "aarch64"
+sha256 = "92dfee8a42a57a5f76512c0bbd046e247b21130d2307228a245a4612b44a2920"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/p/pango-1.42.4-8.el8.aarch64.rpm"
+
+[[package]]
+name = "pcaudiolib"
+evr = "1.1-2.el8"
+arch = "aarch64"
+sha256 = "741fe5c34fd18f6112870cb88c9332d1ce95c60e4461176db0938becdf237f9f"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/p/pcaudiolib-1.1-2.el8.aarch64.rpm"
+
+[[package]]
+name = "pcre"
+evr = "8.42-6.el8"
+arch = "aarch64"
+sha256 = "d2233f6aebbb5ac9f90a6d374650c445794fe5ecf857236228a4cc006206b068"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pcre-8.42-6.el8.aarch64.rpm"
+
+[[package]]
+name = "pcre-cpp"
+evr = "8.42-6.el8"
+arch = "aarch64"
+sha256 = "11747984326dd29836ed4544cb6c652041ed0e6ed9e925768a6ce4261db51d6b"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pcre-cpp-8.42-6.el8.aarch64.rpm"
+
+[[package]]
+name = "pcre-devel"
+evr = "8.42-6.el8"
+arch = "aarch64"
+sha256 = "287960d8b6336ef28563b412c7a059d5657e55382f515f3b9eb1bd378789da79"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pcre-devel-8.42-6.el8.aarch64.rpm"
+
+[[package]]
+name = "pcre-utf16"
+evr = "8.42-6.el8"
+arch = "aarch64"
+sha256 = "55c0ac0f4c6959e1c9383a62e36a58df4eed153d17f152cad9699aae5e5c4c34"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pcre-utf16-8.42-6.el8.aarch64.rpm"
+
+[[package]]
+name = "pcre-utf32"
+evr = "8.42-6.el8"
+arch = "aarch64"
+sha256 = "bae262449b3463dd12d59aa9cfaed79f208482d80d8ce72e89a5ec6a2cef3dbe"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pcre-utf32-8.42-6.el8.aarch64.rpm"
+
+[[package]]
+name = "pcre2"
+evr = "10.32-3.el8_6"
+arch = "aarch64"
+sha256 = "199691f32077d934d813c94a40310e6e54770032ded2dddf0cd7002f4b9434ab"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pcre2-10.32-3.el8_6.aarch64.rpm"
+
+[[package]]
+name = "pcre2-devel"
+evr = "10.32-3.el8_6"
+arch = "aarch64"
+sha256 = "322ba90a7f2dd17d6012d8822b92cfcd0f8bb466fc96bbc192d877bca25a56fc"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pcre2-devel-10.32-3.el8_6.aarch64.rpm"
+
+[[package]]
+name = "pcre2-utf16"
+evr = "10.32-3.el8_6"
+arch = "aarch64"
+sha256 = "5f4fc003b5e7bf176ef9e073c394292f78d57d0f22b4f6eb48c269fc0bc7da10"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pcre2-utf16-10.32-3.el8_6.aarch64.rpm"
+
+[[package]]
+name = "pcre2-utf32"
+evr = "10.32-3.el8_6"
+arch = "aarch64"
+sha256 = "1096d125f218c2a1aab00679612e9a0b859b973b0e030578cff89d7c5e63762d"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pcre2-utf32-10.32-3.el8_6.aarch64.rpm"
+
+[[package]]
+name = "pixman"
+evr = "0.38.4-4.el8"
+arch = "aarch64"
+sha256 = "f71f63385e1c23baa7a54d5bd89ae9c331873a34face544e17b18335593c9f7a"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/p/pixman-0.38.4-4.el8.aarch64.rpm"
+
+[[package]]
+name = "pkgconf"
+evr = "1.4.2-1.el8"
+arch = "aarch64"
+sha256 = "ab1524f28054bde3d77dc734a61317a1642a13f87b9c31ddb96e157699ff7bc5"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pkgconf-1.4.2-1.el8.aarch64.rpm"
+
+[[package]]
+name = "pkgconf-m4"
+evr = "1.4.2-1.el8"
+arch = "noarch"
+sha256 = "89d0641195e4a4d2678b525771613037d2e4949ba6be2400aa74780bec5191a8"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pkgconf-m4-1.4.2-1.el8.noarch.rpm"
+
+[[package]]
+name = "pkgconf-pkg-config"
+evr = "1.4.2-1.el8"
+arch = "aarch64"
+sha256 = "19930eef28fc5f7c8ab70d6b3a5193321ca2392a3c225970ec3224a6603fae94"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/pkgconf-pkg-config-1.4.2-1.el8.aarch64.rpm"
+
+[[package]]
+name = "popt"
+evr = "1.18-1.el8"
+arch = "aarch64"
+sha256 = "0b152ba0c29df0d4f7d079a367e9bb81513c4e69955dbe494bf38b772634d0f2"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/popt-1.18-1.el8.aarch64.rpm"
+
+[[package]]
+name = "publicsuffix-list-dafsa"
+evr = "20180723-1.el8"
+arch = "noarch"
+sha256 = "cf31f0385b77c1d4a786e46f54068663a916669345249abd7bb341fd9db572f2"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/p/publicsuffix-list-dafsa-20180723-1.el8.noarch.rpm"
+
+[[package]]
+name = "pulseaudio-libs"
+evr = "14.0-4.el8"
+arch = "aarch64"
+sha256 = "ec4b645017d7268f762f3f82b933793520eb17002a02901210e3e04dc70f3243"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/p/pulseaudio-libs-14.0-4.el8.aarch64.rpm"
+
+[[package]]
+name = "pulseaudio-libs-devel"
+evr = "14.0-4.el8"
+arch = "aarch64"
+sha256 = "256b2ab75e39e1db78604d6b2d8a59ce26a2513ec19601f5dfc3ada486a830b8"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/p/pulseaudio-libs-devel-14.0-4.el8.aarch64.rpm"
+
+[[package]]
+name = "pulseaudio-libs-glib2"
+evr = "14.0-4.el8"
+arch = "aarch64"
+sha256 = "63e80714c2311d2412fbf3ef5edf56d3ec7707567418cca74028b3c2df184117"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/p/pulseaudio-libs-glib2-14.0-4.el8.aarch64.rpm"
+
+[[package]]
+name = "readline"
+evr = "7.0-10.el8"
+arch = "aarch64"
+sha256 = "cee4b35e604faac3f4d785331654c74d3d6c3ded32c8d34ab8f7782ec9157f93"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/r/readline-7.0-10.el8.aarch64.rpm"
+
+[[package]]
+name = "rpm"
+evr = "4.14.3-32.el8_10"
+arch = "aarch64"
+sha256 = "c41b6a4edd873a566c2a31be6a1819ac401a3a8658823c671601423b984db4ee"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/r/rpm-4.14.3-32.el8_10.aarch64.rpm"
+
+[[package]]
+name = "rpm-libs"
+evr = "4.14.3-32.el8_10"
+arch = "aarch64"
+sha256 = "db28dac831e80cc5cdeeac4f5b17270f8dcae08b3e6cf7360885527812c65aa3"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/r/rpm-libs-4.14.3-32.el8_10.aarch64.rpm"
+
+[[package]]
+name = "speech-dispatcher"
+evr = "0.8.8-6.el8"
+arch = "aarch64"
+sha256 = "31016699ec216568fd1ad221f7da45ba2924fee9813d41f029b4812dbeaa0d5f"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/s/speech-dispatcher-0.8.8-6.el8.aarch64.rpm"
+
+[[package]]
+name = "speech-dispatcher-devel"
+evr = "0.8.8-6.el8"
+arch = "aarch64"
+sha256 = "b56caf478b4a5acd0f1005d5439e9b35f5194e2eb89e620f61d7d303b9ff866d"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/s/speech-dispatcher-devel-0.8.8-6.el8.aarch64.rpm"
+
+[[package]]
+name = "speech-dispatcher-espeak-ng"
+evr = "0.8.8-6.el8"
+arch = "aarch64"
+sha256 = "2484b98e123631890f2e9d5d2c152d4b1d592fec744ec664512889d3522f99fd"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/s/speech-dispatcher-espeak-ng-0.8.8-6.el8.aarch64.rpm"
+
+[[package]]
+name = "sqlite"
+evr = "3.26.0-21.el8_10"
+arch = "aarch64"
+sha256 = "bbf6b9b38b19e1ba60b4db1837acf00fd5fdf71dbd18475273b4153b75f51afd"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/s/sqlite-3.26.0-21.el8_10.aarch64.rpm"
+
+[[package]]
+name = "sqlite-devel"
+evr = "3.26.0-21.el8_10"
+arch = "aarch64"
+sha256 = "bd328a330e2c368fbcda645f1d70386910e1248c1264fa9714dae7468e543010"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/s/sqlite-devel-3.26.0-21.el8_10.aarch64.rpm"
+
+[[package]]
+name = "sqlite-libs"
+evr = "3.26.0-21.el8_10"
+arch = "aarch64"
+sha256 = "94884e7e803aed8f7860deb561139a6390efa239c5e031cc3e63839d55116385"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/s/sqlite-libs-3.26.0-21.el8_10.aarch64.rpm"
+
+[[package]]
+name = "systemd-devel"
+evr = "239-82.el8_10.17"
+arch = "aarch64"
+sha256 = "5b65bbe8e70a2d64eb44b5deee0c36054549424a790c7c1dce1d17d98270862f"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/s/systemd-devel-239-82.el8_10.17.aarch64.rpm"
+
+[[package]]
+name = "systemd-libs"
+evr = "239-82.el8_10.17"
+arch = "aarch64"
+sha256 = "91d4201a90c433878a5c874038619fe34c910572a4c2d0d23e8941b08b08c3eb"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/s/systemd-libs-239-82.el8_10.17.aarch64.rpm"
+
+[[package]]
+name = "systemd-pam"
+evr = "239-82.el8_10.17"
+arch = "aarch64"
+sha256 = "464ce7ac0e1af55076f4f9740ce4c2112245a63247bab78b23cd0a4d6ad3c362"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/s/systemd-pam-239-82.el8_10.17.aarch64.rpm"
+
+[[package]]
+name = "unbound-libs"
+evr = "1.16.2-5.14.el8_10"
+arch = "aarch64"
+sha256 = "e11aa9dad8338f35e690e0a96016f9d611206af642befdd6333497de2245c96f"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/u/unbound-libs-1.16.2-5.14.el8_10.aarch64.rpm"
+
+[[package]]
+name = "valgrind-devel"
+evr = "1:3.22.0-4.el8_10"
+arch = "aarch64"
+sha256 = "fd408faf1f477e8107bc61a8b45f48cb105f3c3bebdfb1b6896d820c1e41e450"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/v/valgrind-devel-3.22.0-4.el8_10.aarch64.rpm"
+
+[[package]]
+name = "vim-filesystem"
+evr = "2:8.0.1763-31.el8_10"
+arch = "noarch"
+sha256 = "4498902ae937c88758baaf98d2799a6bee006085d46b6fbb6e944fb34fd14a34"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/v/vim-filesystem-8.0.1763-31.el8_10.noarch.rpm"
+
+[[package]]
+name = "vulkan-headers"
+evr = "1.3.283.0-1.el8_10"
+arch = "noarch"
+sha256 = "cc5263b4899ce451345f65f08dd5c6e610388dc5e0dc43068eb3ca18fb0a6191"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/v/vulkan-headers-1.3.283.0-1.el8_10.noarch.rpm"
+
+[[package]]
+name = "vulkan-loader"
+evr = "1.3.283.0-1.el8_10"
+arch = "aarch64"
+sha256 = "7fc0f5ce7a33152e1928e00449113c8d2a5d069513132bb66c714f2c0c51ceb6"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/v/vulkan-loader-1.3.283.0-1.el8_10.aarch64.rpm"
+
+[[package]]
+name = "vulkan-loader-devel"
+evr = "1.3.283.0-1.el8_10"
+arch = "aarch64"
+sha256 = "ae4f552807a26132c2c11dd65327067879d6228d6a35a73fc735cd58631c4bf4"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/v/vulkan-loader-devel-1.3.283.0-1.el8_10.aarch64.rpm"
+
+[[package]]
+name = "wayland-devel"
+evr = "1.21.0-1.el8"
+arch = "aarch64"
+sha256 = "d8501bfd593b210ff4cc3b742c5fe7539661b8e0dd1d1cf1213d386a8ea19c8f"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/w/wayland-devel-1.21.0-1.el8.aarch64.rpm"
+
+[[package]]
+name = "wayland-protocols-devel"
+evr = "1.25-1.el8"
+arch = "noarch"
+sha256 = "c645c67840d46c277228fba73bf4e6bbb72e84f9e18128c1b6573e48ea19643b"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/w/wayland-protocols-devel-1.25-1.el8.noarch.rpm"
+
+[[package]]
+name = "xcb-util"
+evr = "0.4.0-10.el8"
+arch = "aarch64"
+sha256 = "b7cf047f6fa85a6b78849128f8865de800e4fd6676dc38a09b661a8f89c0bfd4"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/x/xcb-util-0.4.0-10.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-cursor"
+evr = "0.1.3-9.el8"
+arch = "aarch64"
+sha256 = "8642bdc5a5474444e1f379421cb0b8c5f117db94eaa309ae61b0cfc72b5d4a4b"
+url = "https://dl.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/x/xcb-util-cursor-0.1.3-9.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-cursor-devel"
+evr = "0.1.3-9.el8"
+arch = "aarch64"
+sha256 = "9c46722360d70ba848ed9cde7617d064085b858d3facc799ccab77682f2dddc2"
+url = "https://dl.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/x/xcb-util-cursor-devel-0.1.3-9.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-devel"
+evr = "0.4.0-10.el8"
+arch = "aarch64"
+sha256 = "4a4dcda0dcc08c0ddee3fdb626029b73061ee6d007e479266324a0cb159b1709"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/x/xcb-util-devel-0.4.0-10.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-image"
+evr = "0.4.0-9.el8"
+arch = "aarch64"
+sha256 = "139eddd6e6ac2ff90cfeb1145e3224641869778d4834ea94d549e3153dd080b3"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/x/xcb-util-image-0.4.0-9.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-image-devel"
+evr = "0.4.0-9.el8"
+arch = "aarch64"
+sha256 = "1f3ba0762b9b968efb9731c1fa57d0d4689f573d88946c3da970701077353ba2"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/x/xcb-util-image-devel-0.4.0-9.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-keysyms"
+evr = "0.4.0-7.el8"
+arch = "aarch64"
+sha256 = "a5483d4d56cbf42981da861d735b12f7ef4df1ce0df403e2c34a968445533fd1"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/x/xcb-util-keysyms-0.4.0-7.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-keysyms-devel"
+evr = "0.4.0-7.el8"
+arch = "aarch64"
+sha256 = "10f0fbe30c583c52ccec2485abff7dbcd62a5aeaf901d57dbc03c67dee780279"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/x/xcb-util-keysyms-devel-0.4.0-7.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-renderutil"
+evr = "0.3.9-10.el8"
+arch = "aarch64"
+sha256 = "b7b91ecaebf3217c31e82b829569e380811b79725d1df86bec69fdd7bcb261bf"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/x/xcb-util-renderutil-0.3.9-10.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-renderutil-devel"
+evr = "0.3.9-10.el8"
+arch = "aarch64"
+sha256 = "82dda08e2d36860b7a4a95bcd2da09f115a89604c29c1bd54b774d89ace0a258"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/x/xcb-util-renderutil-devel-0.3.9-10.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-wm"
+evr = "0.4.1-12.el8"
+arch = "aarch64"
+sha256 = "9a544806be602e0630c57c897a41a9b699e377d68eb767bf526de99c328b7bd5"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/x/xcb-util-wm-0.4.1-12.el8.aarch64.rpm"
+
+[[package]]
+name = "xcb-util-wm-devel"
+evr = "0.4.1-12.el8"
+arch = "aarch64"
+sha256 = "d5395fefbc139cd3d0976bf5b7040b8c54d9d0cde5f081bf2034e688adc34435"
+url = "https://download.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/x/xcb-util-wm-devel-0.4.1-12.el8.aarch64.rpm"
+
+[[package]]
+name = "xkeyboard-config"
+evr = "2.28-1.el8"
+arch = "noarch"
+sha256 = "66853f37796011f8bd91e5068c80e00d74d7a98d1c468f416116bac1d3d4db6e"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/x/xkeyboard-config-2.28-1.el8.noarch.rpm"
+
+[[package]]
+name = "xml-common"
+evr = "0.6.3-50.el8"
+arch = "noarch"
+sha256 = "5407a829de913903015e5593d3b70757d9375fc11afcbde96eaab9cf0877b2f2"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/x/xml-common-0.6.3-50.el8.noarch.rpm"
+
+[[package]]
+name = "xorg-x11-proto-devel"
+evr = "2020.1-3.el8"
+arch = "noarch"
+sha256 = "aa75375b6709706c2dfeb39934ae46f7e499f9adb176d8e05942ab94584b7556"
+url = "https://download.rockylinux.org/pub/rocky/8/AppStream/aarch64/os/Packages/x/xorg-x11-proto-devel-2020.1-3.el8.noarch.rpm"
+
+[[package]]
+name = "xz-devel"
+evr = "5.2.4-4.el8_6"
+arch = "aarch64"
+sha256 = "2c915df260a0cf9280625dd99345a5b86f7f050385d1bb881058801fdb625671"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/x/xz-devel-5.2.4-4.el8_6.aarch64.rpm"
+
+[[package]]
+name = "xz-libs"
+evr = "5.2.4-4.el8_6"
+arch = "aarch64"
+sha256 = "5813ddb231f6b96c4de61e76b8b393b9506d39e490e0b51e54000412b41474f5"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/x/xz-libs-5.2.4-4.el8_6.aarch64.rpm"
+
+[[package]]
+name = "zlib"
+evr = "1.2.11-26.el8"
+arch = "aarch64"
+sha256 = "cd82f7d2a702787c02cdda00adee2c53117155c63b08ce0e33f87ad064579db6"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/z/zlib-1.2.11-26.el8.aarch64.rpm"
+
+[[package]]
+name = "zlib-devel"
+evr = "1.2.11-26.el8"
+arch = "aarch64"
+sha256 = "c78361b7dcaefdcd953a5c3e124e073f5afbfc9aead8e7c67a31603bbf090643"
+url = "https://download.rockylinux.org/pub/rocky/8/BaseOS/aarch64/os/Packages/z/zlib-devel-1.2.11-26.el8.aarch64.rpm"

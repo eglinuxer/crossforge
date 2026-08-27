@@ -47,6 +47,7 @@ mod elfpatch;
 mod engine;
 mod error;
 mod fetch;
+mod lockfile;
 mod pack;
 mod python;
 mod repodata;
@@ -79,6 +80,7 @@ pub use engine::{
 };
 pub use error::{Error, Result};
 pub use fetch::Fetcher;
+pub use lockfile::{LOCK_SCHEMA, LockedPackage, SysrootLock};
 pub use pack::{
     BundleEntry, PackedToolchain, PythonEntry, pack_python, pack_toolchain, write_manifest,
 };

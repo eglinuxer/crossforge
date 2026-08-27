@@ -142,6 +142,22 @@ images (stripped interpreter and extensions, no static libpython, no test
 suite: ~64MB per pack, matching the official 66MB). Wheels target
 `manylinux_2_28` only, so packs build for the el8 baseline only.
 
+Sysroot contents can be locked. Resolution reads live repository metadata
+and takes the newest build of everything, so the same crossforge revision
+yields a different sysroot next month — fine for "give me a baseline",
+useless for "give me *that* baseline again":
+
+```console
+$ crossforge sysroot --profile qt6 --target aarch64 --lock sysroot-locks/el8-aarch64-qt6.toml
+$ crossforge sysroot --profile qt6 --target aarch64 --locked sysroot-locks/el8-aarch64-qt6.toml
+```
+
+A lock pins every package by NEVRA, content hash and URL. Replaying one
+reproduces the sysroot exactly (verified file-for-file over 11,125 entries)
+and reads no repository metadata at all, which also makes it far
+faster — seconds instead of parsing several megabytes of primary.xml per
+repository.
+
 `scripts/compare-manylinux-python.py` is the supply-chain cross-check gate:
 it diffs every pack's `pyconfig.h` + `_sysconfigdata_*.py` against the
 official manylinux_2_28 images and fails on any ABI-relevant difference.

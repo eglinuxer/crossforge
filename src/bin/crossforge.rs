@@ -66,6 +66,13 @@ enum Command {
         /// Resolve and report the package set without downloading anything.
         #[arg(long)]
         dry_run: bool,
+        /// Write the resolved package set to a lockfile.
+        #[arg(long)]
+        lock: Option<PathBuf>,
+        /// Build from a lockfile instead of resolving: same packages every
+        /// time, and no repository metadata is read at all.
+        #[arg(long, conflicts_with_all = ["dry_run", "lock"])]
+        locked: Option<PathBuf>,
     },
     /// Audit ELF files against a baseline sysroot (exit 1 on errors).
     Audit {
@@ -282,6 +289,8 @@ fn main() -> crossforge::Result<()> {
             profile,
             work_dir,
             dry_run,
+            lock,
+            locked,
         } => {
             let registry = BaselineRegistry::builtin();
             let sources = SourceRegistry::builtin();
@@ -326,6 +335,44 @@ fn main() -> crossforge::Result<()> {
                 format!("{baseline}-{profile}-{target}")
             };
             let out = work_dir.join("sysroots").join(sysroot_id);
+
+            if let Some(path) = &locked {
+                let lock = crossforge::SysrootLock::read(path)?;
+                let artifact = generator.generate_locked(def, arch, &lock, &out)?;
+                println!(
+                    "sysroot: {} (from {})",
+                    artifact.root.display(),
+                    path.display()
+                );
+                return Ok(());
+            }
+
+            if let Some(path) = &lock {
+                let plan = generator.plan(def, arch, &expanded)?;
+                if !plan.outcome.missing_seeds.is_empty() {
+                    return Err(crossforge::Error::PackageNotFound {
+                        name: plan.outcome.missing_seeds.join(", "),
+                        arch: arch.to_string(),
+                    });
+                }
+                let source = def.source.clone();
+                let lockfile = crossforge::SysrootLock::from_resolved(
+                    &baseline,
+                    arch,
+                    &profile,
+                    &source,
+                    &plan.outcome.unresolved,
+                    &plan.packages,
+                );
+                lockfile.write(path)?;
+                println!(
+                    "lock: {} ({} packages)",
+                    path.display(),
+                    lockfile.package.len()
+                );
+                return Ok(());
+            }
+
             let artifact = generator.generate(def, arch, &expanded, &out)?;
             println!("sysroot: {}", artifact.root.display());
         }

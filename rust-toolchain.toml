@@ -1,0 +1,6 @@
+# Pinned so a build is not at the mercy of whatever "stable" means today.
+# CI resolves this file rather than dtolnay/rust-toolchain@stable, which
+# would silently change compiler under the project between runs.
+[toolchain]
+channel = "1.98.0"
+components = ["rustfmt", "clippy"]
