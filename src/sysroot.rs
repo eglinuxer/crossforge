@@ -10,9 +10,9 @@ use crate::baseline::BaselineDef;
 use crate::elfdyn;
 use crate::error::{Error, Result};
 use crate::fetch::Fetcher;
-use crate::repodata::{self, RepoPackage};
+use crate::repodata::{self, RepoPackage, ResolveOutcome};
 use crate::rpm;
-use crate::source::SourceRegistry;
+use crate::source::{ExpandedProfile, SourceRegistry};
 use crate::target::TargetArch;
 
 /// Libraries whose exported-symbol lists (abilists) are recorded for the audit
@@ -47,9 +47,30 @@ pub struct SysrootMetadata {
     pub arch: String,
     pub source: String,
     pub glibc: String,
+    /// Content profile this sysroot was built from (design doc §5.1). Part
+    /// of the environment identity: the same baseline with a different
+    /// profile is a different build environment.
+    #[serde(default = "default_profile")]
+    pub profile: String,
     pub generator: String,
     pub packages: Vec<PackageRecord>,
     pub abilists: Vec<String>,
+    /// Capabilities nothing in the repos provides. Harmless for a link-time
+    /// tree (they are runtime-only), recorded so the gap is auditable.
+    #[serde(default)]
+    pub unresolved: Vec<String>,
+}
+
+fn default_profile() -> String {
+    crate::source::DEFAULT_PROFILE.to_string()
+}
+
+/// What a profile resolves to, before anything is downloaded.
+#[derive(Debug, Clone)]
+pub struct SysrootPlan {
+    /// `(repo url, package)` for every package that will be extracted.
+    pub packages: Vec<(String, RepoPackage)>,
+    pub outcome: ResolveOutcome,
 }
 
 /// A generated sysroot on disk.
@@ -82,10 +103,85 @@ impl<'a> SysrootGenerator<'a> {
     ///
     /// Idempotent: an existing sysroot (detected via its metadata file) is
     /// returned as-is without touching the network.
+    /// Resolves a profile against the live repo metadata without downloading
+    /// any package — the fast path for validating a profile's seed list.
+    pub fn plan(
+        &self,
+        baseline: &BaselineDef,
+        arch: TargetArch,
+        profile: &ExpandedProfile,
+    ) -> Result<SysrootPlan> {
+        if !baseline.supports(arch) {
+            return Err(Error::UnsupportedArch {
+                baseline: baseline.alias.clone(),
+                arch: arch.to_string(),
+            });
+        }
+        let source = self
+            .sources
+            .get(&baseline.source)
+            .ok_or_else(|| Error::UnknownSource(baseline.source.clone()))?;
+
+        let mut repos = source.repo_urls(arch, self.mirror.as_deref());
+        repos.extend(profile.repo_urls(arch));
+        let mut available: Vec<(String, RepoPackage)> = Vec::new();
+        for repo_url in repos {
+            for pkg in self.load_repo(&repo_url)? {
+                available.push((repo_url.clone(), pkg));
+            }
+        }
+
+        // The source's curated list is always the seed base; a profile adds
+        // depth on top of it.
+        let mut seeds = source.packages.clone();
+        for pkg in &profile.packages {
+            if !seeds.contains(pkg) {
+                seeds.push(pkg.clone());
+            }
+        }
+
+        if !profile.resolve {
+            // Curated exact list: newest build of each named package.
+            let mut packages = Vec::new();
+            for name in &seeds {
+                let best = available
+                    .iter()
+                    .filter(|(_, p)| {
+                        &p.name == name && (p.arch == arch.as_str() || p.arch == "noarch")
+                    })
+                    .max_by(|(_, a), (_, b)| a.evr_cmp(b));
+                match best {
+                    Some((repo, pkg)) => packages.push((repo.clone(), pkg.clone())),
+                    None => {
+                        return Err(Error::PackageNotFound {
+                            name: name.clone(),
+                            arch: arch.to_string(),
+                        });
+                    }
+                }
+            }
+            return Ok(SysrootPlan {
+                packages,
+                outcome: ResolveOutcome::default(),
+            });
+        }
+
+        let mut exclude = source.exclude.clone();
+        exclude.extend(profile.exclude.iter().cloned());
+        let outcome = repodata::resolve_closure(&available, arch.as_str(), &seeds, &exclude)?;
+        let packages = outcome
+            .selected
+            .iter()
+            .map(|i| available[*i].clone())
+            .collect();
+        Ok(SysrootPlan { packages, outcome })
+    }
+
     pub fn generate(
         &self,
         baseline: &BaselineDef,
         arch: TargetArch,
+        profile: &ExpandedProfile,
         out_dir: &Path,
     ) -> Result<SysrootArtifact> {
         let meta_path = out_dir.join(META_DIR).join("sysroot.toml");
@@ -98,42 +194,28 @@ impl<'a> SysrootGenerator<'a> {
                 metadata,
             });
         }
-        if !baseline.supports(arch) {
-            return Err(Error::UnsupportedArch {
-                baseline: baseline.alias.clone(),
+        // 1-2. Resolve the profile against the repos.
+        let plan = self.plan(baseline, arch, profile)?;
+        if !plan.outcome.missing_seeds.is_empty() {
+            return Err(Error::PackageNotFound {
+                name: plan.outcome.missing_seeds.join(", "),
                 arch: arch.to_string(),
             });
         }
+        for cap in &plan.outcome.unresolved {
+            tracing::debug!(capability = %cap, "no provider in the configured repos");
+        }
+        let picked = plan.packages;
         let source = self
             .sources
             .get(&baseline.source)
             .ok_or_else(|| Error::UnknownSource(baseline.source.clone()))?;
-
-        // 1. Collect package lists from every repo.
-        let mut available: Vec<(String, RepoPackage)> = Vec::new();
-        for repo_url in source.repo_urls(arch, self.mirror.as_deref()) {
-            for pkg in self.load_repo(&repo_url)? {
-                available.push((repo_url.clone(), pkg));
-            }
-        }
-
-        // 2. Pick the newest build of each wanted package for this arch.
-        let mut picked: Vec<(String, RepoPackage)> = Vec::new();
-        for name in &source.packages {
-            let best = available
-                .iter()
-                .filter(|(_, p)| &p.name == name && p.arch == arch.as_str())
-                .max_by(|(_, a), (_, b)| a.evr_cmp(b));
-            match best {
-                Some((repo, pkg)) => picked.push((repo.clone(), pkg.clone())),
-                None => {
-                    return Err(Error::PackageNotFound {
-                        name: name.clone(),
-                        arch: arch.to_string(),
-                    });
-                }
-            }
-        }
+        tracing::info!(
+            profile = %profile.id,
+            packages = picked.len(),
+            unresolved = plan.outcome.unresolved.len(),
+            "sysroot package set resolved"
+        );
 
         // 3. Fetch and extract.
         std::fs::create_dir_all(out_dir)?;
@@ -179,9 +261,11 @@ impl<'a> SysrootGenerator<'a> {
             arch: arch.to_string(),
             source: source.id.clone(),
             glibc: baseline.glibc.clone(),
+            profile: profile.id.clone(),
             generator: format!("crossforge {}", env!("CARGO_PKG_VERSION")),
             packages: records,
             abilists,
+            unresolved: plan.outcome.unresolved.clone(),
         };
         std::fs::create_dir_all(meta_path.parent().unwrap())?;
         std::fs::write(&meta_path, toml::to_string_pretty(&metadata)?)?;

@@ -38,6 +38,19 @@ packages = [
     "libuuid",
     "libuuid-devel",
 ]
+# Never pulled in by dependency resolution: a sysroot is a link-time tree,
+# so the bootstrap/runtime chain (shells, coreutils, locales, daemons,
+# interpreters) is dead weight. A trailing `*` matches by prefix.
+exclude = [
+    "filesystem", "setup", "basesystem", "rocky-release", "redhat-release",
+    "bash", "coreutils", "coreutils-single", "glibc-common",
+    "glibc-all-langpacks", "glibc-langpack-*", "tzdata", "info",
+    "grep", "sed", "gawk", "shadow-utils", "util-linux",
+    "systemd", "systemd-udev", "dbus", "dbus-common", "dbus-daemon",
+    "python3*", "platform-python*", "perl*", "crypto-policies*",
+    "ca-certificates", "gtk-update-icon-cache", "hicolor-icon-theme",
+    "adwaita-*", "gnome-*", "desktop-file-utils", "shared-mime-info",
+]
 
 [[source]]
 id = "centos-7"
@@ -61,4 +74,77 @@ packages = [
 aarch64 = [
     "{base}/altarch/7.9.2009/os/{arch}/",
     "{base}/altarch/7.9.2009/updates/{arch}/",
+]
+
+# --- Sysroot content profiles (design doc §5.1) -----------------------------
+# Tiered on purpose: a project pulls in the depth it needs, and the profile id
+# is part of the environment identity (same gcc/baseline/target but a
+# different profile is a *different* build environment).
+#
+# Profiles beyond `minimal` are seed sets resolved to their transitive
+# closure, so nothing has to be hand-listed. Packages missing from a
+# distribution are reported as missing seeds — several of these have bundled
+# fallbacks in Qt, so trim per baseline rather than assuming availability.
+
+[[profile]]
+id = "minimal"
+# The source's curated list, verbatim: proven content that must not drift.
+resolve = false
+
+# Fonts, images, text shaping, audio/video, GPU and input — everything a Qt
+# build needs that is not tied to a specific display protocol.
+[[profile]]
+id = "gui"
+packages = [
+    "freetype-devel", "fontconfig-devel",
+    "libpng-devel", "libjpeg-turbo-devel", "libtiff-devel", "libwebp-devel",
+    "harfbuzz-devel", "pcre2-devel", "glib2-devel", "libicu-devel",
+    "libzstd-devel", "brotli-devel",
+    "dbus-devel", "libxkbcommon-devel",
+    "libinput-devel", "mtdev-devel", "libevdev-devel", "systemd-devel",
+    "mesa-libGL-devel", "mesa-libEGL-devel", "mesa-libgbm-devel",
+    "libdrm-devel", "libglvnd-devel",
+    "alsa-lib-devel", "pulseaudio-libs-devel",
+    "gstreamer1-devel", "gstreamer1-plugins-base-devel",
+    "cups-devel", "libcap-devel",
+    "vulkan-loader-devel", "vulkan-headers",
+]
+
+[[profile]]
+id = "x11"
+include = ["gui"]
+packages = [
+    "libX11-devel", "libXext-devel", "libXrender-devel", "libXi-devel",
+    "libXcursor-devel", "libXrandr-devel", "libXfixes-devel",
+    "libXcomposite-devel", "libXdamage-devel", "libXtst-devel",
+    "libXScrnSaver-devel", "libSM-devel", "libICE-devel",
+    "libxcb-devel", "xcb-util-devel", "xcb-util-image-devel",
+    "xcb-util-keysyms-devel", "xcb-util-renderutil-devel",
+    "xcb-util-wm-devel", "xcb-util-cursor-devel",
+    "xorg-x11-proto-devel",
+]
+
+[[profile]]
+id = "wayland"
+include = ["gui"]
+packages = [
+    "wayland-devel", "wayland-protocols-devel", "mesa-libwayland-egl-devel",
+]
+
+# The full Qt 6 module set: qtbase through qtwebengine.
+[[profile]]
+id = "qt6"
+include = ["x11", "wayland"]
+# EPEL only enters here, and only because RHEL 8 genuinely lacks two
+# packages Qt 6 needs: xcb-util-cursor (a hard requirement of the xcb QPA
+# plugin since Qt 6.5) and minizip (qtwebengine). Everything is still
+# recorded by NEVRA + sha256, so the closure stays auditable; the narrower
+# profiles keep the pure Rocky/RHEL chain.
+repos = ["https://dl.fedoraproject.org/pub/epel/8/Everything/{arch}/"]
+packages = [
+    "openssl-devel", "libproxy-devel", "speech-dispatcher-devel",
+    "bluez-libs-devel", "libxml2-devel", "libxslt-devel",
+    "nss-devel", "nspr-devel", "libatomic",
+    "at-spi2-core-devel", "atk-devel",
+    "xcb-util-cursor-devel", "minizip-devel",
 ]

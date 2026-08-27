@@ -33,6 +33,10 @@ enum Command {
         baseline: String,
         #[arg(long, default_value = "x86_64")]
         target: String,
+        /// Sysroot content profile (minimal / gui / x11 / wayland / qt6);
+        /// part of the toolchain id when not minimal.
+        #[arg(long, default_value = crossforge::DEFAULT_PROFILE)]
+        sysroot_profile: String,
         /// Container image for the build environment (e.g. crossforge-buildenv:el8);
         /// omit to build directly on the host.
         #[arg(long, env = "CROSSFORGE_IMAGE")]
@@ -53,8 +57,15 @@ enum Command {
         baseline: String,
         #[arg(long, default_value = "x86_64")]
         target: String,
+        /// Content profile: minimal (curated list) or a resolved one
+        /// (gui / x11 / wayland / qt6).
+        #[arg(long, default_value = crossforge::DEFAULT_PROFILE)]
+        profile: String,
         #[arg(long, default_value = "/tmp/crossforge")]
         work_dir: PathBuf,
+        /// Resolve and report the package set without downloading anything.
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Audit ELF files against a baseline sysroot (exit 1 on errors).
     Audit {
@@ -213,6 +224,7 @@ fn main() -> crossforge::Result<()> {
             binutils,
             baseline,
             target,
+            sysroot_profile,
             image,
             work_dir,
             jobs,
@@ -225,6 +237,7 @@ fn main() -> crossforge::Result<()> {
                 .binutils(binutils)
                 .baseline(baseline)
                 .target(target.parse::<TargetArch>()?)
+                .sysroot_profile(sysroot_profile)
                 .build(&registry)?;
             let config = BuildConfig {
                 cache_dir: work_dir.join("cache"),
@@ -256,22 +269,54 @@ fn main() -> crossforge::Result<()> {
         Command::Sysroot {
             baseline,
             target,
+            profile,
             work_dir,
+            dry_run,
         } => {
             let registry = BaselineRegistry::builtin();
             let sources = SourceRegistry::builtin();
             let def = registry
                 .get(&baseline)
                 .ok_or_else(|| crossforge::Error::UnknownBaseline(baseline.clone()))?;
+            let arch = target.parse::<TargetArch>()?;
+            let expanded = sources.profile(&profile)?;
             let fetcher = Fetcher::new(work_dir.join("cache"))?;
-            let out = work_dir
-                .join("sysroots")
-                .join(format!("{baseline}-{target}"));
-            let artifact = SysrootGenerator::new(&fetcher, &sources, None).generate(
-                def,
-                target.parse::<TargetArch>()?,
-                &out,
-            )?;
+            let generator = SysrootGenerator::new(&fetcher, &sources, None);
+            if dry_run {
+                let plan = generator.plan(def, arch, &expanded)?;
+                println!(
+                    "profile {profile}: {} packages resolved",
+                    plan.packages.len()
+                );
+                for (_, pkg) in &plan.packages {
+                    println!("  {} {} ({})", pkg.name, pkg.evr(), pkg.arch);
+                }
+                if !plan.outcome.missing_seeds.is_empty() {
+                    println!(
+                        "\nMISSING SEEDS ({}): {}",
+                        plan.outcome.missing_seeds.len(),
+                        plan.outcome.missing_seeds.join(" ")
+                    );
+                }
+                if !plan.outcome.unresolved.is_empty() {
+                    println!(
+                        "\nunsatisfied capabilities ({}): {}",
+                        plan.outcome.unresolved.len(),
+                        plan.outcome.unresolved.join(" ")
+                    );
+                }
+                if !plan.outcome.missing_seeds.is_empty() {
+                    std::process::exit(1);
+                }
+                return Ok(());
+            }
+            let sysroot_id = if profile == crossforge::DEFAULT_PROFILE {
+                format!("{baseline}-{target}")
+            } else {
+                format!("{baseline}-{profile}-{target}")
+            };
+            let out = work_dir.join("sysroots").join(sysroot_id);
+            let artifact = generator.generate(def, arch, &expanded, &out)?;
             println!("sysroot: {}", artifact.root.display());
         }
         Command::Audit {

@@ -225,9 +225,10 @@ impl<R: Runner> BuildEngine<R> {
             .config
             .work_dir
             .join("sysroots")
-            .join(format!("{}-{}", baseline.alias, spec.target));
+            .join(spec.sysroot_id());
+        let profile = sources.profile(&spec.sysroot_profile)?;
         let sysroot = SysrootGenerator::new(&fetcher, &sources, self.config.mirror.clone())
-            .generate(baseline, spec.target, &sysroot_dir)?;
+            .generate(baseline, spec.target, &profile, &sysroot_dir)?;
 
         let jobs = self.config.jobs.unwrap_or_else(|| {
             std::thread::available_parallelism()
@@ -251,6 +252,7 @@ impl<R: Runner> BuildEngine<R> {
         compat.build(spec, baseline, &compiler)?;
 
         write_cmake_toolchain_file(&compiler.prefix, spec)?;
+        write_env_script(&compiler.prefix, spec)?;
 
         Ok(ToolchainArtifact {
             root: compiler.prefix,
@@ -277,11 +279,16 @@ fn write_cmake_toolchain_file(prefix: &Path, spec: &ToolchainSpec) -> Result<()>
          set(CMAKE_AR \"${{_crossforge_root}}/bin/{triple}-ar\")\n\
          set(CMAKE_RANLIB \"${{_crossforge_root}}/bin/{triple}-ranlib\")\n\
          set(CMAKE_STRIP \"${{_crossforge_root}}/bin/{triple}-strip\")\n\
+         set(CMAKE_SYSROOT \"${{_crossforge_root}}/{triple}/sysroot\")\n\
          set(CMAKE_FIND_ROOT_PATH \"${{_crossforge_root}}/{triple}/sysroot\")\n\
          set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)\n\
          set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)\n\
          set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)\n\
-         set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)\n",
+         set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)\n\
+         # pkg-config must read the target's .pc files, with paths rewritten\n\
+         # into the sysroot (a plain PKG_CONFIG_PATH would leak host libs).\n\
+         set(ENV{{PKG_CONFIG_SYSROOT_DIR}} \"${{_crossforge_root}}/{triple}/sysroot\")\n\
+         set(ENV{{PKG_CONFIG_LIBDIR}} \"${{_crossforge_root}}/{triple}/sysroot/usr/lib64/pkgconfig:${{_crossforge_root}}/{triple}/sysroot/usr/share/pkgconfig\")\n",
         triple = triple,
         baseline = spec.baseline,
         arch = spec.target.as_str(),
@@ -289,6 +296,67 @@ fn write_cmake_toolchain_file(prefix: &Path, spec: &ToolchainSpec) -> Result<()>
     let path = prefix.join("toolchain.cmake");
     std::fs::write(&path, content)?;
     tracing::info!(file = %path.display(), "CMake toolchain file written");
+    Ok(())
+}
+
+/// Writes `crossenv.sh`: the same environment the CMake toolchain file sets,
+/// for build systems that are not CMake (autotools, meson, plain make). It
+/// locates itself, so the prefix stays relocatable, and regenerates the
+/// meson cross file on each source since meson cannot express relative paths.
+fn write_env_script(prefix: &Path, spec: &ToolchainSpec) -> Result<()> {
+    let triple = spec.target.triple();
+    let arch = spec.target.as_str();
+    let content = format!(
+        r#"# crossforge environment for {triple} (baseline {baseline}, sysroot profile {profile}).
+# Usage: . <prefix>/crossenv.sh
+CROSSFORGE_ROOT="$(cd "$(dirname "${{BASH_SOURCE[0]:-$0}}")" && pwd)"
+CROSSFORGE_SYSROOT="$CROSSFORGE_ROOT/{triple}/sysroot"
+CROSSFORGE_TRIPLE="{triple}"
+export CROSSFORGE_ROOT CROSSFORGE_SYSROOT CROSSFORGE_TRIPLE
+export PATH="$CROSSFORGE_ROOT/bin:$PATH"
+export CC="{triple}-gcc"
+export CXX="{triple}-g++"
+export AR="{triple}-ar"
+export RANLIB="{triple}-ranlib"
+export STRIP="{triple}-strip"
+export LD="{triple}-ld"
+export NM="{triple}-nm"
+export OBJCOPY="{triple}-objcopy"
+export OBJDUMP="{triple}-objdump"
+export READELF="{triple}-readelf"
+export PKG_CONFIG_SYSROOT_DIR="$CROSSFORGE_SYSROOT"
+export PKG_CONFIG_LIBDIR="$CROSSFORGE_SYSROOT/usr/lib64/pkgconfig:$CROSSFORGE_SYSROOT/usr/share/pkgconfig"
+export CMAKE_TOOLCHAIN_FILE="$CROSSFORGE_ROOT/toolchain.cmake"
+
+# meson cannot express relative paths in a cross file, so regenerate it here.
+cat > "$CROSSFORGE_ROOT/meson-cross.ini" <<EOF
+[binaries]
+c = '$CROSSFORGE_ROOT/bin/{triple}-gcc'
+cpp = '$CROSSFORGE_ROOT/bin/{triple}-g++'
+ar = '$CROSSFORGE_ROOT/bin/{triple}-ar'
+strip = '$CROSSFORGE_ROOT/bin/{triple}-strip'
+pkg-config = 'pkg-config'
+
+[host_machine]
+system = 'linux'
+cpu_family = '{arch}'
+cpu = '{arch}'
+endian = 'little'
+
+[properties]
+sys_root = '$CROSSFORGE_SYSROOT'
+pkg_config_libdir = '$CROSSFORGE_SYSROOT/usr/lib64/pkgconfig:$CROSSFORGE_SYSROOT/usr/share/pkgconfig'
+EOF
+export CROSSFORGE_MESON_CROSS="$CROSSFORGE_ROOT/meson-cross.ini"
+"#,
+        triple = triple,
+        arch = arch,
+        baseline = spec.baseline,
+        profile = spec.sysroot_profile,
+    );
+    let path = prefix.join("crossenv.sh");
+    std::fs::write(&path, content)?;
+    tracing::info!(file = %path.display(), "environment script written");
     Ok(())
 }
 

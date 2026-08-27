@@ -11,8 +11,9 @@
 //!
 //! # Quick start
 //!
-//! Generate an el8 sysroot (milestone M1; the full compiler pipeline lands in
-//! M2/M3):
+//! Generate an el8 sysroot. The profile decides how deep the tree goes —
+//! `minimal` is the curated base list, `qt6` resolves the full dependency
+//! closure a Qt build needs:
 //!
 //! ```no_run
 //! use crossforge::{BaselineRegistry, Fetcher, SourceRegistry, SysrootGenerator, TargetArch};
@@ -22,9 +23,11 @@
 //! let sources = SourceRegistry::builtin();
 //! let fetcher = Fetcher::new("/build/cache".into())?;
 //! let generator = SysrootGenerator::new(&fetcher, &sources, None);
+//! let profile = sources.profile("minimal")?;
 //! let sysroot = generator.generate(
 //!     baselines.get("el8").unwrap(),
 //!     TargetArch::X86_64,
+//!     &profile,
 //!     "/build/sysroots/el8-x86_64".as_ref(),
 //! )?;
 //! println!("sysroot at {}", sysroot.root.display());
@@ -83,11 +86,11 @@ pub use python::{
     pull_pack,
 };
 pub use smoke::{SmokeOutcome, SmokeRunner};
-pub use source::{SourceDef, SourceRegistry};
+pub use source::{DEFAULT_PROFILE, ExpandedProfile, ProfileDef, SourceDef, SourceRegistry};
 pub use spec::{
     DEFAULT_BASELINE, DEFAULT_BINUTILS, DEFAULT_GCC, ToolchainSpec, ToolchainSpecBuilder,
 };
-pub use sysroot::{PackageRecord, SysrootArtifact, SysrootGenerator, SysrootMetadata};
+pub use sysroot::{PackageRecord, SysrootArtifact, SysrootGenerator, SysrootMetadata, SysrootPlan};
 pub use target::{TargetArch, VENDOR};
 pub use vendor::{VendoredLib, vendor_wheel};
 pub use verify::{VerifyResult, verify_in_containers};

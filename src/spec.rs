@@ -27,6 +27,10 @@ pub struct ToolchainSpec {
     pub target: TargetArch,
     /// Baseline alias (must exist in the registry used).
     pub baseline: String,
+    /// Sysroot content profile (design doc §5.1). Part of the identity: the
+    /// same compiler and baseline over a deeper sysroot is a different build
+    /// environment, and downstream consumers must be able to tell them apart.
+    pub sysroot_profile: String,
 }
 
 impl ToolchainSpec {
@@ -35,9 +39,28 @@ impl ToolchainSpec {
     }
 
     /// Artifact id such as `gcc14.2.1-el8-aarch64`, used for the store's
-    /// assembled view and the manifest.
+    /// assembled view and the manifest. A non-default sysroot profile is
+    /// appended (`gcc14.2.1-el8-qt6-aarch64`), so ids and published tags of
+    /// existing minimal toolchains stay unchanged.
     pub fn id(&self) -> String {
-        format!("gcc{}-{}-{}", self.gcc, self.baseline, self.target)
+        if self.sysroot_profile == crate::source::DEFAULT_PROFILE {
+            format!("gcc{}-{}-{}", self.gcc, self.baseline, self.target)
+        } else {
+            format!(
+                "gcc{}-{}-{}-{}",
+                self.gcc, self.baseline, self.sysroot_profile, self.target
+            )
+        }
+    }
+
+    /// Sysroot directory name for this spec, e.g. `el8-aarch64` or
+    /// `el8-qt6-aarch64`.
+    pub fn sysroot_id(&self) -> String {
+        if self.sysroot_profile == crate::source::DEFAULT_PROFILE {
+            format!("{}-{}", self.baseline, self.target)
+        } else {
+            format!("{}-{}-{}", self.baseline, self.sysroot_profile, self.target)
+        }
     }
 }
 
@@ -47,6 +70,7 @@ pub struct ToolchainSpecBuilder {
     binutils: Option<String>,
     target: Option<TargetArch>,
     baseline: Option<String>,
+    sysroot_profile: Option<String>,
 }
 
 impl ToolchainSpecBuilder {
@@ -70,6 +94,11 @@ impl ToolchainSpecBuilder {
         self
     }
 
+    pub fn sysroot_profile(mut self, profile: impl Into<String>) -> Self {
+        self.sysroot_profile = Some(profile.into());
+        self
+    }
+
     /// Applies defaults and validates against the registry: the baseline must
     /// exist and support the target arch.
     pub fn build(self, registry: &BaselineRegistry) -> Result<ToolchainSpec> {
@@ -82,6 +111,9 @@ impl ToolchainSpecBuilder {
             baseline: self
                 .baseline
                 .unwrap_or_else(|| DEFAULT_BASELINE.to_string()),
+            sysroot_profile: self
+                .sysroot_profile
+                .unwrap_or_else(|| crate::source::DEFAULT_PROFILE.to_string()),
         };
         let Some(def) = registry.get(&spec.baseline) else {
             return Err(Error::UnknownBaseline(spec.baseline));
@@ -109,6 +141,19 @@ mod tests {
         assert_eq!(spec.baseline, "el8");
         assert_eq!(spec.target, TargetArch::X86_64);
         assert_eq!(spec.id(), "gcc14.2.1-el8-x86_64");
+        assert_eq!(spec.sysroot_id(), "el8-x86_64");
+    }
+
+    #[test]
+    fn profile_enters_the_identity() {
+        let registry = BaselineRegistry::builtin();
+        let spec = ToolchainSpec::builder()
+            .sysroot_profile("qt6")
+            .target(TargetArch::Aarch64)
+            .build(&registry)
+            .unwrap();
+        assert_eq!(spec.id(), "gcc14.2.1-el8-qt6-aarch64");
+        assert_eq!(spec.sysroot_id(), "el8-qt6-aarch64");
     }
 
     #[test]

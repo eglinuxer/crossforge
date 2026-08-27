@@ -141,6 +141,11 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
         let gcc_bin = prefix.join("bin").join(format!("{triple}-gcc"));
         if gcc_bin.is_file() {
             tracing::info!(prefix = %prefix.display(), "compiler already built, skipping");
+            // Cheap and idempotent, so it also repairs prefixes built before
+            // aliases existed.
+            if spec.target == crate::target::TargetArch::X86_64 {
+                install_native_aliases(&prefix.join("bin"), &triple)?;
+            }
             return Ok(CompilerArtifact {
                 prefix: prefix.to_path_buf(),
                 triple,
@@ -302,6 +307,16 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
                     tracing::info!(archive = %name, "RH nonshared archive installed");
                 }
             }
+        }
+
+        // 4c. A toolchain whose target is the host architecture doubles as
+        // the native compiler for host-side build tools (Qt's moc/rcc/uic,
+        // protoc, ... — anything a cross build must run while building).
+        // Without unprefixed drivers those builds silently fall back to the
+        // distro's system gcc, which on el8 is 8.5 and not the compiler this
+        // toolchain was qualified as.
+        if spec.target == crate::target::TargetArch::X86_64 {
+            install_native_aliases(&prefix.join("bin"), &triple)?;
         }
 
         // 5. Smoke check.
@@ -475,6 +490,39 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
         }
         self.runner.exec(&cmd)
     }
+}
+
+/// Symlinks unprefixed driver names (`gcc`, `g++`, `ar`, ...) next to the
+/// `<triple>-` ones, plus the `cc` / `c++` aliases build systems probe for.
+fn install_native_aliases(bin_dir: &Path, triple: &str) -> Result<()> {
+    let prefix = format!("{triple}-");
+    let mut linked = 0;
+    for entry in std::fs::read_dir(bin_dir)? {
+        let path = entry?.path();
+        let name = path.file_name().unwrap().to_string_lossy().into_owned();
+        let Some(bare) = name.strip_prefix(&prefix) else {
+            continue;
+        };
+        // Versioned drivers (gcc-14.2.1) would shadow nothing useful.
+        if bare.is_empty() || bare.contains(char::is_numeric) {
+            continue;
+        }
+        let link = bin_dir.join(bare);
+        if link.exists() || link.is_symlink() {
+            continue;
+        }
+        std::os::unix::fs::symlink(&name, &link)?;
+        linked += 1;
+    }
+    for (alias, target) in [("cc", "gcc"), ("c++", "g++")] {
+        let link = bin_dir.join(alias);
+        if !link.exists() && !link.is_symlink() && bin_dir.join(target).exists() {
+            std::os::unix::fs::symlink(target, &link)?;
+            linked += 1;
+        }
+    }
+    tracing::info!(count = linked, "native driver aliases installed");
+    Ok(())
 }
 
 /// One `%patch` application from a spec's `%prep` section.

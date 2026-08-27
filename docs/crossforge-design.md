@@ -355,7 +355,49 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 - **注意**：pack 面向 el8 基线，其扩展模块依赖基线时代的运行库（libffi.so.6 等），在现代宿主直跑会 ImportError；冒烟因此需要 `--image` 基线容器。曾尝试用 `LD_LIBRARY_PATH` 指向 sysroot 绕过——**会把基线 libc 配上宿主 ld.so 直接段错误**，已放弃并在错误信息中给出正确指引。
 - CI 重排为 `build → python-packs（5 版本矩阵，推镜像 / tag 时传 release）→ wheels（**改为 --pull**，顺带验证发布路径）→ wheels-arm-check`；wheels job 增补 PyO3 样例（用 Rust 镜像）。
 
-## 10. 参考
+## 10. 交叉构建环境：host + target 与 sysroot profile（2026-08-27）
+
+需求来源：issue #1 的 "Native companion" 一节，其真实场景是 **Qt 6 的完整交叉编译**。Qt 交叉是三段式——先**原生**构建 host 工具（moc / rcc / uic / qmltyperegistrar / qmlcachegen / syncqt / qt-cmake），再用 `-DQT_HOST_PATH=<host qt>` 交叉构建 target Qt，下游项目再重复同一形状。任何带构建期代码生成器的项目（protoc / flatc / bindgen）都是同一结构。
+
+结论：**真正的交付单元不是一条工具链，而是一套交叉构建环境 = 原生 host 工具链 + 目标交叉工具链 + 足够深的目标 sysroot，三者同一闭包身份。**
+
+### 10.1 原生编译器入口
+
+两个 prefix 的可执行文件全部带 triple 前缀，因此共存零冲突（实测交集为空）；但也因此**都不提供裸 `gcc`/`cc`**——host 工具的原生构建会静默落到发行版自带的 GCC 8.5（既非资格化编译器，也不满足 Qt 6 的 C++17 要求）。故：target 与宿主架构一致的工具链（即 x86_64）安装无前缀驱动别名（`gcc/g++/cc/c++/ar/ld/...`，27 个），语义上完全正确，交叉工具链绝不安装。实测裸 `gcc --version` = 14.2.1、原生 `std::filesystem` 编译运行通过。
+
+### 10.2 sysroot profile 与依赖闭包解析
+
+现状问题：`sources.toml` 是**手写平铺包列表且无依赖解析**，目标 sysroot 只有 11 个 pkgconfig 条目——Qt 目标侧需要几十个包及其传递闭包，手写不可行。
+
+实现（自研 solver，保持纯 Rust 与完整供应链记录）：
+
+- `primary.xml` 解析扩展出 `provides` / `requires` / `file`；**跳过** `pre="1"` 的安装脚本依赖、rich/boolean 依赖与 `rpmlib(...)`——sysroot 是链接期树，不是可引导根文件系统；
+- `resolve_closure()`：provider 索引（含 `pkgconfig(x11)` 这类 provides 与文件 provides）+ 广度优先传递闭包；provider 选择规则为**包名精确匹配 > 最短包名（dnf 同款 tie-break）> 最新 EVR**；版本约束不求解——单一仓库快照内部自洽；
+- 缺失的 seed **一次性全量报告**（而非逐个报错），未满足的能力单独记录为非致命；
+- 排除表支持尾部 `*` 前缀通配，默认剔除 bootstrap/运行时链（shell、coreutils、locale、daemon、解释器）。
+
+**分档 profile**（`minimal` / `gui` / `x11` / `wayland` / `qt6`，`include` 组合）：`minimal` 保持策展精确列表不做解析（其内容已被验证，不得漂移）；其余为 seed 集 + 闭包解析。profile 可声明**自己的附加仓库**——这是为了把 EPEL 的引入限制在真正需要它的档位：RHEL 8 确实缺 `xcb-util-cursor`（Qt 6.5+ xcb QPA 插件的硬依赖）与 `minizip`（qtwebengine），而更窄的档位继续保持纯 Rocky/RHEL 供应链。
+
+实测（el8 × aarch64 × qt6）：**315 个包解析、零缺失 seed、452MB、192 个 pkgconfig 条目**，X11 / wayland / EGL / freetype / xkbcommon / xcb-cursor / vulkan / gstreamer 头文件齐备；19 项未满足能力全部是被刻意排除的 bootstrap 链。
+
+**profile 进入身份**：`ToolchainSpec.sysroot_profile` 参与 `id()`（`gcc14.2.1-el8-qt6-aarch64`），非默认档才追加，既保证「同 gcc/基线/target 但 sysroot 不同 = 不同构建环境」可区分，又不改动既有 minimal 工具链的 id 与已发布 tag。
+
+### 10.3 环境导出
+
+- `toolchain.cmake` 补 `CMAKE_SYSROOT` 与 pkg-config 环境（`PKG_CONFIG_SYSROOT_DIR` / `PKG_CONFIG_LIBDIR`，裸 `PKG_CONFIG_PATH` 会泄漏宿主库）；
+- 新增 `crossenv.sh`：非 CMake 构建系统（autotools / meson / 裸 make）的同款环境，脚本自定位以保持可重定位，并在每次 source 时重新生成 meson cross file（meson 无法表达相对路径）。
+
+### 10.4 crossenv bundle 镜像
+
+`docker/crossenv.Dockerfile` 把 **target 交叉工具链 + x86_64 原生 companion** 组合进一个镜像，两个来源镜像**按 digest 钉住**（多阶段 `COPY --from`，两份 `/opt/crossforge/<id>` 天然合并不冲突）。PATH 顺序为 host 优先——裸 `gcc` 必须解析到原生 companion。这不违反 issue #1 的「不做胖矩阵镜像」：它不是全矩阵，而是**真实交叉构建的最小可用单元**，且下游只需钉一个 digest。单工具链镜像继续保留（身份与自由组合用途）。
+
+CI 每次提交为 el7/el8 × aarch64 组合 bundle 并做双向验证（裸 `gcc` 必须是 14.2.1 且为 x86_64、原生 C++17 编译执行、交叉产物 `file` 校验为 aarch64、cmake 可用）。
+
+### 10.5 对 issue #1 的影响
+
+「Native companion」一节需升级：不只是「manifest 暴露足够身份让下游判断可组合」，而是 crossforge 直接交付**已组合**的环境。另有一条原文未覆盖：**sysroot profile 必须进入 manifest 身份**——同一 (gcc, baseline, target) 而 profile 不同即为不同构建环境，下游必须能区分并 fail closed，否则 Qt 构建会拖到链接期才暴露缺包。
+
+## 11. 参考
 
 - RH gcc-toolset 机制：CentOS Stream dist-git `gcc-toolset-*-gcc` spec；LWN 862013
 - 符号版本机制与断点：glibc 2.34 libpthread 合并（LWN 864920）、DT_RELR lockout（sourceware libc-alpha 2022-03）

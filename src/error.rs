@@ -28,6 +28,9 @@ pub enum Error {
     #[error("unknown package source: {0}")]
     UnknownSource(String),
 
+    #[error("unknown sysroot profile: {0}")]
+    UnknownProfile(String),
+
     #[error("duplicate package source id: {0}")]
     DuplicateSource(String),
 

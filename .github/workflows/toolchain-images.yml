@@ -85,6 +85,79 @@ jobs:
             "${TAGS[@]}" work/toolchains
           docker push --all-tags "$IMAGE"
 
+  # Cross build environments (design doc §5.5): the target cross toolchain
+  # plus the x86_64 native companion in one image, composed from this
+  # commit's published toolchain images by digest. This is the unit a real
+  # cross build needs — host tools (moc, protoc, ...) must be built natively
+  # before the target artifacts can be cross-compiled.
+  crossenv:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        baseline: [el8, el7]
+        target: [aarch64]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compose and push the cross build environment
+        run: |
+          SHA=${GITHUB_SHA::7}
+          TOOLCHAIN="ghcr.io/${{ github.repository }}/toolchain"
+          CROSSENV="ghcr.io/${{ github.repository }}/crossenv"
+          HOST_ID="gcc14.2.1-${{ matrix.baseline }}-x86_64"
+          TARGET_ID="gcc14.2.1-${{ matrix.baseline }}-${{ matrix.target }}"
+          # Pin both inputs by digest, not by tag.
+          HOST_REF="$TOOLCHAIN:${{ matrix.baseline }}-x86_64-gcc14.2.1-$SHA"
+          TARGET_REF="$TOOLCHAIN:${{ matrix.baseline }}-${{ matrix.target }}-gcc14.2.1-$SHA"
+          HOST_DIGEST=$(docker buildx imagetools inspect "$HOST_REF" --format '{{.Manifest.Digest}}')
+          TARGET_DIGEST=$(docker buildx imagetools inspect "$TARGET_REF" --format '{{.Manifest.Digest}}')
+          echo "host:   $TOOLCHAIN@$HOST_DIGEST"
+          echo "target: $TOOLCHAIN@$TARGET_DIGEST"
+          TAG="${{ matrix.baseline }}-${{ matrix.target }}"
+          docker build -f docker/crossenv.Dockerfile \
+            --build-arg HOST_IMAGE="$TOOLCHAIN@$HOST_DIGEST" \
+            --build-arg TARGET_IMAGE="$TOOLCHAIN@$TARGET_DIGEST" \
+            --build-arg HOST_ID="$HOST_ID" \
+            --build-arg TARGET_ID="$TARGET_ID" \
+            --build-arg BASELINE="${{ matrix.baseline }}" \
+            --build-arg SYSROOT_PROFILE="minimal" \
+            -t "$CROSSENV:$TAG" -t "$CROSSENV:$TAG-$SHA" .
+          docker push --all-tags "$CROSSENV"
+
+      - name: Verify both toolchains in the composed image
+        run: |
+          TAG="${{ matrix.baseline }}-${{ matrix.target }}"
+          CROSSENV="ghcr.io/${{ github.repository }}/crossenv:$TAG"
+          cat > /tmp/hello.cpp <<'EOF'
+          #include <string>
+          #include <cstdio>
+          int main() { std::string s = "ok"; std::printf("%s\n", s.c_str()); }
+          EOF
+          docker run --rm -v /tmp:/w -w /w "$CROSSENV" sh -c '
+            set -e
+            # The bare driver must be the native companion, not the distro gcc.
+            test "$(gcc -dumpfullversion)" = "14.2.1"
+            gcc -dumpmachine | grep -q x86_64
+            # Host-side build tool, natively compiled and executed.
+            g++ -std=c++17 hello.cpp -o hello_host && ./hello_host
+            # Target artifact from the same environment.
+            ${{ matrix.target }}-unknown-linux-gnu-g++ -std=c++17 hello.cpp -o hello_target
+            file hello_target | grep -qi aarch64
+            cmake --version | head -1
+            echo "crossenv OK"'
+
   # Python packs (design doc §9): built from this commit's toolchains and
   # published per (version, arch) — an image users can `docker run` directly
   # or feed to `crossforge python --pull`, plus tar.zst release assets on
