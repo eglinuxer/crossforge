@@ -61,6 +61,25 @@ jobs:
             --sysroot "work/sysroots/${{ matrix.baseline }}-${{ matrix.target }}" \
             --arch ${{ matrix.target }} smoke
 
+      # A bounded slice of the upstream GCC testsuite, in the job that still
+      # has the build tree. dg.exp is ~38k tests and runs in minutes, which
+      # is what makes it affordable per commit; the full three suites (and
+      # the qemu-executed aarch64 ones) belong to toolchain-testsuite.yml.
+      # Zero unexpected failures is the measured baseline, so that is the bar.
+      - name: GCC testsuite (dg.exp slice)
+        # Native execution and a measured zero-failure baseline: both hold
+        # for the default compiler on x86_64. aarch64 runs under qemu and
+        # gcc 11 has no measured baseline yet, so those are covered weekly.
+        if: matrix.target == 'x86_64' && matrix.gcc == '14.2.1'
+        run: |
+          ./target/release/crossforge check \
+            --gcc ${{ matrix.gcc }} \
+            --baseline ${{ matrix.baseline }} \
+            --target ${{ matrix.target }} \
+            --suites gcc --runtest-arg dg.exp \
+            --max-unexpected-failures 0 \
+            --image crossforge-buildenv:el8 --work-dir "$PWD/work"
+
       - name: Log in to GHCR
         uses: docker/login-action@v4
         with:

@@ -101,6 +101,10 @@ enum Command {
         /// Exit non-zero if unexpected failures exceed this count.
         #[arg(long)]
         max_unexpected_failures: Option<u64>,
+        /// Extra DejaGnu arguments (e.g. `dg.exp` to run one part of a
+        /// suite). Repeatable.
+        #[arg(long = "runtest-arg")]
+        runtest_args: Vec<String>,
     },
     /// Run the built-in toolchain smoke test: compile a dlopen'd plugin with
     /// cross-DSO exception matching of nonshared-provided types, audit the
@@ -357,6 +361,7 @@ fn main() -> crossforge::Result<()> {
             work_dir,
             jobs,
             max_unexpected_failures,
+            runtest_args,
         } => {
             let registry = BaselineRegistry::builtin();
             let spec = ToolchainSpec::builder()
@@ -391,9 +396,25 @@ fn main() -> crossforge::Result<()> {
                         binds: vec![work_dir.clone()],
                         user: Some(format!("{}:{}", me.uid(), me.gid())),
                     };
-                    run_check(&runner, work_dir, jobs, &spec, &compiler, &suites)?
+                    run_check(
+                        &runner,
+                        work_dir,
+                        jobs,
+                        &spec,
+                        &compiler,
+                        &suites,
+                        &runtest_args,
+                    )?
                 }
-                None => run_check(&LocalRunner, work_dir, jobs, &spec, &compiler, &suites)?,
+                None => run_check(
+                    &LocalRunner,
+                    work_dir,
+                    jobs,
+                    &spec,
+                    &compiler,
+                    &suites,
+                    &runtest_args,
+                )?,
             };
             let mut over_limit = false;
             for s in &summaries {
@@ -749,6 +770,7 @@ fn main() -> crossforge::Result<()> {
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_check(
     runner: &impl Runner,
     work_dir: PathBuf,
@@ -756,11 +778,13 @@ fn run_check(
     spec: &ToolchainSpec,
     compiler: &CompilerArtifact,
     suites: &[CheckSuite],
+    runtest_args: &[String],
 ) -> crossforge::Result<Vec<crossforge::CheckSummary>> {
     CheckRunner {
         runner,
         work_dir,
         jobs,
+        runtest_args: runtest_args.to_vec(),
     }
     .run(spec, compiler, suites)
 }

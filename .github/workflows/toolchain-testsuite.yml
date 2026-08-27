@@ -1,0 +1,130 @@
+# The full upstream GCC testsuite — the evidence that the product actually
+# works, as opposed to merely building.
+#
+# Split out from toolchain-images.yml on purpose. That workflow gates every
+# commit with a ~38k-test slice (gcc dg.exp, minutes); this one runs all
+# three suites on both architectures, which takes hours — the aarch64 side
+# executes every test under user-mode qemu. Weekly, on tags, and on demand.
+#
+# Known baseline (el8, measured 2026-08-26): gcc and c++ score zero
+# unexpected failures; libstdc++ has three, two of them the RH-documented
+# string::reserve baseline semantics that the nonshared design deliberately
+# keeps, one a test needing DNS.
+name: toolchain-testsuite
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Target architecture
+        type: choice
+        options: [x86_64, aarch64, both]
+        default: both
+  schedule:
+    # Mondays, 03:00 UTC.
+    - cron: "0 3 * * 1"
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: toolchain-testsuite-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testsuite:
+    runs-on: ubuntu-latest
+    # Hosted-runner ceiling; the aarch64 suites under qemu need most of it.
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc: ["14.2.1"]
+        baseline: [el8]
+        target: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Skip architectures not requested
+        id: gate
+        run: |
+          want='${{ inputs.target }}'
+          if [ -n "$want" ] && [ "$want" != both ] && [ "$want" != '${{ matrix.target }}' ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Free disk space
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
+          df -h /
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.gate.outputs.run == 'true'
+
+      - name: Build crossforge
+        if: steps.gate.outputs.run == 'true'
+        run: cargo build --release
+
+      - name: Build el8 build environment image
+        if: steps.gate.outputs.run == 'true'
+        run: docker build -t crossforge-buildenv:el8 -f docker/buildenv.Dockerfile docker
+
+      # The testsuite runs inside the GCC build tree, so the toolchain has to
+      # be built here rather than pulled from a published image.
+      - name: Build toolchain (gcc ${{ matrix.gcc }}, ${{ matrix.target }})
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          ./target/release/crossforge build \
+            --gcc ${{ matrix.gcc }} \
+            --baseline ${{ matrix.baseline }} \
+            --target ${{ matrix.target }} \
+            --image crossforge-buildenv:el8 --work-dir "$PWD/work"
+
+      # x86_64 is measured: 191,591 + 256,746 passes, zero unexpected
+      # failures. The aarch64 numbers have never been collected, so its
+      # allowance is deliberately loose for now — the artifacts below are
+      # what will let it be tightened to the real figure.
+      - name: Compiler suites (gcc, c++)
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          ./target/release/crossforge check \
+            --gcc ${{ matrix.gcc }} \
+            --baseline ${{ matrix.baseline }} \
+            --target ${{ matrix.target }} \
+            --suites gcc,c++ \
+            --max-unexpected-failures ${{ matrix.target == 'aarch64' && 50 || 0 }} \
+            --image crossforge-buildenv:el8 --work-dir "$PWD/work"
+
+      # x86_64: three known failures (two RH-documented string::reserve
+      # baseline semantics, one needing DNS). aarch64 measured 23 under qemu.
+      - name: libstdc++ suite
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          ./target/release/crossforge check \
+            --gcc ${{ matrix.gcc }} \
+            --baseline ${{ matrix.baseline }} \
+            --target ${{ matrix.target }} \
+            --suites libstdc++ \
+            --max-unexpected-failures ${{ matrix.target == 'aarch64' && 30 || 3 }} \
+            --image crossforge-buildenv:el8 --work-dir "$PWD/work"
+
+      # The .sum/.log files are the evidence; keep them addressable.
+      - name: Collect testsuite results
+        if: always() && steps.gate.outputs.run == 'true'
+        run: |
+          mkdir -p results
+          find work/build -name '*.sum' -o -name '*.log' -path '*testsuite*' \
+            | while read -r f; do
+                cp "$f" "results/$(echo "${f#work/build/}" | tr / _)"
+              done
+          cp work/build/logs/*/check-*.failures results/ 2>/dev/null || true
+          ls -la results/
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.gate.outputs.run == 'true'
+        with:
+          name: testsuite-${{ matrix.baseline }}-${{ matrix.target }}-gcc${{ matrix.gcc }}
+          path: results/
+          retention-days: 90

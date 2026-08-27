@@ -116,6 +116,11 @@ pub struct CheckRunner<'a, R: Runner> {
     /// The engine work dir (containing `build/` with the GCC build trees).
     pub work_dir: PathBuf,
     pub jobs: usize,
+    /// Extra DejaGnu arguments, appended to RUNTESTFLAGS. Naming `.exp`
+    /// files here bounds a run to part of a suite (`dg.exp`), which is what
+    /// makes a per-commit gate affordable — the full suites stay for
+    /// release-time runs.
+    pub runtest_args: Vec<String>,
 }
 
 impl<'a, R: Runner> CheckRunner<'a, R> {
@@ -168,7 +173,13 @@ impl<'a, R: Runner> CheckRunner<'a, R> {
                     .arg(format!("-j{}", self.jobs))
                     .arg("-k")
                     .arg(suite.make_target())
-                    .arg(format!("RUNTESTFLAGS=--target_board={board}"))
+                    .arg(format!(
+                        "RUNTESTFLAGS=--target_board={board}{}",
+                        self.runtest_args
+                            .iter()
+                            .map(|a| format!(" {a}"))
+                            .collect::<String>()
+                    ))
                     .cwd(&build_gcc)
                     .env("PATH", &path_env)
                     // DejaGnu resolves the invoking user via `whoami` when
