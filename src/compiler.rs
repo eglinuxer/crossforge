@@ -47,6 +47,11 @@ pub struct ComponentDef {
     pub version: String,
     /// URL template with a `{version}` placeholder.
     pub url: String,
+    /// Alternate URL templates, tried in order when `url` is unreachable.
+    /// Pick hosts that fail independently — a second path on the same server
+    /// buys nothing.
+    #[serde(default)]
+    pub mirrors: Vec<String>,
     pub sha256: String,
     #[serde(default)]
     pub kind: ComponentKind,
@@ -59,6 +64,14 @@ pub struct ComponentDef {
 impl ComponentDef {
     pub fn url(&self) -> String {
         self.url.replace("{version}", &self.version)
+    }
+
+    /// Every source for this component, primary first.
+    pub fn urls(&self) -> Vec<String> {
+        std::iter::once(&self.url)
+            .chain(&self.mirrors)
+            .map(|u| u.replace("{version}", &self.version))
+            .collect()
     }
 
     /// Source directory name after unpacking, e.g. `binutils-2.40`. For SRPM
@@ -463,7 +476,7 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
                 }
                 let tarball = self
                     .fetcher
-                    .fetch_cached(&component.url(), &component.sha256)?;
+                    .fetch_cached_any(&component.urls(), &component.sha256)?;
                 tracing::info!(component = %component.dir_name(), "unpacking");
                 self.untar(
                     &tarball,
@@ -495,7 +508,7 @@ impl<'a, R: Runner> CompilerBuilder<'a, R> {
         }
         let srpm = self
             .fetcher
-            .fetch_cached(&component.url(), &component.sha256)?;
+            .fetch_cached_any(&component.urls(), &component.sha256)?;
         std::fs::create_dir_all(&srpm_dir)?;
         tracing::info!(component = %component.dir_name(), "extracting srpm");
         crate::rpm::extract_rpm(&std::fs::read(&srpm)?, &srpm_dir)?;
@@ -764,6 +777,24 @@ Patch2001: doxygen-1.7.1-config.patch
                 },
             ]
         );
+    }
+
+    #[test]
+    fn gdb_has_independent_mirrors() {
+        let sources = ToolchainSources::builtin();
+        let gdb = sources.get("gdb", DEFAULT_GDB).unwrap();
+        let urls = gdb.urls();
+
+        assert_eq!(urls[0], gdb.url(), "the primary must come first");
+        assert!(urls.len() >= 3, "one alternate is not enough: {urls:?}");
+        assert!(urls.iter().all(|u| u.contains(DEFAULT_GDB)));
+        // Mirrors only help when they fail independently, so every source
+        // must be a distinct host.
+        let mut hosts: Vec<&str> = urls.iter().filter_map(|u| u.split('/').nth(2)).collect();
+        hosts.sort_unstable();
+        let total = hosts.len();
+        hosts.dedup();
+        assert_eq!(hosts.len(), total, "duplicate host among {urls:?}");
     }
 
     #[test]

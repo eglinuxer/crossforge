@@ -8,12 +8,20 @@
 name = "binutils"
 version = "2.41"
 url = "https://mirrors.kernel.org/gnu/binutils/binutils-{version}.tar.xz"
+mirrors = [
+    "https://sourceware.org/pub/binutils/releases/binutils-{version}.tar.xz",
+    "https://ftpmirror.gnu.org/binutils/binutils-{version}.tar.xz",
+]
 sha256 = "ae9a5789e23459e59606e6714723f2d3ffc31c03174191ef0d015bdf06007450"
 
 [[component]]
 name = "binutils"
 version = "2.40"
 url = "https://mirrors.kernel.org/gnu/binutils/binutils-{version}.tar.xz"
+mirrors = [
+    "https://sourceware.org/pub/binutils/releases/binutils-{version}.tar.xz",
+    "https://ftpmirror.gnu.org/binutils/binutils-{version}.tar.xz",
+]
 sha256 = "0f8a4c272d7f17f369ded10a4aca28b8e304828e95526da482b0ccc4dfc9d8e1"
 
 # RH gcc-toolset-11: GCC 11.2.1 (2022-01-27 snapshot) + Red Hat patch series,
@@ -109,6 +117,10 @@ sha256 = "1e66a7945a48390ee4c2a4268a0e4185884059a13c4aab6d148aa208deea4a76"
 name = "gdb"
 version = "17.2"
 url = "https://mirrors.kernel.org/gnu/gdb/gdb-{version}.tar.xz"
+mirrors = [
+    "https://sourceware.org/pub/gdb/releases/gdb-{version}.tar.xz",
+    "https://ftpmirror.gnu.org/gdb/gdb-{version}.tar.xz",
+]
 sha256 = "1c036c0d72e4b3d1fb5c94c88632add6f9d76f4d7c4d2ea793c12a9f19a3228c"
 
 [[component]]

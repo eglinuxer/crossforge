@@ -127,6 +127,36 @@ impl Fetcher {
         std::fs::rename(&tmp, &path)?;
         Ok(path)
     }
+
+    /// Fetches the first of `urls` that answers, verifying against `sha256`.
+    ///
+    /// Mirrors cover what retries cannot. Retrying helps when a connection
+    /// dropped; it does nothing when a host is refusing every connection,
+    /// which is how one unreachable GNU mirror took out three toolchain
+    /// builds. The checksum is what makes several sources safe to try.
+    ///
+    /// A mirror serving different bytes is not a network problem and does
+    /// not fall through to the next source: pinned inputs are the point, so
+    /// a mismatch is surfaced rather than papered over.
+    pub fn fetch_cached_any(&self, urls: &[String], sha256: &str) -> Result<PathBuf> {
+        let mut last = None;
+        for (index, url) in urls.iter().enumerate() {
+            match self.fetch_cached(url, sha256) {
+                Ok(path) => return Ok(path),
+                Err(e @ Error::ChecksumMismatch { .. }) => return Err(e),
+                Err(e) => {
+                    if index + 1 < urls.len() {
+                        tracing::warn!(url, error = %e, "source failed; trying the next mirror");
+                    }
+                    last = Some(e);
+                }
+            }
+        }
+        Err(last.unwrap_or_else(|| Error::Http {
+            url: String::new(),
+            reason: "no source URLs configured".to_string(),
+        }))
+    }
 }
 
 #[cfg(test)]
