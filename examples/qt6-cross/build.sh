@@ -9,7 +9,9 @@ QT_VERSION="${QT_VERSION:-6.8.4}"
 QT_SHA256="${QT_SHA256:-532dfbf3fa3cbc68fa37441ea9e81c5009da044eaecda78ffaeafd8bd125532f}"
 WORK="${WORK:-/tmp/crossforge}"
 IMAGE="${IMAGE:-crossforge-crossenv:el8-aarch64}"
-HOST_ID="${HOST_ID:-gcc14.2.1-el8-x86_64}"
+# No HOST_ID knob to match: stage 1 calls plain gcc/g++, which the image
+# puts on PATH pointing at the native companion. Only the cross side needs
+# naming, because its toolchain file and sysroot are addressed by path.
 TARGET_ID="${TARGET_ID:-gcc14.2.1-el8-qt6-aarch64}"
 TRIPLE="${TRIPLE:-aarch64-unknown-linux-gnu}"
 JOBS="${JOBS:-$(nproc)}"
