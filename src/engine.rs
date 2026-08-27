@@ -243,6 +243,40 @@ impl<R: Runner> BuildEngine<R> {
             jobs,
         };
         let prefix = self.config.work_dir.join("toolchains").join(spec.id());
+        let triple = spec.target.triple();
+
+        // The compiler and its target runtime libraries depend on (gcc,
+        // binutils, baseline, target) and nothing else — a deeper sysroot
+        // adds headers and libraries for the *user's* code, not for
+        // libstdc++ or libgcc. Verified between the minimal and qt6
+        // prefixes: identical c++config.h, identical libstdc++ exported
+        // symbol set (6274), identical predefined macros, and a configure
+        // line differing only in the prefix and sysroot paths, which GCC
+        // resolves relative to itself.
+        //
+        // So a non-default profile clones the base toolchain and swaps the
+        // sysroot instead of spending another full GCC build on producing
+        // the same compiler.
+        if spec.sysroot_profile != crate::source::DEFAULT_PROFILE && !prefix.join("bin").is_dir() {
+            let base_spec = ToolchainSpec {
+                sysroot_profile: crate::source::DEFAULT_PROFILE.to_string(),
+                ..spec.clone()
+            };
+            tracing::info!(
+                base = %base_spec.id(),
+                profile = %spec.sysroot_profile,
+                "reusing the base toolchain for this sysroot profile"
+            );
+            let base = self.build(&base_spec, registry)?;
+            self.clone_with_sysroot(&base.root, &prefix, &sysroot.root, &triple)?;
+            write_cmake_toolchain_file(&prefix, spec)?;
+            write_env_script(&prefix, spec)?;
+            return Ok(ToolchainArtifact {
+                root: prefix,
+                spec: spec.clone(),
+            });
+        }
+
         let compiler = builder.build(spec, baseline, &sysroot, &prefix)?;
 
         let compat = CompatBuilder {
@@ -258,6 +292,50 @@ impl<R: Runner> BuildEngine<R> {
             root: compiler.prefix,
             spec: spec.clone(),
         })
+    }
+
+    /// Copies a built toolchain to `prefix` and replaces its sysroot with
+    /// `sysroot`. The compiler resolves its sysroot relative to its own
+    /// location, so the clone targets the new baseline content without being
+    /// rebuilt.
+    ///
+    /// Note the GCC build tree belongs to the base toolchain, so
+    /// `crossforge check` runs against that one — a cloned profile has no
+    /// tree of its own, which is correct: they share a compiler.
+    fn clone_with_sysroot(
+        &self,
+        base: &Path,
+        prefix: &Path,
+        sysroot: &Path,
+        triple: &str,
+    ) -> Result<()> {
+        let logs = self.config.work_dir.join("build/logs");
+        std::fs::create_dir_all(prefix)?;
+        self.runner.exec(
+            &Cmd::new("cp")
+                .args([
+                    "-a",
+                    &format!("{}/.", base.display()),
+                    &prefix.display().to_string(),
+                ])
+                .log(logs.join("clone-toolchain.log")),
+        )?;
+        let dest = prefix.join(triple).join("sysroot");
+        if dest.exists() {
+            std::fs::remove_dir_all(&dest)?;
+        }
+        std::fs::create_dir_all(&dest)?;
+        self.runner.exec(
+            &Cmd::new("cp")
+                .args([
+                    "-a",
+                    &format!("{}/.", sysroot.display()),
+                    &dest.display().to_string(),
+                ])
+                .log(logs.join("clone-toolchain.log")),
+        )?;
+        tracing::info!(prefix = %prefix.display(), "toolchain cloned with the profile sysroot");
+        Ok(())
     }
 }
 
