@@ -38,6 +38,7 @@
 mod ar;
 mod audit;
 mod baseline;
+mod bytes;
 mod check;
 mod compat;
 mod compiler;

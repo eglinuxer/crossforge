@@ -5,6 +5,7 @@
 //! `.gnu.version` and `.gnu.version_d` to list exported symbols with their
 //! definition versions.
 
+use crate::bytes;
 use crate::error::{Error, Result};
 
 const SHT_DYNSYM: u32 = 11;
@@ -34,30 +35,25 @@ struct Section {
 }
 
 fn u16le(d: &[u8], at: usize) -> Result<u16> {
-    Ok(u16::from_le_bytes(
-        d.get(at..at + 2)
-            .ok_or_else(|| elf_err("truncated"))?
-            .try_into()
-            .unwrap(),
-    ))
+    bytes::u16le(d, at).ok_or_else(|| elf_err("truncated"))
 }
 
 fn u32le(d: &[u8], at: usize) -> Result<u32> {
-    Ok(u32::from_le_bytes(
-        d.get(at..at + 4)
-            .ok_or_else(|| elf_err("truncated"))?
-            .try_into()
-            .unwrap(),
-    ))
+    bytes::u32le(d, at).ok_or_else(|| elf_err("truncated"))
 }
 
 fn u64le(d: &[u8], at: usize) -> Result<u64> {
-    Ok(u64::from_le_bytes(
-        d.get(at..at + 8)
-            .ok_or_else(|| elf_err("truncated"))?
-            .try_into()
-            .unwrap(),
-    ))
+    bytes::u64le(d, at).ok_or_else(|| elf_err("truncated"))
+}
+
+/// Checked `base + index * size` for walking a header table.
+fn entry_at(base: usize, index: usize, size: usize) -> Result<usize> {
+    bytes::span(base, index, size).ok_or_else(|| elf_err("header table offset overflows"))
+}
+
+/// Checked `base + delta` for a field inside a header.
+fn field(base: usize, delta: usize) -> Result<usize> {
+    bytes::add(base, delta).ok_or_else(|| elf_err("field offset overflows"))
 }
 
 fn sections(data: &[u8]) -> Result<Vec<Section>> {
@@ -75,21 +71,20 @@ fn sections(data: &[u8]) -> Result<Vec<Section>> {
     }
     let mut out = Vec::with_capacity(shnum);
     for i in 0..shnum {
-        let base = shoff + i * shentsize;
+        let base = entry_at(shoff, i, shentsize)?;
         out.push(Section {
-            sh_type: u32le(data, base + 4)?,
-            offset: u64le(data, base + 24)? as usize,
-            size: u64le(data, base + 32)? as usize,
-            link: u32le(data, base + 40)?,
-            entsize: u64le(data, base + 56)? as usize,
+            sh_type: u32le(data, field(base, 4)?)?,
+            offset: u64le(data, field(base, 24)?)? as usize,
+            size: u64le(data, field(base, 32)?)? as usize,
+            link: u32le(data, field(base, 40)?)?,
+            entsize: u64le(data, field(base, 56)?)? as usize,
         });
     }
     Ok(out)
 }
 
 fn section_data<'a>(data: &'a [u8], s: &Section) -> Result<&'a [u8]> {
-    data.get(s.offset..s.offset + s.size)
-        .ok_or_else(|| elf_err("section outside file"))
+    bytes::slice(data, s.offset, s.size).ok_or_else(|| elf_err("section outside file"))
 }
 
 fn cstr(strtab: &[u8], at: usize) -> Result<String> {
@@ -109,9 +104,9 @@ fn verdef_map(data: &[u8], s: &Section, strtab: &[u8]) -> Result<Vec<(u16, Strin
     let mut out = Vec::new();
     let mut pos = 0usize;
     loop {
-        let ndx = u16le(d, pos + 4)?;
-        let aux_offset = u32le(d, pos + 12)? as usize;
-        let next = u32le(d, pos + 16)? as usize;
+        let ndx = u16le(d, field(pos, 4)?)?;
+        let aux_offset = u32le(d, field(pos, 12)?)? as usize;
+        let next = u32le(d, field(pos, 16)?)? as usize;
         // First aux entry holds the version name.
         let name_offset = u32le(d, pos + aux_offset)? as usize;
         out.push((ndx, cstr(strtab, name_offset)?));
@@ -168,12 +163,11 @@ pub fn inspect(data: &[u8]) -> Result<ElfInfo> {
     let phentsize = u16le(data, 0x36)? as usize;
     let phnum = u16le(data, 0x38)? as usize;
     for i in 0..phnum {
-        let base = phoff + i * phentsize;
+        let base = entry_at(phoff, i, phentsize)?;
         if u32le(data, base)? == PT_INTERP {
-            let offset = u64le(data, base + 8)? as usize;
-            let size = u64le(data, base + 32)? as usize;
-            let raw = data
-                .get(offset..offset + size)
+            let offset = u64le(data, field(base, 8)?)? as usize;
+            let size = u64le(data, field(base, 32)?)? as usize;
+            let raw = bytes::slice(data, offset, size)
                 .ok_or_else(|| elf_err("PT_INTERP outside file"))?;
             let end = raw.iter().position(|c| *c == 0).unwrap_or(raw.len());
             info.interp = Some(
@@ -211,22 +205,22 @@ pub fn inspect(data: &[u8]) -> Result<ElfInfo> {
         let d = section_data(data, verneed)?;
         let mut pos = 0usize;
         loop {
-            let cnt = u16le(d, pos + 2)? as usize;
-            let file = cstr(strtab, u32le(d, pos + 4)? as usize)?;
-            let mut aux_pos = pos + u32le(d, pos + 8)? as usize;
+            let cnt = u16le(d, field(pos, 2)?)? as usize;
+            let file = cstr(strtab, u32le(d, field(pos, 4)?)? as usize)?;
+            let mut aux_pos = pos + u32le(d, field(pos, 8)?)? as usize;
             for _ in 0..cnt {
-                let version = cstr(strtab, u32le(d, aux_pos + 8)? as usize)?;
+                let version = cstr(strtab, u32le(d, field(aux_pos, 8)?)? as usize)?;
                 info.version_needs.push(VersionNeed {
                     file: file.clone(),
                     version,
                 });
-                let next = u32le(d, aux_pos + 12)? as usize;
+                let next = u32le(d, field(aux_pos, 12)?)? as usize;
                 if next == 0 {
                     break;
                 }
                 aux_pos += next;
             }
-            let next = u32le(d, pos + 12)? as usize;
+            let next = u32le(d, field(pos, 12)?)? as usize;
             if next == 0 {
                 break;
             }
@@ -247,9 +241,9 @@ pub fn inspect(data: &[u8]) -> Result<ElfInfo> {
             24
         };
         for i in 0..dynsym.size / entsize {
-            let base = i * entsize;
+            let base = entry_at(0, i, entsize)?;
             let name_offset = u32le(syms, base)? as usize;
-            let shndx = u16le(syms, base + 6)?;
+            let shndx = u16le(syms, field(base, 6)?)?;
             if shndx == SHN_UNDEF && name_offset != 0 {
                 info.undefined.push(cstr(strtab, name_offset)?);
             }
@@ -278,12 +272,12 @@ pub fn defined_global_symbols(data: &[u8]) -> Result<std::collections::BTreeSet<
     };
     let mut out = std::collections::BTreeSet::new();
     for i in 0..symtab.size / entsize {
-        let base = i * entsize;
+        let base = entry_at(0, i, entsize)?;
         let name_offset = u32le(syms, base)? as usize;
         let info = *syms
-            .get(base + 4)
+            .get(field(base, 4)?)
             .ok_or_else(|| elf_err("truncated symbol"))?;
-        let shndx = u16le(syms, base + 6)?;
+        let shndx = u16le(syms, field(base, 6)?)?;
         // Defined (incl. SHN_ABS/SHN_COMMON), non-local, named.
         if shndx == SHN_UNDEF || info >> 4 == STB_LOCAL || name_offset == 0 {
             continue;
@@ -331,12 +325,12 @@ pub fn exported_symbols(data: &[u8]) -> Result<Vec<DynSymbol>> {
 
     let mut out = Vec::new();
     for i in 0..count {
-        let base = i * entsize;
+        let base = entry_at(0, i, entsize)?;
         let name_offset = u32le(syms, base)? as usize;
         let info = *syms
-            .get(base + 4)
+            .get(field(base, 4)?)
             .ok_or_else(|| elf_err("truncated symbol"))?;
-        let shndx = u16le(syms, base + 6)?;
+        let shndx = u16le(syms, field(base, 6)?)?;
         if shndx == SHN_UNDEF || info >> 4 == STB_LOCAL || name_offset == 0 {
             continue;
         }

@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 
+use crate::bytes;
 use crate::error::{Error, Result};
 
 const LEAD_LEN: usize = 96;
@@ -43,15 +44,16 @@ fn payload_of(data: &[u8]) -> Result<&[u8]> {
 
 /// Skips one header structure starting at `offset`, returning the offset past it.
 fn skip_header(data: &[u8], offset: usize) -> Result<usize> {
-    let h = data
-        .get(offset..offset + 16)
-        .ok_or_else(|| rpm_err("truncated header"))?;
+    let h = bytes::slice(data, offset, 16).ok_or_else(|| rpm_err("truncated header"))?;
     if h[..3] != HEADER_MAGIC {
         return Err(rpm_err("bad header magic"));
     }
     let nindex = u32::from_be_bytes([h[8], h[9], h[10], h[11]]) as usize;
     let hsize = u32::from_be_bytes([h[12], h[13], h[14], h[15]]) as usize;
-    let end = offset + 16 + nindex * 16 + hsize;
+    let end = bytes::span(offset, nindex, 16)
+        .and_then(|o| bytes::add(o, 16))
+        .and_then(|o| bytes::add(o, hsize))
+        .ok_or_else(|| rpm_err("header size overflows"))?;
     if end > data.len() {
         return Err(rpm_err("header extends past end of file"));
     }
@@ -105,18 +107,16 @@ pub(crate) mod cpio {
     }
 
     fn hex_field(data: &[u8], pos: usize, index: usize) -> Result<u32> {
-        let start = pos + 6 + index * 8;
-        let field = data
-            .get(start..start + 8)
-            .ok_or_else(|| cpio_err("truncated header"))?;
+        let start = bytes::add(pos, 6)
+            .and_then(|o| bytes::span(o, index, 8))
+            .ok_or_else(|| cpio_err("header offset overflows"))?;
+        let field = bytes::slice(data, start, 8).ok_or_else(|| cpio_err("truncated header"))?;
         let s = std::str::from_utf8(field).map_err(|_| cpio_err("non-ascii header field"))?;
         u32::from_str_radix(s, 16).map_err(|_| cpio_err("bad hex header field"))
     }
 
     fn read_entry(data: &[u8], pos: usize) -> Result<Entry<'_>> {
-        let magic = data
-            .get(pos..pos + 6)
-            .ok_or_else(|| cpio_err("truncated magic"))?;
+        let magic = bytes::slice(data, pos, 6).ok_or_else(|| cpio_err("truncated magic"))?;
         if magic != b"070701" && magic != b"070702" {
             return Err(cpio_err("bad entry magic"));
         }
@@ -125,19 +125,21 @@ pub(crate) mod cpio {
         let nlink = hex_field(data, pos, 4)?;
         let filesize = hex_field(data, pos, 6)? as usize;
         let namesize = hex_field(data, pos, 11)? as usize;
-        let name_start = pos + 110;
-        let name_end = name_start + namesize;
-        let name_bytes = data
-            .get(name_start..name_end)
-            .ok_or_else(|| cpio_err("truncated name"))?;
+        let name_start = bytes::add(pos, 110).ok_or_else(|| cpio_err("entry offset overflows"))?;
+        let name_bytes =
+            bytes::slice(data, name_start, namesize).ok_or_else(|| cpio_err("truncated name"))?;
+        let name_end =
+            bytes::add(name_start, namesize).ok_or_else(|| cpio_err("entry offset overflows"))?;
         let name = std::str::from_utf8(&name_bytes[..namesize.saturating_sub(1)])
             .map_err(|_| cpio_err("non-utf8 path"))?;
-        let data_start = name_end + (4 - name_end % 4) % 4;
-        let data_end = data_start + filesize;
-        let file_data = data
-            .get(data_start..data_end)
+        let data_start = bytes::add(name_end, (4 - name_end % 4) % 4)
+            .ok_or_else(|| cpio_err("entry offset overflows"))?;
+        let file_data = bytes::slice(data, data_start, filesize)
             .ok_or_else(|| cpio_err("truncated file data"))?;
-        let next = data_end + (4 - data_end % 4) % 4;
+        let data_end =
+            bytes::add(data_start, filesize).ok_or_else(|| cpio_err("entry offset overflows"))?;
+        let next = bytes::add(data_end, (4 - data_end % 4) % 4)
+            .ok_or_else(|| cpio_err("entry offset overflows"))?;
         Ok(Entry {
             name,
             mode,

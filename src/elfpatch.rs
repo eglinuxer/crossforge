@@ -14,6 +14,7 @@
 
 use std::collections::BTreeMap;
 
+use crate::bytes;
 use crate::error::{Error, Result};
 
 const DT_NULL: u64 = 0;
@@ -62,36 +63,36 @@ struct Reader<'a>(&'a [u8]);
 
 impl<'a> Reader<'a> {
     fn u16(&self, off: usize) -> Result<u16> {
-        Ok(u16::from_le_bytes(
-            self.0
-                .get(off..off + 2)
-                .ok_or_else(|| elf_err("truncated"))?
-                .try_into()
-                .unwrap(),
-        ))
+        bytes::u16le(self.0, off).ok_or_else(|| elf_err("truncated"))
     }
     fn u32(&self, off: usize) -> Result<u32> {
-        Ok(u32::from_le_bytes(
-            self.0
-                .get(off..off + 4)
-                .ok_or_else(|| elf_err("truncated"))?
-                .try_into()
-                .unwrap(),
-        ))
+        bytes::u32le(self.0, off).ok_or_else(|| elf_err("truncated"))
     }
     fn u64(&self, off: usize) -> Result<u64> {
-        Ok(u64::from_le_bytes(
-            self.0
-                .get(off..off + 8)
-                .ok_or_else(|| elf_err("truncated"))?
-                .try_into()
-                .unwrap(),
-        ))
+        bytes::u64le(self.0, off).ok_or_else(|| elf_err("truncated"))
     }
 }
 
-fn put_u64(buf: &mut [u8], off: usize, v: u64) {
-    buf[off..off + 8].copy_from_slice(&v.to_le_bytes());
+/// Writes into a buffer this module built itself; a bad offset is a bug
+/// here rather than hostile input, so it is checked and reported, never
+/// allowed to index out of bounds.
+fn put_u64(buf: &mut [u8], off: usize, v: u64) -> Result<()> {
+    let end = off
+        .checked_add(8)
+        .filter(|e| *e <= buf.len())
+        .ok_or_else(|| elf_err("write offset outside buffer"))?;
+    buf[off..end].copy_from_slice(&v.to_le_bytes());
+    Ok(())
+}
+
+/// Checked `base + delta` for a field inside a header.
+fn field(base: usize, delta: usize) -> Result<usize> {
+    bytes::add(base, delta).ok_or_else(|| elf_err("field offset overflows"))
+}
+
+/// Checked `base + index * size` for walking a header table.
+fn entry_at(base: usize, index: usize, size: usize) -> Result<usize> {
+    bytes::span(base, index, size).ok_or_else(|| elf_err("header table offset overflows"))
 }
 
 fn align_up(v: u64, align: u64) -> u64 {
@@ -119,9 +120,11 @@ pub fn patch_elf(data: &[u8], ops: &PatchOps) -> Result<Vec<u8>> {
     // Program headers.
     let mut phdrs: Vec<Vec<u8>> = (0..e_phnum)
         .map(|i| {
-            data.get(e_phoff + i * PHENT..e_phoff + (i + 1) * PHENT)
-                .map(<[u8]>::to_vec)
-                .ok_or_else(|| elf_err("program headers out of range"))
+            entry_at(e_phoff, i, PHENT).and_then(|at| {
+                bytes::slice(data, at, PHENT)
+                    .map(<[u8]>::to_vec)
+                    .ok_or_else(|| elf_err("program headers out of range"))
+            })
         })
         .collect::<Result<_>>()?;
 
@@ -132,7 +135,8 @@ pub fn patch_elf(data: &[u8], ops: &PatchOps) -> Result<Vec<u8>> {
                 let p_offset = pr.u64(8)?;
                 let p_vaddr = pr.u64(16)?;
                 let p_filesz = pr.u64(32)?;
-                if vaddr >= p_vaddr && vaddr < p_vaddr + p_filesz {
+                let end = p_vaddr.checked_add(p_filesz);
+                if end.is_some_and(|e| vaddr >= p_vaddr && vaddr < e) {
                     return Ok((vaddr - p_vaddr + p_offset) as usize);
                 }
             }
@@ -150,15 +154,16 @@ pub fn patch_elf(data: &[u8], ops: &PatchOps) -> Result<Vec<u8>> {
     let dyn_off = Reader(&phdrs[dyn_idx]).u64(8)? as usize;
     let dyn_size = Reader(&phdrs[dyn_idx]).u64(32)? as usize;
     let mut entries: Vec<(u64, u64)> = Vec::new();
+    let dyn_end = field(dyn_off, dyn_size)?;
     let mut pos = dyn_off;
-    while pos + 16 <= dyn_off + dyn_size {
+    while field(pos, 16)? <= dyn_end {
         let tag = r.u64(pos)?;
-        let val = r.u64(pos + 8)?;
+        let val = r.u64(field(pos, 8)?)?;
         if tag == DT_NULL {
             break;
         }
         entries.push((tag, val));
-        pos += 16;
+        pos = field(pos, 16)?;
     }
 
     let strtab_vaddr = entries
@@ -172,17 +177,12 @@ pub fn patch_elf(data: &[u8], ops: &PatchOps) -> Result<Vec<u8>> {
         .map(|(_, v)| *v as usize)
         .ok_or_else(|| elf_err("no DT_STRSZ"))?;
     let strtab_off = vaddr_to_off(strtab_vaddr)?;
-    let old_dynstr = data
-        .get(strtab_off..strtab_off + strsz)
-        .ok_or_else(|| elf_err("dynstr out of range"))?;
+    let old_dynstr =
+        bytes::slice(data, strtab_off, strsz).ok_or_else(|| elf_err("dynstr out of range"))?;
     let str_at = |off: u64| -> Result<&str> {
-        let start = off as usize;
-        let end = old_dynstr[start..]
-            .iter()
-            .position(|c| *c == 0)
-            .map(|p| start + p)
+        let raw = bytes::cstr(old_dynstr, off as usize)
             .ok_or_else(|| elf_err("unterminated dynstr entry"))?;
-        std::str::from_utf8(&old_dynstr[start..end]).map_err(|_| elf_err("non-UTF-8 dynstr entry"))
+        std::str::from_utf8(raw).map_err(|_| elf_err("non-UTF-8 dynstr entry"))
     };
 
     // New dynstr: old content + appended strings (old offsets stay valid).
@@ -257,20 +257,20 @@ pub fn patch_elf(data: &[u8], ops: &PatchOps) -> Result<Vec<u8>> {
         if let Some(vaddr) = verneed_vaddr {
             let mut off = vaddr_to_off(vaddr)?;
             for _ in 0..verneed_num {
-                let vn_file = r.u32(off + 4)? as u64;
+                let vn_file = r.u32(field(off, 4)?)? as u64;
                 if let Ok(name) = str_at(vn_file) {
                     if let Some(new) = ops.replace_needed.get(name) {
                         let new_off = *appended
                             .get(new)
                             .ok_or_else(|| elf_err("renamed verneed file not in dynstr"))?;
-                        verneed_patches.push((off + 4, new_off as u32));
+                        verneed_patches.push((field(off, 4)?, new_off as u32));
                     }
                 }
-                let vn_next = r.u32(off + 12)? as usize;
+                let vn_next = r.u32(field(off, 12)?)? as usize;
                 if vn_next == 0 {
                     break;
                 }
-                off += vn_next;
+                off = field(off, vn_next)?;
             }
         }
     }
@@ -307,17 +307,17 @@ pub fn patch_elf(data: &[u8], ops: &PatchOps) -> Result<Vec<u8>> {
     for ph in &mut phdrs {
         let ptype = Reader(ph).u32(0)?;
         if ptype == PT_PHDR {
-            put_u64(ph, 8, seg_off);
-            put_u64(ph, 16, phdrs_vaddr);
-            put_u64(ph, 24, phdrs_vaddr);
-            put_u64(ph, 32, phdrs_size);
-            put_u64(ph, 40, phdrs_size);
+            put_u64(ph, 8, seg_off)?;
+            put_u64(ph, 16, phdrs_vaddr)?;
+            put_u64(ph, 24, phdrs_vaddr)?;
+            put_u64(ph, 32, phdrs_size)?;
+            put_u64(ph, 40, phdrs_size)?;
         } else if ptype == PT_DYNAMIC {
-            put_u64(ph, 8, seg_off + (dynamic_vaddr - seg_vaddr));
-            put_u64(ph, 16, dynamic_vaddr);
-            put_u64(ph, 24, dynamic_vaddr);
-            put_u64(ph, 32, dynamic_size);
-            put_u64(ph, 40, dynamic_size);
+            put_u64(ph, 8, seg_off + (dynamic_vaddr - seg_vaddr))?;
+            put_u64(ph, 16, dynamic_vaddr)?;
+            put_u64(ph, 24, dynamic_vaddr)?;
+            put_u64(ph, 32, dynamic_size)?;
+            put_u64(ph, 40, dynamic_size)?;
         }
     }
     let mut load = vec![0u8; PHENT];
@@ -325,19 +325,23 @@ pub fn patch_elf(data: &[u8], ops: &PatchOps) -> Result<Vec<u8>> {
         let buf = &mut load;
         buf[0..4].copy_from_slice(&PT_LOAD.to_le_bytes());
         buf[4..8].copy_from_slice(&6u32.to_le_bytes()); // RW
-        put_u64(buf, 8, seg_off);
-        put_u64(buf, 16, seg_vaddr);
-        put_u64(buf, 24, seg_vaddr);
-        put_u64(buf, 32, seg_size);
-        put_u64(buf, 40, seg_size);
-        put_u64(buf, 48, ALIGN);
+        put_u64(buf, 8, seg_off)?;
+        put_u64(buf, 16, seg_vaddr)?;
+        put_u64(buf, 24, seg_vaddr)?;
+        put_u64(buf, 32, seg_size)?;
+        put_u64(buf, 40, seg_size)?;
+        put_u64(buf, 48, ALIGN)?;
     }
     phdrs.push(load);
 
     // Assemble the output file.
     let mut out = data.to_vec();
     for (off, val) in &verneed_patches {
-        out[*off..*off + 4].copy_from_slice(&val.to_le_bytes());
+        let end = off
+            .checked_add(4)
+            .filter(|e| *e <= out.len())
+            .ok_or_else(|| elf_err("verneed patch outside file"))?;
+        out[*off..end].copy_from_slice(&val.to_le_bytes());
     }
     out.resize(seg_off as usize, 0);
     for ph in &phdrs {
@@ -352,24 +356,32 @@ pub fn patch_elf(data: &[u8], ops: &PatchOps) -> Result<Vec<u8>> {
     out.extend_from_slice(&new_dynstr);
 
     // ELF header: new program header table location and count.
-    put_u64(&mut out, 0x20, seg_off);
+    put_u64(&mut out, 0x20, seg_off)?;
     out[0x38..0x3a].copy_from_slice(&(new_phnum as u16).to_le_bytes());
 
     // Section headers: re-point .dynamic and .dynstr (identified by type +
     // old address) so readelf/strip stay consistent with runtime reality.
     for i in 0..e_shnum {
-        let base = e_shoff + i * SHENT;
+        let base = entry_at(e_shoff, i, SHENT)?;
         let sr = Reader(&out);
-        let sh_type = sr.u32(base + 4)?;
-        let sh_addr = sr.u64(base + 16)?;
+        let sh_type = sr.u32(field(base, 4)?)?;
+        let sh_addr = sr.u64(field(base, 16)?)?;
         if sh_type == SHT_DYNAMIC {
-            put_u64(&mut out, base + 16, dynamic_vaddr);
-            put_u64(&mut out, base + 24, seg_off + (dynamic_vaddr - seg_vaddr));
-            put_u64(&mut out, base + 32, dynamic_size);
+            put_u64(&mut out, field(base, 16)?, dynamic_vaddr)?;
+            put_u64(
+                &mut out,
+                field(base, 24)?,
+                seg_off + (dynamic_vaddr - seg_vaddr),
+            )?;
+            put_u64(&mut out, field(base, 32)?, dynamic_size)?;
         } else if sh_type == SHT_STRTAB && sh_addr == strtab_vaddr {
-            put_u64(&mut out, base + 16, dynstr_vaddr);
-            put_u64(&mut out, base + 24, seg_off + (dynstr_vaddr - seg_vaddr));
-            put_u64(&mut out, base + 32, new_dynstr.len() as u64);
+            put_u64(&mut out, field(base, 16)?, dynstr_vaddr)?;
+            put_u64(
+                &mut out,
+                field(base, 24)?,
+                seg_off + (dynstr_vaddr - seg_vaddr),
+            )?;
+            put_u64(&mut out, field(base, 32)?, new_dynstr.len() as u64)?;
         }
     }
     Ok(out)

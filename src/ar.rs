@@ -1,6 +1,7 @@
 //! Minimal GNU `ar` archive reader, for slicing static libraries into member
 //! objects (compat-pack generation).
 
+use crate::bytes;
 use crate::error::{Error, Result};
 
 fn ar_err(msg: impl Into<String>) -> Error {
@@ -24,7 +25,8 @@ pub fn parse(data: &[u8]) -> Result<Vec<Member<'_>>> {
     let mut longnames: &[u8] = &[];
     let mut members = Vec::new();
     while pos + 60 <= data.len() {
-        let header = &data[pos..pos + 60];
+        let header =
+            bytes::slice(data, pos, 60).ok_or_else(|| Error::Archive("truncated header".into()))?;
         if &header[58..60] != b"`\n" {
             return Err(ar_err("bad member header terminator"));
         }

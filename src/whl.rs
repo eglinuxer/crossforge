@@ -10,6 +10,7 @@
 use std::io::{Read, Write};
 use std::path::Path;
 
+use crate::bytes;
 use crate::error::{Error, Result};
 
 fn zip_err(msg: impl Into<String>) -> Error {
@@ -91,21 +92,16 @@ pub fn read_wheel(path: &Path) -> Result<Vec<WheelEntry>> {
 }
 
 fn u16at(data: &[u8], off: usize) -> Result<u16> {
-    Ok(u16::from_le_bytes(
-        data.get(off..off + 2)
-            .ok_or_else(|| zip_err("truncated"))?
-            .try_into()
-            .unwrap(),
-    ))
+    bytes::u16le(data, off).ok_or_else(|| zip_err("truncated"))
 }
 
 fn u32at(data: &[u8], off: usize) -> Result<u32> {
-    Ok(u32::from_le_bytes(
-        data.get(off..off + 4)
-            .ok_or_else(|| zip_err("truncated"))?
-            .try_into()
-            .unwrap(),
-    ))
+    bytes::u32le(data, off).ok_or_else(|| zip_err("truncated"))
+}
+
+/// Checked `base + delta` for a field inside a zip header.
+fn at(base: usize, delta: usize) -> Result<usize> {
+    bytes::add(base, delta).ok_or_else(|| zip_err("header offset overflows"))
 }
 
 const EOCD_SIG: u32 = 0x0605_4b50;
@@ -123,25 +119,24 @@ fn read_zip(data: &[u8]) -> Result<Vec<WheelEntry>> {
         }
     }
     let eocd = eocd.ok_or_else(|| zip_err("no end-of-central-directory record"))?;
-    let entries = u16at(data, eocd + 10)? as usize;
-    let mut off = u32at(data, eocd + 16)? as usize;
+    let entries = u16at(data, at(eocd, 10)?)? as usize;
+    let mut off = u32at(data, at(eocd, 16)?)? as usize;
 
     let mut out = Vec::with_capacity(entries);
     for _ in 0..entries {
         if u32at(data, off)? != CDIR_SIG {
             return Err(zip_err("bad central directory signature"));
         }
-        let method = u16at(data, off + 10)?;
-        let csize = u32at(data, off + 20)? as usize;
-        let usize_ = u32at(data, off + 24)? as usize;
-        let name_len = u16at(data, off + 28)? as usize;
-        let extra_len = u16at(data, off + 30)? as usize;
-        let comment_len = u16at(data, off + 32)? as usize;
-        let external = u32at(data, off + 38)?;
-        let local_off = u32at(data, off + 42)? as usize;
+        let method = u16at(data, at(off, 10)?)?;
+        let csize = u32at(data, at(off, 20)?)? as usize;
+        let usize_ = u32at(data, at(off, 24)?)? as usize;
+        let name_len = u16at(data, at(off, 28)?)? as usize;
+        let extra_len = u16at(data, at(off, 30)?)? as usize;
+        let comment_len = u16at(data, at(off, 32)?)? as usize;
+        let external = u32at(data, at(off, 38)?)?;
+        let local_off = u32at(data, at(off, 42)?)? as usize;
         let name = String::from_utf8_lossy(
-            data.get(off + 46..off + 46 + name_len)
-                .ok_or_else(|| zip_err("truncated name"))?,
+            bytes::slice(data, at(off, 46)?, name_len).ok_or_else(|| zip_err("truncated name"))?,
         )
         .into_owned();
 
@@ -150,17 +145,19 @@ fn read_zip(data: &[u8]) -> Result<Vec<WheelEntry>> {
         if u32at(data, local_off)? != LOCAL_SIG {
             return Err(zip_err("bad local header signature"));
         }
-        let l_name = u16at(data, local_off + 26)? as usize;
-        let l_extra = u16at(data, local_off + 28)? as usize;
-        let data_off = local_off + 30 + l_name + l_extra;
-        let raw = data
-            .get(data_off..data_off + csize)
-            .ok_or_else(|| zip_err("truncated entry data"))?;
+        let l_name = u16at(data, at(local_off, 26)?)? as usize;
+        let l_extra = u16at(data, at(local_off, 28)?)? as usize;
+        let data_off = at(at(at(local_off, 30)?, l_name)?, l_extra)?;
+        let raw =
+            bytes::slice(data, data_off, csize).ok_or_else(|| zip_err("truncated entry data"))?;
         let content = match method {
             0 => raw.to_vec(),
             8 => {
+                // `usize_` is the declared uncompressed size and comes
+                // straight from the archive, so it is not a safe capacity
+                // hint — a crafted header would ask for gigabytes.
                 let mut decoder = flate2::read::DeflateDecoder::new(raw);
-                let mut buf = Vec::with_capacity(usize_);
+                let mut buf = Vec::new();
                 decoder
                     .read_to_end(&mut buf)
                     .map_err(|e| zip_err(format!("inflate {name}: {e}")))?;
@@ -175,7 +172,7 @@ fn read_zip(data: &[u8]) -> Result<Vec<WheelEntry>> {
                 mode: external >> 16,
             });
         }
-        off += 46 + name_len + extra_len + comment_len;
+        off = at(at(at(at(off, 46)?, name_len)?, extra_len)?, comment_len)?;
     }
     Ok(out)
 }
