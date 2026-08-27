@@ -104,7 +104,19 @@ jobs:
           docker build -f docker/toolchain.Dockerfile \
             --build-arg TOOLCHAIN_ID="$ID" \
             "${TAGS[@]}" work/toolchains
-          docker push --all-tags "$IMAGE"
+          # Jobs in this matrix push to the same package at the same time and
+          # therefore upload the same shared base layers concurrently, which
+          # GHCR intermittently answers with "unknown blob". Observed once in
+          # five otherwise identical jobs, so it is worth retrying rather than
+          # serializing the matrix.
+          pushed=
+          for attempt in 1 2 3; do
+            if docker push --all-tags "$IMAGE"; then pushed=yes; break; fi
+            echo "push attempt $attempt failed; retrying in $((attempt * 15))s"
+            sleep $((attempt * 15))
+          done
+          # Without this the loop would fall through and the step would pass.
+          test -n "$pushed" || { echo "push failed after 3 attempts"; exit 1; }
 
   # Cross build environments (design doc §5.5): the target cross toolchain
   # plus the x86_64 native companion in one image, composed from this
@@ -155,7 +167,19 @@ jobs:
             --build-arg BASELINE="${{ matrix.baseline }}" \
             --build-arg SYSROOT_PROFILE="minimal" \
             -t "$CROSSENV:$TAG" -t "$CROSSENV:$TAG-$SHA" .
-          docker push --all-tags "$CROSSENV"
+          # Jobs in this matrix push to the same package at the same time and
+          # therefore upload the same shared base layers concurrently, which
+          # GHCR intermittently answers with "unknown blob". Observed once in
+          # five otherwise identical jobs, so it is worth retrying rather than
+          # serializing the matrix.
+          pushed=
+          for attempt in 1 2 3; do
+            if docker push --all-tags "$CROSSENV"; then pushed=yes; break; fi
+            echo "push attempt $attempt failed; retrying in $((attempt * 15))s"
+            sleep $((attempt * 15))
+          done
+          # Without this the loop would fall through and the step would pass.
+          test -n "$pushed" || { echo "push failed after 3 attempts"; exit 1; }
 
       - name: Verify both toolchains in the composed image
         run: |
@@ -249,7 +273,19 @@ jobs:
               --build-arg PACK_ID="$TAG-$arch" --build-arg PYTHON_VERSION="$VERSION" \
               -t "$IMAGE:$TAG-$arch" -t "$IMAGE:$TAG-$arch-$SHA" work/python-packs
           done
-          docker push --all-tags "$IMAGE"
+          # Jobs in this matrix push to the same package at the same time and
+          # therefore upload the same shared base layers concurrently, which
+          # GHCR intermittently answers with "unknown blob". Observed once in
+          # five otherwise identical jobs, so it is worth retrying rather than
+          # serializing the matrix.
+          pushed=
+          for attempt in 1 2 3; do
+            if docker push --all-tags "$IMAGE"; then pushed=yes; break; fi
+            echo "push attempt $attempt failed; retrying in $((attempt * 15))s"
+            sleep $((attempt * 15))
+          done
+          # Without this the loop would fall through and the step would pass.
+          test -n "$pushed" || { echo "push failed after 3 attempts"; exit 1; }
 
       - name: Pack release assets and upload (tags only)
         if: startsWith(github.ref, 'refs/tags/')
