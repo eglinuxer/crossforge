@@ -37,6 +37,53 @@ const ABILIST_LIBS: &[&str] = &[
 
 const LIB_DIRS: &[&str] = &["lib64", "usr/lib64", "lib", "usr/lib"];
 
+/// Directory prefixes dropped while extracting a sysroot: a sysroot is a
+/// link-time tree, so documentation, translations and target-architecture
+/// executables are dead weight — and the weight compounds, because the
+/// prefix embeds the sysroot, the image embeds the prefix, and a cross
+/// build environment embeds two prefixes.
+///
+/// Deliberately a deny list, not an allow list: `usr/share` also holds the
+/// things a build genuinely needs — CMake package configs, pkg-config files,
+/// aclocal macros, wayland protocol XML, GIR data.
+const SYSROOT_EXCLUDE: &[&str] = &[
+    "usr/share/doc/",
+    "usr/share/man/",
+    "usr/share/info/",
+    "usr/share/licenses/",
+    "usr/share/locale/",
+    "usr/share/icons/",
+    "usr/share/applications/",
+    "usr/share/gtk-doc/",
+    "usr/share/help/",
+    "usr/share/mime/",
+    "usr/share/metainfo/",
+    "usr/share/appdata/",
+    "usr/share/bash-completion/",
+    "usr/share/zsh/",
+    "usr/share/gdb/",
+    // Target-architecture executables: they cannot run on the build host,
+    // and nothing links against them.
+    "usr/bin/",
+    "usr/sbin/",
+    "bin/",
+    "sbin/",
+    "usr/libexec/",
+    "usr/games/",
+    "usr/lib/debug/",
+    "usr/lib/systemd/",
+    "usr/share/systemd/",
+    "var/",
+    "run/",
+];
+
+/// Whether an archive-relative path belongs in a sysroot.
+fn wanted_in_sysroot(path: &str) -> bool {
+    !SYSROOT_EXCLUDE
+        .iter()
+        .any(|prefix| path.starts_with(prefix))
+}
+
 /// Relative directory inside the sysroot holding crossforge metadata.
 pub const META_DIR: &str = ".crossforge";
 
@@ -231,7 +278,7 @@ impl<'a> SysrootGenerator<'a> {
             let url = format!("{}{}", repo, pkg.location);
             let path = self.fetcher.fetch_cached(&url, &pkg.checksum)?;
             let data = std::fs::read(&path)?;
-            let n = rpm::extract_rpm(&data, out_dir)?;
+            let n = rpm::extract_rpm_filtered(&data, out_dir, wanted_in_sysroot)?;
             tracing::info!(package = %pkg.name, evr = %pkg.evr(), entries = n, "extracted");
             records.push(PackageRecord {
                 name: pkg.name.clone(),
@@ -381,6 +428,31 @@ fn find_lib(root: &Path, name: &str) -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sysroot_filter_keeps_what_a_build_needs() {
+        // Dropped: documentation, translations, target executables.
+        assert!(!wanted_in_sysroot("usr/share/doc/glibc/README"));
+        assert!(!wanted_in_sysroot("usr/share/locale/de/LC_MESSAGES/x.mo"));
+        assert!(!wanted_in_sysroot("usr/share/man/man3/printf.3.gz"));
+        assert!(!wanted_in_sysroot("usr/bin/xml2-config"));
+        assert!(!wanted_in_sysroot("usr/sbin/ldconfig"));
+
+        // Kept: headers, libraries, and the build-time metadata that also
+        // lives under usr/share.
+        assert!(wanted_in_sysroot("usr/include/stdio.h"));
+        assert!(wanted_in_sysroot("usr/lib64/libc.so"));
+        assert!(wanted_in_sysroot("usr/lib64/pkgconfig/x11.pc"));
+        assert!(wanted_in_sysroot(
+            "usr/share/pkgconfig/wayland-protocols.pc"
+        ));
+        assert!(wanted_in_sysroot("usr/share/cmake/Modules/FindX11.cmake"));
+        assert!(wanted_in_sysroot("usr/share/aclocal/pkg.m4"));
+        assert!(wanted_in_sysroot(
+            "usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml"
+        ));
+        assert!(wanted_in_sysroot("usr/share/gir-1.0/Gio-2.0.gir"));
+    }
 
     #[test]
     fn usrmove_merges_toplevel_lib64() {

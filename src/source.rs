@@ -160,6 +160,20 @@ impl SourceRegistry {
             if !seen.insert(def.id.clone()) {
                 return Err(Error::DuplicateSource(def.id));
             }
+            // `arch_packages` and `arch_repos` accept any key, so a
+            // key-value pair written *after* one of those sub-tables lands
+            // inside it instead of on the source — silently, since neither
+            // `deny_unknown_fields` nor the type system can see it. Rejecting
+            // keys that are not architectures turns that into an error.
+            for key in def.arch_packages.keys().chain(def.arch_repos.keys()) {
+                if key.parse::<TargetArch>().is_err() {
+                    return Err(Error::UnknownArch(format!(
+                        "{key} (in source `{}`: arch_repos/arch_packages keys must be target \
+                         architectures — a key written after one of those tables belongs to it)",
+                        def.id
+                    )));
+                }
+            }
             self.entries.insert(def.id.clone(), def);
         }
         for def in file.profile {

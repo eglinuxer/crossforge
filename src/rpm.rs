@@ -22,9 +22,21 @@ fn rpm_err(msg: impl Into<String>) -> Error {
 /// Extracts an RPM's payload into `dest`. Returns the number of filesystem
 /// entries written (files, dirs, symlinks).
 pub fn extract_rpm(data: &[u8], dest: &Path) -> Result<usize> {
+    extract_rpm_filtered(data, dest, |_| true)
+}
+
+/// Extracts only the members `keep` accepts, by their archive-relative path
+/// (`usr/share/doc/foo/README`). Used for sysroots, where documentation,
+/// locales and target-architecture executables are pure weight: they cannot
+/// run on the build host and nothing links against them.
+pub fn extract_rpm_filtered(
+    data: &[u8],
+    dest: &Path,
+    keep: impl Fn(&str) -> bool,
+) -> Result<usize> {
     let payload = payload_of(data)?;
     let cpio = decompress_auto(payload)?;
-    cpio::extract(&cpio, dest)
+    cpio::extract(&cpio, dest, &keep)
 }
 
 /// Returns the (still compressed) payload region of an RPM.
@@ -168,7 +180,7 @@ pub(crate) mod cpio {
         Ok(Some(dest.join(rel)))
     }
 
-    pub fn extract(data: &[u8], dest: &Path) -> Result<usize> {
+    pub fn extract(data: &[u8], dest: &Path, keep: &dyn Fn(&str) -> bool) -> Result<usize> {
         std::fs::create_dir_all(dest)?;
         let mut pos = 0;
         let mut written = 0usize;
@@ -181,6 +193,9 @@ pub(crate) mod cpio {
             pos = entry.next;
             if entry.name == "TRAILER!!!" {
                 break;
+            }
+            if !keep(entry.name.trim_start_matches("./").trim_start_matches('/')) {
+                continue;
             }
             let Some(path) = sanitize(entry.name, dest)? else {
                 continue;
@@ -196,15 +211,35 @@ pub(crate) mod cpio {
                 S_IFLNK => {
                     let target = std::str::from_utf8(entry.data)
                         .map_err(|_| cpio_err("non-utf8 symlink target"))?;
+                    // A UsrMove link (`lib64` -> `usr/lib64`) can arrive
+                    // after another package already materialized the same
+                    // path as a real directory. Replacing it would discard
+                    // what was extracted there; leaving it alone is safe
+                    // because the layout fixups merge and relink afterwards.
+                    if path.is_dir() && !path.is_symlink() {
+                        tracing::debug!(
+                            path = %path.display(),
+                            "symlink member skipped: path already extracted as a directory"
+                        );
+                        continue;
+                    }
                     let _ = std::fs::remove_file(&path);
-                    std::os::unix::fs::symlink(target, &path)?;
+                    std::os::unix::fs::symlink(target, &path).map_err(|e| {
+                        cpio_err(format!("symlink {} -> {target}: {e}", path.display()))
+                    })?;
                     written += 1;
                 }
                 S_IFREG => {
                     if entry.data.is_empty() && entry.nlink > 1 {
                         if let Some(source) = link_source.get(&entry.ino) {
                             let _ = std::fs::remove_file(&path);
-                            std::fs::hard_link(source, &path)?;
+                            std::fs::hard_link(source, &path).map_err(|e| {
+                                cpio_err(format!(
+                                    "hard link {} -> {}: {e}",
+                                    path.display(),
+                                    source.display()
+                                ))
+                            })?;
                             written += 1;
                         } else {
                             pending_links.entry(entry.ino).or_default().push(path);
@@ -217,7 +252,13 @@ pub(crate) mod cpio {
                     if entry.nlink > 1 {
                         for link in pending_links.remove(&entry.ino).unwrap_or_default() {
                             let _ = std::fs::remove_file(&link);
-                            std::fs::hard_link(&path, &link)?;
+                            std::fs::hard_link(&path, &link).map_err(|e| {
+                                cpio_err(format!(
+                                    "hard link {} -> {}: {e}",
+                                    link.display(),
+                                    path.display()
+                                ))
+                            })?;
                             written += 1;
                         }
                         link_source.insert(entry.ino, path);
@@ -300,7 +341,7 @@ mod tests {
             newc_entry("./usr/include/stdio.h", 0o100644, 2, 1, b"int printf();\n"),
             newc_entry("./usr/lib64/libc.so", 0o120777, 3, 1, b"libc.so.6"),
         ]);
-        let n = cpio::extract(&data, dir.path()).unwrap();
+        let n = cpio::extract(&data, dir.path(), &|_| true).unwrap();
         assert_eq!(n, 3);
         let content = std::fs::read_to_string(dir.path().join("usr/include/stdio.h")).unwrap();
         assert_eq!(content, "int printf();\n");
@@ -315,7 +356,7 @@ mod tests {
             newc_entry("./a", 0o100644, 7, 2, b""),
             newc_entry("./b", 0o100644, 7, 2, b"shared"),
         ]);
-        cpio::extract(&data, dir.path()).unwrap();
+        cpio::extract(&data, dir.path(), &|_| true).unwrap();
         assert_eq!(
             std::fs::read_to_string(dir.path().join("a")).unwrap(),
             "shared"
@@ -331,7 +372,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let data = archive(&[newc_entry("./../evil", 0o100644, 1, 1, b"x")]);
         assert!(matches!(
-            cpio::extract(&data, dir.path()),
+            cpio::extract(&data, dir.path(), &|_| true),
             Err(Error::Cpio(_))
         ));
     }

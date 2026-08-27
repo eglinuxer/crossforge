@@ -49,10 +49,6 @@ packages = [
     "libuuid-devel",
 ]
 
-# libquadmath backs __float128, which only exists on x86.
-[source.arch_packages]
-x86_64 = ["libquadmath"]
-
 # Never pulled in by dependency resolution: a sysroot is a link-time tree,
 # so the bootstrap/runtime chain (shells, coreutils, locales, daemons,
 # interpreters) is dead weight. A trailing `*` matches by prefix.
@@ -66,6 +62,10 @@ exclude = [
     "ca-certificates", "gtk-update-icon-cache", "hicolor-icon-theme",
     "adwaita-*", "gnome-*", "desktop-file-utils", "shared-mime-info",
 ]
+
+# libquadmath backs __float128, which only exists on x86.
+[source.arch_packages]
+x86_64 = ["libquadmath"]
 
 # --- Sysroot content profiles (design doc §5.1) -----------------------------
 # Tiered on purpose: a project pulls in the depth it needs, and the profile id
