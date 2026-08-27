@@ -111,6 +111,32 @@ suite: ~64MB per pack, matching the official 66MB). Wheels target
 it diffs every pack's `pyconfig.h` + `_sysconfigdata_*.py` against the
 official manylinux_2_28 images and fails on any ABI-relevant difference.
 
+### Prebuilt packs
+
+Every commit publishes each pack as its own image, so wheel builds need no
+local CPython build:
+
+```console
+$ ./target/release/crossforge python --pull --image crossforge-buildenv:el8
+```
+
+This materializes `work/python-packs/<tag>-<arch>/` from
+`ghcr.io/eglinuxer/crossforge/python:<tag>-<arch>` (add `--image-ref <sha>`
+to pin a commit) and import-smokes each pulled pack. The images are also
+directly usable interpreters on their own architecture, since a pack is
+installed at the prefix it was configured for:
+
+```console
+$ docker run --rm ghcr.io/eglinuxer/crossforge/python:cp312-aarch64 \
+    python3.12 -c 'import ssl; print(ssl.OPENSSL_VERSION)'
+```
+
+Tagged releases additionally carry every pack as a `tar.zst` asset with a
+TOML sidecar (`crossforge python --pack --out dist` produces the same
+locally). Note that packs target the el8 baseline: running one outside a
+baseline container needs baseline-era runtime libraries, which is why the
+smoke runs under `--image`.
+
 ## Wheels (M7): a cross cibuildwheel
 
 `crossforge wheel` takes a project directory to compliant `manylinux_2_28`
@@ -139,13 +165,24 @@ the project's PEP 517 backend through pip, then gates the result:
    `quay.io/pypa/manylinux_2_28_*` container with the image's own
    interpreter (aarch64 via binfmt qemu).
 
+Four build backends are covered by the same environment layer:
+setuptools, scikit-build-core/CMake, maturin/PyO3, and anything else
+driven through PEP 517. Rust extensions need the Rust build image
+(`docker build -t crossforge-buildenv:el8-rust -f docker/buildenv-rust.Dockerfile docker`)
+and are cross-compiled through `CARGO_BUILD_TARGET` plus a per-target
+linker pointing at the crossforge cross gcc — which is also what keeps
+*native* Rust wheels inside the policy's glibc ceiling, since the host gcc
+would link against a much newer glibc.
+
 C++ wheels are where the toolchain's nonshared hybrid linking pays off:
 `std::from_chars`/`std::filesystem` (GLIBCXX_3.4.29+ material) get
 statically carried while the wheel's dynamic requirement stays at
 GLIBCXX ≤ 3.4.21 — inside a policy ceiling that even el8's system
-libstdc++ exceeds. `examples/wheel-setuptools` (plain C),
-`examples/wheel-nanobind` (C++, scikit-build-core/CMake) and
-`examples/wheel-vendored` (linking libssl) are the acceptance samples.
+libstdc++ exceeds. The acceptance samples are `examples/wheel-setuptools` (plain C),
+`examples/wheel-nanobind` (C++, scikit-build-core/CMake),
+`examples/wheel-vendored` (linking libssl), `examples/wheel-abi3`
+(Limited API — one wheel per arch for every interpreter) and
+`examples/wheel-pyo3` (Rust/maturin).
 
 Wheels linking libraries outside the policy whitelist get them **vendored
 automatically** (the auditwheel-repair counterpart, in pure Rust): the

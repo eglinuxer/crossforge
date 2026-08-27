@@ -37,11 +37,28 @@ pub struct PackedToolchain {
     pub entry: BundleEntry,
 }
 
+/// One distributable python pack, as recorded in the manifest.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PythonEntry {
+    /// Pack id, e.g. `cp312-aarch64`.
+    pub id: String,
+    /// Full CPython version, e.g. `3.12.14`.
+    pub version: String,
+    pub arch: String,
+    pub baseline: String,
+    pub file: String,
+    pub sha256: String,
+    pub size: u64,
+    pub created_unix: u64,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct ManifestFile {
     manifest: ManifestHeader,
     #[serde(default)]
     toolchain: Vec<BundleEntry>,
+    #[serde(default)]
+    python: Vec<PythonEntry>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -108,25 +125,84 @@ pub fn pack_toolchain(
     Ok(PackedToolchain { tarball, entry })
 }
 
-/// Rebuilds `<out_dir>/manifest.toml` from all `.tar.zst.toml` sidecars.
+/// Packs a built python pack into
+/// `<out_dir>/crossforge-python-<id>.tar.zst` with a `.python.toml` sidecar
+/// (design doc §9): the release-asset form of a pack, next to the GHCR
+/// images. Idempotent.
+pub fn pack_python(
+    pack: &crate::python::PythonPack,
+    baseline: &str,
+    out_dir: &Path,
+    runner: &impl Runner,
+) -> Result<(PathBuf, PythonEntry)> {
+    std::fs::create_dir_all(out_dir)?;
+    let id = format!("{}-{}", crate::python::pack_tag(&pack.version), pack.arch);
+    let file = format!("crossforge-python-{id}.tar.zst");
+    let tarball = out_dir.join(&file);
+    let sidecar = out_dir.join(format!("{file}.python.toml"));
+    if tarball.is_file() && sidecar.is_file() {
+        let entry: PythonEntry = toml::from_str(&std::fs::read_to_string(&sidecar)?)?;
+        tracing::info!(tarball = %tarball.display(), "already packed, skipping");
+        return Ok((tarball, entry));
+    }
+
+    // The pack root is the DESTDIR; archive its contents so unpacking
+    // anywhere reproduces `opt/_internal/cpython-<version>/`.
+    tracing::info!(tarball = %tarball.display(), "packing python pack");
+    runner.exec(
+        &Cmd::new("tar")
+            .args([
+                "--zstd",
+                "-C",
+                &pack.root.display().to_string(),
+                "-cf",
+                &tarball.display().to_string(),
+                ".",
+            ])
+            .log(out_dir.join(format!("{file}.log"))),
+    )?;
+
+    let (sha256, size) = file_digest(&tarball)?;
+    let entry = PythonEntry {
+        id,
+        version: pack.version.clone(),
+        arch: pack.arch.to_string(),
+        baseline: baseline.to_string(),
+        file,
+        sha256,
+        size,
+        created_unix: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0),
+    };
+    std::fs::write(&sidecar, toml::to_string_pretty(&entry)?)?;
+    Ok((tarball, entry))
+}
+
+/// Rebuilds `<out_dir>/manifest.toml` from the `.tar.zst.toml` (toolchain)
+/// and `.python.toml` (python pack) sidecars.
 pub fn write_manifest(out_dir: &Path) -> Result<PathBuf> {
     let mut entries = Vec::new();
+    let mut python_entries = Vec::new();
     for dir_entry in std::fs::read_dir(out_dir)? {
         let path = dir_entry?.path();
-        if path
-            .file_name()
-            .is_some_and(|n| n.to_string_lossy().ends_with(".tar.zst.toml"))
-        {
+        let name = path.file_name().unwrap_or_default().to_string_lossy();
+        if name.ends_with(".python.toml") {
+            python_entries.push(toml::from_str(&std::fs::read_to_string(&path)?)?);
+        } else if name.ends_with(".tar.zst.toml") {
             entries.push(toml::from_str(&std::fs::read_to_string(&path)?)?);
         }
     }
     entries.sort_by(|a: &BundleEntry, b: &BundleEntry| a.id.cmp(&b.id));
+    python_entries.sort_by(|a: &PythonEntry, b: &PythonEntry| a.id.cmp(&b.id));
     let manifest = ManifestFile {
         manifest: ManifestHeader {
             schema: 1,
             generator: format!("crossforge {}", env!("CARGO_PKG_VERSION")),
         },
         toolchain: entries,
+        python: python_entries,
     };
     let path = out_dir.join("manifest.toml");
     std::fs::write(&path, toml::to_string_pretty(&manifest)?)?;

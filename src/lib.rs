@@ -75,9 +75,12 @@ pub use engine::{
 };
 pub use error::{Error, Result};
 pub use fetch::Fetcher;
-pub use pack::{BundleEntry, PackedToolchain, pack_toolchain, write_manifest};
+pub use pack::{
+    BundleEntry, PackedToolchain, PythonEntry, pack_python, pack_toolchain, write_manifest,
+};
 pub use python::{
     PYTHON_BASELINE, PYTHON_VERSIONS, PythonBuilder, PythonPack, PythonPackMetadata, pack_tag,
+    pull_pack,
 };
 pub use smoke::{SmokeOutcome, SmokeRunner};
 pub use source::{SourceDef, SourceRegistry};

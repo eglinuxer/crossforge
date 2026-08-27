@@ -85,12 +85,96 @@ jobs:
             "${TAGS[@]}" work/toolchains
           docker push --all-tags "$IMAGE"
 
-  # Wheel dimension (design doc §9, M8): python packs + the three sample
-  # wheels through audit/vendor/smoke and the official manylinux containers.
-  # CI builds a reduced matrix (newest CPython only); the full five-version
-  # matrix is a release-time/local run.
-  wheels:
+  # Python packs (design doc §9): built from this commit's toolchains and
+  # published per (version, arch) — an image users can `docker run` directly
+  # or feed to `crossforge python --pull`, plus tar.zst release assets on
+  # tags. This is what removes the local CPython build from a wheel run.
+  python-packs:
     needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9.25", "3.10.21", "3.11.16", "3.12.14", "3.13.15"]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
+          df -h /
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build crossforge
+        run: cargo build --release
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch this commit's el8 toolchains from GHCR
+        run: |
+          SHA=${GITHUB_SHA::7}
+          IMAGE="ghcr.io/${{ github.repository }}/toolchain"
+          mkdir -p work/toolchains
+          for target in x86_64 aarch64; do
+            ID="gcc14.2.1-el8-$target"
+            docker pull -q "$IMAGE:el8-$target-gcc14.2.1-$SHA"
+            cid=$(docker create "$IMAGE:el8-$target-gcc14.2.1-$SHA")
+            docker cp "$cid:/opt/crossforge/$ID" "work/toolchains/$ID"
+            docker rm "$cid" >/dev/null
+          done
+
+      - name: Build el8 build environment image
+        run: docker build -t crossforge-buildenv:el8 -f docker/buildenv.Dockerfile docker
+
+      - name: Build packs (${{ matrix.python }}, both arches)
+        run: |
+          ./target/release/crossforge python \
+            --versions "${{ matrix.python }}" \
+            --image crossforge-buildenv:el8 --work-dir "$PWD/work"
+
+      - name: Push pack images
+        run: |
+          SHA=${GITHUB_SHA::7}
+          IMAGE="ghcr.io/${{ github.repository }}/python"
+          VERSION="${{ matrix.python }}"
+          TAG="cp$(echo "$VERSION" | cut -d. -f1,2 | tr -d .)"
+          for arch in x86_64 aarch64; do
+            platform=linux/amd64
+            [ "$arch" = aarch64 ] && platform=linux/arm64
+            # COPY-only build: the arm64 variant needs no emulation.
+            docker build -f docker/python.Dockerfile --platform "$platform" \
+              --build-arg PACK_ID="$TAG-$arch" --build-arg PYTHON_VERSION="$VERSION" \
+              -t "$IMAGE:$TAG-$arch" -t "$IMAGE:$TAG-$arch-$SHA" work/python-packs
+          done
+          docker push --all-tags "$IMAGE"
+
+      - name: Pack release assets and upload (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./target/release/crossforge python \
+            --versions "${{ matrix.python }}" --pack \
+            --image crossforge-buildenv:el8 --work-dir "$PWD/work" --out "$PWD/dist"
+          TAG="${GITHUB_REF#refs/tags/}"
+          gh release create "$TAG" --title "$TAG" --notes "crossforge $TAG" || true
+          gh release upload "$TAG" dist/*.tar.zst dist/*.python.toml --clobber
+
+  # Wheel dimension (design doc §9, M8): the sample wheels through
+  # audit/vendor/smoke and the official manylinux containers, on packs
+  # pulled from the images the previous job published. CI runs the newest
+  # CPython only; the full five-version matrix is a release-time/local run.
+  wheels:
+    needs: python-packs
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -138,11 +222,19 @@ jobs:
       - name: Build el8 build environment image
         run: docker build -t crossforge-buildenv:el8 -f docker/buildenv.Dockerfile docker
 
-      - name: Build python packs (${{ env.PYTHON_VERSION }}, both arches)
+      # Exercises the published-pack path: no local CPython build.
+      - name: Pull python packs (${{ env.PYTHON_VERSION }}) from this commit's images
         run: |
-          ./target/release/crossforge python \
+          ./target/release/crossforge python --pull \
+            --registry "ghcr.io/${{ github.repository }}/python" \
+            --image-ref "${GITHUB_SHA::7}" \
             --versions "$PYTHON_VERSION" \
             --image crossforge-buildenv:el8 --work-dir "$PWD/work"
+
+      - name: Build Rust build environment image
+        run: |
+          docker build -t crossforge-buildenv:el8-rust \
+            -f docker/buildenv-rust.Dockerfile docker
 
       - name: Build, audit and verify the sample wheels
         run: |
@@ -152,6 +244,11 @@ jobs:
               --image crossforge-buildenv:el8 --work-dir "$PWD/work" \
               --out "$PWD/wheels" --verify-manylinux
           done
+          # PyO3/maturin needs the Rust image.
+          ./target/release/crossforge wheel examples/wheel-pyo3 \
+            --versions "$PYTHON_VERSION" \
+            --image crossforge-buildenv:el8-rust --work-dir "$PWD/work" \
+            --out "$PWD/wheels" --verify-manylinux
           ls -la wheels/
 
       - uses: actions/upload-artifact@v4

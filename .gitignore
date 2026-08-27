@@ -1,3 +1,4 @@
 /target
 examples/*/build/
 examples/*/*.egg-info/
+examples/*/target/

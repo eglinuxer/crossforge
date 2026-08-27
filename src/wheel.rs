@@ -159,6 +159,23 @@ impl<'a, R: Runner> WheelBuilder<'a, R> {
             .env("CC", format!("{triple}-gcc"))
             .env("CXX", format!("{triple}-g++"))
             .env("AR", format!("{triple}-ar"))
+            // cc-rs picks TARGET_CC for target objects and HOST_CC for build
+            // scripts; without HOST_CC it would fall back to the cross CC
+            // above and miscompile host-side build scripts.
+            .env("TARGET_CC", format!("{triple}-gcc"))
+            .env("TARGET_CXX", format!("{triple}-g++"))
+            .env("TARGET_AR", format!("{triple}-ar"))
+            .env("HOST_CC", "gcc")
+            .env("HOST_CXX", "g++")
+            // Cargo/maturin: build for the target triple and link with the
+            // crossforge compiler. This also matters for native x86_64 —
+            // the host gcc would produce binaries over the policy's glibc
+            // ceiling.
+            .env("CARGO_BUILD_TARGET", &triple)
+            .env(
+                format!("CARGO_TARGET_{}_LINKER", cargo_target_env(&triple)),
+                format!("{triple}-gcc"),
+            )
             .env(
                 "CMAKE_TOOLCHAIN_FILE",
                 req.toolchain_prefix
@@ -201,10 +218,14 @@ impl<'a, R: Runner> WheelBuilder<'a, R> {
                             .trim_end_matches('.'),
                     ),
                 )
+                // PyO3 finds the target's sysconfigdata under this lib dir;
+                // the version pin keeps it from guessing when several packs
+                // share a search path.
                 .env(
                     "PYO3_CROSS_LIB_DIR",
                     req.target_pack.prefix.join("lib").display().to_string(),
-                );
+                )
+                .env("PYO3_CROSS_PYTHON_VERSION", &minor);
         }
         wheel_cmd = wheel_cmd.env("PYTHONPATH", pythonpath);
         tracing::info!(project = %req.project_dir.display(), id, "building wheel");
@@ -498,6 +519,12 @@ pub fn project_supports_python(project_dir: &Path, python_version: &str) -> Resu
     }
 }
 
+/// `aarch64-unknown-linux-gnu` → `AARCH64_UNKNOWN_LINUX_GNU`, the form
+/// cargo uses in its per-target environment variables.
+fn cargo_target_env(triple: &str) -> String {
+    triple.to_uppercase().replace('-', "_")
+}
+
 fn pack_minor(pack: &PythonPack) -> String {
     let mut it = pack.version.split('.');
     format!("{}.{}", it.next().unwrap_or("3"), it.next().unwrap_or("0"))
@@ -617,6 +644,18 @@ mod tests {
             },
         ];
         assert_eq!(top_level_modules(&entries), vec!["flat", "pkg"]);
+    }
+
+    #[test]
+    fn cargo_target_env_naming() {
+        assert_eq!(
+            cargo_target_env("aarch64-unknown-linux-gnu"),
+            "AARCH64_UNKNOWN_LINUX_GNU"
+        );
+        assert_eq!(
+            cargo_target_env("x86_64-unknown-linux-gnu"),
+            "X86_64_UNKNOWN_LINUX_GNU"
+        );
     }
 
     #[test]

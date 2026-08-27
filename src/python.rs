@@ -103,6 +103,90 @@ pub fn pack_tag(version: &str) -> String {
     format!("cp{}", minor_version(version).replace('.', ""))
 }
 
+/// Container platform for an arch, as `docker --platform` expects it.
+fn platform(arch: TargetArch) -> &'static str {
+    match arch {
+        TargetArch::X86_64 => "linux/amd64",
+        _ => "linux/arm64",
+    }
+}
+
+/// Materializes a prebuilt pack from a published image (design doc §9):
+/// `<registry>:<tag>-<arch>[-<reference>]`, whose `/opt/_internal` tree is
+/// copied back out into `out_root/<tag>-<arch>`. This is the alternative to
+/// building CPython locally — wheel builds only need the pack tree.
+///
+/// Idempotent: an existing pack short-circuits.
+pub fn pull_pack(
+    engine: &str,
+    registry: &str,
+    version: &str,
+    arch: TargetArch,
+    reference: Option<&str>,
+    out_root: &Path,
+) -> Result<PythonPack> {
+    let tag = pack_tag(version);
+    let pack_root = out_root.join(format!("{tag}-{arch}"));
+    let pack = PythonPack {
+        prefix: pack_root.join(format!("opt/_internal/cpython-{version}")),
+        root: pack_root,
+        version: version.to_string(),
+        arch,
+    };
+    if pack.python_bin().is_file() {
+        tracing::info!(root = %pack.root.display(), "python pack already present, skipping pull");
+        return Ok(pack);
+    }
+    let image = match reference {
+        Some(r) => format!("{registry}:{tag}-{arch}-{r}"),
+        None => format!("{registry}:{tag}-{arch}"),
+    };
+    let platform = platform(arch);
+    tracing::info!(image, "pulling python pack");
+    if let Err(e) = run_capture(engine, &["pull", "--platform", platform, "-q", &image]) {
+        // A locally loaded image (air-gapped install, or a local build) is
+        // still usable; only a genuinely missing image is fatal.
+        run_capture(engine, &["image", "inspect", &image]).map_err(|_| e)?;
+        tracing::warn!(image, "pull failed; using the locally present image");
+    }
+    let cid = run_capture(engine, &["create", "--platform", platform, &image])?
+        .trim()
+        .to_string();
+    let dest = pack.root.join("opt");
+    std::fs::create_dir_all(&dest)?;
+    let result = run_capture(
+        engine,
+        &[
+            "cp",
+            &format!("{cid}:/opt/_internal"),
+            &dest.display().to_string(),
+        ],
+    );
+    let _ = run_capture(engine, &["rm", &cid]);
+    result?;
+    if !pack.python_bin().is_file() {
+        return Err(Error::PythonPack(format!(
+            "image {image} did not yield {}",
+            pack.python_bin().display()
+        )));
+    }
+    tracing::info!(root = %pack.root.display(), "python pack pulled");
+    Ok(pack)
+}
+
+/// Runs a container-engine command, returning stdout (errors carry stderr).
+fn run_capture(program: &str, args: &[&str]) -> Result<String> {
+    let out = std::process::Command::new(program).args(args).output()?;
+    if !out.status.success() {
+        return Err(Error::PythonPack(format!(
+            "`{program} {}` failed: {}",
+            args.join(" "),
+            String::from_utf8_lossy(&out.stderr).trim()
+        )));
+    }
+    Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+}
+
 /// Minor version prefix: `3.12.14` → `3.12`.
 fn minor_version(version: &str) -> &str {
     match version.match_indices('.').nth(1) {
@@ -406,7 +490,7 @@ impl<'a, R: Runner> PythonBuilder<'a, R> {
     /// Import smoke test: every module in the required list must import.
     /// x86_64 packs run directly (inside the build container); other arches
     /// run under user-mode qemu against the toolchain sysroot.
-    pub fn smoke(&self, pack: &PythonPack, toolchain_prefix: &Path) -> Result<()> {
+    pub fn smoke(&self, pack: &PythonPack, toolchain_prefix: Option<&Path>) -> Result<()> {
         let logs = self.work_dir.join("logs").join(format!(
             "python-{}-{}",
             pack_tag(&pack.version),
@@ -415,9 +499,23 @@ impl<'a, R: Runner> PythonBuilder<'a, R> {
         let program = format!("import {}; print('smoke-ok')", SMOKE_IMPORTS.join(", "));
         let python = pack.python_bin();
         let cmd = match pack.arch {
+            // Runs wherever the runner puts it. A pack targets the baseline,
+            // so its extension modules need baseline-era libraries
+            // (libffi.so.6 and friends): on a modern host the run belongs in
+            // a baseline container (`--image`). Injecting the sysroot via
+            // LD_LIBRARY_PATH is not an option — that pairs the host ld.so
+            // with the baseline libc and crashes.
             TargetArch::X86_64 => Cmd::new(python.display().to_string()),
+            // Foreign arches run under user-mode qemu, which needs the
+            // baseline sysroot from a toolchain built for that arch.
             _ => {
-                let sysroot = toolchain_prefix.join(pack.arch.triple()).join("sysroot");
+                let prefix = toolchain_prefix.ok_or_else(|| {
+                    Error::PythonPack(format!(
+                        "smoke testing a {} pack needs its toolchain (for the qemu sysroot)",
+                        pack.arch
+                    ))
+                })?;
+                let sysroot = prefix.join(pack.arch.triple()).join("sysroot");
                 Cmd::new(format!("qemu-{}", pack.arch.as_str()))
                     .arg("-L")
                     .arg(sysroot.display().to_string())
@@ -429,7 +527,9 @@ impl<'a, R: Runner> PythonBuilder<'a, R> {
             .exec(&cmd.args(["-c", &program]).log(logs.join("smoke.log")))
             .map_err(|e| {
                 Error::PythonPack(format!(
-                    "import smoke failed for {} ({}): {e} (imports: {})",
+                    "import smoke failed for {} ({}): {e} (imports: {}) — a pack targets the \
+                     baseline, so it needs baseline-era runtime libraries: rerun with \
+                     `--image crossforge-buildenv:el8`",
                     pack.version,
                     pack.arch,
                     SMOKE_IMPORTS.join(", ")

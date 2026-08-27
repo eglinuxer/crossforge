@@ -133,6 +133,21 @@ enum Command {
         work_dir: PathBuf,
         #[arg(long)]
         jobs: Option<usize>,
+        /// Fetch prebuilt packs from published images instead of building
+        /// CPython locally (no toolchain needed for x86_64).
+        #[arg(long)]
+        pull: bool,
+        /// Registry repository holding the pack images (with --pull).
+        #[arg(long, default_value = "ghcr.io/eglinuxer/crossforge/python")]
+        registry: String,
+        /// Image tag suffix, e.g. a commit sha (with --pull).
+        #[arg(long)]
+        image_ref: Option<String>,
+        /// Also pack each result into a distributable tar.zst under --out.
+        #[arg(long)]
+        pack: bool,
+        #[arg(long, default_value = "/tmp/crossforge/dist")]
+        out: PathBuf,
     },
     /// Build manylinux_2_28 wheels for a project across the full CPython x
     /// arch matrix (design doc §9, M7): PEP 517 build via the python packs,
@@ -389,13 +404,18 @@ fn main() -> crossforge::Result<()> {
             image,
             work_dir,
             jobs,
+            pull,
+            registry,
+            image_ref,
+            pack,
+            out,
         } => {
             if baseline != crossforge::PYTHON_BASELINE {
                 return Err(crossforge::Error::PythonPack(format!(
                     "python packs support only the manylinux_2_28 baseline (el8), got `{baseline}`"
                 )));
             }
-            let registry = BaselineRegistry::builtin();
+            let baselines = BaselineRegistry::builtin();
             let mut arches: Vec<TargetArch> = vec![TargetArch::X86_64];
             for t in &targets {
                 let arch = t.parse::<TargetArch>()?;
@@ -403,23 +423,25 @@ fn main() -> crossforge::Result<()> {
                     arches.push(arch);
                 }
             }
-            // Resolve every needed toolchain prefix up front.
+            // Toolchains are required to build packs; when pulling they are
+            // only needed for the qemu smoke of foreign-arch packs.
             let mut prefixes = std::collections::BTreeMap::new();
             for arch in &arches {
                 let spec = ToolchainSpec::builder()
                     .gcc(gcc.clone())
                     .baseline(baseline.clone())
                     .target(*arch)
-                    .build(&registry)?;
+                    .build(&baselines)?;
                 let prefix = work_dir.join("toolchains").join(spec.id());
-                if !prefix.join("bin").is_dir() {
+                if prefix.join("bin").is_dir() {
+                    prefixes.insert(*arch, prefix);
+                } else if !pull {
                     return Err(crossforge::Error::PythonPack(format!(
                         "toolchain {} not found under {} (run `crossforge build` first)",
                         spec.id(),
                         prefix.display()
                     )));
                 }
-                prefixes.insert(*arch, prefix);
             }
             let versions: Vec<String> = if versions.is_empty() {
                 crossforge::PYTHON_VERSIONS
@@ -436,7 +458,7 @@ fn main() -> crossforge::Result<()> {
                     .unwrap_or(4)
             });
             let out_root = work_dir.join("python-packs");
-            let run = |runner: &dyn Runner| -> crossforge::Result<Vec<PathBuf>> {
+            let run = |runner: &dyn Runner| -> crossforge::Result<Vec<crossforge::PythonPack>> {
                 let builder = crossforge::PythonBuilder {
                     fetcher: &fetcher,
                     runner: &runner,
@@ -446,6 +468,29 @@ fn main() -> crossforge::Result<()> {
                 };
                 let mut packs = Vec::new();
                 for version in &versions {
+                    if pull {
+                        for arch in &arches {
+                            let pack = crossforge::pull_pack(
+                                "docker",
+                                &registry,
+                                version,
+                                *arch,
+                                image_ref.as_deref(),
+                                &out_root,
+                            )?;
+                            let toolchain = prefixes.get(arch).map(PathBuf::as_path);
+                            if *arch == TargetArch::X86_64 || toolchain.is_some() {
+                                builder.smoke(&pack, toolchain)?;
+                            } else {
+                                tracing::warn!(
+                                    arch = %arch,
+                                    "no toolchain for the qemu sysroot; skipping import smoke"
+                                );
+                            }
+                            packs.push(pack);
+                        }
+                        continue;
+                    }
                     let native = builder.build(
                         version,
                         TargetArch::X86_64,
@@ -453,8 +498,8 @@ fn main() -> crossforge::Result<()> {
                         None,
                         &out_root,
                     )?;
-                    builder.smoke(&native, &prefixes[&TargetArch::X86_64])?;
-                    packs.push(native.root.clone());
+                    builder.smoke(&native, Some(&prefixes[&TargetArch::X86_64]))?;
+                    packs.push(native.clone());
                     for arch in arches.iter().filter(|a| **a != TargetArch::X86_64) {
                         let pack = builder.build(
                             version,
@@ -463,8 +508,8 @@ fn main() -> crossforge::Result<()> {
                             Some(&native),
                             &out_root,
                         )?;
-                        builder.smoke(&pack, &prefixes[arch])?;
-                        packs.push(pack.root.clone());
+                        builder.smoke(&pack, Some(&prefixes[arch]))?;
+                        packs.push(pack);
                     }
                 }
                 Ok(packs)
@@ -483,7 +528,14 @@ fn main() -> crossforge::Result<()> {
                 None => run(&LocalRunner)?,
             };
             for p in &packs {
-                println!("python pack: {}", p.display());
+                println!("python pack: {}", p.root.display());
+            }
+            if pack {
+                for p in &packs {
+                    let (tarball, _) = crossforge::pack_python(p, &baseline, &out, &LocalRunner)?;
+                    println!("tarball:     {}", tarball.display());
+                }
+                write_manifest(&out)?;
             }
         }
         Command::Wheel {

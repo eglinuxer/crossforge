@@ -337,6 +337,24 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 - **abi3 实测**（`examples/wheel-abi3`，Limited API 3.9 + `py_limited_api`）：每架构仅构建一次（cp39-abi3 tag），同架构后续版本自动跳过；冒烟自动展开全部五个解释器（x86 原生 + aarch64 qemu，10/10 import 通过），官方双架构容器装机通过。交叉构建下 setuptools 的 `.abi3.so` 后缀不受 SETUPTOOLS_EXT_SUFFIX 干扰（审计的 ext-suffix 检查兜底）。
 - **vendor 清单**：vendor 时向 `<dist>.dist-info/crossforge-vendor.toml` 写入每个库的 soname、hash 名、来源路径与原始 sha256——auditwheel SBOM 的轻量对应物，供应链记录随 wheel 分发。
 - **CI 集成**：`toolchain-images.yml` 新增 `wheels` job（从本 commit 的 GHCR 工具链镜像取 prefix、构建 packs 与三样例 wheel，CI 缩减为最新 CPython 单版本、`--verify-manylinux` 双架构经 binfmt qemu）与 `wheels-arm-check` job（GH 原生 arm64 runner 上对每个 aarch64 wheel 在官方容器内 pip install + import 终检，落实 T8「交叉构建、原生终检」）。
+### 9.5 后续增量（2026-08-27）
+
+**PyO3 / maturin 端到端打通**（T5 的第四类后端补齐）：
+
+- 构建环境分层：`docker/buildenv-rust.Dockerfile` 在基础镜像上叠加 rustup（minimal profile + x86_64/aarch64 两个 target 的 std，约 600MB）。刻意不并入基础镜像——GCC 构建与 python packs 都不需要 Rust，八个工具链 job 不该为此付下载代价。`RUSTUP_HOME` 烧进镜像，**`CARGO_HOME` 故意不设**：镜像内目录对非特权构建用户只读，cargo 需落到 `$HOME/.cargo`（wheel 编排提供的可写 scratch HOME）。
+- 交叉驱动全靠环境变量，无需项目改造：`CARGO_BUILD_TARGET=<triple>`（我们的 triple 与 Rust target 三元组恰好同名）+ `CARGO_TARGET_<TRIPLE>_LINKER=<triple>-gcc`，PyO3 侧 `PYO3_CROSS_LIB_DIR`（指向目标 pack 的 lib，pyo3 从中递归找 sysconfigdata）+ `PYO3_CROSS_PYTHON_VERSION`。
+- **原生 x86 同样必须用本工具链的 linker**：cargo 默认用宿主 `cc` 链接，产物会带宿主 glibc 需求、直接超 policy 上限——这与 §9.3 中 C++ 的结论同构，Rust 侧同样成立。
+- cc-rs 兼容：设 `TARGET_CC/TARGET_CXX/TARGET_AR` 供目标侧对象使用，同时显式设 `HOST_CC/HOST_CXX=gcc/g++`——否则 build script（宿主侧）会误用我们注入的交叉 `CC`。
+- 实测（`examples/wheel-pyo3`，pyo3 0.29 + maturin 1.15）：x86_64 与 aarch64 均一次通过；交叉产物在 qemu 下真实调用成功（`add(2,40)=42`，运行时解释器 3.12.14），DT_NEEDED 仅 4 个白名单库、GLIBC ≤ 2.28。maturin 1.15 自带 CycloneDX SBOM 一并进入 wheel。
+
+**python packs 分发**（免去用户本地构建 CPython）：
+
+- **GHCR 镜像，每 (版本 × 架构) 一个**：`ghcr.io/eglinuxer/crossforge/python:<tag>-<arch>`（另带 `-<sha>` 精确钉版）。pack 按其 configure 前缀 `/opt/_internal/cpython-<v>` 安装进镜像，因此镜像**本身就是可直接运行的 CPython**（`docker run ... python3.12 -c ...`，arm64 经 binfmt 亦可）。Dockerfile 刻意只有 COPY 无 RUN——arm64 变体可在 x86 宿主上零仿真构建。
+- **`crossforge python --pull`**：从镜像把 `/opt/_internal` 拷回本地 pack 树（`--registry` / `--image-ref` 可指定源与钉版），并对拉取结果照跑 import 冒烟。拉取失败但本地已有该镜像时降级使用（离线/`docker load` 场景）。拉到的 pack 与自建 pack 完全等价——实测直接用于 wheel 构建通过。
+- **`--pack --out`**：产出 `crossforge-python-<id>.tar.zst` + `.python.toml` 侧文件（sha256/大小/版本/基线），`manifest.toml` 增加 `[[python]]` 数组；CI 在 tag 上作为 release 资产上传。单包约 14MB。
+- **注意**：pack 面向 el8 基线，其扩展模块依赖基线时代的运行库（libffi.so.6 等），在现代宿主直跑会 ImportError；冒烟因此需要 `--image` 基线容器。曾尝试用 `LD_LIBRARY_PATH` 指向 sysroot 绕过——**会把基线 libc 配上宿主 ld.so 直接段错误**，已放弃并在错误信息中给出正确指引。
+- CI 重排为 `build → python-packs（5 版本矩阵，推镜像 / tag 时传 release）→ wheels（**改为 --pull**，顺带验证发布路径）→ wheels-arm-check`；wheels job 增补 PyO3 样例（用 Rust 镜像）。
+
 ## 10. 参考
 
 - RH gcc-toolset 机制：CentOS Stream dist-git `gcc-toolset-*-gcc` spec；LWN 862013
