@@ -84,3 +84,101 @@ jobs:
             --build-arg TOOLCHAIN_ID="$ID" \
             "${TAGS[@]}" work/toolchains
           docker push --all-tags "$IMAGE"
+
+  # Wheel dimension (design doc §9, M8): python packs + the three sample
+  # wheels through audit/vendor/smoke and the official manylinux containers.
+  # CI builds a reduced matrix (newest CPython only); the full five-version
+  # matrix is a release-time/local run.
+  wheels:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    env:
+      PYTHON_VERSION: "3.13.15"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
+          df -h /
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # binfmt qemu so the aarch64 manylinux container runs on this host.
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build crossforge
+        run: cargo build --release
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch this commit's el8 toolchains from GHCR
+        run: |
+          SHA=${GITHUB_SHA::7}
+          IMAGE="ghcr.io/${{ github.repository }}/toolchain"
+          mkdir -p work/toolchains
+          for target in x86_64 aarch64; do
+            ID="gcc14.2.1-el8-$target"
+            docker pull -q "$IMAGE:el8-$target-gcc14.2.1-$SHA"
+            cid=$(docker create "$IMAGE:el8-$target-gcc14.2.1-$SHA")
+            docker cp "$cid:/opt/crossforge/$ID" "work/toolchains/$ID"
+            docker rm "$cid" >/dev/null
+          done
+
+      - name: Build el8 build environment image
+        run: docker build -t crossforge-buildenv:el8 -f docker/buildenv.Dockerfile docker
+
+      - name: Build python packs (${{ env.PYTHON_VERSION }}, both arches)
+        run: |
+          ./target/release/crossforge python \
+            --versions "$PYTHON_VERSION" \
+            --image crossforge-buildenv:el8 --work-dir "$PWD/work"
+
+      - name: Build, audit and verify the sample wheels
+        run: |
+          for sample in wheel-setuptools wheel-nanobind wheel-vendored; do
+            ./target/release/crossforge wheel "examples/$sample" \
+              --versions "$PYTHON_VERSION" \
+              --image crossforge-buildenv:el8 --work-dir "$PWD/work" \
+              --out "$PWD/wheels" --verify-manylinux
+          done
+          ls -la wheels/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sample-wheels
+          path: wheels/*.whl
+
+  # Final native-hardware check (design doc §9, T8): import every aarch64
+  # wheel inside the official manylinux container on a real arm64 runner.
+  wheels-arm-check:
+    needs: wheels
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sample-wheels
+          path: wheels
+
+      - name: Import every aarch64 wheel natively
+        run: |
+          for whl in wheels/*aarch64*.whl; do
+            name=$(basename "$whl")
+            module=${name%%-*}
+            echo "== $name (import $module)"
+            docker run --rm -v "$PWD/wheels:/wheels" \
+              quay.io/pypa/manylinux_2_28_aarch64 sh -c "
+                /opt/python/cp313-cp313/bin/pip install -q --target /tmp/site /wheels/$name &&
+                PYTHONPATH=/tmp/site /opt/python/cp313-cp313/bin/python -c \
+                  'import $module; print(\"native-arm-ok\")'"
+          done

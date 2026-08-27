@@ -163,6 +163,18 @@ enum Command {
         /// container for its arch (aarch64 needs binfmt_misc qemu).
         #[arg(long)]
         verify_manylinux: bool,
+        /// Additional container images for the install-layer check (distro
+        /// sampling); images without a matching interpreter are skipped.
+        #[arg(long, value_delimiter = ',')]
+        verify_images: Vec<String>,
+        /// Extra directories holding target-arch libraries to vendor from
+        /// (the toolchain sysroot is always searched).
+        #[arg(long)]
+        vendor_path: Vec<PathBuf>,
+        /// Sonames the runtime provides (e.g. libcuda.so.1): neither
+        /// vendored nor flagged by the audit.
+        #[arg(long)]
+        exclude: Vec<String>,
     },
     /// Run a binary across distro container images (exit 1 on failures).
     Verify {
@@ -484,6 +496,9 @@ fn main() -> crossforge::Result<()> {
             work_dir,
             out,
             verify_manylinux,
+            verify_images,
+            vendor_path,
+            exclude,
         } => {
             if baseline != crossforge::PYTHON_BASELINE {
                 return Err(crossforge::Error::Wheel(format!(
@@ -530,6 +545,8 @@ fn main() -> crossforge::Result<()> {
                     sources: crossforge::ToolchainSources::builtin(),
                     work_dir: work_dir.clone(),
                     policy: crossforge::WheelPolicy::builtin(),
+                    vendor_paths: vendor_path.clone(),
+                    exclude: exclude.clone(),
                 };
                 let mut artifacts = Vec::new();
                 let mut abi3_done: std::collections::BTreeSet<TargetArch> =
@@ -572,8 +589,14 @@ fn main() -> crossforge::Result<()> {
                         };
                         let refs: Vec<&crossforge::PythonPack> = smoke_packs.iter().collect();
                         builder.smoke(&artifact, &refs, &prefixes[arch])?;
+                        let mut install_images = Vec::new();
                         if verify_manylinux {
-                            builder.verify_in_manylinux(&artifact, "docker")?;
+                            install_images
+                                .push(format!("quay.io/pypa/manylinux_2_28_{}", arch.as_str()));
+                        }
+                        install_images.extend(verify_images.iter().cloned());
+                        if !install_images.is_empty() {
+                            builder.verify_in_images(&artifact, &install_images, "docker")?;
                         }
                         artifacts.push(artifact);
                     }
@@ -596,7 +619,15 @@ fn main() -> crossforge::Result<()> {
                 None => run(&LocalRunner)?,
             };
             for a in &artifacts {
-                println!("wheel: {}", a.path.display());
+                if a.vendored.is_empty() {
+                    println!("wheel: {}", a.path.display());
+                } else {
+                    println!(
+                        "wheel: {} (vendored: {})",
+                        a.path.display(),
+                        a.vendored.join(", ")
+                    );
+                }
             }
         }
         Command::Verify {

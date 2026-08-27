@@ -9,7 +9,11 @@ policy = "manylinux_2_28"
 auditwheel_reference = "6.8.1"
 
 # DT_NEEDED sonames a compliant wheel may carry without vendoring.
+# The dynamic loaders are appended explicitly: auditwheel injects them at
+# runtime per arch (on aarch64, glibc libraries commonly carry a DT_NEEDED
+# on ld-linux itself), and vendoring a loader would be nonsense.
 lib_whitelist = [
+    "ld-linux-x86-64.so.2", "ld-linux-aarch64.so.1",
 
     "libatomic.so.1", "libgcc_s.so.1", "libstdc++.so.6", "libm.so.6",
     "libmvec.so.1", "libanl.so.1", "libdl.so.2", "librt.so.1", "libc.so.6",

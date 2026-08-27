@@ -143,9 +143,24 @@ C++ wheels are where the toolchain's nonshared hybrid linking pays off:
 `std::from_chars`/`std::filesystem` (GLIBCXX_3.4.29+ material) get
 statically carried while the wheel's dynamic requirement stays at
 GLIBCXX ≤ 3.4.21 — inside a policy ceiling that even el8's system
-libstdc++ exceeds. `examples/wheel-setuptools` (plain C) and
-`examples/wheel-nanobind` (C++, scikit-build-core/CMake) are the two
-acceptance samples.
+libstdc++ exceeds. `examples/wheel-setuptools` (plain C),
+`examples/wheel-nanobind` (C++, scikit-build-core/CMake) and
+`examples/wheel-vendored` (linking libssl) are the acceptance samples.
+
+Wheels linking libraries outside the policy whitelist get them **vendored
+automatically** (the auditwheel-repair counterpart, in pure Rust): the
+library and its transitive dependencies are copied into
+`<distribution>.libs/` under content-hashed names, and every ELF is
+rewritten natively — DT_SONAME/DT_NEEDED renames, `.gnu.version_r` file
+names, and `$ORIGIN`-relative DT_RUNPATH — by appending a relocated
+`.dynamic`/`.dynstr` in a new PT_LOAD segment (no patchelf dependency).
+The output is structurally equivalent to `auditwheel repair` (verified
+side by side; we emit modern RUNPATH instead of its legacy RPATH).
+Driver-style libraries the runtime provides stay external via
+`--exclude libcuda.so.1`. `--verify-images` adds an install-layer check
+across arbitrary container images (images without a matching interpreter
+are skipped), and CI runs the wheel dimension per commit — including an
+import check of every aarch64 wheel on a native arm64 runner.
 
 ## Pipeline
 

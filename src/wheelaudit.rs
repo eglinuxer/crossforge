@@ -48,8 +48,15 @@ impl WheelPolicy {
 
 /// Audits one built wheel against the policy. `arch` is the target the wheel
 /// was built for; the wheel may still carry a `linux_*` tag (audit runs
-/// before retagging).
-pub fn audit_wheel(policy: &WheelPolicy, path: &Path, arch: TargetArch) -> Result<AuditReport> {
+/// before retagging). `excludes` are additional sonames the caller declares
+/// the runtime provides (driver-style libraries, e.g. `libcuda.so.1`) —
+/// allowed as DT_NEEDED and skipped by the symbol-version checks.
+pub fn audit_wheel(
+    policy: &WheelPolicy,
+    path: &Path,
+    arch: TargetArch,
+    excludes: &[String],
+) -> Result<AuditReport> {
     let file_name = path
         .file_name()
         .and_then(|n| n.to_str())
@@ -117,7 +124,10 @@ pub fn audit_wheel(policy: &WheelPolicy, path: &Path, arch: TargetArch) -> Resul
                         "{short}: links {needed}; manylinux wheels must not link libpython"
                     ),
                 });
-            } else if !policy.lib_whitelist.contains(needed) && !internal.contains(needed) {
+            } else if !policy.lib_whitelist.contains(needed)
+                && !internal.contains(needed)
+                && !excludes.contains(needed)
+            {
                 findings.push(Finding {
                     check: "needed",
                     severity: Severity::Error,

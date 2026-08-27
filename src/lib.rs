@@ -39,6 +39,7 @@ mod check;
 mod compat;
 mod compiler;
 mod elfdyn;
+mod elfpatch;
 mod engine;
 mod error;
 mod fetch;
@@ -51,6 +52,7 @@ mod source;
 mod spec;
 mod sysroot;
 mod target;
+mod vendor;
 mod verify;
 mod wheel;
 mod wheelaudit;
@@ -67,6 +69,7 @@ pub use elfdyn::{
     DynSymbol, ElfInfo, VersionNeed, defined_global_symbols, exported_symbols, inspect,
     render_abilist,
 };
+pub use elfpatch::{PatchOps, patch_elf, read_runpath};
 pub use engine::{
     BuildConfig, BuildEngine, Cmd, ContainerRunner, LocalRunner, Runner, ToolchainArtifact,
 };
@@ -83,6 +86,7 @@ pub use spec::{
 };
 pub use sysroot::{PackageRecord, SysrootArtifact, SysrootGenerator, SysrootMetadata};
 pub use target::{TargetArch, VENDOR};
+pub use vendor::{VendoredLib, vendor_wheel};
 pub use verify::{VerifyResult, verify_in_containers};
 pub use wheel::{PIP_VERSION, WheelArtifact, WheelBuilder, WheelRequest, project_supports_python};
 pub use wheelaudit::{WheelPolicy, audit_wheel};

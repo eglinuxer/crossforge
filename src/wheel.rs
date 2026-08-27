@@ -44,6 +44,9 @@ pub struct WheelArtifact {
     pub name: WheelName,
     pub python_version: String,
     pub arch: TargetArch,
+    /// Hashed names of the libraries vendored into the wheel (empty when it
+    /// was already policy-clean).
+    pub vendored: Vec<String>,
 }
 
 impl WheelArtifact {
@@ -77,6 +80,12 @@ pub struct WheelBuilder<'a, R: Runner> {
     pub sources: ToolchainSources,
     pub work_dir: PathBuf,
     pub policy: WheelPolicy,
+    /// Extra directories to resolve vendorable target libraries from (the
+    /// toolchain sysroot's lib dirs are always searched).
+    pub vendor_paths: Vec<PathBuf>,
+    /// Sonames the runtime provides (driver-style, e.g. `libcuda.so.1`):
+    /// neither vendored nor flagged by the audit.
+    pub exclude: Vec<String>,
 }
 
 impl<'a, R: Runner> WheelBuilder<'a, R> {
@@ -201,7 +210,8 @@ impl<'a, R: Runner> WheelBuilder<'a, R> {
         tracing::info!(project = %req.project_dir.display(), id, "building wheel");
         self.runner.exec(&wheel_cmd)?;
 
-        // 4. Audit and retag the produced wheel.
+        // 4. Vendor non-whitelisted dependencies (no-op on clean wheels),
+        // then audit and retag.
         let raw_wheel = single_wheel(&raw_dir)?;
         let file_name = raw_wheel
             .file_name()
@@ -214,7 +224,18 @@ impl<'a, R: Runner> WheelBuilder<'a, R> {
                 "{file_name}: pure-python wheel; crossforge wheel is for extension modules"
             )));
         }
-        let report = wheelaudit::audit_wheel(&self.policy, &raw_wheel, req.arch)?;
+        let sysroot = req.toolchain_prefix.join(&triple).join("sysroot");
+        let mut search_paths = self.vendor_paths.clone();
+        search_paths.push(sysroot.join("usr/lib64"));
+        search_paths.push(sysroot.join("usr/lib"));
+        let vendored = crate::vendor::vendor_wheel(
+            &raw_wheel,
+            req.arch,
+            &self.policy,
+            &search_paths,
+            &self.exclude,
+        )?;
+        let report = wheelaudit::audit_wheel(&self.policy, &raw_wheel, req.arch, &self.exclude)?;
         for finding in &report.findings {
             let level = match finding.severity {
                 Severity::Error => tracing::Level::ERROR,
@@ -247,6 +268,7 @@ impl<'a, R: Runner> WheelBuilder<'a, R> {
             name,
             python_version: req.python_version.to_string(),
             arch: req.arch,
+            vendored: vendored.into_iter().map(|v| v.vendored_name).collect(),
         })
     }
 
@@ -326,10 +348,25 @@ impl<'a, R: Runner> WheelBuilder<'a, R> {
         Ok(())
     }
 
-    /// Final install-layer check inside the official manylinux container:
-    /// imports the wheel's modules with the image's own interpreter.
+    /// Convenience wrapper: install-layer check inside the official
+    /// manylinux container for the wheel's arch.
     pub fn verify_in_manylinux(&self, artifact: &WheelArtifact, engine: &str) -> Result<()> {
         let image = format!("quay.io/pypa/manylinux_2_28_{}", artifact.arch.as_str());
+        self.verify_in_images(artifact, &[image], engine)
+    }
+
+    /// Install-layer check (design doc §9, M8 `--verify-images`): imports the
+    /// wheel's modules inside each container image with the image's own
+    /// interpreter. The manylinux `/opt/python/<tag>` layout is preferred;
+    /// otherwise `python3` is used when its version matches the wheel's tag,
+    /// and non-matching images are skipped with a warning (distro sampling
+    /// across a mixed image list stays usable).
+    pub fn verify_in_images(
+        &self,
+        artifact: &WheelArtifact,
+        images: &[String],
+        engine: &str,
+    ) -> Result<()> {
         let platform = match artifact.arch {
             TargetArch::X86_64 => "linux/amd64",
             _ => "linux/arm64",
@@ -340,33 +377,57 @@ impl<'a, R: Runner> WheelBuilder<'a, R> {
         ));
         let entries = whl::read_wheel(&artifact.path)?;
         let modules = top_level_modules(&entries);
-        let program = format!("import {}; print('manylinux-ok')", modules.join(", "));
+        let program = format!("import {}; print('install-verify-ok')", modules.join(", "));
         // For abi3 wheels this checks the tagged (minimum) interpreter; the
         // native/qemu smoke already fanned out across versions.
         let cp = &artifact.name.python_tag; // e.g. cp312
-        let interpreter = format!("/opt/python/{cp}-{cp}/bin/python");
-        let log = self
-            .work_dir
-            .join("logs")
-            .join(format!("wheel-{cp}-{}", artifact.arch))
-            .join("manylinux-verify.log");
-        std::fs::create_dir_all(log.parent().unwrap())?;
-        let status = std::process::Command::new(engine)
-            .args(["run", "--rm", "--platform", platform])
-            .args(["-v", &format!("{0}:{0}", site.display())])
-            .args(["-e", &format!("PYTHONPATH={}", site.display())])
-            .arg(&image)
-            .args([&interpreter, "-c", &program])
-            .output()?;
-        std::fs::write(&log, [&status.stdout[..], &status.stderr[..]].concat())?;
-        if !status.status.success() {
-            return Err(Error::Wheel(format!(
-                "manylinux container verify failed for {} (log: {})",
-                artifact.name.file_name(),
-                log.display()
-            )));
+        let (major, minor) = cp
+            .strip_prefix("cp")
+            .and_then(|v| v.split_at_checked(1))
+            .ok_or_else(|| Error::Wheel(format!("unsupported python tag {cp}")))?;
+        // Resolve an interpreter, check its version, then import. Exit 42
+        // signals "no matching interpreter" (skip, not failure).
+        let script = format!(
+            "P=/opt/python/{cp}-{cp}/bin/python; \
+             if ! [ -x \"$P\" ]; then P=$(command -v python3) || exit 42; fi; \
+             \"$P\" -c 'import sys; sys.exit(0 if sys.version_info[:2] == ({major}, {minor}) else 42)' || exit 42; \
+             PYTHONPATH={site} exec \"$P\" -c \"{program}\"",
+            site = site.display(),
+        );
+        for image in images {
+            let log = self
+                .work_dir
+                .join("logs")
+                .join(format!("wheel-{cp}-{}", artifact.arch))
+                .join(format!("verify-{}.log", image.replace(['/', ':'], "_")));
+            std::fs::create_dir_all(log.parent().unwrap())?;
+            let status = std::process::Command::new(engine)
+                .args(["run", "--rm", "--platform", platform])
+                .args(["-v", &format!("{0}:{0}", site.display())])
+                .arg(image)
+                .args(["sh", "-c", &script])
+                .output()?;
+            std::fs::write(&log, [&status.stdout[..], &status.stderr[..]].concat())?;
+            match status.status.code() {
+                Some(0) => {
+                    tracing::info!(wheel = %artifact.name.file_name(), image, "install verify passed");
+                }
+                Some(42) => {
+                    tracing::warn!(
+                        wheel = %artifact.name.file_name(),
+                        image,
+                        "skipped: no python {major}.{minor} interpreter in image"
+                    );
+                }
+                _ => {
+                    return Err(Error::Wheel(format!(
+                        "install verify failed for {} in {image} (log: {})",
+                        artifact.name.file_name(),
+                        log.display()
+                    )));
+                }
+            }
         }
-        tracing::info!(wheel = %artifact.name.file_name(), image, "manylinux container verify passed");
         Ok(())
     }
 
@@ -495,7 +556,11 @@ fn top_level_modules(entries: &[whl::WheelEntry]) -> Vec<String> {
     let mut names = std::collections::BTreeSet::new();
     for entry in entries {
         let top = entry.name.split('/').next().unwrap_or("");
-        if top.is_empty() || top.ends_with(".dist-info") || top.ends_with(".data") {
+        if top.is_empty()
+            || top.ends_with(".dist-info")
+            || top.ends_with(".data")
+            || top.ends_with(".libs")
+        {
             continue;
         }
         if entry.name.contains('/') {

@@ -298,7 +298,7 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 |--------|------|------|------|
 | M6 | python-pack：交叉 CPython 构建流水线（cp39–cp313 × x86_64/aarch64），sysroot 包列表扩展（openssl-devel 等），官方镜像对照门禁 | 十个 python-pack 产出；pyconfig.h/sysconfigdata 与官方 manylinux 对照 diff 清洁；aarch64 树在 qemu 下可执行 import | ✅ 2026-08-27（十包全产出并冒烟通过；对照门禁 10/10 PASS、ABI 关键集零差异） |
 | M7 | `crossforge wheel` 端到端：环境组装（crossenv/cross files/PYO3）+ 四类后端编排 + wheel 静态审计（policy 表）+ import 冒烟 + abi3 展开 | 一个 pybind11/nanobind 样例项目与一个 setuptools 样例项目，一条命令产出全矩阵合规 wheel，manylinux 容器全版本 import 通过 | ✅ 2026-08-27（18 wheels 全绿：setuptools 10/10、nanobind 8/8（cp39 被 requires-python 过滤）；全部通过官方 manylinux 双架构容器 import 终检） |
-| M8 | 自研 vendor（ELF soname/RPATH 改写）+ `--verify-images` 装机层 + CI 集成（wheel 维度产物与 arm 终检 job） | vendor 结果与 auditwheel repair 产物等价性对照；CI 全绿 | |
+| M8 | 自研 vendor（ELF soname/RPATH 改写）+ `--verify-images` 装机层 + CI 集成（wheel 维度产物与 arm 终检 job） | vendor 结果与 auditwheel repair 产物等价性对照；CI 全绿 | ✅ 2026-08-27（结构对照同构：.libs 布局/hash 改名/NEEDED-SONAME-verneed 改写/传递闭包一致，差异仅 RUNPATH vs 其老式 RPATH；三样例全矩阵含 vendor 路径全绿；CI wheels + arm 终检 job 就位） |
 
 ### 9.2 M6 实施记录（2026-08-27）
 
@@ -323,6 +323,18 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 
 验收（2026-08-27 实测）：`examples/wheel-setuptools`（纯 C）10/10、`examples/wheel-nanobind`（C++/scikit-build-core/CMake）8/8（cp39 过滤），共 18 wheels；逐一通过 policy 审计、目标 pack import 冒烟（aarch64 经 qemu）、官方 `quay.io/pypa/manylinux_2_28_{x86_64,aarch64}` 容器内官方解释器 import 终检（aarch64 经宿主 binfmt qemu 运行 arm64 容器）。C++ 样例特意使用 `std::from_chars`（浮点）与 `std::filesystem`（GLIBCXX_3.4.29+ 物料）：产物 DT_NEEDED 仅 4 个白名单库、动态需求 GLIBCXX ≤ 3.4.21 / GLIBC ≤ 2.17，147 个相关符号以本地定义静态携带——nonshared 机制在 wheel 场景的直接实证。构建环境镜像补充 cmake + ninja-build（PowerTools）。abi3：构建选项就绪（产出 abi3 tag 自动跳过同架构后续版本并展开全解释器冒烟）；PyO3/maturin 环境接口就绪、端到端样例留 M8 顺带验证。
 
+
+### 9.4 M8 实施记录（2026-08-27）
+
+自研 vendor 三件套落地，`crossforge wheel` 至此覆盖 auditwheel repair 的全部职责：
+
+- **elfpatch**（patchelf 级 ELF 改写，纯 Rust）：DT_SONAME/DT_NEEDED 改名 + DT_RUNPATH 注入。策略为 **append-only 搬迁**——新 `.dynstr`（旧内容 + 追加串，全部旧偏移原样有效，符号名/verneed 引用天然不破）与新 `.dynamic` 置于文件末尾新建的 RW `PT_LOAD`，连同扩容的 program-header 表整体搬入；改指 e_phoff、PT_PHDR/PT_DYNAMIC 与对应 section header。**关键踩坑**：`.gnu.version_r` 的 `vn_file` 库名必须随 DT_NEEDED 同步改写——漏改会直接触发 ld.so 断言（dl-version.c `needed != NULL`），patchelf 同样处理此项。单元测试含 dlopen 实跑验证。
+- **vendor**：非白名单 DT_NEEDED（含经 vendored 库的传递闭包，从工具链 sysroot + `--vendor-path` 解析、按 e_machine 校验架构）复制进 `<distribution>.libs/`，内容 hash 改名（soname 首个 `.so` 前插 `-<8hex>`，同 soname 不同构建可同进程共存）；vendored 库自设 `RUNPATH=$ORIGIN`、扩展模块按目录深度设 `$ORIGIN/<ups><pkg>.libs`；RECORD 全量重建。vendor 后强制复审计，不过不 retag。
+- **`--exclude`**：驱动类库（libcuda.so.1 形态）声明为运行环境提供——既不 vendor 也不报错（审计白名单临时并入）。
+- **`--verify-images` 装机层**：任意镜像列表内用镜像自身解释器 import（manylinux `/opt/python` 布局优先，退化到版本匹配的 `python3`，不匹配跳过并警告），`--verify-manylinux` 成为官方镜像的便捷别名。
+- **policy 表修正**：白名单补动态加载器（`ld-linux-{x86-64.so.2,aarch64.so.1}`）——auditwheel 运行时按架构注入同款；aarch64 上 glibc 库直接 NEEDED ld-linux，漏了会把加载器本身 vendor 进 wheel（实测踩到）。
+- **等价性对照**（验收，2026-08-27 实测）：同一 demossl 项目分别经官方 manylinux 容器内 `auditwheel repair` 与本工具处理，结构同构——`.libs` 布局、hash 命名模式、扩展模块与 vendored 库的 NEEDED/SONAME 改写、libssl→libcrypto 传递闭包全部一致；差异仅（a）我们发 RUNPATH、auditwheel 发老式 RPATH（语义等价，每个 vendored 库自带 RUNPATH 无传递搜索缺口），（b）auditwheel 以真实文件名（.so.1.1.1k）为基、我们以 soname 为基，（c）auditwheel 附带 SBOM。三样例（setuptools/nanobind/vendored）全矩阵（vendored 双架构含 qemu 冒烟与官方双架构容器终检）全绿。
+- **CI 集成**：`toolchain-images.yml` 新增 `wheels` job（从本 commit 的 GHCR 工具链镜像取 prefix、构建 packs 与三样例 wheel，CI 缩减为最新 CPython 单版本、`--verify-manylinux` 双架构经 binfmt qemu）与 `wheels-arm-check` job（GH 原生 arm64 runner 上对每个 aarch64 wheel 在官方容器内 pip install + import 终检，落实 T8「交叉构建、原生终检」）。
 ## 10. 参考
 
 - RH gcc-toolset 机制：CentOS Stream dist-git `gcc-toolset-*-gcc` spec；LWN 862013
