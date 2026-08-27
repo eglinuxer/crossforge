@@ -122,9 +122,13 @@ const SHT_SYMTAB: u32 = 2;
 const SHT_DYNAMIC: u32 = 6;
 const SHT_GNU_VERNEED: u32 = 0x6ffffffe;
 const PT_INTERP: u32 = 3;
+const PT_GNU_STACK: u32 = 0x6474_e551;
 const DT_NEEDED: u64 = 1;
 const DT_SONAME: u64 = 14;
 const DT_RELR: u64 = 36;
+const DT_TEXTREL: u64 = 22;
+const DT_FLAGS: u64 = 30;
+const DF_TEXTREL: u64 = 0x4;
 
 /// One entry from `.gnu.version_r`: this binary requires `version` from the
 /// library `file` (e.g. `GLIBC_2.34` from `libc.so.6`).
@@ -147,6 +151,12 @@ pub struct ElfInfo {
     /// Names of undefined (imported) dynamic symbols.
     pub undefined: Vec<String>,
     pub has_dt_relr: bool,
+    /// `PT_GNU_STACK` carries the execute bit: the binary asks for an
+    /// executable stack, which hardened kernels and SELinux refuse.
+    pub exec_stack: bool,
+    /// Text relocations (`DT_TEXTREL`, or `DF_TEXTREL` in `DT_FLAGS`): the
+    /// loader has to make code pages writable to relocate them.
+    pub has_textrel: bool,
 }
 
 /// Extracts the audit-relevant facts from a dynamic ELF in one pass.
@@ -164,7 +174,12 @@ pub fn inspect(data: &[u8]) -> Result<ElfInfo> {
     let phnum = u16le(data, 0x38)? as usize;
     for i in 0..phnum {
         let base = entry_at(phoff, i, phentsize)?;
-        if u32le(data, base)? == PT_INTERP {
+        let ptype = u32le(data, base)?;
+        if ptype == PT_GNU_STACK {
+            // p_flags: bit 0 = X.
+            info.exec_stack = u32le(data, field(base, 4)?)? & 1 != 0;
+        }
+        if ptype == PT_INTERP {
             let offset = u64le(data, field(base, 8)?)? as usize;
             let size = u64le(data, field(base, 32)?)? as usize;
             let raw = bytes::slice(data, offset, size)
@@ -190,6 +205,12 @@ pub fn inspect(data: &[u8]) -> Result<ElfInfo> {
                 DT_NEEDED => info.needed.push(cstr(strtab, value as usize)?),
                 DT_SONAME => info.soname = Some(cstr(strtab, value as usize)?),
                 DT_RELR => info.has_dt_relr = true,
+                DT_TEXTREL => info.has_textrel = true,
+                DT_FLAGS => {
+                    if value & DF_TEXTREL != 0 {
+                        info.has_textrel = true;
+                    }
+                }
                 0 => break, // DT_NULL
                 _ => {}
             }

@@ -271,6 +271,7 @@ impl<R: Runner> BuildEngine<R> {
             self.clone_with_sysroot(&base.root, &prefix, &sysroot.root, &triple)?;
             write_cmake_toolchain_file(&prefix, spec)?;
             write_env_script(&prefix, spec)?;
+            write_hardened_specs(&prefix)?;
             return Ok(ToolchainArtifact {
                 root: prefix,
                 spec: spec.clone(),
@@ -287,6 +288,7 @@ impl<R: Runner> BuildEngine<R> {
 
         write_cmake_toolchain_file(&compiler.prefix, spec)?;
         write_env_script(&compiler.prefix, spec)?;
+        write_hardened_specs(&compiler.prefix)?;
 
         Ok(ToolchainArtifact {
             root: compiler.prefix,
@@ -435,6 +437,51 @@ export CROSSFORGE_MESON_CROSS="$CROSSFORGE_ROOT/meson-cross.ini"
     let path = prefix.join("crossenv.sh");
     std::fs::write(&path, content)?;
     tracing::info!(file = %path.display(), "environment script written");
+    Ok(())
+}
+
+/// Writes an opt-in hardened spec file into the prefix.
+///
+/// The toolchain deliberately does not harden by default: silently changing
+/// what a compiler emits is how build systems acquire mysteries, and a
+/// toolchain's job is to be predictable. Red Hat's system compilers do bake
+/// these in, which is a distribution policy, not a compiler one — so the
+/// same options ship here as something a build opts into:
+///
+///     gcc -specs=<prefix>/share/crossforge/hardened.specs -O2 ...
+///
+/// Each conditional in the file was verified against this compiler: the
+/// FORTIFY define appears for C and C++ when optimizing, is skipped at -O0
+/// (where glibc would warn), and yields to a level the caller set itself.
+///
+/// PIE is left out on purpose. It is the one hardening option that changes
+/// linking enough to break projects with non-PIC static libraries, and the
+/// failure is a link error in someone else's build — add `-fPIE -pie` to opt
+/// into that separately.
+fn write_hardened_specs(prefix: &Path) -> Result<()> {
+    let dir = prefix.join("share/crossforge");
+    std::fs::create_dir_all(&dir)?;
+    let content = "\
+# crossforge hardened specs — opt in with -specs=<this file>.
+#
+#   -fstack-protector-strong    stack canaries on functions with local arrays
+#   -D_FORTIFY_SOURCE=2         checked variants of the string/memory builtins
+#                               (only while optimizing, and never overriding a
+#                               level the caller chose)
+#   -z relro -z now             full RELRO: the GOT is read-only after startup
+#
+# Not included: -fPIE -pie, which changes linking enough to break projects
+# with non-PIC static libraries. Add it explicitly if you want it.
+
+*cc1_options:
++ -fstack-protector-strong %{O*:%{!O0:%{!D_FORTIFY_SOURCE*:-D_FORTIFY_SOURCE=2}}}
+
+*link:
++ -z relro -z now
+";
+    let path = dir.join("hardened.specs");
+    std::fs::write(&path, content)?;
+    tracing::info!(file = %path.display(), "hardened spec file written");
     Ok(())
 }
 

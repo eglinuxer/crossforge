@@ -153,6 +153,30 @@ impl Auditor {
                 ));
             }
         }
+        // An executable stack is a defect, not a policy choice: hardened
+        // kernels and SELinux refuse it outright. GCC emits one for code
+        // using nested functions (the trampoline lives on the stack), and
+        // the linker warns at that point too.
+        if info.exec_stack {
+            findings.push(error(
+                "exec-stack",
+                "PT_GNU_STACK is executable; hardened kernels refuse to load this. \
+                 Nested functions are the usual cause — with GCC 14, \
+                 -ftrampoline-impl=heap avoids them (though that needs a newer \
+                 libgcc_s than this baseline provides)"
+                    .to_string(),
+            ));
+        }
+        if info.has_textrel {
+            findings.push(error(
+                "textrel",
+                "text relocations (DT_TEXTREL): the loader has to make code pages \
+                 writable, which hardened systems refuse. Usually non-PIC code in a \
+                 shared object — rebuild the objects with -fPIC"
+                    .to_string(),
+            ));
+        }
+
         for soname in &info.needed {
             if !self.allowed_needed.contains(soname) {
                 findings.push(error(
@@ -256,6 +280,37 @@ mod tests {
     fn clean_binary_passes() {
         let findings = test_auditor().evaluate(&clean_info());
         assert!(findings.is_empty(), "{findings:?}");
+    }
+
+    #[test]
+    fn executable_stack_and_textrel_are_errors() {
+        let auditor = test_auditor();
+
+        let mut info = clean_info();
+        info.exec_stack = true;
+        assert!(
+            auditor
+                .evaluate(&info)
+                .iter()
+                .any(|f| f.check == "exec-stack" && f.severity == Severity::Error)
+        );
+
+        let mut info = clean_info();
+        info.has_textrel = true;
+        assert!(
+            auditor
+                .evaluate(&info)
+                .iter()
+                .any(|f| f.check == "textrel" && f.severity == Severity::Error)
+        );
+
+        // Neither fires on an ordinary binary.
+        let findings = auditor.evaluate(&clean_info());
+        assert!(
+            !findings
+                .iter()
+                .any(|f| f.check == "exec-stack" || f.check == "textrel")
+        );
     }
 
     #[test]
