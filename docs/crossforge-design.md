@@ -1,7 +1,7 @@
 # crossforge 交叉编译工具链构建引擎 · 设计文档
 
-- 版本：v0.7（2026-08-26）
-- 状态：评审中
+- 版本：v0.8（2026-08-27）
+- 状态：M0–M8 已交付（工具链全流水线 + python packs + wheel 端到端），持续演进
 - 范围：开源的交叉编译工具链**构建引擎**（CLI 工具 + Rust library API）——解决 C/C++ 产物在旧 Linux 发行版上的 glibc / libstdc++ 兼容问题，构建任意（编译器 × target × 基线）组合的可重定位工具链，经 GHCR 分发预构建镜像
 
 ---
@@ -334,6 +334,8 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 - **`--verify-images` 装机层**：任意镜像列表内用镜像自身解释器 import（manylinux `/opt/python` 布局优先，退化到版本匹配的 `python3`，不匹配跳过并警告），`--verify-manylinux` 成为官方镜像的便捷别名。
 - **policy 表修正**：白名单补动态加载器（`ld-linux-{x86-64.so.2,aarch64.so.1}`）——auditwheel 运行时按架构注入同款；aarch64 上 glibc 库直接 NEEDED ld-linux，漏了会把加载器本身 vendor 进 wheel（实测踩到）。
 - **等价性对照**（验收，2026-08-27 实测）：同一 demossl 项目分别经官方 manylinux 容器内 `auditwheel repair` 与本工具处理，结构同构——`.libs` 布局、hash 命名模式、扩展模块与 vendored 库的 NEEDED/SONAME 改写、libssl→libcrypto 传递闭包全部一致；差异仅（a）我们发 RUNPATH、auditwheel 发老式 RPATH（语义等价，每个 vendored 库自带 RUNPATH 无传递搜索缺口），（b）auditwheel 以真实文件名（.so.1.1.1k）为基、我们以 soname 为基，（c）auditwheel 附带 SBOM。三样例（setuptools/nanobind/vendored）全矩阵（vendored 双架构含 qemu 冒烟与官方双架构容器终检）全绿。
+- **abi3 实测**（`examples/wheel-abi3`，Limited API 3.9 + `py_limited_api`）：每架构仅构建一次（cp39-abi3 tag），同架构后续版本自动跳过；冒烟自动展开全部五个解释器（x86 原生 + aarch64 qemu，10/10 import 通过），官方双架构容器装机通过。交叉构建下 setuptools 的 `.abi3.so` 后缀不受 SETUPTOOLS_EXT_SUFFIX 干扰（审计的 ext-suffix 检查兜底）。
+- **vendor 清单**：vendor 时向 `<dist>.dist-info/crossforge-vendor.toml` 写入每个库的 soname、hash 名、来源路径与原始 sha256——auditwheel SBOM 的轻量对应物，供应链记录随 wheel 分发。
 - **CI 集成**：`toolchain-images.yml` 新增 `wheels` job（从本 commit 的 GHCR 工具链镜像取 prefix、构建 packs 与三样例 wheel，CI 缩减为最新 CPython 单版本、`--verify-manylinux` 双架构经 binfmt qemu）与 `wheels-arm-check` job（GH 原生 arm64 runner 上对每个 aarch64 wheel 在官方容器内 pip install + import 终检，落实 T8「交叉构建、原生终检」）。
 ## 10. 参考
 

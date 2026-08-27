@@ -146,7 +146,7 @@ jobs:
 
       - name: Build, audit and verify the sample wheels
         run: |
-          for sample in wheel-setuptools wheel-nanobind wheel-vendored; do
+          for sample in wheel-setuptools wheel-nanobind wheel-vendored wheel-abi3; do
             ./target/release/crossforge wheel "examples/$sample" \
               --versions "$PYTHON_VERSION" \
               --image crossforge-buildenv:el8 --work-dir "$PWD/work" \

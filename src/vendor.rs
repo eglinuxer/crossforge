@@ -142,9 +142,52 @@ pub fn vendor_wheel(
         entry.data = elfpatch::patch_elf(&entry.data, &ops)?;
     }
 
+    // Vendor manifest into dist-info: what was vendored, from where, and
+    // the original content hash — the supply-chain record auditwheel keeps
+    // as an SBOM.
+    let dist_info = entries
+        .iter()
+        .filter_map(|e| e.name.split_once('/').map(|(d, _)| d.to_string()))
+        .find(|d| d.ends_with(".dist-info"))
+        .ok_or_else(|| Error::Wheel("wheel has no dist-info directory".to_string()))?;
+    let manifest = vendor_manifest(&vendored, &resolved)?;
+    entries.push(WheelEntry {
+        name: format!("{dist_info}/crossforge-vendor.toml"),
+        data: manifest.into_bytes(),
+        mode: 0o644,
+    });
+
     rebuild_record(&mut entries)?;
     whl::write_wheel(wheel, &entries)?;
     Ok(vendored)
+}
+
+/// TOML manifest describing the vendored libraries.
+fn vendor_manifest(
+    vendored: &[VendoredLib],
+    resolved: &BTreeMap<String, (PathBuf, Vec<u8>)>,
+) -> Result<String> {
+    use sha2::Digest;
+    let mut out =
+        String::from("# Libraries vendored into this wheel by crossforge (design doc §9, M8).\n");
+    out.push_str(&format!(
+        "generator = \"crossforge {}\"\n",
+        env!("CARGO_PKG_VERSION")
+    ));
+    for lib in vendored {
+        let (_, data) = &resolved[&lib.soname];
+        let sha: String = sha2::Sha256::digest(data)
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
+        out.push_str(&format!(
+            "\n[[library]]\nsoname = \"{}\"\nvendored_as = \"{}\"\nsource = \"{}\"\nsource_sha256 = \"{sha}\"\n",
+            lib.soname,
+            lib.vendored_name,
+            lib.source.display(),
+        ));
+    }
+    Ok(out)
 }
 
 /// `libssl.so.1.1` + content → `libssl-1a2b3c4d.so.1.1`.
