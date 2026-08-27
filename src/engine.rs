@@ -448,7 +448,9 @@ export CROSSFORGE_MESON_CROSS="$CROSSFORGE_ROOT/meson-cross.ini"
 /// these in, which is a distribution policy, not a compiler one — so the
 /// same options ship here as something a build opts into:
 ///
-///     gcc -specs=<prefix>/share/crossforge/hardened.specs -O2 ...
+/// ```text
+/// gcc -specs=<prefix>/share/crossforge/hardened.specs -O2 ...
+/// ```
 ///
 /// Each conditional in the file was verified against this compiler: the
 /// FORTIFY define appears for C and C++ when optimizing, is skipped at -O0
