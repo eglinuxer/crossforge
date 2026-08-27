@@ -7,6 +7,15 @@
 # - glibc-gconv-extra: without the full gconv module set, GCC's working-iconv
 #   configure probe fails and cc1 loses -fexec-charset support entirely
 # - dejagnu (PowerTools): `crossforge check` (GCC upstream testsuite)
+# - pkgconf-pkg-config: CPython >= 3.11 configure detects target libraries
+#   (openssl, sqlite, ...) via pkg-config against the toolchain sysroot
+# - which: CPython <= 3.10 cross configure probes build-python candidates
+#   with `which ... || continue`; with no `which` binary every candidate is
+#   skipped and the loop's leftover variable silently selects bare `python`
+# - *-devel: native (x86_64) CPython builds probe the build host's system
+#   dirs (not the sysroot) for optional stdlib modules; the set matches the
+#   sysroot package list exactly (same el8 NVRs) so native and cross packs
+#   get a symmetric stdlib
 # The quay.io image is Rocky's continuously updated one; the docker.io
 # `rockylinux:8` tag is a stale 8.9 snapshot.
 FROM quay.io/rockylinux/rockylinux:8
@@ -15,6 +24,10 @@ RUN dnf install -y \
         gcc gcc-c++ make tar xz bzip2 file diffutils patch flex bison \
         findutils \
         glibc-gconv-extra \
+        pkgconf-pkg-config \
+        which \
+        zlib-devel bzip2-devel xz-devel libffi-devel openssl-devel \
+        sqlite-devel libuuid-devel \
     && dnf install -y --enablerepo=powertools dejagnu \
     && dnf clean all
 

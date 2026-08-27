@@ -81,6 +81,36 @@ Available compilers (`--gcc`): `14.2.1` (default, RH gcc-toolset-14) and
 nonshared48 for the el7 baseline). More versions are a TOML registry entry
 away (`src/registry/toolchain-sources.toml`).
 
+## Python packs (cross wheel building, M6)
+
+`crossforge python` builds relocatable CPython installations for wheel
+cross-compilation — the arch-specific material (target `pyconfig.h`,
+`_sysconfigdata_*.py`, and an interpreter for import smoke tests) for every
+supported version:
+
+```console
+$ ./target/release/crossforge python --image crossforge-buildenv:el8
+```
+
+For each of CPython 3.9/3.10/3.11/3.12/3.13 this produces an x86_64 pack
+(built natively in the el8 container with the crossforge toolchain; it doubles
+as the build-python) and an aarch64 pack (cross-compiled; 3.11+ via the
+official `--with-build-python`, 3.9/3.10 via the legacy PYTHON_FOR_BUILD
+path). Configure options track the official manylinux_2_28 image builds
+(`--disable-shared --with-ensurepip=no`, same `/opt/_internal/cpython-<v>`
+prefix) so both trees diff cleanly against the official images as a
+supply-chain cross-check. Every pack must pass an import smoke test covering
+all external-library modules (`zlib, bz2, lzma, ctypes, ssl, hashlib,
+sqlite3, uuid`) — natively for x86_64, under user-mode qemu against the
+toolchain sysroot for aarch64. Packs are production-trimmed like the official
+images (stripped interpreter and extensions, no static libpython, no test
+suite: ~64MB per pack, matching the official 66MB). Wheels target
+`manylinux_2_28` only, so packs build for the el8 baseline only.
+
+`scripts/compare-manylinux-python.py` is the supply-chain cross-check gate:
+it diffs every pack's `pyconfig.h` + `_sysconfigdata_*.py` against the
+official manylinux_2_28 images and fails on any ABI-relevant difference.
+
 ## Pipeline
 
 ```

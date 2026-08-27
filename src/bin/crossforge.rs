@@ -111,6 +111,29 @@ enum Command {
         #[arg(long, default_value = "/tmp/crossforge")]
         work_dir: PathBuf,
     },
+    /// Build relocatable CPython packs (design doc §9, M6): a native x86_64
+    /// build per version (doubling as the build-python), then cross builds
+    /// per target arch, each followed by an import smoke test.
+    Python {
+        #[arg(long, default_value = crossforge::DEFAULT_GCC)]
+        gcc: String,
+        /// Baseline (manylinux_2_28 only, i.e. el8).
+        #[arg(long, default_value = crossforge::PYTHON_BASELINE)]
+        baseline: String,
+        /// Target arches; x86_64 is always built (it is the build-python).
+        #[arg(long, value_delimiter = ',', default_value = "x86_64,aarch64")]
+        targets: Vec<String>,
+        /// Full CPython versions (e.g. 3.12.14); default: all built-in.
+        #[arg(long, value_delimiter = ',')]
+        versions: Vec<String>,
+        /// Container image for the build environment; omit to build on the host.
+        #[arg(long, env = "CROSSFORGE_IMAGE")]
+        image: Option<String>,
+        #[arg(long, default_value = "/tmp/crossforge")]
+        work_dir: PathBuf,
+        #[arg(long)]
+        jobs: Option<usize>,
+    },
     /// Run a binary across distro container images (exit 1 on failures).
     Verify {
         binary: PathBuf,
@@ -314,6 +337,111 @@ fn main() -> crossforge::Result<()> {
             }
             if !outcome.passed() {
                 std::process::exit(1);
+            }
+        }
+        Command::Python {
+            gcc,
+            baseline,
+            targets,
+            versions,
+            image,
+            work_dir,
+            jobs,
+        } => {
+            if baseline != crossforge::PYTHON_BASELINE {
+                return Err(crossforge::Error::PythonPack(format!(
+                    "python packs support only the manylinux_2_28 baseline (el8), got `{baseline}`"
+                )));
+            }
+            let registry = BaselineRegistry::builtin();
+            let mut arches: Vec<TargetArch> = vec![TargetArch::X86_64];
+            for t in &targets {
+                let arch = t.parse::<TargetArch>()?;
+                if !arches.contains(&arch) {
+                    arches.push(arch);
+                }
+            }
+            // Resolve every needed toolchain prefix up front.
+            let mut prefixes = std::collections::BTreeMap::new();
+            for arch in &arches {
+                let spec = ToolchainSpec::builder()
+                    .gcc(gcc.clone())
+                    .baseline(baseline.clone())
+                    .target(*arch)
+                    .build(&registry)?;
+                let prefix = work_dir.join("toolchains").join(spec.id());
+                if !prefix.join("bin").is_dir() {
+                    return Err(crossforge::Error::PythonPack(format!(
+                        "toolchain {} not found under {} (run `crossforge build` first)",
+                        spec.id(),
+                        prefix.display()
+                    )));
+                }
+                prefixes.insert(*arch, prefix);
+            }
+            let versions: Vec<String> = if versions.is_empty() {
+                crossforge::PYTHON_VERSIONS
+                    .iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            } else {
+                versions
+            };
+            let fetcher = Fetcher::new(work_dir.join("cache"))?;
+            let jobs = jobs.unwrap_or_else(|| {
+                std::thread::available_parallelism()
+                    .map(|n| n.get())
+                    .unwrap_or(4)
+            });
+            let out_root = work_dir.join("python-packs");
+            let run = |runner: &dyn Runner| -> crossforge::Result<Vec<PathBuf>> {
+                let builder = crossforge::PythonBuilder {
+                    fetcher: &fetcher,
+                    runner: &runner,
+                    sources: crossforge::ToolchainSources::builtin(),
+                    work_dir: work_dir.clone(),
+                    jobs,
+                };
+                let mut packs = Vec::new();
+                for version in &versions {
+                    let native = builder.build(
+                        version,
+                        TargetArch::X86_64,
+                        &prefixes[&TargetArch::X86_64],
+                        None,
+                        &out_root,
+                    )?;
+                    builder.smoke(&native, &prefixes[&TargetArch::X86_64])?;
+                    packs.push(native.root.clone());
+                    for arch in arches.iter().filter(|a| **a != TargetArch::X86_64) {
+                        let pack = builder.build(
+                            version,
+                            *arch,
+                            &prefixes[arch],
+                            Some(&native),
+                            &out_root,
+                        )?;
+                        builder.smoke(&pack, &prefixes[arch])?;
+                        packs.push(pack.root.clone());
+                    }
+                }
+                Ok(packs)
+            };
+            let packs = match image {
+                Some(image) => {
+                    let me = std::fs::metadata("/proc/self")?;
+                    let runner = ContainerRunner {
+                        engine: "docker".to_string(),
+                        image,
+                        binds: vec![work_dir.clone()],
+                        user: Some(format!("{}:{}", me.uid(), me.gid())),
+                    };
+                    run(&runner)?
+                }
+                None => run(&LocalRunner)?,
+            };
+            for p in &packs {
+                println!("python pack: {}", p.display());
             }
         }
         Command::Verify {

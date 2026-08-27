@@ -57,6 +57,38 @@ skip_patches = [
     "isl-rh2155127.patch",
 ]
 
+# CPython sources for the python-pack pipeline (design doc §9, milestone M6):
+# the five supported minor versions, pinned to their newest upstream releases.
+[[component]]
+name = "cpython"
+version = "3.9.25"
+url = "https://www.python.org/ftp/python/{version}/Python-{version}.tar.xz"
+sha256 = "00e07d7c0f2f0cc002432d1ee84d2a40dae404a99303e3f97701c10966c91834"
+
+[[component]]
+name = "cpython"
+version = "3.10.21"
+url = "https://www.python.org/ftp/python/{version}/Python-{version}.tar.xz"
+sha256 = "a0da1e72132e950154eca0f6f47d5db828454700de20e5113667940d81e0db04"
+
+[[component]]
+name = "cpython"
+version = "3.11.16"
+url = "https://www.python.org/ftp/python/{version}/Python-{version}.tar.xz"
+sha256 = "91bcdebfdde239a003ae93738a7fce0f9230fee5c4bc2b86f6e6e8c6f98aabe8"
+
+[[component]]
+name = "cpython"
+version = "3.12.14"
+url = "https://www.python.org/ftp/python/{version}/Python-{version}.tar.xz"
+sha256 = "5c8462af5790baf43a321a1559dbe0db06d1be4300fb85fb53c40060668e548a"
+
+[[component]]
+name = "cpython"
+version = "3.13.15"
+url = "https://www.python.org/ftp/python/{version}/Python-{version}.tar.xz"
+sha256 = "1e66a7945a48390ee4c2a4268a0e4185884059a13c4aab6d148aa208deea4a76"
+
 [[component]]
 name = "gmp"
 version = "6.1.0"

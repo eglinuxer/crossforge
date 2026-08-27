@@ -62,6 +62,9 @@ pub enum Error {
     #[error("smoke test artifact {artifact} failed the baseline audit: {details}")]
     SmokeAudit { artifact: String, details: String },
 
+    #[error("python pack: {0}")]
+    PythonPack(String),
+
     #[error("malformed repo metadata: {0}")]
     RepoMetadata(String),
 

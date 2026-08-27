@@ -43,6 +43,7 @@ mod engine;
 mod error;
 mod fetch;
 mod pack;
+mod python;
 mod repodata;
 mod rpm;
 mod smoke;
@@ -69,6 +70,9 @@ pub use engine::{
 pub use error::{Error, Result};
 pub use fetch::Fetcher;
 pub use pack::{BundleEntry, PackedToolchain, pack_toolchain, write_manifest};
+pub use python::{
+    PYTHON_BASELINE, PYTHON_VERSIONS, PythonBuilder, PythonPack, PythonPackMetadata, pack_tag,
+};
 pub use smoke::{SmokeOutcome, SmokeRunner};
 pub use source::{SourceDef, SourceRegistry};
 pub use spec::{

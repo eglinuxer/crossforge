@@ -294,11 +294,23 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 
 ### 9.1 里程碑
 
-| 里程碑 | 内容 | 验收 |
-|--------|------|------|
-| M6 | python-pack：交叉 CPython 构建流水线（cp39–cp313 × x86_64/aarch64），sysroot 包列表扩展（openssl-devel 等），官方镜像对照门禁 | 十个 python-pack 产出；pyconfig.h/sysconfigdata 与官方 manylinux 对照 diff 清洁；aarch64 树在 qemu 下可执行 import |
-| M7 | `crossforge wheel` 端到端：环境组装（crossenv/cross files/PYO3）+ 四类后端编排 + wheel 静态审计（policy 表）+ import 冒烟 + abi3 展开 | 一个 pybind11/nanobind 样例项目与一个 setuptools 样例项目，一条命令产出全矩阵合规 wheel，manylinux 容器全版本 import 通过 |
-| M8 | 自研 vendor（ELF soname/RPATH 改写）+ `--verify-images` 装机层 + CI 集成（wheel 维度产物与 arm 终检 job） | vendor 结果与 auditwheel repair 产物等价性对照；CI 全绿 |
+| 里程碑 | 内容 | 验收 | 状态 |
+|--------|------|------|------|
+| M6 | python-pack：交叉 CPython 构建流水线（cp39–cp313 × x86_64/aarch64），sysroot 包列表扩展（openssl-devel 等），官方镜像对照门禁 | 十个 python-pack 产出；pyconfig.h/sysconfigdata 与官方 manylinux 对照 diff 清洁；aarch64 树在 qemu 下可执行 import | ✅ 2026-08-27（十包全产出并冒烟通过；对照门禁 10/10 PASS、ABI 关键集零差异） |
+| M7 | `crossforge wheel` 端到端：环境组装（crossenv/cross files/PYO3）+ 四类后端编排 + wheel 静态审计（policy 表）+ import 冒烟 + abi3 展开 | 一个 pybind11/nanobind 样例项目与一个 setuptools 样例项目，一条命令产出全矩阵合规 wheel，manylinux 容器全版本 import 通过 | |
+| M8 | 自研 vendor（ELF soname/RPATH 改写）+ `--verify-images` 装机层 + CI 集成（wheel 维度产物与 arm 终检 job） | vendor 结果与 auditwheel repair 产物等价性对照；CI 全绿 | |
+
+### 9.2 M6 实施记录（2026-08-27）
+
+`crossforge python` 子命令 + `PythonBuilder` API（`src/python.rs`）落地，一条命令产出全矩阵：每版本先在 el8 构建容器内用本工具链**原生构建 x86_64**（同时充当 build-python，产物自身满足 glibc ≤ 2.28 可移植），再**交叉构建 aarch64**（3.11+ 走官方 `--with-build-python`；3.9/3.10 走 PYTHON_FOR_BUILD 老式通路，setup.py 从 sysroot 化的 `$CC -E -v` 输出推导目标头/库路径）。要点：
+
+- **微版本与官方镜像完全同步**（3.9.25 / 3.10.21 / 3.11.16 / 3.12.14 / 3.13.15，皆为各线最新），configure 口径同款（`--disable-shared --with-ensurepip=no`、prefix `/opt/_internal/cpython-<v>`），对照 diff 天然最小。
+- **对照门禁**（`scripts/compare-manylinux-python.py`）：解析双方 pyconfig.h `#define` 全集与 `_sysconfigdata_*.py`，ABI 关键集（SIZEOF/ALIGNOF/端序/EXT_SUFFIX/SOABI/ABIFLAGS 等）不一致即失败。十组全 PASS、ABI 零差异；非 ABI 差异均已归因（官方多装 curses/readline/ossp-uuid；编译器路径/标志字符串）。
+- **交叉 configure 预置**：除 `/dev/ptmx`+`/dev/ptc` 必答项外，预置四个 run-test 探测的悲观默认（`ac_cv_computed_gotos=yes`、`ac_cv_aligned_required=no`、`ac_cv_broken_sem_getvalue=no`、`ac_cv_working_tzset=yes`），与原生（官方镜像）答案对齐——否则交叉包 eval loop 退化为 switch 分发。
+- **目标依赖经 sysroot 包列表**：rocky-8 源扩 14 包（zlib/bzip2/xz/libffi/openssl/sqlite/libuuid 的运行库+devel）+ PowerTools 仓；同款 devel 包也进构建镜像（原生构建的 setup.py 探测**宿主**目录而非 sysroot——两侧同 NVR 保证原生/交叉包 stdlib 对称）。
+- **冒烟门禁**：每包必须 `import math, struct, json, zlib, bz2, lzma, ctypes, ssl, hashlib, sqlite3, uuid`；x86_64 直跑、aarch64 经 qemu + 工具链 sysroot。10/10 通过。
+- **生产裁剪**（对齐官方镜像）：strip 解释器与扩展、删嵌入专用静态 libpython（两处安装位）、删 test 目录——单包 305MB → 64–90MB（官方 66MB 同量级）。
+- 踩坑存档：Rocky 极简镜像缺 `which` 使 3.9/3.10 交叉 configure 的候选循环静默残留裸 `python`（探测循环 `which ... || continue` 全跳过后循环变量未清空）；`/dev/ptc` 是 AIX 探测项而非 ptem。
 
 ## 10. 参考
 

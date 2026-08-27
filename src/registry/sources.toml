@@ -8,6 +8,7 @@ base = "https://download.rockylinux.org/pub/rocky"
 repos = [
     "{base}/8/BaseOS/{arch}/os/",
     "{base}/8/AppStream/{arch}/os/",
+    "{base}/8/PowerTools/{arch}/os/",
 ]
 packages = [
     "glibc",
@@ -19,6 +20,23 @@ packages = [
     "libstdc++-devel",
     "libxcrypt",
     "libxcrypt-devel",
+    # Common C dependencies, also required by the cross CPython builds
+    # (design doc §9, milestone M6). Runtime libs are included so qemu-run
+    # target binaries resolve their DT_NEEDED inside the sysroot.
+    "zlib",
+    "zlib-devel",
+    "bzip2-libs",
+    "bzip2-devel",
+    "xz-libs",
+    "xz-devel",
+    "libffi",
+    "libffi-devel",
+    "openssl-libs",
+    "openssl-devel",
+    "sqlite-libs",
+    "sqlite-devel",
+    "libuuid",
+    "libuuid-devel",
 ]
 
 [[source]]

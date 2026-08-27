@@ -65,6 +65,12 @@ pub trait Runner {
     fn exec(&self, cmd: &Cmd) -> Result<()>;
 }
 
+impl<R: Runner + ?Sized> Runner for &R {
+    fn exec(&self, cmd: &Cmd) -> Result<()> {
+        (**self).exec(cmd)
+    }
+}
+
 fn spawn(mut command: std::process::Command, cmd: &Cmd) -> Result<()> {
     if let Some(log) = &cmd.log_file {
         if let Some(parent) = log.parent() {
