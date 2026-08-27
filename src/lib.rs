@@ -52,6 +52,9 @@ mod spec;
 mod sysroot;
 mod target;
 mod verify;
+mod wheel;
+mod wheelaudit;
+mod whl;
 
 pub use audit::{AuditReport, Auditor, Finding, Severity};
 pub use baseline::{BaselineDef, BaselineRegistry};
@@ -81,3 +84,6 @@ pub use spec::{
 pub use sysroot::{PackageRecord, SysrootArtifact, SysrootGenerator, SysrootMetadata};
 pub use target::{TargetArch, VENDOR};
 pub use verify::{VerifyResult, verify_in_containers};
+pub use wheel::{PIP_VERSION, WheelArtifact, WheelBuilder, WheelRequest, project_supports_python};
+pub use wheelaudit::{WheelPolicy, audit_wheel};
+pub use whl::{WheelEntry, WheelName, read_wheel, retag_platform, verify_record, write_wheel};

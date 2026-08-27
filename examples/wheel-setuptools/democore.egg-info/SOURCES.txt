@@ -1,0 +1,7 @@
+democore.c
+pyproject.toml
+setup.py
+democore.egg-info/PKG-INFO
+democore.egg-info/SOURCES.txt
+democore.egg-info/dependency_links.txt
+democore.egg-info/top_level.txt

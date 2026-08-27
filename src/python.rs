@@ -76,6 +76,26 @@ impl PythonPack {
             .join("bin")
             .join(format!("python{}", minor_version(&self.version)))
     }
+
+    /// Opens an already-built pack under `out_root` (the `python-packs`
+    /// directory), erroring if it has not been built yet.
+    pub fn open(out_root: &Path, version: &str, arch: TargetArch) -> Result<Self> {
+        let install_prefix = format!("opt/_internal/cpython-{version}");
+        let root = out_root.join(format!("{}-{arch}", pack_tag(version)));
+        let pack = Self {
+            prefix: root.join(install_prefix),
+            root,
+            version: version.to_string(),
+            arch,
+        };
+        if !pack.python_bin().is_file() {
+            return Err(Error::PythonPack(format!(
+                "pack for cpython {version} ({arch}) not found under {} (run `crossforge python` first)",
+                pack.root.display()
+            )));
+        }
+        Ok(pack)
+    }
 }
 
 /// Short pack tag for a full version: `3.12.14` → `cp312`.

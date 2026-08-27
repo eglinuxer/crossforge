@@ -65,6 +65,9 @@ pub enum Error {
     #[error("python pack: {0}")]
     PythonPack(String),
 
+    #[error("wheel: {0}")]
+    Wheel(String),
+
     #[error("malformed repo metadata: {0}")]
     RepoMetadata(String),
 

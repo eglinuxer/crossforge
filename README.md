@@ -111,6 +111,42 @@ suite: ~64MB per pack, matching the official 66MB). Wheels target
 it diffs every pack's `pyconfig.h` + `_sysconfigdata_*.py` against the
 official manylinux_2_28 images and fails on any ABI-relevant difference.
 
+## Wheels (M7): a cross cibuildwheel
+
+`crossforge wheel` takes a project directory to compliant `manylinux_2_28`
+wheels across the full CPython × arch matrix in one command:
+
+```console
+$ ./target/release/crossforge wheel path/to/project \
+    --image crossforge-buildenv:el8 --verify-manylinux
+```
+
+Per (version, arch) it assembles a build environment from the python packs
+(venv + pinned pip; for cross builds the conda-forge-proven
+`_PYTHON_SYSCONFIGDATA_NAME` / `_PYTHON_HOST_PLATFORM` mechanism plus
+`CMAKE_TOOLCHAIN_FILE`/FindPython hints and `PYO3_CROSS_LIB_DIR`), drives
+the project's PEP 517 backend through pip, then gates the result:
+
+1. **Policy audit** against the embedded manylinux_2_28 table (transcribed
+   from auditwheel): symbol-version ceilings — including the GLIBCXX 3.4.24
+   ceiling that sits one step *below* el8's own libstdc++ — DT_NEEDED
+   whitelist, no-libpython rule, extension-suffix/tag consistency, RECORD
+   integrity. Only audited wheels get retagged `linux_*` →
+   `manylinux_2_28_*`.
+2. **Import smoke** with the target pack — natively for x86_64, under qemu
+   for aarch64; abi3 wheels fan out across every interpreter version.
+3. `--verify-manylinux`: import check inside the official
+   `quay.io/pypa/manylinux_2_28_*` container with the image's own
+   interpreter (aarch64 via binfmt qemu).
+
+C++ wheels are where the toolchain's nonshared hybrid linking pays off:
+`std::from_chars`/`std::filesystem` (GLIBCXX_3.4.29+ material) get
+statically carried while the wheel's dynamic requirement stays at
+GLIBCXX ≤ 3.4.21 — inside a policy ceiling that even el8's system
+libstdc++ exceeds. `examples/wheel-setuptools` (plain C) and
+`examples/wheel-nanobind` (C++, scikit-build-core/CMake) are the two
+acceptance samples.
+
 ## Pipeline
 
 ```

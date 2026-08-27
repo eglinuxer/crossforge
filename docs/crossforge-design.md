@@ -297,7 +297,7 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 | 里程碑 | 内容 | 验收 | 状态 |
 |--------|------|------|------|
 | M6 | python-pack：交叉 CPython 构建流水线（cp39–cp313 × x86_64/aarch64），sysroot 包列表扩展（openssl-devel 等），官方镜像对照门禁 | 十个 python-pack 产出；pyconfig.h/sysconfigdata 与官方 manylinux 对照 diff 清洁；aarch64 树在 qemu 下可执行 import | ✅ 2026-08-27（十包全产出并冒烟通过；对照门禁 10/10 PASS、ABI 关键集零差异） |
-| M7 | `crossforge wheel` 端到端：环境组装（crossenv/cross files/PYO3）+ 四类后端编排 + wheel 静态审计（policy 表）+ import 冒烟 + abi3 展开 | 一个 pybind11/nanobind 样例项目与一个 setuptools 样例项目，一条命令产出全矩阵合规 wheel，manylinux 容器全版本 import 通过 | |
+| M7 | `crossforge wheel` 端到端：环境组装（crossenv/cross files/PYO3）+ 四类后端编排 + wheel 静态审计（policy 表）+ import 冒烟 + abi3 展开 | 一个 pybind11/nanobind 样例项目与一个 setuptools 样例项目，一条命令产出全矩阵合规 wheel，manylinux 容器全版本 import 通过 | ✅ 2026-08-27（18 wheels 全绿：setuptools 10/10、nanobind 8/8（cp39 被 requires-python 过滤）；全部通过官方 manylinux 双架构容器 import 终检） |
 | M8 | 自研 vendor（ELF soname/RPATH 改写）+ `--verify-images` 装机层 + CI 集成（wheel 维度产物与 arm 终检 job） | vendor 结果与 auditwheel repair 产物等价性对照；CI 全绿 | |
 
 ### 9.2 M6 实施记录（2026-08-27）
@@ -311,6 +311,17 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 - **冒烟门禁**：每包必须 `import math, struct, json, zlib, bz2, lzma, ctypes, ssl, hashlib, sqlite3, uuid`；x86_64 直跑、aarch64 经 qemu + 工具链 sysroot。10/10 通过。
 - **生产裁剪**（对齐官方镜像）：strip 解释器与扩展、删嵌入专用静态 libpython（两处安装位）、删 test 目录——单包 305MB → 64–90MB（官方 66MB 同量级）。
 - 踩坑存档：Rocky 极简镜像缺 `which` 使 3.9/3.10 交叉 configure 的候选循环静默残留裸 `python`（探测循环 `which ... || continue` 全跳过后循环变量未清空）；`/dev/ptc` 是 AIX 探测项而非 ptem。
+
+### 9.3 M7 实施记录（2026-08-27）
+
+`crossforge wheel <project>` 一条命令：项目目录 → 全矩阵 manylinux_2_28 合规 wheel。四个新模块：
+
+- **whl**：自研最小 zip 读写（stored/deflate，flate2）+ PEP 427 文件名解析 + RECORD 校验/重算 + **retag**（审计通过后 `linux_*` → `manylinux_2_28_*`，改 WHEEL Tag 行、刷新 RECORD、可复现固定时间戳）。
+- **wheelaudit**：内嵌 policy 表（`registry/manylinux-policy.toml`，转录自 auditwheel 6.8.1，含符号版本上限/24 库白名单/libz 私有符号黑名单）；检查 ELF arch、版本化符号需求 ≤ 上限（**GLIBCXX 3.4.24 确实比 el8 系统库严一档**）、DT_NEEDED ∈ 白名单 ∪ wheel 内相邻库、禁链 libpython、EXT_SUFFIX 与 python/abi tag 一致（abi3 wheel 不得携带版本化后缀）、RECORD 完整性。审计不过不 retag。
+- **wheel**（编排）：native pack 建 venv + 钉版 pip wheel（25.2，3.9 支持线的末代）经 PYTHONPATH 引导 → 装 PEP 518 requires（`--no-build-isolation`，隔离环境会覆盖交叉 PYTHONPATH）→ 交叉环境注入（`_PYTHON_SYSCONFIGDATA_NAME` + `_PYTHON_HOST_PLATFORM` + 仅含目标 sysconfigdata 单文件的 PYTHONPATH；`CMAKE_TOOLCHAIN_FILE` + `-DPython_INCLUDE_DIR/SOABI` hints；`SETUPTOOLS_EXT_SUFFIX`；`PYO3_CROSS_LIB_DIR` 接口就绪）→ `pip wheel` → 审计 → retag → 三层验证。**原生 x86 wheel 同样走本工具链**——policy 的 GLIBCXX 上限连 el8 系统 libstdc++ 都超（3.4.25>3.4.24），nonshared 混合链接是原生轮子合规的前提，不只是交叉的。
+- **requires-python 过滤**：读 `[project].requires-python` 下限跳过项目不支持的解释器（nanobind≥2.2 不支持 3.9 即由此路径处理）。
+
+验收（2026-08-27 实测）：`examples/wheel-setuptools`（纯 C）10/10、`examples/wheel-nanobind`（C++/scikit-build-core/CMake）8/8（cp39 过滤），共 18 wheels；逐一通过 policy 审计、目标 pack import 冒烟（aarch64 经 qemu）、官方 `quay.io/pypa/manylinux_2_28_{x86_64,aarch64}` 容器内官方解释器 import 终检（aarch64 经宿主 binfmt qemu 运行 arm64 容器）。C++ 样例特意使用 `std::from_chars`（浮点）与 `std::filesystem`（GLIBCXX_3.4.29+ 物料）：产物 DT_NEEDED 仅 4 个白名单库、动态需求 GLIBCXX ≤ 3.4.21 / GLIBC ≤ 2.17，147 个相关符号以本地定义静态携带——nonshared 机制在 wheel 场景的直接实证。构建环境镜像补充 cmake + ninja-build（PowerTools）。abi3：构建选项就绪（产出 abi3 tag 自动跳过同架构后续版本并展开全解释器冒烟）；PyO3/maturin 环境接口就绪、端到端样例留 M8 顺带验证。
 
 ## 10. 参考
 

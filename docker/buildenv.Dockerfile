@@ -12,6 +12,8 @@
 # - which: CPython <= 3.10 cross configure probes build-python candidates
 #   with `which ... || continue`; with no `which` binary every candidate is
 #   skipped and the loop's leftover variable silently selects bare `python`
+# - cmake + ninja-build (PowerTools): CMake-backend wheels
+#   (scikit-build-core / nanobind)
 # - *-devel: native (x86_64) CPython builds probe the build host's system
 #   dirs (not the sysroot) for optional stdlib modules; the set matches the
 #   sysroot package list exactly (same el8 NVRs) so native and cross packs
@@ -26,9 +28,10 @@ RUN dnf install -y \
         glibc-gconv-extra \
         pkgconf-pkg-config \
         which \
+        cmake \
         zlib-devel bzip2-devel xz-devel libffi-devel openssl-devel \
         sqlite-devel libuuid-devel \
-    && dnf install -y --enablerepo=powertools dejagnu \
+    && dnf install -y --enablerepo=powertools dejagnu ninja-build \
     && dnf clean all
 
 # Static user-mode qemu for running aarch64 testsuites (EPEL8 has no
