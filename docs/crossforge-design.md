@@ -427,6 +427,17 @@ crossforge verify --baseline el8 --matrix                       # 容器矩阵�
 
 CI 每次提交为 el8 × aarch64 组合 bundle 并做双向验证（裸 `gcc` 必须是 14.2.1 且为 x86_64、原生 C++17 编译执行、交叉产物 `file` 校验为 aarch64、cmake 可用）。
 
+**按 sysroot profile 分档发布（2026-08-27）**。「只有一类 docker」指的是**镜像种类**只有 crossenv 一种，而非只有一个 tag——profile 分档（§10.6 的决策 4）落到 tag 后缀上：
+
+| tag | profile | 体积增量 | 用途 |
+|-----|---------|----------|------|
+| `crossenv:el8-aarch64` | minimal | — | 绝大多数交叉构建 |
+| `crossenv:el8-aarch64-qt6` | qt6 | 约 +230MB | Qt 6 及依赖图形/文本栈的项目 |
+
+命名约定：**minimal 不带后缀**，所以下游已经钉住的 tag 一个都不动；非默认 profile 追加 `-<profile>`。注意 tag 与 crossforge 内部 id 的 profile 位置不同（tag 后缀 `el8-aarch64-qt6` vs id 中缀 `gcc14.2.1-el8-qt6-aarch64`）——tag 遵循既有 tag 文法，id 遵循 `spec.id()`，二者各自推导而非相互转换。
+
+qt6 档的 toolchain 镜像由 aarch64 build job 增发（克隆已建编译器 + 换 sysroot，成本是一次拷贝），crossenv job 的矩阵增加 profile 维度。qt6 档额外验证 sysroot 确实携带 Qt configure 需要的 13 个 `.pc`（freetype2/fontconfig/xkbcommon/egl/glesv2/wayland-client/dbus-1/libinput/x11/xcb/libpng/zlib/glib-2.0）——只信 profile 名字的话，一个悄悄退化成更薄包集的 profile 能通过其余所有检查。
+
 ### 10.6 sysroot 精简与编译器跨 profile 复用（2026-08-27）
 
 **只抽取链接需要的内容**：sysroot 是链接期树，文档、翻译、目标架构可执行文件都是死重，且**逐层放大**（prefix 内嵌 sysroot → 镜像内嵌 prefix → crossenv 内嵌两个 prefix）。在抽取时过滤（而非事后删除）：qt6 aarch64 sysroot **452MB → 271MB**、其 prefix **~770MB → 545MB**，同时 192 个 pkg-config、3168 个 CMake 包配置、28 份 wayland 协议 XML 完整保留，X11+wayland+xkbcommon+EGL+freetype 交叉链接照常成功。
