@@ -1,0 +1,44 @@
+{
+  "group": {
+    "toolchain-plan": {
+      "targets": [
+        "toolchain-plan-x86_64",
+        "toolchain-plan-aarch64"
+      ]
+    }
+  },
+  "target": {
+    "_common": {
+      "contexts": {
+        "crossforge_rocky": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6"
+      },
+      "platforms": [
+        "linux/amd64"
+      ]
+    },
+    "toolchain-plan-aarch64": {
+      "args": {
+        "CROSSFORGE_TARGET_ARCH": "aarch64"
+      },
+      "inherits": [
+        "_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "toolchain-plan"
+    },
+    "toolchain-plan-x86_64": {
+      "args": {
+        "CROSSFORGE_TARGET_ARCH": "x86_64"
+      },
+      "inherits": [
+        "_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "toolchain-plan"
+    }
+  }
+}

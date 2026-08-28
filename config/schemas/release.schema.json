@@ -1,0 +1,522 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/eglinuxer/crossforge/main/config/schemas/release.schema.json",
+  "title": "Crossforge release configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "baseline",
+    "product",
+    "base_image",
+    "platforms",
+    "gts",
+    "binutils",
+    "targets",
+    "python",
+    "vcpkg",
+    "nfpm"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "./schemas/release.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "baseline": {
+      "const": "el8"
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image_repository",
+        "stable_channel"
+      ],
+      "properties": {
+        "image_repository": {
+          "const": "ghcr.io/eglinuxer/crossforge"
+        },
+        "stable_channel": {
+          "const": "gts15-el8"
+        }
+      }
+    },
+    "base_image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "tag",
+        "digest"
+      ],
+      "properties": {
+        "repository": {
+          "const": "quay.io/rockylinux/rockylinux"
+        },
+        "tag": {
+          "const": "8"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "platforms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "build",
+        "tool_host",
+        "image"
+      ],
+      "properties": {
+        "build": {
+          "const": "linux/amd64"
+        },
+        "tool_host": {
+          "const": "linux/amd64"
+        },
+        "image": {
+          "const": "linux/amd64"
+        }
+      }
+    },
+    "gts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "major",
+        "gcc_version",
+        "source"
+      ],
+      "properties": {
+        "major": {
+          "const": 15
+        },
+        "gcc_version": {
+          "type": "string",
+          "pattern": "^15\\.[0-9]+\\.[0-9]+$"
+        },
+        "source": {
+          "$ref": "#/$defs/rpm_source"
+        }
+      }
+    },
+    "binutils": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "source"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "source": {
+          "$ref": "#/$defs/rpm_source"
+        }
+      }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/target"
+            },
+            {
+              "properties": {
+                "arch": {
+                  "const": "x86_64"
+                },
+                "triple": {
+                  "const": "x86_64-unknown-linux-gnu"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/target"
+            },
+            {
+              "properties": {
+                "arch": {
+                  "const": "aarch64"
+                },
+                "triple": {
+                  "const": "aarch64-unknown-linux-gnu"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "items": false
+    },
+    "python": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "versions"
+      ],
+      "properties": {
+        "versions": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "uniqueItems": true,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/python_version"
+                },
+                {
+                  "properties": {
+                    "version": {
+                      "pattern": "^3\\.9\\.[0-9]+$"
+                    },
+                    "adapter": {
+                      "const": "legacy"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/python_version"
+                },
+                {
+                  "properties": {
+                    "version": {
+                      "pattern": "^3\\.10\\.[0-9]+$"
+                    },
+                    "adapter": {
+                      "const": "legacy"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/python_version"
+                },
+                {
+                  "properties": {
+                    "version": {
+                      "pattern": "^3\\.11\\.[0-9]+$"
+                    },
+                    "adapter": {
+                      "const": "transition"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/python_version"
+                },
+                {
+                  "properties": {
+                    "version": {
+                      "pattern": "^3\\.12\\.[0-9]+$"
+                    },
+                    "adapter": {
+                      "const": "modern"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/python_version"
+                },
+                {
+                  "properties": {
+                    "version": {
+                      "pattern": "^3\\.13\\.[0-9]+$"
+                    },
+                    "adapter": {
+                      "const": "modern"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/python_version"
+                },
+                {
+                  "properties": {
+                    "version": {
+                      "pattern": "^3\\.14\\.[0-9]+$"
+                    },
+                    "adapter": {
+                      "const": "modern"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false
+        }
+      }
+    },
+    "vcpkg": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "pin"
+      ],
+      "properties": {
+        "repository": {
+          "const": "https://github.com/microsoft/vcpkg.git"
+        },
+        "pin": {
+          "$ref": "#/$defs/git_pin"
+        }
+      }
+    },
+    "nfpm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "source"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "source": {
+          "$ref": "#/$defs/artifact_source"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "pending_artifact_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256"
+      ],
+      "properties": {
+        "status": {
+          "const": "pending"
+        },
+        "url": {
+          "const": null
+        },
+        "sha256": {
+          "const": null
+        }
+      }
+    },
+    "locked_artifact_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "artifact_source": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/pending_artifact_source"
+        },
+        {
+          "$ref": "#/$defs/locked_artifact_source"
+        }
+      ]
+    },
+    "pending_rpm_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "nevra",
+        "url",
+        "sha256"
+      ],
+      "properties": {
+        "status": {
+          "const": "pending"
+        },
+        "nevra": {
+          "const": null
+        },
+        "url": {
+          "const": null
+        },
+        "sha256": {
+          "const": null
+        }
+      }
+    },
+    "locked_rpm_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "nevra",
+        "url",
+        "sha256"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "nevra": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "rpm_source": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/pending_rpm_source"
+        },
+        {
+          "$ref": "#/$defs/locked_rpm_source"
+        }
+      ]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arch",
+        "triple"
+      ],
+      "properties": {
+        "arch": {
+          "type": "string"
+        },
+        "triple": {
+          "type": "string"
+        }
+      }
+    },
+    "python_version": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "adapter",
+        "support",
+        "source"
+      ],
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "adapter": {
+          "enum": [
+            "legacy",
+            "transition",
+            "modern"
+          ]
+        },
+        "support": {
+          "enum": [
+            "active",
+            "legacy"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/artifact_source"
+        }
+      }
+    },
+    "git_pin": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "commit"
+          ],
+          "properties": {
+            "status": {
+              "const": "pending"
+            },
+            "commit": {
+              "const": null
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "commit"
+          ],
+          "properties": {
+            "status": {
+              "const": "locked"
+            },
+            "commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

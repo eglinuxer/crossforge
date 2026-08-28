@@ -1,4 +1,10 @@
 /target
+/build/
+/dist/
+/stage/
+/cache/
+__pycache__/
+*.py[cod]
 examples/*/build/
 examples/*/*.egg-info/
 examples/*/target/

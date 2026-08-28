@@ -1,4 +1,10 @@
 target/
 work/
+build/
+dist/
+stage/
+cache/
+__pycache__/
+*.py[cod]
 .git/
 examples/*/target/
