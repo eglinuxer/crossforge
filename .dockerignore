@@ -1,4 +1,3 @@
-target/
 work/
 build/
 dist/
@@ -7,4 +6,3 @@ cache/
 __pycache__/
 *.py[cod]
 .git/
-examples/*/target/

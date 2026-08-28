@@ -12,8 +12,8 @@ build-system-independent DEB/RPM packaging.
 
 The accepted implementation contract is in
 [`docs/architecture.md`](docs/architecture.md). The original Rust prototype is
-preserved at tag `prototype-rust-2026-08-28`; its historical design record
-remains in [`docs/crossforge-design.md`](docs/crossforge-design.md).
+preserved at tag `prototype-rust-2026-08-28` and has been removed from the
+rewrite branch.
 
 ## Phase 1
 
@@ -68,18 +68,6 @@ qualified release.
 Crossforge is not an official or supported Red Hat GCC Toolset. It does not
 build or repair wheels, manage arbitrary third-party sysroots, guarantee every
 vcpkg port, or publish APT/YUM repositories.
-
-## Legacy checks during migration
-
-The Rust prototype remains in the working tree until the first qualified
-vertical slice replaces it. Keep its baseline green while migrating:
-
-```console
-$ cargo fmt --check
-$ cargo test --features cli
-$ cargo doc --no-deps
-$ cargo check --no-default-features
-```
 
 ## License
 

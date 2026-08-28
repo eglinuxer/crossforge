@@ -1,10 +1,7 @@
-/target
 /build/
 /dist/
 /stage/
 /cache/
+/work/
 __pycache__/
 *.py[cod]
-examples/*/build/
-examples/*/*.egg-info/
-examples/*/target/

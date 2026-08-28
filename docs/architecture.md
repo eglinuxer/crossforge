@@ -1,7 +1,7 @@
 # Crossforge 重写架构
 
 > 状态：已接受的实施基线（2026-08-28）
-> 本文是新实现的架构契约。`docs/crossforge-design.md` 仅保留为旧 Rust 原型的历史记录；两者冲突时以本文为准。
+> 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 
 ## 1. 产品契约
 
@@ -218,4 +218,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-迁移采用纵向切片：先交付 x86_64 cross compiler，再加入 aarch64 与 hybrid runtime，随后依次加入 Python、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现只有在新链路具备等价资格化证据后才删除。
+实现采用纵向切片：先交付 x86_64 cross compiler，再加入 aarch64 与 hybrid runtime，随后依次加入 Python、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
