@@ -3,11 +3,6 @@
 #   ghcr.io/<owner>/<repo>/toolchain:<baseline>-<target>            (default gcc)
 #   ghcr.io/<owner>/<repo>/toolchain:<baseline>-<target>-gcc<ver>   (all)
 #   ghcr.io/<owner>/<repo>/toolchain:<baseline>-<target>-gcc<ver>-<sha>
-#   ghcr.io/<owner>/<repo>/crossenv:<baseline>-<target>             (+ -<sha>)
-#
-# A non-default sysroot profile appends its name to the tag, on both
-# packages: `-qt6` for the profile deep enough to cross-build Qt 6. The
-# unmarked tags are the minimal profile and do not move.
 name: toolchain-images
 
 on:
@@ -153,47 +148,6 @@ jobs:
           # Without this the loop would fall through and the step would pass.
           test -n "$pushed" || { echo "push failed after 3 attempts"; exit 1; }
 
-      # The qt6 sysroot profile, published so its crossenv can be composed
-      # from a digest like any other. It clones the compiler just built and
-      # swaps in the deeper sysroot — 271MB against 39MB, for freetype,
-      # fontconfig, X11, wayland, xkbcommon, EGL and their dependencies — so
-      # it costs a copy, not another GCC build.
-      #
-      # The profile is a tag suffix here (el8-aarch64-qt6) while crossforge
-      # puts it mid-id (gcc14.2.1-el8-qt6-aarch64). The tag follows the tag
-      # grammar the other images already use, which keeps every existing tag
-      # exactly where it was.
-      - name: Build and push the qt6-profile toolchain image
-        if: matrix.target == 'aarch64' && matrix.gcc == '14.2.1'
-        run: |
-          # The GCC build tree has served its purpose; the deeper sysroot and
-          # a second toolchain prefix need the room.
-          sudo rm -rf work/build
-          ./target/release/crossforge build \
-            --gcc ${{ matrix.gcc }} \
-            --baseline ${{ matrix.baseline }} \
-            --target ${{ matrix.target }} \
-            --sysroot-profile qt6 \
-            --image crossforge-buildenv:el8 --work-dir "$PWD/work"
-          ID="gcc${{ matrix.gcc }}-${{ matrix.baseline }}-qt6-${{ matrix.target }}"
-          test -d "work/toolchains/$ID"
-          SHA=${GITHUB_SHA::7}
-          IMAGE="ghcr.io/${{ github.repository }}/toolchain"
-          TAG="${{ matrix.baseline }}-${{ matrix.target }}-qt6"
-          docker build -f docker/toolchain.Dockerfile \
-            --build-arg TOOLCHAIN_ID="$ID" \
-            -t "$IMAGE:$TAG" \
-            -t "$IMAGE:$TAG-gcc${{ matrix.gcc }}" \
-            -t "$IMAGE:$TAG-gcc${{ matrix.gcc }}-$SHA" \
-            work/toolchains
-          pushed=
-          for attempt in 1 2 3; do
-            if docker push --all-tags "$IMAGE"; then pushed=yes; break; fi
-            echo "push attempt $attempt failed; retrying in $((attempt * 15))s"
-            sleep $((attempt * 15))
-          done
-          test -n "$pushed" || { echo "push failed after 3 attempts"; exit 1; }
-
   # Cross build environments (design doc §5.5): the target cross toolchain
   # plus the x86_64 native companion in one image, composed from this
   # commit's published toolchain images by digest. This is the unit a real
@@ -210,10 +164,6 @@ jobs:
       matrix:
         baseline: [el8]
         target: [aarch64]
-        # One image kind, tiered by how deep its sysroot goes. minimal is
-        # what most cross builds want; qt6 carries the graphics and text
-        # stack Qt's configure probes for, and costs ~230MB more.
-        profile: [minimal, qt6]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -229,34 +179,23 @@ jobs:
           SHA=${GITHUB_SHA::7}
           TOOLCHAIN="ghcr.io/${{ github.repository }}/toolchain"
           CROSSENV="ghcr.io/${{ github.repository }}/crossenv"
-          PROFILE="${{ matrix.profile }}"
-          # minimal stays unmarked so the tags downstreams already pin do not
-          # move. crossforge puts the profile mid-id (gcc14.2.1-el8-qt6-aarch64)
-          # while the tags carry it as a suffix (el8-aarch64-qt6), so the two
-          # are derived separately rather than one from the other.
-          if [ "$PROFILE" = minimal ]; then
-            TARGET_ID="gcc14.2.1-${{ matrix.baseline }}-${{ matrix.target }}"
-            TARGET_TAG="${{ matrix.baseline }}-${{ matrix.target }}"
-          else
-            TARGET_ID="gcc14.2.1-${{ matrix.baseline }}-$PROFILE-${{ matrix.target }}"
-            TARGET_TAG="${{ matrix.baseline }}-${{ matrix.target }}-$PROFILE"
-          fi
           HOST_ID="gcc14.2.1-${{ matrix.baseline }}-x86_64"
+          TARGET_ID="gcc14.2.1-${{ matrix.baseline }}-${{ matrix.target }}"
           # Pin both inputs by digest, not by tag.
           HOST_REF="$TOOLCHAIN:${{ matrix.baseline }}-x86_64-gcc14.2.1-$SHA"
-          TARGET_REF="$TOOLCHAIN:$TARGET_TAG-gcc14.2.1-$SHA"
+          TARGET_REF="$TOOLCHAIN:${{ matrix.baseline }}-${{ matrix.target }}-gcc14.2.1-$SHA"
           HOST_DIGEST=$(docker buildx imagetools inspect "$HOST_REF" --format '{{.Manifest.Digest}}')
           TARGET_DIGEST=$(docker buildx imagetools inspect "$TARGET_REF" --format '{{.Manifest.Digest}}')
           echo "host:   $TOOLCHAIN@$HOST_DIGEST"
-          echo "target: $TOOLCHAIN@$TARGET_DIGEST ($PROFILE)"
-          TAG="$TARGET_TAG"
+          echo "target: $TOOLCHAIN@$TARGET_DIGEST"
+          TAG="${{ matrix.baseline }}-${{ matrix.target }}"
           docker build -f docker/crossenv.Dockerfile \
             --build-arg HOST_IMAGE="$TOOLCHAIN@$HOST_DIGEST" \
             --build-arg TARGET_IMAGE="$TOOLCHAIN@$TARGET_DIGEST" \
             --build-arg HOST_ID="$HOST_ID" \
             --build-arg TARGET_ID="$TARGET_ID" \
             --build-arg BASELINE="${{ matrix.baseline }}" \
-            --build-arg SYSROOT_PROFILE="$PROFILE" \
+            --build-arg SYSROOT_PROFILE="minimal" \
             -t "$CROSSENV:$TAG" -t "$CROSSENV:$TAG-$SHA" .
           # Jobs in this matrix push to the same package at the same time and
           # therefore upload the same shared base layers concurrently, which
@@ -275,7 +214,6 @@ jobs:
       - name: Verify both toolchains in the composed image
         run: |
           TAG="${{ matrix.baseline }}-${{ matrix.target }}"
-          [ "${{ matrix.profile }}" = minimal ] || TAG="$TAG-${{ matrix.profile }}"
           CROSSENV="ghcr.io/${{ github.repository }}/crossenv:$TAG"
           cat > /tmp/hello.cpp <<'EOF'
           #include <string>
@@ -294,26 +232,6 @@ jobs:
             file hello_target | grep -qi aarch64
             cmake --version | head -1
             echo "crossenv OK"'
-
-      # The deeper sysroot is the only reason this tag exists, so check for
-      # what it is meant to carry rather than trusting the profile name. These
-      # are the .pc files Qt 6's configure probes for; a profile that silently
-      # resolved to a thinner package set would pass every check above.
-      - name: Verify the qt6 sysroot carries Qt's dependencies
-        if: matrix.profile == 'qt6'
-        run: |
-          TAG="${{ matrix.baseline }}-${{ matrix.target }}-${{ matrix.profile }}"
-          CROSSENV="ghcr.io/${{ github.repository }}/crossenv:$TAG"
-          docker run --rm "$CROSSENV" sh -c '
-            set -e
-            SR="$CROSSFORGE_TARGET_ROOT/${{ matrix.target }}-unknown-linux-gnu/sysroot"
-            missing=
-            for pc in freetype2 fontconfig xkbcommon egl glesv2 \
-                      wayland-client dbus-1 libinput x11 xcb libpng zlib glib-2.0; do
-              find "$SR" -name "$pc.pc" | grep -q . || missing="$missing $pc"
-            done
-            test -z "$missing" || { echo "qt6 sysroot is missing:$missing"; exit 1; }
-            echo "qt6 sysroot OK"'
 
   # Python packs (design doc §9): built from this commit's toolchains and
   # published per (version, arch) — an image users can `docker run` directly

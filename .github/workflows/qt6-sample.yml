@@ -1,11 +1,11 @@
 # The Qt 6 cross build, end to end — the evidence that the host companion
 # earns its place in the environment image.
 #
-# Runs against the *published* qt6 crossenv rather than a locally rebuilt
-# one, so what it qualifies is what a downstream actually pulls. On a tag
-# push this workflow and toolchain-images start together, so the image here
-# is the previously published one; that is the right thing to qualify
-# anyway.
+# What this qualifies is the *published* image, used as shipped: the sample
+# pulls crossenv:el8-aarch64 and takes the toolchain out of it rather than
+# building one. Qt needs a deeper sysroot than that image carries, and the
+# sample generates it from a lockfile and swaps it in — the extra depth is a
+# property of this test, not something the product should ship.
 #
 # Kept out of the per-commit gate: a native Qt and a cross Qt is over an
 # hour before there is anything to audit. What it buys is a class of defect
@@ -33,9 +33,6 @@ jobs:
     permissions:
       contents: read
       packages: read
-    env:
-      TARGET_ID: gcc14.2.1-el8-qt6-aarch64
-      TRIPLE: aarch64-unknown-linux-gnu
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -48,6 +45,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
 
+      # Needed for the sysroot the sample assembles, and for the audit gate.
       - name: Build crossforge
         run: cargo build --release
 
@@ -61,31 +59,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # The audit and the qemu run happen on the runner, not in the
-      # container, so the toolchain has to exist as files here too: the
-      # sample points CMake at its toolchain file and the audit at its
-      # sysroot. Extracting the published image is what keeps this job
-      # honest — nothing is rebuilt, so nothing can differ from what was
-      # shipped.
-      - name: Pull the qt6 cross build environment and extract its toolchain
-        run: |
-          IMAGE="ghcr.io/${{ github.repository }}/crossenv:el8-aarch64-qt6"
-          docker pull "$IMAGE"
-          docker image inspect "$IMAGE" \
-            --format 'sysroot profile: {{ index .Config.Labels "org.crossforge.sysroot-profile" }}'
-          mkdir -p work/toolchains
-          cid=$(docker create "$IMAGE")
-          docker cp "$cid:/opt/crossforge/$TARGET_ID" "work/toolchains/$TARGET_ID"
-          docker rm "$cid"
-          test -x "work/toolchains/$TARGET_ID/bin/$TRIPLE-g++"
-          test -f "work/toolchains/$TARGET_ID/toolchain.cmake"
-          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
-
-      # Host Qt, cross Qt, the sample application, the audit gate and the
-      # qemu run. The script fails the job on any of them.
+      # The sample pulls the image, extracts its toolchain, assembles the
+      # qt6 sysroot, then builds host Qt, cross Qt and the application,
+      # audits them and runs the result under qemu. It fails the job on any
+      # of those.
       - name: Cross-build and run the Qt 6 sample
         run: |
           WORK="$PWD/work" \
+          IMAGE="ghcr.io/${{ github.repository }}/crossenv:el8-aarch64" \
           CROSSFORGE="$PWD/target/release/crossforge" \
           JOBS="$(nproc)" \
           ./examples/qt6-cross/build.sh

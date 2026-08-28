@@ -1,29 +1,34 @@
 #!/usr/bin/env bash
 # Cross-build Qt 6 and run a Qt program on the target.
 #
-# Three stages, resumable: each records a marker, so re-running after a
-# failure picks up where it stopped instead of rebuilding Qt from scratch.
+# What is under test is the *published* environment image, so nothing here
+# rebuilds a compiler: the toolchain comes out of that image and is used as
+# shipped. Four stages, resumable — each records a marker, so re-running
+# after a failure picks up where it stopped instead of rebuilding Qt.
 set -euo pipefail
 
 QT_VERSION="${QT_VERSION:-6.8.4}"
 QT_SHA256="${QT_SHA256:-532dfbf3fa3cbc68fa37441ea9e81c5009da044eaecda78ffaeafd8bd125532f}"
 WORK="${WORK:-/tmp/crossforge}"
-# The qt6 profile, not the plain el8-aarch64 one: Qt's configure probes for
-# freetype, fontconfig, X11, wayland, xkbcommon and EGL, which the minimal
-# sysroot does not carry.
-IMAGE="${IMAGE:-ghcr.io/eglinuxer/crossforge/crossenv:el8-aarch64-qt6}"
+IMAGE="${IMAGE:-ghcr.io/eglinuxer/crossforge/crossenv:el8-aarch64}"
 # No HOST_ID knob to match: stage 1 calls plain gcc/g++, which the image
 # puts on PATH pointing at the native companion. Only the cross side needs
 # naming, because its toolchain file and sysroot are addressed by path.
-TARGET_ID="${TARGET_ID:-gcc14.2.1-el8-qt6-aarch64}"
+TARGET_ID="${TARGET_ID:-gcc14.2.1-el8-aarch64}"
 TRIPLE="${TRIPLE:-aarch64-unknown-linux-gnu}"
+BASELINE="${BASELINE:-el8}"
+ARCH="${ARCH:-aarch64}"
 JOBS="${JOBS:-$(nproc)}"
+CROSSFORGE="${CROSSFORGE:-$(command -v crossforge || echo ./target/release/crossforge)}"
 
 QT_ROOT="$WORK/qt6"
 SRC="$QT_ROOT/qtbase-everywhere-src-$QT_VERSION"
 HOST_QT="$QT_ROOT/host"
 TARGET_QT="$QT_ROOT/target"
 SAMPLE_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SAMPLE_SRC/../.." && pwd)"
+TOOLCHAIN="$WORK/toolchains/$TARGET_ID"
+SYSROOT="$TOOLCHAIN/$TRIPLE/sysroot"
 
 say() { printf '\n=== %s\n' "$*"; }
 
@@ -38,6 +43,39 @@ in_env() {
 }
 
 mkdir -p "$QT_ROOT"
+
+# Stage 0. The compiler under test is the one in the published image, taken
+# as shipped — the audit and the qemu run happen out here rather than in the
+# container, so it has to exist as files on this side too.
+#
+# Qt needs more in its sysroot than the shipped profile carries. That extra
+# depth is a property of this test, not of the product, so it is generated
+# here and swapped into the extracted prefix rather than baked into an image
+# nobody but this script would pull. The swap is the same operation
+# crossforge performs for a sysroot profile, and it is all that is needed:
+# toolchain.cmake, pkg-config and GCC's built-in sysroot all resolve
+# <prefix>/<triple>/sysroot relative to the prefix, so they follow.
+say "stage 0: toolchain from the published image, qt6 sysroot alongside"
+if [ ! -x "$TOOLCHAIN/bin/$TRIPLE-g++" ]; then
+  mkdir -p "$WORK/toolchains"
+  # An image already present locally is honoured, so a self-composed
+  # environment can be pointed at with IMAGE= without a registry.
+  docker pull "$IMAGE" 2>/dev/null || docker image inspect "$IMAGE" >/dev/null
+  cid="$(docker create "$IMAGE")"
+  docker cp "$cid:/opt/crossforge/$TARGET_ID" "$TOOLCHAIN"
+  docker rm "$cid" >/dev/null
+fi
+if [ ! -f "$SYSROOT/usr/include/freetype2/ft2build.h" ]; then
+  # --locked resolves nothing and reads no repository metadata, so the same
+  # package set comes back every run.
+  "$CROSSFORGE" sysroot \
+    --baseline "$BASELINE" --target "$ARCH" --profile qt6 \
+    --locked "$REPO_ROOT/sysroot-locks/$BASELINE-$ARCH-qt6.toml" \
+    --work-dir "$WORK"
+  rm -rf "$SYSROOT"
+  cp -a "$WORK/sysroots/$BASELINE-qt6-$ARCH" "$SYSROOT"
+fi
+echo "  $TOOLCHAIN ($(find "$SYSROOT" -name '*.pc' | wc -l) pkg-config files in the sysroot)"
 
 say "source"
 if [ ! -d "$SRC" ]; then
@@ -84,7 +122,7 @@ if [ ! -f "$TARGET_QT/lib/libQt6Core.so" ]; then
       -qt-host-path '$HOST_QT' \
       -nomake examples -nomake tests \
       -no-openssl -no-icu \
-      -- -DCMAKE_TOOLCHAIN_FILE='$WORK/toolchains/$TARGET_ID/toolchain.cmake' \
+      -- -DCMAKE_TOOLCHAIN_FILE='$TOOLCHAIN/toolchain.cmake' \
          -DCMAKE_BUILD_TYPE=Release
     cmake --build . --parallel $JOBS
     cmake --install ."
@@ -105,15 +143,13 @@ CWD="$QT_ROOT/build-sample" in_env "
 file "$QT_ROOT/build-sample/qt6_cross" | cut -c1-90
 
 say "audit: the application and every Qt library it links"
-CROSSFORGE="${CROSSFORGE:-$(command -v crossforge || echo ./target/release/crossforge)}"
 "$CROSSFORGE" audit \
-  --sysroot "$WORK/toolchains/$TARGET_ID/$TRIPLE/sysroot" --arch aarch64 \
+  --sysroot "$SYSROOT" --arch "$ARCH" \
   --allow-needed libQt6Core.so.6 \
   "$QT_ROOT/build-sample/qt6_cross" "$TARGET_QT/lib/libQt6Core.so.$QT_VERSION"
 
 say "run on the target"
-SYSROOT="$WORK/toolchains/$TARGET_ID/$TRIPLE/sysroot"
 qemu-aarch64 -L "$SYSROOT" \
-  -E LD_LIBRARY_PATH="$TARGET_QT/lib:$WORK/toolchains/$TARGET_ID/$TRIPLE/lib64" \
+  -E LD_LIBRARY_PATH="$TARGET_QT/lib:$TOOLCHAIN/$TRIPLE/lib64" \
   -E QT_QPA_PLATFORM=minimal \
   "$QT_ROOT/build-sample/qt6_cross"

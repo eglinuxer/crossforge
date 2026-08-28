@@ -10,6 +10,7 @@ generate code for need the cross one. That is the whole argument for shipping
 both toolchains in one environment, and this sample is the proof it works.
 
 ```
+stage 0   environment  from the image     published toolchain + qt6 sysroot
 stage 1   host Qt      native x86_64      moc / rcc / uic / qt-cmake
 stage 2   target Qt    cross aarch64      -DQT_HOST_PATH=<stage 1>
 stage 3   application  cross aarch64      built with target Qt, run under qemu
@@ -21,20 +22,24 @@ stage 3   application  cross aarch64      built with target Qt, run under qemu
 $ ./examples/qt6-cross/build.sh
 ```
 
-It pulls `crossenv:el8-aarch64-qt6`, the published environment on the `qt6`
-sysroot profile. The unmarked `el8-aarch64` tag is the `minimal` profile and
-will not get through Qt's configure: Qt probes for freetype, fontconfig,
-X11, wayland, xkbcommon and EGL, which minimal does not carry. The deeper
-sysroot is what the `-qt6` suffix buys, for about 230MB.
+Everything it needs it fetches: `crossenv:el8-aarch64` for the toolchain and
+the host build tools, and the Qt sources. Nothing is compiled that the image
+already ships.
 
-To build the environment yourself instead — a different baseline, a newer
-Qt's dependencies — `crossforge build --sysroot-profile qt6 --target
-aarch64` produces the toolchain (a clone of the base one with the sysroot
-swapped, so it costs a copy rather than another GCC build), and
-`docker/crossenv.Dockerfile` composes it with the x86_64 companion. Then set
-`IMAGE`.
+The one thing it assembles is the sysroot. Qt's configure probes for
+freetype, fontconfig, X11, wayland, xkbcommon and EGL, which the published
+image's `minimal` profile does not carry, so stage 0 generates the `qt6`
+profile from `sysroot-locks/` and swaps it into the extracted prefix. That
+depth belongs to this test rather than to the product — shipping it would
+add ~230MB to an image for a dependency set only Qt-shaped builds want — and
+the swap is the same operation `crossforge build --sysroot-profile` performs.
+It needs no overrides: `toolchain.cmake`, pkg-config and GCC's built-in
+sysroot all resolve `<prefix>/<triple>/sysroot` relative to the prefix, so
+they follow it.
 
-`IMAGE`, `WORK`, `TARGET_ID`, `QT_VERSION` and `JOBS` are all overridable.
+An image already present locally is used as-is, so `IMAGE=` can point at one
+you composed yourself. `WORK`, `TARGET_ID`, `QT_VERSION`, `BASELINE`, `ARCH`
+and `JOBS` are overridable too.
 
 Only qtbase is built. Further modules repeat stages 1 and 2 unchanged, via
 `qt-configure-module` against the two prefixes this leaves behind.
@@ -44,6 +49,9 @@ a failure part way through resumes rather than rebuilding Qt.
 
 ## What it actually proves
 
+- The compiler it exercises is the published one, taken out of the image
+  and used unchanged, so a pass says something about what downstreams get
+  rather than about a toolchain rebuilt for the occasion.
 - The native companion builds and *runs* host tools during a cross build.
 - `toolchain.cmake` drives a real CMake project, not a hello world:
   `CMAKE_SYSROOT` and the pkg-config variables are what let Qt's configure
