@@ -8,7 +8,10 @@ set -euo pipefail
 QT_VERSION="${QT_VERSION:-6.8.4}"
 QT_SHA256="${QT_SHA256:-532dfbf3fa3cbc68fa37441ea9e81c5009da044eaecda78ffaeafd8bd125532f}"
 WORK="${WORK:-/tmp/crossforge}"
-IMAGE="${IMAGE:-crossforge-crossenv:el8-aarch64}"
+# The qt6 profile, not the plain el8-aarch64 one: Qt's configure probes for
+# freetype, fontconfig, X11, wayland, xkbcommon and EGL, which the minimal
+# sysroot does not carry.
+IMAGE="${IMAGE:-ghcr.io/eglinuxer/crossforge/crossenv:el8-aarch64-qt6}"
 # No HOST_ID knob to match: stage 1 calls plain gcc/g++, which the image
 # puts on PATH pointing at the native companion. Only the cross side needs
 # naming, because its toolchain file and sysroot are addressed by path.

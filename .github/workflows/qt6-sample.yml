@@ -1,12 +1,17 @@
 # The Qt 6 cross build, end to end — the evidence that the host companion
 # earns its place in the environment image.
 #
-# Kept out of the per-commit gate deliberately. This builds three toolchains,
-# a native Qt and a cross Qt before it has anything to audit, which is hours;
-# what it buys is a class of defect a hello world cannot reach. Both findings
-# from its first run — the libgcc compat gap and the DT_NEEDED whitelist
-# reporting the sysroot's own loader — came from Qt exercising the toolchain
-# the way a real project does. Weekly, on tags, and on demand.
+# Runs against the *published* qt6 crossenv rather than a locally rebuilt
+# one, so what it qualifies is what a downstream actually pulls. On a tag
+# push this workflow and toolchain-images start together, so the image here
+# is the previously published one; that is the right thing to qualify
+# anyway.
+#
+# Kept out of the per-commit gate: a native Qt and a cross Qt is over an
+# hour before there is anything to audit. What it buys is a class of defect
+# a hello world cannot reach — both findings from its first run, the libgcc
+# compat gap and the DT_NEEDED whitelist reporting the sysroot's own loader,
+# came from Qt exercising the toolchain the way a real project does.
 name: qt6-sample
 
 on:
@@ -24,18 +29,18 @@ concurrency:
 jobs:
   qt6-cross:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 240
+    permissions:
+      contents: read
+      packages: read
     env:
-      BASELINE: el8
-      GCC: "14.2.1"
-      HOST_ID: gcc14.2.1-el8-x86_64
       TARGET_ID: gcc14.2.1-el8-qt6-aarch64
-      IMAGE: crossforge-crossenv:el8-aarch64-qt6
+      TRIPLE: aarch64-unknown-linux-gnu
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      # Qt's build trees are large enough that the stock runner image does
-      # not leave room for them alongside three toolchains.
+      # Qt's two build trees are large enough that the stock runner image
+      # does not leave room for them.
       - name: Free disk space
         run: |
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
@@ -49,57 +54,32 @@ jobs:
       - name: Install qemu-user-static
         run: sudo apt-get update && sudo apt-get install -y qemu-user-static
 
-      - name: Build el8 build environment image
-        run: docker build -t crossforge-buildenv:el8 -f docker/buildenv.Dockerfile docker
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # The native companion, which stage 1 uses to build moc and rcc. Its
-      # GCC build tree is reclaimed immediately: nothing below needs it, and
-      # two of them plus Qt do not fit on a hosted runner. The installed
-      # prefixes under work/toolchains are what the rest of the job uses.
-      - name: Build host toolchain (x86_64)
+      # The audit and the qemu run happen on the runner, not in the
+      # container, so the toolchain has to exist as files here too: the
+      # sample points CMake at its toolchain file and the audit at its
+      # sysroot. Extracting the published image is what keeps this job
+      # honest — nothing is rebuilt, so nothing can differ from what was
+      # shipped.
+      - name: Pull the qt6 cross build environment and extract its toolchain
         run: |
-          ./target/release/crossforge build \
-            --gcc "$GCC" --baseline "$BASELINE" --target x86_64 \
-            --image crossforge-buildenv:el8 --work-dir "$PWD/work"
-          sudo rm -rf work/build
-          df -h /
-
-      # The qt6 profile clones the base aarch64 toolchain and swaps in the
-      # deeper sysroot, so this builds that compiler too.
-      - name: Build target toolchain (aarch64, qt6 sysroot profile)
-        run: |
-          ./target/release/crossforge build \
-            --gcc "$GCC" --baseline "$BASELINE" --target aarch64 \
-            --sysroot-profile qt6 \
-            --image crossforge-buildenv:el8 --work-dir "$PWD/work"
-          sudo rm -rf work/build
-          df -h /
-
-      # crossforge runs its builders as root in the container, so the tree it
-      # leaves behind is root-owned; the sample runs docker as the invoking
-      # user and writes its Qt trees into the same work dir.
-      - name: Take ownership of the work tree
-        run: sudo chown -R "$(id -u):$(id -g)" work
-
-      # Composed here rather than pulled: the published crossenv carries the
-      # minimal sysroot, and Qt needs the qt6 profile's freetype, fontconfig,
-      # X11, wayland, xkbcommon and EGL to get through its configure.
-      - name: Compose the cross build environment
-        run: |
-          docker build -f docker/toolchain.Dockerfile \
-            --build-arg TOOLCHAIN_ID="$HOST_ID" \
-            -t crossforge-toolchain:host work/toolchains
-          docker build -f docker/toolchain.Dockerfile \
-            --build-arg TOOLCHAIN_ID="$TARGET_ID" \
-            -t crossforge-toolchain:target work/toolchains
-          docker build -f docker/crossenv.Dockerfile \
-            --build-arg HOST_IMAGE=crossforge-toolchain:host \
-            --build-arg TARGET_IMAGE=crossforge-toolchain:target \
-            --build-arg HOST_ID="$HOST_ID" \
-            --build-arg TARGET_ID="$TARGET_ID" \
-            --build-arg BASELINE="$BASELINE" \
-            --build-arg SYSROOT_PROFILE=qt6 \
-            -t "$IMAGE" .
+          IMAGE="ghcr.io/${{ github.repository }}/crossenv:el8-aarch64-qt6"
+          docker pull "$IMAGE"
+          docker image inspect "$IMAGE" \
+            --format 'sysroot profile: {{ index .Config.Labels "org.crossforge.sysroot-profile" }}'
+          mkdir -p work/toolchains
+          cid=$(docker create "$IMAGE")
+          docker cp "$cid:/opt/crossforge/$TARGET_ID" "work/toolchains/$TARGET_ID"
+          docker rm "$cid"
+          test -x "work/toolchains/$TARGET_ID/bin/$TRIPLE-g++"
+          test -f "work/toolchains/$TARGET_ID/toolchain.cmake"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
 
       # Host Qt, cross Qt, the sample application, the audit gate and the
       # qemu run. The script fails the job on any of them.

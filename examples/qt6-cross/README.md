@@ -21,19 +21,18 @@ stage 3   application  cross aarch64      built with target Qt, run under qemu
 $ ./examples/qt6-cross/build.sh
 ```
 
-Needs a crossenv image built on the `qt6` sysroot profile. The published
-crossenv carries the `minimal` sysroot, which Qt's configure will not get
-through — it links against freetype, fontconfig, X11, wayland, xkbcommon and
-EGL. Build the deeper one with
+It pulls `crossenv:el8-aarch64-qt6`, the published environment on the `qt6`
+sysroot profile. The unmarked `el8-aarch64` tag is the `minimal` profile and
+will not get through Qt's configure: Qt probes for freetype, fontconfig,
+X11, wayland, xkbcommon and EGL, which minimal does not carry. The deeper
+sysroot is what the `-qt6` suffix buys, for about 230MB.
 
-```console
-$ crossforge build --sysroot-profile qt6 --target aarch64 ...
-```
-
-which clones the base toolchain rather than rebuilding the compiler, so it
-costs a copy, then compose it with the x86_64 companion through
-`docker/crossenv.Dockerfile`. `.github/workflows/qt6-sample.yml` does all of
-this and is the worked example.
+To build the environment yourself instead — a different baseline, a newer
+Qt's dependencies — `crossforge build --sysroot-profile qt6 --target
+aarch64` produces the toolchain (a clone of the base one with the sysroot
+swapped, so it costs a copy rather than another GCC build), and
+`docker/crossenv.Dockerfile` composes it with the x86_64 companion. Then set
+`IMAGE`.
 
 `IMAGE`, `WORK`, `TARGET_ID`, `QT_VERSION` and `JOBS` are all overridable.
 
