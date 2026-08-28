@@ -40,10 +40,14 @@ pub enum Error {
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 
-    #[error("command `{program}` exited with status {status}")]
+    #[error("command `{program}` exited with status {status}{tail}")]
     CommandFailed {
         program: String,
         status: std::process::ExitStatus,
+        /// Pre-formatted tail of the command's log, empty when there is no
+        /// log or nothing could be read. Naming the log file is no help to
+        /// anyone reading a CI run, which discards the working tree.
+        tail: String,
     },
 
     #[error("http request failed for {url}: {reason}")]

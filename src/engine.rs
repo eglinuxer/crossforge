@@ -86,12 +86,65 @@ fn spawn(mut command: std::process::Command, cmd: &Cmd) -> Result<()> {
     let status = command.status()?;
     if !status.success() {
         let mut program = cmd.program.clone();
+        let mut tail = String::new();
         if let Some(log) = &cmd.log_file {
             program.push_str(&format!(" (log: {})", log.display()));
+            tail = log_tail(log, 20);
         }
-        return Err(Error::CommandFailed { program, status });
+        return Err(Error::CommandFailed {
+            program,
+            status,
+            tail,
+        });
     }
     Ok(())
+}
+
+/// Last `lines` lines of `path`, formatted for an error message.
+///
+/// Build logs run to hundreds of megabytes, so this reads a bounded window
+/// off the end rather than the whole file, and returns nothing at all if
+/// that window cannot be read — a failure to explain a failure should not
+/// become the failure being reported.
+fn log_tail(path: &Path, lines: usize) -> String {
+    const WINDOW: u64 = 64 * 1024;
+    let Ok(mut file) = std::fs::File::open(path) else {
+        return String::new();
+    };
+    let Ok(len) = file.metadata().map(|m| m.len()) else {
+        return String::new();
+    };
+    if std::io::Seek::seek(
+        &mut file,
+        std::io::SeekFrom::Start(len.saturating_sub(WINDOW)),
+    )
+    .is_err()
+    {
+        return String::new();
+    }
+    let mut buf = Vec::new();
+    if std::io::Read::read_to_end(&mut file, &mut buf).is_err() {
+        return String::new();
+    }
+    // A window off the end usually starts mid-line; that partial line is
+    // dropped by taking whole lines from the back.
+    let text = String::from_utf8_lossy(&buf);
+    let tail: Vec<&str> = text
+        .lines()
+        .rev()
+        .take(lines)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect();
+    if tail.is_empty() {
+        return String::new();
+    }
+    format!(
+        "\n--- last {} log lines ---\n{}",
+        tail.len(),
+        tail.join("\n")
+    )
 }
 
 /// Runs commands directly on the current host.
@@ -497,6 +550,32 @@ mod tests {
         let err = runner.exec(&Cmd::new("false"));
         assert!(matches!(err, Err(Error::CommandFailed { .. })));
         runner.exec(&Cmd::new("true")).unwrap();
+    }
+
+    #[test]
+    fn failure_carries_the_log_tail() {
+        let dir = tempfile::tempdir().unwrap();
+        let log = dir.path().join("logs/boom.log");
+        let runner = LocalRunner;
+        let err = runner.exec(
+            &Cmd::new("sh")
+                .args(["-c", "echo first; echo needle-in-the-log; exit 3"])
+                .log(&log),
+        );
+        let message = err.unwrap_err().to_string();
+        // The log path alone is useless to anyone reading a CI run.
+        assert!(message.contains("needle-in-the-log"), "{message}");
+        assert!(message.contains("last 2 log lines"), "{message}");
+    }
+
+    #[test]
+    fn a_missing_log_does_not_replace_the_failure() {
+        let dir = tempfile::tempdir().unwrap();
+        let runner = LocalRunner;
+        let err = runner.exec(&Cmd::new("false").log(dir.path().join("never-written.log")));
+        // The command failure is what matters; an unreadable log is not an
+        // error of its own.
+        assert!(matches!(err, Err(Error::CommandFailed { .. })));
     }
 
     #[test]
