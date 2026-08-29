@@ -36,10 +36,35 @@ def render(repository):
             "output": ["type=cacheonly"],
         }
 
-    targets["_common"] = {
+    common = {
         "contexts": {"crossforge_rocky": "docker-image://%s" % rocky_image},
         "platforms": [platform],
     }
+    if (
+        config["gts"]["source"]["status"] == "locked"
+        and config["binutils"]["source"]["status"] == "locked"
+    ):
+        common["args"] = {
+            "GTS_BINUTILS_HEADER_ARCH": config["binutils"]["source"]["header_arch"],
+            "GTS_BINUTILS_REPOSITORY_NEVRA": config["binutils"]["source"][
+                "repository_nevra"
+            ],
+            "GTS_BINUTILS_SHA256": config["binutils"]["source"]["sha256"],
+            "GTS_BINUTILS_SPEC_SHA256": config["binutils"]["source"][
+                "spec_sha256"
+            ],
+            "GTS_GCC_HEADER_ARCH": config["gts"]["source"]["header_arch"],
+            "GTS_GCC_REPOSITORY_NEVRA": config["gts"]["source"][
+                "repository_nevra"
+            ],
+            "GTS_GCC_SHA256": config["gts"]["source"]["sha256"],
+            "GTS_GCC_SPEC_SHA256": config["gts"]["source"]["spec_sha256"],
+            "ROCKY_RPM_TRUST_FINGERPRINT": config["trust"]["rocky_rpm_key"][
+                "fingerprint"
+            ],
+            "ROCKY_RPM_TRUST_SHA256": config["trust"]["rocky_rpm_key"]["sha256"],
+        }
+    targets["_common"] = common
     document = {
         "group": {"toolchain-plan": {"targets": plan_names}},
         "target": targets,

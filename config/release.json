@@ -11,6 +11,13 @@
     "tag": "8",
     "digest": "sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6"
   },
+  "trust": {
+    "rocky_rpm_key": {
+      "file": "keys/RPM-GPG-KEY-rockyofficial",
+      "sha256": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab",
+      "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+    }
+  },
   "platforms": {
     "build": "linux/amd64",
     "tool_host": "linux/amd64",
@@ -20,29 +27,45 @@
     "major": 15,
     "gcc_version": "15.2.1",
     "source": {
-      "status": "pending",
-      "nevra": null,
-      "url": null,
-      "sha256": null
+      "status": "locked",
+      "repository_nevra": "gcc-toolset-15-gcc-0:15.2.1-7.1.el8_10.src",
+      "header_arch": "i686",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/source/tree/Packages/g/gcc-toolset-15-gcc-15.2.1-7.1.el8_10.src.rpm",
+      "sha256": "b7245477ce388b9c9758a4e0b0610af495da6a1961bf5bab9305d8560cfbbd82",
+      "size": 97511212,
+      "spec_sha256": "ef976467ff1a7946136121d6213caa5688b08ad64e6b4033b60866881972bb84"
     }
   },
   "binutils": {
     "version": "2.44",
     "source": {
-      "status": "pending",
-      "nevra": null,
-      "url": null,
-      "sha256": null
+      "status": "locked",
+      "repository_nevra": "gcc-toolset-15-binutils-0:2.44-3.el8.src",
+      "header_arch": "i686",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/source/tree/Packages/g/gcc-toolset-15-binutils-2.44-3.el8.src.rpm",
+      "sha256": "d47b3f86eb62be337ffb6110c7513a63a62ac4bcf280ad1e80055c1af8b17117",
+      "size": 28611047,
+      "spec_sha256": "2969c9be7a7c4a4bb3176be3423fbc5b892316cc2359c046a4d17c5c300b8afa"
     }
   },
   "targets": [
     {
       "arch": "x86_64",
-      "triple": "x86_64-unknown-linux-gnu"
+      "triple": "x86_64-unknown-linux-gnu",
+      "sysroot": {
+        "status": "locked",
+        "lock_file": "locks/sysroot-el8-x86_64.json",
+        "canonical_sha256": "3b8f24c2312e8625f43f1d2f2bfbf97e2c725d5202e3170a80d1dc8f10ec9808"
+      }
     },
     {
       "arch": "aarch64",
-      "triple": "aarch64-unknown-linux-gnu"
+      "triple": "aarch64-unknown-linux-gnu",
+      "sysroot": {
+        "status": "pending",
+        "lock_file": null,
+        "canonical_sha256": null
+      }
     }
   ],
   "python": {

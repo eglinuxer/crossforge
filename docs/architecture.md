@@ -2,6 +2,8 @@
 
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
+>
+> 实施进度：x86_64 sysroot 已锁定，GTS15 C/C++/LTO cross slice 已实际构建并通过 smoke；它仍是非发布 `-dev` target，直到 canonical DNF transaction 生成链和 host RPM closure 均锁定。aarch64、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现。
 
 ## 1. 产品契约
 
@@ -68,11 +70,22 @@ Rocky 8.10 GTS15 GCC/binutils SRPM
 
 不执行原生 spec 的 `%build`，不从目标 GTS 二进制 RPM 拼装 compiler/runtime。x86_64 与 aarch64 共用同一 recipe，只允许显式、可审计的架构参数差异。首发语言仅为 C、C++、LTO；不交付 GDB、Fortran、Ada、D、Go 或 offload。
 
+`%prep` 使用 `rpmbuild -bp --nodeps` 是有意且仅限此阶段：SRPM 的完整
+`BuildRequires` 同时覆盖原生 `%build`、文档和测试，会为单纯解包/打补丁引入
+约 730 个无关包。Crossforge 在 candidate 前另行锁定 `%prep` 实际使用的 RPM 工具与命令，
+校验 SRPM 签名、SRPM/spec SHA256、EL8 RPM 宏和 prepared tree；cross build
+依赖则按 Crossforge 自己的 configure/make recipe 锁定。其他阶段不得借此跳过
+依赖检查。
+
 target runtime 必须由 prepared source 完整交叉构建。RH 补丁必须直接生成 `libstdc++_nonshared80.a`；缺失即构建失败，不允许从完整静态库猜测或裁剪 fallback。最终链接模型为 EL8 动态运行库加新实现静态补充：
 
 ```ld
-INPUT ( =/usr/lib64/libstdc++.so.6 -lstdc++_nonshared )
-GROUP ( =/usr/lib64/libgcc_s.so.1 libgcc.a )
+INPUT (
+  =/usr/lib64/libstdc++.so.6
+  -lstdc++_nonshared
+  AS_NEEDED ( =/usr/lib64/libstdc++.so.6 )
+)
+GROUP ( =/lib64/libgcc_s.so.1 libgcc.a )
 ```
 
 系统 unwinder 保持共享，以保证跨 DSO exception 正确。
@@ -99,6 +112,14 @@ Crossforge 不定义 staging/overlay 目录、产品级 sysroot profile 或第�
 - “glibc >= 2.28”只是 ABI floor，不代表无条件支持所有此类发行版。
 
 `locks/sysroot-*.json` 可因 Rocky errata 更新；`abi/el8/{x86_64,aarch64}.json` 则冻结最低允许的符号集合。sysroot 更新不得静默扩大 ABI，只有显式升级产品 baseline 才能修改冻结集合。
+
+当前 x86_64 lock 捕获了由 14 个显式 roots 经 DNF 求解得到的 78 个 RPM，并固定
+repomd/primary metadata、逐包 NEVRA、URL、仓库 checksum、实收 SHA256、source
+RPM 与 Rocky 签名指纹。正式 assembly 不访问仓库；它先从已验签
+`filesystem` RPM manifest 核对并预置 EL8 usrmerge 链接，再以无 scripts/triggers
+的完整 RPM transaction 安装锁定闭包。当前 renderer 会核验所给 RPM 集合，但
+尚未自行执行并记录唯一的 DNF 求解命令；可发布 candidate 前必须补齐固定镜像、
+空 installroot、transaction manifest 严格比对的 canonical resolver。
 
 ## 7. Python SDK
 
@@ -208,7 +229,9 @@ Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单�
 
 ```text
 config/                  release.json 与 JSON Schema
+config/sysroots/         DNF 求解输入计划
 locks/                   host/sysroot 精确 RPM locks
+keys/                    固定的 RPM 签名信任根
 abi/el8/                 冻结 ABI 集合
 docker/                  Dockerfile 与 test.Dockerfile
 docker-bake.hcl          仓库根部的 Buildx Bake 入口
@@ -218,4 +241,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：先交付 x86_64 cross compiler，再加入 aarch64 与 hybrid runtime，随后依次加入 Python、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：x86_64 cross compiler 与 hybrid runtime 已完成；下一步实现 aarch64 对等切片，随后依次加入 Python、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

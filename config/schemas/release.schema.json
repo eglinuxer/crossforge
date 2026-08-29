@@ -10,6 +10,7 @@
     "baseline",
     "product",
     "base_image",
+    "trust",
     "platforms",
     "gts",
     "binutils",
@@ -62,6 +63,37 @@
         "digest": {
           "type": "string",
           "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "trust": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rocky_rpm_key"
+      ],
+      "properties": {
+        "rocky_rpm_key": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file",
+            "sha256",
+            "fingerprint"
+          ],
+          "properties": {
+            "file": {
+              "const": "keys/RPM-GPG-KEY-rockyofficial"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "fingerprint": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          }
         }
       }
     },
@@ -378,21 +410,33 @@
       "additionalProperties": false,
       "required": [
         "status",
-        "nevra",
+        "repository_nevra",
+        "header_arch",
         "url",
-        "sha256"
+        "sha256",
+        "size",
+        "spec_sha256"
       ],
       "properties": {
         "status": {
           "const": "pending"
         },
-        "nevra": {
+        "repository_nevra": {
+          "const": null
+        },
+        "header_arch": {
           "const": null
         },
         "url": {
           "const": null
         },
         "sha256": {
+          "const": null
+        },
+        "size": {
+          "const": null
+        },
+        "spec_sha256": {
           "const": null
         }
       }
@@ -402,15 +446,22 @@
       "additionalProperties": false,
       "required": [
         "status",
-        "nevra",
+        "repository_nevra",
+        "header_arch",
         "url",
-        "sha256"
+        "sha256",
+        "size",
+        "spec_sha256"
       ],
       "properties": {
         "status": {
           "const": "locked"
         },
-        "nevra": {
+        "repository_nevra": {
+          "type": "string",
+          "minLength": 1
+        },
+        "header_arch": {
           "type": "string",
           "minLength": 1
         },
@@ -419,6 +470,14 @@
           "pattern": "^https://"
         },
         "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "spec_sha256": {
           "type": "string",
           "pattern": "^[0-9a-f]{64}$"
         }
@@ -439,7 +498,8 @@
       "additionalProperties": false,
       "required": [
         "arch",
-        "triple"
+        "triple",
+        "sysroot"
       ],
       "properties": {
         "arch": {
@@ -447,8 +507,57 @@
         },
         "triple": {
           "type": "string"
+        },
+        "sysroot": {
+          "$ref": "#/$defs/sysroot_lock"
         }
       }
+    },
+    "sysroot_lock": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "lock_file",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "status": {
+              "const": "pending"
+            },
+            "lock_file": {
+              "const": null
+            },
+            "canonical_sha256": {
+              "const": null
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "lock_file",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "status": {
+              "const": "locked"
+            },
+            "lock_file": {
+              "type": "string",
+              "pattern": "^locks/sysroot-el8-(x86_64|aarch64)\\.json$"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      ]
     },
     "python_version": {
       "type": "object",

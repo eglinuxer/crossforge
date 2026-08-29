@@ -43,6 +43,7 @@ SCHEMA_KEYWORDS = {
     "prefixItems",
     "items",
     "minLength",
+    "minimum",
     "pattern",
 }
 
@@ -184,6 +185,10 @@ def validate(value, schema, root, path):
             raise ValidationError(f"{path}: string is too short")
         if "pattern" in schema and re.search(schema["pattern"], value) is None:
             raise ValidationError(f"{path}: does not match {schema['pattern']!r}")
+
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if "minimum" in schema and value < schema["minimum"]:
+            raise ValidationError(f"{path}: must be at least {schema['minimum']!r}")
 
 
 def find_pending(value, path="$"):

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://crossforge.dev/schemas/sysroot-plan.schema.json",
+  "schema_version": 1,
+  "kind": "sysroot-plan",
+  "identity": {
+    "distribution": "rocky",
+    "release": "8.10",
+    "baseline": "el8",
+    "arch": "x86_64",
+    "target_triple": "x86_64-unknown-linux-gnu"
+  },
+  "repositories": [
+    {
+      "id": "baseos",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/"
+    }
+  ],
+  "solver_policy": {
+    "implementation": "dnf",
+    "allowed_arches": [
+      "x86_64",
+      "noarch"
+    ],
+    "install_weak_deps": false,
+    "best": true,
+    "strict": true,
+    "allow_erasing": false
+  },
+  "roots": [
+    {
+      "name": "glibc",
+      "arch": "x86_64",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "glibc-devel",
+      "arch": "x86_64",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "glibc-headers",
+      "arch": "x86_64",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "glibc-minimal-langpack",
+      "arch": "x86_64",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "kernel-headers",
+      "arch": "x86_64",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "libgcc",
+      "arch": "x86_64",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "libstdc++",
+      "arch": "x86_64",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "bzip2-devel",
+      "arch": "x86_64",
+      "purpose": "python"
+    },
+    {
+      "name": "libffi-devel",
+      "arch": "x86_64",
+      "purpose": "python"
+    },
+    {
+      "name": "libuuid-devel",
+      "arch": "x86_64",
+      "purpose": "python"
+    },
+    {
+      "name": "openssl-devel",
+      "arch": "x86_64",
+      "purpose": "python"
+    },
+    {
+      "name": "sqlite-devel",
+      "arch": "x86_64",
+      "purpose": "python"
+    },
+    {
+      "name": "xz-devel",
+      "arch": "x86_64",
+      "purpose": "python"
+    },
+    {
+      "name": "zlib-devel",
+      "arch": "x86_64",
+      "purpose": "python"
+    }
+  ]
+}

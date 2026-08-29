@@ -6,9 +6,10 @@ host compiler, EL8-targeting cross compilers for x86_64 and aarch64, CPython
 3.9–3.14 cross SDKs, common build tools, pinned vcpkg integration, and
 build-system-independent DEB/RPM packaging.
 
-> **Not yet usable as the new SDK.** Phase 1 contains configuration,
-> validation, architecture documentation, and explicit `NOT BUILT` Docker
-> planning stages only. It does not publish a compiler image.
+> **Not yet publishable as the complete SDK.** The first real x86_64
+> cross-toolchain slice now builds and passes smoke qualification, but host RPM
+> inputs remain unlocked and aarch64, Python, vcpkg and packaging are pending.
+> Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
 [`docs/architecture.md`](docs/architecture.md). The original Rust prototype is
@@ -47,6 +48,41 @@ The graph validates configuration inside the pinned Rocky 8 base, expands the
 x86_64/aarch64 target plans, and creates an inspectable SDK directory layout.
 Every output is cache-only and marked `NOT BUILT`; it cannot be confused with a
 qualified release.
+
+## Phase 2: x86_64 vertical slice
+
+The Rocky 8.10 sysroot lock captures a 78-RPM DNF transaction. Validate its
+planning manifest and content lock:
+
+```console
+$ ./scripts/validate-sysroot-lock.py config/sysroots/el8-x86_64.plan.json
+$ ./scripts/validate-sysroot-lock.py locks/sysroot-el8-x86_64.json --require-lock
+```
+
+Build the real locked sysroot. RPM downloads are hash- and signature-checked;
+assembly runs without network access:
+
+```console
+$ docker buildx bake sysroot-x86_64
+```
+
+Build and qualify the GTS15-derived cross compiler:
+
+```console
+$ docker buildx bake toolchain-x86_64-dev
+```
+
+This applies the complete Rocky GCC/binutils SRPM patch sets, builds binutils
+2.44 and GCC 15.2.1 for `x86_64-unknown-linux-gnu`, installs the EL8 shared
+runtime plus RH `libstdc++_nonshared80`, then exercises C, C++20, LTO,
+cross-DSO exceptions, link traces and ABI ceilings. The `-dev` suffix is
+intentional: the current host tool closure still comes from live Rocky
+repositories. A canonical, replayable DNF resolver/transaction manifest and a
+host RPM lock are both required before candidate builds are allowed.
+
+The compiler gate is currently a documented manual/heavy check; regular CI
+builds through the locked sysroot only. A locked host closure and suitable
+runner capacity are prerequisites for making the toolchain gate mandatory.
 
 ## Product contract
 

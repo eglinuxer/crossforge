@@ -12,9 +12,19 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Release configuration
         run: ./scripts/validate-release.py
+      - name: Sysroot contracts
+        run: |
+          ./scripts/validate-sysroot-lock.py config/sysroots/el8-x86_64.plan.json
+          ./scripts/validate-sysroot-lock.py locks/sysroot-el8-x86_64.json --require-lock
       - name: Configuration tests
         run: python3 -m unittest discover -s tests/config -p 'test_*.py'
+      - name: Script syntax
+        run: |
+          python3 -m py_compile scripts/*.py
+          bash -n scripts/*.sh
       - name: Generated Bake definition
         run: ./scripts/render-bake.py --check
-      - name: Docker/Bake validation stage
-        run: docker buildx bake validate --progress=plain
+      - name: Docker/Bake static checks
+        run: docker buildx bake --check phase2
+      - name: Locked x86_64 sysroot
+        run: docker buildx bake validate platform-python-check sysroot-x86_64 --progress=plain

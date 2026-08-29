@@ -2,18 +2,21 @@
 
 ## Project Structure & Module Organization
 
-The Docker/Bake rewrite defined in `docs/architecture.md` is canonical. `config/release.json` and its Schema hold release inputs; `docker/Dockerfile` and `docker-bake.hcl` define the build graph; `scripts/` contains small upstream-build and validation tools. Future integration files belong under `integration/`, locks under `locks/`, frozen ABI data under `abi/`, and acceptance fixtures under `tests/`.
+The Docker/Bake rewrite in `docs/architecture.md` is canonical. `config/release.json` holds release inputs; schemas and sysroot plans live under `config/`. `locks/` contains RPM transactions, `keys/` pins trust roots, Docker/Bake files define the graph, and `scripts/` contains build and validation tools. Smoke fixtures live under `tests/smoke/`; future integration files belong under `integration/` and frozen ABI data under `abi/`.
 
 The deleted Rust prototype is recoverable from tag `prototype-rust-2026-08-28`; do not reintroduce its wheel, registry, runner, or custom binary-parser abstractions. Generated `work/`, build output, package staging trees, and local caches must remain uncommitted.
 
 ## Build, Test, and Development Commands
 
 - `./scripts/validate-release.py` validates strict JSON and prints its canonical digest.
+- `./scripts/validate-sysroot-lock.py locks/sysroot-el8-x86_64.json --require-lock` validates lock structure, release binding, and content pins.
 - `./scripts/render-bake.py --check` detects drift in the generated Bake override.
 - `docker buildx bake --print phase1` checks Bake expansion without building.
 - `docker buildx bake phase1` runs config validation and honest NOT-BUILT planning/layout stages.
+- `docker buildx bake sysroot-x86_64` assembles the signed, locked EL8 sysroot offline.
+- `docker buildx bake toolchain-x86_64-dev` builds and smoke-tests the real x86_64 cross slice; it is not a release image.
 
-Never publish `sdk-skeleton`; only a future fully qualified candidate stage may receive user-facing tags.
+Never publish `sdk-skeleton` or a target ending in `-dev`; only a fully locked and qualified future candidate may receive user-facing tags.
 
 ## Coding Style & Naming Conventions
 
@@ -21,7 +24,7 @@ Use strict JSON plus JSON Schema; reject duplicate keys, unknown fields, and unk
 
 ## Testing Guidelines
 
-Add a focused regression test for every defect. Build changes must name the exact image digest, target, sysroot/config digest, and validation tier. x86_64 and aarch64 are distinct compiler targets even though the SDK image runs on amd64. Pending source pins are allowed only in planning stages; release candidates must use `--require-locked`.
+Add a regression test for every defect. Build changes must name the image digest, target, sysroot/config digest, and validation tier. x86_64 and aarch64 remain distinct targets although the image runs on amd64. Pending pins may exist only in non-candidate planning/dev targets; every consumed input must be locked. Candidates require `--require-locked`.
 
 ## Commit & Pull Request Guidelines
 
