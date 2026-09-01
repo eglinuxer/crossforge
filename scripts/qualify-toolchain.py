@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the first x86_64 compiler, hybrid-runtime, and ABI smoke gate."""
+"""Run cross-compiler, hybrid-runtime, and ABI smoke qualification."""
 
 import argparse
 import hashlib
@@ -11,9 +11,25 @@ import subprocess
 import sys
 from pathlib import Path
 
+from loader_evidence import normalize_loader_listing
+
 
 class QualificationError(RuntimeError):
     pass
+
+
+TARGET_PROFILES = {
+    "x86_64-unknown-linux-gnu": {
+        "machine": "Advanced Micro Devices X86-64",
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "arch": "x86_64",
+    },
+    "aarch64-unknown-linux-gnu": {
+        "machine": "AArch64",
+        "interpreter": "/lib/ld-linux-aarch64.so.1",
+        "arch": "aarch64",
+    },
+}
 
 
 def run(arguments, cwd=None, env=None):
@@ -72,7 +88,21 @@ def main():
     parser.add_argument("--work", type=Path, required=True)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--release", type=Path, required=True)
+    parser.add_argument("--skip-sysroot-execution", action="store_true")
     arguments = parser.parse_args()
+
+    profile = TARGET_PROFILES.get(arguments.target)
+    require(profile is not None, "unsupported qualification target")
+    if arguments.target == "x86_64-unknown-linux-gnu":
+        require(
+            not arguments.skip_sysroot_execution,
+            "x86_64 qualification must execute in the locked sysroot",
+        )
+    else:
+        require(
+            arguments.skip_sysroot_execution,
+            "aarch64 sysroot execution requires the explicit QEMU stage",
+        )
 
     gcc = arguments.prefix / "bin" / (arguments.target + "-gcc")
     gxx = arguments.prefix / "bin" / (arguments.target + "-g++")
@@ -114,6 +144,14 @@ def main():
             "binutils": release["binutils"]["source"],
         },
     }
+    if arguments.target == "aarch64-unknown-linux-gnu":
+        report["runtime_executor"] = release["qemu"]["executor"]
+        report["runtime_base"] = {
+            "index_digest": release["base_image"]["digest"],
+            "manifest_digest": release["base_image"]["manifests"]["arm64"],
+        }
+    else:
+        report["runtime_executor"] = {"kind": "native"}
     machine, _ = run([gcc, "-dumpmachine"])
     require(machine.strip() == arguments.target, "compiler target mismatch")
     full_version, _ = run([gcc, "-dumpfullversion"])
@@ -233,8 +271,8 @@ def main():
     )
     run([gcc, "-O0", "-c", smoke / "libgcc_helper.c", "-o", libgcc_helper_object])
     undefined_helpers, _ = run([nm, "-u", libgcc_helper_object])
-    helper_symbols = sorted(set(re.findall(r"\bU\s+(__\S*hf\S*)", undefined_helpers)))
-    require(helper_symbols, "_Float16 fixture emitted no libgcc helper reference")
+    helper_symbols = sorted(set(re.findall(r"\bU\s+(__udivti3)\b", undefined_helpers)))
+    require(helper_symbols == ["__udivti3"], "wide division emitted no __udivti3 reference")
     run(
         [
             gcc,
@@ -297,7 +335,7 @@ def main():
         ]
     )
 
-    expected_machine = "Advanced Micro Devices X86-64"
+    expected_machine = profile["machine"]
     for binary in (
         hello,
         modern,
@@ -331,66 +369,94 @@ def main():
 
     program_headers, _ = run([readelf, "-l", hello])
     require(
-        "/lib64/ld-linux-x86-64.so.2" in program_headers,
-        "unexpected x86_64 ELF interpreter",
+        profile["interpreter"] in program_headers,
+        "unexpected target ELF interpreter",
     )
-    require(os.geteuid() == 0, "locked-runtime execution requires chroot privileges")
-    runtime_directory = arguments.sysroot / "opt/crossforge-qualification"
-    require(not runtime_directory.exists(), "runtime qualification directory is not clean")
-    runtime_directory.mkdir(parents=True)
-    sysroot_resolved = str(arguments.sysroot.resolve())
-    runtime_resolved = str(runtime_directory.resolve())
-    require(
-        runtime_resolved.startswith(sysroot_resolved + os.sep),
-        "runtime qualification directory escaped the sysroot",
-    )
-    for artifact in (
-        hello,
-        modern,
-        lto,
-        lto_archive_executable,
-        libgcc_helper,
-        throw_library,
-        catch,
-    ):
-        shutil.copy2(str(artifact), str(runtime_directory / artifact.name))
-    require(
-        (runtime_directory / "libthrow.so").is_file(),
-        "cross-DSO runtime library was not copied into the sysroot",
-    )
-    loader_stdout, loader_stderr = run(
-        [
-            "chroot",
-            arguments.sysroot,
-            "/lib64/ld-linux-x86-64.so.2",
-            "--list",
-            "/opt/crossforge-qualification/catch",
-        ]
-    )
-    loader_listing = loader_stdout + loader_stderr
-    require("not found" not in loader_listing, "dynamic loader could not resolve catch dependencies")
-    report["catch_loader"] = loader_listing.splitlines()
-    report["runtime_root"] = str(arguments.sysroot)
-    for executable in (hello, modern, lto, lto_archive_executable, libgcc_helper, catch):
-        target_path = "/opt/crossforge-qualification/%s" % executable.name
-        command = ["chroot", arguments.sysroot, target_path]
-        if executable == catch:
-            # A bare chroot has no procfs for EL8 glibc's origin discovery.
-            # The loader preflight above audits $ORIGIN; this execution leg
-            # supplies the same directory explicitly. The clean Rocky stage
-            # later executes catch directly and therefore exercises $ORIGIN.
-            command = [
+    if arguments.skip_sysroot_execution:
+        report["locked_sysroot_execution"] = {
+            "status": "not_run",
+            "required_executor": "explicit-qemu",
+        }
+        report["clean_runtime_execution"] = {
+            "status": "not_run",
+            "required_executor": "explicit-qemu",
+        }
+        report["native_release_execution"] = {
+            "status": "required",
+            "executor": "native-el8-aarch64",
+        }
+    else:
+        require(os.geteuid() == 0, "locked-runtime execution requires chroot privileges")
+        runtime_directory = arguments.sysroot / "opt/crossforge-qualification"
+        require(not runtime_directory.exists(), "runtime qualification directory is not clean")
+        runtime_directory.mkdir(parents=True)
+        sysroot_resolved = str(arguments.sysroot.resolve())
+        runtime_resolved = str(runtime_directory.resolve())
+        require(
+            runtime_resolved.startswith(sysroot_resolved + os.sep),
+            "runtime qualification directory escaped the sysroot",
+        )
+        for artifact in (
+            hello,
+            modern,
+            lto,
+            lto_archive_executable,
+            libgcc_helper,
+            throw_library,
+            catch,
+        ):
+            shutil.copy2(str(artifact), str(runtime_directory / artifact.name))
+        require(
+            (runtime_directory / "libthrow.so").is_file(),
+            "cross-DSO runtime library was not copied into the sysroot",
+        )
+        loader_stdout, loader_stderr = run(
+            [
                 "chroot",
                 arguments.sysroot,
-                "/usr/bin/env",
-                "LD_LIBRARY_PATH=/opt/crossforge-qualification",
-                target_path,
+                profile["interpreter"],
+                "--list",
+                "/opt/crossforge-qualification/catch",
             ]
-        stdout, _ = run(command)
-        if executable == hello:
-            require(stdout.strip() == "crossforge-c-ok", "C smoke output mismatch")
-        if executable == modern:
-            require(stdout.strip() == "crossforge-cxx-ok", "C++ smoke output mismatch")
+        )
+        loader_listing = loader_stdout + loader_stderr
+        require(
+            "not found" not in loader_listing,
+            "dynamic loader could not resolve catch dependencies",
+        )
+        report["catch_loader"] = normalize_loader_listing(loader_listing)
+        report["runtime_root"] = str(arguments.sysroot)
+        for executable in (
+            hello,
+            modern,
+            lto,
+            lto_archive_executable,
+            libgcc_helper,
+            catch,
+        ):
+            target_path = "/opt/crossforge-qualification/%s" % executable.name
+            command = ["chroot", arguments.sysroot, target_path]
+            if executable == catch:
+                # A bare chroot has no procfs for EL8 glibc's origin discovery.
+                # The loader preflight above audits $ORIGIN; this execution leg
+                # supplies the same directory explicitly. The clean Rocky stage
+                # later executes catch directly and therefore exercises $ORIGIN.
+                command = [
+                    "chroot",
+                    arguments.sysroot,
+                    "/usr/bin/env",
+                    "LD_LIBRARY_PATH=/opt/crossforge-qualification",
+                    target_path,
+                ]
+            stdout, _ = run(command)
+            if executable == hello:
+                require(stdout.strip() == "crossforge-c-ok", "C smoke output mismatch")
+            if executable == modern:
+                require(stdout.strip() == "crossforge-cxx-ok", "C++ smoke output mismatch")
+        report["locked_sysroot_execution"] = {
+            "status": "passed",
+            "executor": "native-chroot",
+        }
 
     report_path = arguments.report or arguments.work / "qualification.json"
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")

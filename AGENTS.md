@@ -2,19 +2,19 @@
 
 ## Project Structure & Module Organization
 
-`docs/architecture.md` is canonical. Release inputs and RPM plans live under `config/`; `locks/transactions/` records DNF decisions and `locks/metadata/` pins signed repositories. Docker/Bake defines the graph, `scripts/` contains its tools, and smoke fixtures live under `tests/smoke/`. Future integrations belong under `integration/` and ABI data under `abi/`.
+`docs/architecture.md` is canonical. Release inputs and RPM plans live under `config/`; exact OCI/Git bytes live under `evidence/`. `locks/transactions/` records DNF decisions and `locks/metadata/` pins signed repositories. Docker/Bake defines the graph, `scripts/` contains its tools, and smoke fixtures live under `tests/smoke/`.
 
 The deleted Rust prototype is recoverable from tag `prototype-rust-2026-08-28`; do not reintroduce its wheel, registry, runner, or custom binary-parser abstractions. Generated `work/`, build output, package staging trees, and local caches must remain uncommitted.
 
 ## Build, Test, and Development Commands
 
 - `./scripts/validate-release.py` validates strict JSON and prints its canonical digest.
-- `./scripts/validate-rpm-lock.py locks/sysroot-el8-x86_64.json --require-lock` validates plan, transaction, signed metadata, and RPM content bindings.
+- `./scripts/validate-rpm-lock.py locks/sysroot-el8-{x86_64,aarch64}.json --require-lock` represents the equivalent per-target lock checks; invoke each concrete path separately.
 - `./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock` validates the common host build closure; use the same command for the GCC delta lock.
 - `./scripts/render-bake.py --check` detects drift in the generated Bake override.
-- `docker buildx bake sysroot-x86_64` assembles the signed, locked EL8 sysroot offline.
+- `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
 - `docker buildx bake host-build-common-locked host-gcc-build-locked` replays both host transactions offline.
-- `docker buildx bake toolchain-x86_64-dev` builds and smoke-tests the real x86_64 cross slice; it is not a release image.
+- `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both real cross slices; aarch64 uses explicit pinned QEMU, never implicit binfmt.
 
 Never publish `sdk-skeleton` or a target ending in `-dev`; only a fully locked and qualified future candidate may receive user-facing tags.
 

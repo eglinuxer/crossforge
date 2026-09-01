@@ -14,16 +14,19 @@ class RpmLockValidationTests(unittest.TestCase):
     def setUpClass(cls):
         cls.plans = [
             REPOSITORY / "config/rpm/sysroot-el8-x86_64.plan.json",
+            REPOSITORY / "config/rpm/sysroot-el8-aarch64.plan.json",
             REPOSITORY / "config/rpm/host-build-common-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/host-gcc-build-el8-x86_64.plan.json",
         ]
         cls.transactions = [
             REPOSITORY / "locks/transactions/sysroot-el8-x86_64.json",
+            REPOSITORY / "locks/transactions/sysroot-el8-aarch64.json",
             REPOSITORY / "locks/transactions/host-build-common-el8-x86_64.json",
             REPOSITORY / "locks/transactions/host-gcc-build-el8-x86_64.json",
         ]
         cls.locks = [
             REPOSITORY / "locks/sysroot-el8-x86_64.json",
+            REPOSITORY / "locks/sysroot-el8-aarch64.json",
             REPOSITORY / "locks/host-build-common-el8-x86_64.json",
             REPOSITORY / "locks/host-gcc-build-el8-x86_64.json",
         ]
@@ -43,18 +46,35 @@ class RpmLockValidationTests(unittest.TestCase):
             VALIDATOR["validate_release_binding"](lock, path, release)
 
     def test_sysroot_user_set_exactly_matches_roots(self):
-        transaction = VALIDATOR["load_json"](self.transactions[0])
-        root_nevras = {request["resolved_nevra"] for request in transaction["requests"]}
-        user_nevras = {
-            item["nevra"]
-            for item in transaction["items"]
-            if item["action"] == "install" and item["reason"] == "user"
-        }
-        self.assertEqual(root_nevras, user_nevras)
+        for path in self.transactions[:2]:
+            transaction = VALIDATOR["load_json"](path)
+            root_nevras = {
+                request["resolved_nevra"] for request in transaction["requests"]
+            }
+            user_nevras = {
+                item["nevra"]
+                for item in transaction["items"]
+                if item["action"] == "install" and item["reason"] == "user"
+            }
+            self.assertEqual(root_nevras, user_nevras)
+
+    def test_sysroot_package_closures_have_matching_name_and_evr(self):
+        transactions = [
+            VALIDATOR["load_json"](path) for path in self.transactions[:2]
+        ]
+        identities = [
+            {
+                (item["name"], item["epoch"], item["version"], item["release"])
+                for item in transaction["items"]
+            }
+            for transaction in transactions
+        ]
+        self.assertEqual(identities[0], identities[1])
+        self.assertEqual(len(identities[0]), 78)
 
     def test_host_common_and_gcc_delta_are_distinct(self):
-        common = VALIDATOR["load_json"](self.transactions[1])
-        gcc = VALIDATOR["load_json"](self.transactions[2])
+        common = VALIDATOR["load_json"](self.transactions[2])
+        gcc = VALIDATOR["load_json"](self.transactions[3])
         common_names = {
             item["name"] for item in common["items"] if item["action"] != "remove"
         }
@@ -75,6 +95,20 @@ class RpmLockValidationTests(unittest.TestCase):
         plan["roots"][0]["arch"] = "any"
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate_document"](plan)
+
+    def test_sysroot_identity_and_repository_are_role_bound(self):
+        for field, value in (
+            ("name", "sysroot-el8-forged"),
+            ("baseurl", "https://example.invalid/rocky/"),
+        ):
+            plan = VALIDATOR["load_json"](self.plans[0])
+            if field == "name":
+                plan["identity"][field] = value
+            else:
+                plan["repositories"][0][field] = value
+            with self.subTest(field=field):
+                with self.assertRaises(VALIDATOR["ValidationError"]):
+                    VALIDATOR["validate_document"](plan)
 
     def test_duplicate_transaction_nevra_is_rejected(self):
         transaction = VALIDATOR["load_json"](self.transactions[0])

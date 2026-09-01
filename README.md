@@ -6,11 +6,11 @@ host compiler, EL8-targeting cross compilers for x86_64 and aarch64, CPython
 3.9–3.14 cross SDKs, common build tools, pinned vcpkg integration, and
 build-system-independent DEB/RPM packaging.
 
-> **Not yet publishable as the complete SDK.** The first real x86_64
-> cross-toolchain slice now builds from locked host and sysroot transactions
-> and passes smoke qualification. aarch64, Python, vcpkg and packaging remain
-> pending, as does the independent minimal host-runtime lock required for the
-> final user image.
+> **Not yet publishable as the complete SDK.** Both cross-toolchain slices now
+> build from locked host and sysroot transactions. x86_64 passes native smoke;
+> aarch64 passes the same compile/ABI gates and explicit QEMU smoke against a
+> locked sysroot and clean Rocky arm64 root. Python, vcpkg, packaging, frozen
+> ABI sets and the independent minimal host-runtime lock remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -24,6 +24,7 @@ Validate the canonical release configuration:
 
 ```console
 $ ./scripts/validate-release.py
+$ ./scripts/validate-supply-chain-evidence.py
 ```
 
 Unverified source pins are represented explicitly as `pending`, never with
@@ -78,11 +79,11 @@ This applies the complete Rocky GCC/binutils SRPM patch sets, builds binutils
 2.44 and GCC 15.2.1 for `x86_64-unknown-linux-gnu`, installs the EL8 shared
 runtime plus RH `libstdc++_nonshared80`, then exercises C, C++20, LTO,
 cross-DSO exceptions, link traces and ABI ceilings. The `-dev` suffix is
-intentional: the second target, frozen ABI sets, full GCC/Qt qualification and
+intentional: frozen ABI sets, full GCC/Qt qualification and the complete
 release supply chain are not implemented yet.
 
 The compiler gate is currently a documented manual/heavy check; regular CI
-builds both locked host layers and the sysroot, but not the full compiler.
+builds both locked host layers and both sysroots, but not the full compilers.
 
 ## Phase 3: reproducible RPM foundation
 
@@ -105,7 +106,7 @@ $ docker buildx bake rpm-lock-host-build-common \
     --set rpm-lock-host-build-common.output=type=local,dest=work/lock-refresh/common
 ```
 
-Equivalent targets exist for `rpm-lock-sysroot-x86_64` and
+Equivalent targets exist for both `rpm-lock-sysroot-*` targets and
 `rpm-lock-host-gcc-build`; refresh common before its GCC delta. Bake forces
 these maintenance targets to bypass cache.
 
@@ -113,10 +114,46 @@ These are build-environment locks, not the final image runtime. That runtime is
 resolved independently from a clean Rocky base after its user-facing tool set
 is frozen.
 
-Every transaction records canonical install/upgrade/remove actions, exact DNF reasons,
-base/remove/result RPM
-inventories, repository metadata and detached signatures. Normal builds use
-only committed locks and perform package installation under `--network=none`.
+Every transaction records canonical install/upgrade/remove actions, exact DNF
+reasons, base/remove/result RPM inventories, repository metadata and detached
+signatures. Normal builds use only committed locks and perform package
+installation under `--network=none`.
+
+## Phase 4: aarch64 vertical slice
+
+Validate and assemble the independently locked aarch64 sysroot:
+
+```console
+$ ./scripts/validate-rpm-lock.py locks/sysroot-el8-aarch64.json --require-lock
+$ docker buildx bake sysroot-aarch64
+```
+
+Build the second cross compiler and run its qualification graph:
+
+```console
+$ docker buildx bake qemu-aarch64-validated
+$ docker buildx bake toolchain-aarch64-dev
+$ docker buildx bake phase4
+```
+
+GCC/binutils `%prep` runs separately for each target architecture. aarch64
+smoke execution does not use host binfmt: an amd64 static QEMU 10.2.3 binary is
+bound by image manifest and binary SHA256, then invoked explicitly with the
+Armv8-A `cortex-a53` model against both the locked sysroot and a clean,
+manifest-pinned Rocky arm64 root. The structured report records both runtime
+legs, artifact hashes, normalized loader dependencies, and the observed QEMU
+identity.
+
+The release config distinguishes the pinned binfmt builder commit and SLSA
+predicate from QEMU's own annotated tag and peeled source commit. QEMU remains
+a development qualification tier; the upstream predicate records the QEMU
+version argument but not its in-build Git checkout, so native EL8/aarch64
+release execution remains mandatory.
+
+Exact Rocky index, QEMU OCI/SLSA, and QEMU Git tag/commit bytes are checked in
+under `evidence/` as base64 envelopes. The evidence validator recomputes their
+content identities and verifies the index-to-manifest, attestation, provenance,
+builder, checkout, signed-tag, and source-commit relationships offline.
 
 ## Product contract
 

@@ -18,11 +18,17 @@
         "GTS_GCC_REPOSITORY_NEVRA": "gcc-toolset-15-gcc-0:15.2.1-7.1.el8_10.src",
         "GTS_GCC_SHA256": "b7245477ce388b9c9758a4e0b0610af495da6a1961bf5bab9305d8560cfbbd82",
         "GTS_GCC_SPEC_SHA256": "ef976467ff1a7946136121d6213caa5688b08ad64e6b4033b60866881972bb84",
+        "QEMU_EXECUTOR_BINARY_SHA256": "1ad17b7bd5e15ce60075d0994d5c5e3914d16899a1e3119040b5c9e76e067f24",
+        "QEMU_EXECUTOR_CPU": "cortex-a53",
+        "QEMU_EXECUTOR_UNAME_RELEASE": "4.18.0",
+        "QEMU_EXECUTOR_VERSION": "10.2.3",
         "ROCKY_RPM_TRUST_FINGERPRINT": "7051c470a929f454cebe37b715af5dac6d745a60",
         "ROCKY_RPM_TRUST_SHA256": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab"
       },
       "contexts": {
-        "crossforge_rocky": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6"
+        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705",
+        "crossforge_rocky_amd64": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+        "crossforge_rocky_arm64": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
       },
       "platforms": [
         "linux/amd64"

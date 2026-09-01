@@ -556,11 +556,32 @@ def validate_plan_semantics(plan):
     role = identity["role"]
     triple = identity["target_triple"]
     if role == "target-sysroot":
+        expected_name = "sysroot-el8-%s" % arch
         expected = TARGET_TRIPLES.get(arch)
         if expected is None or triple != expected:
             raise ResolutionError("target sysroot triple differs from its architecture")
-    elif triple is not None:
-        raise ResolutionError("host RPM plans must use a null target_triple")
+        expected_repositories = [
+            (
+                "baseos",
+                "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/%s/os/" % arch,
+            )
+        ]
+    else:
+        if arch != "x86_64" or triple is not None:
+            raise ResolutionError("host RPM plans must use x86_64 and a null triple")
+        expected_name = "%s-el8-x86_64" % role
+        expected_repositories = [
+            (
+                "baseos",
+                "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/",
+            ),
+            (
+                "appstream",
+                "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/",
+            ),
+        ]
+    if identity["name"] != expected_name:
+        raise ResolutionError("plan identity name differs from its role/architecture")
     policy = plan["solver_policy"]
     expected_arches = [arch, "noarch"]
     if policy["allowed_arches"] != expected_arches:
@@ -582,6 +603,10 @@ def validate_plan_semantics(plan):
             raise ResolutionError("repository baseurl must use HTTPS")
         if not repository["baseurl"].endswith("/"):
             raise ResolutionError("repository baseurl must end in /")
+    if [
+        (item["id"], item["baseurl"]) for item in plan["repositories"]
+    ] != expected_repositories:
+        raise ResolutionError("repositories differ from the Rocky role contract")
     root_keys = [(item["name"], item["arch"]) for item in plan["roots"]]
     if len(root_keys) != len(set(root_keys)):
         raise ResolutionError("duplicate root request")
@@ -756,6 +781,9 @@ def configure_base(plan, work, dnf):
     configuration.module_platform_id = policy["module_platform_id"]
     configuration.keepcache = True
     configuration.retries = 3
+    configuration.arch = identity["arch"]
+    configuration.basearch = dnf.rpm.basearch(identity["arch"])
+    configuration.ignorearch = identity["arch"] != platform.machine()
     configuration.substitutions["releasever"] = identity["release"]
     configuration.substitutions["arch"] = identity["arch"]
     configuration.substitutions["basearch"] = dnf.rpm.basearch(identity["arch"])

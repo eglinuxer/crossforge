@@ -1,22 +1,34 @@
 # syntax=docker/dockerfile:1@sha256:ecfaec9ed6d810b56388c508f4121597bfbba70d41a6dfeee4d8cad5f295fc32
 
+ARG CROSSFORGE_ARM64_PLATFORM=linux/arm64
+
 # Canonical Docker-first build graph for the rewrite.
 #
-# Phase 1 stops at configuration validation and filesystem layout. Phase 2
-# adds the x86_64 compiler slice. Phase 3 replaces every live host DNF
-# transaction with signed, content-locked common and GCC-additive layers.
+# Phase 1 defines the layout, Phase 2 adds x86_64, Phase 3 locks every RPM
+# transaction, and Phase 4 adds the aarch64 compiler plus explicit QEMU smoke.
 
 # The generated Bake override binds this named context to the digest in
 # config/release.json. A direct Docker build has no implicit fallback image.
-FROM crossforge_rocky AS rocky-base
+FROM crossforge_rocky_amd64 AS rocky-base
 WORKDIR /src
+
+# Source-only foreign rootfs: no arm64 RUN and therefore no binfmt dependency.
+FROM --platform=${CROSSFORGE_ARM64_PLATFORM} crossforge_rocky_arm64 AS rocky-runtime-aarch64-source
+
+# The amd64 QEMU executor is supplied by a manifest-pinned named context.
+FROM crossforge_qemu AS qemu-executor-source
 
 FROM rocky-base AS config-validate
 COPY config/ ./config/
+COPY evidence/ ./evidence/
 COPY scripts/validate-release.py ./scripts/validate-release.py
+COPY scripts/validate-supply-chain-evidence.py \
+  ./scripts/validate-supply-chain-evidence.py
 RUN /usr/libexec/platform-python ./scripts/validate-release.py \
       ./config/release.json \
       --schema ./config/schemas/release.schema.json
+RUN /usr/libexec/platform-python ./scripts/validate-supply-chain-evidence.py \
+      ./config/release.json
 
 FROM config-validate AS platform-python-check
 COPY scripts/ ./scripts/
@@ -112,6 +124,26 @@ RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --destination /opt/crossforge/sysroots/el8/x86_64
 
+FROM rpm-input-base AS sysroot-rpms-aarch64
+COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
+COPY locks/transactions/sysroot-el8-aarch64.json ./locks/transactions/sysroot-el8-aarch64.json
+COPY locks/metadata/sysroot-el8-aarch64/ ./locks/metadata/sysroot-el8-aarch64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/sysroot-el8-aarch64.json --require-lock \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/sysroot-el8-aarch64.json fetch --output /rpm-bundle --jobs 8
+
+FROM rpm-input-base AS sysroot-aarch64
+COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
+COPY locks/transactions/sysroot-el8-aarch64.json ./locks/transactions/sysroot-el8-aarch64.json
+COPY locks/metadata/sysroot-el8-aarch64/ ./locks/metadata/sysroot-el8-aarch64/
+COPY --from=sysroot-rpms-aarch64 /rpm-bundle/ /rpm-bundle/
+RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/sysroot-el8-aarch64.json install \
+      --bundle /rpm-bundle \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --destination /opt/crossforge/sysroots/el8/aarch64
+
 # The common host transaction exactly reproduces the previously qualified prep
 # environment. RPM scripts/triggers execute, but the package set is immutable
 # and installation runs without repositories or network access.
@@ -139,6 +171,25 @@ RUN --network=none \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --marker /usr/share/crossforge/rpm-locks/host-build-common.json
 ENV PATH="/opt/rh/gcc-toolset-15/root/usr/bin:${PATH}"
+
+FROM host-build-common-locked AS qemu-aarch64-validated
+ARG QEMU_EXECUTOR_VERSION
+ARG QEMU_EXECUTOR_BINARY_SHA256
+COPY --from=qemu-executor-source \
+  /usr/bin/qemu-aarch64 /usr/local/libexec/crossforge/qemu-aarch64
+RUN printf '%s  %s\n' \
+      "$QEMU_EXECUTOR_BINARY_SHA256" \
+      /usr/local/libexec/crossforge/qemu-aarch64 \
+      | sha256sum -c - \
+    && file /usr/local/libexec/crossforge/qemu-aarch64 \
+      | grep -F 'x86-64' \
+    && file /usr/local/libexec/crossforge/qemu-aarch64 \
+      | grep -F 'static-pie linked' \
+    && ! readelf -l /usr/local/libexec/crossforge/qemu-aarch64 \
+      | grep -q 'Requesting program interpreter' \
+    && /usr/local/libexec/crossforge/qemu-aarch64 --version \
+      | head -n 1 \
+      | grep -F "qemu-aarch64 version $QEMU_EXECUTOR_VERSION"
 
 # GCC-only prerequisites are a separate additive lock. Keeping them out of the
 # common layer prevents libzstd-devel from changing binutils auto-detection.
@@ -193,6 +244,28 @@ RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
 FROM scratch AS rpm-lock-sysroot-x86_64
 COPY --from=rpm-resolve-sysroot-x86_64 /resolved/ /
 
+FROM rpm-input-base AS rpm-resolve-sysroot-aarch64
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/sysroot-el8-aarch64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/sysroot-el8-aarch64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-sysroot-aarch64
+COPY --from=rpm-resolve-sysroot-aarch64 /resolved/ /
+
 FROM rpm-input-base AS rpm-resolve-host-build-common
 COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
 COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
@@ -237,7 +310,7 @@ RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
 FROM scratch AS rpm-lock-host-gcc-build
 COPY --from=rpm-resolve-host-gcc-build /resolved/ /
 
-FROM host-build-common-locked AS binutils-prepared
+FROM host-build-common-locked AS binutils-prep-input
 ARG GTS_BINUTILS_SHA256
 ARG GTS_BINUTILS_SPEC_SHA256
 ARG GTS_BINUTILS_REPOSITORY_NEVRA
@@ -249,6 +322,8 @@ COPY --from=gts-binutils-source \
   /sources/gcc-toolset-15-binutils.src.rpm
 COPY keys/RPM-GPG-KEY-rockyofficial /work/keys/RPM-GPG-KEY-rockyofficial
 COPY scripts/prepare-srpm.sh /work/scripts/prepare-srpm.sh
+
+FROM binutils-prep-input AS binutils-prepared-x86_64
 RUN --network=none /work/scripts/prepare-srpm.sh \
       /sources/gcc-toolset-15-binutils.src.rpm \
       "$GTS_BINUTILS_SHA256" \
@@ -260,9 +335,28 @@ RUN --network=none /work/scripts/prepare-srpm.sh \
       /work/prepared/binutils \
       /work/keys/RPM-GPG-KEY-rockyofficial \
       "$ROCKY_RPM_TRUST_SHA256" \
-      "$ROCKY_RPM_TRUST_FINGERPRINT"
+      "$ROCKY_RPM_TRUST_FINGERPRINT" \
+      x86_64
 
-FROM host-build-common-locked AS gcc-prepared
+FROM binutils-prep-input AS binutils-prepared-aarch64
+RUN --network=none /work/scripts/prepare-srpm.sh \
+      /sources/gcc-toolset-15-binutils.src.rpm \
+      "$GTS_BINUTILS_SHA256" \
+      "$GTS_BINUTILS_REPOSITORY_NEVRA" \
+      "$GTS_BINUTILS_HEADER_ARCH" \
+      binutils.spec \
+      "$GTS_BINUTILS_SPEC_SHA256" \
+      binutils-with-gold-2.44 \
+      /work/prepared/binutils \
+      /work/keys/RPM-GPG-KEY-rockyofficial \
+      "$ROCKY_RPM_TRUST_SHA256" \
+      "$ROCKY_RPM_TRUST_FINGERPRINT" \
+      aarch64
+
+# Backward-compatible maintenance alias for the first target.
+FROM binutils-prepared-x86_64 AS binutils-prepared
+
+FROM host-build-common-locked AS gcc-prep-input
 ARG GTS_GCC_SHA256
 ARG GTS_GCC_SPEC_SHA256
 ARG GTS_GCC_REPOSITORY_NEVRA
@@ -274,6 +368,8 @@ COPY --from=gts-gcc-source \
   /sources/gcc-toolset-15-gcc.src.rpm
 COPY keys/RPM-GPG-KEY-rockyofficial /work/keys/RPM-GPG-KEY-rockyofficial
 COPY scripts/prepare-srpm.sh /work/scripts/prepare-srpm.sh
+
+FROM gcc-prep-input AS gcc-prepared-x86_64
 RUN --network=none /work/scripts/prepare-srpm.sh \
       /sources/gcc-toolset-15-gcc.src.rpm \
       "$GTS_GCC_SHA256" \
@@ -285,9 +381,28 @@ RUN --network=none /work/scripts/prepare-srpm.sh \
       /work/prepared/gcc \
       /work/keys/RPM-GPG-KEY-rockyofficial \
       "$ROCKY_RPM_TRUST_SHA256" \
-      "$ROCKY_RPM_TRUST_FINGERPRINT"
+      "$ROCKY_RPM_TRUST_FINGERPRINT" \
+      x86_64
 
-FROM binutils-prepared AS binutils-x86_64
+FROM gcc-prep-input AS gcc-prepared-aarch64
+RUN --network=none /work/scripts/prepare-srpm.sh \
+      /sources/gcc-toolset-15-gcc.src.rpm \
+      "$GTS_GCC_SHA256" \
+      "$GTS_GCC_REPOSITORY_NEVRA" \
+      "$GTS_GCC_HEADER_ARCH" \
+      gcc-toolset-15-gcc.spec \
+      "$GTS_GCC_SPEC_SHA256" \
+      gcc-15.2.1-20260123 \
+      /work/prepared/gcc \
+      /work/keys/RPM-GPG-KEY-rockyofficial \
+      "$ROCKY_RPM_TRUST_SHA256" \
+      "$ROCKY_RPM_TRUST_FINGERPRINT" \
+      aarch64
+
+# Backward-compatible maintenance alias for the first target.
+FROM gcc-prepared-x86_64 AS gcc-prepared
+
+FROM binutils-prepared-x86_64 AS binutils-x86_64
 ARG CROSSFORGE_JOBS=4
 COPY scripts/build-binutils.sh /work/scripts/build-binutils.sh
 RUN --network=none mkdir -p /opt/crossforge/sysroots/el8/x86_64 \
@@ -302,7 +417,7 @@ RUN --network=none mkdir -p /opt/crossforge/sysroots/el8/x86_64 \
 
 FROM host-gcc-build-locked AS gcc-x86_64-built
 ARG CROSSFORGE_JOBS=4
-COPY --from=gcc-prepared /work/prepared/gcc/ /work/prepared/gcc/
+COPY --from=gcc-prepared-x86_64 /work/prepared/gcc/ /work/prepared/gcc/
 COPY --from=sysroot-x86_64 \
   /opt/crossforge/sysroots/el8/x86_64/ \
   /opt/crossforge/sysroots/el8/x86_64/
@@ -328,8 +443,49 @@ RUN --network=none /work/scripts/install-hybrid-runtime.sh \
       15 \
       x86_64
 
-# Real compiler smoke gate. This target remains non-publishable until the
-# second target, frozen ABI sets, full tests and release supply chain exist.
+FROM binutils-prepared-aarch64 AS binutils-aarch64
+ARG CROSSFORGE_JOBS=4
+COPY scripts/build-binutils.sh /work/scripts/build-binutils.sh
+RUN --network=none mkdir -p /opt/crossforge/sysroots/el8/aarch64 \
+    && /work/scripts/build-binutils.sh \
+      /work/prepared/binutils \
+      /work/build/binutils-aarch64 \
+      /work/binutils-stage \
+      /opt/crossforge/targets/aarch64-unknown-linux-gnu \
+      /opt/crossforge/sysroots/el8/aarch64 \
+      aarch64-unknown-linux-gnu \
+      "$CROSSFORGE_JOBS"
+
+FROM host-gcc-build-locked AS gcc-aarch64-built
+ARG CROSSFORGE_JOBS=4
+COPY --from=gcc-prepared-aarch64 /work/prepared/gcc/ /work/prepared/gcc/
+COPY --from=sysroot-aarch64 \
+  /opt/crossforge/sysroots/el8/aarch64/ \
+  /opt/crossforge/sysroots/el8/aarch64/
+COPY --from=binutils-aarch64 /work/binutils-stage/ /
+COPY scripts/build-gcc.sh /work/scripts/build-gcc.sh
+RUN --network=none /work/scripts/build-gcc.sh \
+      /work/prepared/gcc \
+      /work/build/gcc-aarch64 \
+      /work/gcc-stage \
+      /opt/crossforge/targets/aarch64-unknown-linux-gnu \
+      /opt/crossforge/sysroots/el8/aarch64 \
+      aarch64-unknown-linux-gnu \
+      "$CROSSFORGE_JOBS"
+
+FROM gcc-aarch64-built AS gcc-aarch64
+COPY scripts/install-hybrid-runtime.sh /work/scripts/install-hybrid-runtime.sh
+RUN --network=none /work/scripts/install-hybrid-runtime.sh \
+      /work/build/gcc-aarch64/gcc-build \
+      /work/gcc-stage \
+      /opt/crossforge/targets/aarch64-unknown-linux-gnu \
+      /opt/crossforge/sysroots/el8/aarch64 \
+      aarch64-unknown-linux-gnu \
+      15 \
+      aarch64
+
+# Real compiler smoke gate. This target remains non-publishable until frozen
+# ABI sets, full tests and the release supply chain exist.
 FROM host-build-common-locked AS toolchain-x86_64-qualify-build
 COPY --from=config-validate /src/config/release.json /src/config/release.json
 COPY --from=sysroot-x86_64 \
@@ -338,6 +494,7 @@ COPY --from=sysroot-x86_64 \
 COPY --from=binutils-x86_64 /work/binutils-stage/ /
 COPY --from=gcc-x86_64 /work/gcc-stage/ /
 COPY scripts/qualify-toolchain.py /work/scripts/qualify-toolchain.py
+COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY tests/smoke/ /work/tests/smoke/
 RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py \
       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
@@ -346,6 +503,83 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
       --work /work/qualification/x86_64 \
       --report /work/qualification/x86_64.json \
       --release /src/config/release.json
+
+FROM host-build-common-locked AS toolchain-aarch64-qualify-build
+COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY --from=sysroot-aarch64 \
+  /opt/crossforge/sysroots/el8/aarch64/ \
+  /opt/crossforge/sysroots/el8/aarch64/
+COPY --from=binutils-aarch64 /work/binutils-stage/ /
+COPY --from=gcc-aarch64 /work/gcc-stage/ /
+COPY scripts/qualify-toolchain.py /work/scripts/qualify-toolchain.py
+COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
+COPY tests/smoke/ /work/tests/smoke/
+RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py \
+      --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/aarch64 \
+      --target aarch64-unknown-linux-gnu \
+      --work /work/qualification/aarch64 \
+      --report /work/qualification/aarch64-compile.json \
+      --release /src/config/release.json \
+      --skip-sysroot-execution
+
+# Run the aarch64 artifacts in both the locked sysroot and a clean arm64 Rocky
+# root through an explicit, content-locked static QEMU binary. No binfmt
+# registration is used. The finalizer binds both observations into JSON.
+FROM host-build-common-locked AS runtime-smoke-aarch64
+ARG QEMU_EXECUTOR_CPU
+ARG QEMU_EXECUTOR_UNAME_RELEASE
+COPY --from=rocky-runtime-aarch64-source / /runtime-root/
+COPY --from=sysroot-aarch64 \
+  /opt/crossforge/sysroots/el8/aarch64/ /sysroot/
+COPY --from=toolchain-aarch64-qualify-build \
+  /work/qualification/aarch64/ /work/qualification/aarch64/
+COPY --from=toolchain-aarch64-qualify-build \
+  /work/qualification/aarch64-compile.json \
+  /work/qualification/aarch64-compile.json
+COPY scripts/run-aarch64-smoke.sh /work/scripts/run-aarch64-smoke.sh
+COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
+COPY scripts/finalize-aarch64-qualification.py \
+  /work/scripts/finalize-aarch64-qualification.py
+RUN mkdir -p \
+      /sysroot/.crossforge \
+      /sysroot/opt/crossforge-qualification \
+      /runtime-root/.crossforge \
+      /runtime-root/opt/crossforge-qualification \
+    && cp -a /work/qualification/aarch64/. \
+      /sysroot/opt/crossforge-qualification/ \
+    && cp -a /work/qualification/aarch64/. \
+      /runtime-root/opt/crossforge-qualification/
+RUN --network=none \
+    --mount=type=bind,from=qemu-aarch64-validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/sysroot/.crossforge/qemu-aarch64,ro \
+    /work/scripts/run-aarch64-smoke.sh \
+        /sysroot \
+        /.crossforge/qemu-aarch64 \
+        "$QEMU_EXECUTOR_CPU" \
+        "$QEMU_EXECUTOR_UNAME_RELEASE" \
+        locked-sysroot \
+        /work/qualification/locked-sysroot-aarch64.result
+RUN --network=none \
+    --mount=type=bind,from=qemu-aarch64-validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-root/.crossforge/qemu-aarch64,ro \
+    /work/scripts/run-aarch64-smoke.sh \
+        /runtime-root \
+        /.crossforge/qemu-aarch64 \
+        "$QEMU_EXECUTOR_CPU" \
+        "$QEMU_EXECUTOR_UNAME_RELEASE" \
+        clean-rocky \
+        /work/qualification/clean-rocky-aarch64.result
+RUN --network=none \
+    --mount=type=bind,from=qemu-aarch64-validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/work/qemu-aarch64,ro \
+    /usr/libexec/platform-python \
+      /work/scripts/finalize-aarch64-qualification.py \
+      --compile-report /work/qualification/aarch64-compile.json \
+      --release /src/config/release.json \
+      --artifacts /work/qualification/aarch64 \
+      --locked-sysroot-result \
+        /work/qualification/locked-sysroot-aarch64.result \
+      --clean-runtime-result /work/qualification/clean-rocky-aarch64.result \
+      --qemu /work/qemu-aarch64 \
+      --output /work/qualification/aarch64.json
 
 # Re-run every linked executable in a clean pinned Rocky base. Only test
 # artifacts cross this boundary, so host build packages cannot mask runtime
@@ -374,3 +608,15 @@ COPY --from=gcc-x86_64 /work/gcc-stage/ /
 COPY --from=runtime-smoke-x86_64 \
   /work/qualification/ /work/qualification/
 RUN test ! -e /rpm-bundle && test ! -e /rpm-bundle-gcc
+
+FROM host-build-common-locked AS toolchain-aarch64-dev
+COPY --from=sysroot-aarch64 \
+  /opt/crossforge/sysroots/el8/aarch64/ \
+  /opt/crossforge/sysroots/el8/aarch64/
+COPY --from=binutils-aarch64 /work/binutils-stage/ /
+COPY --from=gcc-aarch64 /work/gcc-stage/ /
+COPY --from=runtime-smoke-aarch64 \
+  /work/qualification/ /work/qualification/
+RUN test ! -e /rpm-bundle \
+    && test ! -e /rpm-bundle-gcc \
+    && test ! -e /usr/local/libexec/crossforge/qemu-aarch64

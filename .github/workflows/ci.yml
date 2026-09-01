@@ -11,13 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Release configuration
-        run: ./scripts/validate-release.py
+        run: |
+          ./scripts/validate-release.py
+          ./scripts/validate-supply-chain-evidence.py
       - name: RPM plans, transactions, and locks
         run: |
           ./scripts/validate-rpm-lock.py config/rpm/sysroot-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/sysroot-el8-aarch64.plan.json
           ./scripts/validate-rpm-lock.py config/rpm/host-build-common-el8-x86_64.plan.json
           ./scripts/validate-rpm-lock.py config/rpm/host-gcc-build-el8-x86_64.plan.json
           ./scripts/validate-rpm-lock.py locks/sysroot-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/sysroot-el8-aarch64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/host-gcc-build-el8-x86_64.json --require-lock
       - name: Configuration tests
@@ -29,9 +33,10 @@ jobs:
       - name: Generated Bake definition
         run: ./scripts/render-bake.py --check
       - name: Docker/Bake static checks
-        run: docker buildx bake --check phase3
-      - name: Locked host layers and x86_64 sysroot
+        run: docker buildx bake --check phase4
+      - name: Locked host layers, QEMU executor, and target sysroots
         run: |
           docker buildx bake validate platform-python-check \
-            host-build-common-locked host-gcc-build-locked sysroot-x86_64 \
+            host-build-common-locked host-gcc-build-locked \
+            qemu-aarch64-validated sysroot-x86_64 sysroot-aarch64 \
             --progress=plain

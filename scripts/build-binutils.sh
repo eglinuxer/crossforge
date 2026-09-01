@@ -28,12 +28,26 @@ jobs=$7
 }
 
 case "$target" in
-  x86_64-unknown-linux-gnu | aarch64-unknown-linux-gnu) ;;
+  x86_64-unknown-linux-gnu)
+    target_arch=x86_64
+    ;;
+  aarch64-unknown-linux-gnu)
+    target_arch=aarch64
+    ;;
   *)
     echo "error: unsupported target: $target" >&2
     exit 1
     ;;
 esac
+[[ "$sysroot" == /opt/crossforge/sysroots/el8/"$target_arch" ]] || {
+  echo "error: sysroot and target disagree" >&2
+  exit 1
+}
+grep -Fx "prep_target_arch=$target_arch" \
+  "$source_directory/.crossforge/preparation.txt" >/dev/null || {
+  echo "error: prepared binutils source architecture does not match $target_arch" >&2
+  exit 1
+}
 
 build=$($source_directory/config.guess)
 [[ "$build" != "$target" ]] || {

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-plan.schema.json",
+  "schema_version": 1,
+  "kind": "rpm-plan",
+  "identity": {
+    "name": "sysroot-el8-aarch64",
+    "role": "target-sysroot",
+    "distribution": "rocky",
+    "release": "8.10",
+    "baseline": "el8",
+    "arch": "aarch64",
+    "target_triple": "aarch64-unknown-linux-gnu"
+  },
+  "base": {
+    "mode": "empty",
+    "parent_lock": null,
+    "parent_sha256": null
+  },
+  "repositories": [
+    {
+      "id": "baseos",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/"
+    }
+  ],
+  "solver_policy": {
+    "allowed_arches": [
+      "aarch64",
+      "noarch"
+    ],
+    "install_weak_deps": false,
+    "best": true,
+    "strict": true,
+    "allow_erasing": false,
+    "module_platform_id": "platform:el8",
+    "enabled_modules": []
+  },
+  "roots": [
+    {
+      "name": "glibc",
+      "arch": "target",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "glibc-devel",
+      "arch": "target",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "glibc-headers",
+      "arch": "target",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "glibc-minimal-langpack",
+      "arch": "target",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "kernel-headers",
+      "arch": "target",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "libgcc",
+      "arch": "target",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "libstdc++",
+      "arch": "target",
+      "purpose": "c-runtime"
+    },
+    {
+      "name": "bzip2-devel",
+      "arch": "target",
+      "purpose": "python"
+    },
+    {
+      "name": "libffi-devel",
+      "arch": "target",
+      "purpose": "python"
+    },
+    {
+      "name": "libuuid-devel",
+      "arch": "target",
+      "purpose": "python"
+    },
+    {
+      "name": "openssl-devel",
+      "arch": "target",
+      "purpose": "python"
+    },
+    {
+      "name": "sqlite-devel",
+      "arch": "target",
+      "purpose": "python"
+    },
+    {
+      "name": "xz-devel",
+      "arch": "target",
+      "purpose": "python"
+    },
+    {
+      "name": "zlib-devel",
+      "arch": "target",
+      "purpose": "python"
+    }
+  ]
+}

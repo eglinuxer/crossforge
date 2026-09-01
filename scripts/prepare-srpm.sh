@@ -2,11 +2,11 @@
 set -Eeuo pipefail
 
 usage() {
-  echo "usage: $0 SRPM SRPM_SHA256 REPOSITORY_NEVRA HEADER_ARCH SPEC SPEC_SHA256 SOURCE_DIR OUTPUT KEY KEY_SHA256 KEY_FINGERPRINT" >&2
+  echo "usage: $0 SRPM SRPM_SHA256 REPOSITORY_NEVRA HEADER_ARCH SPEC SPEC_SHA256 SOURCE_DIR OUTPUT KEY KEY_SHA256 KEY_FINGERPRINT PREP_TARGET_ARCH" >&2
   exit 2
 }
 
-[[ $# -eq 11 ]] || usage
+[[ $# -eq 12 ]] || usage
 
 srpm=$1
 srpm_sha256=$2
@@ -19,12 +19,14 @@ output=$8
 key=$9
 key_sha256=${10}
 key_fingerprint=${11}
+prep_target_arch=${12}
 
 [[ -f "$srpm" && -f "$key" ]] || usage
 [[ "$srpm_sha256" =~ ^[0-9a-f]{64}$ ]] || usage
 [[ "$spec_sha256" =~ ^[0-9a-f]{64}$ ]] || usage
 [[ "$key_sha256" =~ ^[0-9a-f]{64}$ ]] || usage
 [[ "$key_fingerprint" =~ ^[0-9a-f]{40}$ ]] || usage
+[[ "$prep_target_arch" == x86_64 || "$prep_target_arch" == aarch64 ]] || usage
 [[ "$spec_name" != */* && "$source_directory" != */* ]] || usage
 [[ ! -e "$output" ]] || {
   echo "error: output already exists: $output" >&2
@@ -101,7 +103,8 @@ actual_spec_sha256=${actual_spec_sha256%% *}
 # BuildRequires covers the SRPM's native build, documentation and tests, while
 # Crossforge only delegates source unpacking and vendor patch application to
 # %prep. The prep tool closure must be locked separately before a candidate.
-LC_ALL=C rpmbuild -bp --nodeps --define "_topdir $topdir" "$spec"
+LC_ALL=C rpmbuild -bp --nodeps --target "$prep_target_arch" \
+  --define "_topdir $topdir" "$spec"
 prepared=$topdir/BUILD/$source_directory
 [[ -d "$prepared" ]] || {
   echo "error: rpmbuild did not produce $source_directory" >&2
@@ -111,7 +114,8 @@ prepared=$topdir/BUILD/$source_directory
 mkdir -p "$(dirname "$output")"
 cp -a "$prepared" "$output"
 mkdir -p "$output/.crossforge"
-LC_ALL=C rpmspec -P --define "_topdir $topdir" "$spec" \
+LC_ALL=C rpmspec -P --target "$prep_target_arch" \
+  --define "_topdir $topdir" "$spec" \
   >"$output/.crossforge/spec.expanded"
 cp "$spec" "$output/.crossforge/spec"
 {
@@ -124,6 +128,7 @@ cp "$spec" "$output/.crossforge/spec"
   printf 'rhel_macro=%s\n' "$rhel_macro"
   printf 'dist_macro=%s\n' "$(rpm --eval '%{?dist}')"
   printf 'target_cpu=%s\n' "$target_cpu"
+  printf 'prep_target_arch=%s\n' "$prep_target_arch"
 } >"$output/.crossforge/preparation.txt"
 
 echo "prepared: $source_directory -> $output"

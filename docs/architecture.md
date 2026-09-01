@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、x86_64 sysroot、host common/GCC 增量 locks 与 GTS15 C/C++/LTO cross slice 已完成并通过离线重放及 smoke。它仍是非发布 `-dev` target；aarch64、最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现。
+> 实施进度：canonical DNF resolver、双架构 sysroot、host common/GCC 增量 locks 与两套 GTS15 C/C++/LTO cross slice 已完成。x86_64 通过原生 smoke；aarch64 通过显式固定 QEMU 的 clean-Rocky smoke。它们仍是非发布 `-dev` target；最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现。
 
 ## 1. 产品契约
 
@@ -113,14 +113,21 @@ Crossforge 不定义 staging/overlay 目录、产品级 sysroot profile 或第�
 
 `locks/sysroot-*.json` 可因 Rocky errata 更新；`abi/el8/{x86_64,aarch64}.json` 则冻结最低允许的符号集合。sysroot 更新不得静默扩大 ABI，只有显式升级产品 baseline 才能修改冻结集合。
 
-当前 x86_64 transaction 由固定 Rocky digest 内的 `python3-dnf` 从空 installroot
+两份 target transaction 由固定 Rocky digest 内的 `python3-dnf` 从空 installroot
 通过上游 [`Base.resolve()`/`download_packages()` API](https://dnf.readthedocs.io/en/latest/api_base.html)
-解析 14 个显式 roots，精确得到 78 个 RPM。Resolver 禁用 plugins/system repo，
-固定架构、模块策略和 solver flags，并记录 DNF action/reason、base/remove/result
+分别解析 14 个显式 roots，各精确得到 78 个 RPM。Resolver 禁用 plugins/system repo，
+以 `arch/basearch/ignorearch` 显式实现 foreign-arch 求解，固定模块策略和 solver flags，并记录 DNF action/reason、base/remove/result
 inventories。BaseOS `repomd.xml.asc`、完整 metadata checksum 链、逐包 NEVRA、URL、
 仓库 checksum、实收 SHA256、source RPM 与 Rocky 签名均被锁定。正式 assembly
 不访问仓库；它预置经签名 `filesystem` manifest 验证的 usrmerge 链接，再以无
 scripts/triggers 的 RPM transaction 安装，最终 rpmdb 必须逐项等于 result manifest。
+
+aarch64 日常运行门禁不依赖宿主 binfmt。测试执行器固定为 QEMU 10.2.3 的
+amd64 static PIE，绑定 tonistiigi/binfmt 的 index/amd64 manifest、二进制 SHA256
+及 source commit；执行时固定 `cortex-a53` 与 EL8 `4.18.0` uname override。Rocky
+arm64 根文件系统只作为 source stage 被复制，所有 arm ELF 都由 amd64 stage
+显式调用 QEMU 执行。该结果只能标记为 QEMU-qualified，不能替代发布前原生
+EL8/aarch64 终检；QEMU 当前也只存在于测试 stage，尚未进入最终用户镜像。
 
 Host 构建环境使用两个独立 transaction：common 从固定基础镜像解析为 119 install
 以及 9 upgrade（并记录对应 9 remove）；GCC additive delta 只含 `bison`、`flex`、
@@ -206,13 +213,15 @@ source commit → build once → candidate digest → 原物验收 → registry-
 - nightly/full：双 target 的 `check-gcc`、`check-g++`、`check-target-libgcc`、`check-target-libstdc++-v3`、`check-target-libgomp`，完整 Python 矩阵，以及 Qt 6.8.4 双 target；
 - release：同一 digest 的原生 aarch64 终检和资格化证明检查。
 
-GCC testsuite 必须指向镜像内最终安装的 compiler，并使用 EL8 shared runtime + Crossforge nonshared/libgcc 的最终 hybrid 组合。x86_64 直接执行，aarch64 日常使用固定 QEMU，release 使用原生 ARM。已知失败按 test identity 维护精确基线；新增 FAIL/ERROR/UNRESOLVED 直接失败，不允许用失败数量阈值掩盖回归。
+GCC testsuite 必须指向镜像内最终安装的 compiler，并使用 EL8 shared runtime + Crossforge nonshared/libgcc 的最终 hybrid 组合。x86_64 直接执行；aarch64 日常使用固定 QEMU，分别在锁定 sysroot 与干净 Rocky arm64 根执行并生成结构化证据，release 使用原生 ARM。已知失败按 test identity 维护精确基线；新增 FAIL/ERROR/UNRESOLVED 直接失败，不允许用失败数量阈值掩盖回归。
 
 Qt 验收固定 Qt 6.8.4 `qt-everywhere` 官方源码和 SHA256，构建完整开源 Linux desktop 模块集合，至少包括 qtbase、qtdeclarative、qtshadertools、qttools、qtwayland、qtmultimedia、qtquick3d 和 qtwebengine；不构建 examples/tests/docs。host tools 与 target 使用同版本并通过 `QT_HOST_PATH` 连接，required module/feature 被静默跳过即失败。Qt 产物只作为测试 artifact，不进入 SDK 镜像。
 
 ## 12. 发布、供应链与许可边界
 
 Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单一供应链。所有源码、RPM、工具和基础镜像均固定 hash 或 digest；禁止 `curl | sh`。BuildKit cache 只用于加速，不构成发布身份或测试证据。
+
+Rocky OCI index、QEMU index/manifest/attestation/SLSA predicate 以及 QEMU Git tag/commit 原始字节以 base64 envelope 签入 `evidence/`。离线 validator 必须重算 OCI digest 与 Git object ID，并验证 platform child manifest、attestation subject、provenance builder/build arguments 和源码 tag→commit 关系。当前只归档 QEMU annotated tag 内的 OpenPGP 签名，不宣称已建立 QEMU maintainer keyring 信任；正式发布前需补齐该信任根或使用等价的上游签名策略。
 
 每个 release 同时提供：
 
@@ -238,6 +247,7 @@ Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单�
 ```text
 config/                  release.json 与 JSON Schema
 config/rpm/              DNF 求解输入 plans
+evidence/                可离线重算的 OCI、SLSA 与 Git 原始证据
 locks/transactions/      DNF 规范化 action、精确 reason 与 inventory manifests
 locks/metadata/          已验签 repomd 与 detached signatures
 locks/                   host/sysroot 实收 RPM content locks
@@ -251,4 +261,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：x86_64 cross compiler 与 hybrid runtime 已完成；下一步实现 aarch64 对等切片，随后依次加入 Python、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：x86_64 与 aarch64 cross compiler、hybrid runtime 和分层 smoke 已完成；下一步加入双架构 Python，随后依次实现 vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

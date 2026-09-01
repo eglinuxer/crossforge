@@ -34,10 +34,12 @@ jobs=$7
 target_options=()
 case "$target" in
   x86_64-unknown-linux-gnu)
+    target_arch=x86_64
     target_options=(--enable-cet --with-arch=x86-64 --with-tune=generic)
     target_cflags='-O2 -g -pipe -march=x86-64 -mtune=generic -D_GLIBCXX_ASSERTIONS -ffile-prefix-map=/work=/usr/src/debug/crossforge'
     ;;
   aarch64-unknown-linux-gnu)
+    target_arch=aarch64
     target_options=(--with-arch=armv8-a --with-tune=generic)
     target_cflags='-O2 -g -pipe -march=armv8-a -mtune=generic -D_GLIBCXX_ASSERTIONS -ffile-prefix-map=/work=/usr/src/debug/crossforge'
     ;;
@@ -46,6 +48,19 @@ case "$target" in
     exit 1
     ;;
 esac
+[[ "$prefix" == /opt/crossforge/targets/"$target" ]] || {
+  echo "error: prefix and target disagree" >&2
+  exit 1
+}
+[[ "$sysroot" == /opt/crossforge/sysroots/el8/"$target_arch" ]] || {
+  echo "error: sysroot and target disagree" >&2
+  exit 1
+}
+grep -Fx "prep_target_arch=$target_arch" \
+  "$source_directory/.crossforge/preparation.txt" >/dev/null || {
+  echo "error: prepared GCC source architecture does not match $target_arch" >&2
+  exit 1
+}
 
 build=$($source_directory/config.guess)
 [[ "$build" != "$target" ]] || {

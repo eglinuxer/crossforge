@@ -22,7 +22,23 @@ def render(repository):
     validate(config, schema, schema, "$")
 
     base = config["base_image"]
-    rocky_image = "%s:%s@%s" % (base["repository"], base["tag"], base["digest"])
+    rocky_amd64_image = "%s:%s@%s" % (
+        base["repository"],
+        base["tag"],
+        base["manifests"]["amd64"],
+    )
+    rocky_arm64_image = "%s:%s@%s" % (
+        base["repository"],
+        base["tag"],
+        base["manifests"]["arm64"],
+    )
+    qemu = config["qemu"]
+    qemu_executor = qemu["executor"]
+    qemu_image = "%s:%s@%s" % (
+        qemu_executor["repository"],
+        qemu_executor["tag"],
+        qemu_executor["manifest_digest"],
+    )
     platform = config["platforms"]["image"]
     targets = {}
     plan_names = []
@@ -37,7 +53,11 @@ def render(repository):
         }
 
     common = {
-        "contexts": {"crossforge_rocky": "docker-image://%s" % rocky_image},
+        "contexts": {
+            "crossforge_qemu": "docker-image://%s" % qemu_image,
+            "crossforge_rocky_amd64": "docker-image://%s" % rocky_amd64_image,
+            "crossforge_rocky_arm64": "docker-image://%s" % rocky_arm64_image,
+        },
         "platforms": [platform],
     }
     if (
@@ -63,6 +83,10 @@ def render(repository):
                 "fingerprint"
             ],
             "ROCKY_RPM_TRUST_SHA256": config["trust"]["rocky_rpm_key"]["sha256"],
+            "QEMU_EXECUTOR_VERSION": qemu["version"],
+            "QEMU_EXECUTOR_BINARY_SHA256": qemu_executor["binary_sha256"],
+            "QEMU_EXECUTOR_CPU": qemu_executor["cpu"],
+            "QEMU_EXECUTOR_UNAME_RELEASE": qemu_executor["uname_release"],
         }
     targets["_common"] = common
     document = {

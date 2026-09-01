@@ -349,22 +349,37 @@ def validate_plan_semantics(plan):
     role = identity["role"]
     arch = identity["arch"]
     if role == "target-sysroot":
+        expected_name = "sysroot-el8-%s" % arch
         if identity["target_triple"] != TARGET_TRIPLES[arch]:
             raise ValidationError("target sysroot triple and arch disagree")
         if plan["base"]["mode"] != "empty":
             raise ValidationError("target sysroot must use an empty base")
         expected_repositories = ["baseos"]
+        expected_repository_urls = [
+            "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/%s/os/" % arch
+        ]
         expected_modules = []
     else:
+        if arch != "x86_64":
+            raise ValidationError("host RPM plans must use x86_64")
+        expected_name = "%s-el8-x86_64" % role
         if identity["target_triple"] is not None:
             raise ValidationError("host plan target_triple must be null")
         expected_repositories = ["baseos", "appstream"]
+        expected_repository_urls = [
+            "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/",
+            "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/",
+        ]
         expected_modules = HOST_MODULES
         expected_mode = "image" if role == "host-build-common" else "lock"
         if plan["base"]["mode"] != expected_mode:
             raise ValidationError("%s must use a %s base" % (role, expected_mode))
+    if identity["name"] != expected_name:
+        raise ValidationError("RPM plan identity name differs from its role/architecture")
     if [repo["id"] for repo in plan["repositories"]] != expected_repositories:
         raise ValidationError("repository order/set differs from the role contract")
+    if [repo["baseurl"] for repo in plan["repositories"]] != expected_repository_urls:
+        raise ValidationError("repository URLs differ from the Rocky role contract")
     if plan["solver_policy"]["allowed_arches"] != [arch, "noarch"]:
         raise ValidationError("allowed_arches must be target arch followed by noarch")
     if plan["solver_policy"]["module_platform_id"] != "platform:el8":

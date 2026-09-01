@@ -50,6 +50,12 @@ target "sysroot-x86_64" {
   output   = ["type=cacheonly"]
 }
 
+target "sysroot-aarch64" {
+  inherits = ["_common"]
+  target   = "sysroot-aarch64"
+  output   = ["type=cacheonly"]
+}
+
 target "host-build-common-locked" {
   inherits = ["_common"]
   target   = "host-build-common-locked"
@@ -62,11 +68,24 @@ target "host-gcc-build-locked" {
   output   = ["type=cacheonly"]
 }
 
+target "qemu-aarch64-validated" {
+  inherits = ["_common"]
+  target   = "qemu-aarch64-validated"
+  output   = ["type=cacheonly"]
+}
+
 # Maintenance targets are cache-only unless a maintainer explicitly overrides
 # output to a local directory for reviewing a lock refresh.
 target "rpm-lock-sysroot-x86_64" {
   inherits = ["_common"]
   target   = "rpm-lock-sysroot-x86_64"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-lock-sysroot-aarch64" {
+  inherits = ["_common"]
+  target   = "rpm-lock-sysroot-aarch64"
   no-cache = true
   output   = ["type=cacheonly"]
 }
@@ -103,9 +122,21 @@ target "binutils-x86_64" {
   output   = ["type=cacheonly"]
 }
 
+target "binutils-aarch64" {
+  inherits = ["_common"]
+  target   = "binutils-aarch64"
+  output   = ["type=cacheonly"]
+}
+
 target "gcc-x86_64" {
   inherits = ["_common"]
   target   = "gcc-x86_64"
+  output   = ["type=cacheonly"]
+}
+
+target "gcc-aarch64" {
+  inherits = ["_common"]
+  target   = "gcc-aarch64"
   output   = ["type=cacheonly"]
 }
 
@@ -115,9 +146,21 @@ target "toolchain-x86_64-dev" {
   output   = ["type=cacheonly"]
 }
 
+target "toolchain-aarch64-dev" {
+  inherits = ["_common"]
+  target   = "toolchain-aarch64-dev"
+  output   = ["type=cacheonly"]
+}
+
 target "runtime-smoke-x86_64" {
   inherits = ["_common"]
   target   = "runtime-smoke-x86_64"
+  output   = ["type=cacheonly"]
+}
+
+target "runtime-smoke-aarch64" {
+  inherits = ["_common"]
+  target   = "runtime-smoke-aarch64"
   output   = ["type=cacheonly"]
 }
 
@@ -137,5 +180,18 @@ group "phase3" {
     "host-gcc-build-locked",
     "sysroot-x86_64",
     "toolchain-x86_64-dev"
+  ]
+}
+
+group "phase4" {
+  targets = [
+    "validate",
+    "platform-python-check",
+    "host-build-common-locked",
+    "host-gcc-build-locked",
+    "sysroot-x86_64",
+    "sysroot-aarch64",
+    "toolchain-x86_64-dev",
+    "toolchain-aarch64-dev"
   ]
 }

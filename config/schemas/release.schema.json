@@ -15,6 +15,7 @@
     "host_locks",
     "gts",
     "binutils",
+    "qemu",
     "targets",
     "python",
     "vcpkg",
@@ -52,7 +53,9 @@
       "required": [
         "repository",
         "tag",
-        "digest"
+        "digest",
+        "index_evidence",
+        "manifests"
       ],
       "properties": {
         "repository": {
@@ -64,6 +67,27 @@
         "digest": {
           "type": "string",
           "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "index_evidence": {
+          "const": "evidence/oci/rocky-linux-8.index.json.b64"
+        },
+        "manifests": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "amd64",
+            "arm64"
+          ],
+          "properties": {
+            "amd64": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "arm64": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
         }
       }
     },
@@ -173,6 +197,150 @@
         },
         "source": {
           "$ref": "#/$defs/rpm_source"
+        }
+      }
+    },
+    "qemu": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "executor"
+      ],
+      "properties": {
+        "version": {
+          "const": "10.2.3"
+        },
+        "executor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "repository",
+            "tag",
+            "index_digest",
+            "index_evidence",
+            "manifest_digest",
+            "manifest_evidence",
+            "binary_path",
+            "binary_sha256",
+            "provenance",
+            "source",
+            "cpu",
+            "uname_release"
+          ],
+          "properties": {
+            "status": {
+              "const": "locked"
+            },
+            "repository": {
+              "const": "docker.io/tonistiigi/binfmt"
+            },
+            "tag": {
+              "const": "qemu-v10.2.3-68"
+            },
+            "index_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "index_evidence": {
+              "const": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.index.json.b64"
+            },
+            "manifest_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "manifest_evidence": {
+              "const": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.manifest.json.b64"
+            },
+            "binary_path": {
+              "const": "/usr/bin/qemu-aarch64"
+            },
+            "binary_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "provenance": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "attestation_manifest_digest",
+                "attestation_evidence",
+                "predicate_digest",
+                "predicate_evidence",
+                "predicate_size",
+                "builder_repository",
+                "builder_commit"
+              ],
+              "properties": {
+                "attestation_manifest_digest": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$"
+                },
+                "attestation_evidence": {
+                  "const": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.attestation.json.b64"
+                },
+                "predicate_digest": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$"
+                },
+                "predicate_evidence": {
+                  "const": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.provenance.json.b64"
+                },
+                "predicate_size": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "builder_repository": {
+                  "const": "https://github.com/tonistiigi/binfmt.git"
+                },
+                "builder_commit": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{40}$"
+                }
+              }
+            },
+            "source": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "repository",
+                "tag",
+                "tag_object",
+                "tag_evidence",
+                "commit",
+                "commit_evidence"
+              ],
+              "properties": {
+                "repository": {
+                  "const": "https://github.com/qemu/qemu.git"
+                },
+                "tag": {
+                  "const": "v10.2.3"
+                },
+                "tag_object": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{40}$"
+                },
+                "tag_evidence": {
+                  "const": "evidence/git/qemu-v10.2.3.tag.b64"
+                },
+                "commit": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{40}$"
+                },
+                "commit_evidence": {
+                  "const": "evidence/git/qemu-v10.2.3.commit.b64"
+                }
+              }
+            },
+            "cpu": {
+              "const": "cortex-a53"
+            },
+            "uname_release": {
+              "const": "4.18.0"
+            }
+          }
         }
       }
     },
