@@ -50,6 +50,41 @@ target "sysroot-x86_64" {
   output   = ["type=cacheonly"]
 }
 
+target "host-build-common-locked" {
+  inherits = ["_common"]
+  target   = "host-build-common-locked"
+  output   = ["type=cacheonly"]
+}
+
+target "host-gcc-build-locked" {
+  inherits = ["_common"]
+  target   = "host-gcc-build-locked"
+  output   = ["type=cacheonly"]
+}
+
+# Maintenance targets are cache-only unless a maintainer explicitly overrides
+# output to a local directory for reviewing a lock refresh.
+target "rpm-lock-sysroot-x86_64" {
+  inherits = ["_common"]
+  target   = "rpm-lock-sysroot-x86_64"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-lock-host-build-common" {
+  inherits = ["_common"]
+  target   = "rpm-lock-host-build-common"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-lock-host-gcc-build" {
+  inherits = ["_common"]
+  target   = "rpm-lock-host-gcc-build"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
 target "gcc-prepared" {
   inherits = ["_common"]
   target   = "gcc-prepared"
@@ -92,4 +127,15 @@ group "phase1" {
 
 group "phase2" {
   targets = ["validate", "platform-python-check", "sysroot-x86_64", "toolchain-x86_64-dev"]
+}
+
+group "phase3" {
+  targets = [
+    "validate",
+    "platform-python-check",
+    "host-build-common-locked",
+    "host-gcc-build-locked",
+    "sysroot-x86_64",
+    "toolchain-x86_64-dev"
+  ]
 }

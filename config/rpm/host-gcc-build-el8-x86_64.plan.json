@@ -1,0 +1,62 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-plan.schema.json",
+  "schema_version": 1,
+  "kind": "rpm-plan",
+  "identity": {
+    "name": "host-gcc-build-el8-x86_64",
+    "role": "host-gcc-build",
+    "distribution": "rocky",
+    "release": "8.10",
+    "baseline": "el8",
+    "arch": "x86_64",
+    "target_triple": null
+  },
+  "base": {
+    "mode": "lock",
+    "parent_lock": "locks/host-build-common-el8-x86_64.json",
+    "parent_sha256": "d6d1b33772faa48658a30b01f5cc6a254c0b6c7640d52296b2e0f4efe7945c01"
+  },
+  "repositories": [
+    {
+      "id": "baseos",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/"
+    },
+    {
+      "id": "appstream",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/"
+    }
+  ],
+  "solver_policy": {
+    "allowed_arches": [
+      "x86_64",
+      "noarch"
+    ],
+    "install_weak_deps": false,
+    "best": true,
+    "strict": true,
+    "allow_erasing": false,
+    "module_platform_id": "platform:el8",
+    "enabled_modules": [
+      "perl:5.26",
+      "perl-IO-Socket-SSL:2.066",
+      "perl-libwww-perl:6.34"
+    ]
+  },
+  "roots": [
+    {
+      "name": "bison",
+      "arch": "any",
+      "purpose": "gcc-build"
+    },
+    {
+      "name": "flex",
+      "arch": "any",
+      "purpose": "gcc-build"
+    },
+    {
+      "name": "libzstd-devel",
+      "arch": "any",
+      "purpose": "gcc-build"
+    }
+  ]
+}

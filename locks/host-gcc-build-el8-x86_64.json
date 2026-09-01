@@ -1,0 +1,79 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-lock.schema.json",
+  "schema_version": 1,
+  "kind": "rpm-lock",
+  "transaction": {
+    "file": "locks/transactions/host-gcc-build-el8-x86_64.json",
+    "canonical_sha256": "9c68cdac91cea0f67402fa948272fb392a2d8b7f4b34667c7bca793acec2138e"
+  },
+  "packages": [
+    {
+      "nevra": "bison-0:3.0.4-10.el8.x86_64",
+      "received_sha256": "adb500fbe39fb17721c401e7fa42a07ad9b7383720faf52b64a0d84d5dc3313b",
+      "header": {
+        "name": "bison",
+        "epoch": 0,
+        "version": "3.0.4",
+        "release": "10.el8",
+        "arch": "x86_64",
+        "nevra": "bison-0:3.0.4-10.el8.x86_64",
+        "source_rpm": "bison-3.0.4-10.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "flex-0:2.6.1-9.el8.x86_64",
+      "received_sha256": "04160926f3c957ff6bb471b97dbedf4389eca1a2d8d7cae67ed55e2327490974",
+      "header": {
+        "name": "flex",
+        "epoch": 0,
+        "version": "2.6.1",
+        "release": "9.el8",
+        "arch": "x86_64",
+        "nevra": "flex-0:2.6.1-9.el8.x86_64",
+        "source_rpm": "flex-2.6.1-9.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libzstd-devel-0:1.4.4-1.el8.x86_64",
+      "received_sha256": "331809e24bcf0caad686f00dfcad0cd3d75b7bd623402194d31e3eb2d2b5f5f9",
+      "header": {
+        "name": "libzstd-devel",
+        "epoch": 0,
+        "version": "1.4.4",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "libzstd-devel-0:1.4.4-1.el8.x86_64",
+        "source_rpm": "zstd-1.4.4-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "m4-0:1.4.18-7.el8.x86_64",
+      "received_sha256": "d7881a93d82deb52eaf09ef9c71260050206e0c674a72dfa75d07ed9bcdcb489",
+      "header": {
+        "name": "m4",
+        "epoch": 0,
+        "version": "1.4.18",
+        "release": "7.el8",
+        "arch": "x86_64",
+        "nevra": "m4-0:1.4.18-7.el8.x86_64",
+        "source_rpm": "m4-1.4.18-7.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    }
+  ]
+}

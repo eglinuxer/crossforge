@@ -3,9 +3,8 @@
 # Canonical Docker-first build graph for the rewrite.
 #
 # Phase 1 stops at configuration validation and filesystem layout. Phase 2
-# adds a locked x86_64 sysroot and an explicitly non-publishable development
-# compiler slice. The latter remains a dev target until host RPM inputs are
-# locked and its full qualification gate passes.
+# adds the x86_64 compiler slice. Phase 3 replaces every live host DNF
+# transaction with signed, content-locked common and GCC-additive layers.
 
 # The generated Bake override binds this named context to the digest in
 # config/release.json. A direct Docker build has no implicit fallback image.
@@ -77,32 +76,35 @@ RUN mkdir -p /sources \
          --schema ./config/schemas/release.schema.json \
          --output /sources/gcc-toolset-15-binutils.src.rpm
 
-# Fetch all RPM payloads named by the resolved lock, then assemble them with
-# network access disabled. materialize-sysroot.py verifies SHA256, size,
-# signature, header NEVRA, the exact locked package set and required ABI files.
-FROM rocky-base AS sysroot-rpms-x86_64
+# Shared code and configuration for independently cached RPM bundles. Locks and
+# transaction manifests stay in their component branches below.
+FROM rocky-base AS rpm-input-base
 COPY config/release.json ./config/release.json
 COPY config/schemas/release.schema.json ./config/schemas/release.schema.json
-COPY config/schemas/sysroot-lock.schema.json ./config/schemas/sysroot-lock.schema.json
+COPY config/schemas/rpm-plan.schema.json ./config/schemas/rpm-plan.schema.json
+COPY config/schemas/rpm-transaction.schema.json ./config/schemas/rpm-transaction.schema.json
+COPY config/schemas/rpm-lock.schema.json ./config/schemas/rpm-lock.schema.json
+COPY config/rpm/ ./config/rpm/
 COPY keys/RPM-GPG-KEY-rockyofficial ./keys/RPM-GPG-KEY-rockyofficial
-COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
 COPY scripts/validate-release.py ./scripts/validate-release.py
-COPY scripts/validate-sysroot-lock.py ./scripts/validate-sysroot-lock.py
+COPY scripts/validate-rpm-lock.py ./scripts/validate-rpm-lock.py
 COPY scripts/materialize-sysroot.py ./scripts/materialize-sysroot.py
-RUN /usr/libexec/platform-python ./scripts/validate-sysroot-lock.py \
+
+# Fetch all RPM payloads named by the canonical sysroot transaction, then
+# assemble the target root with scripts/triggers disabled and no network.
+FROM rpm-input-base AS sysroot-rpms-x86_64
+COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
+COPY locks/transactions/sysroot-el8-x86_64.json ./locks/transactions/sysroot-el8-x86_64.json
+COPY locks/metadata/sysroot-el8-x86_64/ ./locks/metadata/sysroot-el8-x86_64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
       ./locks/sysroot-el8-x86_64.json --require-lock \
     && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
       ./locks/sysroot-el8-x86_64.json fetch --output /rpm-bundle --jobs 8
 
-FROM rocky-base AS sysroot-x86_64
-COPY config/release.json ./config/release.json
-COPY config/schemas/release.schema.json ./config/schemas/release.schema.json
-COPY config/schemas/sysroot-lock.schema.json ./config/schemas/sysroot-lock.schema.json
-COPY keys/RPM-GPG-KEY-rockyofficial ./keys/RPM-GPG-KEY-rockyofficial
+FROM rpm-input-base AS sysroot-x86_64
 COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
-COPY scripts/validate-release.py ./scripts/validate-release.py
-COPY scripts/validate-sysroot-lock.py ./scripts/validate-sysroot-lock.py
-COPY scripts/materialize-sysroot.py ./scripts/materialize-sysroot.py
+COPY locks/transactions/sysroot-el8-x86_64.json ./locks/transactions/sysroot-el8-x86_64.json
+COPY locks/metadata/sysroot-el8-x86_64/ ./locks/metadata/sysroot-el8-x86_64/
 COPY --from=sysroot-rpms-x86_64 /rpm-bundle/ /rpm-bundle/
 RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
       ./locks/sysroot-el8-x86_64.json install \
@@ -110,20 +112,132 @@ RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --destination /opt/crossforge/sysroots/el8/x86_64
 
-# This stage intentionally uses live Rocky repositories for host build
-# requirements. It is suitable for the development slice only and is the
-# remaining reproducibility gap before this graph can produce a candidate.
-FROM rocky-base AS gts-prep-tools-unlocked
-RUN dnf -y --setopt=install_weak_deps=False install \
-         bzip2 diffutils file findutils \
-         gcc-toolset-15-binutils gcc-toolset-15-gcc gcc-toolset-15-gcc-c++ \
-         glibc-devel gmp-devel gzip libmpc-devel make mpfr-devel \
-         patch perl-interpreter redhat-rpm-config rpm-build scl-utils-build sed tar \
-         which xz zlib-devel \
-    && dnf clean all
+# The common host transaction exactly reproduces the previously qualified prep
+# environment. RPM scripts/triggers execute, but the package set is immutable
+# and installation runs without repositories or network access.
+FROM rpm-input-base AS host-build-common-rpms
+COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
+COPY locks/transactions/host-build-common-el8-x86_64.json ./locks/transactions/host-build-common-el8-x86_64.json
+COPY locks/metadata/host-build-common-el8-x86_64/ ./locks/metadata/host-build-common-el8-x86_64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/host-build-common-el8-x86_64.json --require-lock \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/host-build-common-el8-x86_64.json fetch \
+      --output /rpm-bundle --jobs 8
+
+FROM rpm-input-base AS host-build-common-locked
+COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
+COPY locks/transactions/host-build-common-el8-x86_64.json ./locks/transactions/host-build-common-el8-x86_64.json
+COPY locks/metadata/host-build-common-el8-x86_64/ ./locks/metadata/host-build-common-el8-x86_64/
+COPY scripts/install-host-rpm-lock.py ./scripts/install-host-rpm-lock.py
+RUN --network=none \
+    --mount=type=bind,from=host-build-common-rpms,source=/rpm-bundle,target=/rpm-bundle,ro \
+    /usr/libexec/platform-python ./scripts/install-host-rpm-lock.py \
+      ./locks/host-build-common-el8-x86_64.json \
+      --transaction ./locks/transactions/host-build-common-el8-x86_64.json \
+      --bundle /rpm-bundle \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --marker /usr/share/crossforge/rpm-locks/host-build-common.json
 ENV PATH="/opt/rh/gcc-toolset-15/root/usr/bin:${PATH}"
 
-FROM gts-prep-tools-unlocked AS binutils-prepared
+# GCC-only prerequisites are a separate additive lock. Keeping them out of the
+# common layer prevents libzstd-devel from changing binutils auto-detection.
+FROM rpm-input-base AS host-gcc-build-rpms
+COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
+COPY locks/transactions/host-build-common-el8-x86_64.json ./locks/transactions/host-build-common-el8-x86_64.json
+COPY locks/host-gcc-build-el8-x86_64.json ./locks/host-gcc-build-el8-x86_64.json
+COPY locks/transactions/host-gcc-build-el8-x86_64.json ./locks/transactions/host-gcc-build-el8-x86_64.json
+COPY locks/metadata/host-gcc-build-el8-x86_64/ ./locks/metadata/host-gcc-build-el8-x86_64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/host-gcc-build-el8-x86_64.json --require-lock \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/host-gcc-build-el8-x86_64.json fetch \
+      --output /rpm-bundle --jobs 4
+
+FROM host-build-common-locked AS host-gcc-build-locked
+COPY locks/host-gcc-build-el8-x86_64.json ./locks/host-gcc-build-el8-x86_64.json
+COPY locks/transactions/host-gcc-build-el8-x86_64.json ./locks/transactions/host-gcc-build-el8-x86_64.json
+COPY locks/metadata/host-gcc-build-el8-x86_64/ ./locks/metadata/host-gcc-build-el8-x86_64/
+COPY scripts/install-host-rpm-lock.py ./scripts/install-host-rpm-lock.py
+RUN --network=none \
+    --mount=type=bind,from=host-gcc-build-rpms,source=/rpm-bundle,target=/rpm-bundle-gcc,ro \
+    /usr/libexec/platform-python ./scripts/install-host-rpm-lock.py \
+      ./locks/host-gcc-build-el8-x86_64.json \
+      --transaction ./locks/transactions/host-gcc-build-el8-x86_64.json \
+      --bundle /rpm-bundle-gcc \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --marker /usr/share/crossforge/rpm-locks/host-gcc-build.json
+
+# Maintenance-only canonical resolvers. They are not dependencies of normal
+# builds: release stages consume checked-in manifests/locks exclusively. Export
+# one with `--set <target>.output=type=local,dest=...` for an audited lock update.
+FROM rpm-input-base AS rpm-resolve-sysroot-x86_64
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/sysroot-el8-x86_64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/sysroot-el8-x86_64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-sysroot-x86_64
+COPY --from=rpm-resolve-sysroot-x86_64 /resolved/ /
+
+FROM rpm-input-base AS rpm-resolve-host-build-common
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/host-build-common-el8-x86_64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/host-build-common-el8-x86_64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-host-build-common
+COPY --from=rpm-resolve-host-build-common /resolved/ /
+
+FROM host-build-common-locked AS rpm-resolve-host-gcc-build
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/host-gcc-build-el8-x86_64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/host-gcc-build-el8-x86_64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-host-gcc-build
+COPY --from=rpm-resolve-host-gcc-build /resolved/ /
+
+FROM host-build-common-locked AS binutils-prepared
 ARG GTS_BINUTILS_SHA256
 ARG GTS_BINUTILS_SPEC_SHA256
 ARG GTS_BINUTILS_REPOSITORY_NEVRA
@@ -148,7 +262,7 @@ RUN --network=none /work/scripts/prepare-srpm.sh \
       "$ROCKY_RPM_TRUST_SHA256" \
       "$ROCKY_RPM_TRUST_FINGERPRINT"
 
-FROM gts-prep-tools-unlocked AS gcc-prepared
+FROM host-build-common-locked AS gcc-prepared
 ARG GTS_GCC_SHA256
 ARG GTS_GCC_SPEC_SHA256
 ARG GTS_GCC_REPOSITORY_NEVRA
@@ -186,12 +300,7 @@ RUN --network=none mkdir -p /opt/crossforge/sysroots/el8/x86_64 \
       x86_64-unknown-linux-gnu \
       "$CROSSFORGE_JOBS"
 
-FROM gts-prep-tools-unlocked AS gcc-build-tools-unlocked
-RUN dnf -y --enablerepo=powertools --setopt=install_weak_deps=False install \
-      bison flex libzstd-devel \
-    && dnf clean all
-
-FROM gcc-build-tools-unlocked AS gcc-x86_64-built
+FROM host-gcc-build-locked AS gcc-x86_64-built
 ARG CROSSFORGE_JOBS=4
 COPY --from=gcc-prepared /work/prepared/gcc/ /work/prepared/gcc/
 COPY --from=sysroot-x86_64 \
@@ -219,9 +328,9 @@ RUN --network=none /work/scripts/install-hybrid-runtime.sh \
       15 \
       x86_64
 
-# Real compiler smoke gate. This target is cache-only and deliberately carries
-# a dev suffix while its host package closure is still unlocked.
-FROM gts-prep-tools-unlocked AS toolchain-x86_64-qualify-build
+# Real compiler smoke gate. This target remains non-publishable until the
+# second target, frozen ABI sets, full tests and release supply chain exist.
+FROM host-build-common-locked AS toolchain-x86_64-qualify-build
 COPY --from=config-validate /src/config/release.json /src/config/release.json
 COPY --from=sysroot-x86_64 \
   /opt/crossforge/sysroots/el8/x86_64/ \
@@ -256,7 +365,7 @@ RUN --network=none /work/qualification/x86_64/hello \
 
 # Inspectable dev toolchain that depends on both the exact-sysroot qualification
 # and the clean-Rocky portability gate. It remains cache-only and unpublished.
-FROM gts-prep-tools-unlocked AS toolchain-x86_64-dev
+FROM host-build-common-locked AS toolchain-x86_64-dev
 COPY --from=sysroot-x86_64 \
   /opt/crossforge/sysroots/el8/x86_64/ \
   /opt/crossforge/sysroots/el8/x86_64/
@@ -264,3 +373,4 @@ COPY --from=binutils-x86_64 /work/binutils-stage/ /
 COPY --from=gcc-x86_64 /work/gcc-stage/ /
 COPY --from=runtime-smoke-x86_64 \
   /work/qualification/ /work/qualification/
+RUN test ! -e /rpm-bundle && test ! -e /rpm-bundle-gcc

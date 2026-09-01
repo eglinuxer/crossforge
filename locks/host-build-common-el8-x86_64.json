@@ -1,0 +1,2187 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-lock.schema.json",
+  "schema_version": 1,
+  "kind": "rpm-lock",
+  "transaction": {
+    "file": "locks/transactions/host-build-common-el8-x86_64.json",
+    "canonical_sha256": "9ebb75400a82eccf758a256502348831a31bc2957d4df80ca6023ed80e4bd136"
+  },
+  "packages": [
+    {
+      "nevra": "bzip2-0:1.0.6-28.el8_10.x86_64",
+      "received_sha256": "df8552e87d82162ce371128a7736f3205990763257e3ead41fd4c422140c2437",
+      "header": {
+        "name": "bzip2",
+        "epoch": 0,
+        "version": "1.0.6",
+        "release": "28.el8_10",
+        "arch": "x86_64",
+        "nevra": "bzip2-0:1.0.6-28.el8_10.x86_64",
+        "source_rpm": "bzip2-1.0.6-28.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "checkpolicy-0:2.9-1.el8.x86_64",
+      "received_sha256": "99298960b34764108eca6376d69cc572d1db3ef6a1720de07dfe388820d46318",
+      "header": {
+        "name": "checkpolicy",
+        "epoch": 0,
+        "version": "2.9",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "checkpolicy-0:2.9-1.el8.x86_64",
+        "source_rpm": "checkpolicy-2.9-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "cpio-0:2.12-11.el8.x86_64",
+      "received_sha256": "af69fa87dc89d44217a405f35f576fc71f60f932ce0b0f99710b743ab5a06e19",
+      "header": {
+        "name": "cpio",
+        "epoch": 0,
+        "version": "2.12",
+        "release": "11.el8",
+        "arch": "x86_64",
+        "nevra": "cpio-0:2.12-11.el8.x86_64",
+        "source_rpm": "cpio-2.12-11.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "diffutils-0:3.6-6.el8.x86_64",
+      "received_sha256": "a1b4592d6a8f9c88ed8cc427f053779177a16439b93535179b569031adc87788",
+      "header": {
+        "name": "diffutils",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "6.el8",
+        "arch": "x86_64",
+        "nevra": "diffutils-0:3.6-6.el8.x86_64",
+        "source_rpm": "diffutils-3.6-6.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "dwz-0:0.12-10.el8.x86_64",
+      "received_sha256": "d4682e21463097454b01d788a980f13c2377cdc5f757d6a446c30ed1061ba00c",
+      "header": {
+        "name": "dwz",
+        "epoch": 0,
+        "version": "0.12",
+        "release": "10.el8",
+        "arch": "x86_64",
+        "nevra": "dwz-0:0.12-10.el8.x86_64",
+        "source_rpm": "dwz-0.12-10.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "efi-srpm-macros-0:3-3.el8.noarch",
+      "received_sha256": "be93fbe5d15a6af78df7e5441fa6c0a13ef4d4ca73431cd7a8e49c691aa3442a",
+      "header": {
+        "name": "efi-srpm-macros",
+        "epoch": 0,
+        "version": "3",
+        "release": "3.el8",
+        "arch": "noarch",
+        "nevra": "efi-srpm-macros-0:3-3.el8.noarch",
+        "source_rpm": "efi-rpm-macros-3-3.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "elfutils-0:0.190-2.el8.x86_64",
+      "received_sha256": "20523117264964d539a6ac01e3089b6166dd4ca4a43fceb38f8e6341159e5aac",
+      "header": {
+        "name": "elfutils",
+        "epoch": 0,
+        "version": "0.190",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "nevra": "elfutils-0:0.190-2.el8.x86_64",
+        "source_rpm": "elfutils-0.190-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "elfutils-debuginfod-client-0:0.190-2.el8.x86_64",
+      "received_sha256": "80094878cfa0dd1cddb77655e67a8a53d9ab5b257223ae8498431c6c2e7d3f5c",
+      "header": {
+        "name": "elfutils-debuginfod-client",
+        "epoch": 0,
+        "version": "0.190",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "nevra": "elfutils-debuginfod-client-0:0.190-2.el8.x86_64",
+        "source_rpm": "elfutils-0.190-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "environment-modules-0:4.5.2-4.el8.x86_64",
+      "received_sha256": "e2721f84efd0785d8f507998b27ab12903e3c3d0150b846e3b019ec5e52d006d",
+      "header": {
+        "name": "environment-modules",
+        "epoch": 0,
+        "version": "4.5.2",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "nevra": "environment-modules-0:4.5.2-4.el8.x86_64",
+        "source_rpm": "environment-modules-4.5.2-4.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "file-0:5.33-27.el8_10.x86_64",
+      "received_sha256": "292daaaa68d0211ca8f59142b1e3230210026bab51f52f5795adbd77cff51e56",
+      "header": {
+        "name": "file",
+        "epoch": 0,
+        "version": "5.33",
+        "release": "27.el8_10",
+        "arch": "x86_64",
+        "nevra": "file-0:5.33-27.el8_10.x86_64",
+        "source_rpm": "file-5.33-27.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "file-libs-0:5.33-27.el8_10.x86_64",
+      "received_sha256": "462e93d64e1b0b4034abf8028b3535a4d3160ff02c3febd468e892b836032118",
+      "header": {
+        "name": "file-libs",
+        "epoch": 0,
+        "version": "5.33",
+        "release": "27.el8_10",
+        "arch": "x86_64",
+        "nevra": "file-libs-0:5.33-27.el8_10.x86_64",
+        "source_rpm": "file-5.33-27.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "findutils-1:4.6.0-24.el8_10.x86_64",
+      "received_sha256": "0f29b75b637baf402497a02001975f35cbadbb5afd8df8e4804c19a5055b2d26",
+      "header": {
+        "name": "findutils",
+        "epoch": 1,
+        "version": "4.6.0",
+        "release": "24.el8_10",
+        "arch": "x86_64",
+        "nevra": "findutils-1:4.6.0-24.el8_10.x86_64",
+        "source_rpm": "findutils-4.6.0-24.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gc-0:7.6.4-3.el8.x86_64",
+      "received_sha256": "11f239d5463cbf0f15e4ca325624dd148bfd23710482245e34fd7fabd794df8a",
+      "header": {
+        "name": "gc",
+        "epoch": 0,
+        "version": "7.6.4",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "nevra": "gc-0:7.6.4-3.el8.x86_64",
+        "source_rpm": "gc-7.6.4-3.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gcc-toolset-15-binutils-0:2.44-3.el8.x86_64",
+      "received_sha256": "ca3677cb920aa8375b3926fea8179aa35e40510bda6a00e57dfd7aef00348b04",
+      "header": {
+        "name": "gcc-toolset-15-binutils",
+        "epoch": 0,
+        "version": "2.44",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "nevra": "gcc-toolset-15-binutils-0:2.44-3.el8.x86_64",
+        "source_rpm": "gcc-toolset-15-binutils-2.44-3.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gcc-toolset-15-gcc-0:15.2.1-7.1.el8_10.x86_64",
+      "received_sha256": "84a370699a90db689ae59c526f9240ad7ded35e2ef40aa53ea108986ecce9c75",
+      "header": {
+        "name": "gcc-toolset-15-gcc",
+        "epoch": 0,
+        "version": "15.2.1",
+        "release": "7.1.el8_10",
+        "arch": "x86_64",
+        "nevra": "gcc-toolset-15-gcc-0:15.2.1-7.1.el8_10.x86_64",
+        "source_rpm": "gcc-toolset-15-gcc-15.2.1-7.1.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gcc-toolset-15-gcc-c++-0:15.2.1-7.1.el8_10.x86_64",
+      "received_sha256": "cc06115ce374c9ded2d1a3c71192fa448a61f2c01cef9e6eb2e063f8a76f81ed",
+      "header": {
+        "name": "gcc-toolset-15-gcc-c++",
+        "epoch": 0,
+        "version": "15.2.1",
+        "release": "7.1.el8_10",
+        "arch": "x86_64",
+        "nevra": "gcc-toolset-15-gcc-c++-0:15.2.1-7.1.el8_10.x86_64",
+        "source_rpm": "gcc-toolset-15-gcc-15.2.1-7.1.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gcc-toolset-15-libstdc++-devel-0:15.2.1-7.1.el8_10.x86_64",
+      "received_sha256": "81ac93b8c94a226191459991b97007a2fa1137b8893ec4a3d0d13a0cb70b2809",
+      "header": {
+        "name": "gcc-toolset-15-libstdc++-devel",
+        "epoch": 0,
+        "version": "15.2.1",
+        "release": "7.1.el8_10",
+        "arch": "x86_64",
+        "nevra": "gcc-toolset-15-libstdc++-devel-0:15.2.1-7.1.el8_10.x86_64",
+        "source_rpm": "gcc-toolset-15-gcc-15.2.1-7.1.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gcc-toolset-15-runtime-0:15.0-9.el8_10.x86_64",
+      "received_sha256": "990310b3e73023cec31669f2a34c981692ec4f3cc8c701716c1b737a038b4c84",
+      "header": {
+        "name": "gcc-toolset-15-runtime",
+        "epoch": 0,
+        "version": "15.0",
+        "release": "9.el8_10",
+        "arch": "x86_64",
+        "nevra": "gcc-toolset-15-runtime-0:15.0-9.el8_10.x86_64",
+        "source_rpm": "gcc-toolset-15-15.0-9.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gdb-headless-0:8.2-20.el8.0.1.x86_64",
+      "received_sha256": "2c7f8fa98a540b32e296088cb8ded62e7df12a206d6d6cc6ca4830d7915a6a05",
+      "header": {
+        "name": "gdb-headless",
+        "epoch": 0,
+        "version": "8.2",
+        "release": "20.el8.0.1",
+        "arch": "x86_64",
+        "nevra": "gdb-headless-0:8.2-20.el8.0.1.x86_64",
+        "source_rpm": "gdb-8.2-20.el8.0.1.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "ghc-srpm-macros-0:1.4.2-7.el8.noarch",
+      "received_sha256": "0c95293277d68ab9e504ea2eb7ed2b992320b592eca98e60f46135161c813265",
+      "header": {
+        "name": "ghc-srpm-macros",
+        "epoch": 0,
+        "version": "1.4.2",
+        "release": "7.el8",
+        "arch": "noarch",
+        "nevra": "ghc-srpm-macros-0:1.4.2-7.el8.noarch",
+        "source_rpm": "ghc-srpm-macros-1.4.2-7.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "glibc-0:2.28-251.el8_10.40.x86_64",
+      "received_sha256": "f9ee0ed8611d1b4421ac5f9b377ac238377e47466aaaf075822b2d811f01bbdf",
+      "header": {
+        "name": "glibc",
+        "epoch": 0,
+        "version": "2.28",
+        "release": "251.el8_10.40",
+        "arch": "x86_64",
+        "nevra": "glibc-0:2.28-251.el8_10.40.x86_64",
+        "source_rpm": "glibc-2.28-251.el8_10.40.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "glibc-common-0:2.28-251.el8_10.40.x86_64",
+      "received_sha256": "fef3b59c014ec8d288bbefaf343e74c225a9644813c2078eda53679825a8645e",
+      "header": {
+        "name": "glibc-common",
+        "epoch": 0,
+        "version": "2.28",
+        "release": "251.el8_10.40",
+        "arch": "x86_64",
+        "nevra": "glibc-common-0:2.28-251.el8_10.40.x86_64",
+        "source_rpm": "glibc-2.28-251.el8_10.40.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "glibc-devel-0:2.28-251.el8_10.40.x86_64",
+      "received_sha256": "a362e73867c2151cdf19f6fe2fdc520d9b3414b9f922eac3de708669411c7e67",
+      "header": {
+        "name": "glibc-devel",
+        "epoch": 0,
+        "version": "2.28",
+        "release": "251.el8_10.40",
+        "arch": "x86_64",
+        "nevra": "glibc-devel-0:2.28-251.el8_10.40.x86_64",
+        "source_rpm": "glibc-2.28-251.el8_10.40.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "glibc-gconv-extra-0:2.28-251.el8_10.40.x86_64",
+      "received_sha256": "cd50cbcfe233fd4e5deee406bfa275d37e2bee15d343e31d9d4f8d9871ba85b8",
+      "header": {
+        "name": "glibc-gconv-extra",
+        "epoch": 0,
+        "version": "2.28",
+        "release": "251.el8_10.40",
+        "arch": "x86_64",
+        "nevra": "glibc-gconv-extra-0:2.28-251.el8_10.40.x86_64",
+        "source_rpm": "glibc-2.28-251.el8_10.40.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "glibc-headers-0:2.28-251.el8_10.40.x86_64",
+      "received_sha256": "137c4b4bb4074fca3c51bb64f81b193557efd5f0e4aab9dafa88049c136b78da",
+      "header": {
+        "name": "glibc-headers",
+        "epoch": 0,
+        "version": "2.28",
+        "release": "251.el8_10.40",
+        "arch": "x86_64",
+        "nevra": "glibc-headers-0:2.28-251.el8_10.40.x86_64",
+        "source_rpm": "glibc-2.28-251.el8_10.40.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "glibc-minimal-langpack-0:2.28-251.el8_10.40.x86_64",
+      "received_sha256": "b55d62742dd81ae1b2a7641ce8e8da561b3831ea13a4db8abe066199dbb4dd4d",
+      "header": {
+        "name": "glibc-minimal-langpack",
+        "epoch": 0,
+        "version": "2.28",
+        "release": "251.el8_10.40",
+        "arch": "x86_64",
+        "nevra": "glibc-minimal-langpack-0:2.28-251.el8_10.40.x86_64",
+        "source_rpm": "glibc-2.28-251.el8_10.40.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gmp-c++-1:6.1.2-12.el8.x86_64",
+      "received_sha256": "59229eaeba0b4d24a9bf19901369402509ee75913202256c6612c2dfa4c7a2ea",
+      "header": {
+        "name": "gmp-c++",
+        "epoch": 1,
+        "version": "6.1.2",
+        "release": "12.el8",
+        "arch": "x86_64",
+        "nevra": "gmp-c++-1:6.1.2-12.el8.x86_64",
+        "source_rpm": "gmp-6.1.2-12.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gmp-devel-1:6.1.2-12.el8.x86_64",
+      "received_sha256": "706ce689615b9f06c50c9b61550947efa75c5470b6d62b639c54bcf30c1f07f6",
+      "header": {
+        "name": "gmp-devel",
+        "epoch": 1,
+        "version": "6.1.2",
+        "release": "12.el8",
+        "arch": "x86_64",
+        "nevra": "gmp-devel-1:6.1.2-12.el8.x86_64",
+        "source_rpm": "gmp-6.1.2-12.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "go-srpm-macros-0:2-17.el8.noarch",
+      "received_sha256": "18ed6d3a24dac62dea1c6facc0045ddc89c05f450128561a9b063579727b1ced",
+      "header": {
+        "name": "go-srpm-macros",
+        "epoch": 0,
+        "version": "2",
+        "release": "17.el8",
+        "arch": "noarch",
+        "nevra": "go-srpm-macros-0:2-17.el8.noarch",
+        "source_rpm": "go-srpm-macros-2-17.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "groff-base-0:1.22.3-18.el8.x86_64",
+      "received_sha256": "0dc4e1db26d990a5ce2cc354b74cd93364dfccba7ef45cd87741dcba9a2111a0",
+      "header": {
+        "name": "groff-base",
+        "epoch": 0,
+        "version": "1.22.3",
+        "release": "18.el8",
+        "arch": "x86_64",
+        "nevra": "groff-base-0:1.22.3-18.el8.x86_64",
+        "source_rpm": "groff-1.22.3-18.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "guile-5:2.0.14-7.el8.x86_64",
+      "received_sha256": "fbd8b5b80a3946ae0c162741eebdc3a9c29743b93c694fc6d31e3c542a44e475",
+      "header": {
+        "name": "guile",
+        "epoch": 5,
+        "version": "2.0.14",
+        "release": "7.el8",
+        "arch": "x86_64",
+        "nevra": "guile-5:2.0.14-7.el8.x86_64",
+        "source_rpm": "guile-2.0.14-7.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "iso-codes-0:3.79-2.el8.noarch",
+      "received_sha256": "b8404250d7d959fb605ea6617335671c2fa47e7a19cdc3d21fa2f99230fe8385",
+      "header": {
+        "name": "iso-codes",
+        "epoch": 0,
+        "version": "3.79",
+        "release": "2.el8",
+        "arch": "noarch",
+        "nevra": "iso-codes-0:3.79-2.el8.noarch",
+        "source_rpm": "iso-codes-3.79-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "jansson-0:2.14-1.el8.x86_64",
+      "received_sha256": "ec4abca99b96acd29c05cb39c5eb15c7e01827c5e8aeda51f24bc8f93869cd20",
+      "header": {
+        "name": "jansson",
+        "epoch": 0,
+        "version": "2.14",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "jansson-0:2.14-1.el8.x86_64",
+        "source_rpm": "jansson-2.14-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "kernel-headers-0:4.18.0-553.158.1.el8_10.x86_64",
+      "received_sha256": "223a01ae475d7d58877a0ebc089af4429acdb3d1f8a98d759c10890118e3f8c4",
+      "header": {
+        "name": "kernel-headers",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "553.158.1.el8_10",
+        "arch": "x86_64",
+        "nevra": "kernel-headers-0:4.18.0-553.158.1.el8_10.x86_64",
+        "source_rpm": "kernel-4.18.0-553.158.1.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libatomic_ops-0:7.6.2-3.el8.x86_64",
+      "received_sha256": "765fd0ae8dee1d67cb6d017989c1d5a9faed50dd2e05ef47cacea0d6bf92370a",
+      "header": {
+        "name": "libatomic_ops",
+        "epoch": 0,
+        "version": "7.6.2",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "nevra": "libatomic_ops-0:7.6.2-3.el8.x86_64",
+        "source_rpm": "libatomic_ops-7.6.2-3.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libbabeltrace-0:1.5.4-4.el8.x86_64",
+      "received_sha256": "9e6e4064fb82bb163daeb5f230c4fd92917ba94d6e93fc366e769e7a7844e7ac",
+      "header": {
+        "name": "libbabeltrace",
+        "epoch": 0,
+        "version": "1.5.4",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "nevra": "libbabeltrace-0:1.5.4-4.el8.x86_64",
+        "source_rpm": "babeltrace-1.5.4-4.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libgomp-0:8.5.0-28.el8_10.x86_64",
+      "received_sha256": "8869d50ff57a3e973edb5346e42ee961a607dfefd782b97d4db844f33b8dbb8d",
+      "header": {
+        "name": "libgomp",
+        "epoch": 0,
+        "version": "8.5.0",
+        "release": "28.el8_10",
+        "arch": "x86_64",
+        "nevra": "libgomp-0:8.5.0-28.el8_10.x86_64",
+        "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libipt-0:1.6.1-8.el8.x86_64",
+      "received_sha256": "31a22ce7a4fb9585236d07d4bec4a15e7e424da29046ebe0b42111c8c6a95b52",
+      "header": {
+        "name": "libipt",
+        "epoch": 0,
+        "version": "1.6.1",
+        "release": "8.el8",
+        "arch": "x86_64",
+        "nevra": "libipt-0:1.6.1-8.el8.x86_64",
+        "source_rpm": "libipt-1.6.1-8.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libmpc-0:1.1.0-9.1.el8.x86_64",
+      "received_sha256": "4fbf751702394211896af9f253ad2f38c80f603e007a7c9ed2b9c8e5d97f2f95",
+      "header": {
+        "name": "libmpc",
+        "epoch": 0,
+        "version": "1.1.0",
+        "release": "9.1.el8",
+        "arch": "x86_64",
+        "nevra": "libmpc-0:1.1.0-9.1.el8.x86_64",
+        "source_rpm": "libmpc-1.1.0-9.1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libmpc-devel-0:1.1.0-9.1.el8.x86_64",
+      "received_sha256": "256386b3cbf600bf2f9652c6ad57f47d5a7eac2125f6839b8348782389e2166f",
+      "header": {
+        "name": "libmpc-devel",
+        "epoch": 0,
+        "version": "1.1.0",
+        "release": "9.1.el8",
+        "arch": "x86_64",
+        "nevra": "libmpc-devel-0:1.1.0-9.1.el8.x86_64",
+        "source_rpm": "libmpc-1.1.0-9.1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libpipeline-0:1.5.0-2.el8.x86_64",
+      "received_sha256": "407b3f41ebb271e49b9654fba6035ea2ad94ec1ff3480cc97b8bff85e3c9e8ea",
+      "header": {
+        "name": "libpipeline",
+        "epoch": 0,
+        "version": "1.5.0",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "nevra": "libpipeline-0:1.5.0-2.el8.x86_64",
+        "source_rpm": "libpipeline-1.5.0-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libpkgconf-0:1.4.2-1.el8.x86_64",
+      "received_sha256": "b57ad460a1037ebd1a49c66f72464d2635821912df29308f003e95d5cc071ccc",
+      "header": {
+        "name": "libpkgconf",
+        "epoch": 0,
+        "version": "1.4.2",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "libpkgconf-0:1.4.2-1.el8.x86_64",
+        "source_rpm": "pkgconf-1.4.2-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libselinux-utils-0:2.9-8.el8.x86_64",
+      "received_sha256": "dadd76b2d7bcf53adebcc7bfb2dbc89b23276ced2a6a3dfd3ec6476fb21da648",
+      "header": {
+        "name": "libselinux-utils",
+        "epoch": 0,
+        "version": "2.9",
+        "release": "8.el8",
+        "arch": "x86_64",
+        "nevra": "libselinux-utils-0:2.9-8.el8.x86_64",
+        "source_rpm": "libselinux-2.9-8.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libtool-ltdl-0:2.4.6-25.el8.x86_64",
+      "received_sha256": "7a34e022c774ccc6d35226a0d47a9da065dc3b88b8a248a7558359a3847f86d9",
+      "header": {
+        "name": "libtool-ltdl",
+        "epoch": 0,
+        "version": "2.4.6",
+        "release": "25.el8",
+        "arch": "x86_64",
+        "nevra": "libtool-ltdl-0:2.4.6-25.el8.x86_64",
+        "source_rpm": "libtool-2.4.6-25.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libxcrypt-devel-0:4.1.1-6.el8.x86_64",
+      "received_sha256": "71242b7ce34cbadc0eb117e4608887ddd64236e7e808fb593f9b3d7cccdcbc40",
+      "header": {
+        "name": "libxcrypt-devel",
+        "epoch": 0,
+        "version": "4.1.1",
+        "release": "6.el8",
+        "arch": "x86_64",
+        "nevra": "libxcrypt-devel-0:4.1.1-6.el8.x86_64",
+        "source_rpm": "libxcrypt-4.1.1-6.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "make-1:4.2.1-11.el8.x86_64",
+      "received_sha256": "4395686eb6662d9ce01e699cb55f34911f41fe6168437d47dc2c6f7738facb82",
+      "header": {
+        "name": "make",
+        "epoch": 1,
+        "version": "4.2.1",
+        "release": "11.el8",
+        "arch": "x86_64",
+        "nevra": "make-1:4.2.1-11.el8.x86_64",
+        "source_rpm": "make-4.2.1-11.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "man-db-0:2.7.6.1-18.el8.x86_64",
+      "received_sha256": "8037a0a1e22a3558f4d1ed8d1fff0daba12f79bfb3935885957624e53def1c96",
+      "header": {
+        "name": "man-db",
+        "epoch": 0,
+        "version": "2.7.6.1",
+        "release": "18.el8",
+        "arch": "x86_64",
+        "nevra": "man-db-0:2.7.6.1-18.el8.x86_64",
+        "source_rpm": "man-db-2.7.6.1-18.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "mpfr-devel-0:3.1.6-1.el8.x86_64",
+      "received_sha256": "28bdcb6ef35ce3a53609e7df230bb314f46a3e02e32c3d7d0791d224dc6d29af",
+      "header": {
+        "name": "mpfr-devel",
+        "epoch": 0,
+        "version": "3.1.6",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "mpfr-devel-0:3.1.6-1.el8.x86_64",
+        "source_rpm": "mpfr-3.1.6-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "ncurses-0:6.1-10.20180224.el8.x86_64",
+      "received_sha256": "79e3d9ee3649713d81627308c76e487b6986e19cc6fafcb94d398a059796c31f",
+      "header": {
+        "name": "ncurses",
+        "epoch": 0,
+        "version": "6.1",
+        "release": "10.20180224.el8",
+        "arch": "x86_64",
+        "nevra": "ncurses-0:6.1-10.20180224.el8.x86_64",
+        "source_rpm": "ncurses-6.1-10.20180224.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "ocaml-srpm-macros-0:5-4.el8.noarch",
+      "received_sha256": "37a3415a3034d735efa91cef6d27fd07e2230cfda3a0a0708d0b39e2093b6940",
+      "header": {
+        "name": "ocaml-srpm-macros",
+        "epoch": 0,
+        "version": "5",
+        "release": "4.el8",
+        "arch": "noarch",
+        "nevra": "ocaml-srpm-macros-0:5-4.el8.noarch",
+        "source_rpm": "ocaml-srpm-macros-5-4.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "openblas-srpm-macros-0:2-2.el8.noarch",
+      "received_sha256": "9a1d75dc262a61fdf6ebbc267aea8dd32c22ed725c1ca0ad9278174ad442cdb7",
+      "header": {
+        "name": "openblas-srpm-macros",
+        "epoch": 0,
+        "version": "2",
+        "release": "2.el8",
+        "arch": "noarch",
+        "nevra": "openblas-srpm-macros-0:2-2.el8.noarch",
+        "source_rpm": "openblas-srpm-macros-2-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "openssl-1:1.1.1k-12.el8_9.x86_64",
+      "received_sha256": "055a1875d916e50030ead2df6124de68bd3a99a24de4436e1fd62d92d958d95f",
+      "header": {
+        "name": "openssl",
+        "epoch": 1,
+        "version": "1.1.1k",
+        "release": "12.el8_9",
+        "arch": "x86_64",
+        "nevra": "openssl-1:1.1.1k-12.el8_9.x86_64",
+        "source_rpm": "openssl-1.1.1k-12.el8_9.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "patch-0:2.7.6-11.el8.x86_64",
+      "received_sha256": "2a9c37c04fdb645c14de1a32eb344cdc53f29c2da8c75267264f4b632630163b",
+      "header": {
+        "name": "patch",
+        "epoch": 0,
+        "version": "2.7.6",
+        "release": "11.el8",
+        "arch": "x86_64",
+        "nevra": "patch-0:2.7.6-11.el8.x86_64",
+        "source_rpm": "patch-2.7.6-11.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Carp-0:1.42-396.el8.noarch",
+      "received_sha256": "d92465d16df1dd535e1d94ce8680cb90fc9f5af8ff1c6c6b7b411ddca7246e80",
+      "header": {
+        "name": "perl-Carp",
+        "epoch": 0,
+        "version": "1.42",
+        "release": "396.el8",
+        "arch": "noarch",
+        "nevra": "perl-Carp-0:1.42-396.el8.noarch",
+        "source_rpm": "perl-Carp-1.42-396.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Data-Dumper-0:2.167-399.el8.x86_64",
+      "received_sha256": "09c3eea16f9843bfc86340cea0ada1d23f31c6d498ebff9e5c63fbbee6d9a136",
+      "header": {
+        "name": "perl-Data-Dumper",
+        "epoch": 0,
+        "version": "2.167",
+        "release": "399.el8",
+        "arch": "x86_64",
+        "nevra": "perl-Data-Dumper-0:2.167-399.el8.x86_64",
+        "source_rpm": "perl-Data-Dumper-2.167-399.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Digest-0:1.17-395.el8.noarch",
+      "received_sha256": "bc6ecd0d2d3139ffbc4d85e917f58f550ddbcc4d122bd5160a34394d9ad1cf4c",
+      "header": {
+        "name": "perl-Digest",
+        "epoch": 0,
+        "version": "1.17",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Digest-0:1.17-395.el8.noarch",
+        "source_rpm": "perl-Digest-1.17-395.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Digest-MD5-0:2.55-396.el8.x86_64",
+      "received_sha256": "1a337cfd633158edd2a49377b43363eefa8ca4af541cd48ef1c6018cc0047fc1",
+      "header": {
+        "name": "perl-Digest-MD5",
+        "epoch": 0,
+        "version": "2.55",
+        "release": "396.el8",
+        "arch": "x86_64",
+        "nevra": "perl-Digest-MD5-0:2.55-396.el8.x86_64",
+        "source_rpm": "perl-Digest-MD5-2.55-396.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Encode-4:2.97-3.el8.x86_64",
+      "received_sha256": "80dc3a156a630b74695b0ebcfc9d23c81ea48ac6ac737dd417af2f08bc89437e",
+      "header": {
+        "name": "perl-Encode",
+        "epoch": 4,
+        "version": "2.97",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "nevra": "perl-Encode-4:2.97-3.el8.x86_64",
+        "source_rpm": "perl-Encode-2.97-3.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Errno-0:1.28-423.el8_10.x86_64",
+      "received_sha256": "7d00eb67be2c1a11395e00442f1321fc5a37aca79e73079969b37049f053c344",
+      "header": {
+        "name": "perl-Errno",
+        "epoch": 0,
+        "version": "1.28",
+        "release": "423.el8_10",
+        "arch": "x86_64",
+        "nevra": "perl-Errno-0:1.28-423.el8_10.x86_64",
+        "source_rpm": "perl-5.26.3-423.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Exporter-0:5.72-396.el8.noarch",
+      "received_sha256": "8b284465f5989ea57358b07f5b51aefc88c9dd0d8cfef1cb5926e029611e8df6",
+      "header": {
+        "name": "perl-Exporter",
+        "epoch": 0,
+        "version": "5.72",
+        "release": "396.el8",
+        "arch": "noarch",
+        "nevra": "perl-Exporter-0:5.72-396.el8.noarch",
+        "source_rpm": "perl-Exporter-5.72-396.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-File-Path-0:2.15-2.el8.noarch",
+      "received_sha256": "c6286d5cf079a3a30452dc39c7b600cf35fe2b7e9aeae0ed4a4277c7314852fc",
+      "header": {
+        "name": "perl-File-Path",
+        "epoch": 0,
+        "version": "2.15",
+        "release": "2.el8",
+        "arch": "noarch",
+        "nevra": "perl-File-Path-0:2.15-2.el8.noarch",
+        "source_rpm": "perl-File-Path-2.15-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-File-Temp-0:0.230.600-1.el8.noarch",
+      "received_sha256": "88cac7b73525e603c47fbf8a80a6666d6905071785e5e628df85051ffda17280",
+      "header": {
+        "name": "perl-File-Temp",
+        "epoch": 0,
+        "version": "0.230.600",
+        "release": "1.el8",
+        "arch": "noarch",
+        "nevra": "perl-File-Temp-0:0.230.600-1.el8.noarch",
+        "source_rpm": "perl-File-Temp-0.230.600-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Getopt-Long-1:2.50-4.el8.noarch",
+      "received_sha256": "6445ff7f8d206c7d98b947963225dfab1c91ad947e01a2e87f7af56e1a00553a",
+      "header": {
+        "name": "perl-Getopt-Long",
+        "epoch": 1,
+        "version": "2.50",
+        "release": "4.el8",
+        "arch": "noarch",
+        "nevra": "perl-Getopt-Long-1:2.50-4.el8.noarch",
+        "source_rpm": "perl-Getopt-Long-2.50-4.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-HTTP-Tiny-0:0.074-3.el8.noarch",
+      "received_sha256": "ce9e9ec3f33a863a4821fb6fdc872c1cef1f1fae0b63ded1bee3ea25bdd25e7f",
+      "header": {
+        "name": "perl-HTTP-Tiny",
+        "epoch": 0,
+        "version": "0.074",
+        "release": "3.el8",
+        "arch": "noarch",
+        "nevra": "perl-HTTP-Tiny-0:0.074-3.el8.noarch",
+        "source_rpm": "perl-HTTP-Tiny-0.074-3.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-IO-0:1.38-423.el8_10.x86_64",
+      "received_sha256": "0efce4ae32f741188ea40b6003abd0cf06b1af1d00c627822828bc5533763f27",
+      "header": {
+        "name": "perl-IO",
+        "epoch": 0,
+        "version": "1.38",
+        "release": "423.el8_10",
+        "arch": "x86_64",
+        "nevra": "perl-IO-0:1.38-423.el8_10.x86_64",
+        "source_rpm": "perl-5.26.3-423.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-IO-Socket-IP-0:0.39-5.el8.noarch",
+      "received_sha256": "1d165c42a43fa1a32ce7e988cce88a9846cc54f5fd986d056557768cd57762b4",
+      "header": {
+        "name": "perl-IO-Socket-IP",
+        "epoch": 0,
+        "version": "0.39",
+        "release": "5.el8",
+        "arch": "noarch",
+        "nevra": "perl-IO-Socket-IP-0:0.39-5.el8.noarch",
+        "source_rpm": "perl-IO-Socket-IP-0.39-5.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-IO-Socket-SSL-0:2.066-4.module+el8.9.0+1517+e71a7a62.noarch",
+      "received_sha256": "76592f32ad3a6e29bdfdbd54a75da1e1602eafcce2dad1e48574d2153664a0d9",
+      "header": {
+        "name": "perl-IO-Socket-SSL",
+        "epoch": 0,
+        "version": "2.066",
+        "release": "4.module+el8.9.0+1517+e71a7a62",
+        "arch": "noarch",
+        "nevra": "perl-IO-Socket-SSL-0:2.066-4.module+el8.9.0+1517+e71a7a62.noarch",
+        "source_rpm": "perl-IO-Socket-SSL-2.066-4.module+el8.9.0+1517+e71a7a62.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-MIME-Base64-0:3.15-396.el8.x86_64",
+      "received_sha256": "82d0838648209cb59e0ecc0442563ef2b07cf33d61ab1edfd83299597e608456",
+      "header": {
+        "name": "perl-MIME-Base64",
+        "epoch": 0,
+        "version": "3.15",
+        "release": "396.el8",
+        "arch": "x86_64",
+        "nevra": "perl-MIME-Base64-0:3.15-396.el8.x86_64",
+        "source_rpm": "perl-MIME-Base64-3.15-396.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Mozilla-CA-0:20160104-7.module+el8.9.0+1521+0101edce.noarch",
+      "received_sha256": "4674971dd7c42ed4cf2439b993c037fdc0f9eedd79e5719d44b11dfb7a6fedc4",
+      "header": {
+        "name": "perl-Mozilla-CA",
+        "epoch": 0,
+        "version": "20160104",
+        "release": "7.module+el8.9.0+1521+0101edce",
+        "arch": "noarch",
+        "nevra": "perl-Mozilla-CA-0:20160104-7.module+el8.9.0+1521+0101edce.noarch",
+        "source_rpm": "perl-Mozilla-CA-20160104-7.module+el8.9.0+1521+0101edce.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Net-SSLeay-0:1.88-2.module+el8.9.0+1517+e71a7a62.x86_64",
+      "received_sha256": "cce46a58b7ca6bb5dfadd3b38c5adefe5d5aa9d09836cb73b77750961a092f96",
+      "header": {
+        "name": "perl-Net-SSLeay",
+        "epoch": 0,
+        "version": "1.88",
+        "release": "2.module+el8.9.0+1517+e71a7a62",
+        "arch": "x86_64",
+        "nevra": "perl-Net-SSLeay-0:1.88-2.module+el8.9.0+1517+e71a7a62.x86_64",
+        "source_rpm": "perl-Net-SSLeay-1.88-2.module+el8.9.0+1517+e71a7a62.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-PathTools-0:3.74-1.el8.x86_64",
+      "received_sha256": "24ea4147e9bdbf365c3e8ee10ddf931415c878f79163d7924770aec93c3187f1",
+      "header": {
+        "name": "perl-PathTools",
+        "epoch": 0,
+        "version": "3.74",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "perl-PathTools-0:3.74-1.el8.x86_64",
+        "source_rpm": "perl-PathTools-3.74-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Pod-Escapes-1:1.07-395.el8.noarch",
+      "received_sha256": "cb5f816932030a3321de6de8009ede04b9b0ba011e2b4ac0444b45340c7331b1",
+      "header": {
+        "name": "perl-Pod-Escapes",
+        "epoch": 1,
+        "version": "1.07",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Pod-Escapes-1:1.07-395.el8.noarch",
+        "source_rpm": "perl-Pod-Escapes-1.07-395.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Pod-Perldoc-0:3.28-396.el8.noarch",
+      "received_sha256": "59bf89a6d70b6b69b3446f9c238b86ea72aa8f0971e9ad23a4cd071f19641130",
+      "header": {
+        "name": "perl-Pod-Perldoc",
+        "epoch": 0,
+        "version": "3.28",
+        "release": "396.el8",
+        "arch": "noarch",
+        "nevra": "perl-Pod-Perldoc-0:3.28-396.el8.noarch",
+        "source_rpm": "perl-Pod-Perldoc-3.28-396.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Pod-Simple-1:3.35-395.el8.noarch",
+      "received_sha256": "8eb98201f6a088702561c8e346193d17e4c8bd677c297a0f3411316b3924cb6f",
+      "header": {
+        "name": "perl-Pod-Simple",
+        "epoch": 1,
+        "version": "3.35",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Pod-Simple-1:3.35-395.el8.noarch",
+        "source_rpm": "perl-Pod-Simple-3.35-395.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Pod-Usage-4:1.69-395.el8.noarch",
+      "received_sha256": "018e49a58a9281b709e69e3009ac5f34c3db436ea80052972b84c00ffd013c1c",
+      "header": {
+        "name": "perl-Pod-Usage",
+        "epoch": 4,
+        "version": "1.69",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Pod-Usage-4:1.69-395.el8.noarch",
+        "source_rpm": "perl-Pod-Usage-1.69-395.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Scalar-List-Utils-3:1.49-2.el8.x86_64",
+      "received_sha256": "5f9e4f7131eb903e928217fdac8bfad1422dbaca86f0fc931eb3663fffdeb4db",
+      "header": {
+        "name": "perl-Scalar-List-Utils",
+        "epoch": 3,
+        "version": "1.49",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "nevra": "perl-Scalar-List-Utils-3:1.49-2.el8.x86_64",
+        "source_rpm": "perl-Scalar-List-Utils-1.49-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Socket-4:2.027-3.el8.x86_64",
+      "received_sha256": "210f9c20fc35f0db23cc285fe01d48337951f38610e954cefd1bb75bb01a10b2",
+      "header": {
+        "name": "perl-Socket",
+        "epoch": 4,
+        "version": "2.027",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "nevra": "perl-Socket-4:2.027-3.el8.x86_64",
+        "source_rpm": "perl-Socket-2.027-3.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Storable-1:3.11-3.el8.x86_64",
+      "received_sha256": "cb4e02f3289b4edf2e5c8223d0eab939a25e1e28bf572a78c083866d66070675",
+      "header": {
+        "name": "perl-Storable",
+        "epoch": 1,
+        "version": "3.11",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "nevra": "perl-Storable-1:3.11-3.el8.x86_64",
+        "source_rpm": "perl-Storable-3.11-3.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Term-ANSIColor-0:4.06-396.el8.noarch",
+      "received_sha256": "58c7773045a89aaa4f00f0f54f27b44d461123993af3afd0e62a8a8b8a8e3e94",
+      "header": {
+        "name": "perl-Term-ANSIColor",
+        "epoch": 0,
+        "version": "4.06",
+        "release": "396.el8",
+        "arch": "noarch",
+        "nevra": "perl-Term-ANSIColor-0:4.06-396.el8.noarch",
+        "source_rpm": "perl-Term-ANSIColor-4.06-396.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Term-Cap-0:1.17-395.el8.noarch",
+      "received_sha256": "0dd27729a427588d9f68f5f7acdffab2d0efce35f59ba428167da5a29a51138f",
+      "header": {
+        "name": "perl-Term-Cap",
+        "epoch": 0,
+        "version": "1.17",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Term-Cap-0:1.17-395.el8.noarch",
+        "source_rpm": "perl-Term-Cap-1.17-395.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Text-ParseWords-0:3.30-395.el8.noarch",
+      "received_sha256": "0315887bfe70bebb33988cb25dea642f21b85782a4c63f512752e91d15af2877",
+      "header": {
+        "name": "perl-Text-ParseWords",
+        "epoch": 0,
+        "version": "3.30",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Text-ParseWords-0:3.30-395.el8.noarch",
+        "source_rpm": "perl-Text-ParseWords-3.30-395.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Text-Tabs+Wrap-0:2013.0523-395.el8.noarch",
+      "received_sha256": "65792c67f44bad6f100791b95b055bfe59ebc6a310aeb7d37698513fd91e0aed",
+      "header": {
+        "name": "perl-Text-Tabs+Wrap",
+        "epoch": 0,
+        "version": "2013.0523",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Text-Tabs+Wrap-0:2013.0523-395.el8.noarch",
+        "source_rpm": "perl-Text-Tabs+Wrap-2013.0523-395.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Time-Local-1:1.280-1.el8.noarch",
+      "received_sha256": "a8051efdea7ee8c3613c1dd41d001061ac3c00760f04f475427184bad38f24a3",
+      "header": {
+        "name": "perl-Time-Local",
+        "epoch": 1,
+        "version": "1.280",
+        "release": "1.el8",
+        "arch": "noarch",
+        "nevra": "perl-Time-Local-1:1.280-1.el8.noarch",
+        "source_rpm": "perl-Time-Local-1.280-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-URI-0:1.73-3.el8.noarch",
+      "received_sha256": "98c39f4bb378291ba800a57ec3d6b44f85e5960c67eb9c5242515fa43d902048",
+      "header": {
+        "name": "perl-URI",
+        "epoch": 0,
+        "version": "1.73",
+        "release": "3.el8",
+        "arch": "noarch",
+        "nevra": "perl-URI-0:1.73-3.el8.noarch",
+        "source_rpm": "perl-URI-1.73-3.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Unicode-Normalize-0:1.25-396.el8.x86_64",
+      "received_sha256": "6bbb8f3152cb1dacf1ceda11504436451ce67701f265df3106e248adf7817795",
+      "header": {
+        "name": "perl-Unicode-Normalize",
+        "epoch": 0,
+        "version": "1.25",
+        "release": "396.el8",
+        "arch": "x86_64",
+        "nevra": "perl-Unicode-Normalize-0:1.25-396.el8.x86_64",
+        "source_rpm": "perl-Unicode-Normalize-1.25-396.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-constant-0:1.33-396.el8.noarch",
+      "received_sha256": "33ce1ec3ef7015a750656f08b1e366e6d0b94616f9a39d1986a2016ec992923b",
+      "header": {
+        "name": "perl-constant",
+        "epoch": 0,
+        "version": "1.33",
+        "release": "396.el8",
+        "arch": "noarch",
+        "nevra": "perl-constant-0:1.33-396.el8.noarch",
+        "source_rpm": "perl-constant-1.33-396.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-interpreter-4:5.26.3-423.el8_10.x86_64",
+      "received_sha256": "730ee023c312dc84219be2d4ff89ae2d37f4be12032d26a65bbce4e8724b5756",
+      "header": {
+        "name": "perl-interpreter",
+        "epoch": 4,
+        "version": "5.26.3",
+        "release": "423.el8_10",
+        "arch": "x86_64",
+        "nevra": "perl-interpreter-4:5.26.3-423.el8_10.x86_64",
+        "source_rpm": "perl-5.26.3-423.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-libnet-0:3.11-3.el8.noarch",
+      "received_sha256": "99bcae4c5cbecb5e660d19a6589c59ab103250458300959565b961919181803f",
+      "header": {
+        "name": "perl-libnet",
+        "epoch": 0,
+        "version": "3.11",
+        "release": "3.el8",
+        "arch": "noarch",
+        "nevra": "perl-libnet-0:3.11-3.el8.noarch",
+        "source_rpm": "perl-libnet-3.11-3.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-libs-4:5.26.3-423.el8_10.x86_64",
+      "received_sha256": "60e05b11af9d5ec16b0a6fcbeb1a5d43c893d0e21f4291c1c083873cba8611c1",
+      "header": {
+        "name": "perl-libs",
+        "epoch": 4,
+        "version": "5.26.3",
+        "release": "423.el8_10",
+        "arch": "x86_64",
+        "nevra": "perl-libs-4:5.26.3-423.el8_10.x86_64",
+        "source_rpm": "perl-5.26.3-423.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-macros-4:5.26.3-423.el8_10.x86_64",
+      "received_sha256": "56a4d7d59cc5e2018618082c9815b2c93a80a4667c98cfe0eb055bb2f363732e",
+      "header": {
+        "name": "perl-macros",
+        "epoch": 4,
+        "version": "5.26.3",
+        "release": "423.el8_10",
+        "arch": "x86_64",
+        "nevra": "perl-macros-4:5.26.3-423.el8_10.x86_64",
+        "source_rpm": "perl-5.26.3-423.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-parent-1:0.237-1.el8.noarch",
+      "received_sha256": "bd309bb9b94d841e0240b8a8bd5742064a039857c1e648d475bc3681be80c738",
+      "header": {
+        "name": "perl-parent",
+        "epoch": 1,
+        "version": "0.237",
+        "release": "1.el8",
+        "arch": "noarch",
+        "nevra": "perl-parent-1:0.237-1.el8.noarch",
+        "source_rpm": "perl-parent-0.237-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-podlators-0:4.11-1.el8.noarch",
+      "received_sha256": "24067026003e450e87c9e74ae555d0c237f3a42bbdcf970b542509f8993193bc",
+      "header": {
+        "name": "perl-podlators",
+        "epoch": 0,
+        "version": "4.11",
+        "release": "1.el8",
+        "arch": "noarch",
+        "nevra": "perl-podlators-0:4.11-1.el8.noarch",
+        "source_rpm": "perl-podlators-4.11-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-srpm-macros-0:1-25.el8.noarch",
+      "received_sha256": "c83d78a47fbc2d1683694fc7399f409cdb7c922d79bdd11a8a84373c332dba36",
+      "header": {
+        "name": "perl-srpm-macros",
+        "epoch": 0,
+        "version": "1",
+        "release": "25.el8",
+        "arch": "noarch",
+        "nevra": "perl-srpm-macros-0:1-25.el8.noarch",
+        "source_rpm": "perl-srpm-macros-1-25.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-threads-1:2.21-2.el8.x86_64",
+      "received_sha256": "cd75cb664d80b0afe3d538db5d67aec078c8322a8c51b2bbb270d42693d9379a",
+      "header": {
+        "name": "perl-threads",
+        "epoch": 1,
+        "version": "2.21",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "nevra": "perl-threads-1:2.21-2.el8.x86_64",
+        "source_rpm": "perl-threads-2.21-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-threads-shared-0:1.58-2.el8.x86_64",
+      "received_sha256": "be787ebce79bba1f2f06335f7dae5484d4f85c00483c5673a129dbba488ff3c1",
+      "header": {
+        "name": "perl-threads-shared",
+        "epoch": 0,
+        "version": "1.58",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "nevra": "perl-threads-shared-0:1.58-2.el8.x86_64",
+        "source_rpm": "perl-threads-shared-1.58-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "pkgconf-0:1.4.2-1.el8.x86_64",
+      "received_sha256": "e3820365e6a5007b1f1981d685ea4a0e1d15ab140259609d9f3f6239732f1d72",
+      "header": {
+        "name": "pkgconf",
+        "epoch": 0,
+        "version": "1.4.2",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "pkgconf-0:1.4.2-1.el8.x86_64",
+        "source_rpm": "pkgconf-1.4.2-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "pkgconf-m4-0:1.4.2-1.el8.noarch",
+      "received_sha256": "89d0641195e4a4d2678b525771613037d2e4949ba6be2400aa74780bec5191a8",
+      "header": {
+        "name": "pkgconf-m4",
+        "epoch": 0,
+        "version": "1.4.2",
+        "release": "1.el8",
+        "arch": "noarch",
+        "nevra": "pkgconf-m4-0:1.4.2-1.el8.noarch",
+        "source_rpm": "pkgconf-1.4.2-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "pkgconf-pkg-config-0:1.4.2-1.el8.x86_64",
+      "received_sha256": "4d69087e73b4f9ce9c130ddc68e550613edfbd8653564f4cd738a8333eb7a065",
+      "header": {
+        "name": "pkgconf-pkg-config",
+        "epoch": 0,
+        "version": "1.4.2",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "pkgconf-pkg-config-0:1.4.2-1.el8.x86_64",
+        "source_rpm": "pkgconf-1.4.2-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "policycoreutils-0:2.9-26.el8_10.x86_64",
+      "received_sha256": "6c3780f9d232b391a8ba8dd786ee96b2acf90cb66b4c9239d037e2b28d1c47c2",
+      "header": {
+        "name": "policycoreutils",
+        "epoch": 0,
+        "version": "2.9",
+        "release": "26.el8_10",
+        "arch": "x86_64",
+        "nevra": "policycoreutils-0:2.9-26.el8_10.x86_64",
+        "source_rpm": "policycoreutils-2.9-26.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "policycoreutils-python-utils-0:2.9-26.el8_10.noarch",
+      "received_sha256": "577785eb952f28c76f6030da12f02d5d7baa50cb9f0b28ae9418fe631bab244f",
+      "header": {
+        "name": "policycoreutils-python-utils",
+        "epoch": 0,
+        "version": "2.9",
+        "release": "26.el8_10",
+        "arch": "noarch",
+        "nevra": "policycoreutils-python-utils-0:2.9-26.el8_10.noarch",
+        "source_rpm": "policycoreutils-2.9-26.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "procps-ng-0:3.3.15-14.el8.x86_64",
+      "received_sha256": "cbbd805508836bbc260c452a30a534c89e41863a3c129bb863448732f8cd6e1e",
+      "header": {
+        "name": "procps-ng",
+        "epoch": 0,
+        "version": "3.3.15",
+        "release": "14.el8",
+        "arch": "x86_64",
+        "nevra": "procps-ng-0:3.3.15-14.el8.x86_64",
+        "source_rpm": "procps-ng-3.3.15-14.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "python-rpm-macros-0:3-45.el8.noarch",
+      "received_sha256": "a66019d1238b9b4b3734c01e1fef3a579688a0a1487590d715b9f17ab4f73aab",
+      "header": {
+        "name": "python-rpm-macros",
+        "epoch": 0,
+        "version": "3",
+        "release": "45.el8",
+        "arch": "noarch",
+        "nevra": "python-rpm-macros-0:3-45.el8.noarch",
+        "source_rpm": "python-rpm-macros-3-45.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "python-srpm-macros-0:3-45.el8.noarch",
+      "received_sha256": "85ae015c44ed293108d095cc75d91e1c7f57bf8f85d3f95e8cc55a773de6339a",
+      "header": {
+        "name": "python-srpm-macros",
+        "epoch": 0,
+        "version": "3",
+        "release": "45.el8",
+        "arch": "noarch",
+        "nevra": "python-srpm-macros-0:3-45.el8.noarch",
+        "source_rpm": "python-rpm-macros-3-45.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "python3-audit-0:3.1.2-1.el8.x86_64",
+      "received_sha256": "1931f2508ff87f5d31318b265a5e45475e807cd6e8904e32776903eac6e0e4e9",
+      "header": {
+        "name": "python3-audit",
+        "epoch": 0,
+        "version": "3.1.2",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "python3-audit-0:3.1.2-1.el8.x86_64",
+        "source_rpm": "audit-3.1.2-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "python3-libselinux-0:2.9-8.el8.x86_64",
+      "received_sha256": "5b0e8c99eece283f0098eb542a6b19dfcf2c2f7cb7e59ca2e2d201cd2f93a91f",
+      "header": {
+        "name": "python3-libselinux",
+        "epoch": 0,
+        "version": "2.9",
+        "release": "8.el8",
+        "arch": "x86_64",
+        "nevra": "python3-libselinux-0:2.9-8.el8.x86_64",
+        "source_rpm": "libselinux-2.9-8.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "python3-libsemanage-0:2.9-9.el8_6.x86_64",
+      "received_sha256": "84261fe316de650e3c6f7fd00d0d4cbf544d9c1de68dd71bc71b501441ec2f51",
+      "header": {
+        "name": "python3-libsemanage",
+        "epoch": 0,
+        "version": "2.9",
+        "release": "9.el8_6",
+        "arch": "x86_64",
+        "nevra": "python3-libsemanage-0:2.9-9.el8_6.x86_64",
+        "source_rpm": "libsemanage-2.9-9.el8_6.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "python3-policycoreutils-0:2.9-26.el8_10.noarch",
+      "received_sha256": "308d52bb26f2ee3993cd0b8c766351b9ff7d7609d9e873fb531e4e6197f6bba6",
+      "header": {
+        "name": "python3-policycoreutils",
+        "epoch": 0,
+        "version": "2.9",
+        "release": "26.el8_10",
+        "arch": "noarch",
+        "nevra": "python3-policycoreutils-0:2.9-26.el8_10.noarch",
+        "source_rpm": "policycoreutils-2.9-26.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "python3-rpm-0:4.14.3-32.el8_10.x86_64",
+      "received_sha256": "25b52c1e3324dc8741399ec8a8c188bfeef54033c7cfb9ffc545d8bad52960ce",
+      "header": {
+        "name": "python3-rpm",
+        "epoch": 0,
+        "version": "4.14.3",
+        "release": "32.el8_10",
+        "arch": "x86_64",
+        "nevra": "python3-rpm-0:4.14.3-32.el8_10.x86_64",
+        "source_rpm": "rpm-4.14.3-32.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "python3-rpm-macros-0:3-45.el8.noarch",
+      "received_sha256": "af65eee66bca7d25592763fa1e694a855400e6446e1db2006cade596b6079f49",
+      "header": {
+        "name": "python3-rpm-macros",
+        "epoch": 0,
+        "version": "3",
+        "release": "45.el8",
+        "arch": "noarch",
+        "nevra": "python3-rpm-macros-0:3-45.el8.noarch",
+        "source_rpm": "python-rpm-macros-3-45.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "python3-setools-0:4.3.0-5.el8.x86_64",
+      "received_sha256": "895f6d4f343779d1488e03d5f0c8b7793700f3e42a4d78f4c96bcd4a129966e7",
+      "header": {
+        "name": "python3-setools",
+        "epoch": 0,
+        "version": "4.3.0",
+        "release": "5.el8",
+        "arch": "x86_64",
+        "nevra": "python3-setools-0:4.3.0-5.el8.x86_64",
+        "source_rpm": "setools-4.3.0-5.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "qt5-srpm-macros-0:5.15.3-1.el8.noarch",
+      "received_sha256": "3c67f14e96c3953ccae000512d56e7db073fedac51b7a3cb79de29fc941b6891",
+      "header": {
+        "name": "qt5-srpm-macros",
+        "epoch": 0,
+        "version": "5.15.3",
+        "release": "1.el8",
+        "arch": "noarch",
+        "nevra": "qt5-srpm-macros-0:5.15.3-1.el8.noarch",
+        "source_rpm": "qt5-5.15.3-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "redhat-rpm-config-0:131-1.el8.noarch",
+      "received_sha256": "64d924524a8455cc6bf6144ee791d95770fd8c970102a31cf78523f5ad974106",
+      "header": {
+        "name": "redhat-rpm-config",
+        "epoch": 0,
+        "version": "131",
+        "release": "1.el8",
+        "arch": "noarch",
+        "nevra": "redhat-rpm-config-0:131-1.el8.noarch",
+        "source_rpm": "redhat-rpm-config-131-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "rpm-0:4.14.3-32.el8_10.x86_64",
+      "received_sha256": "3de59eb2a2850cf2c39d5940fb285cf7927941cb98e5e2cd623b425b367b1b98",
+      "header": {
+        "name": "rpm",
+        "epoch": 0,
+        "version": "4.14.3",
+        "release": "32.el8_10",
+        "arch": "x86_64",
+        "nevra": "rpm-0:4.14.3-32.el8_10.x86_64",
+        "source_rpm": "rpm-4.14.3-32.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "rpm-build-0:4.14.3-32.el8_10.x86_64",
+      "received_sha256": "f6c6d6bea47cd59f61a691d26d6e71cf8b6dd17eaccc5617ff227dedc6d7b048",
+      "header": {
+        "name": "rpm-build",
+        "epoch": 0,
+        "version": "4.14.3",
+        "release": "32.el8_10",
+        "arch": "x86_64",
+        "nevra": "rpm-build-0:4.14.3-32.el8_10.x86_64",
+        "source_rpm": "rpm-4.14.3-32.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "rpm-build-libs-0:4.14.3-32.el8_10.x86_64",
+      "received_sha256": "6580b3ce3e28df8982bc46ea92c10e00832fcfc2b9c8d5f8778c23763bc2ef76",
+      "header": {
+        "name": "rpm-build-libs",
+        "epoch": 0,
+        "version": "4.14.3",
+        "release": "32.el8_10",
+        "arch": "x86_64",
+        "nevra": "rpm-build-libs-0:4.14.3-32.el8_10.x86_64",
+        "source_rpm": "rpm-4.14.3-32.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "rpm-libs-0:4.14.3-32.el8_10.x86_64",
+      "received_sha256": "231567e147e46a8a6d938086d4a4994a74cc04281ee149d9f89c99a3c098cc78",
+      "header": {
+        "name": "rpm-libs",
+        "epoch": 0,
+        "version": "4.14.3",
+        "release": "32.el8_10",
+        "arch": "x86_64",
+        "nevra": "rpm-libs-0:4.14.3-32.el8_10.x86_64",
+        "source_rpm": "rpm-4.14.3-32.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "rust-srpm-macros-0:5-2.el8.noarch",
+      "received_sha256": "637498e14aa544d9d8036e8591e481f6a443bc9483099bffbcb74f8c78b6d4e0",
+      "header": {
+        "name": "rust-srpm-macros",
+        "epoch": 0,
+        "version": "5",
+        "release": "2.el8",
+        "arch": "noarch",
+        "nevra": "rust-srpm-macros-0:5-2.el8.noarch",
+        "source_rpm": "rust-srpm-macros-5-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "scl-utils-1:2.0.2-16.el8.x86_64",
+      "received_sha256": "5a05fb3002de373c0199aea106e5e34287909f8007fc4ee1e18f673739634188",
+      "header": {
+        "name": "scl-utils",
+        "epoch": 1,
+        "version": "2.0.2",
+        "release": "16.el8",
+        "arch": "x86_64",
+        "nevra": "scl-utils-1:2.0.2-16.el8.x86_64",
+        "source_rpm": "scl-utils-2.0.2-16.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "scl-utils-build-1:2.0.2-16.el8.x86_64",
+      "received_sha256": "4485e382b742a271723d06f4500d9dc74e7e7d4a904241f9821a7dfc8cb6e9d0",
+      "header": {
+        "name": "scl-utils-build",
+        "epoch": 1,
+        "version": "2.0.2",
+        "release": "16.el8",
+        "arch": "x86_64",
+        "nevra": "scl-utils-build-1:2.0.2-16.el8.x86_64",
+        "source_rpm": "scl-utils-2.0.2-16.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "tar-2:1.30-11.el8_10.x86_64",
+      "received_sha256": "0d4717e1af28e4f76acb8920da17e0a82e2cdc2b06beade88bb1ebb90558df0e",
+      "header": {
+        "name": "tar",
+        "epoch": 2,
+        "version": "1.30",
+        "release": "11.el8_10",
+        "arch": "x86_64",
+        "nevra": "tar-2:1.30-11.el8_10.x86_64",
+        "source_rpm": "tar-1.30-11.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "tcl-1:8.6.8-2.el8.x86_64",
+      "received_sha256": "bd8f5e7b51055628b64fdfa3b8e369e4b9c71d9b6db2b3ca0e197fc265572dc8",
+      "header": {
+        "name": "tcl",
+        "epoch": 1,
+        "version": "8.6.8",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "nevra": "tcl-1:8.6.8-2.el8.x86_64",
+        "source_rpm": "tcl-8.6.8-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "unzip-0:6.0-48.el8_10.x86_64",
+      "received_sha256": "888eb57f9d1206da4490c7cb687b99e85d96063caf3bcb1840f49ddc1679e4d9",
+      "header": {
+        "name": "unzip",
+        "epoch": 0,
+        "version": "6.0",
+        "release": "48.el8_10",
+        "arch": "x86_64",
+        "nevra": "unzip-0:6.0-48.el8_10.x86_64",
+        "source_rpm": "unzip-6.0-48.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "which-0:2.21-21.el8_10.x86_64",
+      "received_sha256": "a593c4016ff04afe46b8498a606548687b079079112c08e2fc3f6809273b9658",
+      "header": {
+        "name": "which",
+        "epoch": 0,
+        "version": "2.21",
+        "release": "21.el8_10",
+        "arch": "x86_64",
+        "nevra": "which-0:2.21-21.el8_10.x86_64",
+        "source_rpm": "which-2.21-21.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "xml-common-0:0.6.3-50.el8.noarch",
+      "received_sha256": "5407a829de913903015e5593d3b70757d9375fc11afcbde96eaab9cf0877b2f2",
+      "header": {
+        "name": "xml-common",
+        "epoch": 0,
+        "version": "0.6.3",
+        "release": "50.el8",
+        "arch": "noarch",
+        "nevra": "xml-common-0:0.6.3-50.el8.noarch",
+        "source_rpm": "sgml-common-0.6.3-50.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "xz-0:5.2.4-4.el8_6.x86_64",
+      "received_sha256": "d9d31369563ebeb477fe0d66ebd23afee0699de3e75e36fb818627602bc0aec4",
+      "header": {
+        "name": "xz",
+        "epoch": 0,
+        "version": "5.2.4",
+        "release": "4.el8_6",
+        "arch": "x86_64",
+        "nevra": "xz-0:5.2.4-4.el8_6.x86_64",
+        "source_rpm": "xz-5.2.4-4.el8_6.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "zip-0:3.0-23.el8.x86_64",
+      "received_sha256": "0d0c8b68b97ecf3e1bb4340e2041080999d5032559ad5daaa87ea5ad5c1ec5ed",
+      "header": {
+        "name": "zip",
+        "epoch": 0,
+        "version": "3.0",
+        "release": "23.el8",
+        "arch": "x86_64",
+        "nevra": "zip-0:3.0-23.el8.x86_64",
+        "source_rpm": "zip-3.0-23.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "zlib-devel-0:1.2.11-26.el8.x86_64",
+      "received_sha256": "0150c9915495849bbb1ac9d9d12a1716ce39c9a6dbbd458eb038ba8c218027cf",
+      "header": {
+        "name": "zlib-devel",
+        "epoch": 0,
+        "version": "1.2.11",
+        "release": "26.el8",
+        "arch": "x86_64",
+        "nevra": "zlib-devel-0:1.2.11-26.el8.x86_64",
+        "source_rpm": "zlib-1.2.11-26.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "zstd-0:1.4.4-1.el8.x86_64",
+      "received_sha256": "3a5bea3f29f92bd1b4865f129ac8807a20201ccfb7d807b8e6e5a7a77174a2ac",
+      "header": {
+        "name": "zstd",
+        "epoch": 0,
+        "version": "1.4.4",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "zstd-0:1.4.4-1.el8.x86_64",
+        "source_rpm": "zstd-1.4.4-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    }
+  ]
+}

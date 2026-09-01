@@ -7,8 +7,10 @@ host compiler, EL8-targeting cross compilers for x86_64 and aarch64, CPython
 build-system-independent DEB/RPM packaging.
 
 > **Not yet publishable as the complete SDK.** The first real x86_64
-> cross-toolchain slice now builds and passes smoke qualification, but host RPM
-> inputs remain unlocked and aarch64, Python, vcpkg and packaging are pending.
+> cross-toolchain slice now builds from locked host and sysroot transactions
+> and passes smoke qualification. aarch64, Python, vcpkg and packaging remain
+> pending, as does the independent minimal host-runtime lock required for the
+> final user image.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -51,12 +53,12 @@ qualified release.
 
 ## Phase 2: x86_64 vertical slice
 
-The Rocky 8.10 sysroot lock captures a 78-RPM DNF transaction. Validate its
-planning manifest and content lock:
+The Rocky 8.10 sysroot is a canonical 78-RPM DNF transaction. Validate its
+plan and signed content lock:
 
 ```console
-$ ./scripts/validate-sysroot-lock.py config/sysroots/el8-x86_64.plan.json
-$ ./scripts/validate-sysroot-lock.py locks/sysroot-el8-x86_64.json --require-lock
+$ ./scripts/validate-rpm-lock.py config/rpm/sysroot-el8-x86_64.plan.json
+$ ./scripts/validate-rpm-lock.py locks/sysroot-el8-x86_64.json --require-lock
 ```
 
 Build the real locked sysroot. RPM downloads are hash- and signature-checked;
@@ -76,13 +78,45 @@ This applies the complete Rocky GCC/binutils SRPM patch sets, builds binutils
 2.44 and GCC 15.2.1 for `x86_64-unknown-linux-gnu`, installs the EL8 shared
 runtime plus RH `libstdc++_nonshared80`, then exercises C, C++20, LTO,
 cross-DSO exceptions, link traces and ABI ceilings. The `-dev` suffix is
-intentional: the current host tool closure still comes from live Rocky
-repositories. A canonical, replayable DNF resolver/transaction manifest and a
-host RPM lock are both required before candidate builds are allowed.
+intentional: the second target, frozen ABI sets, full GCC/Qt qualification and
+release supply chain are not implemented yet.
 
 The compiler gate is currently a documented manual/heavy check; regular CI
-builds through the locked sysroot only. A locked host closure and suitable
-runner capacity are prerequisites for making the toolchain gate mandatory.
+builds both locked host layers and the sysroot, but not the full compiler.
+
+## Phase 3: reproducible RPM foundation
+
+Host preparation is split deliberately: common tools contain the exact
+qualified binutils environment, while `bison`, `flex`, `libzstd-devel` and `m4`
+form a GCC-only additive lock. Validate and install both offline:
+
+```console
+$ ./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock
+$ ./scripts/validate-rpm-lock.py locks/host-gcc-build-el8-x86_64.json --require-lock
+$ docker buildx bake host-build-common-locked host-gcc-build-locked
+```
+
+Maintenance targets run the canonical resolver in the pinned Rocky image and
+emit reviewable transaction, RPM and metadata evidence. They never participate
+in normal builds:
+
+```console
+$ docker buildx bake rpm-lock-host-build-common \
+    --set rpm-lock-host-build-common.output=type=local,dest=work/lock-refresh/common
+```
+
+Equivalent targets exist for `rpm-lock-sysroot-x86_64` and
+`rpm-lock-host-gcc-build`; refresh common before its GCC delta. Bake forces
+these maintenance targets to bypass cache.
+
+These are build-environment locks, not the final image runtime. That runtime is
+resolved independently from a clean Rocky base after its user-facing tool set
+is frozen.
+
+Every transaction records canonical install/upgrade/remove actions, exact DNF reasons,
+base/remove/result RPM
+inventories, repository metadata and detached signatures. Normal builds use
+only committed locks and perform package installation under `--network=none`.
 
 ## Product contract
 

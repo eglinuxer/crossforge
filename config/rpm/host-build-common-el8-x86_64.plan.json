@@ -1,0 +1,162 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-plan.schema.json",
+  "schema_version": 1,
+  "kind": "rpm-plan",
+  "identity": {
+    "name": "host-build-common-el8-x86_64",
+    "role": "host-build-common",
+    "distribution": "rocky",
+    "release": "8.10",
+    "baseline": "el8",
+    "arch": "x86_64",
+    "target_triple": null
+  },
+  "base": {
+    "mode": "image",
+    "parent_lock": null,
+    "parent_sha256": null
+  },
+  "repositories": [
+    {
+      "id": "baseos",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/"
+    },
+    {
+      "id": "appstream",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/"
+    }
+  ],
+  "solver_policy": {
+    "allowed_arches": [
+      "x86_64",
+      "noarch"
+    ],
+    "install_weak_deps": false,
+    "best": true,
+    "strict": true,
+    "allow_erasing": false,
+    "module_platform_id": "platform:el8",
+    "enabled_modules": [
+      "perl:5.26",
+      "perl-IO-Socket-SSL:2.066",
+      "perl-libwww-perl:6.34"
+    ]
+  },
+  "roots": [
+    {
+      "name": "bzip2",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "diffutils",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "file",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "findutils",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "gcc-toolset-15-binutils",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "gcc-toolset-15-gcc",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "gcc-toolset-15-gcc-c++",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "glibc-devel",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "gmp-devel",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "gzip",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "libmpc-devel",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "make",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "mpfr-devel",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "patch",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "perl-interpreter",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "redhat-rpm-config",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "rpm-build",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "scl-utils-build",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "sed",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "tar",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "which",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "xz",
+      "arch": "any",
+      "purpose": "host-build-common"
+    },
+    {
+      "name": "zlib-devel",
+      "arch": "any",
+      "purpose": "host-build-common"
+    }
+  ]
+}

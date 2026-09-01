@@ -1,0 +1,741 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/rpm-transaction.schema.json",
+  "title": "Crossforge RPM solver transaction",
+  "description": "Canonical DNF resolution output before RPM payloads are downloaded and verified.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "identity",
+    "plan",
+    "resolver",
+    "base",
+    "repositories",
+    "solver_policy",
+    "requests",
+    "items",
+    "manifests"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/rpm-transaction.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "rpm-transaction"
+    },
+    "identity": {
+      "$ref": "#/$defs/identity"
+    },
+    "plan": {
+      "$ref": "#/$defs/plan_reference"
+    },
+    "resolver": {
+      "$ref": "#/$defs/resolver"
+    },
+    "base": {
+      "$ref": "#/$defs/base"
+    },
+    "repositories": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/repository"
+      }
+    },
+    "solver_policy": {
+      "$ref": "#/$defs/solver_policy"
+    },
+    "requests": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/request"
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/transaction_item"
+      }
+    },
+    "manifests": {
+      "$ref": "#/$defs/manifests"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "role",
+        "distribution",
+        "release",
+        "baseline",
+        "arch",
+        "target_triple"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "role": {
+          "enum": [
+            "target-sysroot",
+            "host-build-common",
+            "host-gcc-build"
+          ]
+        },
+        "distribution": {
+          "const": "rocky"
+        },
+        "release": {
+          "const": "8.10"
+        },
+        "baseline": {
+          "const": "el8"
+        },
+        "arch": {
+          "enum": [
+            "x86_64",
+            "aarch64"
+          ]
+        },
+        "target_triple": {
+          "enum": [
+            null,
+            "x86_64-unknown-linux-gnu",
+            "aarch64-unknown-linux-gnu"
+          ]
+        }
+      }
+    },
+    "plan_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^config/rpm/[A-Za-z0-9+_.-]+\\.plan\\.json$"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "resolver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation",
+        "contract_version",
+        "image",
+        "image_digest",
+        "components",
+        "platform_python",
+        "load_system_repo",
+        "plugins"
+      ],
+      "properties": {
+        "implementation": {
+          "const": "python3-dnf"
+        },
+        "contract_version": {
+          "const": 1
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "image_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/resolver_component"
+          }
+        },
+        "platform_python": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "load_system_repo": {
+          "type": "boolean"
+        },
+        "plugins": {
+          "const": false
+        }
+      }
+    },
+    "resolver_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "nevra"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9+_.-]+$"
+        },
+        "nevra": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "base": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/base_empty"
+        },
+        {
+          "$ref": "#/$defs/base_image"
+        },
+        {
+          "$ref": "#/$defs/base_lock"
+        }
+      ]
+    },
+    "base_empty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "parent_lock",
+        "parent_sha256"
+      ],
+      "properties": {
+        "mode": {
+          "const": "empty"
+        },
+        "parent_lock": {
+          "const": null
+        },
+        "parent_sha256": {
+          "const": null
+        }
+      }
+    },
+    "base_image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "parent_lock",
+        "parent_sha256"
+      ],
+      "properties": {
+        "mode": {
+          "const": "image"
+        },
+        "parent_lock": {
+          "const": null
+        },
+        "parent_sha256": {
+          "const": null
+        }
+      }
+    },
+    "base_lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "parent_lock",
+        "parent_sha256"
+      ],
+      "properties": {
+        "mode": {
+          "const": "lock"
+        },
+        "parent_lock": {
+          "type": "string",
+          "pattern": "^locks/[A-Za-z0-9+_.-]+\\.json$"
+        },
+        "parent_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "checksum": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "sha256"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[0-9a-f]+$"
+        }
+      }
+    },
+    "repository_signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "location",
+        "sha256",
+        "size",
+        "fingerprint"
+      ],
+      "properties": {
+        "location": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "fingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "repomd": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "location",
+        "sha256",
+        "size",
+        "signature",
+        "revision"
+      ],
+      "properties": {
+        "location": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "signature": {
+          "$ref": "#/$defs/repository_signature"
+        },
+        "revision": {
+          "$ref": "#/$defs/nullable_string"
+        }
+      }
+    },
+    "nullable_checksum": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/checksum"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullable_integer": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "location",
+        "checksum",
+        "size",
+        "open_checksum",
+        "open_size"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checksum": {
+          "$ref": "#/$defs/checksum"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "open_checksum": {
+          "$ref": "#/$defs/nullable_checksum"
+        },
+        "open_size": {
+          "$ref": "#/$defs/nullable_integer"
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "baseurl",
+        "gpgcheck",
+        "repo_gpgcheck",
+        "gpg_key",
+        "repomd",
+        "metadata"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "baseurl": {
+          "type": "string",
+          "pattern": "^https://.*/$"
+        },
+        "gpgcheck": {
+          "const": true
+        },
+        "repo_gpgcheck": {
+          "const": true
+        },
+        "gpg_key": {
+          "$ref": "#/$defs/gpg_key"
+        },
+        "repomd": {
+          "$ref": "#/$defs/repomd"
+        },
+        "metadata": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/metadata"
+          }
+        }
+      }
+    },
+    "gpg_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "fingerprint"
+      ],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "fingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "solver_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_arches",
+        "install_weak_deps",
+        "best",
+        "strict",
+        "allow_erasing",
+        "module_platform_id",
+        "enabled_modules"
+      ],
+      "properties": {
+        "allowed_arches": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "x86_64",
+              "aarch64",
+              "noarch"
+            ]
+          }
+        },
+        "install_weak_deps": {
+          "const": false
+        },
+        "best": {
+          "const": true
+        },
+        "strict": {
+          "const": true
+        },
+        "allow_erasing": {
+          "const": false
+        },
+        "module_platform_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9+_.-]+:[A-Za-z0-9+_.-]+$"
+        },
+        "enabled_modules": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9+_.-]+:[A-Za-z0-9+_.-]+$"
+          }
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "arch",
+        "purpose",
+        "resolved_nevra",
+        "disposition"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9+_.-]+$"
+        },
+        "arch": {
+          "enum": [
+            "target",
+            "noarch",
+            "any"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "resolved_nevra": {
+          "type": "string",
+          "minLength": 1
+        },
+        "disposition": {
+          "enum": [
+            "base",
+            "transaction"
+          ]
+        }
+      }
+    },
+    "nullable_string": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullable_location": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[^/].*\\.rpm$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullable_source_rpm": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^.+\\.src\\.rpm$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullable_url": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^https://.*\\.rpm$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "transaction_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "epoch",
+        "version",
+        "release",
+        "arch",
+        "nevra",
+        "repo_id",
+        "action",
+        "reason",
+        "location",
+        "url",
+        "repository_checksum",
+        "size",
+        "install_size",
+        "source_rpm"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9+_.-]+$"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "release": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arch": {
+          "enum": [
+            "x86_64",
+            "aarch64",
+            "noarch"
+          ]
+        },
+        "nevra": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repo_id": {
+          "$ref": "#/$defs/nullable_string"
+        },
+        "action": {
+          "enum": [
+            "install",
+            "upgrade",
+            "remove"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "location": {
+          "$ref": "#/$defs/nullable_location"
+        },
+        "url": {
+          "$ref": "#/$defs/nullable_url"
+        },
+        "repository_checksum": {
+          "$ref": "#/$defs/nullable_checksum"
+        },
+        "size": {
+          "$ref": "#/$defs/nullable_integer"
+        },
+        "install_size": {
+          "$ref": "#/$defs/nullable_integer"
+        },
+        "source_rpm": {
+          "$ref": "#/$defs/nullable_source_rpm"
+        }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packages",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "packages": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "manifests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base",
+        "remove",
+        "result"
+      ],
+      "properties": {
+        "base": {
+          "$ref": "#/$defs/manifest"
+        },
+        "remove": {
+          "$ref": "#/$defs/manifest"
+        },
+        "result": {
+          "$ref": "#/$defs/manifest"
+        }
+      }
+    }
+  }
+}

@@ -23,6 +23,23 @@
     "tool_host": "linux/amd64",
     "image": "linux/amd64"
   },
+  "host_locks": {
+    "host-build-common": {
+      "status": "locked",
+      "lock_file": "locks/host-build-common-el8-x86_64.json",
+      "canonical_sha256": "d6d1b33772faa48658a30b01f5cc6a254c0b6c7640d52296b2e0f4efe7945c01"
+    },
+    "host-gcc-build": {
+      "status": "locked",
+      "lock_file": "locks/host-gcc-build-el8-x86_64.json",
+      "canonical_sha256": "de271a4ba8a9e4bc31c8fc8a92c05fde4736afbc64b1251e06751a0cb96c2be0"
+    },
+    "host-runtime": {
+      "status": "pending",
+      "lock_file": null,
+      "canonical_sha256": null
+    }
+  },
   "gts": {
     "major": 15,
     "gcc_version": "15.2.1",
@@ -55,7 +72,7 @@
       "sysroot": {
         "status": "locked",
         "lock_file": "locks/sysroot-el8-x86_64.json",
-        "canonical_sha256": "3b8f24c2312e8625f43f1d2f2bfbf97e2c725d5202e3170a80d1dc8f10ec9808"
+        "canonical_sha256": "ffe67b4d7448b02be7db774c8d85fdc8b13da695c0184de444949c641876ef57"
       }
     },
     {

@@ -12,6 +12,7 @@
     "base_image",
     "trust",
     "platforms",
+    "host_locks",
     "gts",
     "binutils",
     "targets",
@@ -114,6 +115,26 @@
         },
         "image": {
           "const": "linux/amd64"
+        }
+      }
+    },
+    "host_locks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "host-build-common",
+        "host-gcc-build",
+        "host-runtime"
+      ],
+      "properties": {
+        "host-build-common": {
+          "$ref": "#/$defs/host_lock"
+        },
+        "host-gcc-build": {
+          "$ref": "#/$defs/host_lock"
+        },
+        "host-runtime": {
+          "$ref": "#/$defs/host_lock"
         }
       }
     },
@@ -550,6 +571,52 @@
             "lock_file": {
               "type": "string",
               "pattern": "^locks/sysroot-el8-(x86_64|aarch64)\\.json$"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      ]
+    },
+    "host_lock": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "lock_file",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "status": {
+              "const": "pending"
+            },
+            "lock_file": {
+              "const": null
+            },
+            "canonical_sha256": {
+              "const": null
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "lock_file",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "status": {
+              "const": "locked"
+            },
+            "lock_file": {
+              "type": "string",
+              "pattern": "^locks/host-(build-common|gcc-build|runtime)-el8-x86_64\\.json$"
             },
             "canonical_sha256": {
               "type": "string",

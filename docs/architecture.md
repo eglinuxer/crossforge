@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：x86_64 sysroot 已锁定，GTS15 C/C++/LTO cross slice 已实际构建并通过 smoke；它仍是非发布 `-dev` target，直到 canonical DNF transaction 生成链和 host RPM closure 均锁定。aarch64、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现。
+> 实施进度：canonical DNF resolver、x86_64 sysroot、host common/GCC 增量 locks 与 GTS15 C/C++/LTO cross slice 已完成并通过离线重放及 smoke。它仍是非发布 `-dev` target；aarch64、最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现。
 
 ## 1. 产品契约
 
@@ -72,7 +72,7 @@ Rocky 8.10 GTS15 GCC/binutils SRPM
 
 `%prep` 使用 `rpmbuild -bp --nodeps` 是有意且仅限此阶段：SRPM 的完整
 `BuildRequires` 同时覆盖原生 `%build`、文档和测试，会为单纯解包/打补丁引入
-约 730 个无关包。Crossforge 在 candidate 前另行锁定 `%prep` 实际使用的 RPM 工具与命令，
+约 730 个无关包。Crossforge 已用 host-build-common transaction 锁定 `%prep` 实际使用的 RPM 工具与命令，
 校验 SRPM 签名、SRPM/spec SHA256、EL8 RPM 宏和 prepared tree；cross build
 依赖则按 Crossforge 自己的 configure/make recipe 锁定。其他阶段不得借此跳过
 依赖检查。
@@ -96,7 +96,7 @@ GROUP ( =/lib64/libgcc_s.so.1 libgcc.a )
 
 规划阶段可以用 `status: "pending"` 明示尚未核实的来源，禁止填入猜测值；任何 candidate/release 构建都必须使用 `validate-release.py --require-locked`，存在一个 pending pin 即失败。
 
-规范配置、RPM locks、测试 manifest 和 `crosspack.json` 统一使用严格 JSON + JSON Schema。loader 必须拒绝重复 key、未知字段和未知 `schema_version`。配置身份由 canonical JSON 的 SHA256 计算，不受空白或格式化影响。Bake HCL、CMakePresets、vcpkg manifest、GitHub Actions YAML 等继续使用各自工具的原生格式；生成文件禁止手工修改，并由 CI 检查漂移。
+规范配置、RPM plans/transactions/locks、测试 manifest 和 `crosspack.json` 统一使用严格 JSON + JSON Schema。loader 必须拒绝重复 key、未知字段和未知 `schema_version`。配置身份由 canonical JSON 的 SHA256 计算，不受空白或格式化影响。RPM 供应链固定为三层证据：人工 plan、规范化 install/upgrade/remove 动作并保留精确 reason 的 DNF transaction、实收 payload content lock；不得从下载目录反推或伪造 solver reason。Bake HCL、CMakePresets、vcpkg manifest、GitHub Actions YAML 等继续使用各自工具的原生格式；生成文件禁止手工修改，并由 CI 检查漂移。
 
 ## 6. Sysroot 与运行时兼容性
 
@@ -113,13 +113,21 @@ Crossforge 不定义 staging/overlay 目录、产品级 sysroot profile 或第�
 
 `locks/sysroot-*.json` 可因 Rocky errata 更新；`abi/el8/{x86_64,aarch64}.json` 则冻结最低允许的符号集合。sysroot 更新不得静默扩大 ABI，只有显式升级产品 baseline 才能修改冻结集合。
 
-当前 x86_64 lock 捕获了由 14 个显式 roots 经 DNF 求解得到的 78 个 RPM，并固定
-repomd/primary metadata、逐包 NEVRA、URL、仓库 checksum、实收 SHA256、source
-RPM 与 Rocky 签名指纹。正式 assembly 不访问仓库；它先从已验签
-`filesystem` RPM manifest 核对并预置 EL8 usrmerge 链接，再以无 scripts/triggers
-的完整 RPM transaction 安装锁定闭包。当前 renderer 会核验所给 RPM 集合，但
-尚未自行执行并记录唯一的 DNF 求解命令；可发布 candidate 前必须补齐固定镜像、
-空 installroot、transaction manifest 严格比对的 canonical resolver。
+当前 x86_64 transaction 由固定 Rocky digest 内的 `python3-dnf` 从空 installroot
+通过上游 [`Base.resolve()`/`download_packages()` API](https://dnf.readthedocs.io/en/latest/api_base.html)
+解析 14 个显式 roots，精确得到 78 个 RPM。Resolver 禁用 plugins/system repo，
+固定架构、模块策略和 solver flags，并记录 DNF action/reason、base/remove/result
+inventories。BaseOS `repomd.xml.asc`、完整 metadata checksum 链、逐包 NEVRA、URL、
+仓库 checksum、实收 SHA256、source RPM 与 Rocky 签名均被锁定。正式 assembly
+不访问仓库；它预置经签名 `filesystem` manifest 验证的 usrmerge 链接，再以无
+scripts/triggers 的 RPM transaction 安装，最终 rpmdb 必须逐项等于 result manifest。
+
+Host 构建环境使用两个独立 transaction：common 从固定基础镜像解析为 119 install
+以及 9 upgrade（并记录对应 9 remove）；GCC additive delta 只含 `bison`、`flex`、
+`libzstd-devel` 与依赖 `m4`。两层均逐包验签后在 `--network=none` 下执行真实
+scripts/triggers，并核对完整 rpmdb。`libzstd-devel` 不进入 common 层，避免改变
+binutils 的 `--with-zstd=auto` 探测。最终用户镜像的 host runtime lock 必须从干净
+Rocky base 独立求解，不得继承这些 build-only packages。
 
 ## 7. Python SDK
 
@@ -229,8 +237,10 @@ Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单�
 
 ```text
 config/                  release.json 与 JSON Schema
-config/sysroots/         DNF 求解输入计划
-locks/                   host/sysroot 精确 RPM locks
+config/rpm/              DNF 求解输入 plans
+locks/transactions/      DNF 规范化 action、精确 reason 与 inventory manifests
+locks/metadata/          已验签 repomd 与 detached signatures
+locks/                   host/sysroot 实收 RPM content locks
 keys/                    固定的 RPM 签名信任根
 abi/el8/                 冻结 ABI 集合
 docker/                  Dockerfile 与 test.Dockerfile
