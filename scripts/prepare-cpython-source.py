@@ -16,17 +16,44 @@ from pathlib import Path, PurePosixPath
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
-RELEASE_VALIDATOR = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
-ValidationError = RELEASE_VALIDATOR["ValidationError"]
-load_json = RELEASE_VALIDATOR["load_json"]
-validate = RELEASE_VALIDATOR["validate"]
-validate_schema_subset = RELEASE_VALIDATOR["validate_schema_subset"]
-ROW_CONTRACT = runpy.run_path(str(REPOSITORY / "scripts/python_row_contract.py"))
-ContractError = ROW_CONTRACT["ContractError"]
+SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+RELEASE_VALIDATOR = None
+ROW_CONTRACT = None
+COMPONENT_READER = None
+EXACT_VERSION = re.compile(r"^3\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\Z")
+ROW_NAME = re.compile(r"^cp[0-9]+\Z")
+SHA256 = re.compile(r"^[0-9a-f]{64}\Z")
 
 
 class PreparationError(Exception):
     pass
+
+
+def release_validator():
+    global RELEASE_VALIDATOR
+    if RELEASE_VALIDATOR is None:
+        RELEASE_VALIDATOR = runpy.run_path(
+            str(SCRIPT_DIRECTORY / "validate-release.py")
+        )
+    return RELEASE_VALIDATOR
+
+
+def row_contract_tools():
+    global ROW_CONTRACT
+    if ROW_CONTRACT is None:
+        ROW_CONTRACT = runpy.run_path(
+            str(SCRIPT_DIRECTORY / "python_row_contract.py")
+        )
+    return ROW_CONTRACT
+
+
+def component_reader():
+    global COMPONENT_READER
+    if COMPONENT_READER is None:
+        COMPONENT_READER = runpy.run_path(
+            str(SCRIPT_DIRECTORY / "release_component.py")
+        )
+    return COMPONENT_READER
 
 
 def canonical_sha256(value):
@@ -47,14 +74,237 @@ def sha256_file(path):
 
 
 def row_for(config, row):
+    tools = row_contract_tools()
     try:
-        binding = ROW_CONTRACT["bind_release"](config, row=row)
-    except ContractError as error:
+        binding = tools["bind_release"](config, row=row)
+    except tools["ContractError"] as error:
         raise PreparationError(str(error)) from error
     entry = binding["entry"]
     if entry["source"]["status"] != "locked":
         raise PreparationError("CPython source is not locked: %s" % row)
     return entry
+
+
+def _component_materials(reader, document):
+    materials = {}
+    for record in document["materials"]:
+        path = reader["decode_json_pointer"](record["path"])
+        if path in materials:
+            raise PreparationError("component repeats a material path")
+        materials[path] = record["value"]
+    return materials
+
+
+def _require_material(materials, path, expected_type, label):
+    if path not in materials:
+        raise PreparationError("component is missing %s" % label)
+    value = materials[path]
+    if type(value) is not expected_type:
+        raise PreparationError("component %s has the wrong JSON type" % label)
+    return value
+
+
+def _load_component(path, name, digest):
+    reader = component_reader()
+    try:
+        return reader["load_component"](path, name, "build", digest)
+    except reader["ComponentError"] as error:
+        raise PreparationError("invalid %s component: %s" % (name, error)) from error
+
+
+def _policy_from_component(row, path, digest):
+    if ROW_NAME.match(row) is None:
+        raise PreparationError("invalid CPython row: %s" % row)
+    name = "implementation/python-%s-build-policy" % row
+    document = _load_component(path, name, digest)
+    if document["dependencies"] != []:
+        raise PreparationError("Python build policy must not have dependencies")
+    reader = component_reader()
+    materials = _component_materials(reader, document)
+    prefix = ("@implementation", "python_rows", row)
+    expected_paths = {
+        prefix + ("minor",),
+        prefix + ("row",),
+        prefix + ("adapter",),
+        prefix + ("sysconfig_isolation",),
+    }
+    if set(materials) != expected_paths:
+        raise PreparationError("Python build policy material set differs")
+    policy = {
+        "component": name,
+        "canonical_sha256": digest,
+        "minor": _require_material(materials, prefix + ("minor",), str, "minor"),
+        "row": _require_material(materials, prefix + ("row",), str, "row"),
+        "adapter": _require_material(
+            materials, prefix + ("adapter",), str, "adapter"
+        ),
+        "sysconfig_isolation": _require_material(
+            materials,
+            prefix + ("sysconfig_isolation",),
+            bool,
+            "sysconfig isolation",
+        ),
+    }
+    if (
+        policy["row"] != row
+        or policy["minor"] != row[2:3] + "." + row[3:]
+        or policy["adapter"] not in ("legacy", "transition", "modern")
+        or policy["sysconfig_isolation"] is not True
+    ):
+        raise PreparationError("Python build policy differs from row contract")
+    contract_tools = row_contract_tools()
+    try:
+        contract = contract_tools["contract_for_row"](row)
+    except contract_tools["ContractError"] as error:
+        raise PreparationError(str(error)) from error
+    for field in ("minor", "row", "adapter", "sysconfig_isolation"):
+        if policy[field] != contract[field] or type(policy[field]) is not type(
+            contract[field]
+        ):
+            raise PreparationError(
+                "Python build policy differs from current implementation contract"
+            )
+    return policy, document
+
+
+def _patches_from_materials(materials, prefix, minor):
+    empty_path = prefix + ("patches",)
+    patch_paths = [path for path in materials if path[:1] == ("patches",)]
+    if empty_path in materials:
+        if materials[empty_path] != [] or patch_paths != [empty_path]:
+            raise PreparationError("component empty patch material is invalid")
+        return []
+    records = {}
+    for relative in patch_paths:
+        if (
+            len(relative) != 3
+            or not relative[1].isdigit()
+            or str(int(relative[1])) != relative[1]
+            or relative[2] not in ("file", "sha256")
+        ):
+            raise PreparationError("component patch material path is invalid")
+        records.setdefault(int(relative[1]), {})[relative[2]] = materials[relative]
+    if sorted(records) != list(range(len(records))):
+        raise PreparationError("component patch indexes are not contiguous")
+    patches = []
+    for index in range(len(records)):
+        record = records[index]
+        if set(record) != {"file", "sha256"}:
+            raise PreparationError("component patch fields differ")
+        if type(record["file"]) is not str or type(record["sha256"]) is not str:
+            raise PreparationError("component patch fields have wrong JSON types")
+        relative = PurePosixPath(record["file"])
+        if (
+            relative.is_absolute()
+            or relative.parts[:3] != ("patches", "cpython", minor)
+            or len(relative.parts) != 4
+            or any(part in ("", ".", "..") for part in relative.parts)
+            or str(relative) != record["file"]
+            or not relative.name.endswith(".patch")
+            or SHA256.match(record["sha256"]) is None
+        ):
+            raise PreparationError("component patch path/hash is invalid")
+        patches.append({"file": record["file"], "sha256": record["sha256"]})
+    return patches
+
+
+def row_from_components(
+    row,
+    source_component,
+    source_component_sha256,
+    policy_component,
+    policy_component_sha256,
+):
+    policy, _policy_document = _policy_from_component(
+        row, policy_component, policy_component_sha256
+    )
+    source_name = "python/%s-source" % row
+    document = _load_component(
+        source_component, source_name, source_component_sha256
+    )
+    expected_dependency = [
+        {
+            "component": policy["component"],
+            "canonical_sha256": policy_component_sha256,
+        }
+    ]
+    if document["dependencies"] != expected_dependency:
+        raise PreparationError("Python source component policy dependency differs")
+    reader = component_reader()
+    materials = _component_materials(reader, document)
+    indexes = {
+        path[2]
+        for path in materials
+        if len(path) >= 4 and path[:2] == ("python", "versions")
+    }
+    if len(indexes) != 1 or not next(iter(indexes)).isdigit():
+        raise PreparationError("Python source component must select one version prefix")
+    prefix = ("python", "versions", next(iter(indexes)))
+    relative_materials = {
+        path[len(prefix):]: value
+        for path, value in materials.items()
+        if path[: len(prefix)] == prefix
+    }
+    if len(relative_materials) != len(materials):
+        raise PreparationError("Python source component has unrelated materials")
+    version = _require_material(
+        relative_materials, ("version",), str, "version"
+    )
+    adapter = _require_material(
+        relative_materials, ("adapter",), str, "adapter"
+    )
+    source = {
+        field: _require_material(
+            relative_materials,
+            ("source", field),
+            int if field == "size" else str,
+            "source %s" % field,
+        )
+        for field in ("status", "url", "sha256", "size")
+    }
+    patches = _patches_from_materials(relative_materials, (), policy["minor"])
+    allowed = {
+        ("version",),
+        ("adapter",),
+        ("source", "status"),
+        ("source", "url"),
+        ("source", "sha256"),
+        ("source", "size"),
+    }
+    if patches:
+        for index in range(len(patches)):
+            allowed.add(("patches", str(index), "file"))
+            allowed.add(("patches", str(index), "sha256"))
+    else:
+        allowed.add(("patches",))
+    if set(relative_materials) != allowed:
+        raise PreparationError("Python source component material set differs")
+    minor = version.rsplit(".", 1)[0] if EXACT_VERSION.match(version) else ""
+    if (
+        source["status"] != "locked"
+        or not source["url"].startswith("https://")
+        or SHA256.match(source["sha256"]) is None
+        or type(source["size"]) is not int
+        or source["size"] <= 0
+        or adapter != policy["adapter"]
+        or minor != policy["minor"]
+        or row != "cp" + minor.replace(".", "")
+    ):
+        raise PreparationError("Python source component differs from build policy")
+    entry = {
+        "version": version,
+        "adapter": adapter,
+        "source": source,
+        "patches": patches,
+    }
+    identities = {
+        "source_component": {
+            "component": source_name,
+            "canonical_sha256": source_component_sha256,
+        },
+        "build_policy": policy,
+    }
+    return entry, identities
 
 
 def verify_archive(archive, source):
@@ -259,8 +509,45 @@ def fsync_directory(path):
         os.close(descriptor)
 
 
-def prepare(config, row, archive, destination, manifest, repository):
-    entry = row_for(config, row)
+def _source_manifest(entry, row, applied, context):
+    source = entry["source"]
+    minor = entry["version"].rsplit(".", 1)[0]
+    common = {
+        "kind": "crossforge-cpython-source-row",
+        "row": row,
+        "version": entry["version"],
+        "minor": minor,
+        "compact": minor.replace(".", ""),
+        "adapter": entry["adapter"],
+        "source": {
+            "url": source["url"],
+            "size": source["size"],
+            "sha256": source["sha256"],
+        },
+        "patches": applied,
+    }
+    if context["mode"] == "release":
+        common.update(
+            {
+                "schema_version": 1,
+                "support": entry["support"],
+                "release_sha256": canonical_sha256(context["release"]),
+            }
+        )
+    elif context["mode"] == "component":
+        common.update(
+            {
+                "schema_version": 2,
+                "source_component": context["source_component"],
+                "build_policy": context["build_policy"],
+            }
+        )
+    else:
+        raise PreparationError("unsupported CPython source manifest mode")
+    return common
+
+
+def _prepare_entry(entry, row, archive, destination, manifest, repository, context):
     source = entry["source"]
     verify_archive(archive, source)
     if destination.exists() or destination.is_symlink():
@@ -281,24 +568,7 @@ def prepare(config, row, archive, destination, manifest, repository):
         source_root = extract_archive(archive, temporary, entry["version"])
         applied = apply_patches(source_root, entry.get("patches", []), repository)
         validate_sysconfig_isolation(source_root, entry["version"])
-        minor = entry["version"].rsplit(".", 1)[0]
-        identity = {
-            "schema_version": 1,
-            "kind": "crossforge-cpython-source-row",
-            "row": row,
-            "version": entry["version"],
-            "minor": minor,
-            "compact": minor.replace(".", ""),
-            "adapter": entry["adapter"],
-            "support": entry["support"],
-            "release_sha256": canonical_sha256(config),
-            "source": {
-                "url": source["url"],
-                "size": source["size"],
-                "sha256": source["sha256"],
-            },
-            "patches": applied,
-        }
+        identity = _source_manifest(entry, row, applied, context)
         with tempfile.NamedTemporaryFile(
             mode="w",
             prefix=".%s." % manifest.name,
@@ -342,31 +612,115 @@ def prepare(config, row, archive, destination, manifest, repository):
     return identity
 
 
+def prepare(config, row, archive, destination, manifest, repository):
+    entry = row_for(config, row)
+    return _prepare_entry(
+        entry,
+        row,
+        archive,
+        destination,
+        manifest,
+        repository,
+        {"mode": "release", "release": config},
+    )
+
+
+def prepare_component(
+    row,
+    archive,
+    destination,
+    manifest,
+    repository,
+    source_component,
+    source_component_sha256,
+    policy_component,
+    policy_component_sha256,
+):
+    entry, identities = row_from_components(
+        row,
+        source_component,
+        source_component_sha256,
+        policy_component,
+        policy_component_sha256,
+    )
+    context = {"mode": "component"}
+    context.update(identities)
+    return _prepare_entry(
+        entry, row, archive, destination, manifest, repository, context
+    )
+
+
+def load_release_configuration(config_path, schema_path):
+    tools = release_validator()
+    try:
+        config = tools["load_json"](config_path)
+        schema = tools["load_json"](schema_path)
+        tools["validate_schema_subset"](schema)
+        tools["validate"](config, schema, schema, "$")
+    except tools["ValidationError"] as error:
+        raise PreparationError(str(error)) from error
+    return config
+
+
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--row", required=True)
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--destination", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
-    parser.add_argument("--config", type=Path, default=REPOSITORY / "config/release.json")
-    parser.add_argument(
-        "--schema", type=Path, default=REPOSITORY / "config/schemas/release.schema.json"
-    )
+    parser.add_argument("--config", type=Path)
+    parser.add_argument("--schema", type=Path)
+    parser.add_argument("--source-component", type=Path)
+    parser.add_argument("--source-component-sha256")
+    parser.add_argument("--policy-component", type=Path)
+    parser.add_argument("--policy-component-sha256")
     arguments = parser.parse_args()
     try:
-        config = load_json(arguments.config)
-        schema = load_json(arguments.schema)
-        validate_schema_subset(schema)
-        validate(config, schema, schema, "$")
-        identity = prepare(
-            config,
-            arguments.row,
-            arguments.archive,
-            arguments.destination,
-            arguments.manifest,
-            REPOSITORY,
+        component_values = (
+            arguments.source_component,
+            arguments.source_component_sha256,
+            arguments.policy_component,
+            arguments.policy_component_sha256,
         )
-    except (OSError, PreparationError, ValidationError, tarfile.TarError) as error:
+        component_mode = any(value is not None for value in component_values)
+        if component_mode and not all(value is not None for value in component_values):
+            raise PreparationError(
+                "source and policy component files/digests must be provided together"
+            )
+        if component_mode and (
+            arguments.config is not None or arguments.schema is not None
+        ):
+            raise PreparationError(
+                "component inputs and full release inputs are mutually exclusive"
+            )
+        if component_mode:
+            identity = prepare_component(
+                arguments.row,
+                arguments.archive,
+                arguments.destination,
+                arguments.manifest,
+                REPOSITORY,
+                arguments.source_component,
+                arguments.source_component_sha256,
+                arguments.policy_component,
+                arguments.policy_component_sha256,
+            )
+        else:
+            config_path = arguments.config or REPOSITORY / "config/release.json"
+            schema_path = (
+                arguments.schema
+                or REPOSITORY / "config/schemas/release.schema.json"
+            )
+            config = load_release_configuration(config_path, schema_path)
+            identity = prepare(
+                config,
+                arguments.row,
+                arguments.archive,
+                arguments.destination,
+                arguments.manifest,
+                REPOSITORY,
+            )
+    except (OSError, PreparationError, tarfile.TarError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1
     print(

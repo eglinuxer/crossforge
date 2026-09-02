@@ -24,8 +24,26 @@ def support_script(name):
     raise RowError("missing row support script: %s" % name)
 
 
-ROW_CONTRACT = runpy.run_path(str(support_script("python_row_contract.py")))
-ContractError = ROW_CONTRACT["ContractError"]
+ROW_CONTRACT = None
+PREPARER = None
+
+
+def row_contract_tools():
+    global ROW_CONTRACT
+    if ROW_CONTRACT is None:
+        ROW_CONTRACT = runpy.run_path(
+            str(support_script("python_row_contract.py"))
+        )
+    return ROW_CONTRACT
+
+
+def preparation_tools():
+    global PREPARER
+    if PREPARER is None:
+        PREPARER = runpy.run_path(
+            str(support_script("prepare-cpython-source.py"))
+        )
+    return PREPARER
 
 
 def require(condition, message):
@@ -59,11 +77,12 @@ def canonical_sha256(value):
 
 
 def row_contract(release, row, version, adapter):
+    tools = row_contract_tools()
     try:
-        binding = ROW_CONTRACT["bind_release"](
+        binding = tools["bind_release"](
             release, version=version, adapter=adapter
         )
-    except ContractError as error:
+    except tools["ContractError"] as error:
         raise RowError(str(error)) from error
     contract = binding["contract"]
     selected = binding["entry"]
@@ -123,23 +142,91 @@ def row_contract(release, row, version, adapter):
     }
 
 
+def component_row_contract(
+    row,
+    version,
+    adapter,
+    source_component,
+    source_component_sha256,
+    policy_component,
+    policy_component_sha256,
+):
+    tools = preparation_tools()
+    try:
+        entry, identities = tools["row_from_components"](
+            row,
+            source_component,
+            source_component_sha256,
+            policy_component,
+            policy_component_sha256,
+        )
+    except tools["PreparationError"] as error:
+        raise RowError(str(error)) from error
+    require(entry["version"] == version, "component CPython version differs")
+    require(entry["adapter"] == adapter, "component CPython adapter differs")
+    context = {"mode": "component"}
+    context.update(identities)
+    return tools["_source_manifest"](
+        entry, row, entry["patches"], context
+    )
+
+
+def verify_source_manifest(path, expected):
+    actual = load_json(path)
+    require(
+        canonical_sha256(actual) == canonical_sha256(expected),
+        "source manifest differs from authenticated row contract",
+    )
+    return actual
+
+
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--release", type=Path, required=True)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    parser.add_argument("--release", type=Path)
     parser.add_argument("--row", required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--adapter", required=True)
     parser.add_argument("--manifest", type=Path)
+    parser.add_argument("--source-component", type=Path)
+    parser.add_argument("--source-component-sha256")
+    parser.add_argument("--policy-component", type=Path)
+    parser.add_argument("--policy-component-sha256")
     arguments = parser.parse_args()
 
-    contract = row_contract(
-        load_json(arguments.release),
-        arguments.row,
-        arguments.version,
-        arguments.adapter,
+    component_values = (
+        arguments.source_component,
+        arguments.source_component_sha256,
+        arguments.policy_component,
+        arguments.policy_component_sha256,
     )
+    component_mode = any(value is not None for value in component_values)
+    require(
+        not component_mode or all(value is not None for value in component_values),
+        "source and policy component files/digests must be provided together",
+    )
+    require(
+        (arguments.release is not None) != component_mode,
+        "select exactly one full release or component input mode",
+    )
+    if component_mode:
+        contract = component_row_contract(
+            arguments.row,
+            arguments.version,
+            arguments.adapter,
+            arguments.source_component,
+            arguments.source_component_sha256,
+            arguments.policy_component,
+            arguments.policy_component_sha256,
+        )
+    else:
+        contract = row_contract(
+            load_json(arguments.release),
+            arguments.row,
+            arguments.version,
+            arguments.adapter,
+        )
     if arguments.manifest is not None:
-        require(load_json(arguments.manifest) == contract, "row manifest mismatch")
+        verify_source_manifest(arguments.manifest, contract)
     print("valid CPython row: %s %s %s" % (arguments.row, arguments.version, arguments.adapter))
     return 0
 
