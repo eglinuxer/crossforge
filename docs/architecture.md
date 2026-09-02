@@ -314,4 +314,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：双 target compiler/hybrid runtime 与 CPython 3.10–3.14 双 target 行已完成；后续扩展 Python 3.9，并实现 vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：双 target compiler/hybrid runtime 与 CPython 3.9–3.14 双 target 行已完成；后续实现最终 host runtime/冻结 ABI、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
