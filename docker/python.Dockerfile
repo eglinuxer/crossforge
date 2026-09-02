@@ -11,6 +11,7 @@ ARG CPYTHON_ADAPTER
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 scripts/fetch-release-source.py /work/scripts/fetch-release-source.py
 COPY scripts/validate-release.py /work/scripts/validate-release.py
+COPY scripts/python_row_contract.py /work/scripts/python_row_contract.py
 RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
       --release /src/config/release.json \
       --row "$CPYTHON_ROW" \
@@ -27,6 +28,7 @@ WORKDIR /src
 COPY config/release.json /src/config/release.json
 COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY scripts/validate-release.py /work/scripts/validate-release.py
+COPY scripts/python_row_contract.py /work/scripts/python_row_contract.py
 COPY scripts/finalize-cpython-qualification.py \
   scripts/python_sdk_identity.py scripts/target_artifact_audit.py \
   /work/scripts/

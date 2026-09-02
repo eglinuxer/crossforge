@@ -28,6 +28,10 @@ TARGET_AUDIT = runpy.run_path(
 TargetAuditError = TARGET_AUDIT["AuditError"]
 EXEC_OPERATIONS = TARGET_AUDIT["EXEC_OPERATIONS"]
 LOADER_OPERATIONS = TARGET_AUDIT["LOADER_OPERATIONS"]
+ROW_CONTRACT = runpy.run_path(
+    str(Path(__file__).with_name("python_row_contract.py"))
+)
+ContractError = ROW_CONTRACT["ContractError"]
 
 
 TARGETS = {
@@ -58,15 +62,22 @@ REQUIRED_MODULES = (
     "_uuid",
     "zlib",
 )
-PYTHON_ADAPTERS = {
-    "3.11": "transition",
-    "3.13": "modern",
-}
-
-
 def require(condition, message):
     if not condition:
         raise QualificationError(message)
+
+
+def require_abi_value(actual, expected, name):
+    if type(expected) is int:
+        require(
+            type(actual) is int and actual == expected,
+            "target sysconfig %s mismatch: %r" % (name, actual),
+        )
+    else:
+        require(
+            actual == expected,
+            "target sysconfig %s mismatch: %r" % (name, actual),
+        )
 
 
 def reject_duplicate_keys(pairs):
@@ -119,17 +130,6 @@ def run(arguments, cwd=None, env=None):
             )
         )
     return process.stdout, process.stderr
-
-
-def python_contract(version):
-    match = re.fullmatch(r"(3\.(?:11|13))\.([0-9]+)", version)
-    require(match is not None, "unsupported CPython version: %s" % version)
-    minor = match.group(1)
-    return {
-        "adapter": PYTHON_ADAPTERS[minor],
-        "compact_minor": minor.replace(".", ""),
-        "minor": minor,
-    }
 
 
 def parse_target_artifact_audit(lines, build_directory, prefix):
@@ -220,9 +220,12 @@ def main():
 
     profile = TARGETS.get(arguments.target)
     require(profile is not None, "unsupported CPython target")
-    contract = python_contract(arguments.version)
+    try:
+        contract = ROW_CONTRACT["contract_for_version"](arguments.version)
+    except ContractError as error:
+        raise QualificationError(str(error)) from error
     minor = contract["minor"]
-    compact_minor = contract["compact_minor"]
+    compact_minor = minor.replace(".", "")
     expected_prefix = Path(
         "/opt/crossforge/python/cp%s/targets/%s"
         % (compact_minor, arguments.target)
@@ -259,17 +262,15 @@ def main():
 
     release = load_json(arguments.release)
     release_sha256 = hashlib.sha256(canonical_bytes(release)).hexdigest()
-    python_entries = [
-        item
-        for item in release["python"]["versions"]
-        if item["version"] == arguments.version
-    ]
-    require(len(python_entries) == 1, "release does not select one CPython source")
-    python_entry = python_entries[0]
-    require(
-        python_entry.get("adapter") == contract["adapter"],
-        "CPython version/adapter contract mismatch",
-    )
+    try:
+        binding = ROW_CONTRACT["bind_release"](
+            release,
+            version=arguments.version,
+            adapter=contract["adapter"],
+        )
+    except ContractError as error:
+        raise QualificationError(str(error)) from error
+    python_entry = binding["entry"]
     source = python_entry["source"]
     require(source["status"] == "locked", "CPython source is not locked")
 
@@ -326,18 +327,22 @@ def main():
     }
     for name, expected in expected_values.items():
         actual = variables.get(name, 0 if name == "HAVE_ALIGNED_REQUIRED" else None)
-        require(actual == expected, "target sysconfig %s mismatch: %r" % (name, actual))
-    if minor == "3.11":
+        require_abi_value(actual, expected, name)
+    if contract["gil_policy"] == "absent":
         require(
             "Py_GIL_DISABLED" not in variables,
-            "CPython 3.11 unexpectedly exposes Py_GIL_DISABLED",
+            "CPython %s unexpectedly exposes Py_GIL_DISABLED" % minor,
         )
-    else:
+    elif contract["gil_policy"] == "zero":
         require(
-            "Py_GIL_DISABLED" in variables and variables["Py_GIL_DISABLED"] == 0,
-            "CPython 3.13 must explicitly disable the free-threaded ABI",
+            "Py_GIL_DISABLED" in variables
+            and type(variables["Py_GIL_DISABLED"]) is int
+            and variables["Py_GIL_DISABLED"] == 0,
+            "CPython %s must explicitly disable the free-threaded ABI" % minor,
         )
         expected_values["Py_GIL_DISABLED"] = 0
+    else:
+        raise QualificationError("unsupported CPython GIL policy")
     build_triple = variables.get("BUILD_GNU_TYPE", "")
     require(
         re.fullmatch(r"x86_64-[A-Za-z0-9_.-]+-linux-gnu", build_triple)

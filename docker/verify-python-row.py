@@ -5,12 +5,27 @@ import argparse
 import hashlib
 import json
 import re
+import runpy
 import sys
 from pathlib import Path
 
 
 class RowError(RuntimeError):
     pass
+
+
+def support_script(name):
+    sibling = Path(__file__).with_name(name)
+    if sibling.is_file():
+        return sibling
+    repository_script = Path(__file__).resolve().parents[1] / "scripts" / name
+    if repository_script.is_file():
+        return repository_script
+    raise RowError("missing row support script: %s" % name)
+
+
+ROW_CONTRACT = runpy.run_path(str(support_script("python_row_contract.py")))
+ContractError = ROW_CONTRACT["ContractError"]
 
 
 def require(condition, message):
@@ -36,15 +51,6 @@ def load_json(path):
         raise RowError("%s: %s" % (path, error)) from error
 
 
-def canonical_row(version):
-    require(
-        isinstance(version, str) and re.fullmatch(r"3\.[0-9]+\.[0-9]+", version),
-        "CPython version is not an exact patch release",
-    )
-    minor = version.rsplit(".", 1)[0]
-    return "cp" + minor.replace(".", "")
-
-
 def canonical_sha256(value):
     encoded = json.dumps(
         value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
@@ -53,16 +59,15 @@ def canonical_sha256(value):
 
 
 def row_contract(release, row, version, adapter):
-    require(re.fullmatch(r"cp[0-9]+", row) is not None, "invalid CPython row")
-    matches = [
-        item
-        for item in release.get("python", {}).get("versions", [])
-        if item.get("version") == version
-    ]
-    require(len(matches) == 1, "release must select exactly one CPython version")
-    selected = matches[0]
-    require(canonical_row(version) == row, "row does not match CPython version")
-    require(selected.get("adapter") == adapter, "adapter differs from release")
+    try:
+        binding = ROW_CONTRACT["bind_release"](
+            release, version=version, adapter=adapter
+        )
+    except ContractError as error:
+        raise RowError(str(error)) from error
+    contract = binding["contract"]
+    selected = binding["entry"]
+    require(contract["row"] == row, "row does not match CPython implementation")
     source = selected.get("source")
     require(isinstance(source, dict), "release CPython source is missing")
     require(source.get("status") == "locked", "CPython source is not locked")
@@ -98,7 +103,7 @@ def row_contract(release, row, version, adapter):
         normalized_patches.append(
             {"file": patch["file"], "sha256": patch["sha256"]}
         )
-    minor = version.rsplit(".", 1)[0]
+    minor = contract["minor"]
     return {
         "schema_version": 1,
         "kind": "crossforge-cpython-source-row",

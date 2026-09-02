@@ -385,6 +385,20 @@ def validate_evidence(config, repository):
         "3.13": ("thomas@python.org", "https://accounts.google.com"),
         "3.14": ("hugo@python.org", "https://github.com/login/oauth"),
     }
+    python_patch_policy = {
+        "3.11.16": {
+            "adapter": "transition",
+            "file": "patches/cpython/3.11/0001-gh-115382-isolate-target-sysconfig.patch",
+            "sha256": "072dacfcc57b06bc1e5382726990627593a36e1f08232cb790db42ae334a49aa",
+            "layout_marker": b"to the 3.11 source\nlayout",
+        },
+        "3.12.14": {
+            "adapter": "modern",
+            "file": "patches/cpython/3.12/0001-gh-115382-isolate-target-sysconfig.patch",
+            "sha256": "ff3a8e2695b4c66d0f60e6c73ac0028221ef803a308ff4e81393a54c9404dd33",
+            "layout_marker": b"to the 3.12 source\nlayout",
+        },
+    }
     python_patch_count = 0
     for version_entry in config["python"]["versions"]:
         version = version_entry["version"]
@@ -411,15 +425,25 @@ def validate_evidence(config, repository):
             "CPython Sigstore signer policy mismatch",
         )
         patches = version_entry["patches"]
-        if minor == "3.11":
+        patch_policy = python_patch_policy.get(version)
+        if minor in ("3.11", "3.12"):
             require(
-                version_entry["adapter"] == "transition" and len(patches) == 1,
-                "CPython 3.11 transition adapter requires exactly one patch",
+                patch_policy is not None,
+                "CPython %s has no audited isolation patch policy" % version,
+            )
+        if patch_policy is not None:
+            require(
+                version_entry["adapter"] == patch_policy["adapter"]
+                and len(patches) == 1,
+                "CPython %s adapter requires exactly one patch" % minor,
             )
             require(
-                patches[0]["file"]
-                == "patches/cpython/3.11/0001-gh-115382-isolate-target-sysconfig.patch",
-                "CPython 3.11 transition patch path mismatch",
+                patches[0]["file"] == patch_policy["file"],
+                "CPython %s patch path mismatch" % minor,
+            )
+            require(
+                patches[0]["sha256"] == patch_policy["sha256"],
+                "CPython %s patch digest policy mismatch" % minor,
             )
         else:
             require(not patches, "unexpected CPython patch for %s" % version)
@@ -429,6 +453,11 @@ def validate_evidence(config, repository):
                 hashlib.sha256(patch_payload).hexdigest() == patch["sha256"],
                 "%s: digest mismatch" % patch["file"],
             )
+            expected_files = (
+                b"Lib/sysconfig.py",
+                b"configure",
+                b"configure.ac",
+            )
             diff_headers = [
                 line
                 for line in patch_payload.splitlines()
@@ -437,19 +466,40 @@ def validate_evidence(config, repository):
             require(
                 diff_headers
                 == [
-                    b"diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py",
-                    b"diff --git a/configure b/configure",
-                    b"diff --git a/configure.ac b/configure.ac",
+                    b"diff --git a/" + name + b" b/" + name
+                    for name in expected_files
                 ],
-                "CPython transition patch changes an unexpected file set",
+                "CPython isolation patch changes an unexpected file set",
+            )
+            require(
+                [
+                    line
+                    for line in patch_payload.splitlines()
+                    if line.startswith(b"--- ")
+                ]
+                == [b"--- a/" + name for name in expected_files]
+                and [
+                    line
+                    for line in patch_payload.splitlines()
+                    if line.startswith(b"+++ ")
+                ]
+                == [b"+++ b/" + name for name in expected_files],
+                "CPython isolation patch has unexpected old/new file headers",
             )
             require(
                 b"https://github.com/python/cpython/issues/115382" in patch_payload
                 and b"909d5ac2959ea88e1d3b38f35676a1c7e5dd44f6" in patch_payload
                 and b"+    if (path := os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')):"
                 in patch_payload
-                and b"PYTHONPATH=$(srcdir)/Lib" in patch_payload,
-                "CPython transition patch is missing gh-115382 isolation semantics",
+                and b"PYTHONPATH=$(srcdir)/Lib" in patch_payload
+                and b"-    _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)"
+                in patch_payload
+                and b"+        _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)"
+                in patch_payload
+                and patch_policy is not None
+                and patch_policy["layout_marker"] in patch_payload,
+                "CPython %s patch is missing gh-115382 isolation semantics"
+                % minor,
             )
             python_patch_count += 1
         bundle_payload, bundle = evidence_json(

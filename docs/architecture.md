@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、两套 GTS15 C/C++/LTO cross slice，以及 CPython 3.11 transition 与 3.13 modern 的 build/x86_64/aarch64 行已完成。Python 3.9–3.10/3.12/3.14、最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、两套 GTS15 C/C++/LTO cross slice，以及 CPython 3.11 transition、3.12/3.13 modern 的 build/x86_64/aarch64 行已完成并通过 Phase 7。Python 3.9–3.10/3.14、最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -150,9 +150,9 @@ CPython source
 
 首发支持 3.9–3.14，共 6 个 build Python 和 12 个 target Python。3.9–3.10 使用 legacy adapter，3.11 使用 transition adapter，3.12–3.14 使用 modern adapter；精确 patch 版本与独立的 `eol`/`security`/`bugfix` 支持状态写在 `release.json`。EOL minor 不承诺上游安全修复。
 
-当前已完成 CPython 3.11.16 transition 与 3.13.15 modern 两行：每行各有 amd64 build Python、两个真正 cross target SDK、最小 C extension、全量 `lib-dynload` ELF 审计，以及 locked-sysroot/clean-Rocky 双运行时探针。通用 Python Dockerfile 只描述一条 row pipeline；Bake 生成独立版本/target DAG。资格化完成的 row 经 scratch 导出，再由 append-only 层聚合到 `python-dev`，版本行之间不继承构建状态。
+当前已完成 CPython 3.11.16 transition、3.12.14 modern 与 3.13.15 modern 三行：每行各有 amd64 build Python、两个真正 cross target SDK、最小 C extension、全量 `lib-dynload` ELF 审计，以及 locked-sysroot/clean-Rocky 双运行时探针。通用 Python Dockerfile 只描述一条 row pipeline；Bake 生成独立版本/target DAG。资格化完成的 row 经 scratch 导出，再由 append-only 层聚合。Phase 5 固定 cp313，Phase 6 固定 cp313+cp311，Phase 7 固定 cp313+cp311+cp312；`python-dev`/`python-matrix` 表示共享契约选择的最新三行。
 
-3.11 transition adapter 以文件路径和 SHA256 锁定 gh-115382 backport，显式把 target sysconfigdata 与 build Python 的 `PYTHONPATH` 隔离。cross build 在 configure 前用目标 ELF canary 实测 `execve`/`execv`、PATH 与 varargs exec、`fexecve`、`execveat`、`posix_spawn(p)`、`dlopen` 和 `dlmopen`，构建后拒绝 canary/`conftest` 之外的记录；它是动态 libc/loader 的可审计策略护栏，不是覆盖直接 syscall 或静态程序的安全沙箱。空 `HOSTRUNNER`、无 QEMU 的 cross stage、精确 build Python patch version 和 sysconfig 隔离仍是主正确性契约。
+3.11 与 3.12 均以各自文件路径和 SHA256 锁定 gh-115382 backport，显式把 target sysconfigdata 与 build Python 的 `PYTHONPATH` 隔离；3.12 保持 modern adapter，因为其扩展已由 configure/Makefile 构建。cross build 在 configure 前用目标 ELF canary 实测 `execve`/`execv`、PATH 与 varargs exec、`fexecve`、`execveat`、`posix_spawn(p)`、`dlopen` 和 `dlmopen`，构建后拒绝 canary/`conftest` 之外的记录；它是动态 libc/loader 的可审计策略护栏，不是覆盖直接 syscall 或静态程序的安全沙箱。空 `HOSTRUNNER`、无 QEMU 的 cross stage、精确 build Python patch version 和 sysconfig 隔离仍是主正确性契约。
 
 clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七个精确验签 runtime RPM；因 OCI 与 sysroot errata 版本可不同，该 `--nodeps` overlay 仅验证精确 DSO 字节兼容性，不是可部署的 RPM transaction，也不进入 SDK。两套 runtime tier 都把真实 tmpfs 挂到 `/dev/shm`，并实际执行 `multiprocessing.Lock()` 与 libc unnamed semaphore。aarch64 只使用固定 QEMU，发布前仍需原生 ARM 终检。
 
@@ -272,4 +272,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：双 target compiler/hybrid runtime 与 CPython 3.11/3.13 双 target 行已完成；下一步按 adapter 风险依次扩展其余 Python minors，再实现 vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：双 target compiler/hybrid runtime 与 CPython 3.11–3.13 双 target 行已完成；后续按 adapter 风险扩展其余 Python minors，并实现 vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

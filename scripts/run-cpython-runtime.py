@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import re
+import runpy
 import shutil
 import subprocess
 import sys
@@ -38,10 +39,10 @@ RUNTIME_PACKAGE_NAMES = (
     "xz-libs",
     "zlib",
 )
-PYTHON_ADAPTERS = {
-    "3.11": "transition",
-    "3.13": "modern",
-}
+ROW_CONTRACT = runpy.run_path(
+    str(Path(__file__).with_name("python_row_contract.py"))
+)
+ContractError = ROW_CONTRACT["ContractError"]
 
 
 def require(condition, message):
@@ -93,34 +94,6 @@ def require_sha256(value, label):
         isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value),
         "%s is not a SHA256" % label,
     )
-
-
-def release_python_contract(release, version):
-    match = re.fullmatch(r"(3\.(?:11|13))\.[0-9]+", version)
-    require(match is not None, "unsupported CPython runtime version: %s" % version)
-    minor = match.group(1)
-    try:
-        entries = [
-            entry for entry in release["python"]["versions"]
-            if entry["version"] == version
-        ]
-    except (KeyError, TypeError) as error:
-        raise RuntimeError_("release has an invalid CPython contract") from error
-    require(len(entries) == 1, "release must select one exact CPython version")
-    require(
-        entries[0].get("adapter") == PYTHON_ADAPTERS[minor],
-        "release CPython version/adapter contract mismatch",
-    )
-    require(
-        isinstance(entries[0].get("source"), dict)
-        and entries[0]["source"].get("status") == "locked",
-        "release CPython source is not locked",
-    )
-    return {
-        "adapter": PYTHON_ADAPTERS[minor],
-        "compact_minor": minor.replace(".", ""),
-        "minor": minor,
-    }
 
 
 def validate_overlay_evidence(value, release, profile, target, compile_report, root):
@@ -429,7 +402,13 @@ def main():
     require(arguments.runtime_root.resolve() != Path("/"), "unsafe runtime root")
     release = load_json(arguments.release)
     release_sha256 = canonical_sha256(release)
-    contract = release_python_contract(release, arguments.version)
+    try:
+        binding = ROW_CONTRACT["bind_release"](
+            release, version=arguments.version
+        )
+    except ContractError as error:
+        raise RuntimeError_(str(error)) from error
+    contract = binding["contract"]
     compile_report = load_json(arguments.compile_report)
     require(compile_report.get("report_kind") == "crossforge-cpython-compile", "compile report kind mismatch")
     require(compile_report.get("target") == arguments.target, "compile report target mismatch")
@@ -545,6 +524,8 @@ def main():
             arguments.target,
             "--version",
             arguments.version,
+            "--gil-policy",
+            contract["gil_policy"],
             "--extension-dir",
             guest_extension_dir,
         ]
@@ -574,6 +555,8 @@ def main():
             arguments.target,
             "--version",
             arguments.version,
+            "--gil-policy",
+            contract["gil_policy"],
         ]
         device_loader_command = [
             loader_host,
@@ -630,6 +613,8 @@ def main():
             arguments.target,
             "--version",
             arguments.version,
+            "--gil-policy",
+            contract["gil_policy"],
             "--extension-dir",
             guest_extension_dir,
         ]
@@ -663,6 +648,8 @@ def main():
             arguments.target,
             "--version",
             arguments.version,
+            "--gil-policy",
+            contract["gil_policy"],
         ]
         device_loader_command = [
             arguments.qemu,

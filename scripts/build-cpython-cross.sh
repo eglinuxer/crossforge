@@ -18,18 +18,19 @@ adapter=$9
 jobs=${10}
 minor=${version%.*}
 compact_minor=${minor/./}
+script_directory=$(cd "$(dirname "$0")" && pwd)
+contract_checker=$script_directory/python_row_contract.py
+platform_python=/usr/libexec/platform-python
 
 [[ -x "$source_directory/configure" && -x "$source_directory/config.guess" ]] || {
   echo "error: invalid CPython source: $source_directory" >&2
   exit 1
 }
-case "$minor:$adapter" in
-  3.11:transition|3.13:modern) ;;
-  *)
-    echo "error: unsupported CPython version/adapter: $version/$adapter" >&2
-    exit 1
-    ;;
-esac
+[[ -x "$platform_python" && -f "$contract_checker" ]] || {
+  echo "error: CPython row contract checker is missing" >&2
+  exit 1
+}
+"$platform_python" "$contract_checker" check "$version" "$adapter"
 expected_build_python=/opt/crossforge/python/cp"$compact_minor"/build/bin/python"$minor"
 [[ "$build_python" == "$expected_build_python" ]] || {
   echo "error: build Python path differs from version" >&2
@@ -156,7 +157,6 @@ export PYTHONDONTWRITEBYTECODE=1
 # in host processes, rejecting target ELF files from the build/install roots.
 # This is an auditable policy guard, not a sandbox: LD_PRELOAD cannot cover
 # direct system calls or statically linked programs.
-script_directory=$(cd "$(dirname "$0")" && pwd)
 auditor=$build_directory/deny-target-artifact.so
 auditor_log=$build_directory/target-artifact-audit.log
 canary=$build_directory/target-exec-canary

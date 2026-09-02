@@ -15,7 +15,8 @@ The deleted Rust prototype is recoverable from tag `prototype-rust-2026-08-28`; 
 - `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
 - `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked` replays all host transactions offline.
 - `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both real cross slices; aarch64 uses explicit pinned QEMU, never implicit binfmt.
-- `docker buildx bake phase6` qualifies cp311/cp313; `python-dev` assembles only qualified scratch row exports.
+- `docker buildx bake phase5` and `phase6` reproduce the frozen cp313 and cp313+cp311 snapshots; `python-phase5-dev` and `python-phase6-dev` name those exact aggregates.
+- `phase7` names the cp313+cp311+cp312 snapshot. Use `python-native-latest` and `python-matrix` for the rows selected by the shared implementation contract; graph existence alone is not qualification evidence.
 
 Never publish `sdk-skeleton` or a target ending in `-dev`; only a fully locked and qualified future candidate may receive user-facing tags.
 

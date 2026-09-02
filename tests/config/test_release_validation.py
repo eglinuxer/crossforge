@@ -36,7 +36,7 @@ class ReleaseValidationTests(unittest.TestCase):
             result["qemu_manifest_sha256"],
             self.config["qemu"]["executor"]["manifest_digest"],
         )
-        self.assertEqual(result["python_patches"], 1)
+        self.assertEqual(result["python_patches"], 2)
 
     def test_supply_chain_identity_tampering_is_rejected(self):
         mutations = (
@@ -49,6 +49,7 @@ class ReleaseValidationTests(unittest.TestCase):
                 "0" * 64,
             ),
             (("python", "versions", 2, "patches", 0, "sha256"), "0" * 64),
+            (("python", "versions", 3, "patches", 0, "sha256"), "0" * 64),
         )
         for path, value in mutations:
             with self.subTest(path=path):
@@ -137,52 +138,77 @@ class ReleaseValidationTests(unittest.TestCase):
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate"](config, self.schema, self.schema, "$")
 
-    def test_python_transition_patch_is_explicit_and_content_locked(self):
+    def test_python_isolation_patches_are_explicit_and_content_locked(self):
         versions = self.config["python"]["versions"]
-        transition = versions[2]
-        self.assertEqual(transition["version"], "3.11.16")
-        self.assertEqual(transition["adapter"], "transition")
-        self.assertEqual(
-            transition["patches"],
-            [
-                {
+        expected = {
+            2: {
+                "version": "3.11.16",
+                "adapter": "transition",
+                "patch": {
                     "file": "patches/cpython/3.11/0001-gh-115382-isolate-target-sysconfig.patch",
                     "sha256": "072dacfcc57b06bc1e5382726990627593a36e1f08232cb790db42ae334a49aa",
-                }
-            ],
-        )
-        patch = transition["patches"][0]
-        payload = (REPOSITORY / patch["file"]).read_bytes()
-        self.assertEqual(hashlib.sha256(payload).hexdigest(), patch["sha256"])
-        self.assertEqual(
-            [
-                line
-                for line in payload.splitlines()
-                if line.startswith(b"diff --git ")
-            ],
-            [
-                b"diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py",
-                b"diff --git a/configure b/configure",
-                b"diff --git a/configure.ac b/configure.ac",
-            ],
-        )
-        self.assertIn(b"_PYTHON_SYSCONFIGDATA_PATH", payload)
-        self.assertIn(b"PYTHONPATH=$(srcdir)/Lib", payload)
-        for version in versions[:2] + versions[3:]:
-            self.assertEqual(version["patches"], [])
+                },
+            },
+            3: {
+                "version": "3.12.14",
+                "adapter": "modern",
+                "patch": {
+                    "file": "patches/cpython/3.12/0001-gh-115382-isolate-target-sysconfig.patch",
+                    "sha256": "ff3a8e2695b4c66d0f60e6c73ac0028221ef803a308ff4e81393a54c9404dd33",
+                },
+            },
+        }
+        for index, contract in expected.items():
+            with self.subTest(index=index):
+                version = versions[index]
+                self.assertEqual(version["version"], contract["version"])
+                self.assertEqual(version["adapter"], contract["adapter"])
+                self.assertEqual(version["patches"], [contract["patch"]])
+                patch = version["patches"][0]
+                payload = (REPOSITORY / patch["file"]).read_bytes()
+                self.assertEqual(
+                    hashlib.sha256(payload).hexdigest(), patch["sha256"]
+                )
+                self.assertEqual(
+                    [
+                        line
+                        for line in payload.splitlines()
+                        if line.startswith(b"diff --git ")
+                    ],
+                    [
+                        b"diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py",
+                        b"diff --git a/configure b/configure",
+                        b"diff --git a/configure.ac b/configure.ac",
+                    ],
+                )
+                self.assertIn(b"_PYTHON_SYSCONFIGDATA_PATH", payload)
+                self.assertIn(b"PYTHONPATH=$(srcdir)/Lib", payload)
+        for index, version in enumerate(versions):
+            if index not in expected:
+                self.assertEqual(version["patches"], [])
 
-    def test_python_transition_patch_schema_rejects_contract_drift(self):
+    def test_python_isolation_patch_schema_rejects_contract_drift(self):
         mutations = []
 
         missing = copy.deepcopy(self.config)
         del missing["python"]["versions"][2]["patches"]
         mutations.append(missing)
 
+        missing_312 = copy.deepcopy(self.config)
+        missing_312["python"]["versions"][3]["patches"] = []
+        mutations.append(missing_312)
+
         wrong_path = copy.deepcopy(self.config)
         wrong_path["python"]["versions"][2]["patches"][0]["file"] = (
             "patches/cpython/3.11/0001-other.patch"
         )
         mutations.append(wrong_path)
+
+        wrong_path_312 = copy.deepcopy(self.config)
+        wrong_path_312["python"]["versions"][3]["patches"][0]["file"] = (
+            "patches/cpython/3.12/0001-other.patch"
+        )
+        mutations.append(wrong_path_312)
 
         unexpected = copy.deepcopy(self.config)
         unexpected["python"]["versions"][4]["patches"] = copy.deepcopy(
@@ -202,6 +228,35 @@ class ReleaseValidationTests(unittest.TestCase):
                 "patches/cpython/../cpython/3.11/"
                 "0001-gh-115382-isolate-target-sysconfig.patch",
             )
+
+    def test_python_isolation_policy_fails_closed_for_unknown_patch_release(self):
+        for index, replacement in ((2, "3.11.17"), (3, "3.12.15")):
+            with self.subTest(version=replacement):
+                config = copy.deepcopy(self.config)
+                entry = config["python"]["versions"][index]
+                original = entry["version"]
+                entry["version"] = replacement
+                source = entry["source"]
+                source["url"] = source["url"].replace(original, replacement)
+                source["sigstore"]["bundle_url"] = source["sigstore"][
+                    "bundle_url"
+                ].replace(original, replacement)
+                entry["patches"] = []
+                with self.assertRaisesRegex(
+                    EVIDENCE_VALIDATOR["EvidenceError"],
+                    "no audited isolation patch policy",
+                ):
+                    EVIDENCE_VALIDATOR["validate_evidence"](config, REPOSITORY)
+
+    def test_python_313_supply_policy_rejects_injected_patch(self):
+        config = copy.deepcopy(self.config)
+        config["python"]["versions"][4]["patches"] = copy.deepcopy(
+            config["python"]["versions"][3]["patches"]
+        )
+        with self.assertRaisesRegex(
+            EVIDENCE_VALIDATOR["EvidenceError"], "unexpected CPython patch"
+        ):
+            EVIDENCE_VALIDATOR["validate_evidence"](config, REPOSITORY)
 
     def test_python_source_selection_requires_one_exact_version(self):
         with self.assertRaises(SOURCE_FETCHER["ValidationError"]):

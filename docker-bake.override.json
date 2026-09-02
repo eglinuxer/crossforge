@@ -1,15 +1,51 @@
 {
   "group": {
+    "phase5": {
+      "targets": [
+        "validate",
+        "platform-python-check",
+        "host-python-build-locked",
+        "cpython-build-cp313",
+        "python-runtime-clean-x86_64",
+        "python-runtime-clean-aarch64",
+        "cpython-cp313-x86_64-qualify",
+        "cpython-cp313-aarch64-qualify",
+        "python-phase5-dev"
+      ]
+    },
     "phase6": {
       "targets": [
         "validate",
         "platform-python-check",
         "host-python-build-locked",
+        "cpython-build-cp313",
+        "cpython-build-cp311",
         "python-runtime-clean-x86_64",
         "python-runtime-clean-aarch64",
+        "cpython-cp313-x86_64-qualify",
+        "cpython-cp313-aarch64-qualify",
         "cpython-cp311-x86_64-qualify",
         "cpython-cp311-aarch64-qualify",
-        "python-dev"
+        "python-phase6-dev"
+      ]
+    },
+    "phase7": {
+      "targets": [
+        "validate",
+        "platform-python-check",
+        "host-python-build-locked",
+        "cpython-build-cp313",
+        "cpython-build-cp311",
+        "cpython-build-cp312",
+        "python-runtime-clean-x86_64",
+        "python-runtime-clean-aarch64",
+        "cpython-cp313-x86_64-qualify",
+        "cpython-cp313-aarch64-qualify",
+        "cpython-cp311-x86_64-qualify",
+        "cpython-cp311-aarch64-qualify",
+        "cpython-cp312-x86_64-qualify",
+        "cpython-cp312-aarch64-qualify",
+        "python-phase7-dev"
       ]
     },
     "python-cp311": {
@@ -20,6 +56,16 @@
         "cpython-cp311-aarch64-qualify",
         "python-row-cp311",
         "python-cp311-dev"
+      ]
+    },
+    "python-cp312": {
+      "targets": [
+        "cpython-prepared-cp312",
+        "cpython-build-cp312",
+        "cpython-cp312-x86_64-qualify",
+        "cpython-cp312-aarch64-qualify",
+        "python-row-cp312",
+        "python-cp312-dev"
       ]
     },
     "python-cp313": {
@@ -35,6 +81,31 @@
     "python-matrix": {
       "targets": [
         "python-dev"
+      ]
+    },
+    "python-native-latest": {
+      "targets": [
+        "cpython-build-cp313",
+        "cpython-build-cp311",
+        "cpython-build-cp312"
+      ]
+    },
+    "python-native-phase5": {
+      "targets": [
+        "cpython-build-cp313"
+      ]
+    },
+    "python-native-phase6": {
+      "targets": [
+        "cpython-build-cp313",
+        "cpython-build-cp311"
+      ]
+    },
+    "python-native-phase7": {
+      "targets": [
+        "cpython-build-cp313",
+        "cpython-build-cp311",
+        "cpython-build-cp312"
       ]
     },
     "toolchain-plan": {
@@ -80,6 +151,23 @@
       },
       "contexts": {
         "crossforge_cpython_prepared": "target:cpython-prepared-cp311"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-build"
+    },
+    "cpython-build-cp312": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14"
+      },
+      "contexts": {
+        "crossforge_cpython_prepared": "target:cpython-prepared-cp312"
       },
       "inherits": [
         "_python_common"
@@ -180,6 +268,89 @@
       },
       "contexts": {
         "crossforge_cpython_cross": "target:cpython-cross-cp311-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-qualify-build"
+    },
+    "cpython-cp312-aarch64-qualify": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_clean_runtime": "target:python-runtime-clean-aarch64",
+        "crossforge_cpython_qualify_build": "target:cpython-cp312-aarch64-qualify-build",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_qemu_validated": "target:qemu-aarch64-validated",
+        "crossforge_sysroot": "target:sysroot-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-qualify-aarch64"
+    },
+    "cpython-cp312-aarch64-qualify-build": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross": "target:cpython-cross-cp312-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-qualify-build"
+    },
+    "cpython-cp312-x86_64-qualify": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_clean_runtime": "target:python-runtime-clean-x86_64",
+        "crossforge_cpython_qualify_build": "target:cpython-cp312-x86_64-qualify-build",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_sysroot": "target:sysroot-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-qualify-x86_64"
+    },
+    "cpython-cp312-x86_64-qualify-build": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross": "target:cpython-cross-cp312-x86_64"
       },
       "inherits": [
         "_python_common"
@@ -316,6 +487,50 @@
       ],
       "target": "cpython-cross"
     },
+    "cpython-cross-cp312-aarch64": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_build": "target:cpython-build-cp312",
+        "crossforge_cpython_prepared": "target:cpython-prepared-cp312",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-aarch64-dev"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross"
+    },
+    "cpython-cross-cp312-x86_64": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_build": "target:cpython-build-cp312",
+        "crossforge_cpython_prepared": "target:cpython-prepared-cp312",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-x86_64-dev"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross"
+    },
     "cpython-cross-cp313-aarch64": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
@@ -378,6 +593,24 @@
       ],
       "target": "cpython-prepared"
     },
+    "cpython-prepared-cp312": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14"
+      },
+      "contexts": {
+        "crossforge_cpython_source": "target:cpython-source-cp312",
+        "crossforge_host_python": "target:host-python-build-locked"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-prepared"
+    },
     "cpython-prepared-cp313": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
@@ -401,6 +634,23 @@
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_VERSION": "3.11.16"
+      },
+      "contexts": {
+        "crossforge_config": "target:validate"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-source"
+    },
+    "cpython-source-cp312": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14"
       },
       "contexts": {
         "crossforge_config": "target:validate"
@@ -448,6 +698,24 @@
       ],
       "target": "python-sdk-append"
     },
+    "python-cp312-dev": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14"
+      },
+      "contexts": {
+        "crossforge_python_row": "target:python-row-cp312",
+        "crossforge_sdk_base": "target:sdk-toolchains-dev"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "python-sdk-append"
+    },
     "python-cp313-dev": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
@@ -468,10 +736,10 @@
     },
     "python-dev": {
       "args": {
-        "CROSSFORGE_PYTHON_ROWS": "cp313 cp311"
+        "CROSSFORGE_PYTHON_ROWS": "cp313 cp311 cp312"
       },
       "contexts": {
-        "crossforge_sdk_base": "target:python-dev-append-cp311"
+        "crossforge_sdk_base": "target:python-dev-append-cp312"
       },
       "inherits": [
         "_python_common"
@@ -499,6 +767,24 @@
       ],
       "target": "python-sdk-append"
     },
+    "python-dev-append-cp312": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14"
+      },
+      "contexts": {
+        "crossforge_python_row": "target:python-row-cp312",
+        "crossforge_sdk_base": "target:python-dev-append-cp311"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "python-sdk-append"
+    },
     "python-dev-append-cp313": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
@@ -517,6 +803,51 @@
       ],
       "target": "python-sdk-append"
     },
+    "python-phase5-dev": {
+      "args": {
+        "CROSSFORGE_PYTHON_ROWS": "cp313"
+      },
+      "contexts": {
+        "crossforge_sdk_base": "target:python-dev-append-cp313"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "python-sdk-final"
+    },
+    "python-phase6-dev": {
+      "args": {
+        "CROSSFORGE_PYTHON_ROWS": "cp313 cp311"
+      },
+      "contexts": {
+        "crossforge_sdk_base": "target:python-dev-append-cp311"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "python-sdk-final"
+    },
+    "python-phase7-dev": {
+      "args": {
+        "CROSSFORGE_PYTHON_ROWS": "cp313 cp311 cp312"
+      },
+      "contexts": {
+        "crossforge_sdk_base": "target:python-dev-append-cp312"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "python-sdk-final"
+    },
     "python-row-cp311": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
@@ -527,6 +858,26 @@
         "crossforge_cpython_aarch64": "target:cpython-cp311-aarch64-qualify",
         "crossforge_cpython_build": "target:cpython-build-cp311",
         "crossforge_cpython_x86_64": "target:cpython-cp311-x86_64-qualify",
+        "crossforge_host_python": "target:host-python-build-locked"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-row-export"
+    },
+    "python-row-cp312": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_VERSION": "3.12.14"
+      },
+      "contexts": {
+        "crossforge_cpython_aarch64": "target:cpython-cp312-aarch64-qualify",
+        "crossforge_cpython_build": "target:cpython-build-cp312",
+        "crossforge_cpython_x86_64": "target:cpython-cp312-x86_64-qualify",
         "crossforge_host_python": "target:host-python-build-locked"
       },
       "inherits": [

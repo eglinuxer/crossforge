@@ -202,7 +202,12 @@
         "version": "3.12.14",
         "adapter": "modern",
         "support": "security",
-        "patches": [],
+        "patches": [
+          {
+            "file": "patches/cpython/3.12/0001-gh-115382-isolate-target-sysconfig.patch",
+            "sha256": "ff3a8e2695b4c66d0f60e6c73ac0028221ef803a308ff4e81393a54c9404dd33"
+          }
+        ],
         "source": {
           "status": "locked",
           "url": "https://www.python.org/ftp/python/3.12.14/Python-3.12.14.tar.xz",

@@ -12,8 +12,22 @@ FINALIZER = runpy.run_path(
     str(REPOSITORY / "scripts/finalize-cpython-qualification.py")
 )
 QUALIFIER = runpy.run_path(str(REPOSITORY / "scripts/qualify-cpython.py"))
+ROW_CONTRACT = runpy.run_path(str(REPOSITORY / "scripts/python_row_contract.py"))
+RELEASE_CONFIG = json.loads(
+    (REPOSITORY / "config/release.json").read_text(encoding="utf-8")
+)
 TARGET = "x86_64-unknown-linux-gnu"
-VERSION = "3.13.15"
+IMPLEMENTED_VERSIONS = tuple(
+    next(
+        entry["version"]
+        for entry in RELEASE_CONFIG["python"]["versions"]
+        if entry["version"].rsplit(".", 1)[0] == record["minor"]
+    )
+    for record in ROW_CONTRACT["IMPLEMENTED_ROWS"]
+)
+VERSION = next(
+    version for version in IMPLEMENTED_VERSIONS if version.startswith("3.13.")
+)
 PYTHON_SHA256 = "1" * 64
 EXTENSION_SHA256 = "2" * 64
 SYSROOT_SHA256 = "3" * 64
@@ -35,6 +49,21 @@ class PythonQualificationTests(unittest.TestCase):
         self.compile_path = self.directory / "compile.json"
         self.locked_path = self.directory / "locked.json"
         self.clean_path = self.directory / "clean.json"
+
+        self.reset_fixture(VERSION)
+
+    def reset_fixture(self, version):
+        self.version = version
+        self.contract = ROW_CONTRACT["contract_for_version"](version)
+        self.minor = self.contract["minor"]
+        self.compact = self.minor.replace(".", "")
+        self.row = self.contract["row"]
+        self.adapter = self.contract["adapter"]
+        canonical_entry = next(
+            entry
+            for entry in RELEASE_CONFIG["python"]["versions"]
+            if entry["version"] == self.version
+        )
 
         self.release = {
             "schema_version": 1,
@@ -65,12 +94,13 @@ class PythonQualificationTests(unittest.TestCase):
             "python": {
                 "versions": [
                     {
-                        "version": VERSION,
-                        "adapter": "modern",
+                        "version": self.version,
+                        "adapter": self.adapter,
                         "source": {
                             "status": "locked",
-                            "url": "https://www.python.org/ftp/python/3.13.15/Python-3.13.15.tar.xz",
-                            "size": 23160540,
+                            "url": "https://www.python.org/ftp/python/%s/Python-%s.tar.xz"
+                            % (self.version, self.version),
+                            "size": canonical_entry["source"]["size"],
                             "sha256": "4" * 64,
                             "sigstore": {
                                 "bundle_sha256": "5" * 64,
@@ -98,7 +128,7 @@ class PythonQualificationTests(unittest.TestCase):
 
     def valid_compile(self):
         source = self.release["python"]["versions"][0]["source"]
-        build_directory = "/work/build/cpython-cp313-x86_64"
+        build_directory = "/work/build/cpython-%s-x86_64" % self.row
         executable_canary = build_directory + "/target-exec-canary"
         loader_canary = build_directory + "/target-dlopen-canary.so"
         guard_records = [
@@ -108,12 +138,12 @@ class PythonQualificationTests(unittest.TestCase):
             {"operation": operation, "path": loader_canary}
             for operation in FINALIZER["LOADER_OPERATIONS"]
         ]
-        return {
+        report = {
             "qualification_schema_version": 2,
             "report_kind": "crossforge-cpython-compile",
             "target": TARGET,
-            "version": VERSION,
-            "adapter": "modern",
+            "version": self.version,
+            "adapter": self.adapter,
             "release_sha256": canonical_sha256(self.release),
             "source": {
                 "url": source["url"],
@@ -124,10 +154,12 @@ class PythonQualificationTests(unittest.TestCase):
             },
             "sysroot_sha256": SYSROOT_SHA256,
             "sysroot_transaction_sha256": SYSROOT_TRANSACTION_SHA256,
-            "target_prefix": "/opt/crossforge/python/cp313/targets/" + TARGET,
+            "target_prefix": "/opt/crossforge/python/%s/targets/%s"
+            % (self.row, TARGET),
             "build_python": {
-                "path": "/opt/crossforge/python/cp313/build/bin/python3.13",
-                "version": VERSION,
+                "path": "/opt/crossforge/python/%s/build/bin/python%s"
+                % (self.row, self.minor),
+                "version": self.version,
                 "sha256": "6" * 64,
                 "sdk_tree": {"entries": 200, "canonical_sha256": "d" * 64},
             },
@@ -141,33 +173,34 @@ class PythonQualificationTests(unittest.TestCase):
             },
             "python_sha256": PYTHON_SHA256,
             "extension": {
-                "name": "_crossforge.cpython-313-x86_64-linux-gnu.so",
+                "name": "_crossforge.cpython-%s-x86_64-linux-gnu.so"
+                % self.compact,
                 "sha256": EXTENSION_SHA256,
             },
             "required_modules": {
-                name: "lib/python3.13/lib-dynload/%s.cpython-313-x86_64-linux-gnu.so"
-                % name
+                name: "lib/python%s/lib-dynload/%s.cpython-%s-x86_64-linux-gnu.so"
+                % (self.minor, name, self.compact)
                 for name in sorted(FINALIZER["REQUIRED_MODULES"])
             },
             "sysconfig": {
-                "EXT_SUFFIX": ".cpython-313-x86_64-linux-gnu.so",
+                "EXT_SUFFIX": ".cpython-%s-x86_64-linux-gnu.so" % self.compact,
                 "HAVE_ALIGNED_REQUIRED": 0,
                 "HAVE_USABLE_WCHAR_T": 0,
                 "HOST_GNU_TYPE": TARGET,
                 "MULTIARCH": "x86_64-linux-gnu",
                 "Py_DEBUG": 0,
-                "Py_GIL_DISABLED": 0,
                 "SIZEOF_WCHAR_T": 4,
-                "SOABI": "cpython-313-x86_64-linux-gnu",
+                "SOABI": "cpython-%s-x86_64-linux-gnu" % self.compact,
             },
             "sdk_tree": {"entries": 100, "canonical_sha256": "7" * 64},
             "elf_audit": {
-                "bin/python3.13": {
+                "bin/python%s" % self.minor: {
                     "needed": ["libc.so.6"],
                     "required_versions": {"GLIBC": "2.28"},
                     "sha256": PYTHON_SHA256,
                 },
-                "qualification/_crossforge.cpython-313-x86_64-linux-gnu.so": {
+                "qualification/_crossforge.cpython-%s-x86_64-linux-gnu.so"
+                % self.compact: {
                     "needed": [],
                     "required_versions": {},
                     "sha256": EXTENSION_SHA256,
@@ -180,14 +213,17 @@ class PythonQualificationTests(unittest.TestCase):
                     }
                     for index, relative in enumerate(
                         {
-                            name: "lib/python3.13/lib-dynload/%s.cpython-313-x86_64-linux-gnu.so"
-                            % name
+                            name: "lib/python%s/lib-dynload/%s.cpython-%s-x86_64-linux-gnu.so"
+                            % (self.minor, name, self.compact)
                             for name in sorted(FINALIZER["REQUIRED_MODULES"])
                         }.values()
                     )
                 },
             },
         }
+        if self.contract["gil_policy"] == "zero":
+            report["sysconfig"]["Py_GIL_DISABLED"] = 0
+        return report
 
     def valid_overlay(self):
         packages = [
@@ -235,15 +271,15 @@ class PythonQualificationTests(unittest.TestCase):
         probe_sysconfig = {
             "arch": "x86_64",
             "build_gnu_type": "x86_64-pc-linux-gnu",
-            "cache_tag": "cpython-313",
+            "cache_tag": "cpython-%s" % self.compact,
             "cc": "/opt/crossforge/targets/%s/bin/%s-gcc --sysroot=/opt/crossforge/sysroots/el8/x86_64"
             % (TARGET, TARGET),
-            "ext_suffix": ".cpython-313-x86_64-linux-gnu.so",
+            "ext_suffix": ".cpython-%s-x86_64-linux-gnu.so" % self.compact,
             "host_gnu_type": TARGET,
             "multiarch": "x86_64-linux-gnu",
             "platform": "linux-x86_64",
-            "prefix": "/opt/crossforge/python/cp313/targets/" + TARGET,
-            "soabi": "cpython-313-x86_64-linux-gnu",
+            "prefix": "/opt/crossforge/python/%s/targets/%s" % (self.row, TARGET),
+            "soabi": "cpython-%s-x86_64-linux-gnu" % self.compact,
         }
         overlay = self.valid_overlay() if tier == "clean-rocky" else None
         runtime_root = "/runtime-locked" if tier == "locked-sysroot" else "/runtime-clean"
@@ -264,8 +300,8 @@ class PythonQualificationTests(unittest.TestCase):
             "qualification_schema_version": 2,
             "report_kind": "crossforge-cpython-runtime",
             "target": TARGET,
-            "version": VERSION,
-            "adapter": "modern",
+            "version": self.version,
+            "adapter": self.adapter,
             "tier": tier,
             "status": "passed",
             "release_sha256": canonical_sha256(self.release),
@@ -306,7 +342,7 @@ class PythonQualificationTests(unittest.TestCase):
                 "mode": "core",
                 "status": "passed",
                 "target": TARGET,
-                "version": VERSION,
+                "version": self.version,
                 "sysconfig": copy.deepcopy(probe_sysconfig),
                 "imports": copy.deepcopy(FINALIZER["REQUIRED_PROBE_IMPORTS"]),
                 "functionality": {
@@ -319,7 +355,8 @@ class PythonQualificationTests(unittest.TestCase):
                 },
                 "extension": {
                     "answer": 42,
-                    "file": "_crossforge.cpython-313-x86_64-linux-gnu.so",
+                    "file": "_crossforge.cpython-%s-x86_64-linux-gnu.so"
+                    % self.compact,
                     "module": "_crossforge",
                 },
                 "hash_algorithm": {
@@ -343,7 +380,7 @@ class PythonQualificationTests(unittest.TestCase):
                 "mode": "devices",
                 "status": "passed",
                 "target": TARGET,
-                "version": VERSION,
+                "version": self.version,
                 "sysconfig": copy.deepcopy(probe_sysconfig),
                 "probe": {
                     "pty": {
@@ -362,7 +399,7 @@ class PythonQualificationTests(unittest.TestCase):
             self.clean_path,
             self.release_path,
             TARGET,
-            VERSION,
+            self.version,
         )
 
     def refresh_runtime_bindings(self):
@@ -373,61 +410,6 @@ class PythonQualificationTests(unittest.TestCase):
         ):
             report["compile_report_sha256"] = digest
             self.write_json(path, report)
-
-    @staticmethod
-    def replace_cp313_with_cp311(value):
-        encoded = json.dumps(value)
-        for old, new in (
-            ("3.13.15", "3.11.16"),
-            ("cpython-313", "cpython-311"),
-            ("cp313", "cp311"),
-            ("3.13", "3.11"),
-        ):
-            encoded = encoded.replace(old, new)
-        return json.loads(encoded)
-
-    def convert_fixture_to_cp311(self):
-        self.release = self.replace_cp313_with_cp311(self.release)
-        self.compile = self.replace_cp313_with_cp311(self.compile)
-        self.locked = self.replace_cp313_with_cp311(self.locked)
-        self.clean = self.replace_cp313_with_cp311(self.clean)
-
-        self.release["python"]["versions"][0]["adapter"] = "transition"
-        self.compile["adapter"] = "transition"
-        self.compile["sysconfig"].pop("Py_GIL_DISABLED")
-        self.compile["target_artifact_guard"]["canonical_sha256"] = canonical_sha256(
-            self.compile["target_artifact_guard"]["records"]
-        )
-        self.locked["adapter"] = "transition"
-        self.clean["adapter"] = "transition"
-
-        self.write_json(self.release_path, self.release)
-        release_digest = canonical_sha256(self.release)
-        self.compile["release_sha256"] = release_digest
-        self.write_json(self.compile_path, self.compile)
-        compile_digest = hashlib.sha256(self.compile_path.read_bytes()).hexdigest()
-        for path, report in (
-            (self.locked_path, self.locked),
-            (self.clean_path, self.clean),
-        ):
-            report["release_sha256"] = release_digest
-            report["compile_report_sha256"] = compile_digest
-            if report["tier"] == "clean-rocky":
-                overlay = report["runtime"]["overlay_evidence"]
-                overlay["identity"]["release_sha256"] = release_digest
-                overlay["identity_sha256"] = canonical_sha256(overlay["identity"])
-                report["runtime"]["identity_sha256"] = overlay["identity_sha256"]
-            self.write_json(path, report)
-
-    def finalize_version(self, version):
-        return FINALIZER["finalize"](
-            self.compile_path,
-            self.locked_path,
-            self.clean_path,
-            self.release_path,
-            TARGET,
-            version,
-        )
 
     def test_final_report_binds_static_and_both_runtime_tiers(self):
         report = self.finalize()
@@ -477,30 +459,124 @@ class PythonQualificationTests(unittest.TestCase):
                     invalid, build, prefix
                 )
 
-    def test_cp311_transition_report_uses_its_own_abi_and_omits_gil_flag(self):
-        self.convert_fixture_to_cp311()
-        report = self.finalize_version("3.11.16")
+    def test_all_implemented_rows_use_their_own_abi_adapter_and_gil_policy(self):
+        for version in IMPLEMENTED_VERSIONS:
+            with self.subTest(version=version):
+                self.reset_fixture(version)
+                report = self.finalize()
+                contract = ROW_CONTRACT["contract_for_version"](version)
+                compact = contract["minor"].replace(".", "")
 
-        self.assertEqual(report["adapter"], "transition")
-        self.assertEqual(report["compile"]["adapter"], "transition")
-        self.assertEqual(
-            report["compile"]["target_prefix"],
-            "/opt/crossforge/python/cp311/targets/" + TARGET,
+                self.assertEqual(report["adapter"], contract["adapter"])
+                self.assertEqual(report["compile"]["adapter"], contract["adapter"])
+                self.assertEqual(
+                    report["compile"]["target_prefix"],
+                    "/opt/crossforge/python/%s/targets/%s"
+                    % (contract["row"], TARGET),
+                )
+                self.assertEqual(
+                    report["compile"]["build_python"]["path"],
+                    "/opt/crossforge/python/%s/build/bin/python%s"
+                    % (contract["row"], contract["minor"]),
+                )
+                self.assertEqual(
+                    report["compile"]["extension"]["name"],
+                    "_crossforge.cpython-%s-x86_64-linux-gnu.so" % compact,
+                )
+                self.assertEqual(
+                    report["compile"]["sysconfig"]["SOABI"],
+                    "cpython-%s-x86_64-linux-gnu" % compact,
+                )
+                if contract["gil_policy"] == "absent":
+                    self.assertNotIn(
+                        "Py_GIL_DISABLED", report["compile"]["sysconfig"]
+                    )
+                else:
+                    self.assertEqual(
+                        report["compile"]["sysconfig"]["Py_GIL_DISABLED"], 0
+                    )
+                for execution in report["executions"].values():
+                    self.assertEqual(execution["adapter"], contract["adapter"])
+                    self.assertEqual(
+                        execution["probe"]["sysconfig"]["cache_tag"],
+                        "cpython-%s" % compact,
+                    )
+
+    def test_cross_row_adapter_path_soabi_and_gil_mutations_are_rejected(self):
+        mutations = (
+            (
+                "adapter",
+                "3.12.14",
+                lambda compile_report: compile_report.__setitem__(
+                    "adapter", "transition"
+                ),
+            ),
+            (
+                "path",
+                "3.12.14",
+                lambda compile_report: compile_report.__setitem__(
+                    "target_prefix", "/opt/crossforge/python/cp313/targets/" + TARGET
+                ),
+            ),
+            (
+                "soabi",
+                "3.12.14",
+                lambda compile_report: compile_report["sysconfig"].__setitem__(
+                    "SOABI", "cpython-313-x86_64-linux-gnu"
+                ),
+            ),
+            (
+                "312_gil_present",
+                "3.12.14",
+                lambda compile_report: compile_report["sysconfig"].__setitem__(
+                    "Py_GIL_DISABLED", 0
+                ),
+            ),
+            (
+                "313_gil_missing",
+                "3.13.15",
+                lambda compile_report: compile_report["sysconfig"].pop(
+                    "Py_GIL_DISABLED"
+                ),
+            ),
+            (
+                "313_gil_bool",
+                "3.13.15",
+                lambda compile_report: compile_report["sysconfig"].__setitem__(
+                    "Py_GIL_DISABLED", False
+                ),
+            ),
+            (
+                "py_debug_bool",
+                "3.12.14",
+                lambda compile_report: compile_report["sysconfig"].__setitem__(
+                    "Py_DEBUG", False
+                ),
+            ),
+            (
+                "wchar_size_float",
+                "3.12.14",
+                lambda compile_report: compile_report["sysconfig"].__setitem__(
+                    "SIZEOF_WCHAR_T", 4.0
+                ),
+            ),
         )
-        self.assertEqual(
-            report["compile"]["extension"]["name"],
-            "_crossforge.cpython-311-x86_64-linux-gnu.so",
-        )
-        self.assertEqual(
-            report["compile"]["sysconfig"]["SOABI"],
-            "cpython-311-x86_64-linux-gnu",
-        )
-        self.assertNotIn("Py_GIL_DISABLED", report["compile"]["sysconfig"])
-        for execution in report["executions"].values():
-            self.assertEqual(execution["adapter"], "transition")
-            self.assertEqual(
-                execution["probe"]["sysconfig"]["cache_tag"], "cpython-311"
-            )
+        for name, version, mutate in mutations:
+            with self.subTest(name=name, version=version):
+                self.reset_fixture(version)
+                mutate(self.compile)
+                self.write_json(self.compile_path, self.compile)
+                with self.assertRaises(FINALIZER["FinalizationError"]):
+                    self.finalize()
+
+    def test_static_qualifier_requires_exact_abi_integer_types(self):
+        require_abi_value = QUALIFIER["require_abi_value"]
+        require_abi_value(0, 0, "Py_DEBUG")
+        require_abi_value(4, 4, "SIZEOF_WCHAR_T")
+        for actual, expected in ((False, 0), (0.0, 0), (4.0, 4)):
+            with self.subTest(actual=actual, expected=expected):
+                with self.assertRaises(QUALIFIER["QualificationError"]):
+                    require_abi_value(actual, expected, "ABI_VALUE")
 
     def test_duplicate_json_key_is_rejected(self):
         duplicate = self.directory / "duplicate.json"

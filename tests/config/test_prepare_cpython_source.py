@@ -12,6 +12,7 @@ from unittest import mock
 REPOSITORY = Path(__file__).resolve().parents[2]
 PREPARER = runpy.run_path(str(REPOSITORY / "scripts/prepare-cpython-source.py"))
 PreparationError = PREPARER["PreparationError"]
+ROW_CONTRACT = runpy.run_path(str(REPOSITORY / "scripts/python_row_contract.py"))
 
 
 class PrepareCPythonSourceTests(unittest.TestCase):
@@ -22,14 +23,22 @@ class PrepareCPythonSourceTests(unittest.TestCase):
         )
 
     def test_only_qualified_rows_are_implemented(self):
-        self.assertEqual(PREPARER["row_for"](self.config, "cp311")["version"], "3.11.16")
-        self.assertEqual(PREPARER["row_for"](self.config, "cp313")["version"], "3.13.15")
-        with self.assertRaises(PreparationError):
-            PREPARER["row_for"](self.config, "cp312")
+        for contract in ROW_CONTRACT["IMPLEMENTED_ROWS"]:
+            with self.subTest(row=contract["row"]):
+                entry = PREPARER["row_for"](self.config, contract["row"])
+                self.assertEqual(
+                    entry["version"].rsplit(".", 1)[0], contract["minor"]
+                )
+                self.assertEqual(entry["adapter"], contract["adapter"])
 
     def test_row_adapter_mismatch_is_rejected(self):
         config = copy.deepcopy(self.config)
-        config["python"]["versions"][2]["adapter"] = "modern"
+        transition = next(
+            entry
+            for entry in config["python"]["versions"]
+            if entry["version"].rsplit(".", 1)[0] == "3.11"
+        )
+        transition["adapter"] = "modern"
         with self.assertRaises(PreparationError):
             PREPARER["row_for"](config, "cp311")
 
@@ -81,6 +90,120 @@ class PrepareCPythonSourceTests(unittest.TestCase):
             self.assertFalse(manifest.exists())
             self.assertEqual(list(directory.glob(".*.tmp")), [])
 
+    def test_cp312_patch_applies_and_manifest_binds_identity(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            archive = directory / "Python-3.12.14.tar.xz"
+            self.write_archive(archive, version="3.12.14", vulnerable=True)
+            patches = copy.deepcopy(
+                PREPARER["row_for"](self.config, "cp312")["patches"]
+            )
+            config = self.configuration_for(
+                archive,
+                version="3.12.14",
+                adapter="modern",
+                patches=patches,
+            )
+            destination = directory / "source"
+            manifest = directory / "manifest.json"
+            identity = PREPARER["prepare"](
+                config, "cp312", archive, destination, manifest, REPOSITORY
+            )
+
+            self.assertEqual(identity["row"], "cp312")
+            self.assertEqual(identity["version"], "3.12.14")
+            self.assertEqual(identity["adapter"], "modern")
+            self.assertEqual(identity["patches"], patches)
+            self.assertEqual(
+                json.loads(manifest.read_text(encoding="utf-8")), identity
+            )
+            for relative in ("configure", "configure.ac"):
+                text = (destination / relative).read_text(encoding="utf-8")
+                self.assertIn("PYTHONPATH=$(srcdir)/Lib", text)
+                self.assertIn("_PYTHON_SYSCONFIGDATA_PATH=", text)
+                self.assertNotIn(
+                    "$(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib",
+                    text,
+                )
+            sysconfig = (destination / "Lib/sysconfig.py").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')", sysconfig)
+            self.assertIn("FileFinder", sysconfig)
+
+    def test_cp312_unpatched_source_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            archive = directory / "Python-3.12.14.tar.xz"
+            self.write_archive(archive, version="3.12.14", vulnerable=True)
+            config = self.configuration_for(
+                archive, version="3.12.14", adapter="modern", patches=[]
+            )
+            destination = directory / "source"
+            manifest = directory / "manifest.json"
+            with self.assertRaisesRegex(PreparationError, "lacks isolated"):
+                PREPARER["prepare"](
+                    config, "cp312", archive, destination, manifest, REPOSITORY
+                )
+            self.assertFalse(destination.exists())
+            self.assertFalse(manifest.exists())
+
+    def test_cp312_patch_path_and_hash_are_enforced(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            archive = directory / "Python-3.12.14.tar.xz"
+            self.write_archive(archive, version="3.12.14", vulnerable=True)
+            canonical = PREPARER["row_for"](self.config, "cp312")["patches"]
+            mutations = (
+                ("sha", "sha256", "0" * 64, "SHA256 mismatch"),
+                (
+                    "path",
+                    "file",
+                    "patches/cpython/3.12/missing.patch",
+                    "missing CPython patch",
+                ),
+            )
+            for name, field, value, message in mutations:
+                with self.subTest(name=name):
+                    patches = copy.deepcopy(canonical)
+                    patches[0][field] = value
+                    config = self.configuration_for(
+                        archive,
+                        version="3.12.14",
+                        adapter="modern",
+                        patches=patches,
+                    )
+                    with self.assertRaisesRegex(PreparationError, message):
+                        PREPARER["prepare"](
+                            config,
+                            "cp312",
+                            archive,
+                            directory / ("source-" + name),
+                            directory / ("manifest-" + name + ".json"),
+                            REPOSITORY,
+                        )
+
+    def test_patch_parent_symlink_cannot_escape_repository(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            repository = directory / "repository"
+            patch_parent = repository / "patches/cpython"
+            patch_parent.mkdir(parents=True)
+            outside = directory / "outside"
+            outside.mkdir()
+            payload = outside / "escape.patch"
+            payload.write_text("not a repository patch\n", encoding="utf-8")
+            (patch_parent / "3.12").symlink_to(outside, target_is_directory=True)
+            digest, unused_size = PREPARER["sha256_file"](payload)
+            with self.assertRaisesRegex(PreparationError, "escapes repository"):
+                PREPARER["patch_path"](
+                    repository,
+                    {
+                        "file": "patches/cpython/3.12/escape.patch",
+                        "sha256": digest,
+                    },
+                )
+
     def test_archive_links_are_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             archive = Path(temporary) / "unsafe.tar.xz"
@@ -98,35 +221,104 @@ class PrepareCPythonSourceTests(unittest.TestCase):
                 PREPARER["extract_archive"](archive, extraction, "3.11.16")
 
     @staticmethod
-    def write_archive(path):
+    def write_archive(path, version="3.11.16", vulnerable=False):
+        root_name = "Python-" + version
+        if vulnerable:
+            configure = b"""#!/bin/sh
+# PYTHON_FOR_BUILD='PYTHONPATH=$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_PATH=/comment-only'
+    fi
+        ac_cv_prog_PYTHON_FOR_REGEN=$with_build_python
+    PYTHON_FOR_FREEZE="$with_build_python"
+    PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) '$with_build_python
+    { printf "%s\\n" "$as_me:${as_lineno-$LINENO}: result: $with_build_python" >&5
+printf "%s\\n" "$with_build_python" >&6; }
+
+"""
+            configure_ac = b"""dnl PYTHON_FOR_BUILD='PYTHONPATH=$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_PATH=/comment-only'
+    dnl Build Python interpreter is used for regeneration and freezing.
+    ac_cv_prog_PYTHON_FOR_REGEN=$with_build_python
+    PYTHON_FOR_FREEZE="$with_build_python"
+    PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) '$with_build_python
+    AC_MSG_RESULT([$with_build_python])
+  ], [
+    AS_VAR_IF([cross_compiling], [yes],
+"""
+            sysconfig = b'''# os.environ.get('_PYTHON_SYSCONFIGDATA_PATH') FileFinder SourceFileLoader
+def _init_posix(vars):
+    """Initialize the module as appropriate for POSIX systems."""
+    # _sysconfigdata is generated at build time, see _generate_posix_vars()
+    name = _get_sysconfigdata_name()
+    _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)
+    build_time_vars = _temp.build_time_vars
+    vars.update(build_time_vars)
+
+def _init_non_posix(vars):
+    pass
+
+'''
+        else:
+            isolated = (
+                b"PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) "
+                b"PYTHONPATH=$(srcdir)/Lib "
+                b"_PYTHON_SYSCONFIGDATA_PATH=$(abs_builddir)/target python'\n"
+            )
+            configure = b"#!/bin/sh\n" + isolated
+            configure_ac = isolated
+            sysconfig = b'''import os
+def _init_posix(vars):
+    name = _get_sysconfigdata_name()
+    if (path := os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')):
+        from importlib.machinery import FileFinder, SourceFileLoader, SOURCE_SUFFIXES
+        from importlib.util import module_from_spec
+        spec = FileFinder(path, (SourceFileLoader, SOURCE_SUFFIXES)).find_spec(name)
+        _temp = module_from_spec(spec)
+        spec.loader.exec_module(_temp)
+    else:
+        _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)
+    vars.update(_temp.build_time_vars)
+
+def _init_non_posix(vars):
+    pass
+'''
+
         with tarfile.open(str(path), "w:xz") as output:
-            root = tarfile.TarInfo("Python-3.11.16")
-            root.type = tarfile.DIRTYPE
-            root.mode = 0o755
-            output.addfile(root)
-            payload = b"#!/bin/sh\nexit 0\n"
-            configure = tarfile.TarInfo("Python-3.11.16/configure")
-            configure.mode = 0o755
-            configure.size = len(payload)
-            output.addfile(configure, io.BytesIO(payload))
+            for directory in (root_name, root_name + "/Lib"):
+                member = tarfile.TarInfo(directory)
+                member.type = tarfile.DIRTYPE
+                member.mode = 0o755
+                output.addfile(member)
+            for relative, payload, mode in (
+                ("configure", configure, 0o755),
+                ("configure.ac", configure_ac, 0o644),
+                ("Lib/sysconfig.py", sysconfig, 0o644),
+            ):
+                member = tarfile.TarInfo(root_name + "/" + relative)
+                member.mode = mode
+                member.size = len(payload)
+                output.addfile(member, io.BytesIO(payload))
 
     @staticmethod
-    def configuration_for(archive):
+    def configuration_for(
+        archive, version="3.11.16", adapter="transition", patches=None
+    ):
         digest, size = PREPARER["sha256_file"](archive)
+        if patches is None:
+            patches = []
         return {
             "python": {
                 "versions": [
                     {
-                        "version": "3.11.16",
-                        "adapter": "transition",
+                        "version": version,
+                        "adapter": adapter,
                         "support": "security",
                         "source": {
                             "status": "locked",
-                            "url": "https://example.invalid/Python-3.11.16.tar.xz",
+                            "url": "https://example.invalid/Python-%s.tar.xz"
+                            % version,
                             "sha256": digest,
                             "size": size,
                         },
-                        "patches": [],
+                        "patches": patches,
                     }
                 ]
             }

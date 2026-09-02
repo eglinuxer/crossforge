@@ -3,6 +3,8 @@
 # Target matrices, platforms, source identities and the base image are generated
 # from config/release.json into docker-bake.override.json; run render-bake.py
 # after changing the canonical release configuration.
+# Python phase groups and frozen `python-phaseN-dev` snapshots are generated
+# from scripts/python_row_contract.py; this HCL file owns only Phases 1-4.
 
 target "_common" {
   context    = "."
@@ -226,19 +228,5 @@ group "phase4" {
     "sysroot-aarch64",
     "toolchain-x86_64-dev",
     "toolchain-aarch64-dev"
-  ]
-}
-
-group "phase5" {
-  targets = [
-    "validate",
-    "platform-python-check",
-    "host-python-build-locked",
-    "cpython-build-cp313",
-    "python-runtime-clean-x86_64",
-    "python-runtime-clean-aarch64",
-    "cpython-cp313-x86_64-qualify",
-    "cpython-cp313-aarch64-qualify",
-    "python-cp313-dev"
   ]
 }

@@ -8,24 +8,29 @@ import sys
 from pathlib import Path
 
 
-# Pipeline enablement is implementation state, not source metadata. Exact patch
-# versions and adapters are always selected from release.json below. Extend this
-# tuple only after the corresponding adapter has a qualified vertical slice.
-PYTHON_PIPELINE_MINORS = ("3.13", "3.11")
+ROW_CONTRACT = runpy.run_path(
+    str(Path(__file__).with_name("python_row_contract.py"))
+)
+ContractError = ROW_CONTRACT["ContractError"]
+IMPLEMENTED_ROWS = ROW_CONTRACT["IMPLEMENTED_ROWS"]
+LATEST_PHASE = ROW_CONTRACT["LATEST_PHASE"]
+bind_python_row = ROW_CONTRACT["bind_release"]
+rows_for_phase = ROW_CONTRACT["rows_for_phase"]
+
 PYTHON_TARGETS = {
     "x86_64": "x86_64-unknown-linux-gnu",
     "aarch64": "aarch64-unknown-linux-gnu",
 }
 
 
-def python_row(entry):
+def python_row(contract, entry):
     version = entry["version"]
-    minor = version.rsplit(".", 1)[0]
     return {
-        "row": "cp" + minor.replace(".", ""),
-        "minor": minor,
+        "row": contract["row"],
+        "minor": contract["minor"],
         "version": version,
-        "adapter": entry["adapter"],
+        "adapter": contract["adapter"],
+        "introduced_phase": contract["introduced_phase"],
     }
 
 
@@ -49,25 +54,23 @@ def cacheonly_python_target(target, row, contexts=None, extra_args=None):
 
 
 def render_python_graph(config, targets):
-    entries = config["python"]["versions"]
     rows = []
-    for minor in PYTHON_PIPELINE_MINORS:
-        matches = [
-            python_row(entry)
-            for entry in entries
-            if entry["version"].rsplit(".", 1)[0] == minor
-        ]
-        if len(matches) != 1:
-            raise ValueError("release must select one CPython %s row" % minor)
-        row = matches[0]
-        source = next(
-            entry["source"]
-            for entry in entries
-            if entry["version"] == row["version"]
-        )
+    for record in IMPLEMENTED_ROWS:
+        try:
+            binding = bind_python_row(config, row=record["row"])
+        except ContractError as error:
+            raise ValueError(str(error)) from error
+        row = python_row(binding["contract"], binding["entry"])
+        source = binding["entry"]["source"]
         if source["status"] != "locked":
-            raise ValueError("enabled CPython row is not source-locked: %s" % minor)
+            raise ValueError(
+                "enabled CPython row is not source-locked: %s" % row["minor"]
+            )
         rows.append(row)
+
+    phase_order = [row["introduced_phase"] for row in rows]
+    if phase_order != sorted(phase_order):
+        raise ValueError("Python rows must be introduced in append-only phase order")
 
     release_targets = {
         item["arch"]: item["triple"] for item in config["targets"]
@@ -195,7 +198,9 @@ def render_python_graph(config, targets):
         "output": ["type=cacheonly"],
     }
 
+    rows_by_name = {row["row"]: row for row in rows}
     aggregate_base = "sdk-toolchains-dev"
+    append_targets = {}
     for row in rows:
         append_name = "python-dev-append-%s" % row["row"]
         targets[append_name] = cacheonly_python_target(
@@ -207,28 +212,77 @@ def render_python_graph(config, targets):
             },
         )
         aggregate_base = append_name
+        append_targets[row["row"]] = append_name
+
+    introduced_phases = sorted(
+        {row["introduced_phase"] for row in rows}
+    )
+    for phase in introduced_phases:
+        phase_row_names = rows_for_phase(phase)
+        if not phase_row_names:
+            raise ValueError("Python phase %d has no rows" % phase)
+        try:
+            phase_rows = [rows_by_name[name] for name in phase_row_names]
+        except KeyError as error:
+            raise ValueError(
+                "Python phase %d references an unknown row: %s"
+                % (phase, error.args[0])
+            ) from error
+        native_targets = [
+            "cpython-build-%s" % row["row"] for row in phase_rows
+        ]
+        groups["python-native-phase%d" % phase] = {
+            "targets": native_targets
+        }
+        snapshot_name = "python-phase%d-dev" % phase
+        snapshot_base = append_targets[phase_rows[-1]["row"]]
+        targets[snapshot_name] = {
+            "inherits": ["_python_common"],
+            "target": "python-sdk-final",
+            "args": {
+                "CROSSFORGE_PYTHON_ROWS": " ".join(
+                    row["row"] for row in phase_rows
+                )
+            },
+            "contexts": {
+                "crossforge_sdk_base": "target:%s" % snapshot_base
+            },
+            "output": ["type=cacheonly"],
+        }
+        qualification_targets = [
+            "cpython-%s-%s-qualify" % (row["row"], arch)
+            for row in phase_rows
+            for arch in PYTHON_TARGETS
+        ]
+        groups["phase%d" % phase] = {
+            "targets": [
+                "validate",
+                "platform-python-check",
+                "host-python-build-locked",
+                *native_targets,
+                "python-runtime-clean-x86_64",
+                "python-runtime-clean-aarch64",
+                *qualification_targets,
+                snapshot_name,
+            ]
+        }
+
+    latest_row_names = rows_for_phase(LATEST_PHASE)
+    if tuple(row["row"] for row in rows) != latest_row_names:
+        raise ValueError("latest Python phase differs from implemented row order")
+    groups["python-native-latest"] = {
+        "targets": ["cpython-build-%s" % row for row in latest_row_names]
+    }
     targets["python-dev"] = {
         "inherits": ["_python_common"],
         "target": "python-sdk-final",
         "args": {
-            "CROSSFORGE_PYTHON_ROWS": " ".join(row["row"] for row in rows)
+            "CROSSFORGE_PYTHON_ROWS": " ".join(latest_row_names)
         },
         "contexts": {"crossforge_sdk_base": "target:%s" % aggregate_base},
         "output": ["type=cacheonly"],
     }
     groups["python-matrix"] = {"targets": ["python-dev"]}
-    groups["phase6"] = {
-        "targets": [
-            "validate",
-            "platform-python-check",
-            "host-python-build-locked",
-            "python-runtime-clean-x86_64",
-            "python-runtime-clean-aarch64",
-            "cpython-cp311-x86_64-qualify",
-            "cpython-cp311-aarch64-qualify",
-            "python-dev",
-        ]
-    }
     return groups
 
 

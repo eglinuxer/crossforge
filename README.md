@@ -9,11 +9,10 @@ build-system-independent DEB/RPM packaging.
 > **Not yet publishable as the complete SDK.** Both cross-toolchain slices now
 > build from locked host and sysroot transactions. x86_64 passes native smoke;
 > aarch64 passes the same compile/ABI gates and explicit QEMU smoke against a
-> locked sysroot and clean Rocky arm64 root. CPython 3.11 transition and 3.13
-> modern rows each supply one amd64 build Python plus genuine x86_64/aarch64
-> target SDKs, qualified in locked-sysroot and clean-Rocky runtime tiers. The
-> remaining Python minors, vcpkg, packaging, frozen ABI sets and the independent
-> minimal host-runtime lock remain pending.
+> locked sysroot and clean Rocky arm64 root. CPython 3.11 transition and
+> 3.12/3.13 modern rows have completed their amd64 build-Python and dual-target
+> runtime gates through Phase 7. Python 3.9–3.10/3.14, vcpkg, packaging, frozen
+> ABI sets and the independent minimal host-runtime lock remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -171,6 +170,8 @@ Build and qualify the first complete Python matrix row:
 $ docker buildx bake cpython-cp313-x86_64-qualify
 $ docker buildx bake cpython-cp313-aarch64-qualify
 $ docker buildx bake python-cp313-dev
+$ docker buildx bake python-phase5-dev
+$ docker buildx bake phase5
 ```
 
 CPython 3.13.15 is built once as an amd64 build interpreter and twice as a
@@ -191,22 +192,23 @@ is a later release-supply-chain gate and is not claimed by this phase.
 
 ## Phase 6: parameterized CPython rows
 
-Build the 3.11 transition row or the current two-row SDK aggregate:
+Build the 3.11 transition row or the frozen two-row Phase 6 snapshot:
 
 ```console
 $ docker buildx bake cpython-cp311-x86_64-qualify
 $ docker buildx bake cpython-cp311-aarch64-qualify
 $ docker buildx bake python-cp311-dev
-$ docker buildx bake python-dev
+$ docker buildx bake python-phase6-dev
 $ docker buildx bake phase6
 ```
 
 `docker/python.Dockerfile` implements one row pipeline; Bake supplies exact
 version, adapter and target edges from `release.json`. Rows build and qualify
-independently, export through scratch, and enter `python-dev` only through an
-append-only aggregation chain. Rows do not inherit each other's build state;
-changing the global release identity intentionally rebinds and requalifies all
-enabled rows.
+independently, export through scratch, and enter phase snapshots only through an
+append-only aggregation chain. `python-phase6-dev` is permanently limited to
+cp313+cp311 even as the latest `python-dev` matrix grows. Rows do not inherit
+each other's build state; changing the global release identity intentionally
+rebinds and requalifies all enabled rows.
 
 CPython 3.11.16 carries a hash-locked backport of upstream gh-115382 so the
 amd64 build interpreter cannot discover same-SOABI target extensions through
@@ -217,6 +219,31 @@ programs. Runtime qualification mounts real `tmpfs` instances at `/dev/shm`
 and exercises an actual `multiprocessing.Lock()` on both targets. Each row
 manifest binds its prepared source, patches, complete build/target SDK tree
 identities and both self-validating qualification reports.
+
+## Phase 7: CPython 3.12 modern qualification
+
+Build and qualify the third row and latest aggregate graph:
+
+```console
+$ docker buildx bake python-native-phase7
+$ docker buildx bake cpython-cp312-x86_64-qualify
+$ docker buildx bake cpython-cp312-aarch64-qualify
+$ docker buildx bake python-cp312-dev
+$ docker buildx bake python-phase7-dev
+$ docker buildx bake python-dev
+$ docker buildx bake python-matrix
+$ docker buildx bake phase7
+```
+
+CPython 3.12.14 uses the modern Makefile extension build, but the 3.12 branch
+did not receive the same-SOABI isolation fix. Crossforge therefore carries a
+separate hash-locked gh-115382 backport for the 3.12 source layout. The shared
+row contract defines its adapter, absent `Py_GIL_DISABLED` policy and Phase 7
+introduction once; build, qualification, runtime and Bake consume that same
+contract. `phase5` and `phase6` remain frozen cp313 and cp313+cp311 snapshots.
+`python-dev` and `python-matrix` are the latest three-row graph: they append
+cp312 only through its qualified scratch row. The full Phase 7 gate has passed
+locally; CI repeats `python-matrix` on every main-branch revision.
 
 ## Product contract
 

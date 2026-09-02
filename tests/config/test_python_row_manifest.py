@@ -18,6 +18,10 @@ VERIFY_PATH = REPOSITORY / "docker/verify-python-row.py"
 FINALIZE_PATH = REPOSITORY / "docker/finalize-python-row.py"
 VERIFY = runpy.run_path(str(VERIFY_PATH))
 FINALIZE = runpy.run_path(str(FINALIZE_PATH))
+ROW_CONTRACT = runpy.run_path(str(REPOSITORY / "scripts/python_row_contract.py"))
+IMPLEMENTED_MINORS = tuple(
+    record["minor"] for record in ROW_CONTRACT["IMPLEMENTED_ROWS"]
+)
 TARGETS = {
     "x86_64": "x86_64-unknown-linux-gnu",
     "aarch64": "aarch64-unknown-linux-gnu",
@@ -70,7 +74,7 @@ class PythonRowManifestTests(unittest.TestCase):
 
     def source_contract(self, minor):
         entry = self.entry(minor)
-        row = "cp" + minor.replace(".", "")
+        row = ROW_CONTRACT["contract_for_version"](entry["version"])["row"]
         return VERIFY["row_contract"](
             self.release,
             row,
@@ -80,7 +84,7 @@ class PythonRowManifestTests(unittest.TestCase):
 
     def run_verify(self, minor, manifest):
         entry = self.entry(minor)
-        row = "cp" + minor.replace(".", "")
+        row = ROW_CONTRACT["contract_for_version"](entry["version"])["row"]
         manifest_path = self.directory / (row + "-source.json")
         self.write_json(manifest_path, manifest)
         return subprocess.run(
@@ -105,7 +109,7 @@ class PythonRowManifestTests(unittest.TestCase):
 
     def fixture(self, minor):
         entry = self.entry(minor)
-        row = "cp" + minor.replace(".", "")
+        row = ROW_CONTRACT["contract_for_version"](entry["version"])["row"]
         root = self.directory / (row + "-root")
         source_manifest = self.source_contract(minor)
         source_path = self.directory / (row + "-prepared-source.json")
@@ -255,8 +259,8 @@ class PythonRowManifestTests(unittest.TestCase):
             validator["validate_final_report"] = original
         return SimpleNamespace(returncode=return_code, stderr=stderr.getvalue()), output
 
-    def test_cp311_and_cp313_source_manifests_match_exact_contract(self):
-        for minor in ("3.11", "3.13"):
+    def test_all_implemented_source_manifests_match_exact_contract(self):
+        for minor in IMPLEMENTED_MINORS:
             with self.subTest(minor=minor):
                 contract = self.source_contract(minor)
                 entry = self.entry(minor)
@@ -280,6 +284,16 @@ class PythonRowManifestTests(unittest.TestCase):
                 result = self.run_verify(minor, contract)
                 self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_row_verifier_rejects_source_locked_but_unimplemented_minor(self):
+        planned = self.entry("3.9")
+        with self.assertRaises(VERIFY["RowError"]):
+            VERIFY["row_contract"](
+                self.release,
+                "cp39",
+                planned["version"],
+                planned["adapter"],
+            )
+
     def test_source_manifest_identity_tampering_is_rejected(self):
         mutations = {
             "adapter": lambda value: value.__setitem__("adapter", "legacy"),
@@ -288,18 +302,19 @@ class PythonRowManifestTests(unittest.TestCase):
             "patches": lambda value: value.__setitem__("patches", []),
             "unknown": lambda value: value.__setitem__("unknown", True),
         }
-        for minor in ("3.11", "3.13"):
+        for minor in IMPLEMENTED_MINORS:
             for name, mutate in mutations.items():
-                if minor == "3.13" and name == "patches":
+                manifest = self.source_contract(minor)
+                if not manifest["patches"] and name == "patches":
                     continue
                 with self.subTest(minor=minor, mutation=name):
-                    manifest = copy.deepcopy(self.source_contract(minor))
-                    mutate(manifest)
-                    result = self.run_verify(minor, manifest)
+                    tampered = copy.deepcopy(manifest)
+                    mutate(tampered)
+                    result = self.run_verify(minor, tampered)
                     self.assertNotEqual(result.returncode, 0)
 
-    def test_two_target_row_manifest_succeeds_for_cp311_and_cp313(self):
-        for minor in ("3.11", "3.13"):
+    def test_two_target_row_manifest_succeeds_for_all_implemented_rows(self):
+        for minor in IMPLEMENTED_MINORS:
             with self.subTest(minor=minor):
                 fixture = self.fixture(minor)
                 process, output = self.run_finalize(fixture)

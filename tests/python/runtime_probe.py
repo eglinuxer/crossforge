@@ -70,16 +70,39 @@ def require(condition: bool, message: str) -> None:
         raise ProbeError(message)
 
 
+def is_exact_integer(value: object, expected: int) -> bool:
+    return type(value) is int and value == expected
+
+
+def validate_gil_policy(
+    config_vars: dict[str, object], minor: str, gil_policy: str
+) -> None:
+    if gil_policy == "absent":
+        require(
+            "Py_GIL_DISABLED" not in config_vars,
+            f"CPython {minor} unexpectedly exposes Py_GIL_DISABLED",
+        )
+    elif gil_policy == "zero":
+        require(
+            "Py_GIL_DISABLED" in config_vars
+            and is_exact_integer(config_vars["Py_GIL_DISABLED"], 0),
+            f"CPython {minor} must explicitly disable the free-threaded ABI",
+        )
+    else:
+        raise ProbeError("unsupported CPython GIL policy")
+
+
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("core", "devices"), required=True)
     parser.add_argument("--target", choices=tuple(TARGETS), required=True)
     parser.add_argument("--version", required=True)
+    parser.add_argument("--gil-policy", choices=("absent", "zero"), required=True)
     parser.add_argument("--extension-dir", type=os.path.abspath)
     arguments = parser.parse_args()
 
-    if re.fullmatch(r"3\.(?:11|13)\.[0-9]+", arguments.version) is None:
-        parser.error("--version must be an implemented CPython 3.11/3.13 patch version")
+    if re.fullmatch(r"3\.[0-9]+\.[0-9]+", arguments.version) is None:
+        parser.error("--version must be an exact CPython patch version")
     if arguments.mode == "core" and arguments.extension_dir is None:
         parser.error("--extension-dir is required in core mode")
     if arguments.mode == "devices" and arguments.extension_dir is not None:
@@ -87,7 +110,9 @@ def parse_arguments() -> argparse.Namespace:
     return arguments
 
 
-def validate_identity(target: str, version: str) -> dict[str, object]:
+def validate_identity(
+    target: str, version: str, gil_policy: str
+) -> dict[str, object]:
     target_data = TARGETS[target]
     arch = target_data["arch"]
     multiarch = target_data["multiarch"]
@@ -138,19 +163,12 @@ def validate_identity(target: str, version: str) -> dict[str, object]:
         "sysconfig platform differs from target architecture",
     )
     require(platform.machine() == arch, "runtime machine differs from target")
-    require(sysconfig.get_config_var("Py_DEBUG") == 0, "debug Python is unsupported")
+    require(
+        is_exact_integer(sysconfig.get_config_var("Py_DEBUG"), 0),
+        "debug Python is unsupported",
+    )
     config_vars = sysconfig.get_config_vars()
-    if minor == "3.11":
-        require(
-            "Py_GIL_DISABLED" not in config_vars,
-            "CPython 3.11 unexpectedly exposes Py_GIL_DISABLED",
-        )
-    else:
-        require(
-            "Py_GIL_DISABLED" in config_vars
-            and config_vars["Py_GIL_DISABLED"] == 0,
-            "CPython 3.13 must explicitly disable the free-threaded ABI",
-        )
+    validate_gil_policy(config_vars, minor, gil_policy)
     config_args = sysconfig.get_config_var("CONFIG_ARGS")
     require(isinstance(config_args, str), "sysconfig CONFIG_ARGS is not text")
     for option in (
@@ -431,7 +449,9 @@ def exercise_pty() -> dict[str, object]:
 
 
 def core_report(arguments: argparse.Namespace) -> dict[str, object]:
-    identity = validate_identity(arguments.target, arguments.version)
+    identity = validate_identity(
+        arguments.target, arguments.version, arguments.gil_policy
+    )
     extension_report, extension = exercise_extension(arguments.extension_dir)
     return {
         "extension": extension_report,
@@ -454,7 +474,9 @@ def core_report(arguments: argparse.Namespace) -> dict[str, object]:
 
 
 def devices_report(arguments: argparse.Namespace) -> dict[str, object]:
-    identity = validate_identity(arguments.target, arguments.version)
+    identity = validate_identity(
+        arguments.target, arguments.version, arguments.gil_policy
+    )
     return {
         "mode": "devices",
         "probe": {"pty": exercise_pty()},

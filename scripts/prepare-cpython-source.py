@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import runpy
 import shutil
 import subprocess
@@ -20,13 +21,8 @@ ValidationError = RELEASE_VALIDATOR["ValidationError"]
 load_json = RELEASE_VALIDATOR["load_json"]
 validate = RELEASE_VALIDATOR["validate"]
 validate_schema_subset = RELEASE_VALIDATOR["validate_schema_subset"]
-
-# Rows are enabled deliberately after their two target qualifications pass. A
-# source entry in release.json alone is not an implementation claim.
-IMPLEMENTED_ROWS = {
-    "cp311": ("3.11", "transition"),
-    "cp313": ("3.13", "modern"),
-}
+ROW_CONTRACT = runpy.run_path(str(REPOSITORY / "scripts/python_row_contract.py"))
+ContractError = ROW_CONTRACT["ContractError"]
 
 
 class PreparationError(Exception):
@@ -51,25 +47,11 @@ def sha256_file(path):
 
 
 def row_for(config, row):
-    contract = IMPLEMENTED_ROWS.get(row)
-    if contract is None:
-        raise PreparationError("CPython row is not implemented: %s" % row)
-    expected_minor, expected_adapter = contract
-    matches = []
-    for entry in config["python"]["versions"]:
-        version = entry["version"]
-        if version.rsplit(".", 1)[0] == expected_minor:
-            matches.append(entry)
-    if len(matches) != 1:
-        raise PreparationError("CPython row is not unique: %s" % row)
-    entry = matches[0]
-    if entry["adapter"] != expected_adapter:
-        raise PreparationError(
-            "CPython row adapter mismatch: %s/%s" % (row, entry["adapter"])
-        )
-    compact = expected_minor.replace(".", "")
-    if row != "cp" + compact:
-        raise PreparationError("CPython row name differs from version: %s" % row)
+    try:
+        binding = ROW_CONTRACT["bind_release"](config, row=row)
+    except ContractError as error:
+        raise PreparationError(str(error)) from error
+    entry = binding["entry"]
     if entry["source"]["status"] != "locked":
         raise PreparationError("CPython source is not locked: %s" % row)
     return entry
@@ -132,10 +114,27 @@ def extract_archive(archive, temporary, version):
 
 def patch_path(repository, patch):
     relative = PurePosixPath(patch["file"])
-    if relative.is_absolute() or any(part in ("", ".", "..") for part in relative.parts):
+    if (
+        relative.is_absolute()
+        or relative.parts[:2] != ("patches", "cpython")
+        or any(part in ("", ".", "..") for part in relative.parts)
+    ):
         raise PreparationError("unsafe CPython patch path: %s" % patch["file"])
-    path = repository.joinpath(*relative.parts)
-    if path.is_symlink() or not path.is_file():
+    root = repository.resolve()
+    candidate = root.joinpath(*relative.parts)
+    try:
+        path = candidate.resolve()
+    except (OSError, RuntimeError) as error:
+        raise PreparationError(
+            "cannot resolve CPython patch: %s" % patch["file"]
+        ) from error
+    try:
+        path.relative_to(root)
+    except ValueError as error:
+        raise PreparationError(
+            "CPython patch escapes repository: %s" % patch["file"]
+        ) from error
+    if path != candidate or not path.is_file():
         raise PreparationError("missing CPython patch: %s" % path)
     digest, unused_size = sha256_file(path)
     if digest != patch["sha256"]:
@@ -160,6 +159,95 @@ def apply_patches(source_root, patches, repository):
             )
         applied.append({"file": patch["file"], "sha256": patch["sha256"]})
     return applied
+
+
+def validate_sysconfig_isolation(source_root, version):
+    sysconfig_candidates = (
+        "Lib/sysconfig.py",
+        "Lib/sysconfig/__init__.py",
+    )
+    sysconfig_paths = [
+        relative
+        for relative in sysconfig_candidates
+        if (source_root / relative).is_file()
+    ]
+    if len(sysconfig_paths) != 1:
+        raise PreparationError(
+            "CPython %s has an ambiguous sysconfig source layout" % version
+        )
+    paths = {
+        "configure": source_root / "configure",
+        "configure.ac": source_root / "configure.ac",
+        "sysconfig": source_root / sysconfig_paths[0],
+    }
+    try:
+        contents = {
+            name: path.read_text(encoding="utf-8") for name, path in paths.items()
+        }
+    except (OSError, UnicodeDecodeError) as error:
+        raise PreparationError(
+            "CPython %s isolation source is incomplete: %s" % (version, error)
+        ) from error
+
+    for name in ("configure", "configure.ac"):
+        assignments = [
+            line.strip()
+            for line in contents[name].splitlines()
+            if line.strip().startswith("PYTHON_FOR_BUILD=")
+            and "_PYTHON_PROJECT_BASE=" in line
+        ]
+        require_isolated = len(assignments) == 1 and (
+            "PYTHONPATH=$(srcdir)/Lib" in assignments[0]
+            and "_PYTHON_SYSCONFIGDATA_PATH=" in assignments[0]
+            and "PYTHONPATH=$(shell" not in assignments[0]
+            and "`cat pybuilddir.txt`:)$(srcdir)/Lib" not in assignments[0]
+        )
+        if not require_isolated:
+            raise PreparationError(
+                "CPython %s %s lacks isolated build-Python sysconfig"
+                % (version, name)
+            )
+    # Do not parse a newer CPython standard library with the Rocky 8 host's
+    # Python 3.6 parser.  Limit the check to the exact initializer affected by
+    # gh-115382 and recognize its required operations independent of grammar
+    # additions in the target Python release.
+    sysconfig = contents["sysconfig"]
+    start = sysconfig.find("def _init_posix(vars):")
+    end = sysconfig.find("def _init_non_posix(vars):", start)
+    if start < 0:
+        raise PreparationError(
+            "CPython %s sysconfig lacks the POSIX initializer" % version
+        )
+    if end < 0:
+        end = len(sysconfig)
+    initializer = sysconfig[start:end]
+    machinery_import = re.search(
+        r"^\s+from importlib\.machinery import ([^\n]+)$",
+        initializer,
+        re.MULTILINE,
+    )
+    imported_names = set()
+    if machinery_import is not None:
+        imported_names = {
+            item.strip() for item in machinery_import.group(1).split(",")
+        }
+    required_patterns = (
+        r"os\.environ\.get\((['\"])_PYTHON_SYSCONFIGDATA_PATH\1\)",
+        r"FileFinder\s*\(\s*path\s*,\s*\(\s*SourceFileLoader\s*,\s*"
+        r"SOURCE_SUFFIXES\s*\)\s*\)\.find_spec\s*\(\s*name\s*\)",
+        r"from importlib\.util import module_from_spec",
+        r"module_from_spec\s*\(\s*spec\s*\)",
+        r"spec\.loader\.exec_module\s*\(\s*_temp\s*\)",
+    )
+    if (
+        not {"FileFinder", "SourceFileLoader", "SOURCE_SUFFIXES"}.issubset(
+            imported_names
+        )
+        or any(re.search(pattern, initializer) is None for pattern in required_patterns)
+    ):
+        raise PreparationError(
+            "CPython %s sysconfig lacks isolated target-data loading" % version
+        )
 
 
 def fsync_directory(path):
@@ -192,6 +280,7 @@ def prepare(config, row, archive, destination, manifest, repository):
     try:
         source_root = extract_archive(archive, temporary, entry["version"])
         applied = apply_patches(source_root, entry.get("patches", []), repository)
+        validate_sysconfig_isolation(source_root, entry["version"])
         minor = entry["version"].rsplit(".", 1)[0]
         identity = {
             "schema_version": 1,

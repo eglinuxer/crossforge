@@ -20,6 +20,10 @@ TARGET_AUDIT = runpy.run_path(
 TargetAuditError = TARGET_AUDIT["AuditError"]
 EXEC_OPERATIONS = TARGET_AUDIT["EXEC_OPERATIONS"]
 LOADER_OPERATIONS = TARGET_AUDIT["LOADER_OPERATIONS"]
+ROW_CONTRACT = runpy.run_path(
+    str(Path(__file__).with_name("python_row_contract.py"))
+)
+ContractError = ROW_CONTRACT["ContractError"]
 
 
 COMPILE_KEYS = {
@@ -177,10 +181,6 @@ TARGETS = {
     "x86_64-unknown-linux-gnu": "amd64",
     "aarch64-unknown-linux-gnu": "arm64",
 }
-PYTHON_ADAPTERS = {
-    "3.11": "transition",
-    "3.13": "modern",
-}
 REQUIRED_MODULES = {
     "_bz2",
     "_ctypes",
@@ -224,12 +224,27 @@ REQUIRED_PROBE_IMPORTS = [
     "zlib",
 ]
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
-VERSION = re.compile(r"3\.(?:11|13)\.[0-9]+\Z")
 
 
 def require(condition, message):
     if not condition:
         raise FinalizationError(message)
+
+
+def require_exact_abi_map(actual, expected, path):
+    require_exact_keys(actual, set(expected), path)
+    for name, expected_value in expected.items():
+        actual_value = actual[name]
+        if type(expected_value) is int:
+            require(
+                type(actual_value) is int and actual_value == expected_value,
+                "%s %s mismatch" % (path, name),
+            )
+        else:
+            require(
+                actual_value == expected_value,
+                "%s %s mismatch" % (path, name),
+            )
 
 
 def reject_duplicate_keys(pairs):
@@ -305,31 +320,24 @@ def version_tuple(value):
 
 def release_context(release, target, version):
     require(target in TARGETS, "unsupported CPython target: %s" % target)
-    require(VERSION.fullmatch(version) is not None, "invalid CPython version: %s" % version)
 
     try:
         targets = [item for item in release["targets"] if item["triple"] == target]
-        versions = [
-            item for item in release["python"]["versions"] if item["version"] == version
-        ]
     except (KeyError, TypeError) as error:
         raise FinalizationError("release.json has an invalid qualification contract") from error
     require(len(targets) == 1, "release.json must select exactly one target")
-    require(len(versions) == 1, "release.json must select exactly one CPython version")
-    minor = ".".join(version.split(".")[:2])
-    adapter = PYTHON_ADAPTERS[minor]
-    require(
-        versions[0].get("adapter") == adapter,
-        "release CPython version/adapter contract mismatch",
-    )
-    source = versions[0].get("source")
-    require(isinstance(source, dict), "release CPython source must be an object")
-    require(source.get("status") == "locked", "release CPython source is not locked")
+    try:
+        binding = ROW_CONTRACT["bind_release"](release, version=version)
+    except ContractError as error:
+        raise FinalizationError(str(error)) from error
+    contract = binding["contract"]
+    source = binding["entry"]["source"]
     sysroot = targets[0].get("sysroot")
     require(isinstance(sysroot, dict), "release target sysroot must be an object")
     require(sysroot.get("status") == "locked", "release target sysroot is not locked")
     return {
-        "adapter": adapter,
+        "adapter": contract["adapter"],
+        "gil_policy": contract["gil_policy"],
         "release_sha256": canonical_sha256(release),
         "source": source,
         "sysroot_sha256": require_sha256(
@@ -641,14 +649,12 @@ def validate_compile_report(report, context, target, version):
         "SIZEOF_WCHAR_T": 4,
         "SOABI": expected_soabi,
     }
-    if minor == "3.13":
+    if context["gil_policy"] == "zero":
         expected_sysconfig["Py_GIL_DISABLED"] = 0
-    require_exact_keys(
-        report["sysconfig"], set(expected_sysconfig), "compile report sysconfig"
-    )
-    require(
-        report["sysconfig"] == expected_sysconfig,
-        "compile report sysconfig ABI contract mismatch",
+    elif context["gil_policy"] != "absent":
+        raise FinalizationError("unsupported CPython GIL policy")
+    require_exact_abi_map(
+        report["sysconfig"], expected_sysconfig, "compile report sysconfig"
     )
     require_exact_keys(report["sdk_tree"], SDK_TREE_KEYS, "compile report sdk_tree")
     require(

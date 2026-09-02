@@ -36,7 +36,8 @@ class RenderBakeTests(unittest.TestCase):
         }
 
     def test_enabled_rows_take_exact_metadata_from_release(self):
-        for minor in RENDERER["PYTHON_PIPELINE_MINORS"]:
+        for contract in RENDERER["IMPLEMENTED_ROWS"]:
+            minor = contract["minor"]
             expected = self.expected_row(minor)
             row = expected["CPYTHON_ROW"]
             for name in (
@@ -62,35 +63,118 @@ class RenderBakeTests(unittest.TestCase):
             "python-cp313-dev",
         }
         self.assertTrue(expected.issubset(self.targets))
-        bake = (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8")
-        phase5 = bake.split('group "phase5"', 1)[1]
+        phase5 = self.document["group"]["phase5"]["targets"]
         for name in (
             "cpython-build-cp313",
             "cpython-cp313-x86_64-qualify",
             "cpython-cp313-aarch64-qualify",
-            "python-cp313-dev",
+            "python-phase5-dev",
         ):
-            self.assertIn('"%s"' % name, phase5)
+            self.assertIn(name, phase5)
 
-    def test_cp311_has_two_independent_cross_and_qualification_edges(self):
-        for arch, triple in RENDERER["PYTHON_TARGETS"].items():
-            cross = self.targets["cpython-cross-cp311-%s" % arch]
-            self.assertEqual(cross["target"], "cpython-cross")
-            self.assertEqual(
-                cross["contexts"]["crossforge_toolchain"],
-                "target:toolchain-%s-dev" % arch,
-            )
-            self.assertEqual(
-                cross["contexts"]["crossforge_cpython_prepared"],
-                "target:cpython-prepared-cp311",
-            )
-            self.assertEqual(cross["args"]["CROSSFORGE_TARGET_TRIPLE"], triple)
-            qualify = self.targets["cpython-cp311-%s-qualify" % arch]
-            self.assertEqual(qualify["target"], "cpython-qualify-%s" % arch)
-            self.assertEqual(
-                qualify["contexts"]["crossforge_cpython_qualify_build"],
-                "target:cpython-cp311-%s-qualify-build" % arch,
-            )
+    def test_phase_snapshots_and_native_groups_are_frozen_by_contract(self):
+        expected = {
+            5: ("cp313",),
+            6: ("cp313", "cp311"),
+            7: ("cp313", "cp311", "cp312"),
+        }
+        for phase, rows in expected.items():
+            with self.subTest(phase=phase):
+                self.assertEqual(RENDERER["rows_for_phase"](phase), rows)
+                native = self.document["group"][
+                    "python-native-phase%d" % phase
+                ]["targets"]
+                self.assertEqual(
+                    native,
+                    ["cpython-build-%s" % row for row in rows],
+                )
+                snapshot = self.targets["python-phase%d-dev" % phase]
+                self.assertEqual(snapshot["target"], "python-sdk-final")
+                self.assertEqual(
+                    snapshot["args"]["CROSSFORGE_PYTHON_ROWS"],
+                    " ".join(rows),
+                )
+                self.assertEqual(
+                    snapshot["contexts"]["crossforge_sdk_base"],
+                    "target:python-dev-append-%s" % rows[-1],
+                )
+                phase_targets = self.document["group"]["phase%d" % phase][
+                    "targets"
+                ]
+                for row in rows:
+                    for arch in RENDERER["PYTHON_TARGETS"]:
+                        self.assertIn(
+                            "cpython-%s-%s-qualify" % (row, arch),
+                            phase_targets,
+                        )
+                self.assertIn("python-phase%d-dev" % phase, phase_targets)
+
+        latest_phase = max(
+            row["introduced_phase"] for row in RENDERER["IMPLEMENTED_ROWS"]
+        )
+        latest_rows = tuple(
+            row["row"] for row in RENDERER["IMPLEMENTED_ROWS"]
+        )
+        self.assertEqual(RENDERER["LATEST_PHASE"], latest_phase)
+        self.assertEqual(
+            self.document["group"]["python-native-latest"],
+            {
+                "targets": [
+                    "cpython-build-%s" % row for row in latest_rows
+                ]
+            },
+        )
+        self.assertEqual(
+            self.document["group"]["python-matrix"],
+            {"targets": ["python-dev"]},
+        )
+        self.assertEqual(
+            self.targets["python-dev"]["args"]["CROSSFORGE_PYTHON_ROWS"],
+            " ".join(latest_rows),
+        )
+        self.assertEqual(
+            [row["introduced_phase"] for row in RENDERER["IMPLEMENTED_ROWS"]],
+            sorted(
+                row["introduced_phase"]
+                for row in RENDERER["IMPLEMENTED_ROWS"]
+            ),
+        )
+
+    def test_all_rows_have_independent_cross_and_qualification_edges(self):
+        for contract in RENDERER["IMPLEMENTED_ROWS"]:
+            row = contract["row"]
+            for arch, triple in RENDERER["PYTHON_TARGETS"].items():
+                with self.subTest(row=row, arch=arch):
+                    cross = self.targets["cpython-cross-%s-%s" % (row, arch)]
+                    self.assertEqual(cross["target"], "cpython-cross")
+                    self.assertEqual(
+                        cross["contexts"]["crossforge_toolchain"],
+                        "target:toolchain-%s-dev" % arch,
+                    )
+                    self.assertEqual(
+                        cross["contexts"]["crossforge_cpython_prepared"],
+                        "target:cpython-prepared-%s" % row,
+                    )
+                    self.assertEqual(
+                        cross["contexts"]["crossforge_cpython_build"],
+                        "target:cpython-build-%s" % row,
+                    )
+                    self.assertEqual(
+                        cross["args"]["CROSSFORGE_TARGET_TRIPLE"], triple
+                    )
+                    self.assertEqual(
+                        cross["args"]["CPYTHON_ADAPTER"], contract["adapter"]
+                    )
+                    qualify = self.targets[
+                        "cpython-%s-%s-qualify" % (row, arch)
+                    ]
+                    self.assertEqual(
+                        qualify["target"], "cpython-qualify-%s" % arch
+                    )
+                    self.assertEqual(
+                        qualify["contexts"]["crossforge_cpython_qualify_build"],
+                        "target:cpython-%s-%s-qualify-build" % (row, arch),
+                    )
 
     def test_source_fetch_is_independent_and_prepare_uses_locked_host(self):
         source = self.targets["cpython-source-cp311"]
@@ -120,7 +204,8 @@ class RenderBakeTests(unittest.TestCase):
             if value.get("inherits") == ["_python_common"]
         }
         self.assertIn("python-dev", python_names)
-        self.assertIn("python-cp311-dev", python_names)
+        for contract in RENDERER["IMPLEMENTED_ROWS"]:
+            self.assertIn("python-%s-dev" % contract["row"], python_names)
         for name in python_names:
             self.assertEqual(
                 self.targets[name].get("output"),
@@ -152,8 +237,8 @@ class RenderBakeTests(unittest.TestCase):
         self.assertEqual(
             set(consumers),
             {
-                "cpython-cp313-aarch64-qualify",
-                "cpython-cp311-aarch64-qualify",
+                "cpython-%s-aarch64-qualify" % contract["row"]
+                for contract in RENDERER["IMPLEMENTED_ROWS"]
             },
         )
         for name, target in self.targets.items():
@@ -177,7 +262,10 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_row_exports_are_scratch_and_aggregate_is_append_only(self):
         self.assertIn("FROM scratch AS cpython-row-export", self.python_dockerfile)
-        for row in ("cp313", "cp311"):
+        rows = tuple(
+            contract["row"] for contract in RENDERER["IMPLEMENTED_ROWS"]
+        )
+        for row in rows:
             target = self.targets["python-row-%s" % row]
             self.assertEqual(target["target"], "cpython-row-export")
             self.assertEqual(
@@ -189,21 +277,18 @@ class RenderBakeTests(unittest.TestCase):
                     "crossforge_cpython_aarch64",
                 },
             )
-        self.assertEqual(
-            self.targets["python-dev-append-cp313"]["contexts"][
-                "crossforge_sdk_base"
-            ],
-            "target:sdk-toolchains-dev",
-        )
-        self.assertEqual(
-            self.targets["python-dev-append-cp311"]["contexts"][
-                "crossforge_sdk_base"
-            ],
-            "target:python-dev-append-cp313",
-        )
+        previous = "sdk-toolchains-dev"
+        for row in rows:
+            self.assertEqual(
+                self.targets["python-dev-append-%s" % row]["contexts"][
+                    "crossforge_sdk_base"
+                ],
+                "target:%s" % previous,
+            )
+            previous = "python-dev-append-%s" % row
         self.assertEqual(
             self.targets["python-dev"]["contexts"]["crossforge_sdk_base"],
-            "target:python-dev-append-cp311",
+            "target:%s" % previous,
         )
 
     def test_generated_target_context_graph_is_acyclic(self):
@@ -232,10 +317,11 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_renderer_rejects_a_duplicate_enabled_minor(self):
         config = copy.deepcopy(self.release)
+        duplicate_minor = RENDERER["IMPLEMENTED_ROWS"][0]["minor"]
         duplicate = next(
             item
             for item in config["python"]["versions"]
-            if item["version"].startswith("3.11.")
+            if item["version"].rsplit(".", 1)[0] == duplicate_minor
         )
         config["python"]["versions"].append(copy.deepcopy(duplicate))
         with self.assertRaises(ValueError):
