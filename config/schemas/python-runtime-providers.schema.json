@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/python-runtime-providers.schema.json",
+  "title": "Crossforge CPython runtime provider policy",
+  "description": "The complete non-core ELF provider set used by cross-built CPython. Clean-runtime provider bytes must equal the locked-sysroot bytes recorded here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "runtime_contract",
+    "targets"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/python-runtime-providers.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-python-runtime-provider-policy"
+    },
+    "runtime_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clean_runtime_provider_bytes"
+      ],
+      "properties": {
+        "clean_runtime_provider_bytes": {
+          "const": "must-equal-locked-sysroot"
+        }
+      }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/aarch64_target"
+        },
+        {
+          "$ref": "#/$defs/x86_64_target"
+        }
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "nevra",
+        "received_sha256"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9+_.-]*$"
+        },
+        "nevra": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9+_.-]*-[0-9]+:[A-Za-z0-9+_.~^-]+-[A-Za-z0-9+_.~^-]+\\.(aarch64|x86_64)$"
+        },
+        "received_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "owner_list": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/owner"
+      }
+    },
+    "sysroot_lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^locks/sysroot-el8-(aarch64|x86_64)\\.json$"
+        },
+        "canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "soname",
+        "path",
+        "owner",
+        "dso_sha256"
+      ],
+      "properties": {
+        "soname": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9+_.-]*$"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^/usr/lib64/[A-Za-z0-9][A-Za-z0-9+_.-]*$"
+        },
+        "owner": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9+_.-]*$"
+        },
+        "dso_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "provider_list": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/provider"
+      }
+    },
+    "aarch64_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arch",
+        "triple",
+        "sysroot_lock",
+        "owners",
+        "providers"
+      ],
+      "properties": {
+        "arch": {
+          "const": "aarch64"
+        },
+        "triple": {
+          "const": "aarch64-unknown-linux-gnu"
+        },
+        "sysroot_lock": {
+          "$ref": "#/$defs/sysroot_lock"
+        },
+        "owners": {
+          "$ref": "#/$defs/owner_list"
+        },
+        "providers": {
+          "$ref": "#/$defs/provider_list"
+        }
+      }
+    },
+    "x86_64_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arch",
+        "triple",
+        "sysroot_lock",
+        "owners",
+        "providers"
+      ],
+      "properties": {
+        "arch": {
+          "const": "x86_64"
+        },
+        "triple": {
+          "const": "x86_64-unknown-linux-gnu"
+        },
+        "sysroot_lock": {
+          "$ref": "#/$defs/sysroot_lock"
+        },
+        "owners": {
+          "$ref": "#/$defs/owner_list"
+        },
+        "providers": {
+          "$ref": "#/$defs/provider_list"
+        }
+      }
+    }
+  }
+}

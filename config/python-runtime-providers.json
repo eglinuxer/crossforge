@@ -1,0 +1,200 @@
+{
+  "$schema": "https://crossforge.dev/schemas/python-runtime-providers.schema.json",
+  "schema_version": 1,
+  "kind": "crossforge-python-runtime-provider-policy",
+  "runtime_contract": {
+    "clean_runtime_provider_bytes": "must-equal-locked-sysroot"
+  },
+  "targets": [
+    {
+      "arch": "aarch64",
+      "triple": "aarch64-unknown-linux-gnu",
+      "sysroot_lock": {
+        "file": "locks/sysroot-el8-aarch64.json",
+        "canonical_sha256": "70436d94443b019fbe61237bf93b8bb457927f3de09429e6ef7f37598b482b67"
+      },
+      "owners": [
+        {
+          "name": "bzip2-libs",
+          "nevra": "bzip2-libs-0:1.0.6-28.el8_10.aarch64",
+          "received_sha256": "717c4f0cacb8e8db90557145fa5252d0c596bd1babcd3aa16c891ed8a04047b0"
+        },
+        {
+          "name": "libffi",
+          "nevra": "libffi-0:3.1-24.el8.aarch64",
+          "received_sha256": "fad785b129f8a1892cf759a08ccdb879e6ec846a65ffa977409124e67e744266"
+        },
+        {
+          "name": "libuuid",
+          "nevra": "libuuid-0:2.32.1-48.el8_10.aarch64",
+          "received_sha256": "b1d139a5519ba83e6f333ea70a09bdc71cff588443f735b81e743d4c2fb09ad4"
+        },
+        {
+          "name": "openssl-libs",
+          "nevra": "openssl-libs-1:1.1.1k-17.el8_10.aarch64",
+          "received_sha256": "fa7b3c7ce88ef2ee8b6343340d71bc1cc5bf8187c29d87294d7d2c3aede294e7"
+        },
+        {
+          "name": "sqlite-libs",
+          "nevra": "sqlite-libs-0:3.26.0-21.el8_10.aarch64",
+          "received_sha256": "94884e7e803aed8f7860deb561139a6390efa239c5e031cc3e63839d55116385"
+        },
+        {
+          "name": "xz-libs",
+          "nevra": "xz-libs-0:5.2.4-4.el8_6.aarch64",
+          "received_sha256": "5813ddb231f6b96c4de61e76b8b393b9506d39e490e0b51e54000412b41474f5"
+        },
+        {
+          "name": "zlib",
+          "nevra": "zlib-0:1.2.11-26.el8.aarch64",
+          "received_sha256": "cd82f7d2a702787c02cdda00adee2c53117155c63b08ce0e33f87ad064579db6"
+        }
+      ],
+      "providers": [
+        {
+          "soname": "libbz2.so.1",
+          "path": "/usr/lib64/libbz2.so.1",
+          "owner": "bzip2-libs",
+          "dso_sha256": "549b318a96006692f13bc1fb6fc87719e0f9623857bb6c26a075b710ca9cfc3b"
+        },
+        {
+          "soname": "libcrypto.so.1.1",
+          "path": "/usr/lib64/libcrypto.so.1.1",
+          "owner": "openssl-libs",
+          "dso_sha256": "6cd1b8d677b50ecf7bf6acf6aab20be76fc4df726c3c90cc82114f6c3d71afad"
+        },
+        {
+          "soname": "libffi.so.6",
+          "path": "/usr/lib64/libffi.so.6",
+          "owner": "libffi",
+          "dso_sha256": "84473cb815e4e9af95d4309f673f8c1f0f3de482b20a0dd2ffa1fbbbceed8231"
+        },
+        {
+          "soname": "liblzma.so.5",
+          "path": "/usr/lib64/liblzma.so.5",
+          "owner": "xz-libs",
+          "dso_sha256": "6f9d2abe98f8cba039901cbd19d48a64008811848d91c68091630e6ca4af856e"
+        },
+        {
+          "soname": "libsqlite3.so.0",
+          "path": "/usr/lib64/libsqlite3.so.0",
+          "owner": "sqlite-libs",
+          "dso_sha256": "dff9b7661853e697ef0b38adcd3798499d14637c5efccadc58449717d95b0723"
+        },
+        {
+          "soname": "libssl.so.1.1",
+          "path": "/usr/lib64/libssl.so.1.1",
+          "owner": "openssl-libs",
+          "dso_sha256": "3081ddd4bb586c9f2ce44a0674c10f7e943751033a783c6a8a48f677e990537a"
+        },
+        {
+          "soname": "libuuid.so.1",
+          "path": "/usr/lib64/libuuid.so.1",
+          "owner": "libuuid",
+          "dso_sha256": "8f146a215c87ec8418c4851e7ef0b623d34fabcf1b219be45fa9a2230313d85b"
+        },
+        {
+          "soname": "libz.so.1",
+          "path": "/usr/lib64/libz.so.1",
+          "owner": "zlib",
+          "dso_sha256": "35c4e45aedd0be83c15f19b88a61a7e4aba61fab1727c0acf2cca86912de973a"
+        }
+      ]
+    },
+    {
+      "arch": "x86_64",
+      "triple": "x86_64-unknown-linux-gnu",
+      "sysroot_lock": {
+        "file": "locks/sysroot-el8-x86_64.json",
+        "canonical_sha256": "ffe67b4d7448b02be7db774c8d85fdc8b13da695c0184de444949c641876ef57"
+      },
+      "owners": [
+        {
+          "name": "bzip2-libs",
+          "nevra": "bzip2-libs-0:1.0.6-28.el8_10.x86_64",
+          "received_sha256": "14ecb4995555392bd45644630196b6f864d93dba9c56133bb96f199841852ad0"
+        },
+        {
+          "name": "libffi",
+          "nevra": "libffi-0:3.1-24.el8.x86_64",
+          "received_sha256": "c643193dce9c134921489992a7befefba82bb2596d34b7166947c12b278f5f40"
+        },
+        {
+          "name": "libuuid",
+          "nevra": "libuuid-0:2.32.1-48.el8_10.x86_64",
+          "received_sha256": "f1748e5d96d72bf941a19932ad90388fc733b38393e3bed8181715041bc42dae"
+        },
+        {
+          "name": "openssl-libs",
+          "nevra": "openssl-libs-1:1.1.1k-17.el8_10.x86_64",
+          "received_sha256": "a60dfe74bc3f8f77ca94de4c3656119199286e20b1c990d2b1f804a12745fafb"
+        },
+        {
+          "name": "sqlite-libs",
+          "nevra": "sqlite-libs-0:3.26.0-21.el8_10.x86_64",
+          "received_sha256": "db896e48ef74a6d7518be06f9c34fb6d39f1f1e81c8a4dd2390900c67e55db0a"
+        },
+        {
+          "name": "xz-libs",
+          "nevra": "xz-libs-0:5.2.4-4.el8_6.x86_64",
+          "received_sha256": "283e7ac93ffee0cb93f33a991a9ab9f06a272caf88a6c56d17696ab1b2e83499"
+        },
+        {
+          "name": "zlib",
+          "nevra": "zlib-0:1.2.11-26.el8.x86_64",
+          "received_sha256": "84465251ea8790b3d8a1c30bdfc8f11711ffe9060becb7335e1b50f4277c5162"
+        }
+      ],
+      "providers": [
+        {
+          "soname": "libbz2.so.1",
+          "path": "/usr/lib64/libbz2.so.1",
+          "owner": "bzip2-libs",
+          "dso_sha256": "a1e77c99cc558042331fa883c78b05d866e5457dad100f6f46d8a44275840ea9"
+        },
+        {
+          "soname": "libcrypto.so.1.1",
+          "path": "/usr/lib64/libcrypto.so.1.1",
+          "owner": "openssl-libs",
+          "dso_sha256": "ab95b346cc9502fea8c7b0e9c0f2bfe63a6d69faee07875881331acc6f38c613"
+        },
+        {
+          "soname": "libffi.so.6",
+          "path": "/usr/lib64/libffi.so.6",
+          "owner": "libffi",
+          "dso_sha256": "97030637a5abfbf8c0d5135a4e00347856e82354d40dc53064f248de4d78f0db"
+        },
+        {
+          "soname": "liblzma.so.5",
+          "path": "/usr/lib64/liblzma.so.5",
+          "owner": "xz-libs",
+          "dso_sha256": "51a76f52979f141c5a7075252a3225348f0359ac92f309b57b3f892365b74745"
+        },
+        {
+          "soname": "libsqlite3.so.0",
+          "path": "/usr/lib64/libsqlite3.so.0",
+          "owner": "sqlite-libs",
+          "dso_sha256": "06edad1dd8ec2e695d966241e7b807d91a725e3450f7f85bf6267aa49d1ab23c"
+        },
+        {
+          "soname": "libssl.so.1.1",
+          "path": "/usr/lib64/libssl.so.1.1",
+          "owner": "openssl-libs",
+          "dso_sha256": "30c8b72b7748e8f9e83b61cb14127c4b1c7ad95811641ae7b9697e09d95988ab"
+        },
+        {
+          "soname": "libuuid.so.1",
+          "path": "/usr/lib64/libuuid.so.1",
+          "owner": "libuuid",
+          "dso_sha256": "52ee839c96a6939b26c523c02e0207b81b6230395d8d2631a15a0ad76e4e6d65"
+        },
+        {
+          "soname": "libz.so.1",
+          "path": "/usr/lib64/libz.so.1",
+          "owner": "zlib",
+          "dso_sha256": "1394e19b91f0539753efa937708cf6d156b25073ed43ebdf7bd436ac4ce5838f"
+        }
+      ]
+    }
+  ]
+}

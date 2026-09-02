@@ -43,6 +43,7 @@ jobs:
           ./scripts/validate-release.py
           ./scripts/validate-supply-chain-evidence.py
           ./scripts/validate-frozen-abi.py
+          ./scripts/validate-python-runtime-providers.py
       - name: RPM plans, transactions, and locks
         run: |
           ./scripts/validate-rpm-lock.py config/rpm/sysroot-el8-x86_64.plan.json

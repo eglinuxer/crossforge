@@ -113,6 +113,8 @@ Crossforge 不定义 staging/overlay 目录、产品级 sysroot profile 或第�
 
 `locks/sysroot-*.json` 可因 Rocky errata 更新；`abi/el8/{x86_64,aarch64}.json` 则冻结最低允许的符号集合。sysroot 更新不得静默扩大 ABI，只有显式升级产品 baseline 才能修改冻结集合。
 
+Python 的非 core 动态依赖不进入上述通用 ABI baseline。`config/python-runtime-providers.json` 固定 8 个 SONAME、7 个 RPM owner、NEVRA、实收 RPM 摘要与 DSO 摘要；clean runtime 中这些 DSO 必须与锁定 sysroot 逐字节相同。资格化必须用实际锁定 DSO 的导出表解析 versioned 与 unversioned import，未知 provider、无 owner 或多 owner 的 strong symbol 均失败；动态 `libzstd` 始终禁止。
+
 两份 target transaction 由固定 Rocky digest 内的 `python3-dnf` 从空 installroot
 通过上游 [`Base.resolve()`/`download_packages()` API](https://dnf.readthedocs.io/en/latest/api_base.html)
 分别解析 14 个显式 roots，各精确得到 78 个 RPM。Resolver 禁用 plugins/system repo，
