@@ -71,6 +71,15 @@ ZSTD_BUILD_POLICY = {
     "exclude_archive_symbols": True,
     "selected_license": "BSD-3-Clause",
 }
+NINJA_HOST_TOOL_POLICY = {
+    "schema_version": 1,
+    "install_prefix": "/opt/crossforge/host-tools/ninja",
+    "binary_relative_path": "bin/ninja",
+    "license_relative_path": "share/licenses/ninja/COPYING",
+    "path_precedence": "before-system",
+    "system_binary": "/usr/bin/ninja",
+    "consumers": ["cmake", "meson", "vcpkg"],
+}
 VCPKG_INTEGRATION_POLICY = {
     "schema_version": 1,
     "cmake_root": "/opt/crossforge/cmake",
@@ -305,6 +314,17 @@ def vcpkg_policy_materials():
     ]
 
 
+def ninja_policy_materials():
+    return [
+        {
+            "path": "/@implementation/host-tools/ninja/%s"
+            % "/".join(str(part) for part in path),
+            "value": copy.deepcopy(value),
+        }
+        for path, value in leaf_items(NINJA_HOST_TOOL_POLICY)
+    ]
+
+
 def component_path(component):
     parts = component.split("/")
     require(
@@ -352,6 +372,8 @@ def host_lock_scope(release, role):
 def vcpkg_sdk_scope(release):
     statuses = (
         release["host_locks"]["host-runtime"]["status"],
+        release["host_tools"]["ninja"]["binary"]["status"],
+        release["host_tools"]["ninja"]["source"]["status"],
         release["vcpkg"]["release"]["status"],
         release["vcpkg"]["tool"]["status"],
     )
@@ -570,7 +592,7 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             # signature, Git provenance, key and selected license together.
             # Any change must therefore invalidate the one source identity.
             category = "build"
-        elif len(path) >= 2 and path[0] == "vcpkg":
+        elif len(path) >= 2 and path[0] in {"host_tools", "vcpkg"}:
             category = "build"
         elif path in {
             ("nfpm", "version"),
@@ -726,6 +748,7 @@ def _render_expected_components(release, implemented_rows):
     )
     add("sources/zstd", "build", selector(("python", "zstd")))
     add("sources/vcpkg", "build", selector(("vcpkg",)))
+    add("sources/ninja", "build", selector(("host_tools", "ninja")))
 
     toolchain_builds = {}
     toolchain_qualifications = {}
@@ -792,6 +815,11 @@ def _render_expected_components(release, implemented_rows):
         explicit_materials=vcpkg_policy_materials(),
     )
     add(
+        "implementation/ninja-host-tool",
+        "build",
+        explicit_materials=ninja_policy_materials(),
+    )
+    add(
         "zstd/host-build",
         "build",
         selector(("baseline",), ("platforms",)),
@@ -814,12 +842,23 @@ def _render_expected_components(release, implemented_rows):
             ),
         )
     add(
+        "host-tools/ninja",
+        "build",
+        selector(("baseline",), ("platforms",)),
+        (
+            "rpm/host-runtime",
+            "sources/ninja",
+            "implementation/ninja-host-tool",
+        ),
+    )
+    add(
         "vcpkg/sdk-build",
         vcpkg_sdk_scope(release),
         selector(("baseline",), ("platforms",)),
         (
             "rpm/host-runtime",
             "sources/vcpkg",
+            "host-tools/ninja",
             "implementation/vcpkg-integration",
             toolchain_builds["x86_64"],
             toolchain_builds["aarch64"],

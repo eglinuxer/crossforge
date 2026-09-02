@@ -28,8 +28,17 @@
         "python-phase10-dev"
       ]
     },
+    "phase13-host-tools": {
+      "targets": [
+        "validate",
+        "host-runtime-qualified",
+        "ninja-source",
+        "ninja-host-tool"
+      ]
+    },
     "phase13-integration": {
       "targets": [
+        "ninja-host-tool",
         "vcpkg-source",
         "python-phase10-dev",
         "sdk-phase13-base"
@@ -271,6 +280,8 @@
         "CROSSFORGE_COMPONENT_ABI_PYTHON_PROVIDERS_SHA256": "b2fdf9b5876da30249a4431fb9dcb54a4d509d38ebf82882b6df3fa1a4116b42",
         "CROSSFORGE_COMPONENT_ABI_X86_64_BASELINE_SHA256": "aba3e03137d08c97d9db5e1723b109657e3b87b9164c99f2ed5d90edaaef6878",
         "CROSSFORGE_COMPONENT_FUTURE_PRODUCT_SHA256": "172c8380ac13c0f9ba21f48bb78e7adce5574c86189d8299c31d1255a609d415",
+        "CROSSFORGE_COMPONENT_HOST_TOOLS_NINJA_SHA256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
+        "CROSSFORGE_COMPONENT_IMPLEMENTATION_NINJA_HOST_TOOL_SHA256": "732447444d086b975a7ec6a13f463dd7ced4696a37ad7015e12d5e64d8bcd862",
         "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_CP310_BUILD_POLICY_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
         "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_CP311_BUILD_POLICY_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
         "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_CP312_BUILD_POLICY_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
@@ -314,6 +325,7 @@
         "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
         "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
         "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
+        "CROSSFORGE_COMPONENT_SOURCES_NINJA_SHA256": "2a98362c763cfe71b4d604cb2ccf563b7bb54cfde1b8ba7331ee1b9ef0d4cc38",
         "CROSSFORGE_COMPONENT_SOURCES_VCPKG_SHA256": "32decc4331f2b02cb83fc96a08b622d7302c346eac55ff74e3cb3345c2fc36da",
         "CROSSFORGE_COMPONENT_SOURCES_ZSTD_SHA256": "6622b38249173dc6521ef3a412f656df5774d2d77c2d86fd21f91dba01e802e5",
         "CROSSFORGE_COMPONENT_SUPPLY_EVIDENCE_SHA256": "f8f125a2632ccbe01ab58165b09ee18890b70e2d6cc95c78dd9f61a3a64a7dd8",
@@ -321,7 +333,7 @@
         "CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_BUILD_SHA256": "639bdd7c9185ba832790744b2323f95bc4854d2da1aa7c7931ed8f9f0b0ae2a1",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
-        "CROSSFORGE_COMPONENT_VCPKG_SDK_BUILD_SHA256": "c7d44523b4a7c1b2f181c9c379517d9c1fc78ae25bc1b188682d417aecb7448e",
+        "CROSSFORGE_COMPONENT_VCPKG_SDK_BUILD_SHA256": "92b091c99733a86da217ebdfd09e67884cae48002105ec722f0db89738dff23e",
         "CROSSFORGE_COMPONENT_ZSTD_AARCH64_BUILD_SHA256": "3768be8994a6a59fed6048706d77003eac38481c458fbbc0630b9b151ccb77ad",
         "CROSSFORGE_COMPONENT_ZSTD_HOST_BUILD_SHA256": "a8fb4881342c630e2e9a11c4b018185dacd43f8fab25f29b46ed7014a791084b",
         "CROSSFORGE_COMPONENT_ZSTD_X86_64_BUILD_SHA256": "1b27e662224c9d8e0dd66352c02e133b95f866ad99dc9bf114107e072ae2654e",
@@ -1820,6 +1832,42 @@
       ],
       "target": "cpython-source"
     },
+    "ninja-host-tool": {
+      "args": {
+        "NINJA_POLICY_COMPONENT_SHA256": "732447444d086b975a7ec6a13f463dd7ced4696a37ad7015e12d5e64d8bcd862",
+        "NINJA_SOURCE_COMPONENT_SHA256": "2a98362c763cfe71b4d604cb2ccf563b7bb54cfde1b8ba7331ee1b9ef0d4cc38",
+        "NINJA_TOOL_COMPONENT_SHA256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
+        "NINJA_VERSION": "1.13.2"
+      },
+      "contexts": {
+        "crossforge_host_runtime": "target:host-runtime-qualified",
+        "crossforge_ninja_source": "target:ninja-source"
+      },
+      "inherits": [
+        "_host_tools_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "ninja-host-tool-export"
+    },
+    "ninja-source": {
+      "args": {
+        "NINJA_BINARY_URL": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux.zip",
+        "NINJA_SOURCE_COMPONENT_SHA256": "2a98362c763cfe71b4d604cb2ccf563b7bb54cfde1b8ba7331ee1b9ef0d4cc38",
+        "NINJA_SOURCE_URL": "https://github.com/ninja-build/ninja/archive/3441b633c2fe2c494e958780ba0f4227b1327634.tar.gz"
+      },
+      "contexts": {
+        "crossforge_host_runtime": "target:host-runtime-qualified"
+      },
+      "inherits": [
+        "_host_tools_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "ninja-source-export"
+    },
     "python-cp310-dev": {
       "args": {
         "CPYTHON_ADAPTER": "legacy",
@@ -2370,11 +2418,13 @@
     },
     "sdk-phase13-base": {
       "args": {
+        "NINJA_TOOL_COMPONENT_SHA256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
         "VCPKG_INTEGRATION_COMPONENT_SHA256": "885c8cc9109ff35634af47dcec1ca67e3d53640f6a25ff32f33a0abcf71db21f",
-        "VCPKG_SDK_COMPONENT_SHA256": "c7d44523b4a7c1b2f181c9c379517d9c1fc78ae25bc1b188682d417aecb7448e",
+        "VCPKG_SDK_COMPONENT_SHA256": "92b091c99733a86da217ebdfd09e67884cae48002105ec722f0db89738dff23e",
         "VCPKG_SOURCE_COMPONENT_SHA256": "32decc4331f2b02cb83fc96a08b622d7302c346eac55ff74e3cb3345c2fc36da"
       },
       "contexts": {
+        "crossforge_ninja_host_tool": "target:ninja-host-tool",
         "crossforge_sdk_base": "target:python-phase10-dev",
         "crossforge_vcpkg_source": "target:vcpkg-source"
       },

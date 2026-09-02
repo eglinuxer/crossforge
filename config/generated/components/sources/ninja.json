@@ -1,0 +1,134 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "sources/ninja",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/host_tools/ninja/binary/archive_member",
+      "value": "ninja"
+    },
+    {
+      "path": "/host_tools/ninja/binary/extracted_sha256",
+      "value": "607e668f90dd6cd82e1a42ae572647ad1b1fd43063964295b9547836d8c15d99"
+    },
+    {
+      "path": "/host_tools/ninja/binary/extracted_sha512",
+      "value": "baa28f9bb5519c19f6294956d216a7e384b5919e304412f4fb854d3c434c6ab0005aa0410f2b25c2ec082a6a630f0289933a818576a8f0a2b17d5564438a1dc9"
+    },
+    {
+      "path": "/host_tools/ninja/binary/extracted_size",
+      "value": 290928
+    },
+    {
+      "path": "/host_tools/ninja/binary/sha256",
+      "value": "5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6"
+    },
+    {
+      "path": "/host_tools/ninja/binary/sha512",
+      "value": "714b900cf10b7ecb1b641c91f4ef696250c64984e5955a8088e4a538d6e8077f43e55f6da47efcedbe316c68d51a9e98feff51734eb0eac1b17aa85af5698753"
+    },
+    {
+      "path": "/host_tools/ninja/binary/size",
+      "value": 134040
+    },
+    {
+      "path": "/host_tools/ninja/binary/status",
+      "value": "locked"
+    },
+    {
+      "path": "/host_tools/ninja/binary/url",
+      "value": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux.zip"
+    },
+    {
+      "path": "/host_tools/ninja/commit",
+      "value": "3441b633c2fe2c494e958780ba0f4227b1327634"
+    },
+    {
+      "path": "/host_tools/ninja/commit_evidence",
+      "value": "evidence/git/ninja-v1.13.2.commit.b64"
+    },
+    {
+      "path": "/host_tools/ninja/license/expression",
+      "value": "Apache-2.0"
+    },
+    {
+      "path": "/host_tools/ninja/license/sha256",
+      "value": "eb7e9ab9690124c5c9f42bdc81383d886a3dede26345b6ed15bbad7caf81f7ea"
+    },
+    {
+      "path": "/host_tools/ninja/license/size",
+      "value": 11358
+    },
+    {
+      "path": "/host_tools/ninja/license/source_file",
+      "value": "COPYING"
+    },
+    {
+      "path": "/host_tools/ninja/release/evidence",
+      "value": "evidence/github/ninja-v1.13.2.release.json.b64"
+    },
+    {
+      "path": "/host_tools/ninja/release/evidence_sha256",
+      "value": "1b03f1834b801f95347cea09e4a74fc6b292b26020d629a6bc1ce783e714a7ca"
+    },
+    {
+      "path": "/host_tools/ninja/release/evidence_size",
+      "value": 11979
+    },
+    {
+      "path": "/host_tools/ninja/release/immutable",
+      "value": false
+    },
+    {
+      "path": "/host_tools/ninja/repository",
+      "value": "https://github.com/ninja-build/ninja.git"
+    },
+    {
+      "path": "/host_tools/ninja/source/archive_root",
+      "value": "ninja-3441b633c2fe2c494e958780ba0f4227b1327634"
+    },
+    {
+      "path": "/host_tools/ninja/source/sha256",
+      "value": "bccc6197cd8c3ac2a439e26d6bf41506fe49c430cf3d593269a15379f24266ee"
+    },
+    {
+      "path": "/host_tools/ninja/source/sha512",
+      "value": "7c7480c91f5c4d41c51dd5caeebea8b18049ae89e794afdfbc889897a86eaa15b1f7cb6a3d99330da3f60bb48173494c2b7617c1c0a748fe1d94e66007766bba"
+    },
+    {
+      "path": "/host_tools/ninja/source/size",
+      "value": 292638
+    },
+    {
+      "path": "/host_tools/ninja/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/host_tools/ninja/source/url",
+      "value": "https://github.com/ninja-build/ninja/archive/3441b633c2fe2c494e958780ba0f4227b1327634.tar.gz"
+    },
+    {
+      "path": "/host_tools/ninja/tag",
+      "value": "v1.13.2"
+    },
+    {
+      "path": "/host_tools/ninja/tag_evidence",
+      "value": "evidence/github/ninja-v1.13.2.tag-ref.json.b64"
+    },
+    {
+      "path": "/host_tools/ninja/tag_evidence_sha256",
+      "value": "d5c4f332179730faea77b55b3cf0bf6026eff78d7f6a2111282a0d2b55744c48"
+    },
+    {
+      "path": "/host_tools/ninja/tag_evidence_size",
+      "value": 384
+    },
+    {
+      "path": "/host_tools/ninja/version",
+      "value": "1.13.2"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

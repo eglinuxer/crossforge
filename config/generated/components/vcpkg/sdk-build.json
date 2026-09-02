@@ -3,6 +3,10 @@
   "component": "vcpkg/sdk-build",
   "dependencies": [
     {
+      "canonical_sha256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
+      "component": "host-tools/ninja"
+    },
+    {
       "canonical_sha256": "885c8cc9109ff35634af47dcec1ca67e3d53640f6a25ff32f33a0abcf71db21f",
       "component": "implementation/vcpkg-integration"
     },

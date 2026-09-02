@@ -7,6 +7,7 @@ import json
 import os
 import re
 import runpy
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -338,6 +339,7 @@ def qualify_integration(
     integration_component,
     sdk_component,
     source_component_sha256,
+    ninja_component_sha256,
 ):
     manifest = load_json(manifest_path)
     integration_sha256 = COMPONENT_READER["canonical_sha256"](
@@ -377,12 +379,14 @@ def qualify_integration(
         set(dependencies)
         == {
             "rpm/host-runtime",
+            "host-tools/ninja",
             "sources/vcpkg",
             "implementation/vcpkg-integration",
             "toolchain/x86_64-build",
             "toolchain/aarch64-build",
         }
         and dependencies["sources/vcpkg"] == source_component_sha256
+        and dependencies["host-tools/ninja"] == ninja_component_sha256
         and dependencies["implementation/vcpkg-integration"]
         == integration_sha256,
         "vcpkg SDK component dependency closure differs",
@@ -513,6 +517,12 @@ def cmake_smoke(cmake_root, qemu, release, work):
             ]
         )
         run(["cmake", "--build", build])
+        cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
+        ninja = Path(os.environ["NINJA_ROOT"]) / "bin/ninja"
+        require(
+            "CMAKE_MAKE_PROGRAM:FILEPATH=%s" % ninja in cache,
+            "%s CMake did not select the locked Ninja tool" % name,
+        )
         identity = (build / "identity.txt").read_text(encoding="utf-8").splitlines()
         require(len(identity) == 4, "%s CMake identity is incomplete" % name)
         cmake_boolean = identity[0].upper()
@@ -610,6 +620,66 @@ def cmake_smoke(cmake_root, qemu, release, work):
     return results
 
 
+def qualify_ninja(root, release, component_path, component_sha256, report_path):
+    component = load_component(
+        component_path, "host-tools/ninja", component_sha256
+    )
+    report = load_json(report_path)
+    release_ninja = release["host_tools"]["ninja"]
+    version = release_ninja["version"]
+    ninja_root = Path("/opt/crossforge/host-tools/ninja") / version
+    tool = ninja_root / "bin/ninja"
+    license_path = ninja_root / "share/licenses/ninja/COPYING"
+    require(
+        report.get("schema_version") == 1
+        and report.get("kind") == "crossforge-ninja-host-tool-qualification"
+        and report.get("status") == "passed"
+        and report.get("components", {}).get("tool")
+        == {
+            "component": "host-tools/ninja",
+            "canonical_sha256": COMPONENT_READER["canonical_sha256"](
+                component
+            ),
+        }
+        and report.get("install_root") == str(ninja_root),
+        "Ninja host-tool qualification report differs",
+    )
+    require(
+        os.environ.get("NINJA_ROOT") == str(ninja_root)
+        and os.environ.get("PATH", "").split(":", 1)[0] == str(tool.parent)
+        and shutil.which("ninja", path=os.environ["PATH"]) == str(tool),
+        "Ninja host-tool PATH selection differs",
+    )
+    version_stdout, _stderr = run([tool, "--version"])
+    require(
+        tool.is_file()
+        and not tool.is_symlink()
+        and sha256_file(tool)
+        == release_ninja["binary"]["extracted_sha256"]
+        and version_stdout == version + "\n"
+        and license_path.is_file()
+        and not license_path.is_symlink()
+        and sha256_file(license_path) == release_ninja["license"]["sha256"],
+        "installed Ninja host-tool identity differs",
+    )
+    fetched, _stderr = run(
+        [root / "vcpkg", "fetch", "ninja", "--disable-metrics"], cwd=root
+    )
+    fetch_lines = [line.strip() for line in fetched.splitlines() if line.strip()]
+    require(
+        fetch_lines and fetch_lines[-1] == str(tool),
+        "vcpkg did not select the locked Ninja host tool: %r" % fetch_lines,
+    )
+    return {
+        "component_sha256": COMPONENT_READER["canonical_sha256"](component),
+        "report_sha256": sha256_file(report_path),
+        "path": str(tool),
+        "sha256": sha256_file(tool),
+        "version": version,
+        "vcpkg_fetch": fetch_lines,
+    }
+
+
 def qualify(
     release_path,
     root,
@@ -618,6 +688,7 @@ def qualify(
     cmake_root,
     triplet_root,
     qemu,
+    ninja_report_path,
     component_paths,
     component_sha256,
 ):
@@ -650,17 +721,36 @@ def qualify(
         "vcpkg/sdk-build",
         component_sha256["sdk"],
     )
+    ninja_component = load_component(
+        component_paths["ninja"],
+        "host-tools/ninja",
+        component_sha256["ninja"],
+    )
+    require(
+        COMPONENT_READER["canonical_sha256"](ninja_component)
+        == component_sha256["ninja"],
+        "Ninja component digest differs",
+    )
     expected_environment = {
         "VCPKG_ROOT": str(root),
         "VCPKG_OVERLAY_TRIPLETS": str(triplet_root),
         "VCPKG_DEFAULT_HOST_TRIPLET": HOST_TRIPLET,
         "VCPKG_DISABLE_METRICS": "1",
         "VCPKG_FORCE_SYSTEM_BINARIES": "1",
+        "NINJA_ROOT": "/opt/crossforge/host-tools/ninja/1.13.2",
     }
     require(
         all(os.environ.get(name) == value for name, value in expected_environment.items())
-        and "VCPKG_DEFAULT_TRIPLET" not in os.environ,
+        and "VCPKG_DEFAULT_TRIPLET" not in os.environ
+        and "VCPKG_FORCE_DOWNLOADED_BINARIES" not in os.environ,
         "vcpkg SDK environment differs",
+    )
+    ninja = qualify_ninja(
+        root,
+        release,
+        component_paths["ninja"],
+        component_sha256["ninja"],
+        ninja_report_path,
     )
     source = qualify_source(root, source_manifest_path, source_component)
     integration = qualify_integration(
@@ -670,6 +760,7 @@ def qualify(
         integration_component,
         sdk_component,
         component_sha256["source"],
+        component_sha256["ninja"],
     )
     help_text, _stderr = run(
         [
@@ -709,6 +800,7 @@ def qualify(
         "release_sha256": release_sha256,
         "environment": expected_environment,
         "source": source,
+        "ninja": ninja,
         "integration": integration,
         "triplets": expected_triplets,
         "cmake": cmake,
@@ -724,7 +816,8 @@ def main():
     parser.add_argument("--cmake-root", type=Path, required=True)
     parser.add_argument("--triplet-root", type=Path, required=True)
     parser.add_argument("--qemu", type=Path, required=True)
-    for role in ("source", "integration", "sdk"):
+    parser.add_argument("--ninja-report", type=Path, required=True)
+    for role in ("source", "integration", "sdk", "ninja"):
         parser.add_argument("--%s-component" % role, type=Path, required=True)
         parser.add_argument("--%s-component-sha256" % role, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -737,15 +830,18 @@ def main():
         arguments.cmake_root,
         arguments.triplet_root,
         arguments.qemu,
+        arguments.ninja_report,
         {
             "source": arguments.source_component,
             "integration": arguments.integration_component,
             "sdk": arguments.sdk_component,
+            "ninja": arguments.ninja_component,
         },
         {
             "source": arguments.source_component_sha256,
             "integration": arguments.integration_component_sha256,
             "sdk": arguments.sdk_component_sha256,
+            "ninja": arguments.ninja_component_sha256,
         },
     )
     arguments.output.parent.mkdir(parents=True, exist_ok=True)

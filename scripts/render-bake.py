@@ -159,6 +159,60 @@ def render_zstd_graph(config, targets, component_arguments, rocky_amd64_image):
         }
 
 
+def render_ninja_graph(config, targets, component_arguments):
+    ninja = config["host_tools"]["ninja"]
+
+    def digest(component):
+        argument = component_argument_name(component)
+        try:
+            return component_arguments[argument]
+        except KeyError as error:
+            raise ValueError(
+                "missing Ninja component digest: %s" % component
+            ) from error
+
+    targets["ninja-source"] = {
+        "inherits": ["_host_tools_common"],
+        "target": "ninja-source-export",
+        "args": {
+            "NINJA_BINARY_URL": ninja["binary"]["url"],
+            "NINJA_SOURCE_URL": ninja["source"]["url"],
+            "NINJA_SOURCE_COMPONENT_SHA256": digest("sources/ninja"),
+        },
+        "contexts": {
+            "crossforge_host_runtime": "target:host-runtime-qualified"
+        },
+        "output": ["type=cacheonly"],
+    }
+    targets["ninja-host-tool"] = {
+        "inherits": ["_host_tools_common"],
+        "target": "ninja-host-tool-export",
+        "args": {
+            "NINJA_VERSION": ninja["version"],
+            "NINJA_SOURCE_COMPONENT_SHA256": digest("sources/ninja"),
+            "NINJA_POLICY_COMPONENT_SHA256": digest(
+                "implementation/ninja-host-tool"
+            ),
+            "NINJA_TOOL_COMPONENT_SHA256": digest("host-tools/ninja"),
+        },
+        "contexts": {
+            "crossforge_host_runtime": "target:host-runtime-qualified",
+            "crossforge_ninja_source": "target:ninja-source",
+        },
+        "output": ["type=cacheonly"],
+    }
+    return {
+        "phase13-host-tools": {
+            "targets": [
+                "validate",
+                "host-runtime-qualified",
+                "ninja-source",
+                "ninja-host-tool",
+            ]
+        }
+    }
+
+
 def render_vcpkg_graph(config, targets, component_arguments):
     vcpkg = config["vcpkg"]
     source_argument = component_argument_name("sources/vcpkg")
@@ -203,9 +257,11 @@ def render_vcpkg_graph(config, targets, component_arguments):
                 "implementation/vcpkg-integration"
             ),
             "VCPKG_SDK_COMPONENT_SHA256": digest("vcpkg/sdk-build"),
+            "NINJA_TOOL_COMPONENT_SHA256": digest("host-tools/ninja"),
         },
         "contexts": {
             "crossforge_sdk_base": "target:python-phase10-dev",
+            "crossforge_ninja_host_tool": "target:ninja-host-tool",
             "crossforge_vcpkg_source": "target:vcpkg-source",
         },
         "output": ["type=cacheonly"],
@@ -219,7 +275,12 @@ def render_vcpkg_graph(config, targets, component_arguments):
             ]
         },
         "phase13-integration": {
-            "targets": ["vcpkg-source", "python-phase10-dev", "sdk-phase13-base"]
+            "targets": [
+                "ninja-host-tool",
+                "vcpkg-source",
+                "python-phase10-dev",
+                "sdk-phase13-base",
+            ]
         }
     }
 
@@ -705,11 +766,13 @@ def render(repository):
             "contexts": {"crossforge_qemu": "docker-image://%s" % qemu_image}
         }
     render_zstd_graph(config, targets, component_arguments, rocky_amd64_image)
+    ninja_groups = render_ninja_graph(config, targets, component_arguments)
     vcpkg_groups = render_vcpkg_graph(config, targets, component_arguments)
     python_groups = render_python_graph(config, targets, component_arguments)
     document = {
         "group": {
             "toolchain-plan": {"targets": plan_names},
+            **ninja_groups,
             **vcpkg_groups,
             **python_groups,
         },

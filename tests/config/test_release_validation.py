@@ -265,6 +265,46 @@ class ReleaseValidationTests(unittest.TestCase):
                     config, self.schema, self.schema, "$"
                 )
 
+    def test_ninja_host_tool_evidence_is_exact(self):
+        ninja = self.config["host_tools"]["ninja"]
+        self.assertEqual(ninja["version"], "1.13.2")
+        self.assertEqual(
+            ninja["commit"],
+            "3441b633c2fe2c494e958780ba0f4227b1327634",
+        )
+        self.assertEqual(ninja["binary"]["size"], 134040)
+        self.assertEqual(ninja["binary"]["extracted_size"], 290928)
+        self.assertFalse(ninja["release"]["immutable"])
+        evidence = EVIDENCE_VALIDATOR["validate_evidence"](
+            self.config, REPOSITORY
+        )
+        self.assertEqual(evidence["ninja_commit"], ninja["commit"])
+        self.assertEqual(
+            evidence["ninja_binary_sha256"], ninja["binary"]["sha256"]
+        )
+
+    def test_ninja_schema_rejects_incomplete_or_unlocked_inputs(self):
+        for mutate in (
+            lambda value: value["host_tools"]["ninja"]["binary"].pop(
+                "sha512"
+            ),
+            lambda value: value["host_tools"]["ninja"]["binary"].__setitem__(
+                "status", "pending"
+            ),
+            lambda value: value["host_tools"]["ninja"]["source"].__setitem__(
+                "status", "pending"
+            ),
+            lambda value: value["host_tools"]["ninja"]["release"].__setitem__(
+                "immutable", True
+            ),
+        ):
+            config = copy.deepcopy(self.config)
+            mutate(config)
+            with self.assertRaises(VALIDATOR["ValidationError"]):
+                VALIDATOR["validate"](
+                    config, self.schema, self.schema, "$"
+                )
+
     def test_rocky_trust_root_matches_key_file(self):
         trust = self.config["trust"]["rocky_rpm_key"]
         digest = hashlib.sha256((REPOSITORY / trust["file"]).read_bytes()).hexdigest()

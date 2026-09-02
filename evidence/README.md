@@ -1,6 +1,6 @@
 # Supply-chain Evidence
 
-Files below `oci/`, `git/`, `gpg/`, and `sigstore/` are base64 envelopes of exact upstream bytes.
+Files below `oci/`, `git/`, `github/`, `gpg/`, and `sigstore/` are base64 envelopes of exact upstream bytes.
 Base64 keeps OCI manifest digests and Git object IDs reproducible even when a
 text editor changes line endings. `scripts/validate-supply-chain-evidence.py`
 decodes each file, recomputes its content identity, and verifies every
@@ -12,6 +12,12 @@ verification. The validator does prove that the archived tag object names the
 archived commit and that the pinned binfmt provenance used that tag in its
 checkout step. Refresh evidence only as part of an audited release-input
 update; never edit decoded JSON or Git object bodies by hand.
+
+Ninja uses a lightweight tag and its GitHub release is not immutable. The
+`github/` envelopes therefore preserve the exact tag-ref mapping and release
+asset metadata, while `git/` preserves the commit object. Crossforge treats
+the full commit plus independent archive and extracted-binary hashes as the
+trust boundary; it does not claim that Ninja 1.13.2 is upstream-signed.
 
 The zstd release input has a separate, locked trust boundary. The checked-in
 release key is content- and fingerprint-locked, `gpg/` preserves the detached

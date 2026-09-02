@@ -357,6 +357,49 @@
       }
     ]
   },
+  "host_tools": {
+    "ninja": {
+      "version": "1.13.2",
+      "repository": "https://github.com/ninja-build/ninja.git",
+      "tag": "v1.13.2",
+      "tag_evidence": "evidence/github/ninja-v1.13.2.tag-ref.json.b64",
+      "tag_evidence_sha256": "d5c4f332179730faea77b55b3cf0bf6026eff78d7f6a2111282a0d2b55744c48",
+      "tag_evidence_size": 384,
+      "commit": "3441b633c2fe2c494e958780ba0f4227b1327634",
+      "commit_evidence": "evidence/git/ninja-v1.13.2.commit.b64",
+      "release": {
+        "immutable": false,
+        "evidence": "evidence/github/ninja-v1.13.2.release.json.b64",
+        "evidence_sha256": "1b03f1834b801f95347cea09e4a74fc6b292b26020d629a6bc1ce783e714a7ca",
+        "evidence_size": 11979
+      },
+      "binary": {
+        "status": "locked",
+        "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux.zip",
+        "sha256": "5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6",
+        "sha512": "714b900cf10b7ecb1b641c91f4ef696250c64984e5955a8088e4a538d6e8077f43e55f6da47efcedbe316c68d51a9e98feff51734eb0eac1b17aa85af5698753",
+        "size": 134040,
+        "archive_member": "ninja",
+        "extracted_sha256": "607e668f90dd6cd82e1a42ae572647ad1b1fd43063964295b9547836d8c15d99",
+        "extracted_sha512": "baa28f9bb5519c19f6294956d216a7e384b5919e304412f4fb854d3c434c6ab0005aa0410f2b25c2ec082a6a630f0289933a818576a8f0a2b17d5564438a1dc9",
+        "extracted_size": 290928
+      },
+      "source": {
+        "status": "locked",
+        "url": "https://github.com/ninja-build/ninja/archive/3441b633c2fe2c494e958780ba0f4227b1327634.tar.gz",
+        "sha256": "bccc6197cd8c3ac2a439e26d6bf41506fe49c430cf3d593269a15379f24266ee",
+        "sha512": "7c7480c91f5c4d41c51dd5caeebea8b18049ae89e794afdfbc889897a86eaa15b1f7cb6a3d99330da3f60bb48173494c2b7617c1c0a748fe1d94e66007766bba",
+        "size": 292638,
+        "archive_root": "ninja-3441b633c2fe2c494e958780ba0f4227b1327634"
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "source_file": "COPYING",
+        "sha256": "eb7e9ab9690124c5c9f42bdc81383d886a3dede26345b6ed15bbad7caf81f7ea",
+        "size": 11358
+      }
+    }
+  },
   "vcpkg": {
     "repository": "https://github.com/microsoft/vcpkg.git",
     "release": {

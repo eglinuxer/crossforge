@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-`docs/architecture.md` is canonical. Configuration lives under `config/`; `config/generated/` comes only from `render-release-components.py`. Compatibility policy is in `abi/el8/`, provenance in `evidence/`, third-party notices in `licenses/`, and DNF decisions in `locks/`. Dockerfiles own toolchains, private zstd, Python rows, and vcpkg. Tools are in `scripts/`, backports in `patches/`, and tests in `tests/`.
+`docs/architecture.md` is canonical. Configuration lives under `config/`; `config/generated/` comes only from `render-release-components.py`. Compatibility policy is in `abi/el8/`, provenance in `evidence/`, third-party notices in `licenses/`, and DNF decisions in `locks/`. Dockerfiles own host tools, toolchains, private zstd, Python rows, and vcpkg. Tools are in `scripts/`, backports in `patches/`, and tests in `tests/`.
 
 Rust prototype: tag `prototype-rust-2026-08-28`. Do not commit caches.
 
@@ -14,7 +14,7 @@ Rust prototype: tag `prototype-rust-2026-08-28`. Do not commit caches.
 - `./scripts/render-release-components.py --check`, `./scripts/render-vcpkg-integration.py --check`, and `./scripts/render-bake.py --check` detect generated-file drift.
 - `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
 - `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked host-runtime-qualified` replays and qualifies all host closures offline.
-- `docker buildx bake vcpkg-source` authenticates the full registry history and signed host tool; `docker buildx bake sdk-phase13-base` installs and qualifies the five triplets.
+- `docker buildx bake ninja-host-tool vcpkg-source` authenticates Ninja and vcpkg; `docker buildx bake sdk-phase13-base` qualifies their SDK integration.
 - `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both real cross slices; aarch64 uses explicit pinned QEMU, never implicit binfmt.
 - `docker buildx bake phase10` requalifies all Python 3.9–3.14 rows for both targets. `python-native-latest` and `python-matrix` select the same six-row contract. Graph existence or a build probe alone is not qualification evidence.
 
@@ -22,7 +22,7 @@ Never publish `sdk-skeleton` or a `-dev` target; only a locked, qualified candid
 
 ## Coding Style & Naming Conventions
 
-Use strict JSON plus JSON Schema; reject duplicate keys, unknown fields, and schema versions. Keep Bash quoted and under `set -Eeuo pipefail`. Python infrastructure should prefer the standard library. Delegate package, ELF, RPM, and dependency semantics to upstream tools.
+Use strict JSON plus JSON Schema; reject duplicate keys, unknown fields, and schema versions. Keep Bash quoted and under `set -Eeuo pipefail`. Prefer Python's standard library. Delegate package, ELF, RPM, and dependency semantics to upstream tools.
 
 ## Testing Guidelines
 

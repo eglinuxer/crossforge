@@ -607,6 +607,102 @@ def validate_evidence(config, repository):
         "vcpkg-tool license identity mismatch",
     )
 
+    ninja = config["host_tools"]["ninja"]
+    ninja_binary = ninja["binary"]
+    ninja_source = ninja["source"]
+    ninja_license = ninja["license"]
+    ninja_commit_payload = load_evidence(
+        repository, ninja["commit_evidence"]
+    )
+    _ninja_tag_payload, ninja_tag = evidence_json(
+        repository,
+        ninja["tag_evidence"],
+        "sha256:" + ninja["tag_evidence_sha256"],
+        ninja["tag_evidence_size"],
+    )
+    ninja_release_config = ninja["release"]
+    _ninja_release_payload, ninja_release = evidence_json(
+        repository,
+        ninja_release_config["evidence"],
+        "sha256:" + ninja_release_config["evidence_sha256"],
+        ninja_release_config["evidence_size"],
+    )
+    ninja_asset = one(
+        [
+            asset
+            for asset in ninja_release.get("assets", [])
+            if asset.get("name")
+            == ninja_binary["archive_member"] + "-linux.zip"
+        ],
+        "Ninja linux release asset",
+    )
+    require(
+        ninja["version"] == "1.13.2"
+        and ninja["repository"] == "https://github.com/ninja-build/ninja.git"
+        and ninja["tag"] == "v1.13.2"
+        and git_object_id("commit", ninja_commit_payload)
+        == ninja["commit"]
+        == "3441b633c2fe2c494e958780ba0f4227b1327634"
+        and ninja_commit_payload.startswith(b"tree ")
+        and ninja_tag.get("ref") == "refs/tags/v1.13.2"
+        and ninja_tag.get("object")
+        == {
+            "sha": ninja["commit"],
+            "type": "commit",
+            "url": "https://api.github.com/repos/ninja-build/ninja/git/commits/"
+            + ninja["commit"],
+        },
+        "Ninja Git identity mismatch",
+    )
+    require(
+        ninja_release_config["immutable"] is False
+        and ninja_release.get("tag_name") == ninja["tag"]
+        and ninja_release.get("immutable") is False
+        and ninja_release.get("draft") is False
+        and ninja_release.get("prerelease") is False
+        and ninja_asset.get("size") == ninja_binary["size"]
+        and ninja_asset.get("digest")
+        == "sha256:" + ninja_binary["sha256"]
+        and ninja_asset.get("browser_download_url") == ninja_binary["url"],
+        "Ninja release asset evidence mismatch",
+    )
+    require(
+        ninja_binary
+        == {
+            "status": "locked",
+            "url": "https://github.com/ninja-build/ninja/releases/download/"
+            "v1.13.2/ninja-linux.zip",
+            "sha256": "5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6",
+            "sha512": "714b900cf10b7ecb1b641c91f4ef696250c64984e5955a8088e4a538d6e8077f"
+            "43e55f6da47efcedbe316c68d51a9e98feff51734eb0eac1b17aa85af5698753",
+            "size": 134040,
+            "archive_member": "ninja",
+            "extracted_sha256": "607e668f90dd6cd82e1a42ae572647ad1b1fd43063964295b9547836d8c15d99",
+            "extracted_sha512": "baa28f9bb5519c19f6294956d216a7e384b5919e304412f4fb854d3c434c6ab0"
+            "005aa0410f2b25c2ec082a6a630f0289933a818576a8f0a2b17d5564438a1dc9",
+            "extracted_size": 290928,
+        }
+        and ninja_source
+        == {
+            "status": "locked",
+            "url": "https://github.com/ninja-build/ninja/archive/"
+            "3441b633c2fe2c494e958780ba0f4227b1327634.tar.gz",
+            "sha256": "bccc6197cd8c3ac2a439e26d6bf41506fe49c430cf3d593269a15379f24266ee",
+            "sha512": "7c7480c91f5c4d41c51dd5caeebea8b18049ae89e794afdfbc889897a86eaa15"
+            "b1f7cb6a3d99330da3f60bb48173494c2b7617c1c0a748fe1d94e66007766bba",
+            "size": 292638,
+            "archive_root": "ninja-3441b633c2fe2c494e958780ba0f4227b1327634",
+        }
+        and ninja_license
+        == {
+            "expression": "Apache-2.0",
+            "source_file": "COPYING",
+            "sha256": "eb7e9ab9690124c5c9f42bdc81383d886a3dede26345b6ed15bbad7caf81f7ea",
+            "size": 11358,
+        },
+        "Ninja locked material identity mismatch",
+    )
+
     python_signers = {
         "3.9": ("lukasz@langa.pl", "https://github.com/login/oauth"),
         "3.10": ("pablogsal@python.org", "https://accounts.google.com"),
@@ -836,6 +932,8 @@ def validate_evidence(config, repository):
         "vcpkg_commit": vcpkg_release["commit"],
         "vcpkg_tool_commit": vcpkg_tool["commit"],
         "vcpkg_tool_signature_sha256": vcpkg_signature["sha256"],
+        "ninja_commit": ninja["commit"],
+        "ninja_binary_sha256": ninja_binary["sha256"],
     }
 
 
@@ -853,7 +951,7 @@ def main():
     result = validate_evidence(config, repository)
     print(
         "valid supply-chain evidence: Rocky %s; QEMU %s; source %s; "
-        "CPython Sigstore bundles %s; patches %d; zstd %s; vcpkg %s"
+        "CPython Sigstore bundles %s; patches %d; zstd %s; vcpkg %s; Ninja %s"
         % (
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
@@ -862,6 +960,7 @@ def main():
             result["python_patches"],
             result["zstd_commit"],
             result["vcpkg_commit"],
+            result["ninja_commit"],
         )
     )
     return 0

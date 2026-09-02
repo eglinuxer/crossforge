@@ -32,6 +32,12 @@ target "_vcpkg_common" {
   platforms  = ["linux/amd64"]
 }
 
+target "_host_tools_common" {
+  context    = "."
+  dockerfile = "docker/host-tools.Dockerfile"
+  platforms  = ["linux/amd64"]
+}
+
 group "default" {
   targets = ["validate"]
 }

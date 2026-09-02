@@ -761,7 +761,12 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         self.assertEqual(pending["rpm/host-runtime"]["scope"], "future")
         self.assertEqual(
             changed(self.components, pending),
-            {"rpm/host-runtime", "vcpkg/sdk-build", "future/product"},
+            {
+                "rpm/host-runtime",
+                "host-tools/ninja",
+                "vcpkg/sdk-build",
+                "future/product",
+            },
         )
 
     def test_trust_changes_all_rpm_srpm_and_exact_consumers(self):
@@ -786,6 +791,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "zstd/host-build",
                 "zstd/x86_64-build",
                 "zstd/aarch64-build",
+                "host-tools/ninja",
                 "vcpkg/sdk-build",
             }
         )
@@ -817,6 +823,38 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         self.assertEqual(
             changed(self.components, after),
             {"sources/vcpkg", "vcpkg/sdk-build"},
+        )
+
+    def test_ninja_host_tool_has_isolated_source_policy_and_consumers(self):
+        source = self.components["sources/ninja"]
+        self.assertEqual(source["scope"], "build")
+        self.assertEqual(source["dependencies"], [])
+        self.assertTrue(
+            all(
+                material["path"].startswith("/host_tools/ninja/")
+                for material in source["materials"]
+            )
+        )
+        policy = self.components["implementation/ninja-host-tool"]
+        self.assertEqual(policy["scope"], "build")
+        self.assertEqual(policy["dependencies"], [])
+        tool = self.components["host-tools/ninja"]
+        self.assertEqual(
+            {item["component"] for item in tool["dependencies"]},
+            {
+                "rpm/host-runtime",
+                "sources/ninja",
+                "implementation/ninja-host-tool",
+            },
+        )
+        after = self.render_mutation(
+            lambda release: release["host_tools"]["ninja"]["binary"].__setitem__(
+                "extracted_sha256", "0" * 64
+            )
+        )
+        self.assertEqual(
+            changed(self.components, after),
+            {"sources/ninja", "host-tools/ninja", "vcpkg/sdk-build"},
         )
 
     def test_zstd_source_and_policy_are_isolated_from_python_rows(self):

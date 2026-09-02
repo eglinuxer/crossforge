@@ -18,8 +18,9 @@ build-system-independent DEB/RPM packaging.
 > now rebases those qualified artifacts onto its independently locked host
 > runtime and passes the complete offline integration gate. The pinned vcpkg
 > registry/tool and five generated host/target triplets are installed and
-> qualified offline; representative-port qualification, packaging, the full
-> GCC/Qt suites and release supply chain remain pending.
+> qualified offline with a locked Ninja 1.13.2 host-tool overlay;
+> representative-port qualification, packaging, the full GCC/Qt suites and
+> release supply chain remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -405,7 +406,8 @@ Maintainers refresh the evidence with the cache-only
 tracked transaction, lock, and signed `repomd.xml` files.
 
 The lock contains 140 verified RPM payloads and replays 119 installs plus 21
-upgrades offline. It includes native GTS15, CMake, Meson, Ninja, Autotools,
+upgrades offline. It includes native GTS15, CMake, Meson, distro Ninja,
+Autotools,
 Git core, pkg-config and common archive/text tools. PowerTools may supply only
 Meson and Ninja. Crossforge build-only RPM tooling and CPython dependency
 development roots are rejected from the resulting closure. Replacing the
@@ -425,10 +427,18 @@ Microsoft's detached PGP signature and exact LICENSE/NOTICE files:
 
 ```console
 $ ./scripts/validate-supply-chain-evidence.py
+$ docker buildx bake ninja-host-tool
 $ docker buildx bake vcpkg-source
 $ ./scripts/render-vcpkg-integration.py --check
 $ docker buildx bake sdk-phase13-base
 ```
+
+The host-tool target installs Ninja 1.13.2 at
+`/opt/crossforge/host-tools/ninja/1.13.2` without replacing RPM-owned
+`/usr/bin/ninja`. Its lightweight tag mapping, commit object, mutable GitHub
+release response, binary ZIP, vcpkg SHA512, extracted ELF and Apache-2.0
+license are independently bound. The offline gate verifies the loader and
+dependencies, then runs direct Ninja, CMake/Ninja and Meson/Ninja builds.
 
 The source target clones the complete commit history and fetches the 22 fixed
 port trees referenced by the version database but not reachable from the tag.
@@ -440,7 +450,7 @@ Crossforge overlay triplets chainload explicit native GTS15 or target CMake
 toolchains. No default target triplet is set: downstream builds must select
 x86_64 or aarch64 and static or dynamic linkage deliberately. The cache-only
 SDK gate rechecks the complete Git/tool identity, all generated file hashes,
-host/target separation and PIC shared linking, then runs x86_64 directly and
+Ninja selection, host/target separation and PIC shared linking, then runs x86_64 directly and
 aarch64 only through pinned QEMU. It leaves no downloads, build trees,
 packages or installed ports in the product root. Representative-port
 qualification is the next slice.

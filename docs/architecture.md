@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；vcpkg registry/host tool 供应链、五套 triplet 与 chainload toolchain 的 SDK 集成已完成，代表性 port 资格化、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；Ninja 1.13.2 host-tool overlay、vcpkg registry/host tool 供应链、五套 triplet 与 chainload toolchain 的 SDK 集成已完成，代表性 port 资格化、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -46,6 +46,7 @@ ghcr.io/eglinuxer/crossforge:gts15-el8
 ├── targets/{x86_64-unknown-linux-gnu,aarch64-unknown-linux-gnu}/
 ├── sysroots/el8/{x86_64,aarch64}/
 ├── python/cp{39,310,311,312,313,314}/
+├── host-tools/ninja/1.13.2/
 ├── cmake/
 ├── meson/
 ├── vcpkg/triplets/
@@ -53,7 +54,7 @@ ghcr.io/eglinuxer/crossforge:gts15-el8
 └── release.json
 ```
 
-镜像还包含原生 GTS15 C/C++ 编译器、CMake、Meson、Ninja、Make、Autoconf、Automake、Libtool、pkg-config、Git、bison、flex、常用归档/文本工具、QEMU、固定版本的 vcpkg 和 nFPM。RPM 构建工具、DejaGNU、Qt 源码、gperf 及 WebEngine 专用工具只存在于内部构建/测试 stage。Rust、Conan、auditwheel、cibuildwheel 不进入产品镜像。
+镜像还包含原生 GTS15 C/C++ 编译器、CMake、Meson、固定 Ninja 1.13.2 overlay、Make、Autoconf、Automake、Libtool、pkg-config、Git、bison、flex、常用归档/文本工具、QEMU、固定版本的 vcpkg 和 nFPM。RPM 所有的旧 Ninja 保留但不处于 PATH 首位。RPM 构建工具、DejaGNU、Qt 源码、gperf 及 WebEngine 专用工具只存在于内部构建/测试 stage。Rust、Conan、auditwheel、cibuildwheel 不进入产品镜像。
 
 ## 4. 构建架构
 
@@ -92,7 +93,7 @@ GROUP ( =/lib64/libgcc_s.so.1 libgcc.a )
 
 ## 5. 配置、锁与可追溯性
 
-`config/release.json` 是唯一人工维护的版本事实来源，并由 `config/schemas/release.schema.json` 严格校验。版本、NEVRA、URL、SHA256、target、Python adapter、vcpkg commit、nFPM 版本、基础镜像 digest，以及资格化实际消费的 8 份 ABI baseline/provider JSON 逻辑路径与 canonical digest 都在其中固定。
+`config/release.json` 是唯一人工维护的版本事实来源，并由 `config/schemas/release.schema.json` 严格校验。版本、NEVRA、URL、SHA256、target、Python adapter、Ninja/vcpkg commit、nFPM 版本、基础镜像 digest，以及资格化实际消费的 8 份 ABI baseline/provider JSON 逻辑路径与 canonical digest 都在其中固定。
 
 规划阶段可以用 `status: "pending"` 明示尚未核实的来源，禁止填入猜测值；任何 candidate/release 构建都必须使用 `validate-release.py --require-locked`，存在一个 pending pin 即失败。
 
@@ -214,6 +215,15 @@ Python 契约是“支持交叉编译扩展”，不是 PEP 517/wheel 编排器�
 
 ## 8. vcpkg 集成
 
+vcpkg 固定版本要求现代 Ninja，而 EL8 RPM 只提供旧版本。Crossforge 因此将 vcpkg
+选定的 Ninja 1.13.2 官方 Linux 资产安装到独立
+`/opt/crossforge/host-tools/ninja/1.13.2`，保持
+`VCPKG_FORCE_SYSTEM_BINARIES=1`，并把 overlay 置于 PATH 首位。该资产以完整 commit、
+GitHub tag-ref/release 原始证据、GitHub SHA256、vcpkg SHA512、解包后 ELF 摘要及
+源码 `COPYING` 共同绑定；不因 lightweight tag 或 `immutable:false` release
+声称上游签名信任。资格化必须证明 Ninja、CMake、Meson 与 vcpkg 均选择该绝对路径，
+且不得覆盖 `/usr/bin/ninja`。
+
 供应链基础固定 vcpkg `2026.07.29` / commit
 `9e593bb18ea69cc5095e012465dcd675a822ed0d`，并保留非 shallow 的完整 commit
 历史；version database 中 22 个不可由 tag 到达的 port tree 按固定 OID 补齐，离线
@@ -242,7 +252,7 @@ Crossforge 只承诺 triplet、host/target 分离和代表性 ports（zlib、fmt
 `/opt/crossforge/vcpkg/root`，并从 release component policy 生成三份 CMake
 toolchain 与上述五套 triplet。镜像只设置 host triplet，不设置默认 target
 triplet；target 必须由用户显式选择。离线资格化会重验完整 Git 历史与工具身份，
-再分别构建 host、x86_64 cross 与 aarch64 cross 的 C/C++、static-to-shared PIC
+再验证锁定 Ninja 路径，并分别构建 host、x86_64 cross 与 aarch64 cross 的 C/C++、static-to-shared PIC
 探针；aarch64 产物仅在资格化边界通过固定 QEMU 执行。该阶段不执行 port install，
 也不把 downloads、buildtrees、packages 或 installed tree 带入产品根目录。
 
@@ -300,7 +310,7 @@ Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单�
 
 `release.json` 是唯一人工维护的版本源。`config/generated/` 将它投影为 build、qualification、supply 与 future 四类组件身份，并用单向 `release-binding.json` 绑定完整 release digest；共享 Python 实现策略另有显式投影。生成器要求每个 release 叶字段有明确分类，并保证版本行、架构及 host closure 的无关变化不会污染其他 build identity。ABI 输入只生成 `abi/{x86_64,aarch64}-baseline` 与 `abi/python-providers` 三个 qualification component：对应 toolchain qualification 依赖各自 baseline，Python aggregate 直接依赖三者。ABI pin 更新因此不会改变 GCC、Python row 或 zstd 的任何 build component。维护与资格化边界继续显式读取完整 release identity，因此无关 future 元数据只会触发重验，不会重编 GCC/binutils。
 
-Rocky OCI index、QEMU index/manifest/attestation/SLSA predicate 以及 QEMU Git tag/commit 原始字节以 base64 envelope 签入 `evidence/`。离线 validator 必须重算 OCI digest 与 Git object ID，并验证 platform child manifest、attestation subject、provenance builder/build arguments 和源码 tag→commit 关系。当前只归档 QEMU annotated tag 内的 OpenPGP 签名，不宣称已建立 QEMU maintainer keyring 信任；正式发布前需补齐该信任根或使用等价的上游签名策略。
+Rocky OCI index、QEMU index/manifest/attestation/SLSA predicate、QEMU Git tag/commit，以及 Ninja GitHub tag-ref/release 与 commit 原始字节以 base64 envelope 签入 `evidence/`。离线 validator 必须重算 OCI/GitHub evidence digest 与 Git object ID，并验证 platform child manifest、attestation subject、provenance builder/build arguments 和源码 tag→commit 关系。当前只归档 QEMU annotated tag 内的 OpenPGP 签名，不宣称已建立 QEMU maintainer keyring 信任；Ninja lightweight tag 也无独立签名，因此依赖完整 commit 与多重内容摘要。正式发布前需补齐相应信任根或保留明确的 hash-pinned 风险边界。
 
 CPython 的上游 Sigstore bundle 同样以原始 base64 envelope 归档，并在结构层将 message/Rekor digest 绑定到 tarball SHA256；当前明确标记为 `archived-unverified`。配置中的预期 signer 仅是维护策略，尚未从证书 SAN/issuer 验证。在固定 Fulcio/Rekor/TSA trust roots 并执行真实签名、证书链、身份、SET 与 inclusion proof 验证前，不得把该归档描述为密码学真实性证明。
 
@@ -342,4 +352,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、vcpkg source lock 与五 triplet SDK 集成已完成；后续实现代表性 vcpkg port 资格化、分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、Ninja host-tool overlay、vcpkg source lock 与五 triplet SDK 集成已完成；后续实现代表性 vcpkg port 资格化、分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

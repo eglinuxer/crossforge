@@ -66,6 +66,19 @@ class VcpkgIntegrationTests(unittest.TestCase):
                 self.components["implementation/vcpkg-integration"]
             ),
         )
+        sdk = self.components["vcpkg/sdk-build"]
+        self.assertEqual(sdk["scope"], "build")
+        self.assertEqual(
+            {item["component"] for item in sdk["dependencies"]},
+            {
+                "rpm/host-runtime",
+                "sources/vcpkg",
+                "host-tools/ninja",
+                "implementation/vcpkg-integration",
+                "toolchain/x86_64-build",
+                "toolchain/aarch64-build",
+            },
+        )
 
     def test_generator_rejects_every_untracked_integration_entry(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -80,18 +93,6 @@ class VcpkgIntegrationTests(unittest.TestCase):
                 GENERATOR["output_drift"](repository, self.outputs),
                 ["unexpected integration/cmake/.leak"],
             )
-        sdk = self.components["vcpkg/sdk-build"]
-        self.assertEqual(sdk["scope"], "build")
-        self.assertEqual(
-            {item["component"] for item in sdk["dependencies"]},
-            {
-                "rpm/host-runtime",
-                "sources/vcpkg",
-                "implementation/vcpkg-integration",
-                "toolchain/x86_64-build",
-                "toolchain/aarch64-build",
-            },
-        )
 
     def test_target_toolchains_are_absolute_true_cross_and_emulator_free(self):
         for arch, triple, processor in (
@@ -178,6 +179,7 @@ class VcpkgIntegrationTests(unittest.TestCase):
         self.assertEqual(
             target["contexts"],
             {
+                "crossforge_ninja_host_tool": "target:ninja-host-tool",
                 "crossforge_sdk_base": "target:python-phase10-dev",
                 "crossforge_vcpkg_source": "target:vcpkg-source",
             },

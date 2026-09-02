@@ -64,6 +64,13 @@ FROM crossforge_sdk_base AS vcpkg-sdk-base
 ARG VCPKG_SOURCE_COMPONENT_SHA256
 ARG VCPKG_INTEGRATION_COMPONENT_SHA256
 ARG VCPKG_SDK_COMPONENT_SHA256
+ARG NINJA_TOOL_COMPONENT_SHA256
+COPY --from=crossforge_ninja_host_tool \
+  /opt/crossforge/host-tools/ninja/ \
+  /opt/crossforge/host-tools/ninja/
+COPY --from=crossforge_ninja_host_tool \
+  /opt/crossforge/qualification/host-tools/ninja.json \
+  /opt/crossforge/qualification/host-tools/ninja.json
 COPY --from=crossforge_vcpkg_source /root/ /opt/crossforge/vcpkg/root/
 COPY --from=crossforge_vcpkg_source /source.json \
   /opt/crossforge/qualification/vcpkg/source.json
@@ -77,14 +84,17 @@ COPY config/generated/components/implementation/vcpkg-integration.json \
   /work/config/vcpkg-integration.json
 COPY config/generated/components/vcpkg/sdk-build.json \
   /work/config/vcpkg-sdk-build.json
+COPY config/generated/components/host-tools/ninja.json \
+  /work/config/ninja-host-tool.json
 COPY --chmod=0755 scripts/fetch-vcpkg-history.py \
   scripts/release_component.py scripts/qualify-vcpkg-sdk.py /work/scripts/
-ENV VCPKG_ROOT=/opt/crossforge/vcpkg/root \
+ENV NINJA_ROOT=/opt/crossforge/host-tools/ninja/1.13.2 \
+    VCPKG_ROOT=/opt/crossforge/vcpkg/root \
     VCPKG_OVERLAY_TRIPLETS=/opt/crossforge/vcpkg/triplets \
     VCPKG_DEFAULT_HOST_TRIPLET=crossforge-host-x64-el8 \
     VCPKG_DISABLE_METRICS=1 \
     VCPKG_FORCE_SYSTEM_BINARIES=1 \
-    PATH=/opt/crossforge/vcpkg/root:${PATH}
+    PATH=/opt/crossforge/host-tools/ninja/1.13.2/bin:/opt/crossforge/vcpkg/root:${PATH}
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-vcpkg-sdk.py \
       --release /opt/crossforge/release.json \
@@ -101,7 +111,13 @@ RUN --network=none /usr/libexec/platform-python \
         "$VCPKG_INTEGRATION_COMPONENT_SHA256" \
       --sdk-component /work/config/vcpkg-sdk-build.json \
       --sdk-component-sha256 "$VCPKG_SDK_COMPONENT_SHA256" \
+      --ninja-component /work/config/ninja-host-tool.json \
+      --ninja-component-sha256 "$NINJA_TOOL_COMPONENT_SHA256" \
+      --ninja-report \
+        /opt/crossforge/qualification/host-tools/ninja.json \
       --output /opt/crossforge/qualification/vcpkg/sdk.json \
+    && test "$(command -v ninja)" = "$NINJA_ROOT/bin/ninja" \
+    && test "$(ninja --version)" = 1.13.2 \
     && rm -rf /work \
     && test ! -e /opt/crossforge/vcpkg/root/downloads \
     && test ! -e /opt/crossforge/vcpkg/root/buildtrees \

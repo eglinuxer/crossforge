@@ -1,0 +1,46 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/ninja-host-tool",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/host-tools/ninja/binary_relative_path",
+      "value": "bin/ninja"
+    },
+    {
+      "path": "/@implementation/host-tools/ninja/consumers/0",
+      "value": "cmake"
+    },
+    {
+      "path": "/@implementation/host-tools/ninja/consumers/1",
+      "value": "meson"
+    },
+    {
+      "path": "/@implementation/host-tools/ninja/consumers/2",
+      "value": "vcpkg"
+    },
+    {
+      "path": "/@implementation/host-tools/ninja/install_prefix",
+      "value": "/opt/crossforge/host-tools/ninja"
+    },
+    {
+      "path": "/@implementation/host-tools/ninja/license_relative_path",
+      "value": "share/licenses/ninja/COPYING"
+    },
+    {
+      "path": "/@implementation/host-tools/ninja/path_precedence",
+      "value": "before-system"
+    },
+    {
+      "path": "/@implementation/host-tools/ninja/schema_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/host-tools/ninja/system_binary",
+      "value": "/usr/bin/ninja"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

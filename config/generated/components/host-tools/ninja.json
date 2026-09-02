@@ -1,0 +1,39 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "host-tools/ninja",
+  "dependencies": [
+    {
+      "canonical_sha256": "732447444d086b975a7ec6a13f463dd7ced4696a37ad7015e12d5e64d8bcd862",
+      "component": "implementation/ninja-host-tool"
+    },
+    {
+      "canonical_sha256": "b037782d2cefa64c6b88f75478081f85706ee6c7fe95f6e5c8b4092b464edabd",
+      "component": "rpm/host-runtime"
+    },
+    {
+      "canonical_sha256": "2a98362c763cfe71b4d604cb2ccf563b7bb54cfde1b8ba7331ee1b9ef0d4cc38",
+      "component": "sources/ninja"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/platforms/build",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/image",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/tool_host",
+      "value": "linux/amd64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

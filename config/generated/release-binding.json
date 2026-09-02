@@ -26,6 +26,18 @@
       "scope": "future"
     },
     {
+      "canonical_sha256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
+      "component": "host-tools/ninja",
+      "path": "config/generated/components/host-tools/ninja.json",
+      "scope": "build"
+    },
+    {
+      "canonical_sha256": "732447444d086b975a7ec6a13f463dd7ced4696a37ad7015e12d5e64d8bcd862",
+      "component": "implementation/ninja-host-tool",
+      "path": "config/generated/components/implementation/ninja-host-tool.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
       "component": "implementation/python-cp310-build-policy",
       "path": "config/generated/components/implementation/python-cp310-build-policy.json",
@@ -284,6 +296,12 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "2a98362c763cfe71b4d604cb2ccf563b7bb54cfde1b8ba7331ee1b9ef0d4cc38",
+      "component": "sources/ninja",
+      "path": "config/generated/components/sources/ninja.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "32decc4331f2b02cb83fc96a08b622d7302c346eac55ff74e3cb3345c2fc36da",
       "component": "sources/vcpkg",
       "path": "config/generated/components/sources/vcpkg.json",
@@ -326,7 +344,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "c7d44523b4a7c1b2f181c9c379517d9c1fc78ae25bc1b188682d417aecb7448e",
+      "canonical_sha256": "92b091c99733a86da217ebdfd09e67884cae48002105ec722f0db89738dff23e",
       "component": "vcpkg/sdk-build",
       "path": "config/generated/components/vcpkg/sdk-build.json",
       "scope": "build"
@@ -352,7 +370,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "b9af9243422a06813bdd48aea99c779e84323767ad90231ef6128999766eec8b",
+    "canonical_sha256": "b328139dc84b0561cdbc2d7cf5d4a209d1c3a867e52a6a0f3d0cedbdbeb9aa87",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

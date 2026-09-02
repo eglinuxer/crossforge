@@ -19,6 +19,7 @@
     "qemu",
     "targets",
     "python",
+    "host_tools",
     "vcpkg",
     "nfpm"
   ],
@@ -653,6 +654,9 @@
           "$ref": "#/$defs/vcpkg_tool"
         }
       }
+    },
+    "host_tools": {
+      "$ref": "#/$defs/host_tools"
     },
     "nfpm": {
       "type": "object",
@@ -1449,6 +1453,213 @@
         },
         "source": {
           "$ref": "#/$defs/python_source"
+        }
+      }
+    },
+    "host_tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ninja"
+      ],
+      "properties": {
+        "ninja": {
+          "$ref": "#/$defs/ninja_tool"
+        }
+      }
+    },
+    "ninja_tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "repository",
+        "tag",
+        "tag_evidence",
+        "tag_evidence_sha256",
+        "tag_evidence_size",
+        "commit",
+        "commit_evidence",
+        "release",
+        "binary",
+        "source",
+        "license"
+      ],
+      "properties": {
+        "version": {
+          "const": "1.13.2"
+        },
+        "repository": {
+          "const": "https://github.com/ninja-build/ninja.git"
+        },
+        "tag": {
+          "const": "v1.13.2"
+        },
+        "tag_evidence": {
+          "const": "evidence/github/ninja-v1.13.2.tag-ref.json.b64"
+        },
+        "tag_evidence_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "tag_evidence_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "commit": {
+          "const": "3441b633c2fe2c494e958780ba0f4227b1327634"
+        },
+        "commit_evidence": {
+          "const": "evidence/git/ninja-v1.13.2.commit.b64"
+        },
+        "release": {
+          "$ref": "#/$defs/ninja_release_evidence"
+        },
+        "binary": {
+          "$ref": "#/$defs/ninja_binary"
+        },
+        "source": {
+          "$ref": "#/$defs/ninja_source"
+        },
+        "license": {
+          "$ref": "#/$defs/ninja_license"
+        }
+      }
+    },
+    "ninja_release_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "immutable",
+        "evidence",
+        "evidence_sha256",
+        "evidence_size"
+      ],
+      "properties": {
+        "immutable": {
+          "const": false
+        },
+        "evidence": {
+          "const": "evidence/github/ninja-v1.13.2.release.json.b64"
+        },
+        "evidence_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "evidence_size": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "ninja_binary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256",
+        "sha512",
+        "size",
+        "archive_member",
+        "extracted_sha256",
+        "extracted_sha512",
+        "extracted_size"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "url": {
+          "const": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux.zip"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sha512": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "archive_member": {
+          "const": "ninja"
+        },
+        "extracted_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "extracted_sha512": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        },
+        "extracted_size": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "ninja_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256",
+        "sha512",
+        "size",
+        "archive_root"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "url": {
+          "const": "https://github.com/ninja-build/ninja/archive/3441b633c2fe2c494e958780ba0f4227b1327634.tar.gz"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sha512": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "archive_root": {
+          "const": "ninja-3441b633c2fe2c494e958780ba0f4227b1327634"
+        }
+      }
+    },
+    "ninja_license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "source_file",
+        "sha256",
+        "size"
+      ],
+      "properties": {
+        "expression": {
+          "const": "Apache-2.0"
+        },
+        "source_file": {
+          "const": "COPYING"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     },
