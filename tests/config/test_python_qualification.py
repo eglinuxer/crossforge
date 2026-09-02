@@ -11,6 +11,7 @@ REPOSITORY = Path(__file__).resolve().parents[2]
 FINALIZER = runpy.run_path(
     str(REPOSITORY / "scripts/finalize-cpython-qualification.py")
 )
+QUALIFIER = runpy.run_path(str(REPOSITORY / "scripts/qualify-cpython.py"))
 TARGET = "x86_64-unknown-linux-gnu"
 VERSION = "3.13.15"
 PYTHON_SHA256 = "1" * 64
@@ -65,6 +66,7 @@ class PythonQualificationTests(unittest.TestCase):
                 "versions": [
                     {
                         "version": VERSION,
+                        "adapter": "modern",
                         "source": {
                             "status": "locked",
                             "url": "https://www.python.org/ftp/python/3.13.15/Python-3.13.15.tar.xz",
@@ -96,11 +98,22 @@ class PythonQualificationTests(unittest.TestCase):
 
     def valid_compile(self):
         source = self.release["python"]["versions"][0]["source"]
+        build_directory = "/work/build/cpython-cp313-x86_64"
+        executable_canary = build_directory + "/target-exec-canary"
+        loader_canary = build_directory + "/target-dlopen-canary.so"
+        guard_records = [
+            {"operation": operation, "path": executable_canary}
+            for operation in FINALIZER["EXEC_OPERATIONS"]
+        ] + [
+            {"operation": operation, "path": loader_canary}
+            for operation in FINALIZER["LOADER_OPERATIONS"]
+        ]
         return {
-            "qualification_schema_version": 1,
+            "qualification_schema_version": 2,
             "report_kind": "crossforge-cpython-compile",
             "target": TARGET,
             "version": VERSION,
+            "adapter": "modern",
             "release_sha256": canonical_sha256(self.release),
             "source": {
                 "url": source["url"],
@@ -116,11 +129,15 @@ class PythonQualificationTests(unittest.TestCase):
                 "path": "/opt/crossforge/python/cp313/build/bin/python3.13",
                 "version": VERSION,
                 "sha256": "6" * 64,
+                "sdk_tree": {"entries": 200, "canonical_sha256": "d" * 64},
             },
-            "target_exec_guard": {
-                "canary_observed": True,
-                "denied_attempts": 1,
-                "canonical_sha256": "0" * 64,
+            "target_artifact_guard": {
+                "execution_canaries": list(FINALIZER["EXEC_OPERATIONS"]),
+                "loader_canaries": list(FINALIZER["LOADER_OPERATIONS"]),
+                "records": guard_records,
+                "denied_execution_attempts": len(FINALIZER["EXEC_OPERATIONS"]),
+                "denied_loader_attempts": len(FINALIZER["LOADER_OPERATIONS"]),
+                "canonical_sha256": canonical_sha256(guard_records),
             },
             "python_sha256": PYTHON_SHA256,
             "extension": {
@@ -134,7 +151,14 @@ class PythonQualificationTests(unittest.TestCase):
             },
             "sysconfig": {
                 "EXT_SUFFIX": ".cpython-313-x86_64-linux-gnu.so",
+                "HAVE_ALIGNED_REQUIRED": 0,
+                "HAVE_USABLE_WCHAR_T": 0,
                 "HOST_GNU_TYPE": TARGET,
+                "MULTIARCH": "x86_64-linux-gnu",
+                "Py_DEBUG": 0,
+                "Py_GIL_DISABLED": 0,
+                "SIZEOF_WCHAR_T": 4,
+                "SOABI": "cpython-313-x86_64-linux-gnu",
             },
             "sdk_tree": {"entries": 100, "canonical_sha256": "7" * 64},
             "elf_audit": {
@@ -143,7 +167,7 @@ class PythonQualificationTests(unittest.TestCase):
                     "required_versions": {"GLIBC": "2.28"},
                     "sha256": PYTHON_SHA256,
                 },
-                "qualification/_crossforge.so": {
+                "qualification/_crossforge.cpython-313-x86_64-linux-gnu.so": {
                     "needed": [],
                     "required_versions": {},
                     "sha256": EXTENSION_SHA256,
@@ -237,10 +261,11 @@ class PythonQualificationTests(unittest.TestCase):
             )
         )
         return {
-            "qualification_schema_version": 1,
+            "qualification_schema_version": 2,
             "report_kind": "crossforge-cpython-runtime",
             "target": TARGET,
             "version": VERSION,
+            "adapter": "modern",
             "tier": tier,
             "status": "passed",
             "release_sha256": canonical_sha256(self.release),
@@ -276,7 +301,7 @@ class PythonQualificationTests(unittest.TestCase):
             ],
             "device_loaded_objects": loaded_objects,
             "probe": {
-                "schema_version": 1,
+                "schema_version": 2,
                 "report_kind": "crossforge-cpython-probe",
                 "mode": "core",
                 "status": "passed",
@@ -303,13 +328,17 @@ class PythonQualificationTests(unittest.TestCase):
                     "seed_bits": 128,
                 },
                 "threading": {"event": True, "result": 5050},
-                "semaphore": {"acquire_release": True, "get_value": True},
+                "semaphore": {
+                    "multiprocessing_lock": True,
+                    "unnamed_acquire_release": True,
+                    "unnamed_get_value": True,
+                },
                 "network": {"address": "127.0.0.1", "family": "AF_INET", "port": 443},
                 "timezone": {"posix_rule": True, "tzset": True, "utc_epoch": True},
                 "wchar": {"code_points": 17, "cpython_api": True, "wchar_bytes": 4},
             },
             "device_probe": {
-                "schema_version": 1,
+                "schema_version": 2,
                 "report_kind": "crossforge-cpython-probe",
                 "mode": "devices",
                 "status": "passed",
@@ -345,6 +374,61 @@ class PythonQualificationTests(unittest.TestCase):
             report["compile_report_sha256"] = digest
             self.write_json(path, report)
 
+    @staticmethod
+    def replace_cp313_with_cp311(value):
+        encoded = json.dumps(value)
+        for old, new in (
+            ("3.13.15", "3.11.16"),
+            ("cpython-313", "cpython-311"),
+            ("cp313", "cp311"),
+            ("3.13", "3.11"),
+        ):
+            encoded = encoded.replace(old, new)
+        return json.loads(encoded)
+
+    def convert_fixture_to_cp311(self):
+        self.release = self.replace_cp313_with_cp311(self.release)
+        self.compile = self.replace_cp313_with_cp311(self.compile)
+        self.locked = self.replace_cp313_with_cp311(self.locked)
+        self.clean = self.replace_cp313_with_cp311(self.clean)
+
+        self.release["python"]["versions"][0]["adapter"] = "transition"
+        self.compile["adapter"] = "transition"
+        self.compile["sysconfig"].pop("Py_GIL_DISABLED")
+        self.compile["target_artifact_guard"]["canonical_sha256"] = canonical_sha256(
+            self.compile["target_artifact_guard"]["records"]
+        )
+        self.locked["adapter"] = "transition"
+        self.clean["adapter"] = "transition"
+
+        self.write_json(self.release_path, self.release)
+        release_digest = canonical_sha256(self.release)
+        self.compile["release_sha256"] = release_digest
+        self.write_json(self.compile_path, self.compile)
+        compile_digest = hashlib.sha256(self.compile_path.read_bytes()).hexdigest()
+        for path, report in (
+            (self.locked_path, self.locked),
+            (self.clean_path, self.clean),
+        ):
+            report["release_sha256"] = release_digest
+            report["compile_report_sha256"] = compile_digest
+            if report["tier"] == "clean-rocky":
+                overlay = report["runtime"]["overlay_evidence"]
+                overlay["identity"]["release_sha256"] = release_digest
+                overlay["identity_sha256"] = canonical_sha256(overlay["identity"])
+                report["runtime"]["identity_sha256"] = overlay["identity_sha256"]
+            self.write_json(path, report)
+
+    def finalize_version(self, version):
+        return FINALIZER["finalize"](
+            self.compile_path,
+            self.locked_path,
+            self.clean_path,
+            self.release_path,
+            TARGET,
+            version,
+        )
+
     def test_final_report_binds_static_and_both_runtime_tiers(self):
         report = self.finalize()
         self.assertEqual(report["status"], "passed")
@@ -358,6 +442,65 @@ class PythonQualificationTests(unittest.TestCase):
             json.dumps(report, sort_keys=True),
             json.dumps(self.finalize(), sort_keys=True),
         )
+
+    def test_target_artifact_audit_requires_every_dynamic_guard_canary(self):
+        build = Path("/work/build/cpython-cp313-x86_64")
+        prefix = Path("/opt/crossforge/python/cp313/targets/" + TARGET)
+        executable = str(build / "target-exec-canary")
+        shared_object = str(build / "target-dlopen-canary.so")
+        lines = [
+            operation + "\t" + executable
+            for operation in QUALIFIER["EXEC_OPERATIONS"]
+        ] + [
+            operation + "\t" + shared_object
+            for operation in QUALIFIER["LOADER_OPERATIONS"]
+        ]
+        result = QUALIFIER["parse_target_artifact_audit"](
+            lines, build, prefix
+        )
+        self.assertEqual(
+            result["denied_execution_attempts"],
+            len(QUALIFIER["EXEC_OPERATIONS"]),
+        )
+        self.assertEqual(
+            result["denied_loader_attempts"],
+            len(QUALIFIER["LOADER_OPERATIONS"]),
+        )
+
+        for invalid in (
+            lines[1:],
+            lines + ["unknown\t" + executable],
+            lines + ["dlopen\t" + str(prefix / "lib/python-target.so")],
+        ):
+            with self.assertRaises(QUALIFIER["QualificationError"]):
+                QUALIFIER["parse_target_artifact_audit"](
+                    invalid, build, prefix
+                )
+
+    def test_cp311_transition_report_uses_its_own_abi_and_omits_gil_flag(self):
+        self.convert_fixture_to_cp311()
+        report = self.finalize_version("3.11.16")
+
+        self.assertEqual(report["adapter"], "transition")
+        self.assertEqual(report["compile"]["adapter"], "transition")
+        self.assertEqual(
+            report["compile"]["target_prefix"],
+            "/opt/crossforge/python/cp311/targets/" + TARGET,
+        )
+        self.assertEqual(
+            report["compile"]["extension"]["name"],
+            "_crossforge.cpython-311-x86_64-linux-gnu.so",
+        )
+        self.assertEqual(
+            report["compile"]["sysconfig"]["SOABI"],
+            "cpython-311-x86_64-linux-gnu",
+        )
+        self.assertNotIn("Py_GIL_DISABLED", report["compile"]["sysconfig"])
+        for execution in report["executions"].values():
+            self.assertEqual(execution["adapter"], "transition")
+            self.assertEqual(
+                execution["probe"]["sysconfig"]["cache_tag"], "cpython-311"
+            )
 
     def test_duplicate_json_key_is_rejected(self):
         duplicate = self.directory / "duplicate.json"
@@ -444,6 +587,14 @@ class PythonQualificationTests(unittest.TestCase):
             ("imports", ["forged"]),
             ("extension", {"answer": 0, "file": "_crossforge.so", "module": "_crossforge"}),
             ("threading", {"event": False, "result": 0}),
+            (
+                "semaphore",
+                {
+                    "multiprocessing_lock": False,
+                    "unnamed_acquire_release": True,
+                    "unnamed_get_value": True,
+                },
+            ),
         )
         for field, value in mutations:
             with self.subTest(field=field):
@@ -462,12 +613,64 @@ class PythonQualificationTests(unittest.TestCase):
         with self.assertRaisesRegex(FINALIZER["FinalizationError"], "base image"):
             self.finalize()
 
+    def test_clean_overlay_transaction_is_bound_to_compile_report(self):
+        overlay = self.clean["runtime"]["overlay_evidence"]
+        overlay["identity"]["sysroot"]["transaction_sha256"] = "a" * 64
+        overlay["identity_sha256"] = canonical_sha256(overlay["identity"])
+        self.clean["runtime"]["identity_sha256"] = overlay["identity_sha256"]
+        self.write_json(self.clean_path, self.clean)
+        with self.assertRaisesRegex(
+            FINALIZER["FinalizationError"], "sysroot contract"
+        ):
+            self.finalize()
+
     def test_required_module_must_be_in_elf_audit(self):
         relative = next(iter(self.compile["required_modules"].values()))
         del self.compile["elf_audit"][relative]
         self.write_json(self.compile_path, self.compile)
         with self.assertRaisesRegex(FINALIZER["FinalizationError"], "ELF audit"):
             self.finalize()
+
+    def test_required_module_paths_are_unique_and_abi_exact(self):
+        shared = next(iter(self.compile["required_modules"].values()))
+        self.compile["required_modules"] = {
+            name: shared for name in self.compile["required_modules"]
+        }
+        self.write_json(self.compile_path, self.compile)
+        with self.assertRaisesRegex(FINALIZER["FinalizationError"], "module paths"):
+            self.finalize()
+
+    def test_elf_version_namespaces_and_ceilings_are_strict(self):
+        for versions in ({"GLIBC": "999.0"}, {"EVIL": "1.0"}, {"GLIBC": []}):
+            with self.subTest(versions=versions):
+                report = copy.deepcopy(self.compile)
+                report["elf_audit"]["bin/python3.13"]["required_versions"] = versions
+                self.write_json(self.compile_path, report)
+                with self.assertRaises(FINALIZER["FinalizationError"]):
+                    self.finalize()
+
+    def test_guard_records_and_digest_are_revalidated(self):
+        self.compile["target_artifact_guard"]["records"][0]["path"] = (
+            "/opt/crossforge/python/cp313/targets/"
+            + TARGET
+            + "/bin/python3.13"
+        )
+        self.compile["target_artifact_guard"]["canonical_sha256"] = canonical_sha256(
+            self.compile["target_artifact_guard"]["records"]
+        )
+        self.write_json(self.compile_path, self.compile)
+        with self.assertRaisesRegex(
+            FINALIZER["FinalizationError"], "canary|attempted"
+        ):
+            self.finalize()
+
+    def test_final_report_revalidates_embedded_evidence(self):
+        report = self.finalize()
+        report["compile"]["surprise"] = True
+        with self.assertRaisesRegex(FINALIZER["FinalizationError"], "unknown field"):
+            FINALIZER["validate_final_report"](
+                report, self.release, TARGET, VERSION
+            )
 
     def test_nested_compile_contract_is_strict(self):
         self.compile["source"]["signature"] = "unexpected"
@@ -507,8 +710,12 @@ class PythonQualificationTests(unittest.TestCase):
                     "soabi": "cpython-313-aarch64-linux-gnu",
                 }
             )
+        report["probe"]["extension"][
+            "file"
+        ] = "_crossforge.cpython-313-aarch64-linux-gnu.so"
         context = {
             "release": self.release,
+            "adapter": "modern",
             "release_sha256": canonical_sha256(self.release),
             "sysroot_sha256": SYSROOT_SHA256,
         }

@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import re
+import runpy
 import sys
 from pathlib import Path
 
@@ -13,18 +14,27 @@ class FinalizationError(RuntimeError):
     pass
 
 
+TARGET_AUDIT = runpy.run_path(
+    str(Path(__file__).with_name("target_artifact_audit.py"))
+)
+TargetAuditError = TARGET_AUDIT["AuditError"]
+EXEC_OPERATIONS = TARGET_AUDIT["EXEC_OPERATIONS"]
+LOADER_OPERATIONS = TARGET_AUDIT["LOADER_OPERATIONS"]
+
+
 COMPILE_KEYS = {
     "qualification_schema_version",
     "report_kind",
     "target",
     "version",
+    "adapter",
     "release_sha256",
     "source",
     "sysroot_sha256",
     "sysroot_transaction_sha256",
     "target_prefix",
     "build_python",
-    "target_exec_guard",
+    "target_artifact_guard",
     "python_sha256",
     "extension",
     "required_modules",
@@ -39,13 +49,16 @@ COMPILE_SOURCE_KEYS = {
     "sigstore_bundle_sha256",
     "sigstore_verification",
 }
-BUILD_PYTHON_KEYS = {"path", "version", "sha256"}
+BUILD_PYTHON_KEYS = {"path", "version", "sha256", "sdk_tree"}
 EXTENSION_KEYS = {"name", "sha256"}
 SDK_TREE_KEYS = {"entries", "canonical_sha256"}
 ELF_AUDIT_KEYS = {"needed", "required_versions", "sha256"}
-TARGET_EXEC_GUARD_KEYS = {
-    "canary_observed",
-    "denied_attempts",
+TARGET_ARTIFACT_GUARD_KEYS = {
+    "execution_canaries",
+    "loader_canaries",
+    "records",
+    "denied_execution_attempts",
+    "denied_loader_attempts",
     "canonical_sha256",
 }
 
@@ -54,6 +67,7 @@ RUNTIME_KEYS = {
     "report_kind",
     "target",
     "version",
+    "adapter",
     "tier",
     "status",
     "release_sha256",
@@ -76,6 +90,25 @@ RUNTIME_IDENTITY_KEYS = {
     "loader_sha256",
     "overlay_evidence",
 }
+FINAL_REPORT_KEYS = {
+    "qualification_schema_version",
+    "report_kind",
+    "status",
+    "target",
+    "version",
+    "adapter",
+    "release_sha256",
+    "source",
+    "sysroot_sha256",
+    "python_sha256",
+    "extension_sha256",
+    "probe_sha256",
+    "compile_report_sha256",
+    "compile",
+    "runtime_result_sha256",
+    "executions",
+}
+RUNTIME_TIERS = {"locked-sysroot", "clean-rocky"}
 EXECUTOR_KEYS = {"kind", "binary_sha256", "version", "cpu", "uname_release"}
 CORE_PROBE_KEYS = {
     "schema_version",
@@ -129,7 +162,11 @@ CORE_OBJECT_KEYS = {
     "extension": {"answer", "file", "module"},
     "hash_algorithm": {"algorithm", "hash_bits", "seed_bits"},
     "threading": {"event", "result"},
-    "semaphore": {"acquire_release", "get_value"},
+    "semaphore": {
+        "multiprocessing_lock",
+        "unnamed_acquire_release",
+        "unnamed_get_value",
+    },
     "network": {"address", "family", "port"},
     "timezone": {"posix_rule", "tzset", "utc_epoch"},
     "wchar": {"code_points", "cpython_api", "wchar_bytes"},
@@ -139,6 +176,10 @@ PTY_KEYS = {"character_devices", "isatty", "roundtrip_sha256"}
 TARGETS = {
     "x86_64-unknown-linux-gnu": "amd64",
     "aarch64-unknown-linux-gnu": "arm64",
+}
+PYTHON_ADAPTERS = {
+    "3.11": "transition",
+    "3.13": "modern",
 }
 REQUIRED_MODULES = {
     "_bz2",
@@ -183,7 +224,7 @@ REQUIRED_PROBE_IMPORTS = [
     "zlib",
 ]
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
-VERSION = re.compile(r"3\.[0-9]+\.[0-9]+\Z")
+VERSION = re.compile(r"3\.(?:11|13)\.[0-9]+\Z")
 
 
 def require(condition, message):
@@ -221,6 +262,13 @@ def canonical_sha256(value):
     return hashlib.sha256(canonical_bytes(value)).hexdigest()
 
 
+def serialized_sha256(value):
+    payload = (
+        json.dumps(value, ensure_ascii=True, indent=2, sort_keys=True) + "\n"
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def sha256_file(path):
     digest = hashlib.sha256()
     try:
@@ -251,6 +299,10 @@ def require_sha256(value, path):
     return value
 
 
+def version_tuple(value):
+    return tuple(int(part) for part in value.split("."))
+
+
 def release_context(release, target, version):
     require(target in TARGETS, "unsupported CPython target: %s" % target)
     require(VERSION.fullmatch(version) is not None, "invalid CPython version: %s" % version)
@@ -264,6 +316,12 @@ def release_context(release, target, version):
         raise FinalizationError("release.json has an invalid qualification contract") from error
     require(len(targets) == 1, "release.json must select exactly one target")
     require(len(versions) == 1, "release.json must select exactly one CPython version")
+    minor = ".".join(version.split(".")[:2])
+    adapter = PYTHON_ADAPTERS[minor]
+    require(
+        versions[0].get("adapter") == adapter,
+        "release CPython version/adapter contract mismatch",
+    )
     source = versions[0].get("source")
     require(isinstance(source, dict), "release CPython source must be an object")
     require(source.get("status") == "locked", "release CPython source is not locked")
@@ -271,6 +329,7 @@ def release_context(release, target, version):
     require(isinstance(sysroot, dict), "release target sysroot must be an object")
     require(sysroot.get("status") == "locked", "release target sysroot is not locked")
     return {
+        "adapter": adapter,
         "release_sha256": canonical_sha256(release),
         "source": source,
         "sysroot_sha256": require_sha256(
@@ -286,7 +345,7 @@ def validate_dynamic_map(value, path):
         require_string(key, "%s key" % path)
 
 
-def validate_overlay_evidence(value, context, target, path):
+def validate_overlay_evidence(value, context, compile_report, target, path):
     require_exact_keys(
         value,
         {
@@ -349,10 +408,15 @@ def validate_overlay_evidence(value, context, target, path):
         path + " sysroot",
     )
     require(
-        identity["sysroot"]["lock_sha256"] == context["sysroot_sha256"],
-        "%s sysroot lock mismatch" % path,
+        identity["sysroot"]
+        == {
+            "lock_sha256": context["sysroot_sha256"],
+            "transaction_sha256": compile_report[
+                "sysroot_transaction_sha256"
+            ],
+        },
+        "%s sysroot contract mismatch" % path,
     )
-    require_sha256(identity["sysroot"]["transaction_sha256"], path + " transaction")
     packages = identity["selected_packages"]
     require(
         isinstance(packages, list) and len(packages) == len(RUNTIME_PACKAGE_NAMES),
@@ -410,7 +474,7 @@ def validate_overlay_evidence(value, context, target, path):
 def validate_compile_report(report, context, target, version):
     require_exact_keys(report, COMPILE_KEYS, "compile report")
     require(
-        report["qualification_schema_version"] == 1,
+        report["qualification_schema_version"] == 2,
         "compile report schema version mismatch",
     )
     require(
@@ -419,6 +483,7 @@ def validate_compile_report(report, context, target, version):
     )
     require(report["target"] == target, "compile report target mismatch")
     require(report["version"] == version, "compile report version mismatch")
+    require(report["adapter"] == context["adapter"], "compile report adapter mismatch")
     require_sha256(report["release_sha256"], "compile report release_sha256")
     require(
         report["release_sha256"] == context["release_sha256"],
@@ -461,32 +526,77 @@ def validate_compile_report(report, context, target, version):
         raise FinalizationError("release CPython source is incomplete") from error
     require(source == expected_source_contract, "compile report source differs from release")
 
+    minor = ".".join(version.split(".")[:2])
+    compact_minor = minor.replace(".", "")
+    expected_build_prefix = "/opt/crossforge/python/cp%s/build" % compact_minor
+    expected_build_python = "%s/bin/python%s" % (expected_build_prefix, minor)
     build_python = report["build_python"]
     require_exact_keys(build_python, BUILD_PYTHON_KEYS, "compile report build_python")
-    require_string(build_python["path"], "compile report build_python path")
+    require(
+        build_python["path"] == expected_build_python,
+        "compile report build Python path mismatch",
+    )
     require(
         build_python["version"] == version,
         "compile report build Python version mismatch",
     )
     require_sha256(build_python["sha256"], "compile report build_python sha256")
-
-    guard = report["target_exec_guard"]
-    require_exact_keys(guard, TARGET_EXEC_GUARD_KEYS, "compile report target_exec_guard")
+    require_exact_keys(
+        build_python["sdk_tree"],
+        SDK_TREE_KEYS,
+        "compile report build_python sdk_tree",
+    )
     require(
-        guard["canary_observed"] is True
-        and type(guard["denied_attempts"]) is int
-        and guard["denied_attempts"] > 0,
-        "compile report target-execution guard did not prove enforcement",
+        type(build_python["sdk_tree"]["entries"]) is int
+        and build_python["sdk_tree"]["entries"] > 0,
+        "compile report build Python tree entry count is invalid",
+    )
+    require_sha256(
+        build_python["sdk_tree"]["canonical_sha256"],
+        "compile report build Python tree canonical_sha256",
+    )
+
+    guard = report["target_artifact_guard"]
+    require_exact_keys(
+        guard,
+        TARGET_ARTIFACT_GUARD_KEYS,
+        "compile report target_artifact_guard",
+    )
+    target_arch = "x86_64" if target.startswith("x86_64-") else "aarch64"
+    build_directory = Path(
+        "/work/build/cpython-cp%s-%s" % (compact_minor, target_arch)
+    )
+    prefix = Path(
+        "/opt/crossforge/python/cp%s/targets/%s" % (compact_minor, target)
+    )
+    try:
+        audit_summary = TARGET_AUDIT["validate_records"](
+            guard["records"], build_directory, prefix
+        )
+    except TargetAuditError as error:
+        raise FinalizationError(str(error)) from error
+    require(
+        guard["execution_canaries"] == list(EXEC_OPERATIONS)
+        and guard["loader_canaries"] == list(LOADER_OPERATIONS)
+        and guard["denied_execution_attempts"]
+        == audit_summary["denied_execution_attempts"]
+        and guard["denied_loader_attempts"]
+        == audit_summary["denied_loader_attempts"],
+        "compile report target-artifact guard summary mismatch",
     )
     require_sha256(
         guard["canonical_sha256"],
-        "compile report target_exec_guard canonical_sha256",
+        "compile report target_artifact_guard canonical_sha256",
+    )
+    require(
+        guard["canonical_sha256"]
+        == TARGET_AUDIT["canonical_sha256"](audit_summary["records"]),
+        "compile report target-artifact guard digest mismatch",
     )
 
     require_string(report["target_prefix"], "compile report target_prefix")
-    minor = ".".join(version.split(".")[:2])
     expected_prefix = "/opt/crossforge/python/cp%s/targets/%s" % (
-        minor.replace(".", ""),
+        compact_minor,
         target,
     )
     require(
@@ -498,18 +608,48 @@ def validate_compile_report(report, context, target, version):
     require_exact_keys(extension, EXTENSION_KEYS, "compile report extension")
     require_string(extension["name"], "compile report extension name")
     require("/" not in extension["name"], "compile report extension name is not a basename")
+    multiarch = target_arch + "-linux-gnu"
+    expected_soabi = "cpython-%s-%s" % (compact_minor, multiarch)
+    require(
+        extension["name"] == "_crossforge.%s.so" % expected_soabi,
+        "compile report extension name differs from the selected ABI",
+    )
     require_sha256(extension["sha256"], "compile report extension sha256")
 
     modules = report["required_modules"]
     require_exact_keys(modules, REQUIRED_MODULES, "compile report required_modules")
-    for module, relative_path in modules.items():
-        require_string(relative_path, "compile report required module %s" % module)
-        require(
-            not relative_path.startswith("/")
-            and ".." not in Path(relative_path).parts,
-            "compile report required module path is unsafe: %s" % module,
-        )
-    validate_dynamic_map(report["sysconfig"], "compile report sysconfig")
+    expected_modules = {
+        module: "lib/python%s/lib-dynload/%s.%s.so"
+        % (minor, module, expected_soabi)
+        for module in REQUIRED_MODULES
+    }
+    require(
+        modules == expected_modules,
+        "compile report required module paths differ from the selected ABI",
+    )
+    require(
+        len(set(modules.values())) == len(REQUIRED_MODULES),
+        "compile report required module paths are not unique",
+    )
+    expected_sysconfig = {
+        "EXT_SUFFIX": ".%s.so" % expected_soabi,
+        "HAVE_ALIGNED_REQUIRED": 0,
+        "HAVE_USABLE_WCHAR_T": 0 if target_arch == "x86_64" else 1,
+        "HOST_GNU_TYPE": target,
+        "MULTIARCH": multiarch,
+        "Py_DEBUG": 0,
+        "SIZEOF_WCHAR_T": 4,
+        "SOABI": expected_soabi,
+    }
+    if minor == "3.13":
+        expected_sysconfig["Py_GIL_DISABLED"] = 0
+    require_exact_keys(
+        report["sysconfig"], set(expected_sysconfig), "compile report sysconfig"
+    )
+    require(
+        report["sysconfig"] == expected_sysconfig,
+        "compile report sysconfig ABI contract mismatch",
+    )
     require_exact_keys(report["sdk_tree"], SDK_TREE_KEYS, "compile report sdk_tree")
     require(
         isinstance(report["sdk_tree"]["entries"], int)
@@ -523,7 +663,24 @@ def validate_compile_report(report, context, target, version):
     )
     validate_dynamic_map(report["elf_audit"], "compile report elf_audit")
     require(report["elf_audit"], "compile report elf_audit must not be empty")
+    python_audit_path = "bin/python%s" % minor
+    extension_audit_path = "qualification/" + extension["name"]
+    dynamic_prefix = "lib/python%s/lib-dynload/" % minor
+    require(
+        python_audit_path in report["elf_audit"]
+        and extension_audit_path in report["elf_audit"],
+        "compile report is missing the selected Python or extension audit",
+    )
     for name, audit in report["elf_audit"].items():
+        require(
+            name in (python_audit_path, extension_audit_path)
+            or (
+                name.startswith(dynamic_prefix)
+                and "/" not in name[len(dynamic_prefix):]
+                and name.endswith(".%s.so" % expected_soabi)
+            ),
+            "compile report ELF audit path is outside the selected SDK: %s" % name,
+        )
         require_exact_keys(audit, ELF_AUDIT_KEYS, "compile report elf_audit %s" % name)
         require(
             isinstance(audit["needed"], list)
@@ -534,24 +691,39 @@ def validate_compile_report(report, context, target, version):
             audit["needed"] == sorted(set(audit["needed"])),
             "compile report ELF needed list is not canonical: %s" % name,
         )
-        validate_dynamic_map(
-            audit["required_versions"],
-            "compile report elf_audit %s required_versions" % name,
+        require(
+            all("/" not in item for item in audit["needed"]),
+            "compile report ELF has a path-qualified dependency: %s" % name,
         )
+        versions = audit["required_versions"]
+        require(
+            isinstance(versions, dict)
+            and set(versions).issubset({"GLIBC", "GCC"}),
+            "compile report ELF version namespace is invalid: %s" % name,
+        )
+        ceilings = {"GLIBC": (2, 28), "GCC": (7, 0, 0)}
+        for namespace, observed in versions.items():
+            require(
+                isinstance(observed, str)
+                and re.fullmatch(r"[0-9]+(?:\.[0-9]+)+", observed)
+                and version_tuple(observed) <= ceilings[namespace],
+                "compile report ELF version exceeds policy: %s %s_%r"
+                % (name, namespace, observed),
+            )
         require_sha256(audit["sha256"], "compile report elf_audit %s sha256" % name)
     require(
         set(modules.values()).issubset(report["elf_audit"]),
         "compile report required modules are not all present in the ELF audit",
     )
     require(
-        report["python_sha256"]
-        in {audit["sha256"] for audit in report["elf_audit"].values()},
-        "compile report Python hash is absent from the ELF audit",
+        report["elf_audit"][python_audit_path]["sha256"]
+        == report["python_sha256"],
+        "compile report Python audit hash mismatch",
     )
     require(
-        extension["sha256"]
-        in {audit["sha256"] for audit in report["elf_audit"].values()},
-        "compile report extension hash is absent from the ELF audit",
+        report["elf_audit"][extension_audit_path]["sha256"]
+        == extension["sha256"],
+        "compile report extension audit hash mismatch",
     )
     return report
 
@@ -559,7 +731,7 @@ def validate_compile_report(report, context, target, version):
 def validate_probe(value, path, target, version, expected_mode):
     expected_keys = CORE_PROBE_KEYS if expected_mode == "core" else DEVICE_PROBE_KEYS
     require_exact_keys(value, expected_keys, path)
-    require(value["schema_version"] == 1, "%s schema mismatch" % path)
+    require(value["schema_version"] == 2, "%s schema mismatch" % path)
     require(value["report_kind"] == "crossforge-cpython-probe", "%s kind mismatch" % path)
     require(value["mode"] == expected_mode, "%s mode mismatch" % path)
     require(value["status"] == "passed", "%s did not pass" % path)
@@ -627,8 +799,8 @@ def validate_probe(value, path, target, version, expected_mode):
         require(
             value["extension"]["answer"] == 42
             and value["extension"]["module"] == "_crossforge"
-            and value["extension"]["file"].startswith("_crossforge.cpython-313-")
-            and value["extension"]["file"].endswith(".so"),
+            and value["extension"]["file"]
+            == "_crossforge.cpython-%s-%s.so" % (compact_minor, multiarch),
             "%s extension evidence mismatch" % path,
         )
         require(
@@ -639,7 +811,11 @@ def validate_probe(value, path, target, version, expected_mode):
         require(
             value["threading"] == {"event": True, "result": 5050}
             and value["semaphore"]
-            == {"acquire_release": True, "get_value": True},
+            == {
+                "multiprocessing_lock": True,
+                "unnamed_acquire_release": True,
+                "unnamed_get_value": True,
+            },
             "%s threading/semaphore evidence mismatch" % path,
         )
         require(
@@ -681,10 +857,11 @@ def validate_runtime_result(
 ):
     path = "%s runtime result" % expected_tier
     require_exact_keys(report, RUNTIME_KEYS, path)
-    require(report["qualification_schema_version"] == 1, "%s schema mismatch" % path)
+    require(report["qualification_schema_version"] == 2, "%s schema mismatch" % path)
     require(report["report_kind"] == "crossforge-cpython-runtime", "%s kind mismatch" % path)
     require(report["target"] == target, "%s target mismatch" % path)
     require(report["version"] == version, "%s version mismatch" % path)
+    require(report["adapter"] == context["adapter"], "%s adapter mismatch" % path)
     require(report["tier"] == expected_tier, "%s tier mismatch" % path)
     require(report["status"] == "passed", "%s did not pass" % path)
 
@@ -724,6 +901,7 @@ def validate_runtime_result(
         overlay = validate_overlay_evidence(
             runtime["overlay_evidence"],
             context,
+            compile_report,
             target,
             path + " overlay_evidence",
         )
@@ -829,6 +1007,80 @@ def validate_runtime_result(
     return report
 
 
+def validate_final_report(report, release, target, version):
+    require_exact_keys(report, FINAL_REPORT_KEYS, "qualification report")
+    require(
+        report["qualification_schema_version"] == 2
+        and report["report_kind"] == "crossforge-cpython-qualification"
+        and report["status"] == "passed",
+        "qualification report identity mismatch",
+    )
+    require(report["target"] == target, "qualification report target mismatch")
+    require(report["version"] == version, "qualification report version mismatch")
+
+    context = release_context(release, target, version)
+    context["release"] = release
+    compile_report = validate_compile_report(
+        report["compile"], context, target, version
+    )
+    compile_digest = serialized_sha256(compile_report)
+    require(
+        report["compile_report_sha256"] == compile_digest,
+        "qualification report compile serialization mismatch",
+    )
+    require_exact_keys(report["executions"], RUNTIME_TIERS, "qualification executions")
+    locked = validate_runtime_result(
+        report["executions"]["locked-sysroot"],
+        "locked-sysroot",
+        context,
+        compile_report,
+        compile_digest,
+        target,
+        version,
+    )
+    clean = validate_runtime_result(
+        report["executions"]["clean-rocky"],
+        "clean-rocky",
+        context,
+        compile_report,
+        compile_digest,
+        target,
+        version,
+    )
+    require_exact_keys(
+        report["runtime_result_sha256"],
+        RUNTIME_TIERS,
+        "qualification runtime_result_sha256",
+    )
+    require(
+        report["runtime_result_sha256"]
+        == {
+            "locked-sysroot": serialized_sha256(locked),
+            "clean-rocky": serialized_sha256(clean),
+        },
+        "qualification runtime serialization mismatch",
+    )
+    require(locked["executor"] == clean["executor"], "runtime executor mismatch")
+    require(
+        locked["python_sha256"] == clean["python_sha256"]
+        and locked["extension_sha256"] == clean["extension_sha256"]
+        and locked["probe_sha256"] == clean["probe_sha256"],
+        "runtime tiers used different artifacts",
+    )
+    expected = {
+        "adapter": context["adapter"],
+        "release_sha256": context["release_sha256"],
+        "source": compile_report["source"],
+        "sysroot_sha256": context["sysroot_sha256"],
+        "python_sha256": compile_report["python_sha256"],
+        "extension_sha256": compile_report["extension"]["sha256"],
+        "probe_sha256": locked["probe_sha256"],
+    }
+    for name, value in expected.items():
+        require(report[name] == value, "qualification report %s mismatch" % name)
+    return report
+
+
 def finalize(compile_path, locked_path, clean_path, release_path, target, version):
     release = load_json(release_path)
     context = release_context(release, target, version)
@@ -866,12 +1118,13 @@ def finalize(compile_path, locked_path, clean_path, release_path, target, versio
         "runtime tiers used different artifacts",
     )
 
-    return {
-        "qualification_schema_version": 1,
+    report = {
+        "qualification_schema_version": 2,
         "report_kind": "crossforge-cpython-qualification",
         "status": "passed",
         "target": target,
         "version": version,
+        "adapter": context["adapter"],
         "release_sha256": context["release_sha256"],
         "source": compile_report["source"],
         "sysroot_sha256": context["sysroot_sha256"],
@@ -889,6 +1142,7 @@ def finalize(compile_path, locked_path, clean_path, release_path, target, versio
             "clean-rocky": clean,
         },
     }
+    return validate_final_report(report, release, target, version)
 
 
 def main():

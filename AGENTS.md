@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-`docs/architecture.md` is canonical. Configuration lives under `config/`, raw provenance under `evidence/`, and DNF decisions under `locks/`. Docker/Bake defines the graph; tools are in `scripts/`, compiler fixtures in `tests/smoke/`, CPython probes in `tests/python/`, and regressions in `tests/config/`.
+`docs/architecture.md` is canonical. Configuration lives under `config/`, raw provenance under `evidence/`, and DNF decisions under `locks/`. `docker/Dockerfile` owns toolchains; `docker/python.Dockerfile` owns parameterized Python rows. Tools are in `scripts/`, CPython backports in `patches/`, probes in `tests/python/`, and regressions in `tests/config/`.
 
 The deleted Rust prototype is recoverable from tag `prototype-rust-2026-08-28`; do not restore its abstractions. Keep generated work, staging trees, and caches uncommitted.
 
@@ -15,7 +15,7 @@ The deleted Rust prototype is recoverable from tag `prototype-rust-2026-08-28`; 
 - `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
 - `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked` replays all host transactions offline.
 - `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both real cross slices; aarch64 uses explicit pinned QEMU, never implicit binfmt.
-- `docker buildx bake phase5` builds and qualifies the representative CPython 3.13 row for both targets.
+- `docker buildx bake phase6` qualifies cp311/cp313; `python-dev` assembles only qualified scratch row exports.
 
 Never publish `sdk-skeleton` or a target ending in `-dev`; only a fully locked and qualified future candidate may receive user-facing tags.
 
@@ -25,7 +25,7 @@ Use strict JSON plus JSON Schema; reject duplicate keys, unknown fields, and sch
 
 ## Testing Guidelines
 
-Add a regression test for every defect. Build changes must name the image digest, target, sysroot/config digest, and validation tier. x86_64 and aarch64 remain distinct targets although the image runs on amd64. Target execution belongs only in qualification stages; cross-build stages must not set `HOSTRUNNER` or QEMU. Pending pins may exist only in non-candidate planning/dev targets; candidates require `--require-locked`.
+Add a regression test for every defect. Build changes must name the image digest, target, sysroot/config digest, and validation tier. x86_64 and aarch64 remain distinct targets although the image runs on amd64. Target execution belongs only in qualification stages; cross stages must not set `HOSTRUNNER` or QEMU and must preserve target-artifact guard evidence. Pending pins may exist only in non-candidate planning/dev targets; candidates require `--require-locked`.
 
 ## Commit & Pull Request Guidelines
 

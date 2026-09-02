@@ -419,6 +419,9 @@
                     },
                     "support": {
                       "const": "eol"
+                    },
+                    "patches": {
+                      "maxItems": 0
                     }
                   }
                 }
@@ -439,6 +442,9 @@
                     },
                     "support": {
                       "const": "security"
+                    },
+                    "patches": {
+                      "maxItems": 0
                     }
                   }
                 }
@@ -459,6 +465,28 @@
                     },
                     "support": {
                       "const": "security"
+                    },
+                    "patches": {
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "prefixItems": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/$defs/python_patch"
+                            },
+                            {
+                              "properties": {
+                                "file": {
+                                  "const": "patches/cpython/3.11/0001-gh-115382-isolate-target-sysconfig.patch"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "items": false
                     }
                   }
                 }
@@ -479,6 +507,9 @@
                     },
                     "support": {
                       "const": "security"
+                    },
+                    "patches": {
+                      "maxItems": 0
                     }
                   }
                 }
@@ -499,6 +530,9 @@
                     },
                     "support": {
                       "const": "bugfix"
+                    },
+                    "patches": {
+                      "maxItems": 0
                     }
                   }
                 }
@@ -519,6 +553,9 @@
                     },
                     "support": {
                       "const": "bugfix"
+                    },
+                    "patches": {
+                      "maxItems": 0
                     }
                   }
                 }
@@ -924,6 +961,24 @@
         }
       ]
     },
+    "python_patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^patches/cpython/3\\.[0-9]+/[0-9]{4}-[a-z0-9][a-z0-9._-]*\\.patch$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
     "python_version": {
       "type": "object",
       "additionalProperties": false,
@@ -931,6 +986,7 @@
         "version",
         "adapter",
         "support",
+        "patches",
         "source"
       ],
       "properties": {
@@ -950,6 +1006,14 @@
             "security",
             "bugfix"
           ]
+        },
+        "patches": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/python_patch"
+          }
         },
         "source": {
           "$ref": "#/$defs/python_source"

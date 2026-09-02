@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate checked-in OCI/Git evidence and archive CPython Sigstore bundles."""
+"""Validate checked-in OCI/Git evidence, CPython patches, and Sigstore bundles."""
 
 import argparse
 import base64
@@ -53,6 +53,34 @@ def load_evidence(repository, relative_path):
         return base64.b64decode(encoded, validate=True)
     except (OSError, binascii.Error) as error:
         raise EvidenceError("%s: %s" % (path, error)) from error
+
+
+def load_cpython_patch(repository, relative_path):
+    require(
+        isinstance(relative_path, str)
+        and relative_path.startswith("patches/cpython/")
+        and relative_path.endswith(".patch"),
+        "invalid CPython patch path: %r" % relative_path,
+    )
+    root = repository.resolve()
+    path = (repository / relative_path).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError as error:
+        raise EvidenceError(
+            "CPython patch path escaped repository: %s" % relative_path
+        ) from error
+    require(
+        path.as_posix() == (root / relative_path).as_posix(),
+        "CPython patch path is not canonical: %s" % relative_path,
+    )
+    try:
+        payload = path.read_bytes()
+        payload.decode("utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        raise EvidenceError("%s: %s" % (path, error)) from error
+    require(payload, "CPython patch is empty: %s" % relative_path)
+    return payload
 
 
 def sha256(payload):
@@ -357,6 +385,7 @@ def validate_evidence(config, repository):
         "3.13": ("thomas@python.org", "https://accounts.google.com"),
         "3.14": ("hugo@python.org", "https://github.com/login/oauth"),
     }
+    python_patch_count = 0
     for version_entry in config["python"]["versions"]:
         version = version_entry["version"]
         minor = ".".join(version.split(".")[:2])
@@ -381,6 +410,48 @@ def validate_evidence(config, repository):
             == python_signers[minor],
             "CPython Sigstore signer policy mismatch",
         )
+        patches = version_entry["patches"]
+        if minor == "3.11":
+            require(
+                version_entry["adapter"] == "transition" and len(patches) == 1,
+                "CPython 3.11 transition adapter requires exactly one patch",
+            )
+            require(
+                patches[0]["file"]
+                == "patches/cpython/3.11/0001-gh-115382-isolate-target-sysconfig.patch",
+                "CPython 3.11 transition patch path mismatch",
+            )
+        else:
+            require(not patches, "unexpected CPython patch for %s" % version)
+        for patch in patches:
+            patch_payload = load_cpython_patch(repository, patch["file"])
+            require(
+                hashlib.sha256(patch_payload).hexdigest() == patch["sha256"],
+                "%s: digest mismatch" % patch["file"],
+            )
+            diff_headers = [
+                line
+                for line in patch_payload.splitlines()
+                if line.startswith(b"diff --git ")
+            ]
+            require(
+                diff_headers
+                == [
+                    b"diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py",
+                    b"diff --git a/configure b/configure",
+                    b"diff --git a/configure.ac b/configure.ac",
+                ],
+                "CPython transition patch changes an unexpected file set",
+            )
+            require(
+                b"https://github.com/python/cpython/issues/115382" in patch_payload
+                and b"909d5ac2959ea88e1d3b38f35676a1c7e5dd44f6" in patch_payload
+                and b"+    if (path := os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')):"
+                in patch_payload
+                and b"PYTHONPATH=$(srcdir)/Lib" in patch_payload,
+                "CPython transition patch is missing gh-115382 isolation semantics",
+            )
+            python_patch_count += 1
         bundle_payload, bundle = evidence_json(
             repository,
             sigstore["bundle_evidence"],
@@ -446,6 +517,7 @@ def validate_evidence(config, repository):
         "qemu_tag_object": source["tag_object"],
         "qemu_commit": source["commit"],
         "python_sources": len(config["python"]["versions"]),
+        "python_patches": python_patch_count,
         "python_sigstore_status": "archived-unverified",
     }
 
@@ -464,12 +536,13 @@ def main():
     result = validate_evidence(config, repository)
     print(
         "valid supply-chain evidence: Rocky %s; QEMU %s; source %s; "
-        "CPython Sigstore bundles %s"
+        "CPython Sigstore bundles %s; patches %d"
         % (
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
             result["qemu_commit"],
             result["python_sigstore_status"],
+            result["python_patches"],
         )
     )
     return 0

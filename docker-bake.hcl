@@ -10,6 +10,14 @@ target "_common" {
   platforms  = ["linux/amd64"]
 }
 
+# CPython rows use a separate, parameterized Dockerfile. Concrete row/target
+# names and target-context edges are generated from config/release.json.
+target "_python_common" {
+  context    = "."
+  dockerfile = "docker/python.Dockerfile"
+  platforms  = ["linux/amd64"]
+}
+
 group "default" {
   targets = ["validate"]
 }
@@ -44,12 +52,6 @@ target "gts-binutils-source" {
   output   = ["type=cacheonly"]
 }
 
-target "cpython-source-cp313" {
-  inherits = ["_common"]
-  target   = "cpython-source-cp313"
-  output   = ["type=cacheonly"]
-}
-
 target "sysroot-x86_64" {
   inherits = ["_common"]
   target   = "sysroot-x86_64"
@@ -80,24 +82,6 @@ target "host-python-build-locked" {
   output   = ["type=cacheonly"]
 }
 
-target "cpython-build-cp313" {
-  inherits = ["_common"]
-  target   = "cpython-build-cp313"
-  output   = ["type=cacheonly"]
-}
-
-target "cpython-cross-cp313-x86_64" {
-  inherits = ["_common"]
-  target   = "cpython-cross-cp313-x86_64"
-  output   = ["type=cacheonly"]
-}
-
-target "cpython-cross-cp313-aarch64" {
-  inherits = ["_common"]
-  target   = "cpython-cross-cp313-aarch64"
-  output   = ["type=cacheonly"]
-}
-
 target "python-runtime-clean-x86_64" {
   inherits = ["_common"]
   target   = "python-runtime-clean-x86_64"
@@ -107,36 +91,6 @@ target "python-runtime-clean-x86_64" {
 target "python-runtime-clean-aarch64" {
   inherits = ["_common"]
   target   = "python-runtime-clean-aarch64"
-  output   = ["type=cacheonly"]
-}
-
-target "cpython-cp313-x86_64-qualify-build" {
-  inherits = ["_common"]
-  target   = "cpython-cp313-x86_64-qualify-build"
-  output   = ["type=cacheonly"]
-}
-
-target "cpython-cp313-aarch64-qualify-build" {
-  inherits = ["_common"]
-  target   = "cpython-cp313-aarch64-qualify-build"
-  output   = ["type=cacheonly"]
-}
-
-target "cpython-cp313-x86_64-qualify" {
-  inherits = ["_common"]
-  target   = "cpython-cp313-x86_64-qualify"
-  output   = ["type=cacheonly"]
-}
-
-target "cpython-cp313-aarch64-qualify" {
-  inherits = ["_common"]
-  target   = "cpython-cp313-aarch64-qualify"
-  output   = ["type=cacheonly"]
-}
-
-target "python-cp313-dev" {
-  inherits = ["_common"]
-  target   = "python-cp313-dev"
   output   = ["type=cacheonly"]
 }
 

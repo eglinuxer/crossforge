@@ -19,10 +19,13 @@ compact_minor=${minor/./}
   echo "error: invalid CPython source: $source_directory" >&2
   exit 1
 }
-[[ "$version" =~ ^3\.[0-9]+\.[0-9]+$ && "$adapter" == modern ]] || {
-  echo "error: unsupported CPython version/adapter: $version/$adapter" >&2
-  exit 1
-}
+case "$minor:$adapter" in
+  3.11:transition|3.13:modern) ;;
+  *)
+    echo "error: unsupported CPython version/adapter: $version/$adapter" >&2
+    exit 1
+    ;;
+esac
 [[ "$prefix" == /opt/crossforge/python/cp"$compact_minor"/build ]] || {
   echo "error: build Python prefix differs from version" >&2
   exit 1
@@ -31,21 +34,59 @@ compact_minor=${minor/./}
   echo "error: JOBS must be positive" >&2
   exit 1
 }
+[[ ! -e "$build_directory" && ! -L "$build_directory" ]] || {
+  echo "error: refusing stale native CPython build directory: $build_directory" >&2
+  exit 1
+}
+[[ ! -e "$prefix" && ! -L "$prefix" ]] || {
+  echo "error: refusing stale build Python prefix: $prefix" >&2
+  exit 1
+}
+while IFS='=' read -r name unused; do
+  case "$name" in
+    PYTHON*|_PYTHON*|ac_cv_*) unset "$name" ;;
+  esac
+done < <(env)
+unset AR AS BLDSHARED CCSHARED CFLAGS CONFIG_SITE CPATH CPP CPPFLAGS CC \
+  CXX CXXFLAGS C_INCLUDE_PATH CPLUS_INCLUDE_PATH HOSTRUNNER LD LDFLAGS \
+  LDLIBS LD_LIBRARY_PATH LD_PRELOAD LIBRARY_PATH LIBS LINKFORSHARED \
+  LDSHARED MAKEFLAGS MFLAGS NM OBJC_INCLUDE_PATH OBJDUMP OBJCOPY \
+  PKG_CONFIG PKG_CONFIG_LIBDIR PKG_CONFIG_PATH PKG_CONFIG_SYSROOT_DIR \
+  PYTHON_FOR_BUILD RANLIB READELF STRIP
 
 build=$($source_directory/config.guess)
 [[ "$build" == x86_64-*-linux-gnu ]] || {
   echo "error: build Python must run on linux/x86_64" >&2
   exit 1
 }
+host_toolchain=/opt/rh/gcc-toolset-15/root/usr/bin
+for tool in gcc g++ ar ranlib readelf ld nm strip objcopy; do
+  [[ -x "$host_toolchain/$tool" ]] || {
+    echo "error: missing locked host tool: $tool" >&2
+    exit 1
+  }
+done
 
 mkdir -p "$build_directory"
 cd "$build_directory"
 
+export PATH="$host_toolchain:/usr/bin:/bin"
+export CC=$host_toolchain/gcc
+export CXX=$host_toolchain/g++
+export CPP="$host_toolchain/gcc -E"
+export AR=$host_toolchain/ar
+export RANLIB=$host_toolchain/ranlib
+export READELF=$host_toolchain/readelf
+export LD=$host_toolchain/ld
+export NM=$host_toolchain/nm
+export STRIP=$host_toolchain/strip
+export OBJCOPY=$host_toolchain/objcopy
 export CFLAGS='-O2 -g -pipe -ffile-prefix-map=/work=/usr/src/debug/crossforge'
 export CXXFLAGS=$CFLAGS
 export LDFLAGS='-Wl,-z,relro,-z,now'
+export PKG_CONFIG=/usr/bin/pkg-config
+export PKG_CONFIG_PATH=
 export SOURCE_DATE_EPOCH=0
-unset HOSTRUNNER PYTHON_FOR_BUILD
 
 "$source_directory/configure" \
   --build="$build" \

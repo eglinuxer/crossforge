@@ -134,6 +134,7 @@
         "version": "3.9.25",
         "adapter": "legacy",
         "support": "eol",
+        "patches": [],
         "source": {
           "status": "locked",
           "url": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz",
@@ -154,6 +155,7 @@
         "version": "3.10.21",
         "adapter": "legacy",
         "support": "security",
+        "patches": [],
         "source": {
           "status": "locked",
           "url": "https://www.python.org/ftp/python/3.10.21/Python-3.10.21.tar.xz",
@@ -174,6 +176,12 @@
         "version": "3.11.16",
         "adapter": "transition",
         "support": "security",
+        "patches": [
+          {
+            "file": "patches/cpython/3.11/0001-gh-115382-isolate-target-sysconfig.patch",
+            "sha256": "072dacfcc57b06bc1e5382726990627593a36e1f08232cb790db42ae334a49aa"
+          }
+        ],
         "source": {
           "status": "locked",
           "url": "https://www.python.org/ftp/python/3.11.16/Python-3.11.16.tar.xz",
@@ -194,6 +202,7 @@
         "version": "3.12.14",
         "adapter": "modern",
         "support": "security",
+        "patches": [],
         "source": {
           "status": "locked",
           "url": "https://www.python.org/ftp/python/3.12.14/Python-3.12.14.tar.xz",
@@ -214,6 +223,7 @@
         "version": "3.13.15",
         "adapter": "modern",
         "support": "bugfix",
+        "patches": [],
         "source": {
           "status": "locked",
           "url": "https://www.python.org/ftp/python/3.13.15/Python-3.13.15.tar.xz",
@@ -234,6 +244,7 @@
         "version": "3.14.7",
         "adapter": "modern",
         "support": "bugfix",
+        "patches": [],
         "source": {
           "status": "locked",
           "url": "https://www.python.org/ftp/python/3.14.7/Python-3.14.7.tar.xz",

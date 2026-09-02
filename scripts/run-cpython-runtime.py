@@ -2,6 +2,7 @@
 """Run a cross-built CPython in one explicit Rocky runtime tier."""
 
 import argparse
+import atexit
 import hashlib
 import json
 import os
@@ -37,6 +38,10 @@ RUNTIME_PACKAGE_NAMES = (
     "xz-libs",
     "zlib",
 )
+PYTHON_ADAPTERS = {
+    "3.11": "transition",
+    "3.13": "modern",
+}
 
 
 def require(condition, message):
@@ -88,6 +93,34 @@ def require_sha256(value, label):
         isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value),
         "%s is not a SHA256" % label,
     )
+
+
+def release_python_contract(release, version):
+    match = re.fullmatch(r"(3\.(?:11|13))\.[0-9]+", version)
+    require(match is not None, "unsupported CPython runtime version: %s" % version)
+    minor = match.group(1)
+    try:
+        entries = [
+            entry for entry in release["python"]["versions"]
+            if entry["version"] == version
+        ]
+    except (KeyError, TypeError) as error:
+        raise RuntimeError_("release has an invalid CPython contract") from error
+    require(len(entries) == 1, "release must select one exact CPython version")
+    require(
+        entries[0].get("adapter") == PYTHON_ADAPTERS[minor],
+        "release CPython version/adapter contract mismatch",
+    )
+    require(
+        isinstance(entries[0].get("source"), dict)
+        and entries[0]["source"].get("status") == "locked",
+        "release CPython source is not locked",
+    )
+    return {
+        "adapter": PYTHON_ADAPTERS[minor],
+        "compact_minor": minor.replace(".", ""),
+        "minor": minor,
+    }
 
 
 def validate_overlay_evidence(value, release, profile, target, compile_report, root):
@@ -396,14 +429,16 @@ def main():
     require(arguments.runtime_root.resolve() != Path("/"), "unsafe runtime root")
     release = load_json(arguments.release)
     release_sha256 = canonical_sha256(release)
+    contract = release_python_contract(release, arguments.version)
     compile_report = load_json(arguments.compile_report)
     require(compile_report.get("report_kind") == "crossforge-cpython-compile", "compile report kind mismatch")
     require(compile_report.get("target") == arguments.target, "compile report target mismatch")
     require(compile_report.get("version") == arguments.version, "compile report version mismatch")
+    require(compile_report.get("adapter") == contract["adapter"], "compile report adapter mismatch")
     require(compile_report.get("release_sha256") == release_sha256, "compile report release mismatch")
     compile_report_sha256 = sha256_file(arguments.compile_report)
 
-    minor = ".".join(arguments.version.split(".")[:2])
+    minor = contract["minor"]
     expected_prefix = Path(
         "/opt/crossforge/python/cp%s/targets/%s"
         % (minor.replace(".", ""), arguments.target)
@@ -460,8 +495,17 @@ def main():
     guest_prefix = safe_root_path(arguments.runtime_root, str(arguments.target_prefix))
     require(not guest_prefix.exists(), "runtime target prefix is not clean")
     guest_prefix.parent.mkdir(parents=True, exist_ok=True)
+    cleanup_paths = []
+
+    def cleanup_runtime_inputs():
+        for path in reversed(cleanup_paths):
+            shutil.rmtree(str(path), ignore_errors=True)
+
+    atexit.register(cleanup_runtime_inputs)
+    cleanup_paths.append(guest_prefix)
     shutil.copytree(arguments.target_prefix, guest_prefix, symlinks=True)
     guest_qualification = arguments.runtime_root / "opt/crossforge-qualification/python"
+    cleanup_paths.append(guest_qualification)
     guest_qualification.mkdir(parents=True, exist_ok=False)
     shutil.copy2(arguments.extension, guest_qualification / arguments.extension.name)
     shutil.copy2(arguments.probe, guest_qualification / "runtime_probe.py")
@@ -491,6 +535,7 @@ def main():
             "chroot",
             arguments.runtime_root,
             guest_python,
+            "-B",
             "-I",
             "-S",
             guest_probe,
@@ -519,6 +564,7 @@ def main():
             "--library-path",
             library_path,
             host_python,
+            "-B",
             "-I",
             "-S",
             arguments.probe,
@@ -574,6 +620,7 @@ def main():
         ]
         core_command = ["chroot", arguments.runtime_root] + qemu_options + [
             guest_python,
+            "-B",
             "-I",
             "-S",
             guest_probe,
@@ -606,6 +653,7 @@ def main():
             "-E",
             "LD_LIBRARY_PATH=" + library_path,
             host_python,
+            "-B",
             "-I",
             "-S",
             arguments.probe,
@@ -654,10 +702,11 @@ def main():
     )
 
     result = {
-        "qualification_schema_version": 1,
+        "qualification_schema_version": 2,
         "report_kind": "crossforge-cpython-runtime",
         "target": arguments.target,
         "version": arguments.version,
+        "adapter": contract["adapter"],
         "tier": arguments.tier,
         "status": "passed",
         "release_sha256": release_sha256,

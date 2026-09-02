@@ -8,7 +8,6 @@ import os
 import re
 import runpy
 import shlex
-import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -16,6 +15,19 @@ from pathlib import Path
 
 class QualificationError(RuntimeError):
     pass
+
+
+SDK_IDENTITY = runpy.run_path(
+    str(Path(__file__).with_name("python_sdk_identity.py"))
+)
+SDKIdentityError = SDK_IDENTITY["IdentityError"]
+sdk_tree_identity = SDK_IDENTITY["sdk_tree_identity"]
+TARGET_AUDIT = runpy.run_path(
+    str(Path(__file__).with_name("target_artifact_audit.py"))
+)
+TargetAuditError = TARGET_AUDIT["AuditError"]
+EXEC_OPERATIONS = TARGET_AUDIT["EXEC_OPERATIONS"]
+LOADER_OPERATIONS = TARGET_AUDIT["LOADER_OPERATIONS"]
 
 
 TARGETS = {
@@ -46,6 +58,10 @@ REQUIRED_MODULES = (
     "_uuid",
     "zlib",
 )
+PYTHON_ADAPTERS = {
+    "3.11": "transition",
+    "3.13": "modern",
+}
 
 
 def require(condition, message):
@@ -105,6 +121,24 @@ def run(arguments, cwd=None, env=None):
     return process.stdout, process.stderr
 
 
+def python_contract(version):
+    match = re.fullmatch(r"(3\.(?:11|13))\.([0-9]+)", version)
+    require(match is not None, "unsupported CPython version: %s" % version)
+    minor = match.group(1)
+    return {
+        "adapter": PYTHON_ADAPTERS[minor],
+        "compact_minor": minor.replace(".", ""),
+        "minor": minor,
+    }
+
+
+def parse_target_artifact_audit(lines, build_directory, prefix):
+    try:
+        return TARGET_AUDIT["parse_lines"](lines, build_directory, prefix)
+    except TargetAuditError as error:
+        raise QualificationError(str(error)) from error
+
+
 def version_tuple(value):
     return tuple(int(part) for part in value.split("."))
 
@@ -139,9 +173,17 @@ def audit_elf(readelf, path, profile, require_interpreter=False):
     dynamic, _ = run([readelf, "--wide", "-d", path])
     require("TEXTREL" not in dynamic, "%s contains text relocations" % path)
     require("RELR" not in dynamic, "%s requires DT_RELR" % path)
+    require(
+        "(RPATH)" not in dynamic and "(RUNPATH)" not in dynamic,
+        "%s contains RPATH/RUNPATH" % path,
+    )
     require("/work" not in dynamic, "%s embeds a build path" % path)
     require("/usr/local" not in dynamic, "%s embeds a host-local path" % path)
     needed = sorted(set(re.findall(r"\(NEEDED\).*\[([^]]+)\]", dynamic)))
+    require(
+        all("/" not in dependency for dependency in needed),
+        "%s contains a path-qualified DT_NEEDED" % path,
+    )
 
     program_headers, _ = run([readelf, "--wide", "-l", path])
     stack = [line for line in program_headers.splitlines() if "GNU_STACK" in line]
@@ -158,40 +200,6 @@ def audit_elf(readelf, path, profile, require_interpreter=False):
         "needed": needed,
         "required_versions": audit_versions(symbols, path),
         "sha256": sha256_file(path),
-    }
-
-
-def sdk_tree_identity(prefix):
-    entries = []
-    for path in sorted(prefix.rglob("*"), key=lambda item: item.as_posix()):
-        relative = path.relative_to(prefix).as_posix()
-        metadata = path.lstat()
-        if stat.S_ISLNK(metadata.st_mode):
-            resolved = path.resolve()
-            resolved_prefix = prefix.resolve()
-            require(
-                resolved == resolved_prefix
-                or str(resolved).startswith(str(resolved_prefix) + os.sep),
-                "SDK symlink escapes target prefix: %s" % path,
-            )
-            entries.append({"path": relative, "type": "symlink", "target": os.readlink(path)})
-        elif stat.S_ISREG(metadata.st_mode):
-            entries.append(
-                {
-                    "path": relative,
-                    "type": "file",
-                    "mode": stat.S_IMODE(metadata.st_mode),
-                    "size": metadata.st_size,
-                    "sha256": sha256_file(path),
-                }
-            )
-        elif stat.S_ISDIR(metadata.st_mode):
-            entries.append({"path": relative, "type": "directory"})
-        else:
-            raise QualificationError("unsupported SDK file type: %s" % path)
-    return {
-        "entries": len(entries),
-        "canonical_sha256": hashlib.sha256(canonical_bytes(entries)).hexdigest(),
     }
 
 
@@ -212,40 +220,42 @@ def main():
 
     profile = TARGETS.get(arguments.target)
     require(profile is not None, "unsupported CPython target")
-    require(re.fullmatch(r"3\.13\.[0-9]+", arguments.version), "unsupported CPython version")
-    minor = ".".join(arguments.version.split(".")[:2])
-    compact_minor = minor.replace(".", "")
+    contract = python_contract(arguments.version)
+    minor = contract["minor"]
+    compact_minor = contract["compact_minor"]
     expected_prefix = Path(
         "/opt/crossforge/python/cp%s/targets/%s"
         % (compact_minor, arguments.target)
     )
     expected_sysroot = Path("/opt/crossforge/sysroots/el8") / profile["arch"]
     expected_toolchain = Path("/opt/crossforge/targets") / arguments.target
+    expected_build_prefix = Path(
+        "/opt/crossforge/python/cp%s/build" % compact_minor
+    )
+    expected_build_python = expected_build_prefix / "bin" / ("python" + minor)
     require(arguments.prefix == expected_prefix, "unexpected target Python prefix")
     require(arguments.sysroot == expected_sysroot, "unexpected target sysroot")
     require(arguments.toolchain == expected_toolchain, "unexpected target toolchain")
+    require(
+        arguments.build_python == expected_build_python,
+        "unexpected build Python path",
+    )
     require(arguments.extension_source.is_file(), "minimal extension source is missing")
-    expected_build_directory = Path("/work/build/cpython-cp313-%s" % profile["arch"])
+    expected_build_directory = Path(
+        "/work/build/cpython-cp%s-%s" % (compact_minor, profile["arch"])
+    )
     require(
         arguments.build_directory == expected_build_directory,
         "unexpected target Python build directory",
     )
-    exec_audit_path = arguments.build_directory / "target-exec-audit.log"
+    exec_audit_path = arguments.build_directory / "target-artifact-audit.log"
     try:
         exec_audit = exec_audit_path.read_text(encoding="utf-8").splitlines()
     except OSError as error:
         raise QualificationError("target-execution audit is missing: %s" % error) from error
-    require(exec_audit and all(path.startswith("/") for path in exec_audit), "invalid target-execution audit")
-    canary = str(arguments.build_directory / "target-exec-canary")
-    require(canary in exec_audit, "target-execution canary was not denied")
-    for path in exec_audit:
-        require(
-            path == str(arguments.build_directory)
-            or path.startswith(str(arguments.build_directory) + os.sep)
-            or path == str(arguments.prefix)
-            or path.startswith(str(arguments.prefix) + os.sep),
-            "target-execution audit path escaped guarded roots",
-        )
+    exec_audit_result = parse_target_artifact_audit(
+        exec_audit, arguments.build_directory, arguments.prefix
+    )
 
     release = load_json(arguments.release)
     release_sha256 = hashlib.sha256(canonical_bytes(release)).hexdigest()
@@ -255,7 +265,12 @@ def main():
         if item["version"] == arguments.version
     ]
     require(len(python_entries) == 1, "release does not select one CPython source")
-    source = python_entries[0]["source"]
+    python_entry = python_entries[0]
+    require(
+        python_entry.get("adapter") == contract["adapter"],
+        "CPython version/adapter contract mismatch",
+    )
+    source = python_entry["source"]
     require(source["status"] == "locked", "CPython source is not locked")
 
     target_entries = [
@@ -283,7 +298,13 @@ def main():
     )
 
     build_version, _ = run(
-        [arguments.build_python, "-I", "-c", "import platform;print(platform.python_version())"]
+        [
+            arguments.build_python,
+            "-B",
+            "-I",
+            "-c",
+            "import platform;print(platform.python_version())",
+        ]
     )
     require(build_version.strip() == arguments.version, "build Python version mismatch")
 
@@ -291,7 +312,7 @@ def main():
     require(len(sysconfig_files) == 1, "target SDK must contain one sysconfigdata module")
     variables = runpy.run_path(str(sysconfig_files[0])).get("build_time_vars")
     require(isinstance(variables, dict), "invalid target sysconfigdata")
-    expected_soabi = "cpython-313-%s" % profile["multiarch"]
+    expected_soabi = "cpython-%s-%s" % (compact_minor, profile["multiarch"])
     expected_suffix = ".%s.so" % expected_soabi
     expected_values = {
         "HOST_GNU_TYPE": arguments.target,
@@ -299,7 +320,6 @@ def main():
         "SOABI": expected_soabi,
         "EXT_SUFFIX": expected_suffix,
         "Py_DEBUG": 0,
-        "Py_GIL_DISABLED": 0,
         "HAVE_ALIGNED_REQUIRED": 0,
         "HAVE_USABLE_WCHAR_T": profile["usable_wchar"],
         "SIZEOF_WCHAR_T": 4,
@@ -307,6 +327,17 @@ def main():
     for name, expected in expected_values.items():
         actual = variables.get(name, 0 if name == "HAVE_ALIGNED_REQUIRED" else None)
         require(actual == expected, "target sysconfig %s mismatch: %r" % (name, actual))
+    if minor == "3.11":
+        require(
+            "Py_GIL_DISABLED" not in variables,
+            "CPython 3.11 unexpectedly exposes Py_GIL_DISABLED",
+        )
+    else:
+        require(
+            "Py_GIL_DISABLED" in variables and variables["Py_GIL_DISABLED"] == 0,
+            "CPython 3.13 must explicitly disable the free-threaded ABI",
+        )
+        expected_values["Py_GIL_DISABLED"] = 0
     build_triple = variables.get("BUILD_GNU_TYPE", "")
     require(
         re.fullmatch(r"x86_64-[A-Za-z0-9_.-]+-linux-gnu", build_triple)
@@ -396,10 +427,11 @@ def main():
     require("PyInit__crossforge" in extension_symbols, "extension initializer is missing")
 
     report = {
-        "qualification_schema_version": 1,
+        "qualification_schema_version": 2,
         "report_kind": "crossforge-cpython-compile",
         "target": arguments.target,
         "version": arguments.version,
+        "adapter": contract["adapter"],
         "release_sha256": release_sha256,
         "source": {
             "url": source["url"],
@@ -415,11 +447,21 @@ def main():
             "path": str(arguments.build_python),
             "version": build_version.strip(),
             "sha256": sha256_file(arguments.build_python),
+            "sdk_tree": sdk_tree_identity(expected_build_prefix),
         },
-        "target_exec_guard": {
-            "canary_observed": True,
-            "denied_attempts": len(exec_audit),
-            "canonical_sha256": hashlib.sha256(canonical_bytes(exec_audit)).hexdigest(),
+        "target_artifact_guard": {
+            "execution_canaries": list(EXEC_OPERATIONS),
+            "loader_canaries": list(LOADER_OPERATIONS),
+            "records": exec_audit_result["records"],
+            "denied_execution_attempts": exec_audit_result[
+                "denied_execution_attempts"
+            ],
+            "denied_loader_attempts": exec_audit_result[
+                "denied_loader_attempts"
+            ],
+            "canonical_sha256": TARGET_AUDIT["canonical_sha256"](
+                exec_audit_result["records"]
+            ),
         },
         "python_sha256": sha256_file(python),
         "extension": {"name": extension.name, "sha256": sha256_file(extension)},
@@ -439,6 +481,13 @@ def main():
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except (QualificationError, KeyError, TypeError, ValueError) as error:
+    except (
+        QualificationError,
+        SDKIdentityError,
+        KeyError,
+        OSError,
+        TypeError,
+        ValueError,
+    ) as error:
         print("error: %s" % error, file=sys.stderr)
         raise SystemExit(1)

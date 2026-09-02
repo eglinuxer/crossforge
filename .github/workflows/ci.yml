@@ -8,12 +8,33 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * *'
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install content-locked Docker Buildx
+        run: |
+          mkdir -p "$HOME/.docker/cli-plugins"
+          curl --fail --location --retry 3 \
+            https://github.com/docker/buildx/releases/download/v0.36.1/buildx-v0.36.1.linux-amd64 \
+            --output "$RUNNER_TEMP/docker-buildx"
+          printf '%s  %s\n' \
+            48af8a397ebd60178778bf63611dbcebe5f5e7a9be90eb9147b24b9587455778 \
+            "$RUNNER_TEMP/docker-buildx" | sha256sum -c -
+          install -m 0755 "$RUNNER_TEMP/docker-buildx" \
+            "$HOME/.docker/cli-plugins/docker-buildx"
+          docker buildx version | grep -F 'v0.36.1'
+      - name: Set up pinned Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+        with:
+          cache-binary: false
+          driver-opts: |
+            image=moby/buildkit:v0.32.2@sha256:28a898719c18a33f4e8000685287fa36fd0dd9560c6440227d3a732d79bb41d8
       - name: Release configuration
         run: |
           ./scripts/validate-release.py
@@ -35,18 +56,27 @@ jobs:
       - name: Script syntax
         run: |
           python3 -m py_compile scripts/*.py
+          python3 -m py_compile docker/*.py
           bash -n scripts/*.sh
+          bash -n docker/*.sh
           gcc -fsyntax-only -fPIC -Wall -Wextra -Werror scripts/deny-target-exec.c
           gcc -fsyntax-only -Wall -Wextra -Werror scripts/target-exec-canary.c
+          gcc -fsyntax-only -Wall -Wextra -Werror scripts/target-artifact-canary.c
       - name: Generated Bake definition
         run: ./scripts/render-bake.py --check
       - name: Docker/Bake static checks
-        run: docker buildx bake --check phase5
-      - name: Locked Phase 5 inputs and native build Python
+        run: |
+          docker buildx bake --check phase4
+          docker buildx bake --print phase5 phase6 >/dev/null
+      - name: Locked Phase 6 inputs and native build Pythons
         run: |
           docker buildx bake validate platform-python-check \
             host-build-common-locked host-gcc-build-locked \
             host-python-build-locked qemu-aarch64-validated \
-            sysroot-x86_64 sysroot-aarch64 cpython-build-cp313 \
+            sysroot-x86_64 sysroot-aarch64 \
+            cpython-build-cp311 cpython-build-cp313 \
             python-runtime-clean-x86_64 python-runtime-clean-aarch64 \
             --progress=plain
+      - name: Full Phase 6 qualification on main
+        if: github.event_name != 'pull_request'
+        run: docker buildx bake phase6 --progress=plain

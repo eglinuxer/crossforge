@@ -36,6 +36,7 @@ class ReleaseValidationTests(unittest.TestCase):
             result["qemu_manifest_sha256"],
             self.config["qemu"]["executor"]["manifest_digest"],
         )
+        self.assertEqual(result["python_patches"], 1)
 
     def test_supply_chain_identity_tampering_is_rejected(self):
         mutations = (
@@ -47,6 +48,7 @@ class ReleaseValidationTests(unittest.TestCase):
                 ("python", "versions", 4, "source", "sigstore", "bundle_sha256"),
                 "0" * 64,
             ),
+            (("python", "versions", 2, "patches", 0, "sha256"), "0" * 64),
         )
         for path, value in mutations:
             with self.subTest(path=path):
@@ -135,6 +137,72 @@ class ReleaseValidationTests(unittest.TestCase):
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate"](config, self.schema, self.schema, "$")
 
+    def test_python_transition_patch_is_explicit_and_content_locked(self):
+        versions = self.config["python"]["versions"]
+        transition = versions[2]
+        self.assertEqual(transition["version"], "3.11.16")
+        self.assertEqual(transition["adapter"], "transition")
+        self.assertEqual(
+            transition["patches"],
+            [
+                {
+                    "file": "patches/cpython/3.11/0001-gh-115382-isolate-target-sysconfig.patch",
+                    "sha256": "072dacfcc57b06bc1e5382726990627593a36e1f08232cb790db42ae334a49aa",
+                }
+            ],
+        )
+        patch = transition["patches"][0]
+        payload = (REPOSITORY / patch["file"]).read_bytes()
+        self.assertEqual(hashlib.sha256(payload).hexdigest(), patch["sha256"])
+        self.assertEqual(
+            [
+                line
+                for line in payload.splitlines()
+                if line.startswith(b"diff --git ")
+            ],
+            [
+                b"diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py",
+                b"diff --git a/configure b/configure",
+                b"diff --git a/configure.ac b/configure.ac",
+            ],
+        )
+        self.assertIn(b"_PYTHON_SYSCONFIGDATA_PATH", payload)
+        self.assertIn(b"PYTHONPATH=$(srcdir)/Lib", payload)
+        for version in versions[:2] + versions[3:]:
+            self.assertEqual(version["patches"], [])
+
+    def test_python_transition_patch_schema_rejects_contract_drift(self):
+        mutations = []
+
+        missing = copy.deepcopy(self.config)
+        del missing["python"]["versions"][2]["patches"]
+        mutations.append(missing)
+
+        wrong_path = copy.deepcopy(self.config)
+        wrong_path["python"]["versions"][2]["patches"][0]["file"] = (
+            "patches/cpython/3.11/0001-other.patch"
+        )
+        mutations.append(wrong_path)
+
+        unexpected = copy.deepcopy(self.config)
+        unexpected["python"]["versions"][4]["patches"] = copy.deepcopy(
+            unexpected["python"]["versions"][2]["patches"]
+        )
+        mutations.append(unexpected)
+
+        for index, config in enumerate(mutations):
+            with self.subTest(index=index):
+                with self.assertRaises(VALIDATOR["ValidationError"]):
+                    VALIDATOR["validate"](config, self.schema, self.schema, "$")
+
+    def test_python_patch_loader_rejects_noncanonical_path(self):
+        with self.assertRaises(EVIDENCE_VALIDATOR["EvidenceError"]):
+            EVIDENCE_VALIDATOR["load_cpython_patch"](
+                REPOSITORY,
+                "patches/cpython/../cpython/3.11/"
+                "0001-gh-115382-isolate-target-sysconfig.patch",
+            )
+
     def test_python_source_selection_requires_one_exact_version(self):
         with self.assertRaises(SOURCE_FETCHER["ValidationError"]):
             SOURCE_FETCHER["source_for"](self.config, "python", None)
@@ -168,9 +236,17 @@ class ReleaseValidationTests(unittest.TestCase):
                 base["manifests"]["arm64"]
             )
         )
-        self.assertTrue(
-            contexts["crossforge_qemu"].endswith(executor["manifest_digest"])
-        )
+        self.assertNotIn("crossforge_qemu", contexts)
+        for name in (
+            "qemu-aarch64-validated",
+            "runtime-smoke-aarch64",
+            "toolchain-aarch64-dev",
+        ):
+            self.assertTrue(
+                override["target"][name]["contexts"]["crossforge_qemu"].endswith(
+                    executor["manifest_digest"]
+                )
+            )
 
 
 if __name__ == "__main__":

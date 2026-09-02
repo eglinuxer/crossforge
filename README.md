@@ -9,9 +9,9 @@ build-system-independent DEB/RPM packaging.
 > **Not yet publishable as the complete SDK.** Both cross-toolchain slices now
 > build from locked host and sysroot transactions. x86_64 passes native smoke;
 > aarch64 passes the same compile/ABI gates and explicit QEMU smoke against a
-> locked sysroot and clean Rocky arm64 root. The representative CPython 3.13
-> slice now supplies one amd64 build Python plus genuine x86_64/aarch64 target
-> SDKs, each qualified in locked-sysroot and clean-Rocky runtime tiers. The
+> locked sysroot and clean Rocky arm64 root. CPython 3.11 transition and 3.13
+> modern rows each supply one amd64 build Python plus genuine x86_64/aarch64
+> target SDKs, qualified in locked-sysroot and clean-Rocky runtime tiers. The
 > remaining Python minors, vcpkg, packaging, frozen ABI sets and the independent
 > minimal host-runtime lock remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
@@ -174,7 +174,8 @@ $ docker buildx bake python-cp313-dev
 ```
 
 CPython 3.13.15 is built once as an amd64 build interpreter and twice as a
-real cross target. The build stages never execute target code. Qualification
+real cross target. Cross stages provide no `HOSTRUNNER` or QEMU and deny/audit
+the supported dynamic libc/loader execution paths. Qualification
 compiles a minimal extension, audits every `lib-dynload` ELF and runs zlib,
 bz2, lzma, ctypes, OpenSSL, SQLite, UUID, threading, semaphore, timezone,
 resolver, wide-character and PTY probes. Each target runs against both its
@@ -187,6 +188,35 @@ All six CPython 3.9–3.14 source tarballs are content-locked. Their upstream
 Sigstore bundles are archived and structurally bound to those digests, but are
 explicitly marked `archived-unverified`: cryptographic Fulcio/Rekor verification
 is a later release-supply-chain gate and is not claimed by this phase.
+
+## Phase 6: parameterized CPython rows
+
+Build the 3.11 transition row or the current two-row SDK aggregate:
+
+```console
+$ docker buildx bake cpython-cp311-x86_64-qualify
+$ docker buildx bake cpython-cp311-aarch64-qualify
+$ docker buildx bake python-cp311-dev
+$ docker buildx bake python-dev
+$ docker buildx bake phase6
+```
+
+`docker/python.Dockerfile` implements one row pipeline; Bake supplies exact
+version, adapter and target edges from `release.json`. Rows build and qualify
+independently, export through scratch, and enter `python-dev` only through an
+append-only aggregation chain. Rows do not inherit each other's build state;
+changing the global release identity intentionally rebinds and requalifies all
+enabled rows.
+
+CPython 3.11.16 carries a hash-locked backport of upstream gh-115382 so the
+amd64 build interpreter cannot discover same-SOABI target extensions through
+`PYTHONPATH`. The cross stage also exercises and audits eleven dynamic libc
+execution/spawn APIs plus `dlopen` and `dlmopen`. This `LD_PRELOAD` policy is
+defense in depth, not a sandbox; it does not mediate direct syscalls or static
+programs. Runtime qualification mounts real `tmpfs` instances at `/dev/shm`
+and exercises an actual `multiprocessing.Lock()` on both targets. Each row
+manifest binds its prepared source, patches, complete build/target SDK tree
+identities and both self-validating qualification reports.
 
 ## Product contract
 

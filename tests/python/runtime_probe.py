@@ -78,8 +78,8 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--extension-dir", type=os.path.abspath)
     arguments = parser.parse_args()
 
-    if re.fullmatch(r"3\.13\.[0-9]+", arguments.version) is None:
-        parser.error("--version must be an exact CPython 3.13 patch version")
+    if re.fullmatch(r"3\.(?:11|13)\.[0-9]+", arguments.version) is None:
+        parser.error("--version must be an implemented CPython 3.11/3.13 patch version")
     if arguments.mode == "core" and arguments.extension_dir is None:
         parser.error("--extension-dir is required in core mode")
     if arguments.mode == "devices" and arguments.extension_dir is not None:
@@ -139,10 +139,18 @@ def validate_identity(target: str, version: str) -> dict[str, object]:
     )
     require(platform.machine() == arch, "runtime machine differs from target")
     require(sysconfig.get_config_var("Py_DEBUG") == 0, "debug Python is unsupported")
-    require(
-        sysconfig.get_config_var("Py_GIL_DISABLED") in (None, 0),
-        "free-threaded Python is unsupported",
-    )
+    config_vars = sysconfig.get_config_vars()
+    if minor == "3.11":
+        require(
+            "Py_GIL_DISABLED" not in config_vars,
+            "CPython 3.11 unexpectedly exposes Py_GIL_DISABLED",
+        )
+    else:
+        require(
+            "Py_GIL_DISABLED" in config_vars
+            and config_vars["Py_GIL_DISABLED"] == 0,
+            "CPython 3.13 must explicitly disable the free-threaded ABI",
+        )
     config_args = sysconfig.get_config_var("CONFIG_ARGS")
     require(isinstance(config_args, str), "sysconfig CONFIG_ARGS is not text")
     for option in (
@@ -265,6 +273,21 @@ def exercise_threading() -> dict[str, object]:
 
 
 def exercise_semaphore() -> dict[str, object]:
+    lock = multiprocessing.Lock()
+    require(lock.acquire(timeout=10), "multiprocessing lock acquisition timed out")
+    try:
+        require(
+            not lock.acquire(block=False),
+            "held multiprocessing lock did not provide nonblocking exclusivity",
+        )
+    finally:
+        lock.release()
+    require(
+        lock.acquire(block=False),
+        "released multiprocessing lock could not be reacquired",
+    )
+    lock.release()
+
     libc = ctypes.CDLL(None, use_errno=True)
     semaphore = (ctypes.c_long * 8)()
     pointer = ctypes.byref(semaphore)
@@ -283,7 +306,11 @@ def exercise_semaphore() -> dict[str, object]:
     require(libc.sem_getvalue(pointer, ctypes.byref(value)) == 0, os.strerror(ctypes.get_errno()))
     require(value.value == 0, "waited semaphore has the wrong value")
     require(libc.sem_destroy(pointer) == 0, os.strerror(ctypes.get_errno()))
-    return {"acquire_release": True, "get_value": True}
+    return {
+        "multiprocessing_lock": True,
+        "unnamed_acquire_release": True,
+        "unnamed_get_value": True,
+    }
 
 
 def exercise_network() -> dict[str, object]:
@@ -414,7 +441,7 @@ def core_report(arguments: argparse.Namespace) -> dict[str, object]:
         "mode": "core",
         "network": exercise_network(),
         "report_kind": "crossforge-cpython-probe",
-        "schema_version": 1,
+        "schema_version": 2,
         "semaphore": exercise_semaphore(),
         "status": "passed",
         "sysconfig": identity,
@@ -432,7 +459,7 @@ def devices_report(arguments: argparse.Namespace) -> dict[str, object]:
         "mode": "devices",
         "probe": {"pty": exercise_pty()},
         "report_kind": "crossforge-cpython-probe",
-        "schema_version": 1,
+        "schema_version": 2,
         "status": "passed",
         "sysconfig": identity,
         "target": arguments.target,
