@@ -79,7 +79,9 @@ def is_exact_integer(value: object, expected: int) -> bool:
 
 
 def validate_configure_arguments(
-    config_args: object, expected_options: tuple[str, ...]
+    config_args: object,
+    expected_options: tuple[str, ...],
+    forbidden_options: tuple[str, ...] = (),
 ) -> None:
     require(isinstance(config_args, str), "sysconfig CONFIG_ARGS is not text")
     try:
@@ -87,17 +89,49 @@ def validate_configure_arguments(
     except ValueError as error:
         raise ProbeError("sysconfig CONFIG_ARGS cannot be parsed") from error
     require(tokens, "sysconfig CONFIG_ARGS is empty")
-    for expected in expected_options:
-        name = expected.split("=", 1)[0]
-        matches = [
+
+    def option_matches(name: str) -> list[str]:
+        return [
             token
             for token in tokens
             if token == name or token.startswith(name + "=")
         ]
+
+    for expected in expected_options:
+        name = expected.split("=", 1)[0]
         require(
-            matches == [expected],
+            option_matches(name) == [expected],
             f"sysconfig CONFIG_ARGS must contain exactly {expected}",
         )
+    for forbidden in forbidden_options:
+        require(
+            not option_matches(forbidden),
+            f"sysconfig CONFIG_ARGS contains unsupported {forbidden}",
+        )
+    require(
+        all("HOSTRUNNER" not in token for token in tokens),
+        "target execution leaked into CONFIG_ARGS",
+    )
+
+
+def configure_argument_policy(
+    target: str, minor: str, prefix: str
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    expected = [
+        f"--host={target}",
+        "--build=x86_64-pc-linux-gnu",
+        f"--prefix={prefix}",
+        "--with-computed-gotos=yes",
+        "--with-ensurepip=no",
+    ]
+    forbidden = []
+    if minor == "3.9":
+        forbidden.append("--disable-test-modules")
+    else:
+        expected.append("--disable-test-modules")
+    if minor in ("3.9", "3.10"):
+        forbidden.extend(("--with-build-python", "--with-pkg-config"))
+    return tuple(expected), tuple(forbidden)
 
 
 def validate_gil_policy(
@@ -202,16 +236,13 @@ def validate_identity(
     config_vars = sysconfig.get_config_vars()
     validate_gil_policy(config_vars, minor, gil_policy)
     config_args = sysconfig.get_config_var("CONFIG_ARGS")
+    expected_options, forbidden_options = configure_argument_policy(
+        target, minor, prefix
+    )
     validate_configure_arguments(
         config_args,
-        (
-            f"--host={target}",
-            "--build=x86_64-pc-linux-gnu",
-            f"--prefix={prefix}",
-            "--with-computed-gotos=yes",
-            "--with-ensurepip=no",
-            "--disable-test-modules",
-        ),
+        expected_options,
+        forbidden_options,
     )
 
     return {

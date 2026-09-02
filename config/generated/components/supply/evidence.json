@@ -9,6 +9,34 @@
       "value": "evidence/oci/rocky-linux-8.index.json.b64"
     },
     {
+      "path": "/python/versions/0/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.9.25.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_sha256",
+      "value": "09243be5b795dbccf2e3a28b1a478a51ccdc1d2e102122737fc012798a5b17ad"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_size",
+      "value": 5079
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/identity",
+      "value": "lukasz@langa.pl"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/oidc_issuer",
+      "value": "https://github.com/login/oauth"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
       "path": "/python/versions/1/source/sigstore/bundle_evidence",
       "value": "evidence/sigstore/cpython-3.10.21.tar.xz.sigstore.b64"
     },

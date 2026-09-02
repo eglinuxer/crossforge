@@ -3,7 +3,7 @@
   "component": "python/qualification",
   "dependencies": [
     {
-      "canonical_sha256": "72f505ebdc79810a7e74f6f61a85923e608b0abfb641014e4050ebfd6caeb2f0",
+      "canonical_sha256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
       "component": "implementation/python-qualification-policy"
     },
     {
@@ -47,6 +47,14 @@
       "component": "python/cp314-x86_64-build"
     },
     {
+      "canonical_sha256": "589b2b30272afe035ec513ad77b67155c3c1292bb2d3494b9477e4aa2fda9f58",
+      "component": "python/cp39-aarch64-build"
+    },
+    {
+      "canonical_sha256": "d417845642a67ac02c9af504e3d77001d3732c4024b7ea52fa625bc53e924abf",
+      "component": "python/cp39-x86_64-build"
+    },
+    {
       "canonical_sha256": "303e97f2d655738d717d89d0277789e5094da56d6fdc427f757ee4fa503c685c",
       "component": "toolchain/aarch64-qualification"
     },
@@ -84,6 +92,38 @@
     {
       "path": "/baseline",
       "value": "el8"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.9.25.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_sha256",
+      "value": "09243be5b795dbccf2e3a28b1a478a51ccdc1d2e102122737fc012798a5b17ad"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_size",
+      "value": 5079
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/identity",
+      "value": "lukasz@langa.pl"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/oidc_issuer",
+      "value": "https://github.com/login/oauth"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
+      "path": "/python/versions/0/support",
+      "value": "eol"
     },
     {
       "path": "/python/versions/1/source/sigstore/bundle_evidence",

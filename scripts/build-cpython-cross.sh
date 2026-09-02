@@ -20,8 +20,12 @@ minor=${version%.*}
 compact_minor=${minor/./}
 script_directory=$(cd "$(dirname "$0")" && pwd)
 legacy_setup_build=0
-if [[ "$minor" == 3.10 ]]; then
+disable_test_modules=1
+if [[ "$minor" == 3.9 || "$minor" == 3.10 ]]; then
   legacy_setup_build=1
+fi
+if [[ "$minor" == 3.9 ]]; then
+  disable_test_modules=0
 fi
 
 [[ -x "$source_directory/configure" && -x "$source_directory/config.guess" ]] || {
@@ -55,11 +59,13 @@ case "$target" in
     target_arch=x86_64
     target_machine='Advanced Micro Devices X86-64'
     target_elf_machine=62
+    target_multiarch=x86_64-linux-gnu
     ;;
   aarch64-unknown-linux-gnu)
     target_arch=aarch64
     target_machine=AArch64
     target_elf_machine=183
+    target_multiarch=aarch64-linux-gnu
     ;;
   *)
     echo "error: unsupported Python target: $target" >&2
@@ -303,8 +309,10 @@ fi
 configure_arguments+=(
   --with-computed-gotos=yes
   --with-ensurepip=no
-  --disable-test-modules
 )
+if [[ "$disable_test_modules" -eq 1 ]]; then
+  configure_arguments+=(--disable-test-modules)
+fi
 "$source_directory/configure" "${configure_arguments[@]}"
 if grep -Fq 'unrecognized options:' config.log; then
   echo "error: CPython configure accepted an unsupported option" >&2
@@ -367,6 +375,50 @@ if [[ "$legacy_setup_build" -eq 1 ]]; then
       echo "error: legacy cross CPython lacks its setup.py extension paths" >&2
       exit 1
     }
+
+  make -j"$jobs" pybuilddir.txt
+  mapfile -t pybuilddirs <pybuilddir.txt
+  [[ ${#pybuilddirs[@]} -eq 1 \
+      && "${pybuilddirs[0]}" =~ ^build/lib\.[A-Za-z0-9_.-]+$ ]] || {
+    echo "error: legacy target pybuilddir is invalid" >&2
+    exit 1
+  }
+  target_sysconfig_directory=$build_directory/${pybuilddirs[0]}
+  [[ -d "$target_sysconfig_directory" \
+      && ! -L "$target_sysconfig_directory" ]] || {
+    echo "error: legacy target sysconfig directory is invalid" >&2
+    exit 1
+  }
+  mapfile -t target_sysconfig_files < <(
+    find "$target_sysconfig_directory" -maxdepth 1 \
+      -name '_sysconfigdata_*.py' -type f -print
+  )
+  [[ ${#target_sysconfig_files[@]} -eq 1 \
+      && ! -L "${target_sysconfig_files[0]}" ]] || {
+    echo "error: legacy target sysconfigdata is not unique" >&2
+    exit 1
+  }
+  target_sysconfig_name=${target_sysconfig_files[0]##*/}
+  target_sysconfig_name=${target_sysconfig_name%.py}
+  expected_soabi=cpython-$compact_minor-$target_multiarch
+  env \
+    _PYTHON_PROJECT_BASE="$build_directory" \
+    _PYTHON_HOST_PLATFORM="linux-$target_arch" \
+    PYTHONPATH="$source_directory/Lib" \
+    _PYTHON_SYSCONFIGDATA_NAME="$target_sysconfig_name" \
+    _PYTHON_SYSCONFIGDATA_PATH="$target_sysconfig_directory" \
+    "$build_python" -B -S \
+      "$script_directory/verify-python-build-sysconfig.py" \
+      --build-python "$build_python" \
+      --target-sysconfig-directory "$target_sysconfig_directory" \
+      --source-lib "$source_directory/Lib" \
+      --target "$target" \
+      --cc "$CC" \
+      --ar "$AR" \
+      --ldshared "$CC -shared $LDFLAGS $LDFLAGS" \
+      --multiarch "$target_multiarch" \
+      --soabi "$expected_soabi" \
+      --ext-suffix ".$expected_soabi.so"
 else
   grep -Fq "$build_python" <<<"$python_for_build_line" || {
     echo "error: Makefile does not use the matching build Python" >&2

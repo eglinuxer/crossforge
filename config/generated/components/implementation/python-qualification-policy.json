@@ -21,6 +21,10 @@
     {
       "canonical_sha256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
       "component": "implementation/python-cp314-build-policy"
+    },
+    {
+      "canonical_sha256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
+      "component": "implementation/python-cp39-build-policy"
     }
   ],
   "kind": "crossforge-release-component",
@@ -184,6 +188,38 @@
     {
       "path": "/@implementation/python_rows/cp314/zstd",
       "value": true
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/adapter",
+      "value": "legacy"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/gil_policy",
+      "value": "absent"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/hash_algorithm",
+      "value": "siphash24"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/introduced_phase",
+      "value": 10
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/minor",
+      "value": "3.9"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/row",
+      "value": "cp39"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/sysconfig_isolation",
+      "value": true
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/zstd",
+      "value": false
     }
   ],
   "schema_version": 1,

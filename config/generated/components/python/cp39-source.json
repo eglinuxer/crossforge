@@ -1,0 +1,47 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp39-source",
+  "dependencies": [
+    {
+      "canonical_sha256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
+      "component": "implementation/python-cp39-build-policy"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/python/versions/0/adapter",
+      "value": "legacy"
+    },
+    {
+      "path": "/python/versions/0/patches/0/file",
+      "value": "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+    },
+    {
+      "path": "/python/versions/0/patches/0/sha256",
+      "value": "e4d5629748d9737c891f47eb38cb3a5722c3b71afc5e28b5cede80ae5b66cf77"
+    },
+    {
+      "path": "/python/versions/0/source/sha256",
+      "value": "00e07d7c0f2f0cc002432d1ee84d2a40dae404a99303e3f97701c10966c91834"
+    },
+    {
+      "path": "/python/versions/0/source/size",
+      "value": 20183236
+    },
+    {
+      "path": "/python/versions/0/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/python/versions/0/source/url",
+      "value": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz"
+    },
+    {
+      "path": "/python/versions/0/version",
+      "value": "3.9.25"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

@@ -68,6 +68,22 @@ def _init_non_posix(vars):
 '''
 
 
+DISTUTILS_SYSCONFIG_DELEGATION = '''from sysconfig import _init_posix as sysconfig_init_posix
+
+_config_vars = None
+
+def _init_posix():
+    """Initialize POSIX target configuration."""
+    global _config_vars
+    config_vars = {}
+    sysconfig_init_posix(config_vars)
+    _config_vars = config_vars
+
+def _init_nt():
+    pass
+'''
+
+
 class PrepareCPythonSourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -262,6 +278,57 @@ class PrepareCPythonSourceTests(unittest.TestCase):
             source = Path(temporary) / "Python-3.13.15"
             self.write_isolation_tree(source, FILEFINDER_SYSCONFIG)
             PREPARER["validate_sysconfig_isolation"](source, "3.13.15")
+
+    def test_cp39_distutils_delegates_atomically_to_isolated_sysconfig(self):
+        mutations = {
+            "valid": DISTUTILS_SYSCONFIG_DELEGATION,
+            "missing alias": DISTUTILS_SYSCONFIG_DELEGATION.replace(
+                "from sysconfig import _init_posix as sysconfig_init_posix",
+                "from sysconfig import _init_posix",
+            ),
+            "dead-scope alias": DISTUTILS_SYSCONFIG_DELEGATION.replace(
+                "from sysconfig import _init_posix as sysconfig_init_posix",
+                "if False:\n"
+                "    from sysconfig import _init_posix as sysconfig_init_posix",
+            ),
+            "ambient import": DISTUTILS_SYSCONFIG_DELEGATION.replace(
+                "sysconfig_init_posix(config_vars)",
+                "__import__('_sysconfigdata_target')",
+            ),
+            "published before load": DISTUTILS_SYSCONFIG_DELEGATION.replace(
+                "sysconfig_init_posix(config_vars)\n    _config_vars = config_vars",
+                "_config_vars = config_vars\n    sysconfig_init_posix(config_vars)",
+            ),
+            "delegates global": DISTUTILS_SYSCONFIG_DELEGATION.replace(
+                "config_vars = {}\n    sysconfig_init_posix(config_vars)\n"
+                "    _config_vars = config_vars",
+                "_config_vars = {}\n    sysconfig_init_posix(_config_vars)",
+            ),
+            "missing publication": DISTUTILS_SYSCONFIG_DELEGATION.replace(
+                "    _config_vars = config_vars\n", ""
+            ),
+            "duplicate delegation": DISTUTILS_SYSCONFIG_DELEGATION.replace(
+                "sysconfig_init_posix(config_vars)",
+                "sysconfig_init_posix(config_vars)\n"
+                "    sysconfig_init_posix(config_vars)",
+            ),
+        }
+        for name, distutils_sysconfig in mutations.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                source = Path(temporary) / "Python-3.9.25"
+                self.write_isolation_tree(source, FILEFINDER_SYSCONFIG)
+                path = source / "Lib/distutils/sysconfig.py"
+                path.parent.mkdir(parents=True)
+                path.write_text(distutils_sysconfig, encoding="utf-8")
+                if name == "valid":
+                    PREPARER["validate_sysconfig_isolation"](
+                        source, "3.9.25"
+                    )
+                else:
+                    with self.assertRaises(PreparationError):
+                        PREPARER["validate_sysconfig_isolation"](
+                            source, "3.9.25"
+                        )
 
     def test_cp314_pathfinder_sysconfig_isolation_profile(self):
         with tempfile.TemporaryDirectory() as temporary:

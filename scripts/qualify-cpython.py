@@ -116,8 +116,15 @@ def validate_configure_arguments(
         % (contract["row"], target),
         "--with-computed-gotos=yes",
         "--with-ensurepip=no",
-        "--disable-test-modules",
     ]
+    if contract["minor"] == "3.9":
+        require(
+            not option_matches("--disable-test-modules"),
+            "CPython 3.9 CONFIG_ARGS contains unsupported "
+            "--disable-test-modules",
+        )
+    else:
+        required.append("--disable-test-modules")
     adapter = contract["adapter"]
     if adapter == "legacy":
         require(
@@ -618,6 +625,12 @@ def main():
     )
     require(variables.get("CC") == expected_cc, "target sysconfig CC mismatch")
     require(variables.get("CXX") == expected_cxx, "target sysconfig CXX mismatch")
+    require(
+        variables.get("LDSHARED")
+        == expected_cc
+        + " -shared -Wl,-z,relro,-z,now -Wl,-z,relro,-z,now",
+        "target sysconfig LDSHARED mismatch",
+    )
     require(
         variables.get("AR") == str(arguments.toolchain / "bin" / (arguments.target + "-ar")),
         "target sysconfig AR mismatch",

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/python-cp39-build-policy",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/python_rows/cp39/adapter",
+      "value": "legacy"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/minor",
+      "value": "3.9"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/row",
+      "value": "cp39"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/sysconfig_isolation",
+      "value": true
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

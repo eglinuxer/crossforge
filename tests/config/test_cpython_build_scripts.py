@@ -52,10 +52,13 @@ class CPythonBuildScriptTests(unittest.TestCase):
                 self.assertNotIn("ADAPTER", script)
                 self.assertNotIn("adapter=", script)
 
-    def test_cp310_uses_the_explicit_legacy_setup_build_boundary(self):
+    def test_cp39_and_cp310_use_the_explicit_legacy_setup_build_boundary(self):
         for name, script in (("native", self.native), ("cross", self.cross)):
             with self.subTest(script=name):
-                self.assertIn('if [[ "$minor" == 3.10 ]]', script)
+                self.assertIn(
+                    'if [[ "$minor" == 3.9 || "$minor" == 3.10 ]]',
+                    script,
+                )
                 self.assertIn('if [[ "$legacy_setup_build" -eq 0 ]]', script)
                 self.assertIn("configure_arguments+=(", script)
                 self.assertIn("--with-pkg-config=yes", script)
@@ -96,13 +99,43 @@ class CPythonBuildScriptTests(unittest.TestCase):
             self.cross,
         )
 
-    def test_cp310_and_newer_rows_have_distinct_hostrunner_contracts(self):
+    def test_legacy_and_newer_rows_have_distinct_hostrunner_contracts(self):
         self.assertIn("legacy CPython unexpectedly defines HOSTRUNNER", self.cross)
         self.assertIn("grep -Eq '^HOSTRUNNER=' Makefile", self.cross)
         self.assertIn("grep -Eq '^HOSTRUNNER=[[:space:]]*$' Makefile", self.cross)
         self.assertIn('export PATH="$toolchain/bin:/usr/bin:/bin"', self.cross)
         self.assertNotIn('PATH="$build_python', self.cross)
         self.assertNotIn('command -v "python$minor"', self.cross)
+
+    def test_only_cp39_omits_disable_test_modules(self):
+        for name, script in (("native", self.native), ("cross", self.cross)):
+            with self.subTest(script=name):
+                self.assertIn("disable_test_modules=1", script)
+                self.assertIn('if [[ "$minor" == 3.9 ]]', script)
+                self.assertIn("disable_test_modules=0", script)
+                self.assertIn(
+                    'if [[ "$disable_test_modules" -eq 1 ]]', script
+                )
+                self.assertEqual(script.count("--disable-test-modules"), 1)
+
+    def test_legacy_cross_build_preflights_both_sysconfig_implementations(self):
+        for required in (
+            'make -j"$jobs" pybuilddir.txt',
+            "legacy target sysconfigdata is not unique",
+            "_PYTHON_SYSCONFIGDATA_PATH=\"$target_sysconfig_directory\"",
+            'PYTHONPATH="$source_directory/Lib"',
+            '"$script_directory/verify-python-build-sysconfig.py"',
+            '--cc "$CC"',
+            '--ar "$AR"',
+            '--ldshared "$CC -shared $LDFLAGS $LDFLAGS"',
+            '--multiarch "$target_multiarch"',
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, self.cross)
+        self.assertLess(
+            self.cross.index('make -j"$jobs" pybuilddir.txt'),
+            self.cross.index('make -j"$jobs"\n'),
+        )
 
     def test_configure_rejects_every_unrecognized_option_warning(self):
         expected = "grep -Fq 'unrecognized options:' config.log"

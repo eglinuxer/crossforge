@@ -74,12 +74,22 @@ class PythonRowContractTests(unittest.TestCase):
                     "hash_algorithm": "siphash24",
                     "introduced_phase": 9,
                 },
+                {
+                    "minor": "3.9",
+                    "row": "cp39",
+                    "adapter": "legacy",
+                    "gil_policy": "absent",
+                    "sysconfig_isolation": True,
+                    "zstd": False,
+                    "hash_algorithm": "siphash24",
+                    "introduced_phase": 10,
+                },
             ),
         )
-        self.assertEqual(CONTRACT["LATEST_PHASE"], 9)
+        self.assertEqual(CONTRACT["LATEST_PHASE"], 10)
         self.assertEqual(
             CONTRACT["LATEST_ROWS"],
-            ("cp313", "cp311", "cp312", "cp314", "cp310"),
+            ("cp313", "cp311", "cp312", "cp314", "cp310", "cp39"),
         )
 
     def test_version_and_row_lookups_return_independent_records(self):
@@ -91,6 +101,7 @@ class PythonRowContractTests(unittest.TestCase):
 
     def test_release_binding_is_exact_for_version_and_row(self):
         cases = (
+            ("3.9.25", "cp39", "legacy", "absent", False, "siphash24"),
             ("3.10.21", "cp310", "legacy", "absent", False, "siphash24"),
             ("3.11.16", "cp311", "transition", "absent", False, "siphash13"),
             ("3.12.14", "cp312", "modern", "absent", False, "siphash13"),
@@ -116,8 +127,8 @@ class PythonRowContractTests(unittest.TestCase):
 
     def test_unimplemented_or_mismatched_contract_is_rejected(self):
         for operation in (
-            lambda: CONTRACT["contract_for_version"]("3.9.25"),
-            lambda: CONTRACT["contract_for_row"]("cp39"),
+            lambda: CONTRACT["contract_for_version"]("3.8.20"),
+            lambda: CONTRACT["contract_for_row"]("cp38"),
             lambda: CONTRACT["bind_release"](
                 self.release, version="3.13.15", adapter="transition"
             ),
@@ -175,6 +186,10 @@ class PythonRowContractTests(unittest.TestCase):
             CONTRACT["rows_for_phase"](9),
             ("cp313", "cp311", "cp312", "cp314", "cp310"),
         )
+        self.assertEqual(
+            CONTRACT["rows_for_phase"](10),
+            ("cp313", "cp311", "cp312", "cp314", "cp310", "cp39"),
+        )
         with self.assertRaises(CONTRACT["ContractError"]):
             CONTRACT["rows_for_phase"](0)
 
@@ -185,6 +200,7 @@ class PythonRowContractTests(unittest.TestCase):
             feature_version=(3, 6),
         )
         for version, adapter, row in (
+            ("3.9.25", "legacy", "cp39"),
             ("3.10.21", "legacy", "cp310"),
             ("3.11.16", "transition", "cp311"),
             ("3.12.14", "modern", "cp312"),

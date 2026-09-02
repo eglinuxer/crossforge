@@ -169,7 +169,12 @@
         "version": "3.9.25",
         "adapter": "legacy",
         "support": "eol",
-        "patches": [],
+        "patches": [
+          {
+            "file": "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch",
+            "sha256": "e4d5629748d9737c891f47eb38cb3a5722c3b71afc5e28b5cede80ae5b66cf77"
+          }
+        ],
         "source": {
           "status": "locked",
           "url": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz",

@@ -15,8 +15,12 @@ jobs=$6
 minor=${version%.*}
 compact_minor=${minor/./}
 legacy_setup_build=0
-if [[ "$minor" == 3.10 ]]; then
+disable_test_modules=1
+if [[ "$minor" == 3.9 || "$minor" == 3.10 ]]; then
   legacy_setup_build=1
+fi
+if [[ "$minor" == 3.9 ]]; then
+  disable_test_modules=0
 fi
 
 [[ -x "$source_directory/configure" && -x "$source_directory/config.guess" ]] || {
@@ -130,8 +134,10 @@ fi
 configure_arguments+=(
   --with-computed-gotos=yes
   --with-ensurepip=no
-  --disable-test-modules
 )
+if [[ "$disable_test_modules" -eq 1 ]]; then
+  configure_arguments+=(--disable-test-modules)
+fi
 "$source_directory/configure" "${configure_arguments[@]}"
 if grep -Fq 'unrecognized options:' config.log; then
   echo "error: CPython configure accepted an unsupported option" >&2

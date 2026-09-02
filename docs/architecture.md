@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、两套 GTS15 C/C++/LTO cross slice，以及 CPython 3.10 legacy、3.11 transition、3.12–3.14 modern 的 build/x86_64/aarch64 行已完成并通过 Phase 9；3.14 包含私有静态 zstd 1.5.7 的编译资格化和双 target 运行时资格化。Python 3.9、最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、两套 GTS15 C/C++/LTO cross slice，以及 CPython 3.9–3.10 legacy、3.11 transition、3.12–3.14 modern 的 build/x86_64/aarch64 行已完成并通过 Phase 10；3.14 包含私有静态 zstd 1.5.7 的编译资格化和双 target 运行时资格化。最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -150,9 +150,11 @@ CPython source
 
 首发支持 3.9–3.14，共 6 个 build Python 和 12 个 target Python。3.9–3.10 使用 legacy adapter，3.11 使用 transition adapter，3.12–3.14 使用 modern adapter；精确 patch 版本与独立的 `eol`/`security`/`bugfix` 支持状态写在 `release.json`。EOL minor 不承诺上游安全修复。
 
-当前已完成 CPython 3.10.21 legacy、3.11.16 transition 以及 3.12.14、3.13.15、3.14.7 modern 五行：每行各有 amd64 build Python、两个真正 cross target SDK、最小 C extension、全量 `lib-dynload` ELF 审计，以及 locked-sysroot/clean-Rocky 双运行时探针。通用 Python Dockerfile 只描述一条 row pipeline；Bake 生成独立版本/target DAG。资格化完成的 row 经 scratch 导出，再由 append-only 层聚合。Phase 5 固定 cp313，Phase 6 固定 cp313+cp311，Phase 7 固定 cp313+cp311+cp312，Phase 8 固定 cp313+cp311+cp312+cp314；Phase 9 与最新 `python-dev`/`python-matrix` 选择 cp313+cp311+cp312+cp314+cp310。
+当前已完成 CPython 3.9.25、3.10.21 legacy、3.11.16 transition 以及 3.12.14、3.13.15、3.14.7 modern 六行：每行各有 amd64 build Python、两个真正 cross target SDK、最小 C extension、全量 `lib-dynload` ELF 审计，以及 locked-sysroot/clean-Rocky 双运行时探针。通用 Python Dockerfile 只描述一条 row pipeline；Bake 生成独立版本/target DAG。资格化完成的 row 经 scratch 导出，再由 append-only 层聚合。Phase 5 固定 cp313，Phase 6 固定 cp313+cp311，Phase 7 固定 cp313+cp311+cp312，Phase 8 固定 cp313+cp311+cp312+cp314，Phase 9 固定追加 cp310；Phase 10 与最新 `python-dev`/`python-matrix` 再追加 cp39。
 
-3.10、3.11 与 3.12 均以各自文件路径和 SHA256 锁定 gh-115382 backport，显式把 target sysconfigdata 与 build Python 的 `PYTHONPATH` 隔离；3.12 保持 modern adapter，因为其扩展已由 configure/Makefile 构建。3.10 上游没有 `--with-build-python`、`--with-pkg-config` 或 `HOSTRUNNER`，legacy adapter 必须显式注入精确 `PYTHON_FOR_BUILD`/`PYTHON_FOR_REGEN`，用 `setup.py` 构建扩展，并以 `siphash24` 作为运行时 hash contract。cross build 在 configure 前用目标 ELF canary 实测 `execve`/`execv`、PATH 与 varargs exec、`fexecve`、`execveat`、`posix_spawn(p)`、`dlopen` 和 `dlmopen`，构建后拒绝 canary/`conftest` 之外的记录；它是动态 libc/loader 的可审计策略护栏，不是覆盖直接 syscall 或静态程序的安全沙箱。3.10 要求 `HOSTRUNNER` 不存在，3.11+ 要求其为空；无 QEMU 的 cross stage、精确 build Python patch version 和 sysconfig 隔离仍是主正确性契约。
+3.9–3.12 均以各自文件路径和 SHA256 锁定 gh-115382 backport，显式把 target sysconfigdata 与 build Python 的 `PYTHONPATH` 隔离；3.12 保持 modern adapter，因为其扩展已由 configure/Makefile 构建。3.9–3.10 上游没有 `--with-build-python`、`--with-pkg-config` 或 `HOSTRUNNER`，legacy adapter 必须显式注入精确 `PYTHON_FOR_BUILD`/`PYTHON_FOR_REGEN`，用 `setup.py` 构建扩展，并以 `siphash24` 作为运行时 hash contract。3.9 还没有 `--disable-test-modules`，因此保留上游测试模块，但不据此承诺 EOL 安全支持。其 `setup.py` 使用独立 `distutils.sysconfig`；3.9 补丁必须把该初始化原子委托给 source-only stdlib loader。`sharedmods` 前的动态门禁要求两套 sysconfig 的 `CC`、`AR`、`LDSHARED`、`SOABI`、`EXT_SUFFIX`、`MULTIARCH` 和 `CONFIG_ARGS` 完全一致，且 target build/lib 不得进入 build Python 的 `sys.path`，从而同时阻止 aarch64 显式失败和 x86_64 同 SOABI 静默回退。
+
+cross build 在 configure 前用目标 ELF canary 实测 `execve`/`execv`、PATH 与 varargs exec、`fexecve`、`execveat`、`posix_spawn(p)`、`dlopen` 和 `dlmopen`，构建后拒绝 canary/`conftest` 之外的记录；它是动态 libc/loader 的可审计策略护栏，不是覆盖直接 syscall 或静态程序的安全沙箱。3.9–3.10 要求 `HOSTRUNNER` 不存在，3.11+ 要求其为空；无 QEMU 的 cross stage、精确 build Python patch version 和 sysconfig 隔离仍是主正确性契约。
 
 clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七个精确验签 runtime RPM；因 OCI 与 sysroot errata 版本可不同，该 `--nodeps` overlay 仅验证精确 DSO 字节兼容性，不是可部署的 RPM transaction，也不进入 SDK。两套 runtime tier 都把真实 tmpfs 挂到 `/dev/shm`，并实际执行 `multiprocessing.Lock()` 与 libc unnamed semaphore。aarch64 只使用固定 QEMU，发布前仍需原生 ARM 终检。
 
@@ -184,6 +186,19 @@ $ docker buildx bake phase9
 ```
 
 组件投影把 `hash_algorithm` 和新增行序列归入 qualification policy，而不归入各行 build policy。因此引入 cp310 会改变共享 Python qualification identity，但 cp311–cp314 的 source、build-policy、native 和两个 target build component digest 必须逐一保持不变；回归测试锁定的是组件身份边界，不把共用构建脚本变更误称为 BuildKit layer 命中保证。
+
+Phase 10 在 Phase 9 的固定五行后追加 cp39，并完成首发 3.9–3.14 矩阵：
+
+```console
+$ docker buildx bake python-native-phase10
+$ docker buildx bake cpython-cp39-x86_64-qualify-build cpython-cp39-aarch64-qualify-build
+$ docker buildx bake cpython-cp39-x86_64-qualify cpython-cp39-aarch64-qualify
+$ docker buildx bake python-cp39-dev python-phase10-dev
+$ docker buildx bake python-matrix
+$ docker buildx bake phase10
+```
+
+cp39 的 source、build-policy、native 与两套 target build identity 独立新增，原五行对应 identity 保持不变；共享 qualification policy 与 aggregate identity 按设计重新绑定六行。compile/final 报告、runtime preflight 和双架构 row manifest 都重新从 release/policy 计算该身份，而不信任传入摘要。完整 Phase 10 已实际通过 6 个 build Python、12 个 cross SDK、两套 target 的 locked-sysroot/clean-Rocky 运行时资格化及六行 append-only 聚合。
 
 Python 契约是“支持交叉编译扩展”，不是 PEP 517/wheel 编排器。Crossforge 不做 wheel retag、vendoring、manylinux repair，也不支持 PyPy、free-threaded 或 debug Python。
 

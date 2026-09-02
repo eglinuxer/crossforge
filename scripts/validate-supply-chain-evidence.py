@@ -489,6 +489,12 @@ def validate_evidence(config, repository):
         "3.14": ("hugo@python.org", "https://github.com/login/oauth"),
     }
     python_patch_policy = {
+        "3.9.25": {
+            "adapter": "legacy",
+            "file": "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch",
+            "sha256": "e4d5629748d9737c891f47eb38cb3a5722c3b71afc5e28b5cede80ae5b66cf77",
+            "layout_marker": b"to the 3.9 source\nlayout",
+        },
         "3.10.21": {
             "adapter": "legacy",
             "file": "patches/cpython/3.10/0001-gh-115382-isolate-target-sysconfig.patch",
@@ -535,7 +541,7 @@ def validate_evidence(config, repository):
         )
         patches = version_entry["patches"]
         patch_policy = python_patch_policy.get(version)
-        if minor in ("3.10", "3.11", "3.12"):
+        if minor in ("3.9", "3.10", "3.11", "3.12"):
             require(
                 patch_policy is not None,
                 "CPython %s has no audited isolation patch policy" % version,
@@ -563,9 +569,18 @@ def validate_evidence(config, repository):
                 "%s: digest mismatch" % patch["file"],
             )
             expected_files = (
-                b"Lib/sysconfig.py",
-                b"configure",
-                b"configure.ac",
+                (
+                    b"Lib/distutils/sysconfig.py",
+                    b"Lib/sysconfig.py",
+                    b"configure",
+                    b"configure.ac",
+                )
+                if minor == "3.9"
+                else (
+                    b"Lib/sysconfig.py",
+                    b"configure",
+                    b"configure.ac",
+                )
             )
             diff_headers = [
                 line
@@ -610,6 +625,15 @@ def validate_evidence(config, repository):
                 "CPython %s patch is missing gh-115382 isolation semantics"
                 % minor,
             )
+            if minor == "3.9":
+                require(
+                    b"from sysconfig import _init_posix as sysconfig_init_posix"
+                    in patch_payload
+                    and b"+    sysconfig_init_posix(config_vars)"
+                    in patch_payload
+                    and b"+    _config_vars = config_vars" in patch_payload,
+                    "CPython 3.9 patch lacks isolated distutils delegation",
+                )
             python_patch_count += 1
         bundle_payload, bundle = evidence_json(
             repository,

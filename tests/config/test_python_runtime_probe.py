@@ -11,12 +11,12 @@ PROBE = runpy.run_path(str(REPOSITORY / "tests/python/runtime_probe.py"))
 
 
 class PythonRuntimeProbeContractTests(unittest.TestCase):
-    def test_runtime_probe_is_python310_syntax_compatible(self):
+    def test_runtime_probe_is_python39_syntax_compatible(self):
         path = REPOSITORY / "tests/python/runtime_probe.py"
         ast.parse(
             path.read_text(encoding="utf-8"),
             filename=str(path),
-            feature_version=(3, 10),
+            feature_version=(3, 9),
         )
 
     def test_absent_and_zero_gil_policies_are_distinct(self):
@@ -66,18 +66,16 @@ class PythonRuntimeProbeContractTests(unittest.TestCase):
             with self.assertRaisesRegex(PROBE["ProbeError"], "siphash13"):
                 PROBE["exercise_hash_algorithm"]("siphash13")
 
-    def test_configure_arguments_require_exact_unique_tokens(self):
-        expected = (
-            "--host=x86_64-unknown-linux-gnu",
-            "--build=x86_64-pc-linux-gnu",
-            "--prefix=/opt/crossforge/python/cp310/targets/"
-            "x86_64-unknown-linux-gnu",
-            "--with-computed-gotos=yes",
-            "--with-ensurepip=no",
-            "--disable-test-modules",
+    def test_cp310_configure_arguments_require_exact_unique_tokens(self):
+        target = "x86_64-unknown-linux-gnu"
+        prefix = "/opt/crossforge/python/cp310/targets/" + target
+        expected, forbidden = PROBE["configure_argument_policy"](
+            target, "3.10", prefix
         )
+        self.assertIn("--disable-test-modules", expected)
+        self.assertNotIn("--disable-test-modules", forbidden)
         valid = " ".join(expected)
-        PROBE["validate_configure_arguments"](valid, expected)
+        PROBE["validate_configure_arguments"](valid, expected, forbidden)
         for malformed in (
             valid.replace(expected[0], expected[0] + "-evil"),
             valid.replace(expected[1], expected[1] + "-junk"),
@@ -85,13 +83,49 @@ class PythonRuntimeProbeContractTests(unittest.TestCase):
             valid.replace(expected[4], expected[4] + "pe"),
             valid.replace(expected[5], expected[5] + "-extra"),
             valid + " " + expected[0],
+            valid + " --with-build-python=/tmp/python3.10",
+            valid + " --with-pkg-config=yes",
+            valid + " HOSTRUNNER=qemu",
             "'unterminated",
             None,
         ):
             with self.subTest(malformed=malformed):
                 with self.assertRaises(PROBE["ProbeError"]):
                     PROBE["validate_configure_arguments"](
-                        malformed, expected
+                        malformed, expected, forbidden
+                    )
+
+    def test_cp39_omits_and_rejects_disable_test_modules(self):
+        target = "aarch64-unknown-linux-gnu"
+        prefix = "/opt/crossforge/python/cp39/targets/" + target
+        expected, forbidden = PROBE["configure_argument_policy"](
+            target, "3.9", prefix
+        )
+        self.assertNotIn("--disable-test-modules", expected)
+        self.assertIn("--disable-test-modules", forbidden)
+        valid = " ".join(expected)
+        PROBE["validate_configure_arguments"](valid, expected, forbidden)
+
+        malformed_values = [
+            valid.replace(option, option + "-wrong") for option in expected
+        ]
+        malformed_values.extend(
+            (
+                valid + " " + expected[0],
+                valid + " --disable-test-modules",
+                valid + " --disable-test-modules=yes",
+                valid + " --with-build-python=/tmp/python3.9",
+                valid + " --with-pkg-config=yes",
+                valid + " HOSTRUNNER=qemu",
+                "'unterminated",
+                None,
+            )
+        )
+        for malformed in malformed_values:
+            with self.subTest(malformed=malformed):
+                with self.assertRaises(PROBE["ProbeError"]):
+                    PROBE["validate_configure_arguments"](
+                        malformed, expected, forbidden
                     )
 
     def test_absent_zstd_policy_proves_both_imports_are_unavailable(self):

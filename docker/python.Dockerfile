@@ -178,7 +178,8 @@ COPY --from=crossforge_cpython_build \
 COPY --from=crossforge_zstd \
   /opt/crossforge/deps/zstd/${CPYTHON_ZSTD_VERSION}/${CROSSFORGE_TARGET_TRIPLE}/ \
   /work/deps/zstd/
-COPY --chmod=0755 scripts/build-cpython-cross.sh /work/scripts/build-cpython-cross.sh
+COPY --chmod=0755 scripts/build-cpython-cross.sh \
+  scripts/verify-python-build-sysconfig.py /work/scripts/
 COPY scripts/deny-target-exec.c scripts/target-artifact-canary.c \
   scripts/target-exec-canary.c /work/scripts/
 RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \

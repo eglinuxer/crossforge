@@ -124,6 +124,38 @@ class VerifyPythonSourceBridgeTests(unittest.TestCase):
         self.assertIsNone(bound["source_component"])
         self.assertIsNone(bound["build_policy"])
 
+    def test_cp39_release_bridge_binds_eol_source_and_patch_identity(self):
+        row = "cp39"
+        version = "3.9.25"
+        adapter = "legacy"
+        manifest = VERIFY["row_contract"](
+            self.release, row, version, adapter
+        )
+        bound = VERIFY["bridge_source_manifest"](
+            manifest, self.release, row, version, adapter
+        )
+        self.assertEqual(bound["schema_version"], 1)
+        self.assertEqual(bound["support"], "eol")
+        self.assertEqual(
+            bound["source"],
+            {
+                "url": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz",
+                "size": 20183236,
+                "sha256": "00e07d7c0f2f0cc002432d1ee84d2a40dae404a99303e3f97701c10966c91834",
+            },
+        )
+        self.assertEqual(
+            bound["patches"],
+            [
+                {
+                    "file": "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch",
+                    "sha256": "e4d5629748d9737c891f47eb38cb3a5722c3b71afc5e28b5cede80ae5b66cf77",
+                }
+            ],
+        )
+        self.assertIsNone(bound["source_component"])
+        self.assertIsNone(bound["build_policy"])
+
     def test_support_only_release_change_keeps_v2_build_identity_valid(self):
         release = copy.deepcopy(self.release)
         entry = next(

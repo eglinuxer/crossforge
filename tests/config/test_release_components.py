@@ -11,7 +11,7 @@ RENDERER_PATH = REPOSITORY / "scripts/render-release-components.py"
 RENDERER = runpy.run_path(str(RENDERER_PATH))
 VALIDATOR = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
 
-PHASE8_PYTHON_BUILD_DIGESTS = {
+PHASE9_PYTHON_BUILD_DIGESTS = {
     "implementation/python-cp311-build-policy": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
     "python/cp311-source": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
     "python/cp311-native-build": "d329b20de620e9d6be4d82dd847a41c2ce9a114a5754c60122af573c8e19106b",
@@ -32,10 +32,15 @@ PHASE8_PYTHON_BUILD_DIGESTS = {
     "python/cp314-native-build": "ffdb1374ce4ab354e80dde8df21a15eda0875f6c0fb4fe2b10f8058986dc8202",
     "python/cp314-x86_64-build": "67a6e878e8fc9e592765ce0318a709b2686683b132900431ace217b774c712ae",
     "python/cp314-aarch64-build": "f28bfec58ec2bddafe6dcace24e970db9003135fb59a2eb3c784a30dd639683d",
+    "implementation/python-cp310-build-policy": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
+    "python/cp310-source": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
+    "python/cp310-native-build": "06f91d2b66c85b20e864dbc792b44f1e17772cb865fd18d7bbea7f3f3acfa6d8",
+    "python/cp310-x86_64-build": "85c9e7466beba18ab614d4393573cd2a23db247265feae9e95650a40fbeb5be7",
+    "python/cp310-aarch64-build": "f2536351de8df0207af967bb4ad686613e5d2104f37bb40a1a907376e6ecb410",
 }
-PHASE8_PYTHON_QUALIFICATION_DIGESTS = {
-    "implementation/python-qualification-policy": "5ae0b9f1e9e99c0001bc1285cbbcd529cd7f77a10f574d2e3b6ffc718f2e3f73",
-    "python/qualification": "5de116bc3feef260b2ec3532da145050b3cc820d46760bd606235674d4ac4985",
+PHASE9_PYTHON_QUALIFICATION_DIGESTS = {
+    "implementation/python-qualification-policy": "72f505ebdc79810a7e74f6f61a85923e608b0abfb641014e4050ebfd6caeb2f0",
+    "python/qualification": "d1a9228fd430c2fa66ef948e3fa063db86c4731e240247bd7150c7e9a23cc7d5",
 }
 
 
@@ -451,16 +456,16 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             },
         )
 
-    def test_cp310_append_preserves_existing_build_component_identities(self):
-        self.assertEqual(self.rows[-1]["row"], "cp310")
-        phase8_rows = self.rows[:-1]
+    def test_cp39_append_preserves_existing_build_component_identities(self):
+        self.assertEqual(self.rows[-1]["row"], "cp39")
+        phase9_rows = self.rows[:-1]
         before = RENDERER["render_component_documents"](
-            self.release, phase8_rows
+            self.release, phase9_rows
         )
         after = self.components
 
         protected = set()
-        for row in ("cp311", "cp312", "cp313", "cp314"):
+        for row in ("cp310", "cp311", "cp312", "cp313", "cp314"):
             protected.update(
                 {
                     "implementation/python-%s-build-policy" % row,
@@ -478,9 +483,9 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     RENDERER["canonical_sha256"](after[component]),
-                    PHASE8_PYTHON_BUILD_DIGESTS[component],
+                    PHASE9_PYTHON_BUILD_DIGESTS[component],
                 )
-        self.assertEqual(protected, set(PHASE8_PYTHON_BUILD_DIGESTS))
+        self.assertEqual(protected, set(PHASE9_PYTHON_BUILD_DIGESTS))
 
         for component in (
             "implementation/python-qualification-policy",
@@ -493,7 +498,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 )
                 self.assertNotEqual(
                     RENDERER["canonical_sha256"](after[component]),
-                    PHASE8_PYTHON_QUALIFICATION_DIGESTS[component],
+                    PHASE9_PYTHON_QUALIFICATION_DIGESTS[component],
                 )
         for component in (
             "toolchain/x86_64-qualification",
@@ -503,9 +508,9 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 RENDERER["canonical_sha256"](before[component]),
                 RENDERER["canonical_sha256"](after[component]),
             )
-        self.assertIn("future/python-cp310", before)
-        self.assertNotIn("future/python-cp310", after)
-        self.assertIn("python/cp310-source", after)
+        self.assertIn("future/python-cp39", before)
+        self.assertNotIn("future/python-cp39", after)
+        self.assertIn("python/cp39-source", after)
 
     def test_support_and_sigstore_have_no_build_impact(self):
         release = copy.deepcopy(self.release)
@@ -721,13 +726,17 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 },
             )
 
-    def test_future_python_change_does_not_pollute_current_matrix(self):
-        after = self.render_mutation(
-            lambda release: release["python"]["versions"][0]["source"].__setitem__(
-                "sha256", "0" * 64
-            )
+    def test_future_python_change_does_not_pollute_implemented_matrix(self):
+        phase9_rows = self.rows[:-1]
+        before = RENDERER["render_component_documents"](
+            self.release, phase9_rows
         )
-        self.assertEqual(changed(self.components, after), {"future/python-cp39"})
+        release = copy.deepcopy(self.release)
+        release["python"]["versions"][0]["source"]["sha256"] = "0" * 64
+        after = RENDERER["render_component_documents"](
+            release, phase9_rows
+        )
+        self.assertEqual(changed(before, after), {"future/python-cp39"})
 
     def test_cp314_implementation_preserves_existing_row_build_digests(self):
         prior_rows = tuple(

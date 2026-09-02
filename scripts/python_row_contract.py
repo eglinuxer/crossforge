@@ -64,6 +64,16 @@ IMPLEMENTED_ROWS = (
         "hash_algorithm": "siphash24",
         "introduced_phase": 9,
     },
+    {
+        "minor": "3.9",
+        "row": "cp39",
+        "adapter": "legacy",
+        "gil_policy": "absent",
+        "sysconfig_isolation": True,
+        "zstd": False,
+        "hash_algorithm": "siphash24",
+        "introduced_phase": 10,
+    },
 )
 RECORD_FIELDS = (
     "minor",

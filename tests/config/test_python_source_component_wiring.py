@@ -144,6 +144,14 @@ class PythonSourceComponentWiringTests(unittest.TestCase):
             7: ("cp313", "cp311", "cp312"),
             8: ("cp313", "cp311", "cp312", "cp314"),
             9: ("cp313", "cp311", "cp312", "cp314", "cp310"),
+            10: (
+                "cp313",
+                "cp311",
+                "cp312",
+                "cp314",
+                "cp310",
+                "cp39",
+            ),
         }
         for phase, rows in expected_rows.items():
             expected = [

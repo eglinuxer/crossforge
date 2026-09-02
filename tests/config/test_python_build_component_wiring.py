@@ -139,11 +139,12 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
                     self.assertEqual(arguments["CPYTHON_MINOR"], contract["minor"])
             self.assertEqual(
                 bool(entry["patches"]),
-                row in ("cp310", "cp311", "cp312"),
+                row in ("cp39", "cp310", "cp311", "cp312"),
             )
 
     def test_patch_named_contexts_are_minor_scoped_or_controlled_empty(self):
         expected = {
+            "cp39": "target:cpython-patches-cp39",
             "cp310": "target:cpython-patches-cp310",
             "cp311": "target:cpython-patches-cp311",
             "cp312": "target:cpython-patches-cp312",
@@ -157,6 +158,7 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
                 context,
             )
         for row, minor in (
+            ("cp39", "3.9"),
             ("cp310", "3.10"),
             ("cp311", "3.11"),
             ("cp312", "3.12"),
@@ -281,6 +283,11 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
                 block = self.stages[stage]
                 for argument in arguments:
                     self.assertNotIn(argument, block)
+
+    def test_cross_stage_copies_the_legacy_sysconfig_preflight(self):
+        cross = self.stages["cpython-cross"]
+        self.assertIn("scripts/verify-python-build-sysconfig.py", cross)
+        self.assertIn("scripts/build-cpython-cross.sh", cross)
 
 
 if __name__ == "__main__":

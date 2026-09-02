@@ -9,13 +9,12 @@ build-system-independent DEB/RPM packaging.
 > **Not yet publishable as the complete SDK.** Both cross-toolchain slices now
 > build from locked host and sysroot transactions. x86_64 passes native smoke;
 > aarch64 passes the same compile/ABI gates and explicit QEMU smoke against a
-> locked sysroot and clean Rocky arm64 root. CPython 3.10 legacy, 3.11
+> locked sysroot and clean Rocky arm64 root. CPython 3.9–3.10 legacy, 3.11
 > transition and 3.12–3.14 modern rows have completed their amd64 build-Python,
 > true dual-target SDK, locked-sysroot and clean-Rocky runtime gates through
-> Phase 9. CPython 3.14.7 additionally passes compile
-> qualification with a private static zstd 1.5.7. Python 3.9, vcpkg,
-> packaging, frozen ABI sets, the full GCC/Qt suites and the independent
-> minimal host-runtime lock remain pending.
+> Phase 10. CPython 3.14.7 additionally passes compile qualification with a
+> private static zstd 1.5.7. vcpkg, packaging, frozen ABI sets, the full GCC/Qt
+> suites and the independent minimal host-runtime lock remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -323,10 +322,40 @@ expects CPython 3.10's `siphash24` runtime contract and independently audits
 required extensions because legacy `setup.py` reports some missing modules
 without failing. Adding cp310 preserves every cp311–cp314 source, build-policy,
 native and target build component digest; it deliberately changes the shared
-Python qualification identities. `python-phase9-dev`, `python-dev` and
-`python-matrix` select cp313+cp311+cp312+cp314+cp310. Python 3.9 remains the
-last planned legacy row. The complete Phase 9 gate has passed locally; CI
-repeats the latest matrix on main.
+Python qualification identities. `python-phase9-dev` remains the fixed
+cp313+cp311+cp312+cp314+cp310 snapshot. The complete Phase 9 gate has passed
+locally; CI repeats the latest matrix on main.
+
+## Phase 10: complete CPython 3.9–3.14 matrix
+
+Build and qualify the final legacy row and six-row aggregate:
+
+```console
+$ docker buildx bake python-native-phase10
+$ docker buildx bake cpython-cp39-x86_64-qualify-build \
+    cpython-cp39-aarch64-qualify-build
+$ docker buildx bake cpython-cp39-x86_64-qualify \
+    cpython-cp39-aarch64-qualify
+$ docker buildx bake python-cp39-dev python-phase10-dev
+$ docker buildx bake python-matrix
+$ docker buildx bake phase10
+```
+
+CPython 3.9.25 is EOL and does not support `--disable-test-modules`, so its
+upstream test modules remain installed; no support promise is inferred. Its
+`setup.py` also uses an independent `distutils.sysconfig`. The 3.9-specific
+gh-115382 backport therefore delegates that loader transactionally to the
+source-only stdlib loader. Before `sharedmods`, the build independently proves
+stdlib and distutils agree on compiler, linker, ABI and `CONFIG_ARGS` metadata
+while the target extension directory remains absent from build-Python
+`sys.path`. This prevents both the loud aarch64 lookup failure and the more
+dangerous same-SOABI x86_64 host-config fallback.
+
+`python-phase10-dev`, `python-dev` and `python-matrix` select
+cp313+cp311+cp312+cp314+cp310+cp39; Phases 5–9 retain their original members.
+Adding cp39 preserves all five earlier row-local build component identities
+and deliberately rebinds the shared qualification identities. The complete
+Phase 10 dual-target, dual-runtime gate has passed locally.
 
 ## Product contract
 

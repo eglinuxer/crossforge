@@ -489,6 +489,33 @@ def _validate_filefinder_sysconfig(sysconfig, version):
         )
 
 
+def _validate_distutils_sysconfig_delegation(distutils_sysconfig, version):
+    semantic = _semantic_source(distutils_sysconfig)
+    alias = "from sysconfig import _init_posix as sysconfig_init_posix"
+    if len(re.findall(re.escape(alias), semantic)) != 1 or re.search(
+        r"^%s$" % re.escape(alias), semantic, re.MULTILINE
+    ) is None:
+        raise PreparationError(
+            "CPython %s distutils lacks isolated sysconfig delegation"
+            % version
+        )
+    initializer = _function_block(semantic, "_init_posix", r"", version)
+    statements = [
+        line.strip() for line in initializer.splitlines() if line.strip()
+    ]
+    if statements != [
+        "def _init_posix():",
+        "global _config_vars",
+        "config_vars = {}",
+        "sysconfig_init_posix(config_vars)",
+        "_config_vars = config_vars",
+    ] or len(re.findall(r"sysconfig_init_posix\s*\(", semantic)) != 1:
+        raise PreparationError(
+            "CPython %s distutils sysconfig delegation is not atomic"
+            % version
+        )
+
+
 def _validate_pathfinder_sysconfig(sysconfig, version):
     semantic = _semantic_source(sysconfig)
     importer = _function_block(
@@ -591,6 +618,10 @@ def validate_sysconfig_isolation(source_root, version):
         "configure.ac": source_root / "configure.ac",
         "sysconfig": source_root / sysconfig_paths[0],
     }
+    if version.startswith("3.9."):
+        paths["distutils_sysconfig"] = (
+            source_root / "Lib/distutils/sysconfig.py"
+        )
     try:
         contents = {
             name: path.read_text(encoding="utf-8") for name, path in paths.items()
@@ -627,6 +658,10 @@ def validate_sysconfig_isolation(source_root, version):
         _validate_pathfinder_sysconfig(sysconfig, version)
     else:
         _validate_filefinder_sysconfig(sysconfig, version)
+    if version.startswith("3.9."):
+        _validate_distutils_sysconfig_delegation(
+            contents["distutils_sysconfig"], version
+        )
 
 
 def fsync_directory(path):

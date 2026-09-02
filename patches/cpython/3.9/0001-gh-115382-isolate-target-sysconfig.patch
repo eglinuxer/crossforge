@@ -1,0 +1,103 @@
+From: Vincent Fazio <vfazio@gmail.com>
+Subject: [PATCH] Backport gh-115382: isolate target sysconfig data
+
+Backport the build-critical part of CPython gh-115382 to the 3.9 source
+layout. A build Python must not see target extension modules through
+PYTHONPATH when build and target have the same SOABI. Point sysconfig at the
+target's generated data explicitly instead.
+
+Python 3.9 setup.py still uses an independent distutils.sysconfig loader.
+Delegate its POSIX initialization to the isolated stdlib implementation.
+
+Upstream-Issue: https://github.com/python/cpython/issues/115382
+Backport-Of: https://github.com/python/cpython/commit/909d5ac2959ea88e1d3b38f35676a1c7e5dd44f6
+---
+ Lib/distutils/sysconfig.py | 15 ++++-----------
+ Lib/sysconfig.py           | 15 ++++++++++++++-
+ configure                  |  2 +-
+ configure.ac               |  2 +-
+ 4 files changed, 20 insertions(+), 14 deletions(-)
+
+diff --git a/Lib/distutils/sysconfig.py b/Lib/distutils/sysconfig.py
+--- a/Lib/distutils/sysconfig.py
++++ b/Lib/distutils/sysconfig.py
+@@ -15,6 +15,7 @@ import re
+ import sys
+ 
+ from .errors import DistutilsPlatformError
++from sysconfig import _init_posix as sysconfig_init_posix
+ 
+ # These are needed in a couple of spots, so just compute them once.
+ PREFIX = os.path.normpath(sys.prefix)
+@@ -437,18 +438,10 @@ _config_vars = None
+ 
+ def _init_posix():
+     """Initialize the module as appropriate for POSIX systems."""
+-    # _sysconfigdata is generated at build time, see the sysconfig module
+-    name = os.environ.get('_PYTHON_SYSCONFIGDATA_NAME',
+-        '_sysconfigdata_{abi}_{platform}_{multiarch}'.format(
+-        abi=sys.abiflags,
+-        platform=sys.platform,
+-        multiarch=getattr(sys.implementation, '_multiarch', ''),
+-    ))
+-    _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)
+-    build_time_vars = _temp.build_time_vars
+     global _config_vars
+-    _config_vars = {}
+-    _config_vars.update(build_time_vars)
++    config_vars = {}
++    sysconfig_init_posix(config_vars)
++    _config_vars = config_vars
+ 
+ 
+ def _init_nt():
+
+diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
+--- a/Lib/sysconfig.py
++++ b/Lib/sysconfig.py
+@@ -474,7 +474,20 @@ def _init_posix(vars):
+     """Initialize the module as appropriate for POSIX systems."""
+     # _sysconfigdata is generated at build time, see _generate_posix_vars()
+     name = _get_sysconfigdata_name()
+-    _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)
++
++    # For cross builds, the path to the target's sysconfigdata must be specified
++    # so it can be imported. It cannot be in PYTHONPATH, as foreign modules in
++    # sys.path can cause crashes when loaded by the host interpreter.
++    # Rely on truthiness as a valueless env variable is still an empty string.
++    # See OS X note in _generate_posix_vars re _sysconfigdata.
++    if (path := os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')):
++        from importlib.machinery import FileFinder, SourceFileLoader, SOURCE_SUFFIXES
++        from importlib.util import module_from_spec
++        spec = FileFinder(path, (SourceFileLoader, SOURCE_SUFFIXES)).find_spec(name)
++        _temp = module_from_spec(spec)
++        spec.loader.exec_module(_temp)
++    else:
++        _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)
+     build_time_vars = _temp.build_time_vars
+     vars.update(build_time_vars)
+ 
+diff --git a/configure b/configure
+--- a/configure
++++ b/configure
+@@ -3019,7 +3019,7 @@ if test "$cross_compiling" = yes; then
+ 	fi
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $interp" >&5
+ $as_echo "$interp" >&6; }
+-	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) '$interp
++	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) _PYTHON_SYSCONFIGDATA_PATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`) '$interp
+     fi
+ elif test "$cross_compiling" = maybe; then
+     as_fn_error $? "Cross compiling required --host=HOST-TUPLE and --build=ARCH" "$LINENO" 5
+diff --git a/configure.ac b/configure.ac
+--- a/configure.ac
++++ b/configure.ac
+@@ -82,7 +82,7 @@ if test "$cross_compiling" = yes; then
+ 	    AC_MSG_ERROR([python$PACKAGE_VERSION interpreter not found])
+ 	fi
+         AC_MSG_RESULT($interp)
+-	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) '$interp
++	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) _PYTHON_SYSCONFIGDATA_PATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`) '$interp
+     fi
+ elif test "$cross_compiling" = maybe; then
+     AC_MSG_ERROR([Cross compiling required --host=HOST-TUPLE and --build=ARCH])

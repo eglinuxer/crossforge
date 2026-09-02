@@ -1,0 +1,39 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp39-native-build",
+  "dependencies": [
+    {
+      "canonical_sha256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
+      "component": "python/cp39-source"
+    },
+    {
+      "canonical_sha256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+      "component": "rpm/host-build-common"
+    },
+    {
+      "canonical_sha256": "3a3c0c9e014032d1a38b20962133c83bcdb7a6f59914f1974832e6f0f18ef7a0",
+      "component": "rpm/host-python-build"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/platforms/build",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/image",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/tool_host",
+      "value": "linux/amd64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

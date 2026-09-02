@@ -827,6 +827,57 @@ class PythonQualificationTests(unittest.TestCase):
                         build_python,
                     )
 
+        cp39_build_python = Path(
+            "/opt/crossforge/python/cp39/build/bin/python3.9"
+        )
+        cp39_required = (
+            "--host=" + TARGET,
+            "--build=" + build_triple,
+            "--prefix=/opt/crossforge/python/cp39/targets/" + TARGET,
+            "--with-computed-gotos=yes",
+            "--with-ensurepip=no",
+        )
+        cp39_args = " ".join(cp39_required)
+        cp39_legacy = ROW_CONTRACT["contract_for_version"]("3.9.25")
+        self.assertEqual(
+            validate(
+                cp39_args,
+                cp39_legacy,
+                TARGET,
+                build_triple,
+                cp39_build_python,
+            ),
+            cp39_args,
+        )
+        cp39_invalid = [
+            cp39_args.replace(option, option + "-wrong")
+            for option in cp39_required
+        ]
+        cp39_invalid.extend(
+            (
+                cp39_args + " " + cp39_required[0],
+                cp39_args + " --disable-test-modules",
+                cp39_args + " --disable-test-modules=yes",
+                cp39_args
+                + " --with-build-python="
+                + str(cp39_build_python),
+                cp39_args + " --with-pkg-config=yes",
+                cp39_args + " HOSTRUNNER=qemu",
+                "'unterminated",
+                None,
+            )
+        )
+        for invalid in cp39_invalid:
+            with self.subTest(cp39_invalid=invalid):
+                with self.assertRaises(QUALIFIER["QualificationError"]):
+                    validate(
+                        invalid,
+                        cp39_legacy,
+                        TARGET,
+                        build_triple,
+                        cp39_build_python,
+                    )
+
         modern = ROW_CONTRACT["contract_for_version"]("3.13.15")
         modern_build_python = Path(
             "/opt/crossforge/python/cp313/build/bin/python3.13"

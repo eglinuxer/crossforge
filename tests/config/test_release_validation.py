@@ -36,7 +36,7 @@ class ReleaseValidationTests(unittest.TestCase):
             result["qemu_manifest_sha256"],
             self.config["qemu"]["executor"]["manifest_digest"],
         )
-        self.assertEqual(result["python_patches"], 3)
+        self.assertEqual(result["python_patches"], 4)
 
     def test_supply_chain_identity_tampering_is_rejected(self):
         mutations = (
@@ -48,6 +48,7 @@ class ReleaseValidationTests(unittest.TestCase):
                 ("python", "versions", 4, "source", "sigstore", "bundle_sha256"),
                 "0" * 64,
             ),
+            (("python", "versions", 0, "patches", 0, "sha256"), "0" * 64),
             (("python", "versions", 1, "patches", 0, "sha256"), "0" * 64),
             (("python", "versions", 2, "patches", 0, "sha256"), "0" * 64),
             (("python", "versions", 3, "patches", 0, "sha256"), "0" * 64),
@@ -188,9 +189,50 @@ class ReleaseValidationTests(unittest.TestCase):
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate"](config, self.schema, self.schema, "$")
 
+    def test_python_39_source_and_sigstore_evidence_are_exactly_locked(self):
+        entry = self.config["python"]["versions"][0]
+        self.assertEqual(entry["version"], "3.9.25")
+        self.assertEqual(entry["adapter"], "legacy")
+        self.assertEqual(entry["support"], "eol")
+        self.assertEqual(
+            entry["source"],
+            {
+                "status": "locked",
+                "url": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz",
+                "sha256": "00e07d7c0f2f0cc002432d1ee84d2a40dae404a99303e3f97701c10966c91834",
+                "size": 20183236,
+                "sigstore": {
+                    "verification": "archived-unverified",
+                    "bundle_url": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz.sigstore",
+                    "bundle_sha256": "09243be5b795dbccf2e3a28b1a478a51ccdc1d2e102122737fc012798a5b17ad",
+                    "bundle_size": 5079,
+                    "bundle_evidence": "evidence/sigstore/cpython-3.9.25.tar.xz.sigstore.b64",
+                    "identity": "lukasz@langa.pl",
+                    "oidc_issuer": "https://github.com/login/oauth",
+                },
+            },
+        )
+        self.assertEqual(
+            SOURCE_FETCHER["source_for"](self.config, "python", "3.9.25"),
+            entry["source"],
+        )
+        evidence = EVIDENCE_VALIDATOR["validate_evidence"](
+            self.config, REPOSITORY
+        )
+        self.assertEqual(evidence["python_sources"], 6)
+        self.assertEqual(evidence["python_sigstore_status"], "archived-unverified")
+
     def test_python_isolation_patches_are_explicit_and_content_locked(self):
         versions = self.config["python"]["versions"]
         expected = {
+            0: {
+                "version": "3.9.25",
+                "adapter": "legacy",
+                "patch": {
+                    "file": "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch",
+                    "sha256": "e4d5629748d9737c891f47eb38cb3a5722c3b71afc5e28b5cede80ae5b66cf77",
+                },
+            },
             1: {
                 "version": "3.10.21",
                 "adapter": "legacy",
@@ -233,14 +275,31 @@ class ReleaseValidationTests(unittest.TestCase):
                         for line in payload.splitlines()
                         if line.startswith(b"diff --git ")
                     ],
-                    [
-                        b"diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py",
-                        b"diff --git a/configure b/configure",
-                        b"diff --git a/configure.ac b/configure.ac",
-                    ],
+                    (
+                        [
+                            b"diff --git a/Lib/distutils/sysconfig.py b/Lib/distutils/sysconfig.py",
+                            b"diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py",
+                            b"diff --git a/configure b/configure",
+                            b"diff --git a/configure.ac b/configure.ac",
+                        ]
+                        if contract["version"] == "3.9.25"
+                        else [
+                            b"diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py",
+                            b"diff --git a/configure b/configure",
+                            b"diff --git a/configure.ac b/configure.ac",
+                        ]
+                    ),
                 )
                 self.assertIn(b"_PYTHON_SYSCONFIGDATA_PATH", payload)
                 self.assertIn(b"PYTHONPATH=$(srcdir)/Lib", payload)
+                if contract["version"] == "3.9.25":
+                    self.assertIn(
+                        b"from sysconfig import _init_posix as sysconfig_init_posix",
+                        payload,
+                    )
+                    self.assertIn(
+                        b"sysconfig_init_posix(config_vars)", payload
+                    )
         for index, version in enumerate(versions):
             if index not in expected:
                 self.assertEqual(version["patches"], [])
@@ -248,7 +307,12 @@ class ReleaseValidationTests(unittest.TestCase):
     def test_python_isolation_patch_schema_rejects_contract_drift(self):
         mutations = []
 
-        for index, minor in ((1, "3.10"), (2, "3.11"), (3, "3.12")):
+        for index, minor in (
+            (0, "3.9"),
+            (1, "3.10"),
+            (2, "3.11"),
+            (3, "3.12"),
+        ):
             missing = copy.deepcopy(self.config)
             missing["python"]["versions"][index]["patches"] = []
             mutations.append(missing)
@@ -280,6 +344,7 @@ class ReleaseValidationTests(unittest.TestCase):
 
     def test_python_isolation_policy_fails_closed_for_unknown_patch_release(self):
         for index, replacement in (
+            (0, "3.9.26"),
             (1, "3.10.22"),
             (2, "3.11.17"),
             (3, "3.12.15"),

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp39-aarch64-build",
+  "dependencies": [
+    {
+      "canonical_sha256": "406f69d4c20198de2cd4181a31f41e79de3f15e33867f609d516e7b4fead9457",
+      "component": "python/cp39-native-build"
+    },
+    {
+      "canonical_sha256": "ff75a8428b27f5c4b1193693a81ca8a820b1c042951ea3ae0d181d0a8202a24e",
+      "component": "toolchain/aarch64-build"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/targets/1/arch",
+      "value": "aarch64"
+    },
+    {
+      "path": "/targets/1/sysroot/canonical_sha256",
+      "value": "70436d94443b019fbe61237bf93b8bb457927f3de09429e6ef7f37598b482b67"
+    },
+    {
+      "path": "/targets/1/sysroot/lock_file",
+      "value": "locks/sysroot-el8-aarch64.json"
+    },
+    {
+      "path": "/targets/1/sysroot/status",
+      "value": "locked"
+    },
+    {
+      "path": "/targets/1/triple",
+      "value": "aarch64-unknown-linux-gnu"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

@@ -511,11 +511,14 @@ class PythonRowManifestTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_row_verifier_rejects_source_locked_but_unimplemented_minor(self):
-        planned = self.entry("3.9")
+        release = copy.deepcopy(self.release)
+        planned = copy.deepcopy(self.entry("3.9"))
+        planned["version"] = "3.8.20"
+        release["python"]["versions"].append(planned)
         with self.assertRaises(VERIFY["RowError"]):
             VERIFY["row_contract"](
-                self.release,
-                "cp39",
+                release,
+                "cp38",
                 planned["version"],
                 planned["adapter"],
             )

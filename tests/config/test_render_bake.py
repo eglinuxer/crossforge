@@ -64,7 +64,7 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_component_arguments_cover_the_complete_release_binding(self):
         records = self.binding["components"]
-        self.assertEqual(len(records), 48)
+        self.assertEqual(len(records), 52)
         expected = {
             RENDERER["component_argument_name"](record["component"]): record[
                 "canonical_sha256"
@@ -266,7 +266,7 @@ class RenderBakeTests(unittest.TestCase):
         RENDERER["render_python_graph"](
             changed_release, after, self.component_arguments
         )
-        for row in ("cp313", "cp311", "cp312", "cp310"):
+        for row in ("cp313", "cp311", "cp312", "cp310", "cp39"):
             self.assertEqual(
                 before["cpython-build-%s" % row],
                 after["cpython-build-%s" % row],
@@ -307,6 +307,14 @@ class RenderBakeTests(unittest.TestCase):
             7: ("cp313", "cp311", "cp312"),
             8: ("cp313", "cp311", "cp312", "cp314"),
             9: ("cp313", "cp311", "cp312", "cp314", "cp310"),
+            10: (
+                "cp313",
+                "cp311",
+                "cp312",
+                "cp314",
+                "cp310",
+                "cp39",
+            ),
         }
         for phase, rows in expected.items():
             with self.subTest(phase=phase):
