@@ -82,6 +82,33 @@ class PythonCompileAbiWiringTests(unittest.TestCase):
                     + len(bound["runtime_target"]["providers"]),
                     provider_count,
                 )
+                release = RUNTIME_PROVIDERS.load_json(
+                    REPOSITORY / "config/release.json"
+                )
+                self.assertEqual(
+                    QUALIFIER["validate_release_abi_inputs"](
+                        release, bound
+                    ),
+                    QUALIFIER["abi_contract"].release_abi_inputs(
+                        release, arch
+                    ),
+                )
+
+    def test_release_abi_pin_cannot_diverge_from_compile_inputs(self):
+        bound = self.bind_repository_target(
+            "x86_64", "x86_64-unknown-linux-gnu"
+        )
+        release = RUNTIME_PROVIDERS.load_json(
+            REPOSITORY / "config/release.json"
+        )
+        release["abi"]["targets"]["x86_64"]["baseline"][
+            "canonical_sha256"
+        ] = "0" * 64
+        with self.assertRaisesRegex(
+            QUALIFIER["QualificationError"],
+            "ABI inputs differ from release.json",
+        ):
+            QUALIFIER["validate_release_abi_inputs"](release, bound)
 
     def test_inventory_and_policy_must_name_the_embedded_sysroot_lock(self):
         arch = "x86_64"

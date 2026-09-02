@@ -40,7 +40,7 @@ PHASE9_PYTHON_BUILD_DIGESTS = {
 }
 PHASE9_PYTHON_QUALIFICATION_DIGESTS = {
     "implementation/python-qualification-policy": "72f505ebdc79810a7e74f6f61a85923e608b0abfb641014e4050ebfd6caeb2f0",
-    "python/qualification": "d1a9228fd430c2fa66ef948e3fa063db86c4731e240247bd7150c7e9a23cc7d5",
+    "python/qualification": "7396e38468e853b3d62213907d30ce57d264326052c0ad99cf77c90847d6b587",
 }
 
 
@@ -189,6 +189,9 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
 
     def test_policy_and_python_dependency_matrix_is_exact(self):
         expected_qualification = {
+            "abi/x86_64-baseline",
+            "abi/aarch64-baseline",
+            "abi/python-providers",
             "implementation/python-qualification-policy",
             "toolchain/x86_64-qualification",
             "toolchain/aarch64-qualification",
@@ -232,6 +235,51 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 for item in self.components["python/qualification"]["dependencies"]
             },
             expected_qualification,
+        )
+        for arch in ("x86_64", "aarch64"):
+            self.assertEqual(
+                {
+                    item["component"]
+                    for item in self.components[
+                        "toolchain/%s-qualification" % arch
+                    ]["dependencies"]
+                },
+                {
+                    "abi/%s-baseline" % arch,
+                    "toolchain/%s-build" % arch,
+                },
+            )
+
+    def test_abi_input_component_boundaries_are_exact(self):
+        for arch in ("x86_64", "aarch64"):
+            component = self.components["abi/%s-baseline" % arch]
+            self.assertEqual(component["scope"], "qualification")
+            self.assertEqual(component["dependencies"], [])
+            self.assertEqual(
+                {item["path"] for item in component["materials"]},
+                {
+                    "/abi/targets/%s/baseline/file" % arch,
+                    "/abi/targets/%s/baseline/canonical_sha256" % arch,
+                },
+            )
+        providers = self.components["abi/python-providers"]
+        self.assertEqual(providers["scope"], "qualification")
+        self.assertEqual(providers["dependencies"], [])
+        prefixes = (
+            "/abi/provider_manifest",
+            "/abi/targets/x86_64/sysroot_inventory",
+            "/abi/targets/aarch64/sysroot_inventory",
+            "/abi/python/runtime_provider_policy",
+            "/abi/python/provider_catalogs/x86_64",
+            "/abi/python/provider_catalogs/aarch64",
+        )
+        self.assertEqual(
+            {item["path"] for item in providers["materials"]},
+            {
+                prefix + "/" + field
+                for prefix in prefixes
+                for field in ("file", "canonical_sha256")
+            },
         )
 
     def test_python_qualification_component_identity_api_is_exact(self):
@@ -320,6 +368,36 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             },
         )
         self.assertNotEqual(phase8, expected)
+
+    def test_toolchain_qualification_component_identity_api_is_exact(self):
+        for arch in ("x86_64", "aarch64"):
+            component = "toolchain/%s-qualification" % arch
+            expected = {
+                "component": component,
+                "canonical_sha256": RENDERER["canonical_sha256"](
+                    self.components[component]
+                ),
+            }
+            self.assertEqual(
+                RENDERER["toolchain_qualification_component"](
+                    self.release, arch
+                ),
+                expected,
+            )
+            self.assertEqual(
+                RENDERER["bind_toolchain_qualification_component"](
+                    self.release, arch, expected["canonical_sha256"]
+                ),
+                expected,
+            )
+            with self.assertRaises(RENDERER["ProjectionError"]):
+                RENDERER["bind_toolchain_qualification_component"](
+                    self.release, arch, "0" * 64
+                )
+        with self.assertRaises(RENDERER["ProjectionError"]):
+            RENDERER["toolchain_qualification_component"](
+                self.release, "riscv64"
+            )
 
     def test_every_release_leaf_has_its_classified_scope_owner(self):
         classifications = RENDERER["classify_release_leaves"](
@@ -533,6 +611,76 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                     for name in changed(self.components, documents)
                 )
             )
+
+    def test_abi_identity_changes_have_exact_qualification_only_impact(self):
+        cases = []
+        for arch in ("x86_64", "aarch64"):
+            cases.append(
+                (
+                    "%s-baseline" % arch,
+                    lambda release, arch=arch: release["abi"]["targets"][
+                        arch
+                    ]["baseline"].__setitem__("canonical_sha256", "0" * 64),
+                    {
+                        "abi/%s-baseline" % arch,
+                        "toolchain/%s-qualification" % arch,
+                        "python/qualification",
+                    },
+                )
+            )
+            cases.extend(
+                (
+                    (
+                        "%s-sysroot-inventory" % arch,
+                        lambda release, arch=arch: release["abi"]["targets"][
+                            arch
+                        ]["sysroot_inventory"].__setitem__(
+                            "canonical_sha256", "0" * 64
+                        ),
+                    ),
+                    (
+                        "%s-provider-catalog" % arch,
+                        lambda release, arch=arch: release["abi"]["python"][
+                            "provider_catalogs"
+                        ][arch].__setitem__("canonical_sha256", "0" * 64),
+                    ),
+                )
+            )
+        cases.extend(
+            (
+                (
+                    "provider-manifest",
+                    lambda release: release["abi"]["provider_manifest"].__setitem__(
+                        "canonical_sha256", "0" * 64
+                    ),
+                ),
+                (
+                    "runtime-provider-policy",
+                    lambda release: release["abi"]["python"][
+                        "runtime_provider_policy"
+                    ].__setitem__("canonical_sha256", "0" * 64),
+                ),
+            )
+        )
+        normalized = []
+        provider_impact = {"abi/python-providers", "python/qualification"}
+        for case in cases:
+            if len(case) == 3:
+                normalized.append(case)
+            else:
+                normalized.append(case + (provider_impact,))
+        for name, mutate, expected in normalized:
+            with self.subTest(name=name):
+                release = copy.deepcopy(self.release)
+                mutate(release)
+                after = RENDERER["render_component_documents"](
+                    release, self.rows
+                )
+                observed = changed(self.components, after)
+                self.assertEqual(observed, expected)
+                self.assertFalse(
+                    any(after[item]["scope"] == "build" for item in observed)
+                )
 
     def test_aarch64_sysroot_has_exact_single_arch_impact(self):
         after = self.render_mutation(

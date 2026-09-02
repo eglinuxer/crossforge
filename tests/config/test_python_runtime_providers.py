@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -71,6 +72,26 @@ class PythonRuntimeProviderPolicyTests(unittest.TestCase):
         for target in report["targets"].values():
             self.assertEqual(target["provider_count"], 8)
             self.assertEqual(target["rpm_owner_count"], 7)
+
+    def test_repository_policy_and_catalogs_are_bound_to_release(self):
+        release = PROVIDERS["load_json"](REPOSITORY / "config/release.json")
+        release["abi"]["python"]["runtime_provider_policy"][
+            "canonical_sha256"
+        ] = "0" * 64
+        original = PROVIDERS["load_json"]
+
+        def load(path):
+            if Path(path) == REPOSITORY / "config/release.json":
+                return copy.deepcopy(release)
+            return original(path)
+
+        function = PROVIDERS["validate_repository"]
+        with mock.patch.dict(function.__globals__, {"load_json": load}):
+            with self.assertRaisesRegex(
+                PolicyError,
+                "release Python runtime provider policy identity differs",
+            ):
+                function()
 
     def test_exact_eight_sonames_seven_owners_and_no_core_or_zstd(self):
         expected = list(PROVIDERS["EXPECTED_PROVIDERS"])

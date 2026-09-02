@@ -8,6 +8,7 @@
     "$schema",
     "schema_version",
     "baseline",
+    "abi",
     "product",
     "base_image",
     "trust",
@@ -30,6 +31,9 @@
     },
     "baseline": {
       "const": "el8"
+    },
+    "abi": {
+      "$ref": "#/$defs/abi"
     },
     "product": {
       "type": "object",
@@ -661,6 +665,197 @@
     }
   },
   "$defs": {
+    "canonical_json_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^(abi|config|evidence)/[a-zA-Z0-9._/-]+\\.json$"
+        },
+        "canonical_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "abi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_manifest",
+        "targets",
+        "python"
+      ],
+      "properties": {
+        "provider_manifest": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/canonical_json_identity"
+            },
+            {
+              "properties": {
+                "file": {
+                  "const": "config/abi-providers.json"
+                }
+              }
+            }
+          ]
+        },
+        "targets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x86_64",
+            "aarch64"
+          ],
+          "properties": {
+            "x86_64": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "baseline",
+                "sysroot_inventory"
+              ],
+              "properties": {
+                "baseline": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/canonical_json_identity"
+                    },
+                    {
+                      "properties": {
+                        "file": {
+                          "const": "abi/el8/x86_64.json"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "sysroot_inventory": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/canonical_json_identity"
+                    },
+                    {
+                      "properties": {
+                        "file": {
+                          "const": "evidence/abi/el8-x86_64-sysroot.json"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "aarch64": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "baseline",
+                "sysroot_inventory"
+              ],
+              "properties": {
+                "baseline": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/canonical_json_identity"
+                    },
+                    {
+                      "properties": {
+                        "file": {
+                          "const": "abi/el8/aarch64.json"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "sysroot_inventory": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/canonical_json_identity"
+                    },
+                    {
+                      "properties": {
+                        "file": {
+                          "const": "evidence/abi/el8-aarch64-sysroot.json"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "python": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "runtime_provider_policy",
+            "provider_catalogs"
+          ],
+          "properties": {
+            "runtime_provider_policy": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/canonical_json_identity"
+                },
+                {
+                  "properties": {
+                    "file": {
+                      "const": "config/python-runtime-providers.json"
+                    }
+                  }
+                }
+              ]
+            },
+            "provider_catalogs": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "x86_64",
+                "aarch64"
+              ],
+              "properties": {
+                "x86_64": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/canonical_json_identity"
+                    },
+                    {
+                      "properties": {
+                        "file": {
+                          "const": "evidence/abi/el8-x86_64-python-provider-catalog.json"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "aarch64": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/canonical_json_identity"
+                    },
+                    {
+                      "properties": {
+                        "file": {
+                          "const": "evidence/abi/el8-aarch64-python-provider-catalog.json"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "pending_artifact_source": {
       "type": "object",
       "additionalProperties": false,

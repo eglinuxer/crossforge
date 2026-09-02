@@ -1,0 +1,58 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "abi/python-providers",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/abi/provider_manifest/canonical_sha256",
+      "value": "709de9e38920b315e29bfb4e0c40763a8632697942a836140252ea5665de7de9"
+    },
+    {
+      "path": "/abi/provider_manifest/file",
+      "value": "config/abi-providers.json"
+    },
+    {
+      "path": "/abi/python/provider_catalogs/aarch64/canonical_sha256",
+      "value": "bf72f411578653617091dd414b876fb2beba4074d95aa7b7930fdfc2e15a1108"
+    },
+    {
+      "path": "/abi/python/provider_catalogs/aarch64/file",
+      "value": "evidence/abi/el8-aarch64-python-provider-catalog.json"
+    },
+    {
+      "path": "/abi/python/provider_catalogs/x86_64/canonical_sha256",
+      "value": "048b180ab090eb993ed47e92b1d9f923f332c82993b0eaa126a19d64ab07faed"
+    },
+    {
+      "path": "/abi/python/provider_catalogs/x86_64/file",
+      "value": "evidence/abi/el8-x86_64-python-provider-catalog.json"
+    },
+    {
+      "path": "/abi/python/runtime_provider_policy/canonical_sha256",
+      "value": "c25692ca24d11c13328f758f96dec49a81bb574763c08f9a437a139f1f363960"
+    },
+    {
+      "path": "/abi/python/runtime_provider_policy/file",
+      "value": "config/python-runtime-providers.json"
+    },
+    {
+      "path": "/abi/targets/aarch64/sysroot_inventory/canonical_sha256",
+      "value": "3527525c07f3a3e456eeb3b460a43d1c2cb0b97eeb7f824efd1e81bc5c0f82e8"
+    },
+    {
+      "path": "/abi/targets/aarch64/sysroot_inventory/file",
+      "value": "evidence/abi/el8-aarch64-sysroot.json"
+    },
+    {
+      "path": "/abi/targets/x86_64/sysroot_inventory/canonical_sha256",
+      "value": "4f65a4b1770d96f8cadf46e7927ee40638f348f7fc218093f3059ca27d577534"
+    },
+    {
+      "path": "/abi/targets/x86_64/sysroot_inventory/file",
+      "value": "evidence/abi/el8-x86_64-sysroot.json"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

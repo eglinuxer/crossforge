@@ -523,6 +523,55 @@ def build_provider_catalog(readelf, sysroot, abi_inputs):
     }
 
 
+def validate_release_abi_inputs(release, abi_inputs):
+    """Bind every consumed ABI document to its release.json identity."""
+    arch = abi_inputs["baseline"]["target"]["arch"]
+    try:
+        expected = abi_contract.release_abi_inputs(release, arch)
+    except abi_contract.AbiContractError as error:
+        raise QualificationError(str(error)) from error
+    identities = abi_inputs["identities"]
+    observed = {
+        "provider_manifest": {
+            "file": identities["provider_manifest"]["file"],
+            "canonical_sha256": identities["provider_manifest"][
+                "canonical_sha256"
+            ],
+        },
+        "baseline": {
+            "file": identities["baseline"]["file"],
+            "canonical_sha256": identities["baseline"][
+                "canonical_sha256"
+            ],
+        },
+        "sysroot_inventory": {
+            "file": identities["sysroot_inventory"]["file"],
+            "canonical_sha256": identities["sysroot_inventory"][
+                "canonical_sha256"
+            ],
+        },
+        "runtime_provider_policy": {
+            "file": identities["runtime_provider_policy"]["file"],
+            "canonical_sha256": identities["runtime_provider_policy"][
+                "canonical_sha256"
+            ],
+        },
+        "provider_catalog": {
+            "file": PYTHON_PROVIDER_CATALOG_LOGICAL_PATH.format(
+                arch=arch
+            ),
+            "canonical_sha256": abi_inputs["runtime_target"][
+                "provider_catalog_sha256"
+            ],
+        },
+    }
+    require(
+        observed == expected,
+        "qualification ABI inputs differ from release.json",
+    )
+    return expected
+
+
 def audit_python_artifact(
     baseline,
     external_providers,
@@ -861,6 +910,7 @@ def main():
         profile["arch"],
         arguments.target,
     )
+    validate_release_abi_inputs(release, abi_inputs)
 
     build_version, _ = run(
         [

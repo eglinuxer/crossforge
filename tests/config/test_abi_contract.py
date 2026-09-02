@@ -194,6 +194,34 @@ class AbiDocumentTests(unittest.TestCase):
             },
         )
 
+    def test_release_abi_identities_have_fixed_paths_and_digests(self):
+        release = json.loads(
+            (REPOSITORY / "config/release.json").read_text(encoding="utf-8")
+        )
+        abi = ABI["validate_release_abi_identities"](release)
+        self.assertEqual(
+            abi["provider_manifest"]["canonical_sha256"],
+            PROVIDER_MANIFEST_SHA256,
+        )
+        for arch in ("x86_64", "aarch64"):
+            for name in ("baseline", "sysroot_inventory"):
+                self.assertRegex(
+                    abi["targets"][arch][name]["canonical_sha256"],
+                    r"^[0-9a-f]{64}$",
+                )
+        wrong_path = copy.deepcopy(release)
+        wrong_path["abi"]["targets"]["x86_64"]["baseline"][
+            "file"
+        ] = "abi/el8/aarch64.json"
+        with self.assertRaisesRegex(AbiContractError, "file differs"):
+            ABI["validate_release_abi_identities"](wrong_path)
+        wrong_digest = copy.deepcopy(release)
+        wrong_digest["abi"]["python"]["runtime_provider_policy"][
+            "canonical_sha256"
+        ] = "not-a-digest"
+        with self.assertRaisesRegex(AbiContractError, "64 lowercase"):
+            ABI["validate_release_abi_identities"](wrong_digest)
+
     def test_duplicate_keys_and_nonfinite_numbers_are_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "abi.json"

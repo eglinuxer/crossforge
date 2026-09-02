@@ -593,6 +593,13 @@ def validate_repository(repository=REPOSITORY, provider_roots=None):
     """Validate the checked-in policy, schema and both complete RPM locks."""
     repository = Path(repository)
     require(repository.resolve() == REPOSITORY, "repository validation path differs")
+    release = load_json(repository / "config/release.json")
+    try:
+        release_abi = ABI_CONTRACT["validate_release_abi_identities"](
+            release
+        )
+    except ABI_CONTRACT["AbiContractError"] as error:
+        raise RuntimeProviderPolicyError(str(error)) from error
     policy = load_json(repository / "config/python-runtime-providers.json")
     schema = load_json(
         repository / "config/schemas/python-runtime-providers.schema.json"
@@ -603,6 +610,15 @@ def validate_repository(repository=REPOSITORY, provider_roots=None):
         for arch in TARGET_ORDER
     }
     summary = validate_policy_against_locks(policy, locks)
+    release_python_abi = release_abi["python"]
+    require(
+        release_python_abi["runtime_provider_policy"]
+        == {
+            "file": "config/python-runtime-providers.json",
+            "canonical_sha256": canonical_sha256(policy),
+        },
+        "release Python runtime provider policy identity differs",
+    )
     python_abi = runpy.run_path(
         str(repository / "scripts/python_abi_audit.py")
     )
@@ -632,6 +648,17 @@ def validate_repository(repository=REPOSITORY, provider_roots=None):
         require(
             canonical_sha256(catalog) == target["provider_catalog_sha256"],
             "%s provider catalog digest differs from policy" % arch,
+        )
+        require(
+            release_python_abi["provider_catalogs"][arch]
+            == {
+                "file": (
+                    "evidence/abi/el8-%s-python-provider-catalog.json"
+                    % arch
+                ),
+                "canonical_sha256": canonical_sha256(catalog),
+            },
+            "%s release Python provider catalog identity differs" % arch,
         )
         summary[arch]["provider_catalog_sha256"] = target[
             "provider_catalog_sha256"

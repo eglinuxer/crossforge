@@ -109,6 +109,26 @@ TARGETS = {
         "interpreter": "/lib/ld-linux-aarch64.so.1",
     },
 }
+RELEASE_ABI_FILES = {
+    "provider_manifest": "config/abi-providers.json",
+    "x86_64_baseline": "abi/el8/x86_64.json",
+    "aarch64_baseline": "abi/el8/aarch64.json",
+    "x86_64_sysroot_inventory": (
+        "evidence/abi/el8-x86_64-sysroot.json"
+    ),
+    "aarch64_sysroot_inventory": (
+        "evidence/abi/el8-aarch64-sysroot.json"
+    ),
+    "python_runtime_provider_policy": (
+        "config/python-runtime-providers.json"
+    ),
+    "x86_64_python_provider_catalog": (
+        "evidence/abi/el8-x86_64-python-provider-catalog.json"
+    ),
+    "aarch64_python_provider_catalog": (
+        "evidence/abi/el8-aarch64-python-provider-catalog.json"
+    ),
+}
 PUBLIC_NAMESPACES = ("GLIBC", "GLIBCXX", "CXXABI", "GCC", "XCRYPT")
 PROVIDER_SCOPED_PUBLIC_NAMESPACES = {
     "XCRYPT": frozenset(("libcrypt.so.1",)),
@@ -320,6 +340,96 @@ def _validate_sha256(value, label):
         "%s must be 64 lowercase hexadecimal characters" % label,
     )
     return value
+
+
+def validate_release_abi_identities(release):
+    """Validate the fixed logical paths and digests in release.json."""
+    require(type(release) is dict, "release configuration must be an object")
+    abi = release.get("abi")
+    require(
+        type(abi) is dict
+        and set(abi) == {"provider_manifest", "targets", "python"},
+        "release ABI identity fields differ",
+    )
+
+    def identity(value, expected_file, label):
+        require(
+            type(value) is dict
+            and set(value) == {"file", "canonical_sha256"},
+            "%s fields differ" % label,
+        )
+        require(value["file"] == expected_file, "%s file differs" % label)
+        _validate_sha256(value["canonical_sha256"], label + " digest")
+
+    identity(
+        abi["provider_manifest"],
+        RELEASE_ABI_FILES["provider_manifest"],
+        "release ABI provider manifest",
+    )
+    targets = abi["targets"]
+    require(
+        type(targets) is dict and set(targets) == set(TARGETS),
+        "release ABI target identities differ",
+    )
+    for arch in ("x86_64", "aarch64"):
+        target = targets[arch]
+        require(
+            type(target) is dict
+            and set(target) == {"baseline", "sysroot_inventory"},
+            "release ABI %s target fields differ" % arch,
+        )
+        identity(
+            target["baseline"],
+            RELEASE_ABI_FILES[arch + "_baseline"],
+            "release ABI %s baseline" % arch,
+        )
+        identity(
+            target["sysroot_inventory"],
+            RELEASE_ABI_FILES[arch + "_sysroot_inventory"],
+            "release ABI %s sysroot inventory" % arch,
+        )
+
+    python = abi["python"]
+    require(
+        type(python) is dict
+        and set(python)
+        == {"runtime_provider_policy", "provider_catalogs"},
+        "release Python ABI identity fields differ",
+    )
+    identity(
+        python["runtime_provider_policy"],
+        RELEASE_ABI_FILES["python_runtime_provider_policy"],
+        "release Python runtime provider policy",
+    )
+    catalogs = python["provider_catalogs"]
+    require(
+        type(catalogs) is dict and set(catalogs) == set(TARGETS),
+        "release Python provider catalog targets differ",
+    )
+    for arch in ("x86_64", "aarch64"):
+        identity(
+            catalogs[arch],
+            RELEASE_ABI_FILES[arch + "_python_provider_catalog"],
+            "release Python %s provider catalog" % arch,
+        )
+    return abi
+
+
+def release_abi_inputs(release, arch):
+    """Return the five canonical ABI inputs consumed for one target."""
+    abi = validate_release_abi_identities(release)
+    require(arch in TARGETS, "unsupported release ABI target")
+    return {
+        "provider_manifest": abi["provider_manifest"],
+        "baseline": abi["targets"][arch]["baseline"],
+        "sysroot_inventory": abi["targets"][arch][
+            "sysroot_inventory"
+        ],
+        "runtime_provider_policy": abi["python"][
+            "runtime_provider_policy"
+        ],
+        "provider_catalog": abi["python"]["provider_catalogs"][arch],
+    }
 
 
 def _validate_target(target, expected_arch=None, expected_triple=None):

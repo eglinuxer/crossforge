@@ -73,6 +73,20 @@ class ReleaseValidationTests(unittest.TestCase):
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate"](config, self.schema, self.schema, "$")
 
+    def test_abi_identity_schema_rejects_swaps_and_unknown_fields(self):
+        swapped = copy.deepcopy(self.config)
+        swapped["abi"]["targets"]["x86_64"]["baseline"][
+            "file"
+        ] = "abi/el8/aarch64.json"
+        extra = copy.deepcopy(self.config)
+        extra["abi"]["python"]["unknown"] = {}
+        for config in (swapped, extra):
+            with self.subTest(config=config["abi"]):
+                with self.assertRaises(VALIDATOR["ValidationError"]):
+                    VALIDATOR["validate"](
+                        config, self.schema, self.schema, "$"
+                    )
+
     def test_unsupported_schema_keywords_are_rejected(self):
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate_schema_subset"](
@@ -96,6 +110,35 @@ class ReleaseValidationTests(unittest.TestCase):
             digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
             self.assertEqual(pin["canonical_sha256"], digest)
         self.assertEqual(locked, 2)
+
+    def test_release_abi_identity_digests_match_files(self):
+        abi = self.config["abi"]
+        identities = [abi["provider_manifest"]]
+        for arch in ("x86_64", "aarch64"):
+            identities.extend(
+                (
+                    abi["targets"][arch]["baseline"],
+                    abi["targets"][arch]["sysroot_inventory"],
+                    abi["python"]["provider_catalogs"][arch],
+                )
+            )
+        identities.append(abi["python"]["runtime_provider_policy"])
+        self.assertEqual(len(identities), 8)
+        for identity in identities:
+            with self.subTest(file=identity["file"]):
+                document = VALIDATOR["load_json"](
+                    REPOSITORY / identity["file"]
+                )
+                canonical = json.dumps(
+                    document,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+                self.assertEqual(
+                    identity["canonical_sha256"],
+                    hashlib.sha256(canonical).hexdigest(),
+                )
 
     def test_qemu_executor_identity_is_coherent(self):
         qemu = self.config["qemu"]

@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+import runpy
 import shutil
 import subprocess
 import sys
@@ -31,6 +32,10 @@ TARGET_PROFILES = {
 QUALIFIED_ELF_PROFILE = "crossforge-qualified-v1"
 COMPILER_DEFAULT_ELF_PROFILE = "compiler-default-observation"
 HARDENED_LINKER_FLAG = "-Wl,-z,relro,-z,now"
+RELEASE_COMPONENTS = runpy.run_path(
+    str(Path(__file__).with_name("render-release-components.py"))
+)
+ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
 
 
 def run(arguments, cwd=None, env=None):
@@ -106,6 +111,9 @@ def main():
     parser.add_argument("--report", type=Path)
     parser.add_argument("--release", type=Path, required=True)
     parser.add_argument("--abi-baseline", type=Path, required=True)
+    parser.add_argument(
+        "--qualification-component-sha256", required=True
+    )
     parser.add_argument("--skip-sysroot-execution", action="store_true")
     arguments = parser.parse_args()
 
@@ -157,11 +165,33 @@ def main():
         profile["arch"],
         arguments.target,
     )
+    try:
+        release_abi = abi_contract.validate_release_abi_identities(release)
+        qualification_component = RELEASE_COMPONENTS[
+            "bind_toolchain_qualification_component"
+        ](
+            release,
+            profile["arch"],
+            arguments.qualification_component_sha256,
+        )
+    except (abi_contract.AbiContractError, ProjectionError) as error:
+        raise QualificationError(str(error)) from error
+    require(
+        release_abi["targets"][profile["arch"]]["baseline"]
+        == {
+            "file": "abi/el8/%s.json" % profile["arch"],
+            "canonical_sha256": abi_baseline_identity[
+                "canonical_sha256"
+            ],
+        },
+        "qualified ABI baseline differs from release.json",
+    )
     target_interpreter = abi_contract.TARGETS[profile["arch"]]["interpreter"]
     report = {
         "target": arguments.target,
         "binaries": {},
         "abi_baseline": abi_baseline_identity,
+        "qualification_component": qualification_component,
         "release_sha256": hashlib.sha256(release_canonical.encode("utf-8")).hexdigest(),
         "sysroot_sha256": sysroot_digest,
         "sources": {

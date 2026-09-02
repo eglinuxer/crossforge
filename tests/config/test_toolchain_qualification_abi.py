@@ -153,12 +153,51 @@ class ToolchainQualificationAbiTests(unittest.TestCase):
             path = "/src/abi/el8/%s.json" % arch
             self.assertIn("COPY abi/el8/%s.json %s" % (arch, path), dockerfile)
             self.assertIn("--abi-baseline %s" % path, dockerfile)
+            argument = (
+                "CROSSFORGE_COMPONENT_TOOLCHAIN_%s_QUALIFICATION_SHA256"
+                % arch.upper()
+            )
+            self.assertIn("ARG " + argument, dockerfile)
+            self.assertIn(
+                '"$%s"' % argument,
+                dockerfile,
+            )
+        self.assertEqual(
+            dockerfile.count("--qualification-component-sha256"), 2
+        )
         self.assertEqual(
             dockerfile.count(
                 "COPY scripts/abi_contract.py /work/scripts/abi_contract.py"
             ),
             2,
         )
+
+    def test_release_baseline_and_toolchain_component_are_exact(self):
+        release = json.loads(
+            (REPOSITORY / "config/release.json").read_text(encoding="utf-8")
+        )
+        abi = abi_contract.validate_release_abi_identities(release)
+        for arch in ("x86_64", "aarch64"):
+            baseline = abi_contract.load_json(
+                REPOSITORY / ("abi/el8/%s.json" % arch)
+            )
+            self.assertEqual(
+                abi["targets"][arch]["baseline"]["canonical_sha256"],
+                abi_contract.canonical_sha256(baseline),
+            )
+            expected = QUALIFIER.RELEASE_COMPONENTS[
+                "toolchain_qualification_component"
+            ](release, arch)
+            self.assertEqual(
+                QUALIFIER.RELEASE_COMPONENTS[
+                    "bind_toolchain_qualification_component"
+                ](release, arch, expected["canonical_sha256"]),
+                expected,
+            )
+            with self.assertRaises(QUALIFIER.ProjectionError):
+                QUALIFIER.RELEASE_COMPONENTS[
+                    "bind_toolchain_qualification_component"
+                ](release, arch, "0" * 64)
 
 
 if __name__ == "__main__":

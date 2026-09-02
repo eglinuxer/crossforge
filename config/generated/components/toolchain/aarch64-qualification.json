@@ -3,6 +3,10 @@
   "component": "toolchain/aarch64-qualification",
   "dependencies": [
     {
+      "canonical_sha256": "da3f0a6e652dcf58f9ce8d9555e6768a58ced8541714b9807eed07bd8d80e1f2",
+      "component": "abi/aarch64-baseline"
+    },
+    {
       "canonical_sha256": "ff75a8428b27f5c4b1193693a81ca8a820b1c042951ea3ae0d181d0a8202a24e",
       "component": "toolchain/aarch64-build"
     }

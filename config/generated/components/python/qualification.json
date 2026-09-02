@@ -3,6 +3,18 @@
   "component": "python/qualification",
   "dependencies": [
     {
+      "canonical_sha256": "da3f0a6e652dcf58f9ce8d9555e6768a58ced8541714b9807eed07bd8d80e1f2",
+      "component": "abi/aarch64-baseline"
+    },
+    {
+      "canonical_sha256": "b2fdf9b5876da30249a4431fb9dcb54a4d509d38ebf82882b6df3fa1a4116b42",
+      "component": "abi/python-providers"
+    },
+    {
+      "canonical_sha256": "aba3e03137d08c97d9db5e1723b109657e3b87b9164c99f2ed5d90edaaef6878",
+      "component": "abi/x86_64-baseline"
+    },
+    {
       "canonical_sha256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
       "component": "implementation/python-qualification-policy"
     },
@@ -55,11 +67,11 @@
       "component": "python/cp39-x86_64-build"
     },
     {
-      "canonical_sha256": "303e97f2d655738d717d89d0277789e5094da56d6fdc427f757ee4fa503c685c",
+      "canonical_sha256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
       "component": "toolchain/aarch64-qualification"
     },
     {
-      "canonical_sha256": "da303980237ff9c09cf5fdf78c3cac5b5cd61c20415b434395bb8f4f153b64f5",
+      "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
       "component": "toolchain/x86_64-qualification"
     }
   ],

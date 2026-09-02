@@ -100,6 +100,27 @@ class FrozenAbiTests(unittest.TestCase):
                 ):
                     self.validate(documents)
 
+    def test_release_abi_pins_match_repository_documents(self):
+        documents = self.mutated_documents()
+        documents[0]["abi"]["provider_manifest"][
+            "canonical_sha256"
+        ] = "0" * 64
+        with self.assertRaisesRegex(
+            abi_contract.AbiContractError,
+            "release ABI provider manifest digest differs",
+        ):
+            self.validate(documents)
+
+        documents = self.mutated_documents()
+        documents[0]["abi"]["targets"]["aarch64"]["baseline"][
+            "canonical_sha256"
+        ] = "0" * 64
+        with self.assertRaisesRegex(
+            abi_contract.AbiContractError,
+            "aarch64 release ABI identities differ",
+        ):
+            self.validate(documents)
+
     def test_manifest_digest_binds_inventory_and_extraction_evidence(self):
         documents = self.mutated_documents()
         self.inventory(documents, "x86_64", "clean")["source"][
@@ -131,6 +152,9 @@ class FrozenAbiTests(unittest.TestCase):
         documents[2]["x86_64"]["review"][
             "source_inventory_sha256"
         ] = abi_contract.canonical_sha256(clean)
+        documents[0]["abi"]["targets"]["x86_64"]["baseline"][
+            "canonical_sha256"
+        ] = abi_contract.canonical_sha256(documents[2]["x86_64"])
         with self.assertRaisesRegex(
             abi_contract.AbiContractError, "unreviewed public export"
         ):
@@ -145,6 +169,9 @@ class FrozenAbiTests(unittest.TestCase):
         sysroot["providers"]["libc.so.6"]["exports"].sort(
             key=lambda record: (record["name"], record["version"])
         )
+        documents[0]["abi"]["targets"]["x86_64"]["sysroot_inventory"][
+            "canonical_sha256"
+        ] = abi_contract.canonical_sha256(sysroot)
         with self.assertRaisesRegex(
             abi_contract.AbiContractError, "sysroot inventory has unreviewed ABI extras"
         ):
@@ -154,6 +181,11 @@ class FrozenAbiTests(unittest.TestCase):
         self.inventory(documents, "aarch64", "sysroot")["providers"][
             "libc.so.6"
         ]["exports"].pop()
+        documents[0]["abi"]["targets"]["aarch64"]["sysroot_inventory"][
+            "canonical_sha256"
+        ] = abi_contract.canonical_sha256(
+            self.inventory(documents, "aarch64", "sysroot")
+        )
         with self.assertRaisesRegex(
             abi_contract.AbiContractError, "missing a baseline export"
         ):

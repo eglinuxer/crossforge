@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import runpy
 import subprocess
 import sys
 from pathlib import Path
@@ -11,6 +12,12 @@ from pathlib import Path
 
 class FinalizationError(RuntimeError):
     pass
+
+
+RELEASE_COMPONENTS = runpy.run_path(
+    str(Path(__file__).with_name("render-release-components.py"))
+)
+ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
 
 
 RESULT_KEYS = {
@@ -149,6 +156,12 @@ def main():
 
     compile_report = load_json(arguments.compile_report)
     release = load_json(arguments.release)
+    try:
+        qualification_component = RELEASE_COMPONENTS[
+            "toolchain_qualification_component"
+        ](release, "aarch64")
+    except ProjectionError as error:
+        raise FinalizationError(str(error)) from error
     executor = release["qemu"]["executor"]
     require(
         compile_report.get("target") == "aarch64-unknown-linux-gnu",
@@ -161,6 +174,21 @@ def main():
         compile_report.get("release_sha256")
         == hashlib.sha256(release_canonical.encode("utf-8")).hexdigest(),
         "compile report release digest mismatch",
+    )
+    require(
+        compile_report.get("qualification_component")
+        == qualification_component,
+        "compile report qualification component mismatch",
+    )
+    require(
+        release["abi"]["targets"]["aarch64"]["baseline"]
+        == {
+            "file": "abi/el8/aarch64.json",
+            "canonical_sha256": compile_report.get("abi_baseline", {}).get(
+                "canonical_sha256"
+            ),
+        },
+        "compile report ABI baseline differs from release.json",
     )
     require(
         compile_report.get("runtime_executor") == executor,

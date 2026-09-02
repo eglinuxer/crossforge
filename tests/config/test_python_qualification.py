@@ -786,6 +786,27 @@ class PythonQualificationTests(unittest.TestCase):
                     readelf,
                 )
 
+    def test_finalizer_abi_inputs_are_bound_to_release_pins(self):
+        self.assertEqual(
+            FINALIZER["validate_release_abi_context"](
+                self.release, self.abi_context
+            ),
+            FINALIZER["ABI_CONTRACT"]["release_abi_inputs"](
+                self.release, "x86_64"
+            ),
+        )
+        release = copy.deepcopy(self.release)
+        release["abi"]["python"]["provider_catalogs"]["x86_64"][
+            "canonical_sha256"
+        ] = "0" * 64
+        with self.assertRaisesRegex(
+            FINALIZER["FinalizationError"],
+            "ABI inputs differ from release.json",
+        ):
+            FINALIZER["validate_release_abi_context"](
+                release, self.abi_context
+            )
+
     def test_compile_qualification_component_identity_is_fail_closed(self):
         mutations = {
             "policy-digest": lambda value: value["policy"].update(

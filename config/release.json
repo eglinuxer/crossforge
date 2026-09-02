@@ -2,6 +2,50 @@
   "$schema": "./schemas/release.schema.json",
   "schema_version": 1,
   "baseline": "el8",
+  "abi": {
+    "provider_manifest": {
+      "file": "config/abi-providers.json",
+      "canonical_sha256": "709de9e38920b315e29bfb4e0c40763a8632697942a836140252ea5665de7de9"
+    },
+    "targets": {
+      "x86_64": {
+        "baseline": {
+          "file": "abi/el8/x86_64.json",
+          "canonical_sha256": "efaaceb1b9264f04f8abd4f94724649b116e99532969d61027e825681fff8944"
+        },
+        "sysroot_inventory": {
+          "file": "evidence/abi/el8-x86_64-sysroot.json",
+          "canonical_sha256": "4f65a4b1770d96f8cadf46e7927ee40638f348f7fc218093f3059ca27d577534"
+        }
+      },
+      "aarch64": {
+        "baseline": {
+          "file": "abi/el8/aarch64.json",
+          "canonical_sha256": "bcc86a87b1f9afd9ef864c0c75d571afdfaf5b1ca7fb135e62a26f3a3c1c8aab"
+        },
+        "sysroot_inventory": {
+          "file": "evidence/abi/el8-aarch64-sysroot.json",
+          "canonical_sha256": "3527525c07f3a3e456eeb3b460a43d1c2cb0b97eeb7f824efd1e81bc5c0f82e8"
+        }
+      }
+    },
+    "python": {
+      "runtime_provider_policy": {
+        "file": "config/python-runtime-providers.json",
+        "canonical_sha256": "c25692ca24d11c13328f758f96dec49a81bb574763c08f9a437a139f1f363960"
+      },
+      "provider_catalogs": {
+        "x86_64": {
+          "file": "evidence/abi/el8-x86_64-python-provider-catalog.json",
+          "canonical_sha256": "048b180ab090eb993ed47e92b1d9f923f332c82993b0eaa126a19d64ab07faed"
+        },
+        "aarch64": {
+          "file": "evidence/abi/el8-aarch64-python-provider-catalog.json",
+          "canonical_sha256": "bf72f411578653617091dd414b876fb2beba4074d95aa7b7930fdfc2e15a1108"
+        }
+      }
+    }
+  },
   "product": {
     "image_repository": "ghcr.io/eglinuxer/crossforge",
     "stable_channel": "gts15-el8"

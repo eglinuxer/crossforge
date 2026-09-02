@@ -2,6 +2,24 @@
   "$schema": "https://crossforge.dev/schemas/release-binding.schema.json",
   "components": [
     {
+      "canonical_sha256": "da3f0a6e652dcf58f9ce8d9555e6768a58ced8541714b9807eed07bd8d80e1f2",
+      "component": "abi/aarch64-baseline",
+      "path": "config/generated/components/abi/aarch64-baseline.json",
+      "scope": "qualification"
+    },
+    {
+      "canonical_sha256": "b2fdf9b5876da30249a4431fb9dcb54a4d509d38ebf82882b6df3fa1a4116b42",
+      "component": "abi/python-providers",
+      "path": "config/generated/components/abi/python-providers.json",
+      "scope": "qualification"
+    },
+    {
+      "canonical_sha256": "aba3e03137d08c97d9db5e1723b109657e3b87b9164c99f2ed5d90edaaef6878",
+      "component": "abi/x86_64-baseline",
+      "path": "config/generated/components/abi/x86_64-baseline.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "ff9601c653ecd53ecb7c76c5d93a17b46d22f6840721a61c4f124caa5d85da4d",
       "component": "future/product",
       "path": "config/generated/components/future/product.json",
@@ -206,7 +224,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "3536b6f5baebfc2e74554efdc0133e072cdb85bd7435d2852ca274a99fcf515c",
+      "canonical_sha256": "423e22d60fff79ffc18645065160e783faf7fdec1a1d6c7c7f65616762c2748d",
       "component": "python/qualification",
       "path": "config/generated/components/python/qualification.json",
       "scope": "qualification"
@@ -278,7 +296,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "303e97f2d655738d717d89d0277789e5094da56d6fdc427f757ee4fa503c685c",
+      "canonical_sha256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
       "component": "toolchain/aarch64-qualification",
       "path": "config/generated/components/toolchain/aarch64-qualification.json",
       "scope": "qualification"
@@ -290,7 +308,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "da303980237ff9c09cf5fdf78c3cac5b5cd61c20415b434395bb8f4f153b64f5",
+      "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
       "component": "toolchain/x86_64-qualification",
       "path": "config/generated/components/toolchain/x86_64-qualification.json",
       "scope": "qualification"
@@ -316,7 +334,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "c0447e0bb5db2e98b82f8e8abef481356764a1278cf73d25dabacb6ef4093539",
+    "canonical_sha256": "76d84a9781a2d87c6e2774ad419cce6cbcd45d38bab650f3b13eb4f2c9d5fb6a",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

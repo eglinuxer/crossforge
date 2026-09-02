@@ -380,6 +380,10 @@ versioned imports, COPY relocations and deterministic strong/weak symbol
 ownership. The locked tier byte-checks all providers; clean Rocky permits core
 errata byte differences only when the full reviewed ELF catalog is unchanged,
 while Python's eight external providers remain byte-exact in both tiers.
+`config/release.json` pins the eight canonical ABI inputs by logical path and
+digest. They project into two target-baseline components and one shared Python
+provider component; only toolchain/Python qualification identities change,
+while every row-local build identity remains stable.
 
 ## Product contract
 

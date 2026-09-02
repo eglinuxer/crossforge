@@ -1,0 +1,18 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "abi/x86_64-baseline",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/abi/targets/x86_64/baseline/canonical_sha256",
+      "value": "efaaceb1b9264f04f8abd4f94724649b116e99532969d61027e825681fff8944"
+    },
+    {
+      "path": "/abi/targets/x86_64/baseline/file",
+      "value": "abi/el8/x86_64.json"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

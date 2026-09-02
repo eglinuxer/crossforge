@@ -366,6 +366,12 @@ def validate_documents(release, manifest, baselines, inventories, extractions):
     abi_contract.validate_provider_manifest(manifest)
     manifest_sha256 = abi_contract.canonical_sha256(manifest)
     identities = _release_identities(release)
+    release_abi = abi_contract.validate_release_abi_identities(release)
+    require(
+        release_abi["provider_manifest"]["canonical_sha256"]
+        == manifest_sha256,
+        "release ABI provider manifest digest differs from repository",
+    )
     require(
         type(baselines) is dict and set(baselines) == set(ARCHES),
         "frozen ABI baseline matrix differs",
@@ -416,6 +422,18 @@ def validate_documents(release, manifest, baselines, inventories, extractions):
 
         baseline = baselines[arch]
         abi_contract.validate_baseline(baseline, arch, triple)
+        release_target_abi = release_abi["targets"][arch]
+        require(
+            release_target_abi["baseline"]["canonical_sha256"]
+            == abi_contract.canonical_sha256(baseline)
+            and release_target_abi["sysroot_inventory"][
+                "canonical_sha256"
+            ]
+            == abi_contract.canonical_sha256(
+                validated_inventories["sysroot"]
+            ),
+            "%s release ABI identities differ from repository" % arch,
+        )
         require(baseline["baseline"] == BASELINE, "ABI baseline id differs for %s" % arch)
         _validate_provider_order(baseline, provider_names, "%s baseline" % arch)
         clean_difference = abi_contract.validate_baseline_against_inventory(

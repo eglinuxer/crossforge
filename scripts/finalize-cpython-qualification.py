@@ -762,6 +762,53 @@ def validate_compile_abi(value, report, context, minor):
     return value
 
 
+def validate_release_abi_context(release, context):
+    """Bind finalizer ABI inputs to the canonical release identities."""
+    arch = context["arch"]
+    try:
+        expected = ABI_CONTRACT["release_abi_inputs"](release, arch)
+    except AbiContractError as error:
+        raise FinalizationError(str(error)) from error
+    identities = context["expected_identities"]
+    observed = {
+        "provider_manifest": {
+            "file": identities["provider_manifest"]["file"],
+            "canonical_sha256": identities["provider_manifest"][
+                "canonical_sha256"
+            ],
+        },
+        "baseline": {
+            "file": identities["baseline"]["file"],
+            "canonical_sha256": identities["baseline"][
+                "canonical_sha256"
+            ],
+        },
+        "sysroot_inventory": {
+            "file": identities["sysroot_inventory"]["file"],
+            "canonical_sha256": identities["sysroot_inventory"][
+                "canonical_sha256"
+            ],
+        },
+        "runtime_provider_policy": {
+            "file": identities["runtime_provider_policy"]["file"],
+            "canonical_sha256": identities["runtime_provider_policy"][
+                "canonical_sha256"
+            ],
+        },
+        "provider_catalog": {
+            "file": context["reviewed_provider_catalog_file"],
+            "canonical_sha256": context[
+                "runtime_provider_evidence"
+            ]["provider_catalog_sha256"],
+        },
+    }
+    require(
+        observed == expected,
+        "finalizer ABI inputs differ from release.json",
+    )
+    return expected
+
+
 def validate_elf_policy_result(
     value, name, context, expected_executable
 ):
@@ -1287,6 +1334,7 @@ def validate_compile_report(
         == context["sysroot_sha256"],
         "compile report ABI inputs differ from the release sysroot",
     )
+    validate_release_abi_context(context["release"], abi_context)
     require_sha256(
         report["sysroot_transaction_sha256"],
         "compile report sysroot_transaction_sha256",

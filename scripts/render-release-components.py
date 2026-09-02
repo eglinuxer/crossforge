@@ -75,6 +75,20 @@ PYTHON_QUALIFICATION_COMPONENTS = {
     "policy": "implementation/python-qualification-policy",
     "aggregate": "python/qualification",
 }
+TOOLCHAIN_QUALIFICATION_COMPONENTS = {
+    "x86_64": "toolchain/x86_64-qualification",
+    "aarch64": "toolchain/aarch64-qualification",
+}
+ABI_IDENTITY_PREFIXES = (
+    ("abi", "provider_manifest"),
+    ("abi", "targets", "x86_64", "baseline"),
+    ("abi", "targets", "x86_64", "sysroot_inventory"),
+    ("abi", "targets", "aarch64", "baseline"),
+    ("abi", "targets", "aarch64", "sysroot_inventory"),
+    ("abi", "python", "runtime_provider_policy"),
+    ("abi", "python", "provider_catalogs", "x86_64"),
+    ("abi", "python", "provider_catalogs", "aarch64"),
+)
 
 
 class ProjectionError(RuntimeError):
@@ -321,6 +335,11 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
         "commit",
         "commit_evidence",
     }
+    abi_identity_leaves = {
+        prefix + (field,)
+        for prefix in ABI_IDENTITY_PREFIXES
+        for field in ("file", "canonical_sha256")
+    }
 
     for path, _value in leaf_items(release):
         category = None
@@ -328,6 +347,8 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             category = "supply"
         elif path == ("baseline",):
             category = "build"
+        elif path in abi_identity_leaves:
+            category = "qualification"
         elif len(path) == 2 and path[0] == "product" and path[1] in {
             "image_repository",
             "stable_channel",
@@ -591,6 +612,26 @@ def _render_expected_components(release, implemented_rows):
             selector(*(rpm_common + (("targets", index),))),
         )
 
+    abi_baseline_components = {}
+    for arch in ("x86_64", "aarch64"):
+        component = "abi/%s-baseline" % arch
+        abi_baseline_components[arch] = component
+        add(
+            component,
+            "qualification",
+            selector(("abi", "targets", arch, "baseline")),
+        )
+    add(
+        "abi/python-providers",
+        "qualification",
+        selector(
+            ("abi", "provider_manifest"),
+            ("abi", "targets", "x86_64", "sysroot_inventory"),
+            ("abi", "targets", "aarch64", "sysroot_inventory"),
+            ("abi", "python"),
+        ),
+    )
+
     # SRPM preparation authenticates the Rocky signing key as well as the
     # downloaded bytes.  Trust rotation must therefore invalidate both source
     # preparation identities even when the SRPM URL and digest are unchanged.
@@ -632,7 +673,7 @@ def _render_expected_components(release, implemented_rows):
             qualification_component,
             "qualification",
             selector(*qualification_prefixes),
-            (build_component,),
+            (build_component, abi_baseline_components[arch]),
         )
 
     build_policy_components = []
@@ -772,6 +813,9 @@ def _render_expected_components(release, implemented_rows):
     python_qualification_dependencies = tuple(
         python_target_builds
         + [
+            abi_baseline_components["x86_64"],
+            abi_baseline_components["aarch64"],
+            "abi/python-providers",
             toolchain_qualifications["x86_64"],
             toolchain_qualifications["aarch64"],
             "implementation/python-qualification-policy",
@@ -893,6 +937,45 @@ def bind_python_qualification_components(
     return validate_python_qualification_components(
         value, release, implemented_rows
     )
+
+
+def toolchain_qualification_component(
+    release, arch, implemented_rows=IMPLEMENTED_ROWS
+):
+    """Return the canonical qualification identity for one toolchain."""
+    require(
+        arch in TOOLCHAIN_QUALIFICATION_COMPONENTS,
+        "unsupported toolchain qualification architecture",
+    )
+    component = TOOLCHAIN_QUALIFICATION_COMPONENTS[arch]
+    documents = render_component_documents(release, implemented_rows)
+    return {
+        "component": component,
+        "canonical_sha256": canonical_sha256(documents[component]),
+    }
+
+
+def bind_toolchain_qualification_component(
+    release, arch, canonical_sha256_value, implemented_rows=IMPLEMENTED_ROWS
+):
+    """Bind a CLI-provided digest to one exact toolchain component."""
+    expected = toolchain_qualification_component(
+        release, arch, implemented_rows
+    )
+    require(
+        isinstance(canonical_sha256_value, str)
+        and len(canonical_sha256_value) == 64
+        and all(
+            character in "0123456789abcdef"
+            for character in canonical_sha256_value
+        ),
+        "toolchain qualification component digest is invalid",
+    )
+    require(
+        canonical_sha256_value == expected["canonical_sha256"],
+        "toolchain qualification component identity differs from release/ABI",
+    )
+    return expected
 
 
 def validate_component_set(

@@ -731,6 +731,44 @@ def main():
         },
         "compile report runtime provider policy differs from runtime",
     )
+    arch = profile["arch"]
+    try:
+        expected_abi_inputs = ABI_CONTRACT["release_abi_inputs"](
+            release, arch
+        )
+    except AbiContractError as error:
+        raise RuntimeError_(str(error)) from error
+    observed_abi_inputs = {
+        "provider_manifest": compile_abi["provider_manifest"],
+        "baseline": {
+            "file": compile_abi["baseline"]["file"],
+            "canonical_sha256": compile_abi["baseline"][
+                "canonical_sha256"
+            ],
+        },
+        "sysroot_inventory": {
+            "file": compile_abi["sysroot_inventory"]["file"],
+            "canonical_sha256": compile_abi["sysroot_inventory"][
+                "canonical_sha256"
+            ],
+        },
+        "runtime_provider_policy": {
+            "file": compile_provider_policy["file"],
+            "canonical_sha256": compile_provider_policy[
+                "canonical_sha256"
+            ],
+        },
+        "provider_catalog": {
+            "file": compile_abi["provider_catalog"]["file"],
+            "canonical_sha256": compile_abi["provider_catalog"][
+                "elf_records_sha256"
+            ],
+        },
+    }
+    require(
+        observed_abi_inputs == expected_abi_inputs,
+        "runtime ABI inputs differ from release.json",
+    )
     observed_provider_catalog = validate_runtime_provider_catalog(
         arguments.runtime_root,
         compile_report,
