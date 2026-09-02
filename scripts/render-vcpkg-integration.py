@@ -82,6 +82,8 @@ def render_host_toolchain(policy, integration_sha256, runtime_sha256):
             "rpm/host-runtime",
             runtime_sha256,
         ).rstrip(),
+        'set(CMAKE_CROSSCOMPILING %s CACHE BOOL "" FORCE)'
+        % cmake_bool(policy["host"]["cross_compiling"]),
     ]
     lines.extend(
         compiler_lines(policy["host"]["compiler_root"])

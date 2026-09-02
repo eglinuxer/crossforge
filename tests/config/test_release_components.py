@@ -625,6 +625,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                         "abi/%s-baseline" % arch,
                         "toolchain/%s-qualification" % arch,
                         "python/qualification",
+                        "vcpkg/contract-qualification",
                     },
                 )
             )
@@ -695,6 +696,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "python/qualification",
             "zstd/aarch64-build",
             "vcpkg/sdk-build",
+            "vcpkg/contract-qualification",
         }
         expected.update(
             "python/%s-aarch64-build" % row for row in self.row_names
@@ -714,6 +716,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "python/qualification",
             "zstd/x86_64-build",
             "vcpkg/sdk-build",
+            "vcpkg/contract-qualification",
         }
         expected.update(
             "python/%s-x86_64-build" % row for row in self.row_names
@@ -726,7 +729,11 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         )
         self.assertEqual(
             changed(self.components, after),
-            {"toolchain/aarch64-qualification", "python/qualification"},
+            {
+                "toolchain/aarch64-qualification",
+                "python/qualification",
+                "vcpkg/contract-qualification",
+            },
         )
 
     def test_host_python_lock_has_exact_python_host_impact(self):
@@ -765,6 +772,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "rpm/host-runtime",
                 "host-tools/ninja",
                 "vcpkg/sdk-build",
+                "vcpkg/contract-qualification",
                 "future/product",
             },
         )
@@ -793,6 +801,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "zstd/aarch64-build",
                 "host-tools/ninja",
                 "vcpkg/sdk-build",
+                "vcpkg/contract-qualification",
             }
         )
         for row in self.row_names:
@@ -822,7 +831,11 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         )
         self.assertEqual(
             changed(self.components, after),
-            {"sources/vcpkg", "vcpkg/sdk-build"},
+            {
+                "sources/vcpkg",
+                "vcpkg/sdk-build",
+                "vcpkg/contract-qualification",
+            },
         )
 
     def test_ninja_host_tool_has_isolated_source_policy_and_consumers(self):
@@ -854,7 +867,12 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         )
         self.assertEqual(
             changed(self.components, after),
-            {"sources/ninja", "host-tools/ninja", "vcpkg/sdk-build"},
+            {
+                "sources/ninja",
+                "host-tools/ninja",
+                "vcpkg/sdk-build",
+                "vcpkg/contract-qualification",
+            },
         )
 
     def test_zstd_source_and_policy_are_isolated_from_python_rows(self):

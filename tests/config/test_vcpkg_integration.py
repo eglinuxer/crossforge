@@ -126,7 +126,7 @@ class VcpkgIntegrationTests(unittest.TestCase):
         ]
         self.assertNotIn("CMAKE_SYSTEM_NAME", source)
         self.assertNotIn("CMAKE_SYSTEM_PROCESSOR", source)
-        self.assertNotIn("CMAKE_CROSSCOMPILING", source)
+        self.assertIn("set(CMAKE_CROSSCOMPILING OFF", source)
         self.assertIn(
             "/opt/rh/gcc-toolset-15/root/usr/bin/gcc", source
         )

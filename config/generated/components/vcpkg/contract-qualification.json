@@ -1,0 +1,43 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "vcpkg/contract-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "822fe461d134b6f2c5841d9658763d4880640111019da485dd4b9c9beecb1961",
+      "component": "implementation/vcpkg-contract-qualification"
+    },
+    {
+      "canonical_sha256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
+      "component": "toolchain/aarch64-qualification"
+    },
+    {
+      "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
+      "component": "toolchain/x86_64-qualification"
+    },
+    {
+      "canonical_sha256": "f7d1512861d2fe1d998a2b6095a1c6835d41ab104d24cfcbe09310c654ad0ed1",
+      "component": "vcpkg/sdk-build"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/platforms/build",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/image",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/tool_host",
+      "value": "linux/amd64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

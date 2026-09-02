@@ -45,6 +45,10 @@
       "value": "/opt/rh/gcc-toolset-15/root/usr/bin"
     },
     {
+      "path": "/@implementation/vcpkg/host/cross_compiling",
+      "value": false
+    },
+    {
       "path": "/@implementation/vcpkg/host/library_linkage",
       "value": "static"
     },

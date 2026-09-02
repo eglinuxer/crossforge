@@ -1,0 +1,17 @@
+{
+  "name": "crossforge-target-probe",
+  "version": "1.0.0",
+  "description": "Crossforge vcpkg host/target separation qualification library",
+  "license": "MIT OR Apache-2.0",
+  "supports": "linux",
+  "dependencies": [
+    {
+      "name": "crossforge-host-probe",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    }
+  ]
+}

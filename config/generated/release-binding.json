@@ -80,7 +80,13 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "885c8cc9109ff35634af47dcec1ca67e3d53640f6a25ff32f33a0abcf71db21f",
+      "canonical_sha256": "822fe461d134b6f2c5841d9658763d4880640111019da485dd4b9c9beecb1961",
+      "component": "implementation/vcpkg-contract-qualification",
+      "path": "config/generated/components/implementation/vcpkg-contract-qualification.json",
+      "scope": "qualification"
+    },
+    {
+      "canonical_sha256": "38a352f70de4a7c247d27c7c52ed55c0226a596c6c9f849f79027328355e31b0",
       "component": "implementation/vcpkg-integration",
       "path": "config/generated/components/implementation/vcpkg-integration.json",
       "scope": "build"
@@ -344,7 +350,13 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "92b091c99733a86da217ebdfd09e67884cae48002105ec722f0db89738dff23e",
+      "canonical_sha256": "eecd46311857bf968b19ad0892daa3bde46a686ef8c235f33d58eb92e9e2da45",
+      "component": "vcpkg/contract-qualification",
+      "path": "config/generated/components/vcpkg/contract-qualification.json",
+      "scope": "qualification"
+    },
+    {
+      "canonical_sha256": "f7d1512861d2fe1d998a2b6095a1c6835d41ab104d24cfcbe09310c654ad0ed1",
       "component": "vcpkg/sdk-build",
       "path": "config/generated/components/vcpkg/sdk-build.json",
       "scope": "build"

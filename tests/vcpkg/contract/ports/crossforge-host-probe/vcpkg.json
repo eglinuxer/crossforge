@@ -1,0 +1,13 @@
+{
+  "name": "crossforge-host-probe",
+  "version": "1.0.0",
+  "description": "Crossforge vcpkg host-triplet qualification generator",
+  "license": "MIT OR Apache-2.0",
+  "supports": "linux",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    }
+  ]
+}

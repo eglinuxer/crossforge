@@ -7,7 +7,7 @@
       "component": "host-tools/ninja"
     },
     {
-      "canonical_sha256": "885c8cc9109ff35634af47dcec1ca67e3d53640f6a25ff32f33a0abcf71db21f",
+      "canonical_sha256": "38a352f70de4a7c247d27c7c52ed55c0226a596c6c9f849f79027328355e31b0",
       "component": "implementation/vcpkg-integration"
     },
     {

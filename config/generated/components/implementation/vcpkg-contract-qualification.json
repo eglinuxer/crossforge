@@ -1,0 +1,162 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/vcpkg-contract-qualification",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/vcpkg-contract/assets/patchelf/filename",
+      "value": "patchelf-0.19.0-x86_64.tar.gz"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/assets/patchelf/sha256",
+      "value": "a493df96abeecee55d539071e9bace94d32458a3baf54d9495da94f44c647d86"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/assets/patchelf/sha512",
+      "value": "2a65c9cbdddcc7952cdbd6e98a2cf3da01386cf0f0b927a6bbcfe8131ecf0bfb17c534246635b5e6a090652ee54c903f9f9c4f3f1d2412dba59f287ae2ae8070"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/assets/patchelf/size",
+      "value": 569003
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/assets/patchelf/url",
+      "value": "https://github.com/NixOS/patchelf/releases/download/0.19.0/patchelf-0.19.0-x86_64.tar.gz"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/binary_sources",
+      "value": "clear"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/downloads",
+      "value": "forbidden"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/0/path",
+      "value": "manifest/vcpkg.json"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/0/sha256",
+      "value": "82c7339ff0f5a6deb9341ab6956fbde95dd6609a3ae503c6e1660e7c9db0df15"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/1/path",
+      "value": "ports/crossforge-host-probe/CMakeLists.txt"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/1/sha256",
+      "value": "42a4b4d5c76c8b10ec13c9e2b469958a7e7a727648f5981f344e1c741bed2ae7"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/10/path",
+      "value": "ports/crossforge-target-probe/probe.h"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/10/sha256",
+      "value": "1ac333a679f98b4dd79adc3cfa25878614a178b667224b0338f364d49288f5c5"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/11/path",
+      "value": "ports/crossforge-target-probe/vcpkg.json"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/11/sha256",
+      "value": "77a5fd45be846d49c40345a418d6d15df3e6fb8ae2412d7435e2c6759798c586"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/2/path",
+      "value": "ports/crossforge-host-probe/copyright"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/2/sha256",
+      "value": "bee6e7ffd2d81f6f009ecda87f141e55744e54b7f73d480a866d051aa9c6076c"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/3/path",
+      "value": "ports/crossforge-host-probe/portfile.cmake"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/3/sha256",
+      "value": "b78122b52c685f36462a44fa1c8ca36f67584f40b056e7be1e18f7a8eb083105"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/4/path",
+      "value": "ports/crossforge-host-probe/probe.c"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/4/sha256",
+      "value": "87323fff3acc938d97274e2aa723a4c8d868c1522d7c4844a515759b2709234b"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/5/path",
+      "value": "ports/crossforge-host-probe/vcpkg.json"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/5/sha256",
+      "value": "dae78d63985682b0702f0c5cabe4a9fb62f3032fc818c6adbb57c383fe76942d"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/6/path",
+      "value": "ports/crossforge-target-probe/CMakeLists.txt"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/6/sha256",
+      "value": "4e5c9ab9fc33cf42d9c98535157ab9ce4962f1a63a3887740e6eff4856625bf3"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/7/path",
+      "value": "ports/crossforge-target-probe/copyright"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/7/sha256",
+      "value": "bee6e7ffd2d81f6f009ecda87f141e55744e54b7f73d480a866d051aa9c6076c"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/8/path",
+      "value": "ports/crossforge-target-probe/portfile.cmake"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/8/sha256",
+      "value": "edde722f6730c494b8697a039766a45e31df0b3406e5a6e9a7e2d82f5dd2c076"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/9/path",
+      "value": "ports/crossforge-target-probe/probe.c"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/files/9/sha256",
+      "value": "eab43a212383f9e262783909ca2362e99124ec49f114942e3634c8171a368f3c"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/host_triplet",
+      "value": "crossforge-host-x64-el8"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/schema_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/triplets/0",
+      "value": "crossforge-host-x64-el8"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/triplets/1",
+      "value": "crossforge-x64-el8"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/triplets/2",
+      "value": "crossforge-x64-el8-dynamic"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/triplets/3",
+      "value": "crossforge-arm64-el8"
+    },
+    {
+      "path": "/@implementation/vcpkg-contract/triplets/4",
+      "value": "crossforge-arm64-el8-dynamic"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

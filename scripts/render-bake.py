@@ -213,7 +213,9 @@ def render_ninja_graph(config, targets, component_arguments):
     }
 
 
-def render_vcpkg_graph(config, targets, component_arguments):
+def render_vcpkg_graph(
+    config, targets, component_arguments, contract_policy
+):
     vcpkg = config["vcpkg"]
     source_argument = component_argument_name("sources/vcpkg")
     try:
@@ -228,6 +230,25 @@ def render_vcpkg_graph(config, targets, component_arguments):
             raise ValueError(
                 "missing vcpkg component digest: %s" % component
             ) from error
+
+    patchelf = contract_policy["assets"]["patchelf"]
+    targets["vcpkg-contract-assets"] = {
+        "inherits": ["_vcpkg_common"],
+        "target": "vcpkg-contract-assets-export",
+        "args": {
+            "VCPKG_CONTRACT_POLICY_COMPONENT_SHA256": digest(
+                "implementation/vcpkg-contract-qualification"
+            ),
+            "VCPKG_PATCHELF_URL": patchelf["url"],
+            "VCPKG_PATCHELF_SHA256": patchelf["sha256"],
+            "VCPKG_PATCHELF_SHA512": patchelf["sha512"],
+            "VCPKG_PATCHELF_SIZE": str(patchelf["size"]),
+        },
+        "contexts": {
+            "crossforge_host_runtime": "target:host-runtime-qualified"
+        },
+        "output": ["type=cacheonly"],
+    }
 
     targets["vcpkg-source"] = {
         "inherits": ["_vcpkg_common"],
@@ -266,6 +287,23 @@ def render_vcpkg_graph(config, targets, component_arguments):
         },
         "output": ["type=cacheonly"],
     }
+    targets["vcpkg-contract-qualified"] = {
+        "inherits": ["_vcpkg_common"],
+        "target": "vcpkg-contract-qualified",
+        "args": {
+            "VCPKG_CONTRACT_POLICY_COMPONENT_SHA256": digest(
+                "implementation/vcpkg-contract-qualification"
+            ),
+            "VCPKG_CONTRACT_QUALIFICATION_COMPONENT_SHA256": digest(
+                "vcpkg/contract-qualification"
+            ),
+        },
+        "contexts": {
+            "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
+            "crossforge_vcpkg_sdk": "target:sdk-phase13-base",
+        },
+        "output": ["type=cacheonly"],
+    }
     return {
         "phase13-source": {
             "targets": [
@@ -281,7 +319,10 @@ def render_vcpkg_graph(config, targets, component_arguments):
                 "python-phase10-dev",
                 "sdk-phase13-base",
             ]
-        }
+        },
+        "phase13-contract": {
+            "targets": ["vcpkg-contract-qualified"]
+        },
     }
 
 
@@ -767,7 +808,15 @@ def render(repository):
         }
     render_zstd_graph(config, targets, component_arguments, rocky_amd64_image)
     ninja_groups = render_ninja_graph(config, targets, component_arguments)
-    vcpkg_groups = render_vcpkg_graph(config, targets, component_arguments)
+    component_renderer = runpy.run_path(
+        str(repository / "scripts/render-release-components.py")
+    )
+    vcpkg_groups = render_vcpkg_graph(
+        config,
+        targets,
+        component_arguments,
+        component_renderer["VCPKG_CONTRACT_POLICY"],
+    )
     python_groups = render_python_graph(config, targets, component_arguments)
     document = {
         "group": {
