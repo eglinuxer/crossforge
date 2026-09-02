@@ -23,6 +23,10 @@ class RenderBakeTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
+        cls.binding_records = {
+            record["component"]: record
+            for record in cls.binding["components"]
+        }
         cls.component_arguments = {
             key: value
             for key, value in cls.targets["_common"]["args"].items()
@@ -40,10 +44,16 @@ class RenderBakeTests(unittest.TestCase):
         ]
         self.assertEqual(len(matches), 1)
         entry = matches[0]
+        row = "cp" + minor.replace(".", "")
+        source_component = "python/%s-source" % row
         return {
-            "CPYTHON_ROW": "cp" + minor.replace(".", ""),
+            "CPYTHON_ROW": row,
             "CPYTHON_VERSION": entry["version"],
             "CPYTHON_ADAPTER": entry["adapter"],
+            "CPYTHON_SOURCE_COMPONENT": source_component,
+            "CPYTHON_SOURCE_COMPONENT_SHA256": self.binding_records[
+                source_component
+            ]["canonical_sha256"],
         }
 
     def test_component_arguments_cover_the_complete_release_binding(self):
@@ -275,7 +285,18 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_source_fetch_is_independent_and_prepare_uses_locked_host(self):
         source = self.targets["cpython-source-cp311"]
-        self.assertEqual(source["contexts"], {"crossforge_config": "target:validate"})
+        base = self.release["base_image"]
+        self.assertEqual(
+            source["contexts"],
+            {
+                "crossforge_rocky_amd64": "docker-image://%s:%s@%s"
+                % (
+                    base["repository"],
+                    base["tag"],
+                    base["manifests"]["amd64"],
+                )
+            },
+        )
         prepared = self.targets["cpython-prepared-cp311"]
         self.assertEqual(
             prepared["contexts"],
@@ -285,7 +306,7 @@ class RenderBakeTests(unittest.TestCase):
             },
         )
         source_block = self.python_dockerfile.split(
-            "FROM crossforge_config AS cpython-source", 1
+            "FROM crossforge_rocky_amd64 AS cpython-source", 1
         )[1].split("FROM crossforge_host_python AS python-host", 1)[0]
         self.assertNotIn("prepare-cpython-source.py", source_block)
         prepared_block = self.python_dockerfile.split(
@@ -422,7 +443,7 @@ class RenderBakeTests(unittest.TestCase):
         )
         config["python"]["versions"].append(copy.deepcopy(duplicate))
         with self.assertRaises(ValueError):
-            RENDERER["render_python_graph"](config, {})
+            RENDERER["render_python_graph"](config, {}, {})
 
     def test_renderer_is_python36_syntax_compatible(self):
         path = REPOSITORY / "scripts/render-bake.py"

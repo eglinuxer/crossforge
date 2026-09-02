@@ -182,6 +182,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16"
       },
       "contexts": {
@@ -199,6 +201,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14"
       },
       "contexts": {
@@ -216,6 +220,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15"
       },
       "contexts": {
@@ -233,6 +239,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
@@ -256,6 +264,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
@@ -275,6 +285,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
@@ -297,6 +309,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
@@ -316,6 +330,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
@@ -339,6 +355,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
@@ -358,6 +376,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
@@ -380,6 +400,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
@@ -399,6 +421,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
@@ -422,6 +446,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
@@ -441,6 +467,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
@@ -463,6 +491,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
@@ -482,6 +512,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
@@ -504,6 +536,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
@@ -526,6 +560,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
@@ -548,6 +584,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
@@ -570,6 +608,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
@@ -592,6 +632,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
@@ -614,6 +656,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16"
       },
       "contexts": {
@@ -632,6 +676,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14"
       },
       "contexts": {
@@ -650,6 +696,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15"
       },
       "contexts": {
@@ -668,10 +716,12 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16"
       },
       "contexts": {
-        "crossforge_config": "target:validate"
+        "crossforge_rocky_amd64": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
       },
       "inherits": [
         "_python_common"
@@ -685,10 +735,12 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14"
       },
       "contexts": {
-        "crossforge_config": "target:validate"
+        "crossforge_rocky_amd64": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
       },
       "inherits": [
         "_python_common"
@@ -702,10 +754,12 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15"
       },
       "contexts": {
-        "crossforge_config": "target:validate"
+        "crossforge_rocky_amd64": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
       },
       "inherits": [
         "_python_common"
@@ -719,6 +773,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16"
       },
       "contexts": {
@@ -737,6 +793,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14"
       },
       "contexts": {
@@ -755,6 +813,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15"
       },
       "contexts": {
@@ -788,6 +848,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16"
       },
       "contexts": {
@@ -806,6 +868,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14"
       },
       "contexts": {
@@ -824,6 +888,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15"
       },
       "contexts": {
@@ -887,6 +953,8 @@
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16"
       },
       "contexts": {
@@ -907,6 +975,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14"
       },
       "contexts": {
@@ -927,6 +997,8 @@
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15"
       },
       "contexts": {

@@ -4,23 +4,25 @@
 # context, so row/target cache identity and the QEMU qualification boundary are
 # explicit in the generated graph.
 
-FROM crossforge_config AS cpython-source
+FROM crossforge_rocky_amd64 AS cpython-source
 ARG CPYTHON_ROW
 ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
-COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
-COPY --chmod=0755 scripts/fetch-release-source.py /work/scripts/fetch-release-source.py
-COPY scripts/validate-release.py /work/scripts/validate-release.py
-COPY scripts/python_row_contract.py /work/scripts/python_row_contract.py
-RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
-      --release /src/config/release.json \
-      --row "$CPYTHON_ROW" \
+ARG CPYTHON_SOURCE_COMPONENT
+ARG CPYTHON_SOURCE_COMPONENT_SHA256
+COPY config/generated/components/python/${CPYTHON_ROW}-source.json \
+  /work/config/python-source-component.json
+COPY --chmod=0755 scripts/release_component.py \
+  scripts/python_row_contract.py scripts/fetch-release-source.py \
+  /work/scripts/
+RUN /usr/libexec/platform-python /work/scripts/python_row_contract.py \
+      check "$CPYTHON_VERSION" "$CPYTHON_ADAPTER" \
+    && /usr/libexec/platform-python /work/scripts/fetch-release-source.py python \
       --version "$CPYTHON_VERSION" \
-      --adapter "$CPYTHON_ADAPTER"
-RUN /usr/libexec/platform-python /work/scripts/fetch-release-source.py python \
-      --version "$CPYTHON_VERSION" \
-      --config /src/config/release.json \
-      --schema /src/config/schemas/release.schema.json \
+      --component-file /work/config/python-source-component.json \
+      --expected-component "$CPYTHON_SOURCE_COMPONENT" \
+      --expected-scope build \
+      --expected-sha256 "$CPYTHON_SOURCE_COMPONENT_SHA256" \
       --output /out/Python.tar.xz
 
 FROM crossforge_host_python AS python-host

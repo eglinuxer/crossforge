@@ -106,6 +106,8 @@ def cacheonly_python_target(target, row, contexts=None, extra_args=None):
         "CPYTHON_ROW": row["row"],
         "CPYTHON_VERSION": row["version"],
         "CPYTHON_ADAPTER": row["adapter"],
+        "CPYTHON_SOURCE_COMPONENT": row["source_component"],
+        "CPYTHON_SOURCE_COMPONENT_SHA256": row["source_component_sha256"],
     }
     if extra_args:
         arguments.update(extra_args)
@@ -120,7 +122,7 @@ def cacheonly_python_target(target, row, contexts=None, extra_args=None):
     return result
 
 
-def render_python_graph(config, targets):
+def render_python_graph(config, targets, component_arguments):
     rows = []
     for record in IMPLEMENTED_ROWS:
         try:
@@ -128,6 +130,16 @@ def render_python_graph(config, targets):
         except ContractError as error:
             raise ValueError(str(error)) from error
         row = python_row(binding["contract"], binding["entry"])
+        source_component = "python/%s-source" % row["row"]
+        source_argument = component_argument_name(source_component)
+        try:
+            source_digest = component_arguments[source_argument]
+        except KeyError as error:
+            raise ValueError(
+                "Python row lacks a source component digest: %s" % row["row"]
+            ) from error
+        row["source_component"] = source_component
+        row["source_component_sha256"] = source_digest
         source = binding["entry"]["source"]
         if source["status"] != "locked":
             raise ValueError(
@@ -145,6 +157,13 @@ def render_python_graph(config, targets):
     if release_targets != PYTHON_TARGETS:
         raise ValueError("release targets differ from the Python matrix contract")
 
+    base = config["base_image"]
+    rocky_amd64_context = "docker-image://%s:%s@%s" % (
+        base["repository"],
+        base["tag"],
+        base["manifests"]["amd64"],
+    )
+
     groups = {}
     for row in rows:
         row_name = row["row"]
@@ -157,7 +176,7 @@ def render_python_graph(config, targets):
         targets[source_name] = cacheonly_python_target(
             "cpython-source",
             row,
-            {"crossforge_config": "target:validate"},
+            {"crossforge_rocky_amd64": rocky_amd64_context},
         )
         targets[prepared_name] = cacheonly_python_target(
             "cpython-prepared",
@@ -404,6 +423,7 @@ def render(repository):
         },
         "platforms": [platform],
     }
+    component_arguments = component_digest_arguments(repository, config)
     arguments = {
         "ROCKY_RPM_TRUST_FINGERPRINT": config["trust"]["rocky_rpm_key"][
             "fingerprint"
@@ -416,7 +436,7 @@ def render(repository):
         "QEMU_EXECUTOR_CPU": qemu_executor["cpu"],
         "QEMU_EXECUTOR_UNAME_RELEASE": qemu_executor["uname_release"],
     }
-    arguments.update(component_digest_arguments(repository, config))
+    arguments.update(component_arguments)
     if (
         config["gts"]["source"]["status"] == "locked"
         and config["binutils"]["source"]["status"] == "locked"
@@ -447,7 +467,7 @@ def render(repository):
         targets[name] = {
             "contexts": {"crossforge_qemu": "docker-image://%s" % qemu_image}
         }
-    python_groups = render_python_graph(config, targets)
+    python_groups = render_python_graph(config, targets, component_arguments)
     document = {
         "group": {
             "toolchain-plan": {"targets": plan_names},
