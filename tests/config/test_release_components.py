@@ -127,9 +127,22 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             RENDERER["QUALIFICATION_POLICY_FIELDS"],
             tuple(RENDERER["RECORD_FIELDS"]),
         )
+        self.assertNotIn("zstd", RENDERER["BUILD_POLICY_FIELDS"])
+        self.assertIn("zstd", RENDERER["QUALIFICATION_POLICY_FIELDS"])
+        for row in self.row_names:
+            materials = self.components[
+                "implementation/python-%s-build-policy" % row
+            ]["materials"]
+            self.assertFalse(
+                any(material["path"].endswith("/zstd") for material in materials)
+            )
         malformed = [copy.deepcopy(row) for row in self.rows]
         malformed[0]["extra"] = True
         with self.assertRaisesRegex(RENDERER["ProjectionError"], "RECORD_FIELDS"):
+            RENDERER["render_component_documents"](self.release, tuple(malformed))
+        malformed = [copy.deepcopy(row) for row in self.rows]
+        malformed[0]["zstd"] = 0
+        with self.assertRaisesRegex(RENDERER["ProjectionError"], "zstd policy"):
             RENDERER["render_component_documents"](self.release, tuple(malformed))
 
     def test_policy_and_python_dependency_matrix_is_exact(self):
@@ -138,7 +151,8 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "toolchain/x86_64-qualification",
             "toolchain/aarch64-qualification",
         }
-        for row in self.row_names:
+        for record in self.rows:
+            row = record["row"]
             policy = "implementation/python-%s-build-policy" % row
             source = "python/%s-source" % row
             native = "python/%s-native-build" % row
@@ -146,18 +160,28 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 {item["component"] for item in self.components[source]["dependencies"]},
                 {policy},
             )
+            expected_native = {
+                "rpm/host-build-common",
+                "rpm/host-python-build",
+                source,
+            }
+            if record["zstd"]:
+                expected_native.add("zstd/host-build")
             self.assertEqual(
                 {item["component"] for item in self.components[native]["dependencies"]},
-                {"rpm/host-build-common", "rpm/host-python-build", source},
+                expected_native,
             )
             for arch in ("x86_64", "aarch64"):
                 target = "python/%s-%s-build" % (row, arch)
+                expected_target = {native, "toolchain/%s-build" % arch}
+                if record["zstd"]:
+                    expected_target.add("zstd/%s-build" % arch)
                 self.assertEqual(
                     {
                         item["component"]
                         for item in self.components[target]["dependencies"]
                     },
-                    {native, "toolchain/%s-build" % arch},
+                    expected_target,
                 )
                 expected_qualification.add(target)
         self.assertEqual(
@@ -474,15 +498,20 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 },
                 expected,
             )
+        expected_python_edges = {
+            "python/cp314-native-build": {"zstd/host-build"},
+            "python/cp314-x86_64-build": {"zstd/x86_64-build"},
+            "python/cp314-aarch64-build": {"zstd/aarch64-build"},
+        }
         for component, document in self.components.items():
-            if component.startswith("python/cp"):
-                self.assertFalse(
-                    any(
-                        dependency["component"].startswith(("zstd/", "sources/zstd"))
-                        for dependency in document["dependencies"]
-                    ),
-                    component,
-                )
+            if not component.startswith("python/cp"):
+                continue
+            actual = {
+                dependency["component"]
+                for dependency in document["dependencies"]
+                if dependency["component"].startswith(("zstd/", "sources/zstd"))
+            }
+            self.assertEqual(actual, expected_python_edges.get(component, set()))
 
     def test_zstd_metadata_change_has_exact_build_impact(self):
         mutations = (
@@ -505,6 +534,10 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                     "zstd/host-build",
                     "zstd/x86_64-build",
                     "zstd/aarch64-build",
+                    "python/cp314-native-build",
+                    "python/cp314-x86_64-build",
+                    "python/cp314-aarch64-build",
+                    "python/qualification",
                 },
             )
 
@@ -516,19 +549,14 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         )
         self.assertEqual(changed(self.components, after), {"future/python-cp39"})
 
-    def test_adding_implemented_row_preserves_existing_row_builds(self):
-        added_policy = {
-            "minor": "3.14",
-            "row": "cp314",
-            "adapter": "modern",
-            "gil_policy": "zero",
-            "sysconfig_isolation": True,
-            "introduced_phase": 8,
-        }
-        rows = self.rows + (added_policy,)
-        after = RENDERER["render_component_documents"](self.release, rows)
+    def test_cp314_implementation_preserves_existing_row_build_digests(self):
+        prior_rows = self.rows[:-1]
+        self.assertEqual(self.rows[-1]["row"], "cp314")
+        before = RENDERER["render_component_documents"](
+            self.release, prior_rows
+        )
         self.assertEqual(
-            set(after) - set(self.components),
+            set(self.components) - set(before),
             {
                 "implementation/python-cp314-build-policy",
                 "python/cp314-source",
@@ -537,22 +565,27 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "python/cp314-aarch64-build",
             },
         )
-        self.assertEqual(set(self.components) - set(after), {"future/python-cp314"})
+        self.assertEqual(set(before) - set(self.components), {"future/python-cp314"})
         self.assertEqual(
-            changed(self.components, after),
+            changed(before, self.components),
             {
                 "implementation/python-qualification-policy",
                 "python/qualification",
                 "supply/evidence",
             },
         )
-        for row in self.row_names:
+        for row in ("cp313", "cp311", "cp312"):
             for suffix in ("source", "native-build", "x86_64-build", "aarch64-build"):
                 name = "python/%s-%s" % (row, suffix)
                 self.assertEqual(
+                    RENDERER["canonical_sha256"](before[name]),
                     RENDERER["canonical_sha256"](self.components[name]),
-                    RENDERER["canonical_sha256"](after[name]),
                 )
+            policy = "implementation/python-%s-build-policy" % row
+            self.assertEqual(
+                RENDERER["canonical_sha256"](before[policy]),
+                RENDERER["canonical_sha256"](self.components[policy]),
+            )
 
     def test_writer_rejects_escape_paths_before_any_side_effect(self):
         with tempfile.TemporaryDirectory() as directory:

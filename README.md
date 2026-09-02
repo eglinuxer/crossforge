@@ -10,9 +10,11 @@ build-system-independent DEB/RPM packaging.
 > build from locked host and sysroot transactions. x86_64 passes native smoke;
 > aarch64 passes the same compile/ABI gates and explicit QEMU smoke against a
 > locked sysroot and clean Rocky arm64 root. CPython 3.11 transition and
-> 3.12/3.13 modern rows have completed their amd64 build-Python and dual-target
-> runtime gates through Phase 7. Python 3.9–3.10/3.14, vcpkg, packaging, frozen
-> ABI sets and the independent minimal host-runtime lock remain pending.
+> 3.12–3.14 modern rows have completed their amd64 build-Python and dual-target
+> runtime gates through Phase 8. CPython 3.14.7 additionally passes compile
+> qualification with a private static zstd 1.5.7. Python 3.9–3.10, vcpkg,
+> packaging, frozen ABI sets, the full GCC/Qt suites and the independent
+> minimal host-runtime lock remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -230,9 +232,9 @@ and exercises an actual `multiprocessing.Lock()` on both targets. Each row
 manifest binds its prepared source, patches, complete build/target SDK tree
 identities and both self-validating qualification reports.
 
-## Phase 7: CPython 3.12 modern qualification
+## Phase 7: frozen CPython 3.12 snapshot
 
-Build and qualify the third row and latest aggregate graph:
+Build and qualify the third row and its frozen aggregate graph:
 
 ```console
 $ docker buildx bake python-native-phase7
@@ -250,10 +252,40 @@ did not receive the same-SOABI isolation fix. Crossforge therefore carries a
 separate hash-locked gh-115382 backport for the 3.12 source layout. The shared
 row contract defines its adapter, absent `Py_GIL_DISABLED` policy and Phase 7
 introduction once; build, qualification, runtime and Bake consume that same
-contract. `phase5` and `phase6` remain frozen cp313 and cp313+cp311 snapshots.
-`python-dev` and `python-matrix` are the latest three-row graph: they append
-cp312 only through its qualified scratch row. The full Phase 7 gate has passed
-locally; CI repeats `python-matrix` on every main-branch revision.
+contract. `python-phase7-dev` remains frozen at cp313+cp311+cp312 and appends
+cp312 only through its qualified scratch row.
+
+## Phase 8: CPython 3.14 with private zstd
+
+Build locked zstd 1.5.7 once for the amd64 build interpreter and once per
+target, then exercise CPython 3.14's compile and dual-runtime gates:
+
+```console
+$ docker buildx bake zstd-source zstd-host-build \
+    zstd-x86_64-build zstd-aarch64-build
+$ docker buildx bake python-native-phase8
+$ docker buildx bake cpython-cp314-x86_64-qualify-build \
+    cpython-cp314-aarch64-qualify-build
+$ docker buildx bake cpython-cp314-x86_64-qualify \
+    cpython-cp314-aarch64-qualify
+$ docker buildx bake python-cp314-dev python-phase8-dev
+$ docker buildx bake python-matrix
+$ docker buildx bake phase8
+```
+
+CPython 3.14.7 uses the modern adapter and an isolated build/target sysconfig
+contract. Rocky 8's zstd is too old, so Crossforge builds private PIC static
+zstd 1.5.7 prefixes for host, x86_64 and aarch64. Only `_zstd` consumes them;
+the immutable sysroots are unchanged. Compile qualification verifies the exact
+zstd build manifests and component identities, a unique `_zstd`, static symbol
+resolution and the absence of `libzstd.so`, exported private symbols, RPATHs
+and text relocations. Both locked-sysroot and clean-Rocky runtime tiers execute
+one-shot, streaming, dictionary, multithreaded, tarfile and zipfile zstd probes.
+
+Phase 5, 6 and 7 aggregates remain frozen at cp313, cp313+cp311 and
+cp313+cp311+cp312. `python-phase8-dev`, `python-dev` and `python-matrix` are the
+latest four-row graph: cp313+cp311+cp312+cp314, assembled only from qualified
+scratch rows. These are still cache-only development artifacts, not a release.
 
 ## Product contract
 

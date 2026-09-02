@@ -9,6 +9,7 @@ import os
 import re
 import runpy
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -256,11 +257,185 @@ def extract_source(archive_path, destination, version):
 
 
 def tree_manifest(destination):
+    require(
+        destination.is_dir() and not destination.is_symlink(),
+        "prepared zstd source root is not a regular directory",
+    )
+
+    def walk_error(error):
+        raise PreparationError("cannot inspect prepared zstd source: %s" % error)
+
     records = []
-    for path in sorted(item for item in destination.rglob("*") if item.is_file()):
-        digest, size = sha256_file(path)
-        records.append({"path": path.relative_to(destination).as_posix(), "sha256": digest, "size": size})
-    return records
+    for root, directories, filenames in os.walk(
+        str(destination), topdown=True, onerror=walk_error, followlinks=False
+    ):
+        directories.sort()
+        filenames.sort()
+        root_path = Path(root)
+        for name in directories:
+            path = root_path / name
+            require(
+                stat.S_ISDIR(os.lstat(str(path)).st_mode),
+                "prepared zstd source contains a symlink or special directory",
+            )
+        for name in filenames:
+            path = root_path / name
+            require(
+                stat.S_ISREG(os.lstat(str(path)).st_mode),
+                "prepared zstd source contains a symlink or special file",
+            )
+            digest, size = sha256_file(path)
+            records.append(
+                {
+                    "path": path.relative_to(destination).as_posix(),
+                    "sha256": digest,
+                    "size": size,
+                }
+            )
+    return sorted(records, key=lambda item: item["path"])
+
+
+def locked_archive_manifest(archive_path, identity):
+    """Hash the selected tree directly from the locked release archive."""
+    archive_sha256, archive_size = sha256_file(archive_path)
+    require(
+        archive_sha256 == identity["/python/zstd/source/sha256"]
+        and archive_size == identity["/python/zstd/source/size"],
+        "zstd source archive identity differs",
+    )
+    records = []
+    with tarfile.open(str(archive_path), "r:gz") as archive:
+        for member, relative in safe_members(
+            archive, identity["/python/zstd/version"]
+        ):
+            if not member.isfile():
+                continue
+            source = archive.extractfile(member)
+            require(source is not None, "cannot read zstd archive member")
+            digest = hashlib.sha256()
+            size = 0
+            with source:
+                for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                    digest.update(chunk)
+                    size += len(chunk)
+            require(size == member.size, "zstd archive member size differs")
+            records.append(
+                {
+                    "path": relative.as_posix(),
+                    "sha256": digest.hexdigest(),
+                    "size": size,
+                }
+            )
+    return sorted(records, key=lambda item: item["path"])
+
+
+def source_manifest_document(identity, component_sha256, destination):
+    """Describe one prepared tree using identities owned by its component."""
+    return {
+        "schema_version": 1,
+        "kind": "crossforge-zstd-source",
+        "component": {
+            "name": COMPONENT_NAME,
+            "canonical_sha256": component_sha256,
+        },
+        "version": identity["/python/zstd/version"],
+        "source": {
+            "url": identity["/python/zstd/source/url"],
+            "size": identity["/python/zstd/source/size"],
+            "sha256": identity["/python/zstd/source/sha256"],
+        },
+        "signature": {
+            "sha256": identity["/python/zstd/source/signature/sha256"],
+            "fingerprint": identity[
+                "/python/zstd/source/signature/key/fingerprint"
+            ],
+            "key_sha256": identity[
+                "/python/zstd/source/signature/key/sha256"
+            ],
+        },
+        "git": {
+            "repository": identity["/python/zstd/source/git/repository"],
+            "tag": identity["/python/zstd/source/git/tag"],
+            "tag_object": identity["/python/zstd/source/git/tag_object"],
+            "commit": identity["/python/zstd/source/git/commit"],
+        },
+        "license": {
+            "expression": identity["/python/zstd/license/expression"],
+            "file": identity["/python/zstd/license/license_file"],
+            "sha256": identity["/python/zstd/license/license_sha256"],
+            "copying_file": identity["/python/zstd/license/copying_file"],
+            "copying_sha256": identity[
+                "/python/zstd/license/copying_sha256"
+            ],
+        },
+        "files": tree_manifest(destination),
+    }
+
+
+def require_exact_json(actual, expected, label):
+    """Compare JSON values without Python's bool/int equality ambiguity."""
+    require(type(actual) is type(expected), "%s type differs" % label)
+    if type(expected) is dict:
+        require(set(actual) == set(expected), "%s fields differ" % label)
+        for key in sorted(expected):
+            require_exact_json(actual[key], expected[key], "%s.%s" % (label, key))
+    elif type(expected) is list:
+        require(len(actual) == len(expected), "%s length differs" % label)
+        for index, value in enumerate(expected):
+            require_exact_json(actual[index], value, "%s[%d]" % (label, index))
+    else:
+        require(actual == expected, "%s differs" % label)
+
+
+def validate_prepared_source(
+    component,
+    component_sha256,
+    destination,
+    manifest,
+    archive,
+    signature,
+    repository,
+):
+    """Rebind a prepared source tree to one authenticated component."""
+    identity = load_identity(component, component_sha256, repository)
+    reader = component_reader()
+    try:
+        document = reader["load_json"](manifest)
+    except reader["ComponentError"] as error:
+        raise PreparationError("invalid zstd source manifest: %s" % error) from error
+    expected = source_manifest_document(identity, component_sha256, destination)
+    require_exact_json(document, expected, "prepared zstd source manifest")
+
+    signature_sha256, signature_size = sha256_file(signature)
+    require(
+        signature_sha256 == identity["/python/zstd/source/signature/sha256"]
+        and signature_size == identity["/python/zstd/source/signature/size"],
+        "zstd detached signature identity differs",
+    )
+    locked_files = locked_archive_manifest(archive, identity)
+    require_exact_json(
+        expected["files"],
+        locked_files,
+        "prepared zstd source tree versus locked archive",
+    )
+
+    records = {item["path"]: item for item in expected["files"]}
+    for path, digest_path in (
+        (
+            identity["/python/zstd/license/license_file"],
+            "/python/zstd/license/license_sha256",
+        ),
+        (
+            identity["/python/zstd/license/copying_file"],
+            "/python/zstd/license/copying_sha256",
+        ),
+    ):
+        require(path in records, "prepared zstd source is missing %s" % path)
+        require(
+            records[path]["sha256"] == identity[digest_path],
+            "prepared zstd source %s digest differs" % path,
+        )
+    return document
 
 
 def prepare(component, component_sha256, archive, signature, destination, manifest, repository):
@@ -276,17 +451,7 @@ def prepare(component, component_sha256, archive, signature, destination, manife
         copying_sha = sha256_file(destination / "COPYING")[0]
         require(license_sha == identity["/python/zstd/license/license_sha256"], "zstd LICENSE hash differs")
         require(copying_sha == identity["/python/zstd/license/copying_sha256"], "zstd COPYING hash differs")
-        result = {
-            "schema_version": 1,
-            "kind": "crossforge-zstd-source",
-            "component": {"name": COMPONENT_NAME, "canonical_sha256": component_sha256},
-            "version": version,
-            "source": {"url": identity["/python/zstd/source/url"], "size": identity["/python/zstd/source/size"], "sha256": identity["/python/zstd/source/sha256"]},
-            "signature": {"sha256": identity["/python/zstd/source/signature/sha256"], "fingerprint": identity["/python/zstd/source/signature/key/fingerprint"], "key_sha256": identity["/python/zstd/source/signature/key/sha256"]},
-            "git": {"repository": identity["/python/zstd/source/git/repository"], "tag": identity["/python/zstd/source/git/tag"], "tag_object": identity["/python/zstd/source/git/tag_object"], "commit": identity["/python/zstd/source/git/commit"]},
-            "license": {"expression": identity["/python/zstd/license/expression"], "file": "LICENSE", "sha256": license_sha, "copying_file": "COPYING", "copying_sha256": copying_sha},
-            "files": tree_manifest(destination),
-        }
+        result = source_manifest_document(identity, component_sha256, destination)
         manifest.parent.mkdir(parents=True, exist_ok=True)
         temporary.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         os.replace(str(temporary), str(manifest))

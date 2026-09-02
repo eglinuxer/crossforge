@@ -24,6 +24,14 @@ ROW_CONTRACT = runpy.run_path(
     str(Path(__file__).with_name("python_row_contract.py"))
 )
 ContractError = ROW_CONTRACT["ContractError"]
+RELEASE_COMPONENTS = runpy.run_path(
+    str(Path(__file__).with_name("render-release-components.py"))
+)
+ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+ZSTD_EVIDENCE = runpy.run_path(
+    str(Path(__file__).with_name("python_zstd_evidence.py"))
+)
+ZstdEvidenceError = ZSTD_EVIDENCE["ZstdEvidenceError"]
 
 
 COMPILE_KEYS = {
@@ -45,6 +53,7 @@ COMPILE_KEYS = {
     "sysconfig",
     "sdk_tree",
     "elf_audit",
+    "zstd",
 }
 COMPILE_SOURCE_KEYS = {
     "url",
@@ -109,6 +118,7 @@ FINAL_REPORT_KEYS = {
     "probe_sha256",
     "compile_report_sha256",
     "compile",
+    "zstd",
     "runtime_result_sha256",
     "executions",
 }
@@ -131,6 +141,7 @@ CORE_PROBE_KEYS = {
     "network",
     "timezone",
     "wchar",
+    "zstd",
 }
 DEVICE_PROBE_KEYS = {
     "schema_version",
@@ -141,6 +152,7 @@ DEVICE_PROBE_KEYS = {
     "version",
     "sysconfig",
     "probe",
+    "zstd",
 }
 PROBE_SYSCONFIG_KEYS = {
     "arch",
@@ -176,6 +188,18 @@ CORE_OBJECT_KEYS = {
     "wchar": {"code_points", "cpython_api", "wchar_bytes"},
 }
 PTY_KEYS = {"character_devices", "isatty", "roundtrip_sha256"}
+ZSTD_ABSENT_KEYS = {"available", "policy", "rejected_imports"}
+ZSTD_REQUIRED_KEYS = {
+    "available",
+    "corrupt_error",
+    "dictionary",
+    "multithread",
+    "payload_sha256",
+    "policy",
+    "roundtrips",
+    "version",
+    "version_info",
+}
 
 TARGETS = {
     "x86_64-unknown-linux-gnu": "amd64",
@@ -224,6 +248,8 @@ REQUIRED_PROBE_IMPORTS = [
     "zlib",
 ]
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
+ZSTD_FAMILY = ZSTD_EVIDENCE["FAMILY"]
+ZSTD_REQUIRED_DEFINITIONS = ZSTD_EVIDENCE["REQUIRED_DEFINITIONS"]
 
 
 def require(condition, message):
@@ -338,6 +364,7 @@ def release_context(release, target, version):
     return {
         "adapter": contract["adapter"],
         "gil_policy": contract["gil_policy"],
+        "zstd": contract["zstd"],
         "release_sha256": canonical_sha256(release),
         "source": source,
         "sysroot_sha256": require_sha256(
@@ -345,6 +372,168 @@ def release_context(release, target, version):
             "release target sysroot canonical_sha256",
         ),
     }
+
+
+def expected_zstd_components(release, target_arch):
+    try:
+        return ZSTD_EVIDENCE["expected_components"](
+            release,
+            target_arch,
+            RELEASE_COMPONENTS["render_component_documents"],
+        )
+    except ZstdEvidenceError as error:
+        raise FinalizationError(str(error)) from error
+
+
+def validate_global_zstd_linkage(elf_audit):
+    try:
+        return ZSTD_EVIDENCE["validate_no_dynamic_libzstd"](
+            elf_audit, "compile report elf_audit"
+        )
+    except ZstdEvidenceError as error:
+        raise FinalizationError(str(error)) from error
+
+
+def validate_zstd_build_evidence(
+    value,
+    identity,
+    prefix,
+    machine,
+    component_identity,
+    policy_identity,
+    path,
+):
+    try:
+        return ZSTD_EVIDENCE["validate_build_evidence"](
+            value,
+            identity,
+            prefix,
+            machine,
+            component_identity,
+            policy_identity,
+            path,
+        )
+    except ZstdEvidenceError as error:
+        raise FinalizationError(str(error)) from error
+
+
+def validate_compile_zstd_evidence(value, context, report, target, version):
+    path = "compile report zstd"
+    if not context["zstd"]:
+        require_exact_keys(value, {"policy", "module", "builds"}, path)
+        require(
+            value == {"policy": "absent", "module": None, "builds": None},
+            "%s absent policy mismatch" % path,
+        )
+        dynamic_prefix = "lib/python%s/lib-dynload/" % ".".join(version.split(".")[:2])
+        require(
+            not any(
+                name.startswith(dynamic_prefix)
+                and Path(name).name.startswith("_zstd.")
+                for name in report["elf_audit"]
+            ),
+            "%s absent policy has an audited _zstd module" % path,
+        )
+        return value
+
+    require_exact_keys(value, {"policy", "version", "module", "builds"}, path)
+    require(
+        value["policy"] == "required" and value["version"] == "1.5.7",
+        "%s required policy/version mismatch" % path,
+    )
+    module = value["module"]
+    require_exact_keys(module, {"path", "sha256", "needed", "symbols"}, path + " module")
+    expected_path = report["required_modules"].get("_zstd")
+    require(
+        module["path"] == expected_path and expected_path in report["elf_audit"],
+        "%s module path mismatch" % path,
+    )
+    require_sha256(module["sha256"], path + " module sha256")
+    audit = report["elf_audit"][expected_path]
+    require(
+        module["sha256"] == audit["sha256"]
+        and module["needed"] == audit["needed"],
+        "%s module ELF binding mismatch" % path,
+    )
+    require(
+        not any(item.startswith("libzstd.so") for item in module["needed"]),
+        "%s module dynamically depends on libzstd" % path,
+    )
+    symbols = module["symbols"]
+    symbol_keys = {
+        "required_definitions",
+        "defined",
+        "undefined",
+        "dynamic_exports",
+        "canonical_sha256",
+    }
+    require_exact_keys(symbols, symbol_keys, path + " module symbols")
+    require(
+        symbols["required_definitions"] == ZSTD_REQUIRED_DEFINITIONS,
+        "%s required static definitions mismatch" % path,
+    )
+    for name in ("defined", "undefined", "dynamic_exports"):
+        observed = symbols[name]
+        require(
+            isinstance(observed, list)
+            and observed == sorted(set(observed))
+            and all(
+                isinstance(item, str) and ZSTD_FAMILY.match(item)
+                for item in observed
+            ),
+            "%s symbol list %s is not canonical" % (path, name),
+        )
+    require(
+        not symbols["undefined"]
+        and not symbols["dynamic_exports"]
+        and set(ZSTD_REQUIRED_DEFINITIONS).issubset(symbols["defined"]),
+        "%s static linkage symbol proof failed" % path,
+    )
+    symbol_payload = {
+        name: symbols[name]
+        for name in (
+            "required_definitions",
+            "defined",
+            "undefined",
+            "dynamic_exports",
+        )
+    }
+    require_sha256(symbols["canonical_sha256"], path + " symbol digest")
+    require(
+        symbols["canonical_sha256"] == canonical_sha256(symbol_payload),
+        "%s symbol evidence digest mismatch" % path,
+    )
+
+    require_exact_keys(value["builds"], {"host", "target"}, path + " builds")
+    target_arch = "x86_64" if target.startswith("x86_64-") else "aarch64"
+    machine = (
+        "Advanced Micro Devices X86-64" if target_arch == "x86_64" else "AArch64"
+    )
+    components = expected_zstd_components(context["release"], target_arch)
+    host = validate_zstd_build_evidence(
+        value["builds"]["host"],
+        "host",
+        "/opt/crossforge/deps/zstd/1.5.7/host",
+        "Advanced Micro Devices X86-64",
+        components["host"],
+        components["policy"],
+        path + " host build",
+    )
+    target_build = validate_zstd_build_evidence(
+        value["builds"]["target"],
+        target,
+        "/opt/crossforge/deps/zstd/1.5.7/%s" % target,
+        machine,
+        components["target"],
+        components["policy"],
+        path + " target build",
+    )
+    require(
+        host["manifest"]["source_manifest_sha256"]
+        == target_build["manifest"]["source_manifest_sha256"],
+        "%s host/target source manifest mismatch" % path,
+    )
+    return value
 
 
 def validate_dynamic_map(value, path):
@@ -625,18 +814,25 @@ def validate_compile_report(report, context, target, version):
     require_sha256(extension["sha256"], "compile report extension sha256")
 
     modules = report["required_modules"]
-    require_exact_keys(modules, REQUIRED_MODULES, "compile report required_modules")
+    expected_required_modules = set(REQUIRED_MODULES)
+    if context["zstd"]:
+        expected_required_modules.add("_zstd")
+    require_exact_keys(
+        modules,
+        expected_required_modules,
+        "compile report required_modules",
+    )
     expected_modules = {
         module: "lib/python%s/lib-dynload/%s.%s.so"
         % (minor, module, expected_soabi)
-        for module in REQUIRED_MODULES
+        for module in expected_required_modules
     }
     require(
         modules == expected_modules,
         "compile report required module paths differ from the selected ABI",
     )
     require(
-        len(set(modules.values())) == len(REQUIRED_MODULES),
+        len(set(modules.values())) == len(expected_required_modules),
         "compile report required module paths are not unique",
     )
     expected_sysconfig = {
@@ -717,6 +913,7 @@ def validate_compile_report(report, context, target, version):
                 % (name, namespace, observed),
             )
         require_sha256(audit["sha256"], "compile report elf_audit %s sha256" % name)
+    validate_global_zstd_linkage(report["elf_audit"])
     require(
         set(modules.values()).issubset(report["elf_audit"]),
         "compile report required modules are not all present in the ELF audit",
@@ -731,10 +928,59 @@ def validate_compile_report(report, context, target, version):
         == extension["sha256"],
         "compile report extension audit hash mismatch",
     )
+    validate_compile_zstd_evidence(
+        report["zstd"], context, report, target, version
+    )
     return report
 
 
-def validate_probe(value, path, target, version, expected_mode):
+def validate_zstd_evidence(value, required, path):
+    require(isinstance(value, dict), "%s must be an object" % path)
+    if not required:
+        require_exact_keys(value, ZSTD_ABSENT_KEYS, path)
+        require(
+            value["available"] is False
+            and value["policy"] == "absent"
+            and value["rejected_imports"]
+            == ["_zstd", "compression.zstd"],
+            "%s absent-policy evidence mismatch" % path,
+        )
+        return
+    require_exact_keys(value, ZSTD_REQUIRED_KEYS, path)
+    require_exact_keys(value["dictionary"], {"finalized", "trained"}, path + " dictionary")
+    require_exact_keys(
+        value["multithread"],
+        {"nb_workers", "supported"},
+        path + " multithread",
+    )
+    require(
+        value["available"] is True
+        and value["policy"] == "required"
+        and value["version"] == "1.5.7"
+        and value["version_info"] == [1, 5, 7]
+        and all(type(item) is int for item in value["version_info"])
+        and value["payload_sha256"]
+        == "dd1fc53b1dfcac3378b57b9b8b2723c16f2b6aad628c940b09f6904fba3957a2"
+        and value["roundtrips"]
+        == [
+            "dictionary",
+            "multithread",
+            "one-shot",
+            "streaming",
+            "tarfile",
+            "zipfile",
+        ]
+        and value["dictionary"]["finalized"] is True
+        and value["dictionary"]["trained"] is True
+        and value["multithread"]["nb_workers"] == 1
+        and type(value["multithread"]["nb_workers"]) is int
+        and value["multithread"]["supported"] is True
+        and value["corrupt_error"] == "ZstdError",
+        "%s required-policy evidence mismatch" % path,
+    )
+
+
+def validate_probe(value, path, target, version, expected_mode, zstd_required):
     expected_keys = CORE_PROBE_KEYS if expected_mode == "core" else DEVICE_PROBE_KEYS
     require_exact_keys(value, expected_keys, path)
     require(value["schema_version"] == 2, "%s schema mismatch" % path)
@@ -743,6 +989,7 @@ def validate_probe(value, path, target, version, expected_mode):
     require(value["status"] == "passed", "%s did not pass" % path)
     require(value["target"] == target, "%s target mismatch" % path)
     require(value["version"] == version, "%s version mismatch" % path)
+    validate_zstd_evidence(value["zstd"], zstd_required, "%s zstd" % path)
 
     sysconfig = value["sysconfig"]
     require_exact_keys(sysconfig, PROBE_SYSCONFIG_KEYS, "%s sysconfig" % path)
@@ -784,7 +1031,9 @@ def validate_probe(value, path, target, version, expected_mode):
             "%s imports must be a non-empty string array" % path,
         )
         require(
-            imports == REQUIRED_PROBE_IMPORTS,
+            imports
+            == REQUIRED_PROBE_IMPORTS
+            + (["_zstd", "compression.zstd"] if zstd_required else []),
             "%s imports differ from the required module set" % path,
         )
         for name, keys in CORE_OBJECT_KEYS.items():
@@ -968,6 +1217,10 @@ def validate_runtime_result(
         not any("not found" in item or "(0x" in item for item in dependencies),
         "%s loader_dependencies contain unresolved or unstable evidence" % path,
     )
+    require(
+        not any("libzstd.so" in item for item in dependencies),
+        "%s loader_dependencies contain dynamic libzstd" % path,
+    )
     device_dependencies = report["device_loader_dependencies"]
     require(
         isinstance(device_dependencies, list)
@@ -978,6 +1231,10 @@ def validate_runtime_result(
     require(
         not any("not found" in item or "(0x" in item for item in device_dependencies),
         "%s device loader evidence is unstable" % path,
+    )
+    require(
+        not any("libzstd.so" in item for item in device_dependencies),
+        "%s device loader dependencies contain dynamic libzstd" % path,
     )
     loaded_objects = report["device_loaded_objects"]
     require(
@@ -1002,15 +1259,64 @@ def validate_runtime_result(
         ),
         "%s device loaded-object evidence is incomplete" % path,
     )
-    validate_probe(report["probe"], "%s probe" % path, target, version, "core")
+    loaded_basenames = {Path(item).name for item in loaded_objects}
+    require(
+        not any(name.startswith("libzstd.so") for name in loaded_basenames),
+        "%s loaded a dynamic libzstd" % path,
+    )
+    compact_minor = "".join(version.split(".")[:2])
+    target_arch = "x86_64" if target.startswith("x86_64-") else "aarch64"
+    expected_zstd_modules = (
+        {"_zstd.cpython-%s-%s-linux-gnu.so" % (compact_minor, target_arch)}
+        if context["zstd"]
+        else set()
+    )
+    zstd_modules = {name for name in loaded_basenames if name.startswith("_zstd.")}
+    require(
+        zstd_modules == expected_zstd_modules,
+        "%s _zstd loaded-object policy mismatch" % path,
+    )
+    validate_probe(
+        report["probe"],
+        "%s probe" % path,
+        target,
+        version,
+        "core",
+        context["zstd"],
+    )
     validate_probe(
         report["device_probe"],
         "%s device_probe" % path,
         target,
         version,
         "devices",
+        context["zstd"],
     )
     return report
+
+
+def validate_qualification_zstd(report, release, target, version):
+    """Validate and return the normalized final/compile zstd evidence.
+
+    Row aggregation uses this stable boundary after validating the surrounding
+    qualification report, then independently recomputes the on-disk ELF facts.
+    """
+    require(isinstance(report, dict), "qualification report must be an object")
+    require("compile" in report and "zstd" in report, "qualification zstd evidence is missing")
+    context = release_context(release, target, version)
+    context["release"] = release
+    evidence = validate_compile_zstd_evidence(
+        report["compile"].get("zstd"),
+        context,
+        report["compile"],
+        target,
+        version,
+    )
+    require(
+        report["zstd"] == evidence,
+        "qualification report zstd evidence mismatch",
+    )
+    return evidence
 
 
 def validate_final_report(report, release, target, version):
@@ -1034,6 +1340,7 @@ def validate_final_report(report, release, target, version):
         report["compile_report_sha256"] == compile_digest,
         "qualification report compile serialization mismatch",
     )
+    validate_qualification_zstd(report, release, target, version)
     require_exact_keys(report["executions"], RUNTIME_TIERS, "qualification executions")
     locked = validate_runtime_result(
         report["executions"]["locked-sysroot"],
@@ -1139,6 +1446,7 @@ def finalize(compile_path, locked_path, clean_path, release_path, target, versio
         "probe_sha256": locked["probe_sha256"],
         "compile_report_sha256": compile_digest,
         "compile": compile_report,
+        "zstd": compile_report["zstd"],
         "runtime_result_sha256": {
             "locked-sysroot": sha256_file(locked_path),
             "clean-rocky": sha256_file(clean_path),

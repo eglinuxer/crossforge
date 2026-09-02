@@ -13,6 +13,10 @@
     {
       "canonical_sha256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
       "component": "implementation/python-cp313-build-policy"
+    },
+    {
+      "canonical_sha256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
+      "component": "implementation/python-cp314-build-policy"
     }
   ],
   "kind": "crossforge-release-component",
@@ -42,6 +46,10 @@
       "value": true
     },
     {
+      "path": "/@implementation/python_rows/cp311/zstd",
+      "value": false
+    },
+    {
       "path": "/@implementation/python_rows/cp312/adapter",
       "value": "modern"
     },
@@ -66,6 +74,10 @@
       "value": true
     },
     {
+      "path": "/@implementation/python_rows/cp312/zstd",
+      "value": false
+    },
+    {
       "path": "/@implementation/python_rows/cp313/adapter",
       "value": "modern"
     },
@@ -87,6 +99,38 @@
     },
     {
       "path": "/@implementation/python_rows/cp313/sysconfig_isolation",
+      "value": true
+    },
+    {
+      "path": "/@implementation/python_rows/cp313/zstd",
+      "value": false
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/adapter",
+      "value": "modern"
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/gil_policy",
+      "value": "zero"
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/introduced_phase",
+      "value": 8
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/minor",
+      "value": "3.14"
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/row",
+      "value": "cp314"
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/sysconfig_isolation",
+      "value": true
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/zstd",
       "value": true
     }
   ],

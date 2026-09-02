@@ -32,6 +32,14 @@ ROW_CONTRACT = runpy.run_path(
     str(Path(__file__).with_name("python_row_contract.py"))
 )
 ContractError = ROW_CONTRACT["ContractError"]
+RELEASE_COMPONENTS = runpy.run_path(
+    str(Path(__file__).with_name("render-release-components.py"))
+)
+ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+ZSTD_EVIDENCE = runpy.run_path(
+    str(Path(__file__).with_name("python_zstd_evidence.py"))
+)
+ZstdEvidenceError = ZSTD_EVIDENCE["ZstdEvidenceError"]
 
 
 TARGETS = {
@@ -62,6 +70,10 @@ REQUIRED_MODULES = (
     "_uuid",
     "zlib",
 )
+ZSTD_FAMILY = ZSTD_EVIDENCE["FAMILY"]
+ZSTD_REQUIRED_DEFINITIONS = tuple(ZSTD_EVIDENCE["REQUIRED_DEFINITIONS"])
+
+
 def require(condition, message):
     if not condition:
         raise QualificationError(message)
@@ -102,6 +114,10 @@ def canonical_bytes(value):
     return json.dumps(
         value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
+
+
+def canonical_sha256(value):
+    return hashlib.sha256(canonical_bytes(value)).hexdigest()
 
 
 def sha256_file(path):
@@ -200,6 +216,178 @@ def audit_elf(readelf, path, profile, require_interpreter=False):
         "needed": needed,
         "required_versions": audit_versions(symbols, path),
         "sha256": sha256_file(path),
+    }
+
+
+def expected_zstd_components(release, target_arch):
+    try:
+        return ZSTD_EVIDENCE["expected_components"](
+            release,
+            target_arch,
+            RELEASE_COMPONENTS["render_component_documents"],
+        )
+    except ZstdEvidenceError as error:
+        raise QualificationError(str(error)) from error
+
+
+def validate_global_zstd_linkage(elf_audit):
+    try:
+        return ZSTD_EVIDENCE["validate_no_dynamic_libzstd"](
+            elf_audit, "compile ELF audit"
+        )
+    except ZstdEvidenceError as error:
+        raise QualificationError(str(error)) from error
+
+
+def load_zstd_build_evidence(
+    manifest_path,
+    identity,
+    prefix,
+    machine,
+    component_identity,
+    policy_identity,
+    path,
+):
+    require(
+        manifest_path.is_file() and not manifest_path.is_symlink(),
+        "%s is missing or unsafe" % path,
+    )
+    document = load_json(manifest_path)
+    try:
+        ZSTD_EVIDENCE["validate_build_manifest"](
+            document,
+            identity,
+            prefix,
+            machine,
+            component_identity,
+            policy_identity,
+            path,
+        )
+    except ZstdEvidenceError as error:
+        raise QualificationError(str(error)) from error
+    return {"manifest": document, "manifest_sha256": sha256_file(manifest_path)}
+
+
+def _nm_family_symbols(nm, path, option):
+    output, _ = run([nm, "--format=posix", option, path])
+    symbols = set()
+    for line in output.splitlines():
+        fields = line.split()
+        if not fields:
+            continue
+        name = fields[0].split("@", 1)[0]
+        if ZSTD_FAMILY.match(name):
+            symbols.add(name)
+    return sorted(symbols)
+
+
+def audit_zstd_module(readelf, nm, path, audit):
+    dynamic, _ = run([readelf, "--wide", "-d", path])
+    require(
+        "TEXTREL" not in dynamic
+        and "(RPATH)" not in dynamic
+        and "(RUNPATH)" not in dynamic,
+        "%s violates the static zstd relocation/path policy" % path,
+    )
+    require(
+        not any(name.startswith("libzstd.so") for name in audit["needed"]),
+        "%s dynamically depends on libzstd" % path,
+    )
+    dynsym, _ = run([readelf, "--wide", "--dyn-syms", path])
+    dynamic_exports = set()
+    for line in dynsym.splitlines():
+        fields = line.split()
+        if len(fields) < 8 or not fields[0].endswith(":") or fields[6] == "UND":
+            continue
+        name = fields[7].split("@", 1)[0]
+        if ZSTD_FAMILY.match(name):
+            dynamic_exports.add(name)
+    defined = _nm_family_symbols(nm, path, "--defined-only")
+    undefined = _nm_family_symbols(nm, path, "--undefined-only")
+    require(not dynamic_exports, "%s exports private zstd symbols" % path)
+    require(not undefined, "%s has unresolved zstd symbols" % path)
+    require(
+        set(ZSTD_REQUIRED_DEFINITIONS).issubset(defined),
+        "%s lacks required statically linked zstd definitions" % path,
+    )
+    symbol_evidence = {
+        "required_definitions": list(ZSTD_REQUIRED_DEFINITIONS),
+        "defined": defined,
+        "undefined": undefined,
+        "dynamic_exports": sorted(dynamic_exports),
+    }
+    symbol_evidence["canonical_sha256"] = canonical_sha256(symbol_evidence)
+    return {
+        "needed": audit["needed"],
+        "path": None,
+        "sha256": audit["sha256"],
+        "symbols": symbol_evidence,
+    }
+
+
+def zstd_compile_evidence(
+    contract,
+    release,
+    profile,
+    target,
+    build_prefix,
+    target_prefix,
+    lib_dynload,
+    readelf,
+    nm,
+    elf_audit,
+):
+    module_matches = sorted(lib_dynload.glob("_zstd.*.so"))
+    host_manifest_path = build_prefix / ".crossforge" / "zstd-build.json"
+    target_manifest_path = target_prefix / ".crossforge" / "zstd-build.json"
+    if not contract["zstd"]:
+        require(not module_matches, "pre-3.14 SDK unexpectedly contains _zstd")
+        require(
+            not (host_manifest_path.exists() or host_manifest_path.is_symlink())
+            and not (target_manifest_path.exists() or target_manifest_path.is_symlink()),
+            "pre-3.14 SDK unexpectedly contains zstd build evidence",
+        )
+        return {"policy": "absent", "module": None, "builds": None}
+
+    require(len(module_matches) == 1, "CPython 3.14 _zstd module is not unique")
+    components = expected_zstd_components(release, profile["arch"])
+    host_prefix = "/opt/crossforge/deps/zstd/1.5.7/host"
+    target_zstd_prefix = "/opt/crossforge/deps/zstd/1.5.7/%s" % target
+    builds = {
+        "host": load_zstd_build_evidence(
+            host_manifest_path,
+            "host",
+            host_prefix,
+            TARGETS["x86_64-unknown-linux-gnu"]["machine"],
+            components["host"],
+            components["policy"],
+            "host zstd build manifest",
+        ),
+        "target": load_zstd_build_evidence(
+            target_manifest_path,
+            target,
+            target_zstd_prefix,
+            profile["machine"],
+            components["target"],
+            components["policy"],
+            "target zstd build manifest",
+        ),
+    }
+    require(
+        builds["host"]["manifest"]["source_manifest_sha256"]
+        == builds["target"]["manifest"]["source_manifest_sha256"],
+        "host and target zstd builds used different source manifests",
+    )
+    module = module_matches[0]
+    relative = module.relative_to(target_prefix).as_posix()
+    require(relative in elf_audit, "_zstd is absent from the ELF audit")
+    module_evidence = audit_zstd_module(readelf, nm, module, elf_audit[relative])
+    module_evidence["path"] = relative
+    return {
+        "policy": "required",
+        "version": "1.5.7",
+        "module": module_evidence,
+        "builds": builds,
     }
 
 
@@ -378,7 +566,11 @@ def main():
 
     gcc = arguments.toolchain / "bin" / (arguments.target + "-gcc")
     readelf = arguments.toolchain / "bin" / (arguments.target + "-readelf")
-    require(gcc.is_file() and readelf.is_file(), "target compiler tools are missing")
+    nm = arguments.toolchain / "bin" / (arguments.target + "-nm")
+    require(
+        gcc.is_file() and readelf.is_file() and nm.is_file(),
+        "target compiler tools are missing",
+    )
     macros, _ = run([gcc, "--sysroot=" + str(arguments.sysroot), "-dM", "-E", "-xc", "/dev/null"])
     require(
         "#define __WCHAR_TYPE__ %s" % profile["wchar_type"] in macros,
@@ -407,8 +599,9 @@ def main():
     python = arguments.prefix / "bin" / ("python" + minor)
     require(python.is_file(), "target Python executable is missing")
     lib_dynload = arguments.prefix / "lib" / ("python" + minor) / "lib-dynload"
+    selected_modules = REQUIRED_MODULES + (("_zstd",) if contract["zstd"] else ())
     required_modules = {}
-    for module in REQUIRED_MODULES:
+    for module in selected_modules:
         matches = list(lib_dynload.glob(module + ".*.so"))
         require(len(matches) == 1, "required module %s is not unique" % module)
         required_modules[module] = matches[0].relative_to(arguments.prefix).as_posix()
@@ -428,8 +621,21 @@ def main():
             profile,
             require_interpreter=(path == python),
         )
+    validate_global_zstd_linkage(elf_audit)
     extension_symbols, _ = run([readelf, "--wide", "--dyn-syms", extension])
     require("PyInit__crossforge" in extension_symbols, "extension initializer is missing")
+    zstd = zstd_compile_evidence(
+        contract,
+        release,
+        profile,
+        arguments.target,
+        expected_build_prefix,
+        arguments.prefix,
+        lib_dynload,
+        readelf,
+        nm,
+        elf_audit,
+    )
 
     report = {
         "qualification_schema_version": 2,
@@ -474,6 +680,7 @@ def main():
         "sysconfig": {name: variables.get(name, 0) for name in sorted(expected_values)},
         "sdk_tree": sdk_tree_identity(arguments.prefix),
         "elf_audit": elf_audit,
+        "zstd": zstd,
     }
     arguments.report.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.report.with_name(arguments.report.name + ".tmp")
@@ -489,6 +696,7 @@ if __name__ == "__main__":
     except (
         QualificationError,
         SDKIdentityError,
+        ProjectionError,
         KeyError,
         OSError,
         TypeError,

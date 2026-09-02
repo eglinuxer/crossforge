@@ -7,6 +7,7 @@ import argparse
 import bz2
 import ctypes
 import hashlib
+import io
 import importlib
 import json
 import lzma
@@ -19,9 +20,11 @@ import sqlite3
 import ssl
 import sys
 import sysconfig
+import tarfile
 import threading
 import time
 import uuid
+import zipfile
 import zlib
 
 
@@ -98,6 +101,9 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--target", choices=tuple(TARGETS), required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--gil-policy", choices=("absent", "zero"), required=True)
+    parser.add_argument(
+        "--zstd-policy", choices=("required", "absent"), required=True
+    )
     parser.add_argument("--extension-dir", type=os.path.abspath)
     arguments = parser.parse_args()
 
@@ -194,12 +200,137 @@ def validate_identity(
     }
 
 
-def exercise_imports() -> list[str]:
+def exercise_imports(zstd_policy: str) -> list[str]:
     imported = []
-    for module_name in REQUIRED_IMPORTS:
+    module_names = list(REQUIRED_IMPORTS)
+    if zstd_policy == "required":
+        module_names.extend(("_zstd", "compression.zstd"))
+    for module_name in module_names:
         importlib.import_module(module_name)
         imported.append(module_name)
     return imported
+
+
+def exercise_zstd(policy: str) -> dict[str, object]:
+    module_names = ("_zstd", "compression.zstd")
+    if policy == "absent":
+        rejected = []
+        for module_name in module_names:
+            try:
+                importlib.import_module(module_name)
+            except ModuleNotFoundError:
+                rejected.append(module_name)
+            else:
+                raise ProbeError(
+                    f"zstd module unexpectedly available: {module_name}"
+                )
+        return {
+            "available": False,
+            "policy": "absent",
+            "rejected_imports": rejected,
+        }
+    if policy != "required":
+        raise ProbeError("unsupported CPython zstd policy")
+
+    zstd = importlib.import_module("compression.zstd")
+    importlib.import_module("_zstd")
+    require(zstd.zstd_version == "1.5.7", "private zstd version string differs")
+    require(
+        tuple(zstd.zstd_version_info) == (1, 5, 7),
+        "private zstd version tuple differs",
+    )
+    payload_sha256 = hashlib.sha256(PAYLOAD).hexdigest()
+
+    compressed = zstd.compress(PAYLOAD)
+    require(zstd.decompress(compressed) == PAYLOAD, "zstd one-shot round-trip failed")
+    compressor = zstd.ZstdCompressor()
+    streaming = compressor.compress(PAYLOAD) + compressor.flush()
+    require(
+        zstd.decompress(streaming) == PAYLOAD,
+        "zstd streaming round-trip failed",
+    )
+
+    words = (
+        b"red", b"green", b"yellow", b"black", b"white", b"blue",
+        b"lilac", b"purple", b"navy", b"gold", b"silver", b"olive",
+        b"dog", b"cat", b"tiger", b"lion", b"fish", b"bird",
+    )
+    samples = [
+        b"\n".join(
+            words[(index + offset) % len(words)]
+            + b" = "
+            + str((index * 17 + offset) % 100).encode("ascii")
+            for offset in range(20)
+        )
+        for index in range(300)
+    ]
+    trained = zstd.train_dict(samples, 3 * 1024)
+    finalized = zstd.finalize_dict(trained, samples, 200 * 1024, 6)
+    dictionary_payload = samples[0]
+    dictionary_frame = zstd.compress(
+        dictionary_payload, level=6, zstd_dict=finalized
+    )
+    require(
+        zstd.decompress(dictionary_frame, zstd_dict=finalized)
+        == dictionary_payload,
+        "zstd dictionary round-trip failed",
+    )
+
+    bounds = zstd.CompressionParameter.nb_workers.bounds()
+    require(bounds[1] >= 1, "private zstd lacks multithread support")
+    multithread_frame = zstd.compress(
+        PAYLOAD * 1024,
+        options={zstd.CompressionParameter.nb_workers: 1},
+    )
+    require(
+        zstd.decompress(multithread_frame) == PAYLOAD * 1024,
+        "zstd multithread round-trip failed",
+    )
+
+    tar_buffer = io.BytesIO()
+    member = tarfile.TarInfo("payload.bin")
+    member.size = len(PAYLOAD)
+    with tarfile.open(fileobj=tar_buffer, mode="w:zst") as archive:
+        archive.addfile(member, io.BytesIO(PAYLOAD))
+    with tarfile.open(fileobj=io.BytesIO(tar_buffer.getvalue()), mode="r:zst") as archive:
+        extracted = archive.extractfile("payload.bin")
+        require(extracted is not None, "zstd tar member is missing")
+        with extracted:
+            require(extracted.read() == PAYLOAD, "zstd tarfile round-trip failed")
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(
+        zip_buffer, mode="w", compression=zipfile.ZIP_ZSTANDARD
+    ) as archive:
+        archive.writestr("payload.bin", PAYLOAD)
+    with zipfile.ZipFile(io.BytesIO(zip_buffer.getvalue()), mode="r") as archive:
+        require(archive.read("payload.bin") == PAYLOAD, "zstd zipfile round-trip failed")
+
+    try:
+        zstd.decompress(b"not-a-zstandard-frame")
+    except zstd.ZstdError:
+        corrupt_error = "ZstdError"
+    else:
+        raise ProbeError("corrupt zstd input did not raise ZstdError")
+
+    return {
+        "available": True,
+        "corrupt_error": corrupt_error,
+        "dictionary": {"finalized": True, "trained": True},
+        "multithread": {"nb_workers": 1, "supported": True},
+        "payload_sha256": payload_sha256,
+        "policy": "required",
+        "roundtrips": [
+            "dictionary",
+            "multithread",
+            "one-shot",
+            "streaming",
+            "tarfile",
+            "zipfile",
+        ],
+        "version": "1.5.7",
+        "version_info": [1, 5, 7],
+    }
 
 
 def exercise_libraries() -> dict[str, object]:
@@ -457,7 +588,7 @@ def core_report(arguments: argparse.Namespace) -> dict[str, object]:
         "extension": extension_report,
         "functionality": exercise_libraries(),
         "hash_algorithm": exercise_hash_algorithm(),
-        "imports": exercise_imports(),
+        "imports": exercise_imports(arguments.zstd_policy),
         "mode": "core",
         "network": exercise_network(),
         "report_kind": "crossforge-cpython-probe",
@@ -470,6 +601,7 @@ def core_report(arguments: argparse.Namespace) -> dict[str, object]:
         "timezone": exercise_timezone(),
         "version": arguments.version,
         "wchar": exercise_wchar(extension),
+        "zstd": exercise_zstd(arguments.zstd_policy),
     }
 
 
@@ -486,6 +618,7 @@ def devices_report(arguments: argparse.Namespace) -> dict[str, object]:
         "sysconfig": identity,
         "target": arguments.target,
         "version": arguments.version,
+        "zstd": exercise_zstd(arguments.zstd_policy),
     }
 
 

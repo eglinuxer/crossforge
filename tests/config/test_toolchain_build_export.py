@@ -129,7 +129,8 @@ class ToolchainBuildExportTests(unittest.TestCase):
                 {
                     "cpython-cross-%s-%s" % (contract["row"], arch)
                     for contract in RENDERER["IMPLEMENTED_ROWS"]
-                },
+                }
+                | {"zstd-%s-build" % arch},
             )
         sdk = self.targets["sdk-toolchains-dev"]["contexts"]
         self.assertEqual(

@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、两套 GTS15 C/C++/LTO cross slice，以及 CPython 3.11 transition、3.12/3.13 modern 的 build/x86_64/aarch64 行已完成并通过 Phase 7。Python 3.9–3.10/3.14、最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、两套 GTS15 C/C++/LTO cross slice，以及 CPython 3.11 transition、3.12–3.14 modern 的 build/x86_64/aarch64 行已完成；3.14 包含私有静态 zstd 1.5.7 的编译资格化和双 target 运行时资格化。Python 3.9–3.10、最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -150,7 +150,7 @@ CPython source
 
 首发支持 3.9–3.14，共 6 个 build Python 和 12 个 target Python。3.9–3.10 使用 legacy adapter，3.11 使用 transition adapter，3.12–3.14 使用 modern adapter；精确 patch 版本与独立的 `eol`/`security`/`bugfix` 支持状态写在 `release.json`。EOL minor 不承诺上游安全修复。
 
-当前已完成 CPython 3.11.16 transition、3.12.14 modern 与 3.13.15 modern 三行：每行各有 amd64 build Python、两个真正 cross target SDK、最小 C extension、全量 `lib-dynload` ELF 审计，以及 locked-sysroot/clean-Rocky 双运行时探针。通用 Python Dockerfile 只描述一条 row pipeline；Bake 生成独立版本/target DAG。资格化完成的 row 经 scratch 导出，再由 append-only 层聚合。Phase 5 固定 cp313，Phase 6 固定 cp313+cp311，Phase 7 固定 cp313+cp311+cp312；`python-dev`/`python-matrix` 表示共享契约选择的最新三行。
+当前已完成 CPython 3.11.16 transition 以及 3.12.14、3.13.15、3.14.7 modern 四行：每行各有 amd64 build Python、两个真正 cross target SDK、最小 C extension、全量 `lib-dynload` ELF 审计，以及 locked-sysroot/clean-Rocky 双运行时探针。通用 Python Dockerfile 只描述一条 row pipeline；Bake 生成独立版本/target DAG。资格化完成的 row 经 scratch 导出，再由 append-only 层聚合。Phase 5 固定 cp313，Phase 6 固定 cp313+cp311，Phase 7 固定 cp313+cp311+cp312；Phase 8 与最新 `python-dev`/`python-matrix` 固定 cp313+cp311+cp312+cp314。
 
 3.11 与 3.12 均以各自文件路径和 SHA256 锁定 gh-115382 backport，显式把 target sysconfigdata 与 build Python 的 `PYTHONPATH` 隔离；3.12 保持 modern adapter，因为其扩展已由 configure/Makefile 构建。cross build 在 configure 前用目标 ELF canary 实测 `execve`/`execv`、PATH 与 varargs exec、`fexecve`、`execveat`、`posix_spawn(p)`、`dlopen` 和 `dlmopen`，构建后拒绝 canary/`conftest` 之外的记录；它是动态 libc/loader 的可审计策略护栏，不是覆盖直接 syscall 或静态程序的安全沙箱。空 `HOSTRUNNER`、无 QEMU 的 cross stage、精确 build Python patch version 和 sysconfig 隔离仍是主正确性契约。
 
@@ -158,7 +158,19 @@ clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七
 
 target SDK 包含解释器、stdlib、headers、`pyconfig.h`、`_sysconfigdata_*`、扩展模块和构建元数据。即使 x86_64 build/target 架构相同，也不得复用。每个 target 必须验证 zlib、bz2、lzma、ctypes、ssl、hashlib、sqlite3、uuid 等约定模块，以及最小 C extension 的编译、ELF 架构和 import；3.14 另验 `compression.zstd`。
 
-Rocky 8 的 zstd 1.4.4 低于 CPython 3.14 `compression.zstd` 所需的 1.4.5。3.14 adapter 必须构建固定来源、PIC 的私有静态 zstd，并只链接进 `_zstd`；不得修改全局不可变 sysroot。资格化必须确认 `_zstd` 没有新增 zstd `DT_NEEDED`，并实际执行 `compression.zstd` round-trip。
+Rocky 8 的 zstd 1.4.4 低于 CPython 3.14 `compression.zstd` 所需的 1.4.5。Phase 8 因此从签名和 hash 锁定的上游源构建 PIC 私有静态 zstd 1.5.7，分别产生 host、x86_64 和 aarch64 prefix，并只链接进 `_zstd`；全局不可变 sysroot 未改动。编译资格化绑定精确 zstd build manifest/component identity，确认 `_zstd` 唯一、静态符号完整，且无 zstd `DT_NEEDED`、动态导出、RPATH 或 text relocation。locked-sysroot 与 clean-Rocky 运行时 tier 都实际执行 one-shot、streaming、dictionary、multithreaded、tarfile 和 zipfile zstd 探针。
+
+Phase 8 的可执行入口为：
+
+```console
+$ docker buildx bake zstd-source zstd-host-build zstd-x86_64-build zstd-aarch64-build
+$ docker buildx bake python-native-phase8
+$ docker buildx bake cpython-cp314-x86_64-qualify-build cpython-cp314-aarch64-qualify-build
+$ docker buildx bake cpython-cp314-x86_64-qualify cpython-cp314-aarch64-qualify
+$ docker buildx bake python-cp314-dev python-phase8-dev
+$ docker buildx bake python-matrix
+$ docker buildx bake phase8
+```
 
 Python 契约是“支持交叉编译扩展”，不是 PEP 517/wheel 编排器。Crossforge 不做 wheel retag、vendoring、manylinux repair，也不支持 PyPy、free-threaded 或 debug Python。
 
@@ -274,4 +286,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：双 target compiler/hybrid runtime 与 CPython 3.11–3.13 双 target 行已完成；后续按 adapter 风险扩展其余 Python minors，并实现 vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：双 target compiler/hybrid runtime 与 CPython 3.11–3.14 双 target 行已完成；后续按 adapter 风险扩展 Python 3.9–3.10，并实现 vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

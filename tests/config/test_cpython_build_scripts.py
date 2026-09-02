@@ -62,7 +62,44 @@ class CPythonBuildScriptTests(unittest.TestCase):
             "target-artifact-canary.c",
             "target-exec-canary.c",
         ):
-            self.assertIn('"$script_directory/%s"' % source, self.cross)
+                self.assertIn('"$script_directory/%s"' % source, self.cross)
+
+    def test_cp314_uses_exact_private_static_zstd_flags(self):
+        expected_cflags = 'LIBZSTD_CFLAGS="-I$zstd_directory/include"'
+        expected_libs = (
+            'LIBZSTD_LIBS="$zstd_archive -pthread '
+            '-Wl,--exclude-libs,libzstd.a"'
+        )
+        for name, script in (("native", self.native), ("cross", self.cross)):
+            with self.subTest(script=name):
+                self.assertIn('if [[ "$minor" == 3.14 ]]', script)
+                self.assertIn(expected_cflags, script)
+                self.assertIn(expected_libs, script)
+                self.assertIn("MODULE__ZSTD_STATE=yes", script)
+                self.assertIn("MODULE__ZSTD_CFLAGS=", script)
+                self.assertIn("MODULE__ZSTD_LDFLAGS=", script)
+                self.assertIn("fell back to dynamic -lzstd", script)
+                self.assertIn("pre-3.14 CPython", script)
+
+    def test_zstd_extension_and_manifest_are_fail_closed(self):
+        for name, script in (("native", self.native), ("cross", self.cross)):
+            with self.subTest(script=name):
+                self.assertIn("'_zstd.*.so'", script)
+                self.assertIn("NEEDED.*libzstd", script)
+                self.assertIn("TEXTREL|RPATH|RUNPATH", script)
+                self.assertIn("ZSTD_|ZDICT_|FSE_|HUF_|XXH_", script)
+                self.assertIn(".crossforge/zstd-build.json", script)
+                self.assertIn(
+                    'install -m 0644 "$zstd_manifest"', script
+                )
+                self.assertNotIn(
+                    'install -m 0644 "$zstd_archive" "$prefix', script
+                )
+        self.assertIn("zstd.zstd_version_info != (1, 5, 7)", self.native)
+        self.assertIn(
+            "CompressionParameter.nb_workers.bounds()[1] < 1", self.native
+        )
+        self.assertNotIn("\nassert ", self.native)
 
 
 if __name__ == "__main__":

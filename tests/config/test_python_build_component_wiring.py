@@ -68,6 +68,7 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         self.assertIn("config/schemas/release.schema.json", full_host)
         self.assertIn("python_source_release_binding.py", full_host)
         self.assertIn("render-release-components.py", full_host)
+        self.assertIn("python_zstd_evidence.py", full_host)
 
     def test_prepared_native_and_cross_are_component_only_build_stages(self):
         expected_parents = {
@@ -146,6 +147,7 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
             "cp311": "target:cpython-patches-cp311",
             "cp312": "target:cpython-patches-cp312",
             "cp313": "target:cpython-empty-patches",
+            "cp314": "target:cpython-empty-patches",
         }
         for row, context in expected.items():
             prepared = self.targets["cpython-prepared-%s" % row]
@@ -170,6 +172,46 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
             prepared_block,
         )
 
+    def test_zstd_inputs_are_versioned_and_only_cp314_uses_real_slices(self):
+        empty = self.stages["zstd-empty"]
+        self.assertIn("FROM scratch AS zstd-empty", empty)
+        build = self.stages["cpython-build"]
+        cross = self.stages["cpython-cross"]
+        self.assertIn(
+            "/opt/crossforge/deps/zstd/${CPYTHON_ZSTD_VERSION}/host/",
+            build,
+        )
+        self.assertIn(
+            "/opt/crossforge/deps/zstd/${CPYTHON_ZSTD_VERSION}/${CROSSFORGE_TARGET_TRIPLE}/",
+            cross,
+        )
+        for block in (build, cross):
+            self.assertEqual(block.count("COPY --from=crossforge_zstd"), 1)
+            self.assertIn("/work/deps/zstd", block)
+            self.assertNotIn("/opt/crossforge/deps/zstd/ /work", block)
+
+        for contract in RENDERER["IMPLEMENTED_ROWS"]:
+            row = contract["row"]
+            native = self.targets["cpython-build-%s" % row]
+            expected_native = (
+                "target:zstd-host-build" if contract["zstd"] else "target:zstd-empty"
+            )
+            self.assertEqual(
+                native["contexts"]["crossforge_zstd"], expected_native
+            )
+            for arch in RENDERER["PYTHON_TARGETS"]:
+                cross_target = self.targets[
+                    "cpython-cross-%s-%s" % (row, arch)
+                ]
+                expected_cross = (
+                    "target:zstd-%s-build" % arch
+                    if contract["zstd"]
+                    else "target:zstd-empty"
+                )
+                self.assertEqual(
+                    cross_target["contexts"]["crossforge_zstd"], expected_cross
+                )
+
     def test_full_release_bridge_enters_only_at_late_boundaries(self):
         stages_with_release_copy = {
             name
@@ -185,6 +227,7 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         self.assertIn("python_source_release_binding.py", qualify)
         self.assertIn("render-release-components.py", qualify)
         self.assertIn("python_row_contract.py", qualify)
+        self.assertIn("python_zstd_evidence.py", qualify)
         self.assertIn("validate-release.py", qualify)
         self.assertIn("--manifest /work/source/source-manifest.json", qualify)
         self.assertLess(

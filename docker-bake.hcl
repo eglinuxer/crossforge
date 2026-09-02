@@ -20,6 +20,12 @@ target "_python_common" {
   platforms  = ["linux/amd64"]
 }
 
+target "_zstd_common" {
+  context    = "."
+  dockerfile = "docker/zstd.Dockerfile"
+  platforms  = ["linux/amd64"]
+}
+
 group "default" {
   targets = ["validate"]
 }

@@ -93,6 +93,34 @@
       "value": "archived-unverified"
     },
     {
+      "path": "/python/versions/5/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.14.7.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/bundle_sha256",
+      "value": "6f41efc358b146b5548dbfc0414e9247441f8524fb6ef59f1c4ca946ffc70701"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/bundle_size",
+      "value": 7101
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.14.7/Python-3.14.7.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/identity",
+      "value": "hugo@python.org"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/oidc_issuer",
+      "value": "https://github.com/login/oauth"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
       "path": "/qemu/executor/index_evidence",
       "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.index.json.b64"
     },

@@ -109,6 +109,129 @@ class PythonRowManifestTests(unittest.TestCase):
             policy_record["canonical_sha256"],
         )
 
+    def zstd_build_manifest(self, identity, arch):
+        components = FINALIZE["QUALIFICATION_VALIDATOR"][
+            "expected_zstd_components"
+        ](self.release, arch)
+        if identity == "host":
+            prefix = "/opt/crossforge/deps/zstd/1.5.7/host"
+            compiler = "x86_64-redhat-linux"
+            machine = "Advanced Micro Devices X86-64"
+            component = components["host"]
+        else:
+            prefix = "/opt/crossforge/deps/zstd/1.5.7/" + identity
+            compiler = identity
+            machine = (
+                "Advanced Micro Devices X86-64"
+                if arch == "x86_64"
+                else "AArch64"
+            )
+            component = components["target"]
+        members = [
+            {
+                "name": name,
+                "sha256": sha256_bytes((identity + "-" + name).encode("ascii")),
+            }
+            for name in ("compress.o", "decompress.o")
+        ]
+        return {
+            "schema_version": 1,
+            "kind": "crossforge-zstd-static-build",
+            "version": "1.5.7",
+            "identity": identity,
+            "prefix": prefix,
+            "compiler_dumpmachine": compiler,
+            "flags": {
+                "cflags": (
+                    "-O2 -g0 -fPIC -fvisibility=hidden "
+                    "-ffile-prefix-map=/work/build/zstd=/usr/src/debug/crossforge-zstd"
+                ),
+                "cppflags": (
+                    "-DZSTD_MULTITHREAD -DZSTD_NO_TRACE -DDEBUGLEVEL=0 "
+                    "-DZSTDLIB_VISIBLE=ZSTDLIB_HIDDEN "
+                    "-DZSTDERRORLIB_VISIBLE=ZSTDERRORLIB_HIDDEN "
+                    "-DZDICTLIB_VISIBLE=ZDICTLIB_HIDDEN "
+                    "-DZSTDLIB_STATIC_API=ZSTDLIB_HIDDEN "
+                    "-DZDICTLIB_STATIC_API=ZDICTLIB_HIDDEN"
+                ),
+                "pic_probe_ldflags": (
+                    "-shared -Wl,-z,defs,-z,text "
+                    "-Wl,--whole-archive lib/libzstd.a "
+                    "-Wl,--no-whole-archive,--exclude-libs,libzstd.a -pthread"
+                ),
+            },
+            "archive": {
+                "path": "lib/libzstd.a",
+                "sha256": sha256_bytes((identity + "-archive").encode("ascii")),
+                "members": members,
+                "objects": len(members),
+            },
+            "headers": {
+                name: sha256_bytes(("header-" + name).encode("ascii"))
+                for name in ("zstd.h", "zstd_errors.h", "zdict.h")
+            },
+            "pic_probe": {
+                "sha256": sha256_bytes((identity + "-pic-probe").encode("ascii")),
+                "machine": machine,
+                "whole_archive": True,
+                "no_zstd_exports": True,
+                "no_dynamic_libzstd": True,
+                "no_rpath": True,
+            },
+            "source_manifest_sha256": sha256_bytes(b"zstd-source-manifest"),
+            "build_policy": components["policy"],
+            "build_component": component,
+            "policy": {
+                "static_only": True,
+                "position_independent": True,
+                "multithread": True,
+                "no_trace": True,
+                "debug_level": 0,
+                "visibility": "hidden",
+                "legacy_support": 0,
+                "exclude_archive_symbols": True,
+            },
+        }
+
+    def zstd_build_evidence(self, path, manifest):
+        self.write_json(path, manifest)
+        return {
+            "manifest": copy.deepcopy(manifest),
+            "manifest_sha256": sha256_file(path),
+        }
+
+    def zstd_module_summary(self, relative, payload):
+        symbol_payload = {
+            "required_definitions": [
+                "ZSTD_compressStream2",
+                "ZSTD_decompressStream",
+                "ZSTD_versionNumber",
+            ],
+            "defined": [
+                "ZSTD_compressStream2",
+                "ZSTD_decompressStream",
+                "ZSTD_versionNumber",
+            ],
+            "undefined": [],
+            "dynamic_exports": [],
+        }
+        symbols = copy.deepcopy(symbol_payload)
+        symbols["canonical_sha256"] = canonical_sha256(symbol_payload)
+        return {
+            "path": relative,
+            "sha256": sha256_bytes(payload),
+            "needed": ["libc.so.6"],
+            "symbols": symbols,
+        }
+
+    def zstd_module_evidence(self, path, prefix, payload):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(payload)
+        return self.zstd_module_summary(path.relative_to(prefix).as_posix(), payload)
+
+    def fake_zstd_module_audit(self, path, relative, expected_machine):
+        return self.zstd_module_summary(relative, path.read_bytes())
+
     def run_verify(self, minor, manifest):
         entry = self.entry(minor)
         row = ROW_CONTRACT["contract_for_version"](entry["version"])["row"]
@@ -156,6 +279,25 @@ class PythonRowManifestTests(unittest.TestCase):
         )
         build_python.parent.mkdir(parents=True, exist_ok=True)
         build_python.write_bytes(build_bytes)
+        contract = ROW_CONTRACT["contract_for_version"](entry["version"])
+        host_zstd = None
+        host_zstd_module = None
+        if contract["zstd"]:
+            host_manifest = self.zstd_build_manifest("host", "x86_64")
+            host_zstd = self.zstd_build_evidence(
+                build_python.parents[1] / ".crossforge/zstd-build.json",
+                host_manifest,
+            )
+            host_module_path = (
+                build_python.parents[1]
+                / "lib/python3.14/lib-dynload/"
+                / "_zstd.cpython-314-x86_64-linux-gnu.so"
+            )
+            host_zstd_module = self.zstd_module_evidence(
+                host_module_path,
+                build_python.parents[1],
+                b"zstd-module-host",
+            )
         build_tree = FINALIZE["sdk_tree_identity"](build_python.parents[1])
 
         reports = {}
@@ -187,6 +329,43 @@ class PythonRowManifestTests(unittest.TestCase):
             )
             target_python.parent.mkdir(parents=True, exist_ok=True)
             target_python.write_bytes(python_bytes)
+            required_modules = {}
+            elf_audit = {
+                "bin/python" + minor: {"sha256": sha256_bytes(python_bytes)}
+            }
+            if contract["zstd"]:
+                module_relative = (
+                    "lib/python%s/lib-dynload/"
+                    "_zstd.cpython-%s-%s-linux-gnu.so"
+                    % (minor, minor.replace(".", ""), arch)
+                )
+                module_path = target_python.parents[1] / module_relative
+                module_bytes = ("zstd-module-" + arch).encode("ascii")
+                module_evidence = self.zstd_module_evidence(
+                    module_path, target_python.parents[1], module_bytes
+                )
+                target_manifest = self.zstd_build_manifest(target, arch)
+                target_zstd = self.zstd_build_evidence(
+                    target_python.parents[1] / ".crossforge/zstd-build.json",
+                    target_manifest,
+                )
+                zstd = {
+                    "policy": "required",
+                    "version": "1.5.7",
+                    "module": module_evidence,
+                    "builds": {
+                        "host": copy.deepcopy(host_zstd),
+                        "target": target_zstd,
+                    },
+                }
+                required_modules["_zstd"] = module_relative
+                elf_audit[module_relative] = {
+                    "needed": module_evidence["needed"],
+                    "required_versions": {},
+                    "sha256": sha256_bytes(module_bytes),
+                }
+            else:
+                zstd = {"policy": "absent", "module": None, "builds": None}
             target_tree = FINALIZE["sdk_tree_identity"](target_python.parents[1])
             report = {
                 "qualification_schema_version": 2,
@@ -207,18 +386,17 @@ class PythonRowManifestTests(unittest.TestCase):
                     "version": entry["version"],
                     "adapter": entry["adapter"],
                     "sdk_tree": target_tree,
+                    "required_modules": required_modules,
                     "build_python": {
                         "path": str(build_python),
                         "version": entry["version"],
                         "sha256": sha256_bytes(build_bytes),
                         "sdk_tree": build_tree,
                     },
-                    "elf_audit": {
-                        "bin/python" + minor: {
-                            "sha256": sha256_bytes(python_bytes)
-                        }
-                    },
+                    "elf_audit": elf_audit,
+                    "zstd": copy.deepcopy(zstd),
                 },
+                "zstd": copy.deepcopy(zstd),
                 "runtime_result_sha256": {
                     "locked-sysroot": sha256_bytes(("locked-" + arch).encode()),
                     "clean-rocky": sha256_bytes(("clean-" + arch).encode()),
@@ -245,9 +423,17 @@ class PythonRowManifestTests(unittest.TestCase):
             "source_path": source_path,
             "source": source_manifest,
             "build_python": build_python,
+            "host_zstd_module": host_zstd_module,
             "reports": reports,
             "target_pythons": target_pythons,
         }
+
+    def rebind_build_tree(self, fixture):
+        tree = FINALIZE["sdk_tree_identity"](fixture["build_python"].parents[1])
+        for record in fixture["reports"].values():
+            record["value"]["compile"]["build_python"]["sdk_tree"] = tree
+            self.write_json(record["path"], record["value"])
+        return tree
 
     def run_finalize(self, fixture, output=None, strict=False):
         if output is None:
@@ -272,10 +458,12 @@ class PythonRowManifestTests(unittest.TestCase):
         globals_ = FINALIZE["main"].__globals__
         validator = globals_["QUALIFICATION_VALIDATOR"]
         original = validator["validate_final_report"]
+        original_audit = globals_["audit_exported_zstd_module"]
         if not strict:
             validator["validate_final_report"] = (
                 lambda report, release, target, version: report
             )
+            globals_["audit_exported_zstd_module"] = self.fake_zstd_module_audit
         stdout = io.StringIO()
         stderr = io.StringIO()
         try:
@@ -288,6 +476,7 @@ class PythonRowManifestTests(unittest.TestCase):
             stderr.write(str(error))
         finally:
             validator["validate_final_report"] = original
+            globals_["audit_exported_zstd_module"] = original_audit
         return SimpleNamespace(returncode=return_code, stderr=stderr.getvalue()), output
 
     def test_all_implemented_source_manifests_match_exact_contract(self):
@@ -367,6 +556,341 @@ class PythonRowManifestTests(unittest.TestCase):
                         manifest["qualifications"][arch]["report_sha256"],
                         sha256_file(fixture["reports"][arch]["path"]),
                     )
+                if minor == "3.14":
+                    self.assertEqual(manifest["zstd"]["policy"], "required")
+                    self.assertEqual(manifest["zstd"]["version"], "1.5.7")
+                    self.assertEqual(
+                        manifest["zstd"]["static_link"],
+                        {
+                            "required_definitions": [
+                                "ZSTD_compressStream2",
+                                "ZSTD_decompressStream",
+                                "ZSTD_versionNumber",
+                            ],
+                            "undefined": [],
+                            "dynamic_exports": [],
+                            "dynamic_libzstd": False,
+                        },
+                    )
+                    host_module = fixture["host_zstd_module"]
+                    self.assertEqual(
+                        manifest["zstd"]["host"]["module"],
+                        {
+                            "path": host_module["path"],
+                            "sha256": host_module["sha256"],
+                        },
+                    )
+                    self.assertEqual(
+                        manifest["zstd"]["host"]["static_link"],
+                        {
+                            "needed": host_module["needed"],
+                            "symbols_canonical_sha256": host_module["symbols"][
+                                "canonical_sha256"
+                            ],
+                        },
+                    )
+                    self.assertEqual(set(manifest["zstd"]["targets"]), set(TARGETS))
+                    for arch, target in TARGETS.items():
+                        report_zstd = fixture["reports"][arch]["value"]["zstd"]
+                        summary = manifest["zstd"]["targets"][arch]
+                        self.assertEqual(summary["target"], target)
+                        self.assertEqual(
+                            summary["module"]["sha256"],
+                            report_zstd["module"]["sha256"],
+                        )
+                        self.assertEqual(
+                            summary["static_link"]["symbols_canonical_sha256"],
+                            report_zstd["module"]["symbols"]["canonical_sha256"],
+                        )
+                else:
+                    self.assertEqual(
+                        manifest["zstd"],
+                        {"policy": "absent", "module": None, "builds": None},
+                    )
+
+    def test_cp314_machine_specific_symbol_closures_are_normalized_per_target(self):
+        fixture = self.fixture("3.14")
+        evidence = {
+            arch: fixture["reports"][arch]["value"]["zstd"]
+            for arch in TARGETS
+        }
+        arm_symbols = evidence["aarch64"]["module"]["symbols"]
+        arm_symbols["defined"].append("ZSTD_arm_specific")
+        arm_symbols["defined"].sort()
+        arm_symbols["canonical_sha256"] = canonical_sha256(
+            {
+                name: arm_symbols[name]
+                for name in (
+                    "required_definitions",
+                    "defined",
+                    "undefined",
+                    "dynamic_exports",
+                )
+            }
+        )
+        summary = FINALIZE["aggregate_zstd"](
+            evidence, fixture["host_zstd_module"]
+        )
+        self.assertNotEqual(
+            summary["targets"]["x86_64"]["static_link"][
+                "symbols_canonical_sha256"
+            ],
+            summary["targets"]["aarch64"]["static_link"][
+                "symbols_canonical_sha256"
+            ],
+        )
+
+    def test_build_python_zstd_audit_recomputes_and_rejects_static_policy_drift(self):
+        fixture = self.fixture("3.14")
+        prefix = fixture["build_python"].parents[1]
+        relative = fixture["host_zstd_module"]["path"]
+        module = prefix / relative
+        header = (
+            "  Class:                             ELF64\n"
+            "  Type:                              DYN (Shared object file)\n"
+            "  Machine:                           Advanced Micro Devices X86-64\n"
+            "  Entry point address:               0x0\n"
+        )
+        program_headers = "Program Headers:\n  LOAD 0x000000 0x000000 0x000000\n"
+        dynamic = " 0x00000001 (NEEDED) Shared library: [libc.so.6]\n"
+        dynsym = "Symbol table '.dynsym' contains 1 entry:\n"
+        symbols = "\n".join(
+            "  %d: 0000000000000000 0 FUNC GLOBAL HIDDEN 1 %s" % (index, name)
+            for index, name in enumerate(
+                (
+                    "ZSTD_compressStream2",
+                    "ZSTD_decompressStream",
+                    "ZSTD_versionNumber",
+                ),
+                1,
+            )
+        )
+
+        def audit(
+            dynamic_output,
+            dynsym_output,
+            symbol_output,
+            header_output=header,
+            program_header_output=program_headers,
+        ):
+            def fake_run(arguments):
+                if "-h" in arguments:
+                    return header_output
+                if "-d" in arguments:
+                    return dynamic_output
+                if "-l" in arguments:
+                    return program_header_output
+                if "--dyn-syms" in arguments:
+                    return dynsym_output
+                return symbol_output
+
+            globals_ = FINALIZE["audit_exported_zstd_module"].__globals__
+            with mock.patch.dict(
+                globals_,
+                {
+                    "host_binutils": lambda name: Path("/fake/readelf"),
+                    "run_tool": fake_run,
+                },
+            ):
+                return FINALIZE["audit_exported_zstd_module"](
+                    module, relative, "Advanced Micro Devices X86-64"
+                )
+
+        evidence = audit(dynamic, dynsym, symbols)
+        self.assertEqual(evidence, fixture["host_zstd_module"])
+        mutations = {
+            "dynamic_libzstd": (
+                dynamic
+                + " 0x00000001 (NEEDED) Shared library: [libzstd.so.1]\n",
+                dynsym,
+                symbols,
+            ),
+            "path_qualified_needed": (
+                dynamic
+                + " 0x00000001 (NEEDED) Shared library: [/tmp/libprivate.so]\n",
+                dynsym,
+                symbols,
+            ),
+            "rpath": (dynamic + " 0x0000000f (RPATH) [/tmp]\n", dynsym, symbols),
+            "pie_flag": (
+                dynamic + " 0x000000006ffffffb (FLAGS_1) Flags: PIE\n",
+                dynsym,
+                symbols,
+            ),
+            "dynamic_export": (
+                dynamic,
+                "  1: 0 0 FUNC GLOBAL DEFAULT 1 ZSTD_versionNumber\n",
+                symbols,
+            ),
+            "undefined": (
+                dynamic,
+                dynsym,
+                symbols + "\n  9: 0 0 FUNC GLOBAL DEFAULT UND ZSTD_missing\n",
+            ),
+            "missing_required": (
+                dynamic,
+                dynsym,
+                "\n".join(symbols.splitlines()[:-1]),
+            ),
+            "relocatable": (
+                dynamic,
+                dynsym,
+                symbols,
+                header.replace("DYN (Shared object file)", "REL (Relocatable file)"),
+            ),
+            "elf32": (
+                dynamic,
+                dynsym,
+                symbols,
+                header.replace("ELF64", "ELF32"),
+            ),
+            "wrong_machine": (
+                dynamic,
+                dynsym,
+                symbols,
+                header.replace("Advanced Micro Devices X86-64", "AArch64"),
+            ),
+            "executable_entry": (
+                dynamic,
+                dynsym,
+                symbols,
+                header.replace(
+                    "Entry point address:               0x0",
+                    "Entry point address:               0x1040",
+                ),
+            ),
+            "interpreter": (
+                dynamic,
+                dynsym,
+                symbols,
+                header,
+                program_headers + "  INTERP 0x000318 0x000318 0x000318\n",
+            ),
+        }
+        for name, outputs in mutations.items():
+            with self.subTest(mutation=name):
+                with self.assertRaises(FINALIZE["FinalizationError"]):
+                    audit(*outputs)
+
+    def test_absent_row_rejects_build_python_zstd_module(self):
+        paths = (
+            "lib/python3.13/lib-dynload/_zstd.cpython-313-x86_64-linux-gnu.so",
+            "lib/python3.13/lib-dynload/_zstd.so",
+            "lib/python3.14/lib-dynload/_zstd.cpython-314-x86_64-linux-gnu.so",
+        )
+        for relative in paths:
+            with self.subTest(relative=relative):
+                fixture = self.fixture("3.13")
+                prefix = fixture["build_python"].parents[1]
+                unexpected = prefix / relative
+                unexpected.parent.mkdir(parents=True, exist_ok=True)
+                unexpected.write_bytes(b"unexpected-zstd")
+                self.rebind_build_tree(fixture)
+                process, unused_output = self.run_finalize(fixture)
+                self.assertNotEqual(process.returncode, 0)
+                self.assertIn(
+                    "absent zstd policy exported build-Python", process.stderr
+                )
+
+    def test_cp314_rejects_noncanonical_build_python_zstd_modules(self):
+        paths = (
+            "lib/python3.14/lib-dynload/_zstd.duplicate.so",
+            "lib/python3.14/lib-dynload/_zstdbogus.so",
+            "lib/python3.14/lib-dynload/_zstd.so",
+            "lib/python3.13/lib-dynload/_zstd.cpython-313-x86_64-linux-gnu.so",
+        )
+        for relative in paths:
+            with self.subTest(relative=relative):
+                fixture = self.fixture("3.14")
+                prefix = fixture["build_python"].parents[1]
+                duplicate = prefix / relative
+                duplicate.parent.mkdir(parents=True, exist_ok=True)
+                duplicate.write_bytes(b"duplicate-zstd")
+                self.rebind_build_tree(fixture)
+                process, unused_output = self.run_finalize(fixture)
+                self.assertNotEqual(process.returncode, 0)
+                self.assertIn("exact safe build-Python", process.stderr)
+
+    def test_absent_policy_rejects_dangling_host_and_target_zstd_symlinks(self):
+        fixture = self.fixture("3.13")
+        evidence = {
+            arch: fixture["reports"][arch]["value"]["zstd"]
+            for arch in TARGETS
+        }
+        build_prefix = fixture["build_python"].parents[1]
+        build_link = build_prefix / "lib/python3.13/lib-dynload/_zstd.so"
+        build_link.parent.mkdir(parents=True, exist_ok=True)
+        build_link.symlink_to("missing.so")
+        with self.assertRaisesRegex(
+            FINALIZE["FinalizationError"], "build-Python _zstd"
+        ):
+            FINALIZE["audit_build_zstd_module"](build_prefix, evidence, "3.13")
+
+        target_prefix = fixture["target_pythons"]["x86_64"].parents[1]
+        target_link = target_prefix / "lib/python3.13/lib-dynload/_zstd.so"
+        target_link.parent.mkdir(parents=True, exist_ok=True)
+        target_link.symlink_to("missing.so")
+        with self.assertRaisesRegex(
+            FINALIZE["FinalizationError"], "absent zstd policy exported _zstd"
+        ):
+            FINALIZE["revalidate_exported_zstd"](
+                evidence["x86_64"],
+                build_prefix.parent / "empty-build",
+                target_prefix,
+                "x86_64",
+            )
+
+    def test_cp314_cross_target_zstd_contract_drift_is_rejected(self):
+        mutations = {
+            "source": lambda evidence: evidence["aarch64"]["builds"]["target"][
+                "manifest"
+            ].__setitem__("source_manifest_sha256", "0" * 64),
+            "policy": lambda evidence: evidence["aarch64"]["builds"]["target"][
+                "manifest"
+            ]["build_policy"].__setitem__("canonical_sha256", "0" * 64),
+            "header": lambda evidence: evidence["aarch64"]["builds"]["target"][
+                "manifest"
+            ]["headers"].__setitem__("zstd.h", "0" * 64),
+            "members": lambda evidence: evidence["aarch64"]["builds"]["target"][
+                "manifest"
+            ]["archive"]["members"][0].__setitem__("name", "different.o"),
+            "required_symbol": lambda evidence: evidence["aarch64"]["module"][
+                "symbols"
+            ]["required_definitions"].append("ZSTD_extra"),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(mutation=name):
+                fixture = self.fixture("3.14")
+                evidence = {
+                    arch: copy.deepcopy(fixture["reports"][arch]["value"]["zstd"])
+                    for arch in TARGETS
+                }
+                mutate(evidence)
+                with self.assertRaises(FINALIZE["FinalizationError"]):
+                    FINALIZE["aggregate_zstd"](
+                        evidence, fixture["host_zstd_module"]
+                    )
+
+    def test_cp314_final_and_compile_zstd_evidence_must_match(self):
+        fixture = self.fixture("3.14")
+        report = fixture["reports"]["x86_64"]["value"]
+        report["zstd"]["module"]["sha256"] = "0" * 64
+        self.write_json(fixture["reports"]["x86_64"]["path"], report)
+        process, unused_output = self.run_finalize(fixture)
+        self.assertNotEqual(process.returncode, 0)
+
+    def test_cp314_exported_zstd_manifest_is_revalidated_from_disk(self):
+        fixture = self.fixture("3.14")
+        target_prefix = fixture["target_pythons"]["aarch64"].parents[1]
+        manifest_path = target_prefix / ".crossforge/zstd-build.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["archive"]["sha256"] = "0" * 64
+        self.write_json(manifest_path, manifest)
+        report = fixture["reports"]["aarch64"]["value"]
+        report["compile"]["sdk_tree"] = FINALIZE["sdk_tree_identity"](target_prefix)
+        self.write_json(fixture["reports"]["aarch64"]["path"], report)
+        process, unused_output = self.run_finalize(fixture)
+        self.assertNotEqual(process.returncode, 0)
 
     def test_v2_source_manifest_is_rebound_to_complete_release_row(self):
         fixture = self.fixture("3.12", source_schema_version=2)

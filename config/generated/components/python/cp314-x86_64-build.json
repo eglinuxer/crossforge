@@ -1,0 +1,43 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp314-x86_64-build",
+  "dependencies": [
+    {
+      "canonical_sha256": "ffdb1374ce4ab354e80dde8df21a15eda0875f6c0fb4fe2b10f8058986dc8202",
+      "component": "python/cp314-native-build"
+    },
+    {
+      "canonical_sha256": "639bdd7c9185ba832790744b2323f95bc4854d2da1aa7c7931ed8f9f0b0ae2a1",
+      "component": "toolchain/x86_64-build"
+    },
+    {
+      "canonical_sha256": "1b27e662224c9d8e0dd66352c02e133b95f866ad99dc9bf114107e072ae2654e",
+      "component": "zstd/x86_64-build"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/targets/0/arch",
+      "value": "x86_64"
+    },
+    {
+      "path": "/targets/0/sysroot/canonical_sha256",
+      "value": "ffe67b4d7448b02be7db774c8d85fdc8b13da695c0184de444949c641876ef57"
+    },
+    {
+      "path": "/targets/0/sysroot/lock_file",
+      "value": "locks/sysroot-el8-x86_64.json"
+    },
+    {
+      "path": "/targets/0/sysroot/status",
+      "value": "locked"
+    },
+    {
+      "path": "/targets/0/triple",
+      "value": "x86_64-unknown-linux-gnu"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

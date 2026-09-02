@@ -33,6 +33,18 @@ COPY --from=cpython-empty-patches-build /row-patches/ /row-patches/
 FROM scratch AS cpython-patch-context
 COPY --from=crossforge_cpython_patch_files / /row-patches/
 
+# A stable absence context lets every parameterized build use the same COPY
+# shape without making pre-3.14 rows depend on the private zstd source/build.
+FROM crossforge_rocky_amd64 AS zstd-empty-build
+RUN for identity in host x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu; do \
+      directory="/empty/opt/crossforge/deps/zstd/none/$identity"; \
+      mkdir -p "$directory"; \
+      touch "$directory/.crossforge-empty"; \
+    done
+
+FROM scratch AS zstd-empty
+COPY --from=zstd-empty-build /empty/ /
+
 # Build stages inherit only the locked host tool closure. Release-wide policy
 # and qualification/finalization tools enter through the sibling host below.
 FROM crossforge_host_python AS python-build-host
@@ -44,7 +56,8 @@ COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY scripts/validate-release.py /work/scripts/validate-release.py
 COPY scripts/python_row_contract.py /work/scripts/python_row_contract.py
 COPY scripts/finalize-cpython-qualification.py \
-  scripts/python_sdk_identity.py scripts/target_artifact_audit.py \
+  scripts/python_sdk_identity.py scripts/python_zstd_evidence.py \
+  scripts/target_artifact_audit.py \
   scripts/python_source_release_binding.py \
   scripts/render-release-components.py \
   /work/scripts/
@@ -115,7 +128,11 @@ ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
 ARG CPYTHON_SOURCE_COMPONENT_SHA256
 ARG CPYTHON_BUILD_POLICY_COMPONENT_SHA256
+ARG CPYTHON_ZSTD_VERSION
 ARG CROSSFORGE_JOBS=4
+COPY --from=crossforge_zstd \
+  /opt/crossforge/deps/zstd/${CPYTHON_ZSTD_VERSION}/host/ \
+  /work/deps/zstd/
 COPY --chmod=0755 scripts/build-cpython-native.sh /work/scripts/build-cpython-native.sh
 RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
       --row "$CPYTHON_ROW" \
@@ -133,6 +150,7 @@ RUN --network=none test "$CPYTHON_MINOR" = "${CPYTHON_VERSION%.*}" \
       "/work/build/cpython-$CPYTHON_ROW-native" \
       "/opt/crossforge/python/$CPYTHON_ROW/build" \
       "$CPYTHON_VERSION" \
+      /work/deps/zstd \
       "$CROSSFORGE_JOBS" \
     && test "$CPYTHON_ROW" = "cp$compact_minor"
 
@@ -143,6 +161,7 @@ ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
 ARG CPYTHON_SOURCE_COMPONENT_SHA256
 ARG CPYTHON_BUILD_POLICY_COMPONENT_SHA256
+ARG CPYTHON_ZSTD_VERSION
 ARG CROSSFORGE_TARGET_ARCH
 ARG CROSSFORGE_TARGET_TRIPLE
 ARG CROSSFORGE_JOBS=4
@@ -156,6 +175,9 @@ COPY --from=crossforge_cpython_prepared /work/config/ /work/config/
 COPY --from=crossforge_cpython_prepared /work/scripts/ /work/scripts/
 COPY --from=crossforge_cpython_build \
   /opt/crossforge/python/ /opt/crossforge/python/
+COPY --from=crossforge_zstd \
+  /opt/crossforge/deps/zstd/${CPYTHON_ZSTD_VERSION}/${CROSSFORGE_TARGET_TRIPLE}/ \
+  /work/deps/zstd/
 COPY --chmod=0755 scripts/build-cpython-cross.sh /work/scripts/build-cpython-cross.sh
 COPY scripts/deny-target-exec.c scripts/target-artifact-canary.c \
   scripts/target-exec-canary.c /work/scripts/
@@ -182,6 +204,7 @@ RUN --network=none case "$CROSSFORGE_TARGET_ARCH:$CROSSFORGE_TARGET_TRIPLE" in \
       "$CROSSFORGE_TARGET_TRIPLE" \
       "/opt/crossforge/python/$CPYTHON_ROW/build/bin/python$CPYTHON_MINOR" \
       "$CPYTHON_VERSION" \
+      /work/deps/zstd \
       "$CROSSFORGE_JOBS"
 
 # Static qualification remains host-only. It compiles a target extension and
@@ -198,7 +221,8 @@ COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 scripts/qualify-cpython.py /work/scripts/qualify-cpython.py
 COPY scripts/python_sdk_identity.py scripts/target_artifact_audit.py \
   scripts/python_source_release_binding.py scripts/render-release-components.py \
-  scripts/python_row_contract.py scripts/validate-release.py /work/scripts/
+  scripts/python_row_contract.py scripts/python_zstd_evidence.py \
+  scripts/validate-release.py /work/scripts/
 COPY tests/python/minimal_extension.c /work/tests/python/minimal_extension.c
 RUN /usr/libexec/platform-python /work/scripts/validate-release.py \
       /src/config/release.json \

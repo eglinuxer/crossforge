@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import runpy
+import subprocess
 import sys
 from pathlib import Path
 
@@ -63,6 +64,7 @@ QUALIFICATION_KEYS = {
     "probe_sha256",
     "compile_report_sha256",
     "compile",
+    "zstd",
     "runtime_result_sha256",
     "executions",
 }
@@ -104,6 +106,333 @@ def canonical_sha256(value):
         value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def host_binutils(name):
+    for path in (
+        Path("/opt/rh/gcc-toolset-15/root/usr/bin") / name,
+        Path("/usr/bin") / name,
+    ):
+        if path.is_file():
+            return path
+    raise FinalizationError("missing host %s for row ELF revalidation" % name)
+
+
+def run_tool(arguments):
+    process = subprocess.run(
+        [str(argument) for argument in arguments],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
+    require(
+        process.returncode == 0,
+        "row ELF revalidation failed: %s" % (process.stdout + process.stderr),
+    )
+    return process.stdout
+
+
+def audit_exported_zstd_module(module_path, relative_path, expected_machine):
+    """Recompute one exported module's static-link proof with host readelf."""
+    readelf = host_binutils("readelf")
+    header = run_tool([readelf, "--wide", "-h", module_path])
+    require(
+        re.search(r"^\s*Class:\s+ELF64\s*$", header, re.MULTILINE) is not None
+        and re.search(r"^\s*Type:\s+DYN\b", header, re.MULTILINE) is not None
+        and re.search(
+            r"^\s*Machine:\s+%s\s*$" % re.escape(expected_machine),
+            header,
+            re.MULTILINE,
+        )
+        is not None
+        and re.search(
+            r"^\s*Entry point address:\s+0x0\s*$", header, re.MULTILINE
+        )
+        is not None,
+        "exported _zstd has the wrong ELF class/type/machine",
+    )
+    dynamic = run_tool([readelf, "--wide", "-d", module_path])
+    require(
+        "TEXTREL" not in dynamic
+        and "(RPATH)" not in dynamic
+        and "(RUNPATH)" not in dynamic
+        and re.search(r"\(FLAGS_1\).*\bPIE\b", dynamic) is None,
+        "exported _zstd violates the relocation/path policy",
+    )
+    program_headers = run_tool([readelf, "--wide", "-l", module_path])
+    require(
+        not any("INTERP" in line for line in program_headers.splitlines()),
+        "exported _zstd contains an executable interpreter",
+    )
+    needed = sorted(set(re.findall(r"\(NEEDED\).*\[([^]]+)\]", dynamic)))
+    require(
+        all("/" not in item for item in needed)
+        and not any(item.startswith("libzstd.so") for item in needed),
+        "exported _zstd has a path-qualified or dynamic libzstd dependency",
+    )
+    dynsym = run_tool([readelf, "--wide", "--dyn-syms", module_path])
+    dynamic_exports = set()
+    for line in dynsym.splitlines():
+        fields = line.split()
+        if len(fields) < 8 or not fields[0].endswith(":") or fields[6] == "UND":
+            continue
+        name = fields[7].split("@", 1)[0]
+        if re.match(r"(?:ZSTD|ZDICT|FSE|HUF|XXH)_", name):
+            dynamic_exports.add(name)
+    symbols = run_tool([readelf, "--wide", "--syms", module_path])
+    defined = set()
+    undefined = set()
+    for line in symbols.splitlines():
+        fields = line.split()
+        if len(fields) < 8 or not fields[0].endswith(":"):
+            continue
+        name = fields[7].split("@", 1)[0]
+        if not re.match(r"(?:ZSTD|ZDICT|FSE|HUF|XXH)_", name):
+            continue
+        if fields[6] == "UND":
+            undefined.add(name)
+        else:
+            defined.add(name)
+    symbol_evidence = {
+        "required_definitions": list(
+            QUALIFICATION_VALIDATOR["ZSTD_REQUIRED_DEFINITIONS"]
+        ),
+        "defined": sorted(defined),
+        "undefined": sorted(undefined),
+        "dynamic_exports": sorted(dynamic_exports),
+    }
+    require(
+        set(symbol_evidence["required_definitions"]).issubset(defined)
+        and not undefined
+        and not dynamic_exports,
+        "exported _zstd static-link symbol proof failed",
+    )
+    symbol_evidence["canonical_sha256"] = canonical_sha256(symbol_evidence)
+    return {
+        "needed": needed,
+        "path": relative_path,
+        "sha256": sha256_file(module_path),
+        "symbols": symbol_evidence,
+    }
+
+
+def revalidate_exported_zstd_module(module_path, evidence, expected_machine):
+    observed = audit_exported_zstd_module(
+        module_path, evidence["path"], expected_machine
+    )
+    require(observed == evidence, "exported _zstd static-link evidence differs")
+
+
+def exported_zstd_modules(prefix):
+    return sorted(prefix.glob("lib/python*/lib-dynload/_zstd*.so"))
+
+
+def audit_build_zstd_module(build_prefix, evidence_by_arch, minor):
+    policies = {value["policy"] for value in evidence_by_arch.values()}
+    require(len(policies) == 1, "row zstd policy differs across targets")
+    modules = exported_zstd_modules(build_prefix)
+    if policies == {"absent"}:
+        require(not modules, "absent zstd policy exported build-Python _zstd")
+        return None
+    require(policies == {"required"}, "row zstd policy is invalid")
+    expected = (
+        build_prefix
+        / ("lib/python%s/lib-dynload" % minor)
+        / ("_zstd.cpython-%s-x86_64-linux-gnu.so" % minor.replace(".", ""))
+    )
+    require(
+        modules == [expected]
+        and expected.is_file()
+        and not expected.is_symlink(),
+        "required zstd policy needs the exact safe build-Python _zstd ABI path",
+    )
+    relative = expected.relative_to(build_prefix).as_posix()
+    return audit_exported_zstd_module(
+        expected, relative, "Advanced Micro Devices X86-64"
+    )
+
+
+def verify_exported_zstd_manifest(path, evidence, label):
+    require(path.is_file() and not path.is_symlink(), "%s is missing or unsafe" % label)
+    require(
+        sha256_file(path) == evidence["manifest_sha256"],
+        "%s digest differs from qualification" % label,
+    )
+    require(
+        load_json(path) == evidence["manifest"],
+        "%s content differs from qualification" % label,
+    )
+
+
+def revalidate_exported_zstd(evidence, build_prefix, target_prefix, arch):
+    host_manifest = build_prefix / ".crossforge/zstd-build.json"
+    target_manifest = target_prefix / ".crossforge/zstd-build.json"
+    if evidence["policy"] == "absent":
+        require(
+            not host_manifest.exists()
+            and not host_manifest.is_symlink()
+            and not target_manifest.exists()
+            and not target_manifest.is_symlink(),
+            "%s absent zstd policy exported build evidence" % arch,
+        )
+        require(
+            not exported_zstd_modules(target_prefix),
+            "%s absent zstd policy exported _zstd" % arch,
+        )
+        return
+
+    verify_exported_zstd_manifest(
+        host_manifest, evidence["builds"]["host"], "%s host zstd manifest" % arch
+    )
+    verify_exported_zstd_manifest(
+        target_manifest,
+        evidence["builds"]["target"],
+        "%s target zstd manifest" % arch,
+    )
+    relative = Path(evidence["module"]["path"])
+    require(
+        not relative.is_absolute() and ".." not in relative.parts,
+        "%s _zstd path is unsafe" % arch,
+    )
+    module_path = target_prefix / relative
+    require(
+        module_path.is_file() and not module_path.is_symlink(),
+        "%s exported _zstd is missing or unsafe" % arch,
+    )
+    require(
+        sha256_file(module_path) == evidence["module"]["sha256"],
+        "%s exported _zstd digest differs from qualification" % arch,
+    )
+    require(
+        exported_zstd_modules(target_prefix) == [module_path],
+        "%s exported _zstd inventory differs from qualification" % arch,
+    )
+    machine = (
+        "Advanced Micro Devices X86-64" if arch == "x86_64" else "AArch64"
+    )
+    revalidate_exported_zstd_module(module_path, evidence["module"], machine)
+
+
+def aggregate_zstd(evidence_by_arch, host_module):
+    policies = {value["policy"] for value in evidence_by_arch.values()}
+    require(len(policies) == 1, "row zstd policy differs across targets")
+    if policies == {"absent"}:
+        expected = {"policy": "absent", "module": None, "builds": None}
+        require(
+            all(value == expected for value in evidence_by_arch.values()),
+            "row absent zstd evidence is not normalized",
+        )
+        require(host_module is None, "absent zstd policy has a host module")
+        return expected
+
+    require(policies == {"required"}, "row zstd policy is invalid")
+    require(isinstance(host_module, dict), "required zstd host module is missing")
+    x86 = evidence_by_arch["x86_64"]
+    arm = evidence_by_arch["aarch64"]
+    require(x86["version"] == arm["version"] == "1.5.7", "row zstd version differs")
+    require(x86["builds"]["host"] == arm["builds"]["host"], "row host zstd build differs")
+
+    host = x86["builds"]["host"]["manifest"]
+    target_manifests = {
+        arch: value["builds"]["target"]["manifest"]
+        for arch, value in evidence_by_arch.items()
+    }
+    manifests = [host] + [target_manifests[arch] for arch in sorted(target_manifests)]
+    source_manifest_sha256 = host["source_manifest_sha256"]
+    build_policy = host["build_policy"]
+    headers = host["headers"]
+    member_names = [item["name"] for item in host["archive"]["members"]]
+    for manifest in manifests[1:]:
+        require(
+            manifest["source_manifest_sha256"] == source_manifest_sha256,
+            "row zstd source identity differs across builds",
+        )
+        require(
+            manifest["build_policy"] == build_policy,
+            "row zstd policy component differs across builds",
+        )
+        require(manifest["headers"] == headers, "row zstd headers differ across builds")
+        require(
+            [item["name"] for item in manifest["archive"]["members"]]
+            == member_names,
+            "row zstd archive inventory differs across builds",
+        )
+    required_definitions = x86["module"]["symbols"]["required_definitions"]
+    host_symbols = host_module["symbols"]
+    require(
+        host_symbols["required_definitions"] == required_definitions
+        and not host_symbols["undefined"]
+        and not host_symbols["dynamic_exports"]
+        and not any(item.startswith("libzstd.so") for item in host_module["needed"]),
+        "row build-Python _zstd static-link policy differs",
+    )
+    for evidence in (x86, arm):
+        symbols = evidence["module"]["symbols"]
+        require(
+            symbols["required_definitions"] == required_definitions
+            and not symbols["undefined"]
+            and not symbols["dynamic_exports"]
+            and not any(
+                item.startswith("libzstd.so")
+                for item in evidence["module"]["needed"]
+            ),
+            "row _zstd static-link policy differs across targets",
+        )
+
+    targets = {}
+    for arch in sorted(evidence_by_arch):
+        evidence = evidence_by_arch[arch]
+        manifest = target_manifests[arch]
+        targets[arch] = {
+            "target": TARGETS[arch],
+            "build_component": manifest["build_component"],
+            "build_manifest_sha256": evidence["builds"]["target"][
+                "manifest_sha256"
+            ],
+            "archive_sha256": manifest["archive"]["sha256"],
+            "pic_probe_sha256": manifest["pic_probe"]["sha256"],
+            "module": {
+                "path": evidence["module"]["path"],
+                "sha256": evidence["module"]["sha256"],
+            },
+            "static_link": {
+                "needed": evidence["module"]["needed"],
+                "symbols_canonical_sha256": evidence["module"]["symbols"][
+                    "canonical_sha256"
+                ],
+            },
+        }
+    return {
+        "policy": "required",
+        "version": "1.5.7",
+        "source_manifest_sha256": source_manifest_sha256,
+        "build_policy": build_policy,
+        "headers": headers,
+        "archive_members_sha256": canonical_sha256(member_names),
+        "host": {
+            "build_component": host["build_component"],
+            "build_manifest_sha256": x86["builds"]["host"]["manifest_sha256"],
+            "archive_sha256": host["archive"]["sha256"],
+            "pic_probe_sha256": host["pic_probe"]["sha256"],
+            "module": {
+                "path": host_module["path"],
+                "sha256": host_module["sha256"],
+            },
+            "static_link": {
+                "needed": host_module["needed"],
+                "symbols_canonical_sha256": host_module["symbols"][
+                    "canonical_sha256"
+                ],
+            },
+        },
+        "static_link": {
+            "required_definitions": required_definitions,
+            "undefined": [],
+            "dynamic_exports": [],
+            "dynamic_libzstd": False,
+        },
+        "targets": targets,
+    }
 
 
 def main():
@@ -154,6 +483,7 @@ def main():
     build_tree = sdk_tree_identity(build_prefix)
 
     reports = {}
+    zstd_evidence = {}
     for arch, target in TARGETS.items():
         report_path = (
             arguments.root
@@ -166,6 +496,9 @@ def main():
             QUALIFICATION_VALIDATOR["validate_final_report"](
                 report, release, target, arguments.version
             )
+            validated_zstd = QUALIFICATION_VALIDATOR[
+                "validate_qualification_zstd"
+            ](report, release, target, arguments.version)
         except QualificationError as error:
             raise FinalizationError(
                 "%s qualification report is invalid: %s" % (arch, error)
@@ -256,12 +589,21 @@ def main():
             and compile_build.get("sdk_tree") == build_tree,
             "%s build Python tree differs from qualification" % arch,
         )
+        revalidate_exported_zstd(
+            validated_zstd, build_prefix, target_prefix, arch
+        )
+        zstd_evidence[arch] = validated_zstd
         reports[arch] = {
             "target": target,
             "report_sha256": sha256_file(report_path),
             "python_sha256": report["python_sha256"],
             "sdk_tree": target_tree,
         }
+
+    host_zstd_module = audit_build_zstd_module(
+        build_prefix, zstd_evidence, minor
+    )
+    zstd = aggregate_zstd(zstd_evidence, host_zstd_module)
 
     manifest = {
         "schema_version": 1,
@@ -276,6 +618,7 @@ def main():
         "patches": patches,
         "build_python_sha256": build_python_sha256,
         "build_python_sdk_tree": build_tree,
+        "zstd": zstd,
         "qualifications": reports,
     }
     arguments.output.parent.mkdir(parents=True, exist_ok=True)

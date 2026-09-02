@@ -20,6 +20,7 @@ IMPLEMENTED_ROWS = (
         "adapter": "modern",
         "gil_policy": "zero",
         "sysconfig_isolation": True,
+        "zstd": False,
         "introduced_phase": 5,
     },
     {
@@ -28,6 +29,7 @@ IMPLEMENTED_ROWS = (
         "adapter": "transition",
         "gil_policy": "absent",
         "sysconfig_isolation": True,
+        "zstd": False,
         "introduced_phase": 6,
     },
     {
@@ -36,7 +38,17 @@ IMPLEMENTED_ROWS = (
         "adapter": "modern",
         "gil_policy": "absent",
         "sysconfig_isolation": True,
+        "zstd": False,
         "introduced_phase": 7,
+    },
+    {
+        "minor": "3.14",
+        "row": "cp314",
+        "adapter": "modern",
+        "gil_policy": "zero",
+        "sysconfig_isolation": True,
+        "zstd": True,
+        "introduced_phase": 8,
     },
 )
 RECORD_FIELDS = (
@@ -45,6 +57,7 @@ RECORD_FIELDS = (
     "adapter",
     "gil_policy",
     "sysconfig_isolation",
+    "zstd",
     "introduced_phase",
 )
 RECORD_KEYS = set(RECORD_FIELDS)
@@ -88,6 +101,10 @@ def validate_contract_table():
         require(
             record["sysconfig_isolation"] is True,
             "implemented CPython row lacks sysconfig isolation",
+        )
+        require(
+            type(record["zstd"]) is bool,
+            "implemented CPython zstd policy is invalid",
         )
         require(
             type(record["introduced_phase"]) is int

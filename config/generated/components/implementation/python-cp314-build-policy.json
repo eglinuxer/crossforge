@@ -1,0 +1,26 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/python-cp314-build-policy",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/python_rows/cp314/adapter",
+      "value": "modern"
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/minor",
+      "value": "3.14"
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/row",
+      "value": "cp314"
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/sysconfig_isolation",
+      "value": true
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

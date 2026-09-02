@@ -64,7 +64,7 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_component_arguments_cover_the_complete_release_binding(self):
         records = self.binding["components"]
-        self.assertEqual(len(records), 40)
+        self.assertEqual(len(records), 44)
         expected = {
             RENDERER["component_argument_name"](record["component"]): record[
                 "canonical_sha256"
@@ -156,11 +156,71 @@ class RenderBakeTests(unittest.TestCase):
             for name in (
                 "cpython-source-%s" % row,
                 "cpython-prepared-%s" % row,
-                "cpython-build-%s" % row,
                 "python-row-%s" % row,
                 "python-%s-dev" % row,
             ):
                 self.assertEqual(self.targets[name]["args"], expected)
+            build_expected = dict(expected)
+            build_expected["CPYTHON_ZSTD_VERSION"] = (
+                self.release["python"]["zstd"]["version"]
+                if contract["zstd"]
+                else "none"
+            )
+            self.assertEqual(
+                self.targets["cpython-build-%s" % row]["args"], build_expected
+            )
+
+    def test_python_zstd_contexts_are_row_and_arch_scoped(self):
+        empty = self.targets["zstd-empty"]
+        self.assertEqual(empty["target"], "zstd-empty")
+        self.assertEqual(empty["inherits"], ["_python_common"])
+        self.assertEqual(empty["output"], ["type=cacheonly"])
+        for contract in RENDERER["IMPLEMENTED_ROWS"]:
+            row = contract["row"]
+            version = (
+                self.release["python"]["zstd"]["version"]
+                if contract["zstd"]
+                else "none"
+            )
+            native = self.targets["cpython-build-%s" % row]
+            self.assertEqual(native["args"]["CPYTHON_ZSTD_VERSION"], version)
+            self.assertEqual(
+                native["contexts"]["crossforge_zstd"],
+                "target:zstd-host-build" if contract["zstd"] else "target:zstd-empty",
+            )
+            for arch in RENDERER["PYTHON_TARGETS"]:
+                cross = self.targets["cpython-cross-%s-%s" % (row, arch)]
+                self.assertEqual(cross["args"]["CPYTHON_ZSTD_VERSION"], version)
+                self.assertEqual(
+                    cross["contexts"]["crossforge_zstd"],
+                    (
+                        "target:zstd-%s-build" % arch
+                        if contract["zstd"]
+                        else "target:zstd-empty"
+                    ),
+                )
+
+    def test_zstd_version_change_preserves_pre314_python_build_targets(self):
+        before = {}
+        RENDERER["render_python_graph"](
+            copy.deepcopy(self.release), before, self.component_arguments
+        )
+        changed_release = copy.deepcopy(self.release)
+        changed_release["python"]["zstd"]["version"] = "1.5.8"
+        after = {}
+        RENDERER["render_python_graph"](
+            changed_release, after, self.component_arguments
+        )
+        for row in ("cp313", "cp311", "cp312"):
+            self.assertEqual(
+                before["cpython-build-%s" % row],
+                after["cpython-build-%s" % row],
+            )
+            for arch in RENDERER["PYTHON_TARGETS"]:
+                self.assertEqual(
+                    before["cpython-cross-%s-%s" % (row, arch)],
+                    after["cpython-cross-%s-%s" % (row, arch)],
+                )
 
     def test_cp313_phase5_target_names_remain_available(self):
         expected = {

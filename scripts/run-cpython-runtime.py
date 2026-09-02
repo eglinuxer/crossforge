@@ -331,6 +331,7 @@ def validate_device_loader_listing(text, runtime_root):
     require("not found" not in text, "device loader has unresolved dependencies")
     dependencies = normalize_loader_listing(text)
     require(dependencies, "device loader evidence is empty")
+    reject_dynamic_zstd(dependencies, "device loader")
     root = str(runtime_root.resolve())
     for dependency in dependencies:
         if dependency.startswith("linux-vdso"):
@@ -353,6 +354,7 @@ def validate_device_loader_listing(text, runtime_root):
 def validate_device_loaded_objects(text, runtime_root, target_prefix):
     objects = sorted(set(re.findall(r"calling init: (\/\S+)", text)))
     require(objects, "device probe produced no dynamic-loader object evidence")
+    reject_dynamic_zstd(objects, "device probe")
     root = str(runtime_root.resolve())
     prefix = str(target_prefix.resolve())
     for path in objects:
@@ -375,6 +377,13 @@ def validate_device_loaded_objects(text, runtime_root, target_prefix):
     }
     require(required.issubset(basenames), "device probe did not map every runtime library")
     return objects
+
+
+def reject_dynamic_zstd(values, label):
+    require(
+        not any(re.search(r"(?:^|[/\s])libzstd\.so(?:\.|\s|$)", item) for item in values),
+        "%s loaded a dynamic libzstd" % label,
+    )
 
 
 def main():
@@ -409,6 +418,7 @@ def main():
     except ContractError as error:
         raise RuntimeError_(str(error)) from error
     contract = binding["contract"]
+    zstd_policy = "required" if contract["zstd"] else "absent"
     compile_report = load_json(arguments.compile_report)
     require(compile_report.get("report_kind") == "crossforge-cpython-compile", "compile report kind mismatch")
     require(compile_report.get("target") == arguments.target, "compile report target mismatch")
@@ -526,6 +536,8 @@ def main():
             arguments.version,
             "--gil-policy",
             contract["gil_policy"],
+            "--zstd-policy",
+            zstd_policy,
             "--extension-dir",
             guest_extension_dir,
         ]
@@ -557,6 +569,8 @@ def main():
             arguments.version,
             "--gil-policy",
             contract["gil_policy"],
+            "--zstd-policy",
+            zstd_policy,
         ]
         device_loader_command = [
             loader_host,
@@ -615,6 +629,8 @@ def main():
             arguments.version,
             "--gil-policy",
             contract["gil_policy"],
+            "--zstd-policy",
+            zstd_policy,
             "--extension-dir",
             guest_extension_dir,
         ]
@@ -650,6 +666,8 @@ def main():
             arguments.version,
             "--gil-policy",
             contract["gil_policy"],
+            "--zstd-policy",
+            zstd_policy,
         ]
         device_loader_command = [
             arguments.qemu,
@@ -673,6 +691,7 @@ def main():
     require("not found" not in loader_text, "runtime loader has unresolved dependencies")
     loader_dependencies = normalize_loader_listing(loader_text)
     require(loader_dependencies, "runtime loader evidence is empty")
+    reject_dynamic_zstd(loader_dependencies, "runtime loader")
     device_loader_stdout, device_loader_stderr = run(device_loader_command, environment)
     device_loader_dependencies = validate_device_loader_listing(
         device_loader_stdout + device_loader_stderr,

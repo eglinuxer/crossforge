@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-if [[ $# -ne 9 ]]; then
-  echo "usage: $0 SOURCE BUILD_DIR PREFIX SYSROOT TOOLCHAIN TARGET BUILD_PYTHON VERSION JOBS" >&2
+if [[ $# -ne 10 ]]; then
+  echo "usage: $0 SOURCE BUILD_DIR PREFIX SYSROOT TOOLCHAIN TARGET BUILD_PYTHON VERSION ZSTD_DEPS JOBS" >&2
   exit 2
 fi
 
@@ -14,7 +14,8 @@ toolchain=$5
 target=$6
 build_python=$7
 version=$8
-jobs=$9
+zstd_directory=$9
+jobs=${10}
 minor=${version%.*}
 compact_minor=${minor/./}
 script_directory=$(cd "$(dirname "$0")" && pwd)
@@ -74,6 +75,11 @@ esac
   echo "error: target Python toolchain differs from target" >&2
   exit 1
 }
+[[ "$zstd_directory" == /work/deps/zstd && -d "$zstd_directory" \
+    && ! -L "$zstd_directory" ]] || {
+  echo "error: invalid cross CPython zstd dependency context" >&2
+  exit 1
+}
 for tool in gcc g++ ar ranlib readelf ld nm strip objcopy; do
   [[ -x "$toolchain/bin/$target-$tool" ]] || {
     echo "error: missing cross tool: $target-$tool" >&2
@@ -90,7 +96,7 @@ unset AR AS BLDSHARED CCSHARED CFLAGS CONFIG_SITE CPATH CPP CPPFLAGS CC \
   LDLIBS LD_LIBRARY_PATH LD_PRELOAD LIBRARY_PATH LIBS LINKFORSHARED \
   LDSHARED MAKEFLAGS MFLAGS NM OBJC_INCLUDE_PATH OBJDUMP OBJCOPY \
   PKG_CONFIG PKG_CONFIG_LIBDIR PKG_CONFIG_PATH PKG_CONFIG_SYSROOT_DIR \
-  PYTHON_FOR_BUILD RANLIB READELF STRIP
+  PYTHON_FOR_BUILD RANLIB READELF STRIP LIBZSTD_CFLAGS LIBZSTD_LIBS
 [[ "$($build_python -B -I -c 'import platform; print(platform.python_version())')" == "$version" ]] || {
   echo "error: build Python patch version differs from target source" >&2
   exit 1
@@ -142,6 +148,36 @@ export PKG_CONFIG_LIBDIR=$sysroot/usr/lib64/pkgconfig:$sysroot/usr/share/pkgconf
 export SOURCE_DATE_EPOCH=0
 unset HOSTRUNNER MAKEFLAGS MFLAGS PYTHON_FOR_BUILD
 export PYTHONDONTWRITEBYTECODE=1
+
+zstd_enabled=0
+if [[ "$minor" == 3.14 ]]; then
+  zstd_enabled=1
+  zstd_archive=$zstd_directory/lib/libzstd.a
+  zstd_manifest=$zstd_directory/build-manifest.json
+  for path in "$zstd_archive" "$zstd_manifest" \
+      "$zstd_directory/include/zstd.h" "$zstd_directory/include/zdict.h"; do
+    [[ -f "$path" && ! -L "$path" ]] || {
+      echo "error: CPython 3.14 private target zstd input is incomplete: $path" >&2
+      exit 1
+    }
+  done
+  [[ ! -e "$zstd_directory/.crossforge-empty" ]] || {
+    echo "error: CPython 3.14 received the empty target zstd context" >&2
+    exit 1
+  }
+  export LIBZSTD_CFLAGS="-I$zstd_directory/include"
+  export LIBZSTD_LIBS="$zstd_archive -pthread -Wl,--exclude-libs,libzstd.a"
+else
+  [[ -f "$zstd_directory/.crossforge-empty" ]] || {
+    echo "error: pre-3.14 CPython lacks the controlled empty target zstd context" >&2
+    exit 1
+  }
+  if find "$zstd_directory" -mindepth 1 ! -name .crossforge-empty -print -quit \
+      | grep -q .; then
+    echo "error: pre-3.14 CPython rejects private target zstd inputs" >&2
+    exit 1
+  fi
+fi
 
 # An empty HOSTRUNNER is necessary but not sufficient: same-ISA x86_64 could
 # execute natively, and a build host may have global binfmt configured for
@@ -247,6 +283,21 @@ done
   --with-ensurepip=no \
   --disable-test-modules
 
+if [[ "$zstd_enabled" -eq 1 ]]; then
+  expected_zstd_cflags="-I$zstd_directory/include"
+  expected_zstd_libs="$zstd_directory/lib/libzstd.a -pthread -Wl,--exclude-libs,libzstd.a"
+  grep -Fqx "MODULE__ZSTD_STATE=yes" Makefile \
+    && grep -Fqx "MODULE__ZSTD_CFLAGS=$expected_zstd_cflags" Makefile \
+    && grep -Fqx "MODULE__ZSTD_LDFLAGS=$expected_zstd_libs" Makefile || {
+      echo "error: target CPython Makefile did not bind the private static zstd" >&2
+      exit 1
+    }
+  if grep -E '^MODULE__ZSTD_LDFLAGS=.*(^|[[:space:]])-lzstd([[:space:]]|$)' Makefile; then
+    echo "error: target CPython Makefile fell back to dynamic -lzstd" >&2
+    exit 1
+  fi
+fi
+
 grep -F "PYTHON_FOR_BUILD=" Makefile | grep -F "$build_python" >/dev/null || {
   echo "error: Makefile does not use the matching build Python" >&2
   exit 1
@@ -346,6 +397,35 @@ for module in _bz2 _ctypes _hashlib _lzma _sqlite3 _ssl _uuid zlib; do
     exit 1
   }
 done
+
+if [[ "$zstd_enabled" -eq 1 ]]; then
+  mapfile -t zstd_modules < <(
+    find "$prefix/lib/python$minor/lib-dynload" -maxdepth 1 \
+      -name '_zstd.*.so' -type f -print
+  )
+  [[ ${#zstd_modules[@]} -eq 1 ]] || {
+    echo "error: target CPython 3.14 must install exactly one _zstd module" >&2
+    exit 1
+  }
+  zstd_dynamic=$($READELF --wide -d "${zstd_modules[0]}")
+  if grep -E '(TEXTREL|RPATH|RUNPATH|NEEDED.*libzstd)' <<<"$zstd_dynamic"; then
+    echo "error: target CPython _zstd has a forbidden dynamic property" >&2
+    exit 1
+  fi
+  zstd_symbols=$($READELF --wide --dyn-syms "${zstd_modules[0]}")
+  if grep -E '[[:space:]](ZSTD_|ZDICT_|FSE_|HUF_|XXH_)' <<<"$zstd_symbols"; then
+    echo "error: target CPython _zstd exposes private zstd symbols" >&2
+    exit 1
+  fi
+  mkdir -p "$prefix/.crossforge"
+  install -m 0644 "$zstd_manifest" "$prefix/.crossforge/zstd-build.json"
+else
+  [[ -z "$(find "$prefix" \( -name '_zstd.*.so' -o \
+      -path '*/.crossforge/zstd-build.json' \) -print -quit)" ]] || {
+    echo "error: pre-3.14 target CPython unexpectedly contains private zstd output" >&2
+    exit 1
+  }
+fi
 
 headers=$($READELF -h "$python")
 grep -F "Machine:" <<<"$headers" | grep -F "$target_machine" >/dev/null || {

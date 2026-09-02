@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-if [[ $# -ne 11 ]]; then
-  echo "usage: $0 SOURCE BUILD PREFIX SOURCE_MANIFEST BUILD_MANIFEST POLICY_COMPONENT POLICY_SHA256 HOST_OR_TRIPLE TOOLCHAIN SYSROOT_OR_DASH JOBS" >&2
+if [[ $# -ne 17 ]]; then
+  echo "usage: $0 SOURCE BUILD PREFIX SOURCE_MANIFEST SOURCE_ARCHIVE SOURCE_SIGNATURE BUILD_MANIFEST SOURCE_COMPONENT SOURCE_SHA256 POLICY_COMPONENT POLICY_SHA256 BUILD_COMPONENT BUILD_SHA256 HOST_OR_TRIPLE TOOLCHAIN SYSROOT_OR_DASH JOBS" >&2
   exit 2
 fi
 
@@ -10,20 +10,26 @@ source_directory=$1
 build_directory=$2
 prefix=$3
 source_manifest=$4
-build_manifest=$5
-policy_component=$6
-policy_sha256=$7
-identity=$8
-toolchain=$9
-sysroot=${10}
-jobs=${11}
+source_archive=$5
+source_signature=$6
+build_manifest=$7
+source_component=$8
+source_sha256=$9
+policy_component=${10}
+policy_sha256=${11}
+build_component=${12}
+build_sha256=${13}
+identity=${14}
+toolchain=${15}
+sysroot=${16}
+jobs=${17}
 version=1.5.7
 
 [[ "$source_directory" = /* && "$build_directory" = /* && "$prefix" = /* ]] || {
   echo "error: zstd source/build/prefix paths must be absolute" >&2
   exit 1
 }
-[[ -f "$source_manifest" && -f "$source_directory/lib/Makefile" ]] || {
+[[ -f "$source_manifest" && -f "$source_archive" && -f "$source_signature" && -f "$source_component" && -f "$source_directory/lib/Makefile" ]] || {
   echo "error: prepared zstd source or manifest is missing" >&2
   exit 1
 }
@@ -52,25 +58,26 @@ if [[ -z "$python" ]]; then
     python=$(command -v python3)
   fi
 fi
-"$python" - "$source_directory" "$source_manifest" <<'PY'
-import hashlib, json, pathlib, sys
-root = pathlib.Path(sys.argv[1])
-manifest = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
-assert manifest["schema_version"] == 1
-assert manifest["kind"] == "crossforge-zstd-source"
-assert manifest["version"] == "1.5.7"
-expected = {item["path"]: item for item in manifest["files"]}
-actual = {}
-for path in root.rglob("*"):
-    if not path.is_file():
-        continue
-    payload = path.read_bytes()
-    actual[path.relative_to(root).as_posix()] = {
-        "sha256": hashlib.sha256(payload).hexdigest(), "size": len(payload)
-    }
-assert set(actual) == set(expected)
-for name, value in actual.items():
-    assert value == {"sha256": expected[name]["sha256"], "size": expected[name]["size"]}
+"$python" - "$source_component" "$source_sha256" "$source_directory" \
+  "$source_manifest" "$source_archive" "$source_signature" \
+  "$(dirname "$0")" <<'PY'
+import pathlib, runpy, sys
+
+component, digest, source, manifest, archive, signature, scripts = sys.argv[1:]
+validator = runpy.run_path(scripts + "/prepare-zstd-source.py")
+try:
+    validator["validate_prepared_source"](
+        pathlib.Path(component),
+        digest,
+        pathlib.Path(source),
+        pathlib.Path(manifest),
+        pathlib.Path(archive),
+        pathlib.Path(signature),
+        pathlib.Path(scripts).parent,
+    )
+except (OSError, validator["PreparationError"]) as error:
+    sys.stderr.write("error: %s\n" % error)
+    raise SystemExit(1)
 PY
 "$python" - "$policy_component" "$policy_sha256" "$(dirname "$0")" <<'PY'
 import runpy, sys
@@ -82,7 +89,8 @@ document = reader["load_component"](
     "build",
     digest,
 )
-assert document["dependencies"] == []
+if document["dependencies"] != []:
+    raise SystemExit("error: zstd build policy unexpectedly has dependencies")
 actual = {item["path"]: item["value"] for item in document["materials"]}
 expected = {
     "/@implementation/zstd/exclude_archive_symbols": True,
@@ -94,7 +102,8 @@ expected = {
     "/@implementation/zstd/selected_license": "BSD-3-Clause",
     "/@implementation/zstd/visibility": "hidden",
 }
-assert actual == expected
+if actual != expected:
+    raise SystemExit("error: zstd build policy materials differ")
 PY
 
 case "$identity" in
@@ -103,6 +112,7 @@ case "$identity" in
       echo "error: invalid host zstd prefix/sysroot" >&2
       exit 1
     }
+    [[ "$build_component" == zstd/host-build ]] || exit 1
     tool_prefix=
     expected_machine='Advanced Micro Devices X86-64'
     ;;
@@ -112,6 +122,7 @@ case "$identity" in
       exit 1
     }
     tool_prefix=$identity-
+    [[ "$build_component" == zstd/x86_64-build ]] || exit 1
     expected_machine='Advanced Micro Devices X86-64'
     ;;
   aarch64-unknown-linux-gnu)
@@ -120,6 +131,7 @@ case "$identity" in
       exit 1
     }
     tool_prefix=$identity-
+    [[ "$build_component" == zstd/aarch64-build ]] || exit 1
     expected_machine=AArch64
     ;;
   *)
@@ -127,6 +139,10 @@ case "$identity" in
     exit 1
     ;;
 esac
+[[ "$source_sha256" =~ ^[0-9a-f]{64}$ && "$policy_sha256" =~ ^[0-9a-f]{64}$ && "$build_sha256" =~ ^[0-9a-f]{64}$ ]] || {
+  echo "error: invalid zstd component digest" >&2
+  exit 1
+}
 
 for tool in gcc ar ranlib readelf; do
   [[ -x "$toolchain/$tool_prefix$tool" ]] || {
@@ -226,7 +242,8 @@ probe_sha=$(sha256sum "$build_directory/libzstd-pic-probe.so" | awk '{print $1}'
 mkdir -p "$(dirname "$build_manifest")"
 "$python" - "$build_manifest" "$identity" "$prefix" "$archive_sha" \
   "$manifest_sha" "$objects" "$probe_sha" "$expected_machine" \
-  "$compiler_machine" "$cflags" "$cppflags" "$policy_sha256" <<'PY'
+  "$compiler_machine" "$cflags" "$cppflags" "$policy_sha256" \
+  "$build_component" "$build_sha256" <<'PY'
 import hashlib, json, os, pathlib, sys
 path = pathlib.Path(sys.argv[1])
 objects = pathlib.Path(sys.argv[6])
@@ -261,6 +278,7 @@ document = {
     },
     "source_manifest_sha256": sys.argv[5],
     "build_policy": {"component": "implementation/zstd-build-policy", "canonical_sha256": sys.argv[12]},
+    "build_component": {"component": sys.argv[13], "canonical_sha256": sys.argv[14]},
     "policy": {
         "static_only": True,
         "position_independent": True,

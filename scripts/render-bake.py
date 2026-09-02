@@ -90,6 +90,75 @@ def component_digest_arguments(repository, release, require_tracked=True):
     return arguments
 
 
+def render_zstd_graph(config, targets, component_arguments, rocky_amd64_image):
+    version = config["python"]["zstd"]["version"]
+
+    def digest(component):
+        name = component_argument_name(component)
+        try:
+            return component_arguments[name]
+        except KeyError as error:
+            raise ValueError("missing zstd component digest: %s" % component) from error
+
+    common_args = {
+        "ZSTD_VERSION": version,
+        "ZSTD_SOURCE_COMPONENT_SHA256": digest("sources/zstd"),
+        "ZSTD_BUILD_POLICY_COMPONENT_SHA256": digest(
+            "implementation/zstd-build-policy"
+        ),
+    }
+    targets["zstd-source"] = {
+        "inherits": ["_zstd_common"],
+        "target": "zstd-source",
+        "args": {
+            "ZSTD_VERSION": version,
+            "ZSTD_SOURCE_COMPONENT_SHA256": common_args[
+                "ZSTD_SOURCE_COMPONENT_SHA256"
+            ],
+        },
+        "contexts": {
+            "crossforge_rocky_amd64": "docker-image://%s" % rocky_amd64_image
+        },
+        "output": ["type=cacheonly"],
+    }
+    host_args = dict(common_args)
+    host_args["ZSTD_BUILD_COMPONENT_SHA256"] = digest("zstd/host-build")
+    targets["zstd-host-build"] = {
+        "inherits": ["_zstd_common"],
+        "target": "zstd-host-build-export",
+        "args": host_args,
+        "contexts": {
+            "crossforge_host_common": "target:host-build-common-locked",
+            "crossforge_zstd_source": "target:zstd-source",
+        },
+        "output": ["type=cacheonly"],
+    }
+    for arch, triple in PYTHON_TARGETS.items():
+        build_component = "zstd/%s-build" % arch
+        arguments = dict(common_args)
+        arguments.update(
+            {
+                "ZSTD_TARGET_ARCH": arch,
+                "ZSTD_TARGET_TRIPLE": triple,
+                "ZSTD_BUILD_COMPONENT": build_component,
+                "ZSTD_BUILD_COMPONENT_SHA256": digest(build_component),
+            }
+        )
+        targets["zstd-%s-build" % arch] = {
+            "inherits": ["_zstd_common"],
+            "target": "zstd-target-build-export",
+            "args": arguments,
+            "contexts": {
+                "crossforge_host_common": "target:host-build-common-locked",
+                "crossforge_zstd_source": "target:zstd-source",
+                "crossforge_toolchain": (
+                    "target:toolchain-%s-build-export" % arch
+                ),
+            },
+            "output": ["type=cacheonly"],
+        }
+
+
 def python_row(contract, entry):
     version = entry["version"]
     return {
@@ -97,6 +166,7 @@ def python_row(contract, entry):
         "minor": contract["minor"],
         "version": version,
         "adapter": contract["adapter"],
+        "zstd": contract["zstd"],
         "introduced_phase": contract["introduced_phase"],
     }
 
@@ -129,6 +199,7 @@ def cacheonly_python_target(target, row, contexts=None, extra_args=None):
 
 def render_python_graph(config, targets, component_arguments):
     rows = []
+    zstd_version = config["python"]["zstd"]["version"]
     for record in IMPLEMENTED_ROWS:
         try:
             binding = bind_python_row(config, row=record["row"])
@@ -184,6 +255,7 @@ def render_python_graph(config, targets, component_arguments):
         row["patch_context"] = "target:%s" % (
             row["patch_context_target"] or "cpython-empty-patches"
         )
+        row["zstd_version"] = zstd_version if row["zstd"] else "none"
         rows.append(row)
 
     phase_order = [row["introduced_phase"] for row in rows]
@@ -206,6 +278,12 @@ def render_python_graph(config, targets, component_arguments):
     targets["cpython-empty-patches"] = {
         "inherits": ["_python_common"],
         "target": "cpython-empty-patches",
+        "contexts": {"crossforge_rocky_amd64": rocky_amd64_context},
+        "output": ["type=cacheonly"],
+    }
+    targets["zstd-empty"] = {
+        "inherits": ["_python_common"],
+        "target": "zstd-empty",
         "contexts": {"crossforge_rocky_amd64": rocky_amd64_context},
         "output": ["type=cacheonly"],
     }
@@ -248,7 +326,15 @@ def render_python_graph(config, targets, component_arguments):
         targets[build_name] = cacheonly_python_target(
             "cpython-build",
             row,
-            {"crossforge_cpython_prepared": "target:%s" % prepared_name},
+            {
+                "crossforge_cpython_prepared": "target:%s" % prepared_name,
+                "crossforge_zstd": (
+                    "target:zstd-host-build"
+                    if row["zstd"]
+                    else "target:zstd-empty"
+                ),
+            },
+            {"CPYTHON_ZSTD_VERSION": row["zstd_version"]},
         )
 
         qualification_names = []
@@ -274,8 +360,16 @@ def render_python_graph(config, targets, component_arguments):
                     "crossforge_toolchain": (
                         "target:toolchain-%s-build-export" % arch
                     ),
+                    "crossforge_zstd": (
+                        "target:zstd-%s-build" % arch
+                        if row["zstd"]
+                        else "target:zstd-empty"
+                    ),
                 },
-                target_args,
+                dict(
+                    target_args,
+                    CPYTHON_ZSTD_VERSION=row["zstd_version"],
+                ),
             )
             targets[qualify_build_name] = cacheonly_python_target(
                 "cpython-qualify-build",
@@ -528,6 +622,7 @@ def render(repository):
         targets[name] = {
             "contexts": {"crossforge_qemu": "docker-image://%s" % qemu_image}
         }
+    render_zstd_graph(config, targets, component_arguments, rocky_amd64_image)
     python_groups = render_python_graph(config, targets, component_arguments)
     document = {
         "group": {

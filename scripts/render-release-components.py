@@ -43,6 +43,7 @@ POLICY_FIELD_SCOPES = {
     "adapter": ("build", "qualification"),
     "gil_policy": ("qualification",),
     "sysconfig_isolation": ("build", "qualification"),
+    "zstd": ("qualification",),
     "introduced_phase": ("qualification",),
 }
 BUILD_POLICY_FIELDS = tuple(
@@ -134,6 +135,10 @@ def validate_policy_registry(implemented_rows):
         require(
             record["sysconfig_isolation"] is True,
             "implemented Python sysconfig isolation is not enabled",
+        )
+        require(
+            type(record["zstd"]) is bool,
+            "implemented Python zstd policy is invalid",
         )
         require(
             type(record["introduced_phase"]) is int
@@ -714,24 +719,30 @@ def _render_expected_components(release, implemented_rows):
             (row_policy,),
         )
         native_component = "python/%s-native-build" % row
+        native_dependencies = [
+            "rpm/host-build-common",
+            "rpm/host-python-build",
+            source_component,
+        ]
+        if record["zstd"]:
+            native_dependencies.append("zstd/host-build")
         add(
             native_component,
             "build",
             selector(("baseline",), ("platforms",)),
-            (
-                "rpm/host-build-common",
-                "rpm/host-python-build",
-                source_component,
-            ),
+            tuple(native_dependencies),
         )
         for arch in ("x86_64", "aarch64"):
             target_component = "python/%s-%s-build" % (row, arch)
             python_target_builds.append(target_component)
+            target_dependencies = [native_component, toolchain_builds[arch]]
+            if record["zstd"]:
+                target_dependencies.append("zstd/%s-build" % arch)
             add(
                 target_component,
                 "build",
                 selector(("targets", target_indices[arch])),
-                (native_component, toolchain_builds[arch]),
+                tuple(target_dependencies),
             )
         qualification_material_prefixes.extend(
             [

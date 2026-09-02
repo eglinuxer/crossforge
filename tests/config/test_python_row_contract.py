@@ -30,6 +30,7 @@ class PythonRowContractTests(unittest.TestCase):
                     "adapter": "modern",
                     "gil_policy": "zero",
                     "sysconfig_isolation": True,
+                    "zstd": False,
                     "introduced_phase": 5,
                 },
                 {
@@ -38,6 +39,7 @@ class PythonRowContractTests(unittest.TestCase):
                     "adapter": "transition",
                     "gil_policy": "absent",
                     "sysconfig_isolation": True,
+                    "zstd": False,
                     "introduced_phase": 6,
                 },
                 {
@@ -46,12 +48,24 @@ class PythonRowContractTests(unittest.TestCase):
                     "adapter": "modern",
                     "gil_policy": "absent",
                     "sysconfig_isolation": True,
+                    "zstd": False,
                     "introduced_phase": 7,
+                },
+                {
+                    "minor": "3.14",
+                    "row": "cp314",
+                    "adapter": "modern",
+                    "gil_policy": "zero",
+                    "sysconfig_isolation": True,
+                    "zstd": True,
+                    "introduced_phase": 8,
                 },
             ),
         )
-        self.assertEqual(CONTRACT["LATEST_PHASE"], 7)
-        self.assertEqual(CONTRACT["LATEST_ROWS"], ("cp313", "cp311", "cp312"))
+        self.assertEqual(CONTRACT["LATEST_PHASE"], 8)
+        self.assertEqual(
+            CONTRACT["LATEST_ROWS"], ("cp313", "cp311", "cp312", "cp314")
+        )
 
     def test_version_and_row_lookups_return_independent_records(self):
         by_version = CONTRACT["contract_for_version"]("3.13.15")
@@ -62,11 +76,12 @@ class PythonRowContractTests(unittest.TestCase):
 
     def test_release_binding_is_exact_for_version_and_row(self):
         cases = (
-            ("3.11.16", "cp311", "transition", "absent"),
-            ("3.12.14", "cp312", "modern", "absent"),
-            ("3.13.15", "cp313", "modern", "zero"),
+            ("3.11.16", "cp311", "transition", "absent", False),
+            ("3.12.14", "cp312", "modern", "absent", False),
+            ("3.13.15", "cp313", "modern", "zero", False),
+            ("3.14.7", "cp314", "modern", "zero", True),
         )
-        for version, row, adapter, gil_policy in cases:
+        for version, row, adapter, gil_policy, zstd in cases:
             with self.subTest(version=version):
                 version_binding = CONTRACT["bind_release"](
                     self.release, version=version, adapter=adapter
@@ -77,11 +92,12 @@ class PythonRowContractTests(unittest.TestCase):
                 self.assertEqual(
                     version_binding["contract"]["gil_policy"], gil_policy
                 )
+                self.assertIs(version_binding["contract"]["zstd"], zstd)
 
     def test_unimplemented_or_mismatched_contract_is_rejected(self):
         for operation in (
-            lambda: CONTRACT["contract_for_version"]("3.14.7"),
-            lambda: CONTRACT["contract_for_row"]("cp314"),
+            lambda: CONTRACT["contract_for_version"]("3.10.21"),
+            lambda: CONTRACT["contract_for_row"]("cp310"),
             lambda: CONTRACT["bind_release"](
                 self.release, version="3.13.15", adapter="transition"
             ),
@@ -131,6 +147,10 @@ class PythonRowContractTests(unittest.TestCase):
         self.assertEqual(
             CONTRACT["rows_for_phase"](7), ("cp313", "cp311", "cp312")
         )
+        self.assertEqual(
+            CONTRACT["rows_for_phase"](8),
+            ("cp313", "cp311", "cp312", "cp314"),
+        )
         with self.assertRaises(CONTRACT["ContractError"]):
             CONTRACT["rows_for_phase"](0)
 
@@ -144,6 +164,7 @@ class PythonRowContractTests(unittest.TestCase):
             ("3.11.16", "transition", "cp311"),
             ("3.12.14", "modern", "cp312"),
             ("3.13.15", "modern", "cp313"),
+            ("3.14.7", "modern", "cp314"),
         ):
             with self.subTest(version=version):
                 valid = subprocess.run(

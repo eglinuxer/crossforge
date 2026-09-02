@@ -1,0 +1,43 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp314-source",
+  "dependencies": [
+    {
+      "canonical_sha256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
+      "component": "implementation/python-cp314-build-policy"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/python/versions/5/adapter",
+      "value": "modern"
+    },
+    {
+      "path": "/python/versions/5/patches",
+      "value": []
+    },
+    {
+      "path": "/python/versions/5/source/sha256",
+      "value": "3b48dac8fb59f62eaa67ac83c1eb12bda1b7a08406dd286e252c11a66be27f81"
+    },
+    {
+      "path": "/python/versions/5/source/size",
+      "value": 24053924
+    },
+    {
+      "path": "/python/versions/5/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/python/versions/5/source/url",
+      "value": "https://www.python.org/ftp/python/3.14.7/Python-3.14.7.tar.xz"
+    },
+    {
+      "path": "/python/versions/5/version",
+      "value": "3.14.7"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

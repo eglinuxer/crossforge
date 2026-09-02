@@ -3,7 +3,7 @@
   "component": "python/qualification",
   "dependencies": [
     {
-      "canonical_sha256": "422849b1faa1f6d17a7e4d22178bad8a081668044df16f6ec54b85342740786d",
+      "canonical_sha256": "5ae0b9f1e9e99c0001bc1285cbbcd529cd7f77a10f574d2e3b6ffc718f2e3f73",
       "component": "implementation/python-qualification-policy"
     },
     {
@@ -29,6 +29,14 @@
     {
       "canonical_sha256": "ab87916b414cd783300275c033b227496ac08e75e6ec55d1e91167db353f6a1b",
       "component": "python/cp313-x86_64-build"
+    },
+    {
+      "canonical_sha256": "f28bfec58ec2bddafe6dcace24e970db9003135fb59a2eb3c784a30dd639683d",
+      "component": "python/cp314-aarch64-build"
+    },
+    {
+      "canonical_sha256": "67a6e878e8fc9e592765ce0318a709b2686683b132900431ace217b774c712ae",
+      "component": "python/cp314-x86_64-build"
     },
     {
       "canonical_sha256": "303e97f2d655738d717d89d0277789e5094da56d6fdc427f757ee4fa503c685c",
@@ -163,6 +171,38 @@
     },
     {
       "path": "/python/versions/4/support",
+      "value": "bugfix"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.14.7.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/bundle_sha256",
+      "value": "6f41efc358b146b5548dbfc0414e9247441f8524fb6ef59f1c4ca946ffc70701"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/bundle_size",
+      "value": 7101
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.14.7/Python-3.14.7.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/identity",
+      "value": "hugo@python.org"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/oidc_issuer",
+      "value": "https://github.com/login/oauth"
+    },
+    {
+      "path": "/python/versions/5/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
+      "path": "/python/versions/5/support",
       "value": "bugfix"
     },
     {
