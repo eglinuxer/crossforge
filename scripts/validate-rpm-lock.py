@@ -17,6 +17,7 @@ REPOSITORY = Path(__file__).resolve().parents[1]
 STRICT = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
 ValidationError = STRICT["ValidationError"]
 load_json = STRICT["load_json"]
+COMPONENT_READER = None
 SCHEMAS = {
     "rpm-plan": REPOSITORY / "config/schemas/rpm-plan.schema.json",
     "rpm-transaction": REPOSITORY / "config/schemas/rpm-transaction.schema.json",
@@ -26,6 +27,17 @@ TARGET_TRIPLES = {
     "x86_64": "x86_64-unknown-linux-gnu",
     "aarch64": "aarch64-unknown-linux-gnu",
 }
+
+
+def component_reader():
+    global COMPONENT_READER
+    if COMPONENT_READER is None:
+        COMPONENT_READER = runpy.run_path(
+            str(REPOSITORY / "scripts/release_component.py")
+        )
+    return COMPONENT_READER
+
+
 SYSROOT_ROOTS = {
     "glibc",
     "glibc-devel",
@@ -243,9 +255,9 @@ def validate_repository_trust(repository, trust):
         "sha256": trust["sha256"],
         "fingerprint": trust["fingerprint"],
     }:
-        raise ValidationError("repository key differs from release.json")
+        raise ValidationError("repository key differs from release binding")
     if repository["repomd"]["signature"]["fingerprint"] != trust["fingerprint"]:
-        raise ValidationError("repomd signature claim differs from release.json")
+        raise ValidationError("repomd signature claim differs from release binding")
 
 
 def verify_detached_signature(key, fingerprint, signature, content):
@@ -597,19 +609,49 @@ def validate_transaction_semantics(transaction):
     return plan
 
 
-def load_referenced_transaction(lock):
+def validate_locked_transaction_semantics(transaction):
+    """Validate the immutable transaction without reopening its maintenance plan."""
+    identity = transaction["identity"]
+    role = identity["role"]
+    arch = identity["arch"]
+    if role == "target-sysroot":
+        if arch not in TARGET_TRIPLES or identity["target_triple"] != TARGET_TRIPLES[arch]:
+            raise ValidationError("locked target transaction arch/triple mismatch")
+    elif role not in ("host-build-common", "host-gcc-build", "host-python-build"):
+        raise ValidationError("unsupported locked RPM transaction role")
+    elif arch != "x86_64" or identity["target_triple"] is not None:
+        raise ValidationError("locked host transaction identity is invalid")
+    repository_ids = [repository["id"] for repository in transaction["repositories"]]
+    reject_duplicates(repository_ids, "locked repository id")
+    item_keys = []
+    for item in transaction["items"]:
+        validate_nevra_fields(item)
+        item_keys.append((item["nevra"], item["action"]))
+    if item_keys != sorted(item_keys) or len(item_keys) != len(set(item_keys)):
+        raise ValidationError("locked transaction items must be sorted and unique")
+    for name in ("base", "remove", "result"):
+        validate_manifest(
+            transaction["manifests"][name],
+            "locked transaction %s manifest" % name,
+        )
+
+
+def load_referenced_transaction(lock, validate_plan=True):
     reference = lock["transaction"]
     path = repository_file(reference["file"], "transaction reference")
     transaction = load_json(path)
     validate_schema(transaction)
     if canonical_sha256(transaction) != reference["canonical_sha256"]:
         raise ValidationError("transaction canonical SHA256 differs from lock")
-    validate_transaction_semantics(transaction)
+    if validate_plan:
+        validate_transaction_semantics(transaction)
+    else:
+        validate_locked_transaction_semantics(transaction)
     return transaction
 
 
-def validate_lock_semantics(lock):
-    transaction = load_referenced_transaction(lock)
+def validate_lock_semantics(lock, validate_plan=True):
+    transaction = load_referenced_transaction(lock, validate_plan=validate_plan)
     forward = sorted(
         [item for item in transaction["items"] if item["action"] in ("install", "upgrade")],
         key=lambda item: item["nevra"],
@@ -640,19 +682,172 @@ def validate_lock_semantics(lock):
     return transaction
 
 
-def validate_release_binding(lock, lock_path, release_path):
-    transaction = validate_lock_semantics(lock)
-    release = load_json(release_path)
-    release_schema = load_json(REPOSITORY / "config/schemas/release.schema.json")
-    STRICT["validate_schema_subset"](release_schema)
-    STRICT["validate"](release, release_schema, release_schema, "$")
+def component_material_map(document):
+    reader = component_reader()
+    materials = {}
+    for record in document["materials"]:
+        path = reader["decode_json_pointer"](record["path"])
+        if path in materials:
+            raise ValidationError("release component repeats a material path")
+        materials[path] = record["value"]
+    return materials
+
+
+def require_material(materials, path, expected_type, label):
+    if path not in materials:
+        raise ValidationError("release component is missing %s" % label)
+    value = materials[path]
+    if type(value) is not expected_type:
+        raise ValidationError("release component %s has the wrong JSON type" % label)
+    return value
+
+
+def safe_binding_path(value, label):
+    if not isinstance(value, str) or not value or "\\" in value:
+        raise ValidationError("release component %s is not a safe path" % label)
+    relative = PurePosixPath(value)
+    if (
+        not relative.parts
+        or relative.is_absolute()
+        or value in (".", "..")
+        or ".." in relative.parts
+        or ":" in relative.parts[0]
+        or str(relative) != value
+    ):
+        raise ValidationError("release component %s is not a safe path" % label)
+    return value
+
+
+def component_binding(document, transaction, component_name, component_sha256):
+    materials = component_material_map(document)
+    role = transaction["identity"]["role"]
+    arch = transaction["identity"]["arch"]
+    expected_component = (
+        "rpm/sysroot-%s" % arch
+        if role == "target-sysroot"
+        else "rpm/%s" % role
+    )
+    if component_name != expected_component:
+        raise ValidationError(
+            "release component %s does not bind RPM role/arch %s/%s"
+            % (component_name, role, arch)
+        )
+
+    base = {
+        "repository": require_material(
+            materials, ("base_image", "repository"), str, "base repository"
+        ),
+        "tag": require_material(
+            materials, ("base_image", "tag"), str, "base tag"
+        ),
+        "digest": require_material(
+            materials, ("base_image", "digest"), str, "base digest"
+        ),
+    }
+    trust = {
+        "file": safe_binding_path(
+            require_material(
+                materials,
+                ("trust", "rocky_rpm_key", "file"),
+                str,
+                "Rocky key file",
+            ),
+            "Rocky key file",
+        ),
+        "sha256": require_material(
+            materials,
+            ("trust", "rocky_rpm_key", "sha256"),
+            str,
+            "Rocky key SHA256",
+        ),
+        "fingerprint": require_material(
+            materials,
+            ("trust", "rocky_rpm_key", "fingerprint"),
+            str,
+            "Rocky key fingerprint",
+        ),
+    }
+    if not is_sha256(trust["sha256"]):
+        raise ValidationError("release component Rocky key SHA256 is invalid")
+
+    if role == "target-sysroot":
+        target_indexes = {
+            path[1]
+            for path in materials
+            if len(path) >= 3 and path[0] == "targets"
+        }
+        if (
+            len(target_indexes) != 1
+            or not next(iter(target_indexes)).isdigit()
+        ):
+            raise ValidationError(
+                "release component must contain one target material prefix"
+            )
+        index = next(iter(target_indexes))
+        prefix = ("targets", index)
+        component_arch = require_material(
+            materials, prefix + ("arch",), str, "target architecture"
+        )
+        triple = require_material(
+            materials, prefix + ("triple",), str, "target triple"
+        )
+        if component_arch != arch or TARGET_TRIPLES.get(arch) != triple:
+            raise ValidationError(
+                "release component target architecture/triple differs from lock"
+            )
+        pin_prefix = prefix + ("sysroot",)
+    else:
+        host_roles = {
+            path[1]
+            for path in materials
+            if len(path) >= 3 and path[0] == "host_locks"
+        }
+        if host_roles != {role}:
+            raise ValidationError(
+                "release component host lock role differs from transaction"
+            )
+        pin_prefix = ("host_locks", role)
+
+    pin = {
+        "status": require_material(
+            materials, pin_prefix + ("status",), str, "lock status"
+        ),
+        "lock_file": safe_binding_path(
+            require_material(
+                materials, pin_prefix + ("lock_file",), str, "lock path"
+            ),
+            "lock path",
+        ),
+        "canonical_sha256": require_material(
+            materials,
+            pin_prefix + ("canonical_sha256",),
+            str,
+            "lock canonical SHA256",
+        ),
+    }
+    if not is_sha256(pin["canonical_sha256"]):
+        raise ValidationError("release component lock SHA256 is invalid")
+    return {
+        "base": base,
+        "trust": trust,
+        "pin": pin,
+        "identity": {
+            "kind": "release-component",
+            "component": component_name,
+            "scope": "build",
+            "canonical_sha256": component_sha256,
+        },
+    }
+
+
+def validate_bound_transaction(lock, lock_path, transaction, binding):
     resolver = transaction["resolver"]
-    base = release["base_image"]
+    base = binding["base"]
     if resolver["image"] != "%s:%s" % (base["repository"], base["tag"]):
-        raise ValidationError("resolver image differs from release.json")
+        raise ValidationError("resolver image differs from release binding")
     if resolver["image_digest"] != base["digest"]:
-        raise ValidationError("resolver digest differs from release.json")
-    trust = release["trust"]["rocky_rpm_key"]
+        raise ValidationError("resolver digest differs from release binding")
+    trust = binding["trust"]
     for repository in transaction["repositories"]:
         validate_repository_trust(repository, trust)
         metadata_root = REPOSITORY / "locks/metadata" / transaction["identity"]["name"] / repository["id"]
@@ -664,7 +859,7 @@ def validate_release_binding(lock, lock_path, release_path):
                 raise ValidationError("checked repository identity file differs: %s" % path)
     key_path = REPOSITORY / trust["file"]
     if file_sha256(key_path) != trust["sha256"]:
-        raise ValidationError("Rocky key file differs from release.json")
+        raise ValidationError("Rocky key file differs from release binding")
     for repository in transaction["repositories"]:
         metadata_root = (
             REPOSITORY
@@ -690,17 +885,7 @@ def validate_release_binding(lock, lock_path, release_path):
                 metadata_root, repository["repomd"]["location"], REPOSITORY
             ),
         )
-    role = transaction["identity"]["role"]
-    if role == "target-sysroot":
-        matches = [
-            target for target in release["targets"]
-            if target["arch"] == transaction["identity"]["arch"]
-        ]
-        if len(matches) != 1:
-            raise ValidationError("release target is not unique")
-        pin = matches[0]["sysroot"]
-    else:
-        pin = release["host_locks"][role]
+    pin = binding["pin"]
     try:
         relative = lock_path.resolve().relative_to(REPOSITORY).as_posix()
     except ValueError:
@@ -710,6 +895,127 @@ def validate_release_binding(lock, lock_path, release_path):
     if pin["canonical_sha256"] != canonical_sha256(lock):
         raise ValidationError("release lock digest binding differs")
     return transaction
+
+
+def full_release_binding(release, transaction):
+    role = transaction["identity"]["role"]
+    if role == "target-sysroot":
+        matches = [
+            target
+            for target in release["targets"]
+            if target["arch"] == transaction["identity"]["arch"]
+        ]
+        if len(matches) != 1:
+            raise ValidationError("release target is not unique")
+        pin = matches[0]["sysroot"]
+    else:
+        pin = release["host_locks"][role]
+    return {
+        "base": release["base_image"],
+        "trust": release["trust"]["rocky_rpm_key"],
+        "pin": pin,
+        "identity": {
+            "kind": "release-config",
+            "canonical_sha256": canonical_sha256(release),
+        },
+    }
+
+
+def validate_lock_binding(
+    lock,
+    lock_path,
+    release_path=None,
+    release_component=None,
+    release_component_name=None,
+    release_component_sha256=None,
+):
+    component_values = (
+        release_component,
+        release_component_name,
+        release_component_sha256,
+    )
+    component_mode = any(value is not None for value in component_values)
+    if component_mode and not all(value is not None for value in component_values):
+        raise ValidationError(
+            "release component path, name and SHA256 must be provided together"
+        )
+    if component_mode and release_path is not None:
+        raise ValidationError(
+            "--release-config and --release-component are mutually exclusive"
+        )
+
+    document = None
+    if component_mode:
+        reader = component_reader()
+        try:
+            document = reader["load_component"](
+                release_component,
+                release_component_name,
+                "build",
+                release_component_sha256,
+            )
+        except reader["ComponentError"] as error:
+            raise ValidationError("invalid release component: %s" % error) from error
+
+    transaction = validate_lock_semantics(lock, validate_plan=not component_mode)
+    if component_mode:
+        binding = component_binding(
+            document,
+            transaction,
+            release_component_name,
+            release_component_sha256,
+        )
+    else:
+        if release_path is None:
+            release_path = REPOSITORY / "config/release.json"
+        release = load_json(release_path)
+        release_schema = load_json(REPOSITORY / "config/schemas/release.schema.json")
+        STRICT["validate_schema_subset"](release_schema)
+        STRICT["validate"](release, release_schema, release_schema, "$")
+        binding = full_release_binding(release, transaction)
+    validate_bound_transaction(lock, lock_path, transaction, binding)
+    return transaction, binding["identity"]
+
+
+def validate_release_binding(lock, lock_path, release_path):
+    transaction, _identity = validate_lock_binding(
+        lock, lock_path, release_path=release_path
+    )
+    return transaction
+
+
+def add_release_binding_arguments(parser, suppress_defaults=False):
+    optional = {
+        "default": argparse.SUPPRESS
+    } if suppress_defaults else {}
+    parser.add_argument("--release-config", type=Path, **optional)
+    parser.add_argument("--release-component", type=Path, **optional)
+    parser.add_argument("--release-component-name", **optional)
+    parser.add_argument("--release-component-sha256", **optional)
+
+
+def release_binding_arguments(arguments):
+    values = (
+        arguments.release_component,
+        arguments.release_component_name,
+        arguments.release_component_sha256,
+    )
+    if any(value is not None for value in values) and not all(
+        value is not None for value in values
+    ):
+        raise ValidationError(
+            "release component path, name and SHA256 must be provided together"
+        )
+    if all(value is not None for value in values) and arguments.release_config is not None:
+        raise ValidationError(
+            "--release-config and --release-component are mutually exclusive"
+        )
+    return {
+        "release_path": arguments.release_config,
+        "release_component": arguments.release_component,
+        "release_component_name": arguments.release_component_name,
+        "release_component_sha256": arguments.release_component_sha256,
+    }
 
 
 def validate_document(document):
@@ -723,18 +1029,39 @@ def validate_document(document):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("document", type=Path)
     parser.add_argument("--require-lock", action="store_true")
-    parser.add_argument("--release-config", type=Path, default=REPOSITORY / "config/release.json")
+    add_release_binding_arguments(parser)
     arguments = parser.parse_args()
     try:
         document = load_json(arguments.document)
-        validate_document(document)
+        binding_options = release_binding_arguments(arguments)
+        component_mode = binding_options["release_component"] is not None
+        if document.get("kind") == "rpm-lock" and component_mode:
+            validate_schema(document)
+        else:
+            validate_document(document)
         if arguments.require_lock and document["kind"] != "rpm-lock":
             raise ValidationError("document is not a verified RPM content lock")
         if document["kind"] == "rpm-lock":
-            validate_release_binding(document, arguments.document, arguments.release_config)
+            validate_lock_binding(
+                document,
+                arguments.document,
+                **binding_options
+            )
+        elif any(
+            value is not None
+            for value in (
+                arguments.release_config,
+                arguments.release_component,
+                arguments.release_component_name,
+                arguments.release_component_sha256,
+            )
+        ):
+            raise ValidationError(
+                "release binding options are valid only for RPM locks"
+            )
     except (OSError, ValidationError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1

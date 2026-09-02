@@ -47,6 +47,11 @@ $ ./scripts/render-bake.py --check
 Files under `config/generated/` are deterministic build, qualification,
 supply, and future-policy projections. Do not edit them by hand.
 
+Normal GTS source, sysroot, and host-RPM stages consume only their exact
+projection and canonical digest. Full `release.json` input is confined to
+validation, lock maintenance, and qualification boundaries; changing unrelated
+future metadata therefore requalifies without recompiling GCC or binutils.
+
 Inspect or execute the honest phase-one graph:
 
 ```console

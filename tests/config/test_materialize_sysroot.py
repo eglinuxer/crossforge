@@ -27,10 +27,21 @@ def package_for(payload):
 
 
 def context_for(payload, role="target-sysroot"):
+    component = (
+        "rpm/sysroot-x86_64"
+        if role == "target-sysroot"
+        else "rpm/%s" % role
+    )
     return {
         "role": role,
         "packages": [package_for(payload)],
         "result_packages": ["fake-0:1-1.x86_64"],
+        "release_binding": {
+            "kind": "release-component",
+            "component": component,
+            "scope": "build",
+            "canonical_sha256": "c" * 64,
+        },
     }
 
 
@@ -235,6 +246,12 @@ class MaterializeSysrootTests(unittest.TestCase):
                 "result_packages": ["fake-0:1-1.x86_64"],
                 "lock": {"kind": "rpm-lock"},
                 "transaction": {"kind": "rpm-transaction"},
+                "release_binding": {
+                    "kind": "release-component",
+                    "component": "rpm/sysroot-x86_64",
+                    "scope": "build",
+                    "canonical_sha256": "c" * 64,
+                },
             }
             calls = []
             globals_ = MATERIALIZER["install"].__globals__
@@ -291,6 +308,9 @@ class MaterializeSysrootTests(unittest.TestCase):
             metadata = destination / "usr/share/crossforge"
             self.assertTrue((metadata / "sysroot-lock.json").is_file())
             self.assertTrue((metadata / "sysroot-transaction.json").is_file())
+            self.assertTrue(
+                (metadata / "sysroot-release-binding.json").is_file()
+            )
 
 
 if __name__ == "__main__":

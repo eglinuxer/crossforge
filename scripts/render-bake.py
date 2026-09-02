@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import re
 import runpy
 import sys
 from pathlib import Path
@@ -21,6 +22,72 @@ PYTHON_TARGETS = {
     "x86_64": "x86_64-unknown-linux-gnu",
     "aarch64": "aarch64-unknown-linux-gnu",
 }
+COMPONENT_ARGUMENT_RE = re.compile(
+    r"^CROSSFORGE_COMPONENT_[A-Z0-9_]+_SHA256\Z"
+)
+SHA256_RE = re.compile(r"^[0-9a-f]{64}\Z")
+
+
+def component_argument_name(component):
+    if not isinstance(component, str) or not component:
+        raise ValueError("component argument identity must be non-empty text")
+    normalized = component.upper().replace("/", "_").replace("-", "_")
+    name = "CROSSFORGE_COMPONENT_%s_SHA256" % normalized
+    if COMPONENT_ARGUMENT_RE.match(name) is None:
+        raise ValueError("component has no safe Bake argument name: %r" % component)
+    return name
+
+
+def component_digest_arguments(repository, release, require_tracked=True):
+    """Derive validated per-component identities without a global digest."""
+    renderer = runpy.run_path(
+        str(repository / "scripts/render-release-components.py")
+    )
+    try:
+        documents = renderer["render_documents"](
+            repository=repository,
+            release=release,
+            implemented_rows=IMPLEMENTED_ROWS,
+        )
+        if require_tracked:
+            drift = renderer["output_drift"](repository, documents)
+            if drift:
+                raise ValueError(
+                    "release component projections are stale: %s"
+                    % "; ".join(drift)
+                )
+    except renderer["ProjectionError"] as error:
+        raise ValueError(str(error)) from error
+
+    binding = documents[renderer["BINDING_PATH"]]
+    component_documents = {
+        document["component"]: document
+        for document in documents.values()
+        if document.get("kind") == "crossforge-release-component"
+    }
+    records = binding["components"]
+    if {record["component"] for record in records} != set(component_documents):
+        raise ValueError("release binding does not cover every component")
+
+    arguments = {}
+    owners = {}
+    for record in records:
+        component = record["component"]
+        name = component_argument_name(component)
+        if name in arguments:
+            raise ValueError(
+                "component Bake argument collision: %s and %s"
+                % (owners[name], component)
+            )
+        digest = record["canonical_sha256"]
+        if not isinstance(digest, str) or SHA256_RE.match(digest) is None:
+            raise ValueError("component has an invalid canonical digest: %s" % component)
+        expected = renderer["canonical_sha256"](component_documents[component])
+        if digest != expected:
+            raise ValueError("component binding digest differs: %s" % component)
+        owners[name] = component
+        arguments[name] = digest
+    return arguments
 
 
 def python_row(contract, entry):
@@ -349,6 +416,7 @@ def render(repository):
         "QEMU_EXECUTOR_CPU": qemu_executor["cpu"],
         "QEMU_EXECUTOR_UNAME_RELEASE": qemu_executor["uname_release"],
     }
+    arguments.update(component_digest_arguments(repository, config))
     if (
         config["gts"]["source"]["status"] == "locked"
         and config["binutils"]["source"]["status"] == "locked"

@@ -54,7 +54,7 @@ def safe_rpm_filename(location, nevra):
     return relative.name
 
 
-def normalize_lock(lock, transaction):
+def normalize_lock(lock, transaction, release_binding=None):
     role = transaction["identity"]["role"]
     arch = transaction["identity"]["arch"]
     forward = sorted(
@@ -107,7 +107,7 @@ def normalize_lock(lock, transaction):
     if len(key_identities) != 1:
         raise ValidationError("RPM transaction uses multiple trust roots")
     key_sha256, fingerprint = next(iter(key_identities))
-    return {
+    result = {
         "lock": lock,
         "transaction": transaction,
         "role": role,
@@ -117,17 +117,75 @@ def normalize_lock(lock, transaction):
         "key_sha256": key_sha256,
         "fingerprint": fingerprint,
     }
+    if release_binding is not None:
+        result["release_binding"] = release_binding
+    return result
 
 
-def load_lock(path):
+def load_lock(
+    path,
+    release_path=None,
+    release_component=None,
+    release_component_name=None,
+    release_component_sha256=None,
+):
     lock = load_json(path)
-    VALIDATOR["validate_document"](lock)
+    component_mode = any(
+        value is not None
+        for value in (
+            release_component,
+            release_component_name,
+            release_component_sha256,
+        )
+    )
+    if component_mode:
+        VALIDATOR["validate_schema"](lock)
+    else:
+        VALIDATOR["validate_document"](lock)
     if lock["kind"] != "rpm-lock":
         raise ValidationError("a verified generic RPM lock is required")
-    transaction = VALIDATOR["validate_release_binding"](
-        lock, path, REPOSITORY / "config/release.json"
+    transaction, binding_identity = VALIDATOR["validate_lock_binding"](
+        lock,
+        path,
+        release_path=release_path,
+        release_component=release_component,
+        release_component_name=release_component_name,
+        release_component_sha256=release_component_sha256,
     )
-    return normalize_lock(lock, transaction)
+    return normalize_lock(lock, transaction, binding_identity)
+
+
+def validate_release_binding_identity(identity, role=None, arch=None):
+    if not isinstance(identity, dict):
+        raise ValidationError("RPM context lacks a release binding identity")
+    kind = identity.get("kind")
+    if kind == "release-component":
+        expected = {"kind", "component", "scope", "canonical_sha256"}
+        if set(identity) != expected or identity.get("scope") != "build":
+            raise ValidationError("invalid RPM release component identity")
+        if (
+            not isinstance(identity.get("component"), str)
+            or not identity["component"].startswith("rpm/")
+        ):
+            raise ValidationError("invalid RPM release component name")
+        if role is not None:
+            expected_component = (
+                "rpm/sysroot-%s" % arch
+                if role == "target-sysroot"
+                else "rpm/%s" % role
+            )
+            if identity["component"] != expected_component:
+                raise ValidationError(
+                    "RPM release component differs from context role/arch"
+                )
+    elif kind == "release-config":
+        if set(identity) != {"kind", "canonical_sha256"}:
+            raise ValidationError("invalid full release identity")
+    else:
+        raise ValidationError("unsupported RPM release binding identity")
+    if not VALIDATOR["is_sha256"](identity.get("canonical_sha256")):
+        raise ValidationError("invalid RPM release binding SHA256")
+    return identity
 
 
 def package_filename(package):
@@ -237,6 +295,9 @@ def require_output_directory(directory):
 
 
 def fetch(context, directory, jobs):
+    validate_release_binding_identity(
+        context.get("release_binding"), context.get("role"), context.get("arch")
+    )
     require_output_directory(directory)
     with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
         futures = [
@@ -396,6 +457,14 @@ def write_metadata(destination, context):
     for name, document in (
         ("sysroot-lock.json", context["lock"]),
         ("sysroot-transaction.json", context["transaction"]),
+        (
+            "sysroot-release-binding.json",
+            validate_release_binding_identity(
+                context.get("release_binding"),
+                context.get("role"),
+                context.get("arch"),
+            ),
+        ),
     ):
         (metadata / name).write_text(
             json.dumps(document, indent=2, ensure_ascii=False) + "\n",
@@ -404,6 +473,9 @@ def write_metadata(destination, context):
 
 
 def install(context, bundle, key, destination):
+    validate_release_binding_identity(
+        context.get("release_binding"), context.get("role"), context.get("arch")
+    )
     if context["role"] != "target-sysroot":
         raise ValidationError("only target-sysroot RPM locks may be installed here")
     verify_bundle(context, bundle)
@@ -459,18 +531,28 @@ def install(context, bundle, key, destination):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("lock", type=Path)
+    VALIDATOR["add_release_binding_arguments"](parser)
     subparsers = parser.add_subparsers(dest="operation")
 
     fetch_parser = subparsers.add_parser("fetch")
+    VALIDATOR["add_release_binding_arguments"](
+        fetch_parser, suppress_defaults=True
+    )
     fetch_parser.add_argument("--output", type=Path, required=True)
     fetch_parser.add_argument("--jobs", type=int, default=8)
 
     verify_parser = subparsers.add_parser("verify")
+    VALIDATOR["add_release_binding_arguments"](
+        verify_parser, suppress_defaults=True
+    )
     verify_parser.add_argument("--bundle", type=Path, required=True)
 
     install_parser = subparsers.add_parser("install")
+    VALIDATOR["add_release_binding_arguments"](
+        install_parser, suppress_defaults=True
+    )
     install_parser.add_argument("--bundle", type=Path, required=True)
     install_parser.add_argument("--key", type=Path, required=True)
     install_parser.add_argument("--destination", type=Path, required=True)
@@ -479,7 +561,10 @@ def main():
     try:
         if arguments.operation is None:
             parser.error("an operation is required")
-        context = load_lock(arguments.lock)
+        context = load_lock(
+            arguments.lock,
+            **VALIDATOR["release_binding_arguments"](arguments)
+        )
         if arguments.operation == "fetch":
             if arguments.jobs < 1 or arguments.jobs > 32:
                 raise ValidationError("--jobs must be between 1 and 32")

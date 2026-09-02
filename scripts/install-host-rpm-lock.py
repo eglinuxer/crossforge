@@ -16,10 +16,13 @@ from pathlib import Path, PurePosixPath
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
+RPM_BINDING = runpy.run_path(
+    str(REPOSITORY / "scripts/validate-rpm-lock.py")
+)
 ALLOWED_ROLES = {"host-build-common", "host-gcc-build", "host-python-build"}
 ALLOWED_ACTIONS = {"install", "upgrade"}
-HEX_SHA256 = re.compile(r"^[0-9a-f]{64}$")
-HEX_FINGERPRINT = re.compile(r"^[0-9a-f]{40}$")
+HEX_SHA256 = re.compile(r"^[0-9a-f]{64}\Z")
+HEX_FINGERPRINT = re.compile(r"^[0-9a-f]{40}\Z")
 INVENTORY_NEVRA = re.compile(r"^.+-[0-9]+:.+-.+\.(?:[A-Za-z0-9_]+|\(none\))$")
 LOCK_PACKAGE_FIELDS = {"nevra", "received_sha256", "header", "signature"}
 HEADER_FIELDS = {"name", "epoch", "version", "release", "arch", "nevra", "source_rpm"}
@@ -73,6 +76,45 @@ def canonical_digest(value):
         value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def validate_release_binding_identity(identity, role=None):
+    if not isinstance(identity, dict):
+        raise ValidationError("host RPM install lacks a release binding")
+    if identity.get("kind") == "release-component":
+        if (
+            set(identity)
+            != {"kind", "component", "scope", "canonical_sha256"}
+            or identity.get("scope") != "build"
+            or not isinstance(identity.get("component"), str)
+            or not identity["component"].startswith("rpm/host-")
+        ):
+            raise ValidationError("invalid host RPM release component identity")
+        if role is not None and identity["component"] != "rpm/%s" % role:
+            raise ValidationError(
+                "host RPM release component differs from install role"
+            )
+    elif identity.get("kind") == "release-config":
+        if set(identity) != {"kind", "canonical_sha256"}:
+            raise ValidationError("invalid host RPM full release identity")
+    else:
+        raise ValidationError("unsupported host RPM release binding")
+    digest = identity.get("canonical_sha256")
+    if not isinstance(digest, str) or not HEX_SHA256.match(digest):
+        raise ValidationError("invalid host RPM release binding SHA256")
+    return identity
+
+
+def validate_release_binding(lock, lock_path, arguments):
+    try:
+        transaction, identity = RPM_BINDING["validate_lock_binding"](
+            lock,
+            lock_path,
+            **RPM_BINDING["release_binding_arguments"](arguments)
+        )
+    except (OSError, RPM_BINDING["ValidationError"]) as error:
+        raise ValidationError("host RPM release binding failed: %s" % error) from error
+    return transaction, validate_release_binding_identity(identity)
 
 
 def validate_schema(document, schema_name, label):
@@ -634,7 +676,10 @@ def write_marker(marker, value):
         raise
 
 
-def install(normalized, lock, transaction, marker):
+def install(normalized, lock, transaction, marker, release_binding):
+    release_binding = validate_release_binding_identity(
+        release_binding, normalized.get("role")
+    )
     require_inventory(rpm_inventory(), normalized["base"], "current RPM inventory")
     rpm_paths = [package["path"] for package in normalized["packages"]]
     run_command(["rpm", "--test", "-U"] + rpm_paths, "locked RPM transaction test")
@@ -648,13 +693,14 @@ def install(normalized, lock, transaction, marker):
     require_inventory(result, normalized["result"], "installed RPM inventory")
     result_digest = canonical_digest(result)
     marker_value = {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "host-rpm-install-marker",
         "role": normalized["role"],
         "lock_sha256": canonical_digest(lock),
         "transaction_sha256": canonical_digest(transaction),
         "result_sha256": result_digest,
         "result_item_count": len(result),
+        "release_binding": release_binding,
     }
     write_marker(marker, marker_value)
     print(
@@ -664,20 +710,28 @@ def install(normalized, lock, transaction, marker):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("lock", type=Path)
     parser.add_argument("--transaction", type=Path)
     parser.add_argument("--bundle", type=Path, required=True)
     parser.add_argument("--key", type=Path, required=True)
     parser.add_argument("--marker", type=Path, required=True)
+    RPM_BINDING["add_release_binding_arguments"](parser)
     arguments = parser.parse_args()
     try:
         lock = load_json(arguments.lock, "lock")
         validate_schema(lock, "rpm-lock.schema.json", "rpm-lock")
         validated_lock = validate_lock(lock)
+        bound_transaction, release_binding = validate_release_binding(
+            lock, arguments.lock, arguments
+        )
         transaction_path, transaction = load_transaction(
             validated_lock, arguments.lock, arguments.bundle, arguments.transaction
         )
+        if canonical_digest(transaction) != canonical_digest(bound_transaction):
+            raise ValidationError(
+                "explicit host transaction differs from release-bound transaction"
+            )
         validate_schema(transaction, "rpm-transaction.schema.json", "rpm-transaction")
         normalized = normalize(validated_lock, transaction)
         bundle = verify_bundle(
@@ -687,7 +741,9 @@ def main():
         )
         marker = validate_marker_path(arguments.marker, bundle)
         verify_key_and_headers(normalized, arguments.key)
-        install(normalized, lock, transaction, marker)
+        install(
+            normalized, lock, transaction, marker, release_binding
+        )
     except (OSError, ValidationError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1

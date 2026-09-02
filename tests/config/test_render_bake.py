@@ -1,3 +1,4 @@
+import ast
 import copy
 import json
 import runpy
@@ -17,6 +18,16 @@ class RenderBakeTests(unittest.TestCase):
         )
         cls.document = json.loads(RENDERER["render"](REPOSITORY))
         cls.targets = cls.document["target"]
+        cls.binding = json.loads(
+            (REPOSITORY / "config/generated/release-binding.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        cls.component_arguments = {
+            key: value
+            for key, value in cls.targets["_common"]["args"].items()
+            if key.startswith("CROSSFORGE_COMPONENT_")
+        }
         cls.python_dockerfile = (
             REPOSITORY / "docker/python.Dockerfile"
         ).read_text(encoding="utf-8")
@@ -34,6 +45,92 @@ class RenderBakeTests(unittest.TestCase):
             "CPYTHON_VERSION": entry["version"],
             "CPYTHON_ADAPTER": entry["adapter"],
         }
+
+    def test_component_arguments_cover_the_complete_release_binding(self):
+        records = self.binding["components"]
+        self.assertEqual(len(records), 35)
+        expected = {
+            RENDERER["component_argument_name"](record["component"]): record[
+                "canonical_sha256"
+            ]
+            for record in records
+        }
+        self.assertEqual(len(expected), len(records))
+        self.assertEqual(self.component_arguments, expected)
+
+    def test_component_argument_names_are_stable_unique_and_content_locked(self):
+        self.assertEqual(
+            RENDERER["component_argument_name"](
+                "toolchain/x86_64-qualification"
+            ),
+            "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256",
+        )
+        names = list(self.component_arguments)
+        self.assertEqual(len(names), len(set(names)))
+        for name, digest in self.component_arguments.items():
+            with self.subTest(name=name):
+                self.assertRegex(
+                    name,
+                    r"^CROSSFORGE_COMPONENT_[A-Z0-9_]+_SHA256$",
+                )
+                self.assertRegex(digest, r"^[0-9a-f]{64}$")
+
+    def test_future_components_are_bound_without_a_global_release_argument(self):
+        future = {
+            record["component"]
+            for record in self.binding["components"]
+            if record["scope"] == "future"
+        }
+        self.assertTrue(future)
+        for component in future:
+            self.assertIn(
+                RENDERER["component_argument_name"](component),
+                self.component_arguments,
+            )
+        self.assertNotIn(
+            "CROSSFORGE_RELEASE_SHA256",
+            self.targets["_common"]["args"],
+        )
+
+    def test_python_only_change_preserves_rpm_and_toolchain_component_args(self):
+        before = RENDERER["component_digest_arguments"](
+            REPOSITORY,
+            self.release,
+            require_tracked=False,
+        )
+        release = copy.deepcopy(self.release)
+        entry = next(
+            item
+            for item in release["python"]["versions"]
+            if item["version"] == "3.12.14"
+        )
+        original = entry["source"]["sha256"]
+        entry["source"]["sha256"] = (
+            ("0" if original[0] != "0" else "1") + original[1:]
+        )
+        after = RENDERER["component_digest_arguments"](
+            REPOSITORY,
+            release,
+            require_tracked=False,
+        )
+        protected_components = {
+            record["component"]
+            for record in self.binding["components"]
+            if record["component"].startswith(
+                ("rpm/", "sources/", "toolchain/")
+            )
+        }
+        for component in protected_components:
+            name = RENDERER["component_argument_name"](component)
+            self.assertEqual(before[name], after[name], component)
+        self.assertNotEqual(
+            before[
+                RENDERER["component_argument_name"]("python/cp312-source")
+            ],
+            after[
+                RENDERER["component_argument_name"]("python/cp312-source")
+            ],
+        )
 
     def test_enabled_rows_take_exact_metadata_from_release(self):
         for contract in RENDERER["IMPLEMENTED_ROWS"]:
@@ -326,6 +423,14 @@ class RenderBakeTests(unittest.TestCase):
         config["python"]["versions"].append(copy.deepcopy(duplicate))
         with self.assertRaises(ValueError):
             RENDERER["render_python_graph"](config, {})
+
+    def test_renderer_is_python36_syntax_compatible(self):
+        path = REPOSITORY / "scripts/render-bake.py"
+        ast.parse(
+            path.read_text(encoding="utf-8"),
+            filename=str(path),
+            feature_version=(3, 6),
+        )
 
 
 if __name__ == "__main__":

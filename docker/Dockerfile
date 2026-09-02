@@ -72,32 +72,48 @@ RUN mkdir -p \
          > /opt/crossforge/README.phase1
 COPY config/release.json /opt/crossforge/release.json
 
-# Download each source RPM on an independent branch using only release.json.
-# A GCC source update therefore cannot invalidate the binutils build cache.
+# Download each source RPM from its authenticated component projection.  The
+# branches deliberately carry no full release/schema input, so Python metadata
+# cannot invalidate either source cache.
 FROM rocky-base AS gts-gcc-source
-COPY config/release.json ./config/release.json
-COPY config/schemas/release.schema.json ./config/schemas/release.schema.json
-COPY scripts/validate-release.py ./scripts/validate-release.py
+ARG CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256
+COPY config/generated/components/sources/gcc.json ./config/components/sources-gcc.json
+COPY scripts/release_component.py ./scripts/release_component.py
 COPY scripts/fetch-release-source.py ./scripts/fetch-release-source.py
 RUN mkdir -p /sources \
     && /usr/libexec/platform-python ./scripts/fetch-release-source.py gcc \
-         --config ./config/release.json \
-         --schema ./config/schemas/release.schema.json \
+         --component-file ./config/components/sources-gcc.json \
+         --expected-component sources/gcc \
+         --expected-scope build \
+         --expected-sha256 "$CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256" \
          --output /sources/gcc-toolset-15-gcc.src.rpm
 
 FROM rocky-base AS gts-binutils-source
-COPY config/release.json ./config/release.json
-COPY config/schemas/release.schema.json ./config/schemas/release.schema.json
-COPY scripts/validate-release.py ./scripts/validate-release.py
+ARG CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256
+COPY config/generated/components/sources/binutils.json ./config/components/sources-binutils.json
+COPY scripts/release_component.py ./scripts/release_component.py
 COPY scripts/fetch-release-source.py ./scripts/fetch-release-source.py
 RUN mkdir -p /sources \
     && /usr/libexec/platform-python ./scripts/fetch-release-source.py binutils \
-         --config ./config/release.json \
-         --schema ./config/schemas/release.schema.json \
+         --component-file ./config/components/sources-binutils.json \
+         --expected-component sources/binutils \
+         --expected-scope build \
+         --expected-sha256 "$CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256" \
          --output /sources/gcc-toolset-15-binutils.src.rpm
 
-# Shared code and configuration for independently cached RPM bundles. Locks and
-# transaction manifests stay in their component branches below.
+# Normal locked builds start from a component-only base.  It contains schemas
+# and validators but no release.json, release schema, evidence, or config tree.
+FROM rocky-base AS rpm-locked-input-base
+COPY config/schemas/rpm-transaction.schema.json ./config/schemas/rpm-transaction.schema.json
+COPY config/schemas/rpm-lock.schema.json ./config/schemas/rpm-lock.schema.json
+COPY keys/RPM-GPG-KEY-rockyofficial ./keys/RPM-GPG-KEY-rockyofficial
+COPY scripts/validate-release.py ./scripts/validate-release.py
+COPY scripts/release_component.py ./scripts/release_component.py
+COPY scripts/validate-rpm-lock.py ./scripts/validate-rpm-lock.py
+COPY scripts/materialize-sysroot.py ./scripts/materialize-sysroot.py
+
+# Maintenance-only resolver base retains the full release input.  Normal
+# sysroot/host stages below must never inherit this branch.
 FROM rocky-base AS rpm-input-base
 COPY config/release.json ./config/release.json
 COPY config/schemas/release.schema.json ./config/schemas/release.schema.json
@@ -112,16 +128,26 @@ COPY scripts/materialize-sysroot.py ./scripts/materialize-sysroot.py
 
 # Fetch all RPM payloads named by the canonical sysroot transaction, then
 # assemble the target root with scripts/triggers disabled and no network.
-FROM rpm-input-base AS sysroot-rpms-x86_64
+FROM rpm-locked-input-base AS sysroot-rpms-x86_64
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256
+COPY config/generated/components/rpm/sysroot-x86_64.json ./config/components/rpm-sysroot-x86_64.json
 COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
 COPY locks/transactions/sysroot-el8-x86_64.json ./locks/transactions/sysroot-el8-x86_64.json
 COPY locks/metadata/sysroot-el8-x86_64/ ./locks/metadata/sysroot-el8-x86_64/
 RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
       ./locks/sysroot-el8-x86_64.json --require-lock \
+      --release-component ./config/components/rpm-sysroot-x86_64.json \
+      --release-component-name rpm/sysroot-x86_64 \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256" \
     && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
-      ./locks/sysroot-el8-x86_64.json fetch --output /rpm-bundle --jobs 8
+      ./locks/sysroot-el8-x86_64.json fetch --output /rpm-bundle --jobs 8 \
+      --release-component ./config/components/rpm-sysroot-x86_64.json \
+      --release-component-name rpm/sysroot-x86_64 \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256"
 
-FROM rpm-input-base AS sysroot-x86_64
+FROM rpm-locked-input-base AS sysroot-x86_64
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256
+COPY config/generated/components/rpm/sysroot-x86_64.json ./config/components/rpm-sysroot-x86_64.json
 COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
 COPY locks/transactions/sysroot-el8-x86_64.json ./locks/transactions/sysroot-el8-x86_64.json
 COPY locks/metadata/sysroot-el8-x86_64/ ./locks/metadata/sysroot-el8-x86_64/
@@ -130,18 +156,31 @@ RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py
       ./locks/sysroot-el8-x86_64.json install \
       --bundle /rpm-bundle \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
-      --destination /opt/crossforge/sysroots/el8/x86_64
+      --destination /opt/crossforge/sysroots/el8/x86_64 \
+      --release-component ./config/components/rpm-sysroot-x86_64.json \
+      --release-component-name rpm/sysroot-x86_64 \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256"
 
-FROM rpm-input-base AS sysroot-rpms-aarch64
+FROM rpm-locked-input-base AS sysroot-rpms-aarch64
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256
+COPY config/generated/components/rpm/sysroot-aarch64.json ./config/components/rpm-sysroot-aarch64.json
 COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
 COPY locks/transactions/sysroot-el8-aarch64.json ./locks/transactions/sysroot-el8-aarch64.json
 COPY locks/metadata/sysroot-el8-aarch64/ ./locks/metadata/sysroot-el8-aarch64/
 RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
       ./locks/sysroot-el8-aarch64.json --require-lock \
+      --release-component ./config/components/rpm-sysroot-aarch64.json \
+      --release-component-name rpm/sysroot-aarch64 \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256" \
     && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
-      ./locks/sysroot-el8-aarch64.json fetch --output /rpm-bundle --jobs 8
+      ./locks/sysroot-el8-aarch64.json fetch --output /rpm-bundle --jobs 8 \
+      --release-component ./config/components/rpm-sysroot-aarch64.json \
+      --release-component-name rpm/sysroot-aarch64 \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256"
 
-FROM rpm-input-base AS sysroot-aarch64
+FROM rpm-locked-input-base AS sysroot-aarch64
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256
+COPY config/generated/components/rpm/sysroot-aarch64.json ./config/components/rpm-sysroot-aarch64.json
 COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
 COPY locks/transactions/sysroot-el8-aarch64.json ./locks/transactions/sysroot-el8-aarch64.json
 COPY locks/metadata/sysroot-el8-aarch64/ ./locks/metadata/sysroot-el8-aarch64/
@@ -150,22 +189,35 @@ RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py
       ./locks/sysroot-el8-aarch64.json install \
       --bundle /rpm-bundle \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
-      --destination /opt/crossforge/sysroots/el8/aarch64
+      --destination /opt/crossforge/sysroots/el8/aarch64 \
+      --release-component ./config/components/rpm-sysroot-aarch64.json \
+      --release-component-name rpm/sysroot-aarch64 \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256"
 
 # The common host transaction exactly reproduces the previously qualified prep
 # environment. RPM scripts/triggers execute, but the package set is immutable
 # and installation runs without repositories or network access.
-FROM rpm-input-base AS host-build-common-rpms
+FROM rpm-locked-input-base AS host-build-common-rpms
+ARG CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256
+COPY config/generated/components/rpm/host-build-common.json ./config/components/rpm-host-build-common.json
 COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
 COPY locks/transactions/host-build-common-el8-x86_64.json ./locks/transactions/host-build-common-el8-x86_64.json
 COPY locks/metadata/host-build-common-el8-x86_64/ ./locks/metadata/host-build-common-el8-x86_64/
 RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
       ./locks/host-build-common-el8-x86_64.json --require-lock \
+      --release-component ./config/components/rpm-host-build-common.json \
+      --release-component-name rpm/host-build-common \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256" \
     && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
       ./locks/host-build-common-el8-x86_64.json fetch \
-      --output /rpm-bundle --jobs 8
+      --output /rpm-bundle --jobs 8 \
+      --release-component ./config/components/rpm-host-build-common.json \
+      --release-component-name rpm/host-build-common \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256"
 
-FROM rpm-input-base AS host-build-common-locked
+FROM rpm-locked-input-base AS host-build-common-locked
+ARG CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256
+COPY config/generated/components/rpm/host-build-common.json ./config/components/rpm-host-build-common.json
 COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
 COPY locks/transactions/host-build-common-el8-x86_64.json ./locks/transactions/host-build-common-el8-x86_64.json
 COPY locks/metadata/host-build-common-el8-x86_64/ ./locks/metadata/host-build-common-el8-x86_64/
@@ -177,7 +229,10 @@ RUN --network=none \
       --transaction ./locks/transactions/host-build-common-el8-x86_64.json \
       --bundle /rpm-bundle \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
-      --marker /usr/share/crossforge/rpm-locks/host-build-common.json
+      --marker /usr/share/crossforge/rpm-locks/host-build-common.json \
+      --release-component ./config/components/rpm-host-build-common.json \
+      --release-component-name rpm/host-build-common \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256"
 ENV PATH="/opt/rh/gcc-toolset-15/root/usr/bin:${PATH}"
 
 FROM host-build-common-locked AS qemu-aarch64-validated
@@ -201,7 +256,9 @@ RUN printf '%s  %s\n' \
 
 # GCC-only prerequisites are a separate additive lock. Keeping them out of the
 # common layer prevents libzstd-devel from changing binutils auto-detection.
-FROM rpm-input-base AS host-gcc-build-rpms
+FROM rpm-locked-input-base AS host-gcc-build-rpms
+ARG CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256
+COPY config/generated/components/rpm/host-gcc-build.json ./config/components/rpm-host-gcc-build.json
 COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
 COPY locks/transactions/host-build-common-el8-x86_64.json ./locks/transactions/host-build-common-el8-x86_64.json
 COPY locks/host-gcc-build-el8-x86_64.json ./locks/host-gcc-build-el8-x86_64.json
@@ -209,11 +266,19 @@ COPY locks/transactions/host-gcc-build-el8-x86_64.json ./locks/transactions/host
 COPY locks/metadata/host-gcc-build-el8-x86_64/ ./locks/metadata/host-gcc-build-el8-x86_64/
 RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
       ./locks/host-gcc-build-el8-x86_64.json --require-lock \
+      --release-component ./config/components/rpm-host-gcc-build.json \
+      --release-component-name rpm/host-gcc-build \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256" \
     && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
       ./locks/host-gcc-build-el8-x86_64.json fetch \
-      --output /rpm-bundle --jobs 4
+      --output /rpm-bundle --jobs 4 \
+      --release-component ./config/components/rpm-host-gcc-build.json \
+      --release-component-name rpm/host-gcc-build \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256"
 
 FROM host-build-common-locked AS host-gcc-build-locked
+ARG CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256
+COPY config/generated/components/rpm/host-gcc-build.json ./config/components/rpm-host-gcc-build.json
 COPY locks/host-gcc-build-el8-x86_64.json ./locks/host-gcc-build-el8-x86_64.json
 COPY locks/transactions/host-gcc-build-el8-x86_64.json ./locks/transactions/host-gcc-build-el8-x86_64.json
 COPY locks/metadata/host-gcc-build-el8-x86_64/ ./locks/metadata/host-gcc-build-el8-x86_64/
@@ -225,11 +290,16 @@ RUN --network=none \
       --transaction ./locks/transactions/host-gcc-build-el8-x86_64.json \
       --bundle /rpm-bundle-gcc \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
-      --marker /usr/share/crossforge/rpm-locks/host-gcc-build.json
+      --marker /usr/share/crossforge/rpm-locks/host-gcc-build.json \
+      --release-component ./config/components/rpm-host-gcc-build.json \
+      --release-component-name rpm/host-gcc-build \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256"
 
 # CPython's native build interpreter has its own additive development closure;
 # it must not inherit GCC-only bison/flex or couple Python to that lock.
-FROM rpm-input-base AS host-python-build-rpms
+FROM rpm-locked-input-base AS host-python-build-rpms
+ARG CROSSFORGE_COMPONENT_RPM_HOST_PYTHON_BUILD_SHA256
+COPY config/generated/components/rpm/host-python-build.json ./config/components/rpm-host-python-build.json
 COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
 COPY locks/transactions/host-build-common-el8-x86_64.json ./locks/transactions/host-build-common-el8-x86_64.json
 COPY locks/host-python-build-el8-x86_64.json ./locks/host-python-build-el8-x86_64.json
@@ -237,11 +307,19 @@ COPY locks/transactions/host-python-build-el8-x86_64.json ./locks/transactions/h
 COPY locks/metadata/host-python-build-el8-x86_64/ ./locks/metadata/host-python-build-el8-x86_64/
 RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
       ./locks/host-python-build-el8-x86_64.json --require-lock \
+      --release-component ./config/components/rpm-host-python-build.json \
+      --release-component-name rpm/host-python-build \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_PYTHON_BUILD_SHA256" \
     && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
       ./locks/host-python-build-el8-x86_64.json fetch \
-      --output /rpm-bundle --jobs 8
+      --output /rpm-bundle --jobs 8 \
+      --release-component ./config/components/rpm-host-python-build.json \
+      --release-component-name rpm/host-python-build \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_PYTHON_BUILD_SHA256"
 
 FROM host-build-common-locked AS host-python-build-locked
+ARG CROSSFORGE_COMPONENT_RPM_HOST_PYTHON_BUILD_SHA256
+COPY config/generated/components/rpm/host-python-build.json ./config/components/rpm-host-python-build.json
 COPY locks/host-python-build-el8-x86_64.json ./locks/host-python-build-el8-x86_64.json
 COPY locks/transactions/host-python-build-el8-x86_64.json ./locks/transactions/host-python-build-el8-x86_64.json
 COPY locks/metadata/host-python-build-el8-x86_64/ ./locks/metadata/host-python-build-el8-x86_64/
@@ -253,7 +331,10 @@ RUN --network=none \
       --transaction ./locks/transactions/host-python-build-el8-x86_64.json \
       --bundle /rpm-bundle-python \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
-      --marker /usr/share/crossforge/rpm-locks/host-python-build.json
+      --marker /usr/share/crossforge/rpm-locks/host-python-build.json \
+      --release-component ./config/components/rpm-host-python-build.json \
+      --release-component-name rpm/host-python-build \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_PYTHON_BUILD_SHA256"
 
 # Qualification-only clean Rocky roots. Each starts from the exact OCI child
 # and receives only the seven target runtime RPMs needed by the CPython module
@@ -261,6 +342,10 @@ RUN --network=none \
 # re-verified before those RPMs are selected.
 FROM host-build-common-locked AS python-runtime-clean-x86_64
 ARG ROCKY_AMD64_MANIFEST_DIGEST
+COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY --from=config-validate /src/config/schemas/release.schema.json /src/config/schemas/release.schema.json
+COPY --from=config-validate /src/config/schemas/rpm-plan.schema.json /src/config/schemas/rpm-plan.schema.json
+COPY --from=config-validate /src/config/rpm/sysroot-el8-x86_64.plan.json /src/config/rpm/sysroot-el8-x86_64.plan.json
 COPY --from=rocky-runtime-x86_64-source / /runtime-root/
 COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
 COPY locks/transactions/sysroot-el8-x86_64.json ./locks/transactions/sysroot-el8-x86_64.json
@@ -278,6 +363,10 @@ RUN --network=none \
 
 FROM host-build-common-locked AS python-runtime-clean-aarch64
 ARG ROCKY_ARM64_MANIFEST_DIGEST
+COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY --from=config-validate /src/config/schemas/release.schema.json /src/config/schemas/release.schema.json
+COPY --from=config-validate /src/config/schemas/rpm-plan.schema.json /src/config/schemas/rpm-plan.schema.json
+COPY --from=config-validate /src/config/rpm/sysroot-el8-aarch64.plan.json /src/config/rpm/sysroot-el8-aarch64.plan.json
 COPY --from=rocky-runtime-aarch64-source / /runtime-root/
 COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
 COPY locks/transactions/sysroot-el8-aarch64.json ./locks/transactions/sysroot-el8-aarch64.json
@@ -363,6 +452,7 @@ FROM scratch AS rpm-lock-host-build-common
 COPY --from=rpm-resolve-host-build-common /resolved/ /
 
 FROM host-build-common-locked AS rpm-resolve-host-gcc-build
+COPY --from=rpm-input-base /src/config/ ./config/
 COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
 COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
 RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
@@ -385,6 +475,7 @@ FROM scratch AS rpm-lock-host-gcc-build
 COPY --from=rpm-resolve-host-gcc-build /resolved/ /
 
 FROM host-build-common-locked AS rpm-resolve-host-python-build
+COPY --from=rpm-input-base /src/config/ ./config/
 COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
 COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
 RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
@@ -625,6 +716,7 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
 FROM host-build-common-locked AS runtime-smoke-aarch64
 ARG QEMU_EXECUTOR_CPU
 ARG QEMU_EXECUTOR_UNAME_RELEASE
+COPY --from=config-validate /src/config/release.json /src/config/release.json
 COPY --from=rocky-runtime-aarch64-source / /runtime-root/
 COPY --from=sysroot-aarch64 \
   /opt/crossforge/sysroots/el8/aarch64/ /sysroot/

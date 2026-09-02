@@ -230,7 +230,7 @@ Qt 验收固定 Qt 6.8.4 `qt-everywhere` 官方源码和 SHA256，构建完整�
 
 Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单一供应链。所有源码、RPM、工具和基础镜像均固定 hash 或 digest；禁止 `curl | sh`。BuildKit cache 只用于加速，不构成发布身份或测试证据。
 
-`release.json` 是唯一人工维护的版本源。`config/generated/` 将它投影为 build、qualification、supply 与 future 四类组件身份，并用单向 `release-binding.json` 绑定完整 release digest；共享 Python 实现策略另有显式投影。生成器要求每个 release 叶字段有明确分类，并保证版本行、架构及 host closure 的无关变化不会污染其他 build identity。Docker stage 正按这些细粒度输入迁移；在迁移完成前，最终资格化仍以完整 release identity 为准。
+`release.json` 是唯一人工维护的版本源。`config/generated/` 将它投影为 build、qualification、supply 与 future 四类组件身份，并用单向 `release-binding.json` 绑定完整 release digest；共享 Python 实现策略另有显式投影。生成器要求每个 release 叶字段有明确分类，并保证版本行、架构及 host closure 的无关变化不会污染其他 build identity。GTS source、锁定 RPM、sysroot 与 host closure 已只消费各自投影；Python row 仍在迁移。维护与资格化边界继续显式读取完整 release identity，因此无关 future 元数据只会触发重验，不会重编 GCC/binutils。
 
 Rocky OCI index、QEMU index/manifest/attestation/SLSA predicate 以及 QEMU Git tag/commit 原始字节以 base64 envelope 签入 `evidence/`。离线 validator 必须重算 OCI digest 与 Git object ID，并验证 platform child manifest、attestation subject、provenance builder/build arguments 和源码 tag→commit 关系。当前只归档 QEMU annotated tag 内的 OpenPGP 签名，不宣称已建立 QEMU maintainer keyring 信任；正式发布前需补齐该信任根或使用等价的上游签名策略。
 
