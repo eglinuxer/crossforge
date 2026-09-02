@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/abi-providers.schema.json",
+  "title": "Crossforge fixed ABI provider manifest",
+  "description": "The complete non-NSS public runtime provider set extracted beneath one trusted target root.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "targets"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/abi-providers.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-abi-provider-manifest"
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/aarch64_target"
+        },
+        {
+          "$ref": "#/$defs/x86_64_target"
+        }
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "soname",
+        "path"
+      ],
+      "properties": {
+        "soname": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9+_.-]*$"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^usr/lib64/[A-Za-z0-9][A-Za-z0-9+_.-]*$"
+        }
+      }
+    },
+    "aarch64_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arch",
+        "triple",
+        "providers"
+      ],
+      "properties": {
+        "arch": {
+          "const": "aarch64"
+        },
+        "triple": {
+          "const": "aarch64-unknown-linux-gnu"
+        },
+        "providers": {
+          "type": "array",
+          "minItems": 14,
+          "maxItems": 14,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/provider"
+          }
+        }
+      }
+    },
+    "x86_64_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arch",
+        "triple",
+        "providers"
+      ],
+      "properties": {
+        "arch": {
+          "const": "x86_64"
+        },
+        "triple": {
+          "const": "x86_64-unknown-linux-gnu"
+        },
+        "providers": {
+          "type": "array",
+          "minItems": 15,
+          "maxItems": 15,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/provider"
+          }
+        }
+      }
+    }
+  }
+}

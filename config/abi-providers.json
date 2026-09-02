@@ -1,0 +1,135 @@
+{
+  "$schema": "https://crossforge.dev/schemas/abi-providers.schema.json",
+  "schema_version": 1,
+  "kind": "crossforge-abi-provider-manifest",
+  "targets": [
+    {
+      "arch": "aarch64",
+      "triple": "aarch64-unknown-linux-gnu",
+      "providers": [
+        {
+          "soname": "ld-linux-aarch64.so.1",
+          "path": "usr/lib64/ld-linux-aarch64.so.1"
+        },
+        {
+          "soname": "libBrokenLocale.so.1",
+          "path": "usr/lib64/libBrokenLocale.so.1"
+        },
+        {
+          "soname": "libanl.so.1",
+          "path": "usr/lib64/libanl.so.1"
+        },
+        {
+          "soname": "libc.so.6",
+          "path": "usr/lib64/libc.so.6"
+        },
+        {
+          "soname": "libcrypt.so.1",
+          "path": "usr/lib64/libcrypt.so.1"
+        },
+        {
+          "soname": "libdl.so.2",
+          "path": "usr/lib64/libdl.so.2"
+        },
+        {
+          "soname": "libgcc_s.so.1",
+          "path": "usr/lib64/libgcc_s.so.1"
+        },
+        {
+          "soname": "libm.so.6",
+          "path": "usr/lib64/libm.so.6"
+        },
+        {
+          "soname": "libpthread.so.0",
+          "path": "usr/lib64/libpthread.so.0"
+        },
+        {
+          "soname": "libresolv.so.2",
+          "path": "usr/lib64/libresolv.so.2"
+        },
+        {
+          "soname": "librt.so.1",
+          "path": "usr/lib64/librt.so.1"
+        },
+        {
+          "soname": "libstdc++.so.6",
+          "path": "usr/lib64/libstdc++.so.6"
+        },
+        {
+          "soname": "libthread_db.so.1",
+          "path": "usr/lib64/libthread_db.so.1"
+        },
+        {
+          "soname": "libutil.so.1",
+          "path": "usr/lib64/libutil.so.1"
+        }
+      ]
+    },
+    {
+      "arch": "x86_64",
+      "triple": "x86_64-unknown-linux-gnu",
+      "providers": [
+        {
+          "soname": "ld-linux-x86-64.so.2",
+          "path": "usr/lib64/ld-linux-x86-64.so.2"
+        },
+        {
+          "soname": "libBrokenLocale.so.1",
+          "path": "usr/lib64/libBrokenLocale.so.1"
+        },
+        {
+          "soname": "libanl.so.1",
+          "path": "usr/lib64/libanl.so.1"
+        },
+        {
+          "soname": "libc.so.6",
+          "path": "usr/lib64/libc.so.6"
+        },
+        {
+          "soname": "libcrypt.so.1",
+          "path": "usr/lib64/libcrypt.so.1"
+        },
+        {
+          "soname": "libdl.so.2",
+          "path": "usr/lib64/libdl.so.2"
+        },
+        {
+          "soname": "libgcc_s.so.1",
+          "path": "usr/lib64/libgcc_s.so.1"
+        },
+        {
+          "soname": "libm.so.6",
+          "path": "usr/lib64/libm.so.6"
+        },
+        {
+          "soname": "libmvec.so.1",
+          "path": "usr/lib64/libmvec.so.1"
+        },
+        {
+          "soname": "libpthread.so.0",
+          "path": "usr/lib64/libpthread.so.0"
+        },
+        {
+          "soname": "libresolv.so.2",
+          "path": "usr/lib64/libresolv.so.2"
+        },
+        {
+          "soname": "librt.so.1",
+          "path": "usr/lib64/librt.so.1"
+        },
+        {
+          "soname": "libstdc++.so.6",
+          "path": "usr/lib64/libstdc++.so.6"
+        },
+        {
+          "soname": "libthread_db.so.1",
+          "path": "usr/lib64/libthread_db.so.1"
+        },
+        {
+          "soname": "libutil.so.1",
+          "path": "usr/lib64/libutil.so.1"
+        }
+      ]
+    }
+  ]
+}

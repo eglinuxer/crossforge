@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/abi-baseline.schema.json",
+  "title": "Crossforge reviewed ABI baseline",
+  "description": "An architecture-bound, review-approved allowlist of exact public versioned exports and explicit ELF policy decisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "baseline",
+    "target",
+    "review",
+    "providers",
+    "elf_policy"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/abi-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-abi-baseline"
+    },
+    "baseline": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "target": {
+      "$ref": "#/$defs/target"
+    },
+    "review": {
+      "$ref": "#/$defs/review"
+    },
+    "providers": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/soname"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": {
+          "$ref": "#/$defs/export"
+        }
+      }
+    },
+    "elf_policy": {
+      "$ref": "#/$defs/elf_policy"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "soname": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9+_.-]*$"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arch",
+        "triple"
+      ],
+      "properties": {
+        "arch": {
+          "enum": [
+            "x86_64",
+            "aarch64"
+          ]
+        },
+        "triple": {
+          "enum": [
+            "x86_64-unknown-linux-gnu",
+            "aarch64-unknown-linux-gnu"
+          ]
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "source_inventory",
+        "source_inventory_sha256"
+      ],
+      "properties": {
+        "status": {
+          "const": "reviewed"
+        },
+        "source_inventory": {
+          "type": "string",
+          "pattern": "^evidence/abi/[a-z0-9][a-z0-9._-]*-(?:x86_64|aarch64)-clean\\.json$"
+        },
+        "source_inventory_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "export": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^@\\s]+$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(?:GLIBC|GLIBCXX|CXXABI|GCC)_[A-Za-z0-9][A-Za-z0-9_.-]*$"
+        }
+      }
+    },
+    "interpreter_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "expected"
+      ],
+      "properties": {
+        "decision": {
+          "const": "require"
+        },
+        "expected": {
+          "type": "string",
+          "pattern": "^/[^\\s]*$"
+        }
+      }
+    },
+    "elf_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "textrel",
+        "relr",
+        "rpath",
+        "runpath",
+        "gnu_stack",
+        "writable_executable_segments",
+        "interpreter",
+        "relro",
+        "bind_now"
+      ],
+      "properties": {
+        "textrel": {
+          "enum": [
+            "forbid",
+            "allow"
+          ]
+        },
+        "relr": {
+          "enum": [
+            "forbid",
+            "allow"
+          ]
+        },
+        "rpath": {
+          "enum": [
+            "forbid",
+            "allow"
+          ]
+        },
+        "runpath": {
+          "enum": [
+            "forbid",
+            "allow"
+          ]
+        },
+        "gnu_stack": {
+          "enum": [
+            "require-non-executable",
+            "allow-executable"
+          ]
+        },
+        "writable_executable_segments": {
+          "enum": [
+            "forbid",
+            "allow"
+          ]
+        },
+        "interpreter": {
+          "$ref": "#/$defs/interpreter_rule"
+        },
+        "relro": {
+          "enum": [
+            "require",
+            "require-absent"
+          ]
+        },
+        "bind_now": {
+          "enum": [
+            "require",
+            "require-absent"
+          ]
+        }
+      }
+    },
+    "elf_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profiles",
+        "artifact_exceptions"
+      ],
+      "properties": {
+        "profiles": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "compiler-default-observation",
+            "crossforge-qualified-v1"
+          ],
+          "properties": {
+            "compiler-default-observation": {
+              "$ref": "#/$defs/elf_profile"
+            },
+            "crossforge-qualified-v1": {
+              "$ref": "#/$defs/elf_profile"
+            }
+          }
+        },
+        "artifact_exceptions": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "prefixItems": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "artifact",
+                "profile",
+                "exceptions"
+              ],
+              "properties": {
+                "artifact": {
+                  "const": "toolchain/catch"
+                },
+                "profile": {
+                  "const": "crossforge-qualified-v1"
+                },
+                "exceptions": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 1,
+                  "prefixItems": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "check",
+                        "allowed_values",
+                        "reason"
+                      ],
+                      "properties": {
+                        "check": {
+                          "const": "runpath"
+                        },
+                        "allowed_values": {
+                          "const": [
+                            "$ORIGIN"
+                          ]
+                        },
+                        "reason": {
+                          "const": "test-only cross-DSO lookup"
+                        }
+                      }
+                    }
+                  ],
+                  "items": false
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "artifact",
+                "profile",
+                "exceptions"
+              ],
+              "properties": {
+                "artifact": {
+                  "const": "toolchain/compiler-default-canary"
+                },
+                "profile": {
+                  "const": "compiler-default-observation"
+                },
+                "exceptions": {
+                  "const": []
+                }
+              }
+            }
+          ],
+          "items": false
+        }
+      }
+    }
+  }
+}

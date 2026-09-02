@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/abi-inventory.schema.json",
+  "title": "Crossforge ABI provider inventory candidate",
+  "description": "A target-bound inventory of provider bytes and exports. It is evidence for review, never an ABI allowlist by itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "target",
+    "source",
+    "providers"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/abi-inventory.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-abi-inventory"
+    },
+    "target": {
+      "$ref": "#/$defs/target"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "providers": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/soname"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/provider"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "soname": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9+_.-]*$"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arch",
+        "triple"
+      ],
+      "properties": {
+        "arch": {
+          "enum": [
+            "x86_64",
+            "aarch64"
+          ]
+        },
+        "triple": {
+          "enum": [
+            "x86_64-unknown-linux-gnu",
+            "aarch64-unknown-linux-gnu"
+          ]
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "identity_sha256",
+        "provider_manifest_sha256"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "clean-rocky-oci",
+            "locked-sysroot"
+          ]
+        },
+        "identity_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "provider_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "export": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^@\\s]+$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(?:GLIBC|GLIBCXX|CXXABI|GCC)_[A-Za-z0-9][A-Za-z0-9_.-]*$"
+        }
+      }
+    },
+    "nonpublic_export": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "classification"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^@\\s]+$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^@\\s]+$"
+        },
+        "classification": {
+          "enum": [
+            "abi-internal",
+            "private",
+            "unknown-namespace"
+          ]
+        }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "soname",
+        "sha256",
+        "exports",
+        "unversioned_exports",
+        "nonpublic_versioned_exports"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/[^\\s]*$"
+        },
+        "soname": {
+          "$ref": "#/$defs/soname"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "exports": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/export"
+          }
+        },
+        "unversioned_exports": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^@\\s]+$"
+          }
+        },
+        "nonpublic_versioned_exports": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/nonpublic_export"
+          }
+        }
+      }
+    }
+  }
+}
