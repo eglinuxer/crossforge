@@ -215,6 +215,8 @@ ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
 ARG CROSSFORGE_TARGET_ARCH
 ARG CROSSFORGE_TARGET_TRIPLE
+ARG CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256
+ARG CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256
 COPY config/release.json /src/config/release.json
 COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
@@ -245,6 +247,10 @@ RUN --network=none minor="${CPYTHON_VERSION%.*}" \
       --extension-source /work/tests/python/minimal_extension.c \
       --work "/work/qualification/python/$CPYTHON_ROW/$CROSSFORGE_TARGET_ARCH" \
       --release /src/config/release.json \
+      --qualification-policy-component-sha256 \
+        "$CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256" \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256" \
       --report "/work/qualification/python/$CPYTHON_ROW/$CROSSFORGE_TARGET_ARCH/compile.json"
 
 FROM python-host AS cpython-runtime-input

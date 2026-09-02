@@ -229,6 +229,93 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             expected_qualification,
         )
 
+    def test_python_qualification_component_identity_api_is_exact(self):
+        expected = {
+            "policy": {
+                "component": "implementation/python-qualification-policy",
+                "canonical_sha256": RENDERER["canonical_sha256"](
+                    self.components[
+                        "implementation/python-qualification-policy"
+                    ]
+                ),
+            },
+            "aggregate": {
+                "component": "python/qualification",
+                "canonical_sha256": RENDERER["canonical_sha256"](
+                    self.components["python/qualification"]
+                ),
+            },
+        }
+        observed = RENDERER["python_qualification_components"](self.release)
+        self.assertEqual(observed, expected)
+        self.assertEqual(
+            RENDERER["python_qualification_components"](
+                self.release, self.rows
+            ),
+            expected,
+        )
+        self.assertEqual(
+            RENDERER["validate_python_qualification_components"](
+                copy.deepcopy(observed), self.release
+            ),
+            expected,
+        )
+        self.assertEqual(
+            RENDERER["bind_python_qualification_components"](
+                self.release,
+                expected["policy"]["canonical_sha256"],
+                expected["aggregate"]["canonical_sha256"],
+            ),
+            expected,
+        )
+
+        malformed = []
+        extra_role = copy.deepcopy(expected)
+        extra_role["extra"] = copy.deepcopy(expected["policy"])
+        malformed.append(extra_role)
+        wrong_name = copy.deepcopy(expected)
+        wrong_name["policy"]["component"] = "python/qualification"
+        malformed.append(wrong_name)
+        wrong_digest = copy.deepcopy(expected)
+        wrong_digest["aggregate"]["canonical_sha256"] = "0" * 64
+        malformed.append(wrong_digest)
+        extra_field = copy.deepcopy(expected)
+        extra_field["policy"]["scope"] = "qualification"
+        malformed.append(extra_field)
+        for value in malformed:
+            with self.subTest(value=value):
+                with self.assertRaises(RENDERER["ProjectionError"]):
+                    RENDERER[
+                        "validate_python_qualification_components"
+                    ](value, self.release, self.rows)
+
+        phase8 = RENDERER["python_qualification_components"](
+            self.release, self.rows[:-1]
+        )
+        phase8_documents = RENDERER["render_component_documents"](
+            self.release, self.rows[:-1]
+        )
+        self.assertEqual(
+            phase8,
+            {
+                "policy": {
+                    "component": "implementation/python-qualification-policy",
+                    "canonical_sha256": RENDERER["canonical_sha256"](
+                        phase8_documents[
+                            "implementation/python-qualification-policy"
+                        ]
+                    ),
+                },
+                "aggregate": {
+                    "component": "python/qualification",
+                    "canonical_sha256": RENDERER["canonical_sha256"](
+                        phase8_documents["python/qualification"]
+                    ),
+                },
+            },
+        )
+        self.assertNotEqual(phase8, expected)
+
     def test_every_release_leaf_has_its_classified_scope_owner(self):
         classifications = RENDERER["classify_release_leaves"](
             self.release, self.rows

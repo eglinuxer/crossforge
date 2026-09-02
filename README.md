@@ -224,6 +224,9 @@ each other's build state. Row-local source and build projections preserve
 unrelated component identities; changes to shared implementation scripts still
 invalidate the corresponding BuildKit layers. Aggregate qualification identity
 changes whenever the supported matrix or its policy changes.
+Compile and final reports bind both the qualification-policy and aggregate
+component digests. Runtime preflight re-derives them before touching target
+artifacts, and each row manifest requires the two target reports to agree.
 
 CPython 3.11.16 carries a hash-locked backport of upstream gh-115382 so the
 amd64 build interpreter cannot discover same-SOABI target extensions through

@@ -255,6 +255,33 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         ):
             self.assertIn("FROM python-host AS %s" % stage, self.stages[stage])
 
+    def test_static_qualifier_binds_both_qualification_components(self):
+        qualify = self.stages["cpython-qualify-build"]
+        arguments = {
+            "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": (
+                "--qualification-policy-component-sha256"
+            ),
+            "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": (
+                "--qualification-component-sha256"
+            ),
+        }
+        for argument, option in arguments.items():
+            with self.subTest(argument=argument):
+                self.assertEqual(qualify.count("ARG " + argument), 1)
+                self.assertEqual(qualify.count(option), 1)
+                self.assertIn('"$%s"' % argument, qualify)
+
+        for stage in (
+            "cpython-source",
+            "cpython-prepared",
+            "cpython-build",
+            "cpython-cross",
+        ):
+            with self.subTest(stage=stage):
+                block = self.stages[stage]
+                for argument in arguments:
+                    self.assertNotIn(argument, block)
+
 
 if __name__ == "__main__":
     unittest.main()

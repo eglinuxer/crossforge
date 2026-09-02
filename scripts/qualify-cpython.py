@@ -461,6 +461,10 @@ def main():
     parser.add_argument("--extension-source", type=Path, required=True)
     parser.add_argument("--work", type=Path, required=True)
     parser.add_argument("--release", type=Path, required=True)
+    parser.add_argument(
+        "--qualification-policy-component-sha256", required=True
+    )
+    parser.add_argument("--qualification-component-sha256", required=True)
     parser.add_argument("--report", type=Path, required=True)
     arguments = parser.parse_args()
 
@@ -508,6 +512,13 @@ def main():
 
     release = load_json(arguments.release)
     release_sha256 = hashlib.sha256(canonical_bytes(release)).hexdigest()
+    qualification_components = RELEASE_COMPONENTS[
+        "bind_python_qualification_components"
+    ](
+        release,
+        arguments.qualification_policy_component_sha256,
+        arguments.qualification_component_sha256,
+    )
     try:
         binding = ROW_CONTRACT["bind_release"](
             release,
@@ -693,12 +704,13 @@ def main():
     )
 
     report = {
-        "qualification_schema_version": 2,
+        "qualification_schema_version": 3,
         "report_kind": "crossforge-cpython-compile",
         "target": arguments.target,
         "version": arguments.version,
         "adapter": contract["adapter"],
         "release_sha256": release_sha256,
+        "qualification_components": qualification_components,
         "source": {
             "url": source["url"],
             "size": source["size"],

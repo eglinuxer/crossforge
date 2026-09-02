@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -108,64 +109,11 @@ class PythonQualificationTests(unittest.TestCase):
         self.compact = self.minor.replace(".", "")
         self.row = self.contract["row"]
         self.adapter = self.contract["adapter"]
-        canonical_entry = next(
-            entry
-            for entry in RELEASE_CONFIG["python"]["versions"]
-            if entry["version"] == self.version
+        self.release = copy.deepcopy(RELEASE_CONFIG)
+        selected_target = next(
+            item for item in self.release["targets"] if item["triple"] == TARGET
         )
-
-        self.release = {
-            "schema_version": 1,
-            "base_image": {
-                "digest": "sha256:" + "a" * 64,
-                "manifests": {
-                    "amd64": "sha256:" + "b" * 64,
-                    "arm64": "sha256:" + "c" * 64,
-                },
-            },
-            "qemu": {
-                "version": "10.2.3",
-                "executor": {
-                    "binary_sha256": "d" * 64,
-                    "cpu": "cortex-a53",
-                    "uname_release": "4.18.0",
-                },
-            },
-            "targets": [
-                {
-                    "triple": TARGET,
-                    "sysroot": {
-                        "status": "locked",
-                        "canonical_sha256": SYSROOT_SHA256,
-                    },
-                }
-            ],
-            "python": {
-                "versions": [
-                    {
-                        "version": self.version,
-                        "adapter": self.adapter,
-                        "source": {
-                            "status": "locked",
-                            "url": "https://www.python.org/ftp/python/%s/Python-%s.tar.xz"
-                            % (self.version, self.version),
-                            "size": canonical_entry["source"]["size"],
-                            "sha256": "4" * 64,
-                            "sigstore": {
-                                "bundle_sha256": "5" * 64,
-                                "verification": "archived-unverified",
-                            },
-                        },
-                    }
-                ]
-            },
-        }
-        if self.contract["zstd"]:
-            self.release = copy.deepcopy(RELEASE_CONFIG)
-            selected_target = next(
-                item for item in self.release["targets"] if item["triple"] == TARGET
-            )
-            selected_target["sysroot"]["canonical_sha256"] = SYSROOT_SHA256
+        selected_target["sysroot"]["canonical_sha256"] = SYSROOT_SHA256
         self.write_json(self.release_path, self.release)
         self.compile = self.valid_compile()
         self.write_json(self.compile_path, self.compile)
@@ -198,12 +146,15 @@ class PythonQualificationTests(unittest.TestCase):
             for operation in FINALIZER["LOADER_OPERATIONS"]
         ]
         report = {
-            "qualification_schema_version": 2,
+            "qualification_schema_version": 3,
             "report_kind": "crossforge-cpython-compile",
             "target": TARGET,
             "version": self.version,
             "adapter": self.adapter,
             "release_sha256": canonical_sha256(self.release),
+            "qualification_components": QUALIFIER["RELEASE_COMPONENTS"][
+                "python_qualification_components"
+            ](self.release),
             "source": {
                 "url": source["url"],
                 "size": source["size"],
@@ -632,6 +583,17 @@ class PythonQualificationTests(unittest.TestCase):
         report = self.finalize()
         self.assertEqual(report["status"], "passed")
         self.assertEqual(report["report_kind"], "crossforge-cpython-qualification")
+        self.assertEqual(report["qualification_schema_version"], 3)
+        self.assertEqual(
+            report["qualification_components"],
+            QUALIFIER["RELEASE_COMPONENTS"][
+                "python_qualification_components"
+            ](self.release),
+        )
+        self.assertEqual(
+            report["qualification_components"],
+            report["compile"]["qualification_components"],
+        )
         self.assertEqual(report["python_sha256"], PYTHON_SHA256)
         self.assertEqual(report["extension_sha256"], EXTENSION_SHA256)
         self.assertEqual(
@@ -641,6 +603,84 @@ class PythonQualificationTests(unittest.TestCase):
             json.dumps(report, sort_keys=True),
             json.dumps(self.finalize(), sort_keys=True),
         )
+
+    def test_compile_qualification_component_identity_is_fail_closed(self):
+        mutations = {
+            "policy-digest": lambda value: value["policy"].update(
+                canonical_sha256="0" * 64
+            ),
+            "aggregate-name": lambda value: value["aggregate"].update(
+                component="implementation/python-qualification-policy"
+            ),
+            "swapped-roles": lambda value: value.update(
+                policy=copy.deepcopy(value["aggregate"]),
+                aggregate=copy.deepcopy(value["policy"]),
+            ),
+            "missing-role": lambda value: value.pop("policy"),
+            "extra-role": lambda value: value.update(untrusted={}),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                self.reset_fixture(VERSION)
+                mutate(self.compile["qualification_components"])
+                self.write_json(self.compile_path, self.compile)
+                with self.assertRaisesRegex(
+                    FINALIZER["FinalizationError"],
+                    "qualification_components|component",
+                ):
+                    self.finalize()
+
+    def test_final_qualification_components_are_revalidated(self):
+        report = self.finalize()
+        report["qualification_components"] = copy.deepcopy(
+            report["qualification_components"]
+        )
+        report["qualification_components"]["aggregate"][
+            "canonical_sha256"
+        ] = "0" * 64
+        with self.assertRaisesRegex(
+            FINALIZER["FinalizationError"],
+            "qualification_components|component",
+        ):
+            FINALIZER["validate_final_report"](
+                report, self.release, TARGET, VERSION
+            )
+
+    def test_runtime_rejects_component_substitution_before_artifact_access(self):
+        self.compile["qualification_components"]["policy"][
+            "canonical_sha256"
+        ] = "0" * 64
+        self.write_json(self.compile_path, self.compile)
+        runtime_root = self.directory / "runtime-root"
+        runtime_root.mkdir()
+        argv = [
+            "run-cpython-runtime.py",
+            "--compile-report",
+            str(self.compile_path),
+            "--release",
+            str(self.release_path),
+            "--runtime-root",
+            str(runtime_root),
+            "--target-prefix",
+            str(self.directory / "missing-prefix"),
+            "--extension",
+            str(self.directory / "missing-extension"),
+            "--probe",
+            str(self.directory / "missing-probe"),
+            "--target",
+            TARGET,
+            "--version",
+            self.version,
+            "--tier",
+            "locked-sysroot",
+            "--output",
+            str(self.directory / "runtime.json"),
+        ]
+        with mock.patch.object(sys, "argv", argv):
+            with self.assertRaisesRegex(
+                RUNTIME_RUNNER["RuntimeError_"], "qualification_components"
+            ):
+                RUNTIME_RUNNER["main"]()
 
     def test_target_artifact_audit_requires_every_dynamic_guard_canary(self):
         build = Path("/work/build/cpython-cp313-x86_64")

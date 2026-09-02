@@ -41,6 +41,7 @@ COMPILE_KEYS = {
     "version",
     "adapter",
     "release_sha256",
+    "qualification_components",
     "source",
     "sysroot_sha256",
     "sysroot_transaction_sha256",
@@ -111,6 +112,7 @@ FINAL_REPORT_KEYS = {
     "version",
     "adapter",
     "release_sha256",
+    "qualification_components",
     "source",
     "sysroot_sha256",
     "python_sha256",
@@ -384,6 +386,15 @@ def expected_zstd_components(release, target_arch):
         )
     except ZstdEvidenceError as error:
         raise FinalizationError(str(error)) from error
+
+
+def validate_python_qualification_components(value, release, path):
+    try:
+        return RELEASE_COMPONENTS["validate_python_qualification_components"](
+            value, release
+        )
+    except ProjectionError as error:
+        raise FinalizationError("%s: %s" % (path, error)) from error
 
 
 def validate_global_zstd_linkage(elf_audit):
@@ -672,7 +683,7 @@ def validate_overlay_evidence(value, context, compile_report, target, path):
 def validate_compile_report(report, context, target, version):
     require_exact_keys(report, COMPILE_KEYS, "compile report")
     require(
-        report["qualification_schema_version"] == 2,
+        report["qualification_schema_version"] == 3,
         "compile report schema version mismatch",
     )
     require(
@@ -686,6 +697,11 @@ def validate_compile_report(report, context, target, version):
     require(
         report["release_sha256"] == context["release_sha256"],
         "compile report release digest mismatch",
+    )
+    validate_python_qualification_components(
+        report["qualification_components"],
+        context["release"],
+        "compile report qualification_components",
     )
     require_sha256(report["sysroot_sha256"], "compile report sysroot_sha256")
     require(
@@ -1337,7 +1353,7 @@ def validate_qualification_zstd(report, release, target, version):
 def validate_final_report(report, release, target, version):
     require_exact_keys(report, FINAL_REPORT_KEYS, "qualification report")
     require(
-        report["qualification_schema_version"] == 2
+        report["qualification_schema_version"] == 3
         and report["report_kind"] == "crossforge-cpython-qualification"
         and report["status"] == "passed",
         "qualification report identity mismatch",
@@ -1349,6 +1365,15 @@ def validate_final_report(report, release, target, version):
     context["release"] = release
     compile_report = validate_compile_report(
         report["compile"], context, target, version
+    )
+    qualification_components = validate_python_qualification_components(
+        report["qualification_components"],
+        release,
+        "qualification report qualification_components",
+    )
+    require(
+        qualification_components == compile_report["qualification_components"],
+        "qualification report component identities differ from compile report",
     )
     compile_digest = serialized_sha256(compile_report)
     require(
@@ -1447,13 +1472,16 @@ def finalize(compile_path, locked_path, clean_path, release_path, target, versio
     )
 
     report = {
-        "qualification_schema_version": 2,
+        "qualification_schema_version": 3,
         "report_kind": "crossforge-cpython-qualification",
         "status": "passed",
         "target": target,
         "version": version,
         "adapter": context["adapter"],
         "release_sha256": context["release_sha256"],
+        "qualification_components": compile_report[
+            "qualification_components"
+        ],
         "source": compile_report["source"],
         "sysroot_sha256": context["sysroot_sha256"],
         "python_sha256": compile_report["python_sha256"],

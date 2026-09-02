@@ -43,6 +43,10 @@ ROW_CONTRACT = runpy.run_path(
     str(Path(__file__).with_name("python_row_contract.py"))
 )
 ContractError = ROW_CONTRACT["ContractError"]
+RELEASE_COMPONENTS = runpy.run_path(
+    str(Path(__file__).with_name("render-release-components.py"))
+)
+ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
 
 
 def require(condition, message):
@@ -94,6 +98,21 @@ def require_sha256(value, label):
         isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value),
         "%s is not a SHA256" % label,
     )
+
+
+def validate_compile_qualification_components(compile_report, release):
+    require(
+        compile_report.get("qualification_schema_version") == 3,
+        "compile report schema version mismatch",
+    )
+    try:
+        return RELEASE_COMPONENTS["validate_python_qualification_components"](
+            compile_report.get("qualification_components"), release
+        )
+    except ProjectionError as error:
+        raise RuntimeError_(
+            "compile report qualification_components: %s" % error
+        ) from error
 
 
 def validate_overlay_evidence(value, release, profile, target, compile_report, root):
@@ -425,6 +444,7 @@ def main():
     require(compile_report.get("version") == arguments.version, "compile report version mismatch")
     require(compile_report.get("adapter") == contract["adapter"], "compile report adapter mismatch")
     require(compile_report.get("release_sha256") == release_sha256, "compile report release mismatch")
+    validate_compile_qualification_components(compile_report, release)
     compile_report_sha256 = sha256_file(arguments.compile_report)
 
     minor = contract["minor"]

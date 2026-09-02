@@ -71,6 +71,10 @@ ZSTD_BUILD_POLICY = {
     "exclude_archive_symbols": True,
     "selected_license": "BSD-3-Clause",
 }
+PYTHON_QUALIFICATION_COMPONENTS = {
+    "policy": "implementation/python-qualification-policy",
+    "aggregate": "python/qualification",
+}
 
 
 class ProjectionError(RuntimeError):
@@ -816,6 +820,79 @@ def render_component_documents(release, implemented_rows=IMPLEMENTED_ROWS):
     documents = _render_expected_components(release, implemented_rows)
     validate_component_set(release, documents, implemented_rows)
     return documents
+
+
+def python_qualification_components(
+    release, implemented_rows=IMPLEMENTED_ROWS
+):
+    """Return the two canonical identities governing Python qualification."""
+    documents = render_component_documents(release, implemented_rows)
+    return {
+        role: {
+            "component": component,
+            "canonical_sha256": canonical_sha256(documents[component]),
+        }
+        for role, component in PYTHON_QUALIFICATION_COMPONENTS.items()
+    }
+
+
+def validate_python_qualification_components(
+    value, release, implemented_rows=IMPLEMENTED_ROWS
+):
+    """Validate an untrusted policy/aggregate qualification identity pair."""
+    require(
+        isinstance(value, dict)
+        and set(value) == set(PYTHON_QUALIFICATION_COMPONENTS),
+        "Python qualification component roles differ",
+    )
+    for role, component in PYTHON_QUALIFICATION_COMPONENTS.items():
+        record = value[role]
+        require(
+            isinstance(record, dict)
+            and set(record) == {"component", "canonical_sha256"},
+            "Python qualification %s component fields differ" % role,
+        )
+        require(
+            record["component"] == component,
+            "Python qualification %s component name differs" % role,
+        )
+        require(
+            isinstance(record["canonical_sha256"], str)
+            and len(record["canonical_sha256"]) == 64
+            and all(
+                character in "0123456789abcdef"
+                for character in record["canonical_sha256"]
+            ),
+            "Python qualification %s component digest is invalid" % role,
+        )
+    expected = python_qualification_components(release, implemented_rows)
+    require(
+        value == expected,
+        "Python qualification component identities differ from release/policy",
+    )
+    return copy.deepcopy(expected)
+
+
+def bind_python_qualification_components(
+    release,
+    policy_sha256,
+    aggregate_sha256,
+    implemented_rows=IMPLEMENTED_ROWS,
+):
+    """Bind CLI-provided digests to their exact canonical component names."""
+    value = {
+        "policy": {
+            "component": PYTHON_QUALIFICATION_COMPONENTS["policy"],
+            "canonical_sha256": policy_sha256,
+        },
+        "aggregate": {
+            "component": PYTHON_QUALIFICATION_COMPONENTS["aggregate"],
+            "canonical_sha256": aggregate_sha256,
+        },
+    }
+    return validate_python_qualification_components(
+        value, release, implemented_rows
+    )
 
 
 def validate_component_set(

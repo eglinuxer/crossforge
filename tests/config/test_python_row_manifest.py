@@ -62,6 +62,9 @@ class PythonRowManifestTests(unittest.TestCase):
         self.component_records = {
             record["component"]: record for record in binding["components"]
         }
+        self.qualification_components = FINALIZE["RELEASE_COMPONENTS"][
+            "python_qualification_components"
+        ](self.release)
 
     def tearDown(self):
         self.temporary.cleanup()
@@ -368,13 +371,16 @@ class PythonRowManifestTests(unittest.TestCase):
                 zstd = {"policy": "absent", "module": None, "builds": None}
             target_tree = FINALIZE["sdk_tree_identity"](target_python.parents[1])
             report = {
-                "qualification_schema_version": 2,
+                "qualification_schema_version": 3,
                 "report_kind": "crossforge-cpython-qualification",
                 "status": "passed",
                 "target": target,
                 "version": entry["version"],
                 "adapter": entry["adapter"],
                 "release_sha256": release_sha256,
+                "qualification_components": copy.deepcopy(
+                    self.qualification_components
+                ),
                 "source": copy.deepcopy(report_source),
                 "sysroot_sha256": sha256_bytes(("sysroot-" + arch).encode()),
                 "python_sha256": sha256_bytes(python_bytes),
@@ -543,11 +549,16 @@ class PythonRowManifestTests(unittest.TestCase):
                 process, output = self.run_finalize(fixture)
                 self.assertEqual(process.returncode, 0, process.stderr)
                 manifest = json.loads(output.read_text(encoding="utf-8"))
+                self.assertEqual(manifest["schema_version"], 2)
                 self.assertEqual(manifest["kind"], "crossforge-cpython-row")
                 self.assertEqual(manifest["row"], fixture["row"])
                 self.assertEqual(manifest["adapter"], fixture["entry"]["adapter"])
                 self.assertEqual(
                     manifest["release_sha256"], canonical_sha256(self.release)
+                )
+                self.assertEqual(
+                    manifest["qualification_components"],
+                    self.qualification_components,
                 )
                 self.assertEqual(
                     manifest["source_manifest_sha256"],
@@ -1029,6 +1040,63 @@ class PythonRowManifestTests(unittest.TestCase):
                 self.write_json(fixture["reports"]["x86_64"]["path"], report)
                 process, unused_output = self.run_finalize(fixture)
                 self.assertNotEqual(process.returncode, 0)
+
+    def test_qualification_component_identity_tampering_is_rejected(self):
+        def remove_identity(report):
+            report.pop("qualification_components")
+
+        def add_role(report):
+            report["qualification_components"]["unknown"] = {
+                "component": "python/unknown",
+                "canonical_sha256": "0" * 64,
+            }
+
+        def malformed_digest(report):
+            report["qualification_components"]["policy"][
+                "canonical_sha256"
+            ] = "0" * 63
+
+        def swap_identities(report):
+            components = report["qualification_components"]
+            components["policy"], components["aggregate"] = (
+                components["aggregate"],
+                components["policy"],
+            )
+
+        def mismatch_release(report):
+            report["qualification_components"]["aggregate"][
+                "canonical_sha256"
+            ] = "0" * 64
+
+        def old_schema(report):
+            report["qualification_schema_version"] = 2
+
+        mutations = {
+            "missing": remove_identity,
+            "extra-role": add_role,
+            "malformed-digest": malformed_digest,
+            "swapped": swap_identities,
+            "release-mismatch": mismatch_release,
+            "old-schema": old_schema,
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(mutation=name):
+                fixture = self.fixture("3.11")
+                report = fixture["reports"]["x86_64"]["value"]
+                mutate(report)
+                self.write_json(fixture["reports"]["x86_64"]["path"], report)
+                process, unused_output = self.run_finalize(fixture)
+                self.assertNotEqual(process.returncode, 0)
+
+    def test_qualification_components_must_match_across_targets(self):
+        components = {
+            arch: copy.deepcopy(self.qualification_components) for arch in TARGETS
+        }
+        components["aarch64"]["aggregate"]["canonical_sha256"] = "0" * 64
+        with self.assertRaisesRegex(
+            FINALIZE["FinalizationError"], "differ across targets"
+        ):
+            FINALIZE["aggregate_qualification_components"](components)
 
     def test_target_python_byte_tampering_is_rejected(self):
         fixture = self.fixture("3.13")

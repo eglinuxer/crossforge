@@ -200,6 +200,19 @@ def cacheonly_python_target(target, row, contexts=None, extra_args=None):
 def render_python_graph(config, targets, component_arguments):
     rows = []
     zstd_version = config["python"]["zstd"]["version"]
+    qualification_arguments = {}
+    for component in (
+        "implementation/python-qualification-policy",
+        "python/qualification",
+    ):
+        argument = component_argument_name(component)
+        try:
+            qualification_arguments[argument] = component_arguments[argument]
+        except KeyError as error:
+            raise ValueError(
+                "missing Python qualification component digest: %s"
+                % component
+            ) from error
     for record in IMPLEMENTED_ROWS:
         try:
             binding = bind_python_row(config, row=record["row"])
@@ -375,7 +388,7 @@ def render_python_graph(config, targets, component_arguments):
                 "cpython-qualify-build",
                 row,
                 {"crossforge_cpython_cross": "target:%s" % cross_name},
-                target_args,
+                dict(target_args, **qualification_arguments),
             )
             runtime_contexts = {
                 "crossforge_host_python": "target:host-python-build-locked",

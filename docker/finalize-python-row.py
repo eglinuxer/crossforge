@@ -36,6 +36,10 @@ SOURCE_BINDING = runpy.run_path(
     str(support_script("python_source_release_binding.py"))
 )
 SourceBindingError = SOURCE_BINDING["BindingError"]
+RELEASE_COMPONENTS = runpy.run_path(
+    str(support_script("render-release-components.py"))
+)
+ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
 
 
 TARGETS = {
@@ -57,6 +61,7 @@ QUALIFICATION_KEYS = {
     "version",
     "adapter",
     "release_sha256",
+    "qualification_components",
     "source",
     "sysroot_sha256",
     "python_sha256",
@@ -435,6 +440,19 @@ def aggregate_zstd(evidence_by_arch, host_module):
     }
 
 
+def aggregate_qualification_components(components_by_arch):
+    require(
+        set(components_by_arch) == set(TARGETS),
+        "row qualification component identities are incomplete",
+    )
+    components = components_by_arch["x86_64"]
+    require(
+        all(value == components for value in components_by_arch.values()),
+        "row qualification component identities differ across targets",
+    )
+    return components
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
@@ -484,6 +502,7 @@ def main():
 
     reports = {}
     zstd_evidence = {}
+    qualification_components_by_arch = {}
     for arch, target in TARGETS.items():
         report_path = (
             arguments.root
@@ -503,9 +522,18 @@ def main():
             raise FinalizationError(
                 "%s qualification report is invalid: %s" % (arch, error)
             ) from error
+        try:
+            qualification_components = RELEASE_COMPONENTS[
+                "validate_python_qualification_components"
+            ](report.get("qualification_components"), release)
+        except ProjectionError as error:
+            raise FinalizationError(
+                "%s qualification component identities are invalid: %s"
+                % (arch, error)
+            ) from error
         require(
             set(report) == QUALIFICATION_KEYS
-            and report.get("qualification_schema_version") == 2
+            and report.get("qualification_schema_version") == 3
             and report.get("report_kind") == "crossforge-cpython-qualification"
             and report.get("status") == "passed",
             "%s qualification did not pass" % arch,
@@ -593,6 +621,7 @@ def main():
             validated_zstd, build_prefix, target_prefix, arch
         )
         zstd_evidence[arch] = validated_zstd
+        qualification_components_by_arch[arch] = qualification_components
         reports[arch] = {
             "target": target,
             "report_sha256": sha256_file(report_path),
@@ -600,19 +629,23 @@ def main():
             "sdk_tree": target_tree,
         }
 
+    qualification_components = aggregate_qualification_components(
+        qualification_components_by_arch
+    )
     host_zstd_module = audit_build_zstd_module(
         build_prefix, zstd_evidence, minor
     )
     zstd = aggregate_zstd(zstd_evidence, host_zstd_module)
 
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "crossforge-cpython-row",
         "row": arguments.row,
         "version": arguments.version,
         "adapter": arguments.adapter,
         "support": source_context["support"],
         "release_sha256": release_sha256,
+        "qualification_components": qualification_components,
         "source": source,
         "source_manifest_sha256": sha256_file(arguments.source_manifest),
         "patches": patches,
