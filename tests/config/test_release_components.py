@@ -694,6 +694,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "toolchain/aarch64-qualification",
             "python/qualification",
             "zstd/aarch64-build",
+            "vcpkg/sdk-build",
         }
         expected.update(
             "python/%s-aarch64-build" % row for row in self.row_names
@@ -712,6 +713,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "toolchain/x86_64-qualification",
             "python/qualification",
             "zstd/x86_64-build",
+            "vcpkg/sdk-build",
         }
         expected.update(
             "python/%s-x86_64-build" % row for row in self.row_names
@@ -759,7 +761,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         self.assertEqual(pending["rpm/host-runtime"]["scope"], "future")
         self.assertEqual(
             changed(self.components, pending),
-            {"rpm/host-runtime", "future/product"},
+            {"rpm/host-runtime", "vcpkg/sdk-build", "future/product"},
         )
 
     def test_trust_changes_all_rpm_srpm_and_exact_consumers(self):
@@ -784,6 +786,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "zstd/host-build",
                 "zstd/x86_64-build",
                 "zstd/aarch64-build",
+                "vcpkg/sdk-build",
             }
         )
         for row in self.row_names:
@@ -812,7 +815,8 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             )
         )
         self.assertEqual(
-            changed(self.components, after), {"sources/vcpkg"}
+            changed(self.components, after),
+            {"sources/vcpkg", "vcpkg/sdk-build"},
         )
 
     def test_zstd_source_and_policy_are_isolated_from_python_rows(self):

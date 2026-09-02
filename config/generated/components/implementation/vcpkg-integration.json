@@ -1,0 +1,154 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/vcpkg-integration",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/vcpkg/cmake_root",
+      "value": "/opt/crossforge/cmake"
+    },
+    {
+      "path": "/@implementation/vcpkg/crt_linkage",
+      "value": "dynamic"
+    },
+    {
+      "path": "/@implementation/vcpkg/execution_adapters/cmake_variable",
+      "value": "CMAKE_CROSSCOMPILING_EMULATOR"
+    },
+    {
+      "path": "/@implementation/vcpkg/execution_adapters/environment_variable",
+      "value": "HOSTRUNNER"
+    },
+    {
+      "path": "/@implementation/vcpkg/find_root_modes/include",
+      "value": "ONLY"
+    },
+    {
+      "path": "/@implementation/vcpkg/find_root_modes/library",
+      "value": "ONLY"
+    },
+    {
+      "path": "/@implementation/vcpkg/find_root_modes/package",
+      "value": "ONLY"
+    },
+    {
+      "path": "/@implementation/vcpkg/find_root_modes/program",
+      "value": "NEVER"
+    },
+    {
+      "path": "/@implementation/vcpkg/host/architecture",
+      "value": "x64"
+    },
+    {
+      "path": "/@implementation/vcpkg/host/compiler_root",
+      "value": "/opt/rh/gcc-toolset-15/root/usr/bin"
+    },
+    {
+      "path": "/@implementation/vcpkg/host/library_linkage",
+      "value": "static"
+    },
+    {
+      "path": "/@implementation/vcpkg/host/toolchain",
+      "value": "host-gts15.cmake"
+    },
+    {
+      "path": "/@implementation/vcpkg/host/triplet",
+      "value": "crossforge-host-x64-el8"
+    },
+    {
+      "path": "/@implementation/vcpkg/pic_flag",
+      "value": "-fPIC"
+    },
+    {
+      "path": "/@implementation/vcpkg/position_independent_code",
+      "value": true
+    },
+    {
+      "path": "/@implementation/vcpkg/schema_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/vcpkg/system_name",
+      "value": "Linux"
+    },
+    {
+      "path": "/@implementation/vcpkg/system_version",
+      "value": "4.18.0"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/aarch64/architecture",
+      "value": "arm64"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/aarch64/compiler_root",
+      "value": "/opt/crossforge/targets/aarch64-unknown-linux-gnu/bin"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/aarch64/dynamic_triplet",
+      "value": "crossforge-arm64-el8-dynamic"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/aarch64/processor",
+      "value": "aarch64"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/aarch64/static_triplet",
+      "value": "crossforge-arm64-el8"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/aarch64/sysroot",
+      "value": "/opt/crossforge/sysroots/el8/aarch64"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/aarch64/toolchain",
+      "value": "aarch64-unknown-linux-gnu.cmake"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/aarch64/triple",
+      "value": "aarch64-unknown-linux-gnu"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/x86_64/architecture",
+      "value": "x64"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/x86_64/compiler_root",
+      "value": "/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/x86_64/dynamic_triplet",
+      "value": "crossforge-x64-el8-dynamic"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/x86_64/processor",
+      "value": "x86_64"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/x86_64/static_triplet",
+      "value": "crossforge-x64-el8"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/x86_64/sysroot",
+      "value": "/opt/crossforge/sysroots/el8/x86_64"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/x86_64/toolchain",
+      "value": "x86_64-unknown-linux-gnu.cmake"
+    },
+    {
+      "path": "/@implementation/vcpkg/targets/x86_64/triple",
+      "value": "x86_64-unknown-linux-gnu"
+    },
+    {
+      "path": "/@implementation/vcpkg/triplet_root",
+      "value": "/opt/crossforge/vcpkg/triplets"
+    },
+    {
+      "path": "/@implementation/vcpkg/vcpkg_root",
+      "value": "/opt/crossforge/vcpkg/root"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

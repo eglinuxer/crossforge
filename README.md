@@ -16,9 +16,10 @@ build-system-independent DEB/RPM packaging.
 > private static zstd 1.5.7. Frozen EL8 ABI sets and Python's complete
 > provider-ownership/ELF gates are implemented for both targets. The final SDK
 > now rebases those qualified artifacts onto its independently locked host
-> runtime and passes the complete offline integration gate. The vcpkg registry
-> and signed host tool are source-locked; triplets/port qualification,
-> packaging, the full GCC/Qt suites and release supply chain remain pending.
+> runtime and passes the complete offline integration gate. The pinned vcpkg
+> registry/tool and five generated host/target triplets are installed and
+> qualified offline; representative-port qualification, packaging, the full
+> GCC/Qt suites and release supply chain remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -415,7 +416,7 @@ sysroot locks, every build/target Python tree and QEMU; it also builds and runs
 C, C++ and LTO probes for both targets. Build-only roots and markers are absent
 from the resulting cache-only image.
 
-## Phase 13: vcpkg supply-chain foundation
+## Phase 13: vcpkg source and SDK integration
 
 Crossforge pins the immutable vcpkg `2026.07.29` release at commit
 `9e593bb18ea69cc5095e012465dcd675a822ed0d`. Its matching vcpkg-tool
@@ -425,6 +426,8 @@ Microsoft's detached PGP signature and exact LICENSE/NOTICE files:
 ```console
 $ ./scripts/validate-supply-chain-evidence.py
 $ docker buildx bake vcpkg-source
+$ ./scripts/render-vcpkg-integration.py --check
+$ docker buildx bake sdk-phase13-base
 ```
 
 The source target clones the complete commit history and fetches the 22 fixed
@@ -433,7 +436,14 @@ It rejects shallow repositories and batch-checks all 39,823 historical trees.
 Bootstrap is never executed online. Network access is confined to fetching
 content-addressed registry objects and the signed tool; checkout, signature
 verification, tool execution and scratch export run offline. The five
-Crossforge triplets and representative-port qualification are the next slice.
+Crossforge overlay triplets chainload explicit native GTS15 or target CMake
+toolchains. No default target triplet is set: downstream builds must select
+x86_64 or aarch64 and static or dynamic linkage deliberately. The cache-only
+SDK gate rechecks the complete Git/tool identity, all generated file hashes,
+host/target separation and PIC shared linking, then runs x86_64 directly and
+aarch64 only through pinned QEMU. It leaves no downloads, build trees,
+packages or installed ports in the product root. Representative-port
+qualification is the next slice.
 
 ## Product contract
 

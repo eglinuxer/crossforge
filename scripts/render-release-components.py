@@ -71,6 +71,56 @@ ZSTD_BUILD_POLICY = {
     "exclude_archive_symbols": True,
     "selected_license": "BSD-3-Clause",
 }
+VCPKG_INTEGRATION_POLICY = {
+    "schema_version": 1,
+    "cmake_root": "/opt/crossforge/cmake",
+    "crt_linkage": "dynamic",
+    "execution_adapters": {
+        "cmake_variable": "CMAKE_CROSSCOMPILING_EMULATOR",
+        "environment_variable": "HOSTRUNNER",
+    },
+    "find_root_modes": {
+        "include": "ONLY",
+        "library": "ONLY",
+        "package": "ONLY",
+        "program": "NEVER",
+    },
+    "host": {
+        "architecture": "x64",
+        "compiler_root": "/opt/rh/gcc-toolset-15/root/usr/bin",
+        "library_linkage": "static",
+        "toolchain": "host-gts15.cmake",
+        "triplet": "crossforge-host-x64-el8",
+    },
+    "pic_flag": "-fPIC",
+    "position_independent_code": True,
+    "system_name": "Linux",
+    "system_version": "4.18.0",
+    "targets": {
+        "aarch64": {
+            "architecture": "arm64",
+            "compiler_root": "/opt/crossforge/targets/aarch64-unknown-linux-gnu/bin",
+            "dynamic_triplet": "crossforge-arm64-el8-dynamic",
+            "processor": "aarch64",
+            "static_triplet": "crossforge-arm64-el8",
+            "sysroot": "/opt/crossforge/sysroots/el8/aarch64",
+            "toolchain": "aarch64-unknown-linux-gnu.cmake",
+            "triple": "aarch64-unknown-linux-gnu",
+        },
+        "x86_64": {
+            "architecture": "x64",
+            "compiler_root": "/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin",
+            "dynamic_triplet": "crossforge-x64-el8-dynamic",
+            "processor": "x86_64",
+            "static_triplet": "crossforge-x64-el8",
+            "sysroot": "/opt/crossforge/sysroots/el8/x86_64",
+            "toolchain": "x86_64-unknown-linux-gnu.cmake",
+            "triple": "x86_64-unknown-linux-gnu",
+        },
+    },
+    "triplet_root": "/opt/crossforge/vcpkg/triplets",
+    "vcpkg_root": "/opt/crossforge/vcpkg/root",
+}
 PYTHON_QUALIFICATION_COMPONENTS = {
     "policy": "implementation/python-qualification-policy",
     "aggregate": "python/qualification",
@@ -244,6 +294,17 @@ def zstd_policy_materials():
     ]
 
 
+def vcpkg_policy_materials():
+    return [
+        {
+            "path": "/@implementation/vcpkg/%s"
+            % "/".join(str(part) for part in path),
+            "value": copy.deepcopy(value),
+        }
+        for path, value in leaf_items(VCPKG_INTEGRATION_POLICY)
+    ]
+
+
 def component_path(component):
     parts = component.split("/")
     require(
@@ -286,6 +347,19 @@ def host_lock_scope(release, role):
         "host runtime lock status is invalid",
     )
     return "build" if status == "locked" else "future"
+
+
+def vcpkg_sdk_scope(release):
+    statuses = (
+        release["host_locks"]["host-runtime"]["status"],
+        release["vcpkg"]["release"]["status"],
+        release["vcpkg"]["tool"]["status"],
+    )
+    require(
+        all(status in ("pending", "locked") for status in statuses),
+        "vcpkg SDK input status is invalid",
+    )
+    return "build" if all(status == "locked" for status in statuses) else "future"
 
 
 def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
@@ -713,6 +787,11 @@ def _render_expected_components(release, implemented_rows):
         explicit_materials=zstd_policy_materials(),
     )
     add(
+        "implementation/vcpkg-integration",
+        "build",
+        explicit_materials=vcpkg_policy_materials(),
+    )
+    add(
         "zstd/host-build",
         "build",
         selector(("baseline",), ("platforms",)),
@@ -734,6 +813,18 @@ def _render_expected_components(release, implemented_rows):
                 "implementation/zstd-build-policy",
             ),
         )
+    add(
+        "vcpkg/sdk-build",
+        vcpkg_sdk_scope(release),
+        selector(("baseline",), ("platforms",)),
+        (
+            "rpm/host-runtime",
+            "sources/vcpkg",
+            "implementation/vcpkg-integration",
+            toolchain_builds["x86_64"],
+            toolchain_builds["aarch64"],
+        ),
+    )
 
     release_entries = {}
     release_entry_indices = {}

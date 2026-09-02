@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；vcpkg registry/host tool 的供应链锁定已完成，triplet/port 资格化、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；vcpkg registry/host tool 供应链、五套 triplet 与 chainload toolchain 的 SDK 集成已完成，代表性 port 资格化、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -238,6 +238,14 @@ crossforge-arm64-el8-dynamic
 
 Crossforge 只承诺 triplet、host/target 分离和代表性 ports（zlib、fmt、OpenSSL、curl、protobuf、Boost）的持续验收。项目自己的 `vcpkg.json`、builtin baseline、registry、overlay ports、许可证判断和 binary cache 由下游管理；镜像不预装编译好的 ports。
 
+当前 `sdk-phase13-base` 已把固定 registry/tool 安装到
+`/opt/crossforge/vcpkg/root`，并从 release component policy 生成三份 CMake
+toolchain 与上述五套 triplet。镜像只设置 host triplet，不设置默认 target
+triplet；target 必须由用户显式选择。离线资格化会重验完整 Git 历史与工具身份，
+再分别构建 host、x86_64 cross 与 aarch64 cross 的 C/C++、static-to-shared PIC
+探针；aarch64 产物仅在资格化边界通过固定 QEMU 执行。该阶段不执行 port install，
+也不把 downloads、buildtrees、packages 或 installed tree 带入产品根目录。
+
 ## 9. 构建系统无关的分包
 
 `crossforge package` 调用自研的薄编排层 `crosspack`，后者只接受 staged filesystem 或显式 `source → destination` 映射，不调用也不识别 CMake、Meson、Autotools、Make、Cargo 或 Bazel。因此 CPack 不是正式打包路径。
@@ -334,4 +342,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行及 vcpkg source lock 已完成；后续实现 vcpkg triplet/port 资格化、分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、vcpkg source lock 与五 triplet SDK 集成已完成；后续实现代表性 vcpkg port 资格化、分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

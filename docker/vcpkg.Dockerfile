@@ -56,3 +56,56 @@ RUN --network=none /usr/libexec/platform-python \
 
 FROM scratch AS vcpkg-source-export
 COPY --from=vcpkg-source /out/ /
+
+# Phase 13 integrates only the authenticated registry/tool and generated
+# configuration. Port build trees and installed packages are qualification
+# artifacts and never enter this user-facing base.
+FROM crossforge_sdk_base AS vcpkg-sdk-base
+ARG VCPKG_SOURCE_COMPONENT_SHA256
+ARG VCPKG_INTEGRATION_COMPONENT_SHA256
+ARG VCPKG_SDK_COMPONENT_SHA256
+COPY --from=crossforge_vcpkg_source /root/ /opt/crossforge/vcpkg/root/
+COPY --from=crossforge_vcpkg_source /source.json \
+  /opt/crossforge/qualification/vcpkg/source.json
+COPY integration/cmake/ /opt/crossforge/cmake/
+COPY integration/vcpkg/triplets/ /opt/crossforge/vcpkg/triplets/
+COPY integration/vcpkg/manifest.json \
+  /opt/crossforge/vcpkg/integration.json
+COPY config/generated/components/sources/vcpkg.json \
+  /work/config/sources-vcpkg.json
+COPY config/generated/components/implementation/vcpkg-integration.json \
+  /work/config/vcpkg-integration.json
+COPY config/generated/components/vcpkg/sdk-build.json \
+  /work/config/vcpkg-sdk-build.json
+COPY --chmod=0755 scripts/fetch-vcpkg-history.py \
+  scripts/release_component.py scripts/qualify-vcpkg-sdk.py /work/scripts/
+ENV VCPKG_ROOT=/opt/crossforge/vcpkg/root \
+    VCPKG_OVERLAY_TRIPLETS=/opt/crossforge/vcpkg/triplets \
+    VCPKG_DEFAULT_HOST_TRIPLET=crossforge-host-x64-el8 \
+    VCPKG_DISABLE_METRICS=1 \
+    VCPKG_FORCE_SYSTEM_BINARIES=1 \
+    PATH=/opt/crossforge/vcpkg/root:${PATH}
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/qualify-vcpkg-sdk.py \
+      --release /opt/crossforge/release.json \
+      --root /opt/crossforge/vcpkg/root \
+      --source-manifest /opt/crossforge/qualification/vcpkg/source.json \
+      --integration-manifest /opt/crossforge/vcpkg/integration.json \
+      --cmake-root /opt/crossforge/cmake \
+      --triplet-root /opt/crossforge/vcpkg/triplets \
+      --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
+      --source-component /work/config/sources-vcpkg.json \
+      --source-component-sha256 "$VCPKG_SOURCE_COMPONENT_SHA256" \
+      --integration-component /work/config/vcpkg-integration.json \
+      --integration-component-sha256 \
+        "$VCPKG_INTEGRATION_COMPONENT_SHA256" \
+      --sdk-component /work/config/vcpkg-sdk-build.json \
+      --sdk-component-sha256 "$VCPKG_SDK_COMPONENT_SHA256" \
+      --output /opt/crossforge/qualification/vcpkg/sdk.json \
+    && rm -rf /work \
+    && test ! -e /opt/crossforge/vcpkg/root/downloads \
+    && test ! -e /opt/crossforge/vcpkg/root/buildtrees \
+    && test ! -e /opt/crossforge/vcpkg/root/packages \
+    && test ! -e /opt/crossforge/vcpkg/root/installed \
+    && test ! -e /opt/crossforge/vcpkg/root/vcpkg_installed
+WORKDIR /workspace

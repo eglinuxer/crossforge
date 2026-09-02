@@ -1,0 +1,47 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "vcpkg/sdk-build",
+  "dependencies": [
+    {
+      "canonical_sha256": "885c8cc9109ff35634af47dcec1ca67e3d53640f6a25ff32f33a0abcf71db21f",
+      "component": "implementation/vcpkg-integration"
+    },
+    {
+      "canonical_sha256": "b037782d2cefa64c6b88f75478081f85706ee6c7fe95f6e5c8b4092b464edabd",
+      "component": "rpm/host-runtime"
+    },
+    {
+      "canonical_sha256": "32decc4331f2b02cb83fc96a08b622d7302c346eac55ff74e3cb3345c2fc36da",
+      "component": "sources/vcpkg"
+    },
+    {
+      "canonical_sha256": "ff75a8428b27f5c4b1193693a81ca8a820b1c042951ea3ae0d181d0a8202a24e",
+      "component": "toolchain/aarch64-build"
+    },
+    {
+      "canonical_sha256": "639bdd7c9185ba832790744b2323f95bc4854d2da1aa7c7931ed8f9f0b0ae2a1",
+      "component": "toolchain/x86_64-build"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/platforms/build",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/image",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/tool_host",
+      "value": "linux/amd64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

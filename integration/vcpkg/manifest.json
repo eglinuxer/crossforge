@@ -1,0 +1,98 @@
+{
+  "components": {
+    "integration": {
+      "canonical_sha256": "885c8cc9109ff35634af47dcec1ca67e3d53640f6a25ff32f33a0abcf71db21f",
+      "component": "implementation/vcpkg-integration"
+    },
+    "sdk": {
+      "canonical_sha256": "c7d44523b4a7c1b2f181c9c379517d9c1fc78ae25bc1b188682d417aecb7448e",
+      "component": "vcpkg/sdk-build"
+    }
+  },
+  "files": [
+    {
+      "path": "cmake/aarch64-unknown-linux-gnu.cmake",
+      "sha256": "c062864c7260df26cf9f39eaef0c87ba65c6fd02a378403619ced4571db6511d"
+    },
+    {
+      "path": "cmake/host-gts15.cmake",
+      "sha256": "2bd48d99624be10d61f1d957af9d7dcbecfb177606943dbf0603e32100320c12"
+    },
+    {
+      "path": "cmake/x86_64-unknown-linux-gnu.cmake",
+      "sha256": "aa6f68d6bd7c36c300ba33ae79992ab7bbeda9c7197268dcf9ee2db01998bbc9"
+    },
+    {
+      "path": "triplets/crossforge-arm64-el8-dynamic.cmake",
+      "sha256": "fe9b67f70acd9305f44695b3147f9e316d41ea3a03575adc91b430f620b68235"
+    },
+    {
+      "path": "triplets/crossforge-arm64-el8.cmake",
+      "sha256": "419ed72aeaa152369e118e1e1dcf413fe6c31ad63568bba53e2acae66a776244"
+    },
+    {
+      "path": "triplets/crossforge-host-x64-el8.cmake",
+      "sha256": "a845bf9446da4a06101fcd6c3e459414e94b85fafdcdbc8c0d42604e6e9f504a"
+    },
+    {
+      "path": "triplets/crossforge-x64-el8-dynamic.cmake",
+      "sha256": "6b9a2a3ae149ced8cc0c37c89d6d2c22db4258992a0f9ac56aafc99a1ba9ed91"
+    },
+    {
+      "path": "triplets/crossforge-x64-el8.cmake",
+      "sha256": "1e3aed3b8f086f0d6a7d565ba90fdf986f6d5e2347d2ab7f380d3c85b64f887e"
+    }
+  ],
+  "kind": "crossforge-vcpkg-integration",
+  "policy": {
+    "cmake_root": "/opt/crossforge/cmake",
+    "crt_linkage": "dynamic",
+    "execution_adapters": {
+      "cmake_variable": "CMAKE_CROSSCOMPILING_EMULATOR",
+      "environment_variable": "HOSTRUNNER"
+    },
+    "find_root_modes": {
+      "include": "ONLY",
+      "library": "ONLY",
+      "package": "ONLY",
+      "program": "NEVER"
+    },
+    "host": {
+      "architecture": "x64",
+      "compiler_root": "/opt/rh/gcc-toolset-15/root/usr/bin",
+      "library_linkage": "static",
+      "toolchain": "host-gts15.cmake",
+      "triplet": "crossforge-host-x64-el8"
+    },
+    "pic_flag": "-fPIC",
+    "position_independent_code": true,
+    "schema_version": 1,
+    "system_name": "Linux",
+    "system_version": "4.18.0",
+    "targets": {
+      "aarch64": {
+        "architecture": "arm64",
+        "compiler_root": "/opt/crossforge/targets/aarch64-unknown-linux-gnu/bin",
+        "dynamic_triplet": "crossforge-arm64-el8-dynamic",
+        "processor": "aarch64",
+        "static_triplet": "crossforge-arm64-el8",
+        "sysroot": "/opt/crossforge/sysroots/el8/aarch64",
+        "toolchain": "aarch64-unknown-linux-gnu.cmake",
+        "triple": "aarch64-unknown-linux-gnu"
+      },
+      "x86_64": {
+        "architecture": "x64",
+        "compiler_root": "/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin",
+        "dynamic_triplet": "crossforge-x64-el8-dynamic",
+        "processor": "x86_64",
+        "static_triplet": "crossforge-x64-el8",
+        "sysroot": "/opt/crossforge/sysroots/el8/x86_64",
+        "toolchain": "x86_64-unknown-linux-gnu.cmake",
+        "triple": "x86_64-unknown-linux-gnu"
+      }
+    },
+    "triplet_root": "/opt/crossforge/vcpkg/triplets",
+    "vcpkg_root": "/opt/crossforge/vcpkg/root"
+  },
+  "schema_version": 1
+}

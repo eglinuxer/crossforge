@@ -68,6 +68,12 @@
       "scope": "qualification"
     },
     {
+      "canonical_sha256": "885c8cc9109ff35634af47dcec1ca67e3d53640f6a25ff32f33a0abcf71db21f",
+      "component": "implementation/vcpkg-integration",
+      "path": "config/generated/components/implementation/vcpkg-integration.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "be14b05aebc58eeb91642e1f3fb019cba033e4801fe489c727e88c7b6bfa1a93",
       "component": "implementation/zstd-build-policy",
       "path": "config/generated/components/implementation/zstd-build-policy.json",
@@ -318,6 +324,12 @@
       "component": "toolchain/x86_64-qualification",
       "path": "config/generated/components/toolchain/x86_64-qualification.json",
       "scope": "qualification"
+    },
+    {
+      "canonical_sha256": "c7d44523b4a7c1b2f181c9c379517d9c1fc78ae25bc1b188682d417aecb7448e",
+      "component": "vcpkg/sdk-build",
+      "path": "config/generated/components/vcpkg/sdk-build.json",
+      "scope": "build"
     },
     {
       "canonical_sha256": "3768be8994a6a59fed6048706d77003eac38481c458fbbc0630b9b151ccb77ad",

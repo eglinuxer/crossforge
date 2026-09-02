@@ -70,12 +70,14 @@ jobs:
           gcc -fsyntax-only -Wall -Wextra -Werror scripts/target-exec-canary.c
           gcc -fsyntax-only -Wall -Wextra -Werror scripts/target-artifact-canary.c
       - name: Generated Bake definition
-        run: ./scripts/render-bake.py --check
+        run: |
+          ./scripts/render-vcpkg-integration.py --check
+          ./scripts/render-bake.py --check
       - name: Docker/Bake static checks
         run: |
           docker buildx bake --check phase4 host-runtime-qualified
           docker buildx bake --print phase5 phase6 phase7 phase8 phase9 phase10 \
-            phase13-source >/dev/null
+            phase13-source phase13-integration >/dev/null
       - name: Locked latest inputs and native build Pythons
         run: |
           docker buildx bake validate platform-python-check \
@@ -86,6 +88,7 @@ jobs:
             sysroot-x86_64 sysroot-aarch64 python-native-latest \
             python-runtime-clean-x86_64 python-runtime-clean-aarch64 \
             --progress=plain
-      - name: Run the full latest Python qualification gate
+      - name: Run the full Python and vcpkg SDK qualification gates
         if: github.event_name != 'pull_request'
-        run: docker buildx bake python-matrix --progress=plain
+        run: |
+          docker buildx bake python-matrix sdk-phase13-base --progress=plain

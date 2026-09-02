@@ -166,6 +166,15 @@ def render_vcpkg_graph(config, targets, component_arguments):
         source_sha256 = component_arguments[source_argument]
     except KeyError as error:
         raise ValueError("missing vcpkg source component digest") from error
+    def digest(component):
+        argument = component_argument_name(component)
+        try:
+            return component_arguments[argument]
+        except KeyError as error:
+            raise ValueError(
+                "missing vcpkg component digest: %s" % component
+            ) from error
+
     targets["vcpkg-source"] = {
         "inherits": ["_vcpkg_common"],
         "target": "vcpkg-source-export",
@@ -185,6 +194,22 @@ def render_vcpkg_graph(config, targets, component_arguments):
         },
         "output": ["type=cacheonly"],
     }
+    targets["sdk-phase13-base"] = {
+        "inherits": ["_vcpkg_common"],
+        "target": "vcpkg-sdk-base",
+        "args": {
+            "VCPKG_SOURCE_COMPONENT_SHA256": source_sha256,
+            "VCPKG_INTEGRATION_COMPONENT_SHA256": digest(
+                "implementation/vcpkg-integration"
+            ),
+            "VCPKG_SDK_COMPONENT_SHA256": digest("vcpkg/sdk-build"),
+        },
+        "contexts": {
+            "crossforge_sdk_base": "target:python-phase10-dev",
+            "crossforge_vcpkg_source": "target:vcpkg-source",
+        },
+        "output": ["type=cacheonly"],
+    }
     return {
         "phase13-source": {
             "targets": [
@@ -192,6 +217,9 @@ def render_vcpkg_graph(config, targets, component_arguments):
                 "host-runtime-qualified",
                 "vcpkg-source",
             ]
+        },
+        "phase13-integration": {
+            "targets": ["vcpkg-source", "python-phase10-dev", "sdk-phase13-base"]
         }
     }
 
