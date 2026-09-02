@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 host runtime lock、vcpkg、分包、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime lock、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 的 host-runtime rebase、vcpkg、分包、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -138,8 +138,12 @@ Host 构建环境使用三个独立 transaction：common 从固定基础镜像�
 `libzstd-devel` 与依赖 `m4`；Python additive delta 只声明 bzip2、libffi、libuuid、
 OpenSSL、SQLite 与 xz 的开发 roots。三层均逐包验签后在 `--network=none` 下执行真实
 scripts/triggers，并核对完整 rpmdb。`libzstd-devel` 不进入 common/Python 层，避免改变
-binutils 的 `--with-zstd=auto` 探测。最终用户镜像的 host runtime lock 必须从干净
-Rocky base 独立求解，不得继承这些 build-only packages。
+binutils 的 `--with-zstd=auto` 探测。最终用户镜像的 host runtime lock 已从干净
+Rocky base 独立求解，不继承这些 build-only packages：41 个显式 roots 产生 140 个
+验签 payload，PowerTools 只允许提供 Meson 与 Ninja，正式安装在无网络阶段重放。
+Rocky 的 Meson 包强制依赖系统 Python development package；这是受审的上游打包闭包，
+不等同于 Crossforge 的 CPython build-devel transaction。最终 SDK 改用该 runtime 作为
+祖先并完成 build-Python/host-tool 终检仍属于下一切片。
 
 ## 7. Python SDK
 
@@ -318,4 +322,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：双 target compiler/hybrid runtime、冻结 ABI 与 CPython 3.9–3.14 双 target 行已完成；后续实现最终 host runtime、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime lock、双 target compiler/hybrid runtime、冻结 ABI 与 CPython 3.9–3.14 双 target 行已完成；后续实现最终镜像 runtime rebase、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

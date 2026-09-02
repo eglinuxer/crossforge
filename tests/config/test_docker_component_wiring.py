@@ -150,6 +150,10 @@ class DockerComponentWiringTests(unittest.TestCase):
                 "host-python-build-rpms",
                 "host-python-build-locked",
             ),
+            "rpm/host-runtime": (
+                "host-runtime-rpms",
+                "host-runtime-locked",
+            ),
         }
         for component, role_stages in cases.items():
             for index, stage in enumerate(role_stages):
@@ -166,6 +170,8 @@ class DockerComponentWiringTests(unittest.TestCase):
             "host-build-common-locked",
             "host-gcc-build-rpms",
             "host-python-build-rpms",
+            "host-runtime-rpms",
+            "host-runtime-locked",
         ):
             self.assertEqual(self.parents[stage], "rpm-locked-input-base")
 
@@ -184,6 +190,8 @@ class DockerComponentWiringTests(unittest.TestCase):
             "host-gcc-build-locked",
             "host-python-build-rpms",
             "host-python-build-locked",
+            "host-runtime-rpms",
+            "host-runtime-locked",
             "binutils-prep-input",
             "gcc-prep-input",
             "binutils-x86_64",
@@ -209,6 +217,7 @@ class DockerComponentWiringTests(unittest.TestCase):
             "rpm-resolve-sysroot-x86_64",
             "rpm-resolve-sysroot-aarch64",
             "rpm-resolve-host-build-common",
+            "rpm-resolve-host-runtime",
         ):
             self.assertEqual(self.parents[stage], "rpm-input-base")
         for stage in (
@@ -252,6 +261,7 @@ class DockerComponentWiringTests(unittest.TestCase):
             "host-build-common-locked",
             "host-gcc-build-locked",
             "host-python-build-locked",
+            "host-runtime-locked",
         ):
             self.assertIn("--marker /usr/share/crossforge/rpm-locks/", self.stages[stage])
         materializer = (
@@ -262,6 +272,13 @@ class DockerComponentWiringTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("sysroot-release-binding.json", materializer)
         self.assertIn('"release_binding": release_binding', installer)
+
+    def test_host_runtime_replay_is_offline_and_uses_only_its_bundle(self):
+        block = self.stages["host-runtime-locked"]
+        self.assertIn("RUN --network=none", block)
+        self.assertIn("from=host-runtime-rpms", block)
+        self.assertNotIn("host-build-common", block)
+        self.assertNotIn("host-python-build", block)
 
 
 if __name__ == "__main__":

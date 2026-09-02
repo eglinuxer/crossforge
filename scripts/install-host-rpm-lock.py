@@ -19,7 +19,12 @@ REPOSITORY = Path(__file__).resolve().parents[1]
 RPM_BINDING = runpy.run_path(
     str(REPOSITORY / "scripts/validate-rpm-lock.py")
 )
-ALLOWED_ROLES = {"host-build-common", "host-gcc-build", "host-python-build"}
+ALLOWED_ROLES = {
+    "host-build-common",
+    "host-gcc-build",
+    "host-python-build",
+    "host-runtime",
+}
 ALLOWED_ACTIONS = {"install", "upgrade"}
 HEX_SHA256 = re.compile(r"^[0-9a-f]{64}\Z")
 HEX_FINGERPRINT = re.compile(r"^[0-9a-f]{40}\Z")

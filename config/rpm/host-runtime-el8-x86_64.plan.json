@@ -1,0 +1,256 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-plan.schema.json",
+  "schema_version": 1,
+  "kind": "rpm-plan",
+  "identity": {
+    "name": "host-runtime-el8-x86_64",
+    "role": "host-runtime",
+    "distribution": "rocky",
+    "release": "8.10",
+    "baseline": "el8",
+    "arch": "x86_64",
+    "target_triple": null
+  },
+  "base": {
+    "mode": "image",
+    "parent_lock": null,
+    "parent_sha256": null
+  },
+  "repositories": [
+    {
+      "id": "baseos",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/"
+    },
+    {
+      "id": "appstream",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/"
+    },
+    {
+      "id": "powertools",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/"
+    }
+  ],
+  "solver_policy": {
+    "allowed_arches": [
+      "x86_64",
+      "noarch"
+    ],
+    "install_weak_deps": false,
+    "best": true,
+    "strict": true,
+    "allow_erasing": false,
+    "module_platform_id": "platform:el8",
+    "enabled_modules": [
+      "perl:5.26",
+      "perl-IO-Socket-SSL:2.066",
+      "perl-libwww-perl:6.34"
+    ]
+  },
+  "roots": [
+    {
+      "name": "autoconf",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "automake",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "bash",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "bison",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "bzip2",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "bzip2-libs",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "ca-certificates",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "cmake",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "coreutils-single",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "curl",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "diffutils",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "file",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "findutils",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "flex",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "gawk",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "gcc-toolset-15-binutils",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "gcc-toolset-15-gcc",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "gcc-toolset-15-gcc-c++",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "git-core",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "glibc-devel",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "grep",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "gzip",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "libffi",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "libtool",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "libuuid",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "make",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "meson",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "ninja-build",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "openssl-libs",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "patch",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "pkgconf-pkg-config",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "platform-python",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "sed",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "sqlite-libs",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "tar",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "unzip",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "which",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "xz",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "xz-libs",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "zip",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "zlib",
+      "arch": "any",
+      "purpose": "host-runtime"
+    }
+  ]
+}

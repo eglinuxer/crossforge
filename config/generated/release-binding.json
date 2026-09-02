@@ -20,7 +20,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "ff9601c653ecd53ecb7c76c5d93a17b46d22f6840721a61c4f124caa5d85da4d",
+      "canonical_sha256": "3e547dd1bfdc0829e0a08b2b764500247ef64d7f5d83c5b23651bd9828ca2b60",
       "component": "future/product",
       "path": "config/generated/components/future/product.json",
       "scope": "future"
@@ -248,10 +248,10 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "eda3371790683bd8c47f05e33f40590c66cdf37267bf318fca796b96c86e44ad",
+      "canonical_sha256": "b037782d2cefa64c6b88f75478081f85706ee6c7fe95f6e5c8b4092b464edabd",
       "component": "rpm/host-runtime",
       "path": "config/generated/components/rpm/host-runtime.json",
-      "scope": "future"
+      "scope": "build"
     },
     {
       "canonical_sha256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
@@ -334,7 +334,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "76d84a9781a2d87c6e2774ad419cce6cbcd45d38bab650f3b13eb4f2c9d5fb6a",
+    "canonical_sha256": "77263e9005c568a26b3510435c9dc9ffda139ef82533a3bda2f0a132493b0653",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

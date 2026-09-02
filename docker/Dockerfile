@@ -195,6 +195,46 @@ RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py
       --release-component-name rpm/sysroot-aarch64 \
       --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256"
 
+# The user-facing host closure is independently solved from the clean Rocky
+# image. It never inherits compiler/Python build transactions.
+FROM rpm-locked-input-base AS host-runtime-rpms
+ARG CROSSFORGE_COMPONENT_RPM_HOST_RUNTIME_SHA256
+COPY config/generated/components/rpm/host-runtime.json ./config/components/rpm-host-runtime.json
+COPY locks/host-runtime-el8-x86_64.json ./locks/host-runtime-el8-x86_64.json
+COPY locks/transactions/host-runtime-el8-x86_64.json ./locks/transactions/host-runtime-el8-x86_64.json
+COPY locks/metadata/host-runtime-el8-x86_64/ ./locks/metadata/host-runtime-el8-x86_64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/host-runtime-el8-x86_64.json --require-lock \
+      --release-component ./config/components/rpm-host-runtime.json \
+      --release-component-name rpm/host-runtime \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_RUNTIME_SHA256" \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/host-runtime-el8-x86_64.json fetch \
+      --output /rpm-bundle --jobs 8 \
+      --release-component ./config/components/rpm-host-runtime.json \
+      --release-component-name rpm/host-runtime \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_RUNTIME_SHA256"
+
+FROM rpm-locked-input-base AS host-runtime-locked
+ARG CROSSFORGE_COMPONENT_RPM_HOST_RUNTIME_SHA256
+COPY config/generated/components/rpm/host-runtime.json ./config/components/rpm-host-runtime.json
+COPY locks/host-runtime-el8-x86_64.json ./locks/host-runtime-el8-x86_64.json
+COPY locks/transactions/host-runtime-el8-x86_64.json ./locks/transactions/host-runtime-el8-x86_64.json
+COPY locks/metadata/host-runtime-el8-x86_64/ ./locks/metadata/host-runtime-el8-x86_64/
+COPY scripts/install-host-rpm-lock.py ./scripts/install-host-rpm-lock.py
+RUN --network=none \
+    --mount=type=bind,from=host-runtime-rpms,source=/rpm-bundle,target=/rpm-bundle,ro \
+    /usr/libexec/platform-python ./scripts/install-host-rpm-lock.py \
+      ./locks/host-runtime-el8-x86_64.json \
+      --transaction ./locks/transactions/host-runtime-el8-x86_64.json \
+      --bundle /rpm-bundle \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --marker /usr/share/crossforge/rpm-locks/host-runtime.json \
+      --release-component ./config/components/rpm-host-runtime.json \
+      --release-component-name rpm/host-runtime \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_RUNTIME_SHA256"
+ENV PATH="/opt/rh/gcc-toolset-15/root/usr/bin:${PATH}"
+
 # The common host transaction exactly reproduces the previously qualified prep
 # environment. RPM scripts/triggers execute, but the package set is immutable
 # and installation runs without repositories or network access.
@@ -451,6 +491,28 @@ RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
 
 FROM scratch AS rpm-lock-host-build-common
 COPY --from=rpm-resolve-host-build-common /resolved/ /
+
+FROM rpm-input-base AS rpm-resolve-host-runtime
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/host-runtime-el8-x86_64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/host-runtime-el8-x86_64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-host-runtime
+COPY --from=rpm-resolve-host-runtime /resolved/ /
 
 FROM host-build-common-locked AS rpm-resolve-host-gcc-build
 COPY --from=rpm-input-base /src/config/ ./config/

@@ -95,6 +95,87 @@ HOST_PYTHON_ROOTS = {
     "sqlite-devel",
     "xz-devel",
 }
+HOST_RUNTIME_ROOTS = {
+    "autoconf",
+    "automake",
+    "bash",
+    "bison",
+    "bzip2",
+    "bzip2-libs",
+    "ca-certificates",
+    "cmake",
+    "coreutils-single",
+    "curl",
+    "diffutils",
+    "file",
+    "findutils",
+    "flex",
+    "gawk",
+    "gcc-toolset-15-binutils",
+    "gcc-toolset-15-gcc",
+    "gcc-toolset-15-gcc-c++",
+    "git-core",
+    "glibc-devel",
+    "grep",
+    "gzip",
+    "libffi",
+    "libtool",
+    "libuuid",
+    "make",
+    "meson",
+    "ninja-build",
+    "openssl-libs",
+    "patch",
+    "pkgconf-pkg-config",
+    "platform-python",
+    "sed",
+    "sqlite-libs",
+    "tar",
+    "unzip",
+    "which",
+    "xz",
+    "xz-libs",
+    "zip",
+    "zlib",
+}
+HOST_RUNTIME_POWERTOOLS_FORWARD = {"meson", "ninja-build"}
+HOST_RUNTIME_REPOSITORIES = {
+    "baseos": (
+        "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/"
+    ),
+    "appstream": (
+        "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/"
+    ),
+    "powertools": (
+        "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/"
+    ),
+}
+HOST_RUNTIME_ALLOWED_DEVEL = {
+    "gcc-toolset-15-libstdc++-devel",
+    "glibc-devel",
+    "libxcrypt-devel",
+    "platform-python-devel",
+    "python36-devel",
+}
+HOST_RUNTIME_FORBIDDEN = {
+    "bzip2-devel",
+    "dejagnu",
+    "expect",
+    "gmp-devel",
+    "gperf",
+    "libffi-devel",
+    "libmpc-devel",
+    "libuuid-devel",
+    "libzstd-devel",
+    "mpfr-devel",
+    "openssl-devel",
+    "redhat-rpm-config",
+    "rpm-build",
+    "scl-utils-build",
+    "sqlite-devel",
+    "xz-devel",
+    "zlib-devel",
+}
 HOST_MODULES = [
     "perl:5.26",
     "perl-IO-Socket-SSL:2.066",
@@ -362,7 +443,114 @@ def expected_role_roots(role):
         "host-build-common": HOST_COMMON_ROOTS,
         "host-gcc-build": HOST_GCC_ROOTS,
         "host-python-build": HOST_PYTHON_ROOTS,
+        "host-runtime": HOST_RUNTIME_ROOTS,
     }[role]
+
+
+def validate_locked_host_runtime_contract(transaction):
+    """Enforce the product runtime policy without reopening its plan."""
+    identity = transaction["identity"]
+    if identity != {
+        "name": "host-runtime-el8-x86_64",
+        "role": "host-runtime",
+        "distribution": "rocky",
+        "release": "8.10",
+        "baseline": "el8",
+        "arch": "x86_64",
+        "target_triple": None,
+    }:
+        raise ValidationError("locked host runtime identity differs")
+    if transaction["base"] != {
+        "mode": "image",
+        "parent_lock": None,
+        "parent_sha256": None,
+    }:
+        raise ValidationError("locked host runtime base differs")
+    if transaction["solver_policy"] != {
+        "allowed_arches": ["x86_64", "noarch"],
+        "install_weak_deps": False,
+        "best": True,
+        "strict": True,
+        "allow_erasing": False,
+        "module_platform_id": "platform:el8",
+        "enabled_modules": sorted(HOST_MODULES),
+    }:
+        raise ValidationError("locked host runtime solver policy differs")
+    if transaction["resolver"]["load_system_repo"] is not True:
+        raise ValidationError("host runtime must resolve from the image RPMDB")
+    repositories = {
+        item["id"]: item["baseurl"] for item in transaction["repositories"]
+    }
+    if repositories != HOST_RUNTIME_REPOSITORIES:
+        raise ValidationError("locked host runtime repositories differ")
+    requests = transaction["requests"]
+    request_names = [item["name"] for item in requests]
+    if request_names != sorted(HOST_RUNTIME_ROOTS):
+        raise ValidationError("locked host runtime roots differ")
+    for request in requests:
+        resolved_name, resolved_arch = nevra_name_arch(
+            request["resolved_nevra"]
+        )
+        if (
+            request["arch"] != "any"
+            or request["purpose"] != "host-runtime"
+            or resolved_name != request["name"]
+            or resolved_arch not in ("x86_64", "noarch")
+        ):
+            raise ValidationError("locked host runtime request differs")
+    forward = [
+        item
+        for item in transaction["items"]
+        if item["action"] in ("install", "upgrade")
+    ]
+    removed = [
+        item for item in transaction["items"] if item["action"] == "remove"
+    ]
+    powertools_names = {
+        item["name"]
+        for item in forward
+        if item["repo_id"] == "powertools"
+    }
+    if powertools_names != HOST_RUNTIME_POWERTOOLS_FORWARD:
+        raise ValidationError("host runtime PowerTools package set differs")
+    base = validate_manifest(
+        transaction["manifests"]["base"], "host runtime base manifest"
+    )
+    remove_manifest = validate_manifest(
+        transaction["manifests"]["remove"],
+        "host runtime remove manifest",
+    )
+    result = validate_manifest(
+        transaction["manifests"]["result"], "host runtime result manifest"
+    )
+    forward_nevras = {item["nevra"] for item in forward}
+    removed_nevras = {item["nevra"] for item in removed}
+    if (
+        removed_nevras != set(remove_manifest)
+        or (set(base) - removed_nevras) | forward_nevras != set(result)
+    ):
+        raise ValidationError("locked host runtime transaction algebra differs")
+    for request in requests:
+        expected_disposition = (
+            "transaction"
+            if request["resolved_nevra"] in forward_nevras
+            else "base"
+        )
+        if (
+            request["resolved_nevra"] not in result
+            or request["disposition"] != expected_disposition
+        ):
+            raise ValidationError("locked host runtime root disposition differs")
+    result_names = {nevra_name_arch(nevra)[0] for nevra in result}
+    forbidden = sorted(result_names.intersection(HOST_RUNTIME_FORBIDDEN))
+    if forbidden:
+        raise ValidationError(
+            "build-only packages entered host runtime: %s"
+            % ", ".join(forbidden)
+        )
+    devel = {name for name in result_names if name.endswith("-devel")}
+    if devel != HOST_RUNTIME_ALLOWED_DEVEL:
+        raise ValidationError("host runtime development package set differs")
 
 
 def validate_plan_semantics(plan):
@@ -391,8 +579,17 @@ def validate_plan_semantics(plan):
             "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/",
             "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/",
         ]
+        if role == "host-runtime":
+            expected_repositories.append("powertools")
+            expected_repository_urls.append(
+                "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/"
+            )
         expected_modules = HOST_MODULES
-        expected_mode = "image" if role == "host-build-common" else "lock"
+        expected_mode = (
+            "image"
+            if role in ("host-build-common", "host-runtime")
+            else "lock"
+        )
         if plan["base"]["mode"] != expected_mode:
             raise ValidationError("%s must use a %s base" % (role, expected_mode))
     if identity["name"] != expected_name:
@@ -606,6 +803,8 @@ def validate_transaction_semantics(transaction):
     if parent is not None:
         if parent["manifests"]["result"] != transaction["manifests"]["base"]:
             raise ValidationError("delta base differs from parent result manifest")
+    if role == "host-runtime":
+        validate_locked_host_runtime_contract(transaction)
     return plan
 
 
@@ -617,7 +816,12 @@ def validate_locked_transaction_semantics(transaction):
     if role == "target-sysroot":
         if arch not in TARGET_TRIPLES or identity["target_triple"] != TARGET_TRIPLES[arch]:
             raise ValidationError("locked target transaction arch/triple mismatch")
-    elif role not in ("host-build-common", "host-gcc-build", "host-python-build"):
+    elif role not in (
+        "host-build-common",
+        "host-gcc-build",
+        "host-python-build",
+        "host-runtime",
+    ):
         raise ValidationError("unsupported locked RPM transaction role")
     elif arch != "x86_64" or identity["target_triple"] is not None:
         raise ValidationError("locked host transaction identity is invalid")
@@ -634,6 +838,8 @@ def validate_locked_transaction_semantics(transaction):
             transaction["manifests"][name],
             "locked transaction %s manifest" % name,
         )
+    if role == "host-runtime":
+        validate_locked_host_runtime_contract(transaction)
 
 
 def load_referenced_transaction(lock, validate_plan=True):

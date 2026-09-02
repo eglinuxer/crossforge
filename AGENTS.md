@@ -10,10 +10,10 @@ The deleted Rust prototype remains at tag `prototype-rust-2026-08-28`. Keep work
 
 - `./scripts/validate-release.py` validates strict JSON and prints its canonical digest.
 - `./scripts/validate-frozen-abi.py` checks both ABI baselines and evidence; `./scripts/validate-python-runtime-providers.py` checks Python's RPM-owned DSO policy.
-- `./scripts/validate-rpm-lock.py locks/sysroot-el8-x86_64.json --require-lock` validates one lock; repeat for aarch64 and the three host locks.
+- `./scripts/validate-rpm-lock.py locks/sysroot-el8-x86_64.json --require-lock` validates one lock; repeat for aarch64 and the four host locks.
 - `./scripts/render-bake.py --check` and `./scripts/render-release-components.py --check` detect generated-file drift.
 - `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
-- `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked` replays all host transactions offline.
+- `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked host-runtime-locked` replays all host transactions offline.
 - `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both real cross slices; aarch64 uses explicit pinned QEMU, never implicit binfmt.
 - `docker buildx bake phase10` requalifies all Python 3.9–3.14 rows for both targets. `python-native-latest` and `python-matrix` select the same six-row contract. Graph existence or a build probe alone is not qualification evidence.
 

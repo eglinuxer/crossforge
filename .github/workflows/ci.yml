@@ -51,11 +51,13 @@ jobs:
           ./scripts/validate-rpm-lock.py config/rpm/host-build-common-el8-x86_64.plan.json
           ./scripts/validate-rpm-lock.py config/rpm/host-gcc-build-el8-x86_64.plan.json
           ./scripts/validate-rpm-lock.py config/rpm/host-python-build-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/host-runtime-el8-x86_64.plan.json
           ./scripts/validate-rpm-lock.py locks/sysroot-el8-x86_64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/sysroot-el8-aarch64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/host-gcc-build-el8-x86_64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/host-python-build-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/host-runtime-el8-x86_64.json --require-lock
       - name: Configuration tests
         run: python3 -m unittest discover -s tests/config -p 'test_*.py'
       - name: Script syntax
@@ -71,13 +73,14 @@ jobs:
         run: ./scripts/render-bake.py --check
       - name: Docker/Bake static checks
         run: |
-          docker buildx bake --check phase4
+          docker buildx bake --check phase4 host-runtime-locked
           docker buildx bake --print phase5 phase6 phase7 phase8 phase9 phase10 >/dev/null
       - name: Locked latest inputs and native build Pythons
         run: |
           docker buildx bake validate platform-python-check \
             host-build-common-locked host-gcc-build-locked \
             host-python-build-locked qemu-aarch64-validated \
+            host-runtime-locked \
             sysroot-x86_64 sysroot-aarch64 python-native-latest \
             python-runtime-clean-x86_64 python-runtime-clean-aarch64 \
             --progress=plain

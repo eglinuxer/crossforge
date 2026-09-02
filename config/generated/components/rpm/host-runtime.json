@@ -30,15 +30,15 @@
     },
     {
       "path": "/host_locks/host-runtime/canonical_sha256",
-      "value": null
+      "value": "d59a0d3b4f70524d370e6db6f3e001fc4447ee123f51a71d6a50af6722139d57"
     },
     {
       "path": "/host_locks/host-runtime/lock_file",
-      "value": null
+      "value": "locks/host-runtime-el8-x86_64.json"
     },
     {
       "path": "/host_locks/host-runtime/status",
-      "value": "pending"
+      "value": "locked"
     },
     {
       "path": "/platforms/build",
@@ -66,5 +66,5 @@
     }
   ],
   "schema_version": 1,
-  "scope": "future"
+  "scope": "build"
 }

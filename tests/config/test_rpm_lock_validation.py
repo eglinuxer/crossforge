@@ -7,6 +7,9 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 VALIDATOR = runpy.run_path(str(REPOSITORY / "scripts/validate-rpm-lock.py"))
+RESOLVER = runpy.run_path(
+    str(REPOSITORY / "scripts/resolve-rpm-transaction.py")
+)
 
 
 class RpmLockValidationTests(unittest.TestCase):
@@ -18,6 +21,7 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "config/rpm/host-build-common-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/host-gcc-build-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/host-python-build-el8-x86_64.plan.json",
+            REPOSITORY / "config/rpm/host-runtime-el8-x86_64.plan.json",
         ]
         cls.transactions = [
             REPOSITORY / "locks/transactions/sysroot-el8-x86_64.json",
@@ -25,6 +29,7 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "locks/transactions/host-build-common-el8-x86_64.json",
             REPOSITORY / "locks/transactions/host-gcc-build-el8-x86_64.json",
             REPOSITORY / "locks/transactions/host-python-build-el8-x86_64.json",
+            REPOSITORY / "locks/transactions/host-runtime-el8-x86_64.json",
         ]
         cls.locks = [
             REPOSITORY / "locks/sysroot-el8-x86_64.json",
@@ -32,6 +37,7 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "locks/host-build-common-el8-x86_64.json",
             REPOSITORY / "locks/host-gcc-build-el8-x86_64.json",
             REPOSITORY / "locks/host-python-build-el8-x86_64.json",
+            REPOSITORY / "locks/host-runtime-el8-x86_64.json",
         ]
 
     def test_current_plans_are_strict_and_semantically_valid(self):
@@ -104,6 +110,162 @@ class RpmLockValidationTests(unittest.TestCase):
             "libzstd-devel",
             {item["name"] for item in python["items"]},
         )
+
+    def test_host_runtime_is_an_independent_user_tool_closure(self):
+        plan = VALIDATOR["load_json"](self.plans[-1])
+        RESOLVER["validate_plan_semantics"](plan)
+        self.assertEqual(plan["identity"]["role"], "host-runtime")
+        self.assertEqual(
+            plan["base"],
+            {"mode": "image", "parent_lock": None, "parent_sha256": None},
+        )
+        self.assertEqual(
+            [repository["id"] for repository in plan["repositories"]],
+            ["baseos", "appstream", "powertools"],
+        )
+        roots = {item["name"] for item in plan["roots"]}
+        self.assertEqual(roots, VALIDATOR["HOST_RUNTIME_ROOTS"])
+        self.assertTrue(
+            {
+                "cmake",
+                "meson",
+                "ninja-build",
+                "git-core",
+                "gcc-toolset-15-gcc-c++",
+            }.issubset(roots)
+        )
+        self.assertFalse(
+            {
+                "rpm-build",
+                "redhat-rpm-config",
+                "scl-utils-build",
+                "libzstd-devel",
+                "openssl-devel",
+            }.intersection(roots)
+        )
+
+        for mutation in ("lock-base", "missing-powertools", "extra-root"):
+            with self.subTest(mutation=mutation):
+                candidate = copy.deepcopy(plan)
+                if mutation == "lock-base":
+                    candidate["base"] = {
+                        "mode": "lock",
+                        "parent_lock": "locks/host-build-common-el8-x86_64.json",
+                        "parent_sha256": "0" * 64,
+                    }
+                else:
+                    if mutation == "missing-powertools":
+                        candidate["repositories"].pop()
+                    else:
+                        extra = copy.deepcopy(candidate["roots"][0])
+                        extra["name"] = "forged-root"
+                        candidate["roots"].append(extra)
+                with self.assertRaises(VALIDATOR["ValidationError"]):
+                    VALIDATOR["validate_document"](candidate)
+                with self.assertRaises(RESOLVER["ResolutionError"]):
+                    RESOLVER["validate_plan_semantics"](candidate)
+
+    def test_host_runtime_transaction_is_clean_and_origin_scoped(self):
+        runtime = VALIDATOR["load_json"](self.transactions[-1])
+        common = VALIDATOR["load_json"](self.transactions[2])
+        lock = VALIDATOR["load_json"](self.locks[-1])
+        self.assertEqual(len(runtime["requests"]), 41)
+        self.assertEqual(len(runtime["items"]), 161)
+        self.assertEqual(len(lock["packages"]), 140)
+        self.assertEqual(
+            len(runtime["manifests"]["result"]["packages"]), 267
+        )
+        self.assertEqual(
+            runtime["manifests"]["base"], common["manifests"]["base"]
+        )
+        self.assertNotEqual(
+            runtime["manifests"]["base"], common["manifests"]["result"]
+        )
+        self.assertEqual(
+            {
+                item["name"]
+                for item in runtime["items"]
+                if item["action"] != "remove"
+                and item["repo_id"] == "powertools"
+            },
+            {"meson", "ninja-build"},
+        )
+        result_names = {
+            VALIDATOR["nevra_name_arch"](nevra)[0]
+            for nevra in runtime["manifests"]["result"]["packages"]
+        }
+        self.assertFalse(
+            result_names.intersection(VALIDATOR["HOST_RUNTIME_FORBIDDEN"])
+        )
+        self.assertTrue(
+            {
+                "bzip2-libs",
+                "libffi",
+                "libuuid",
+                "openssl-libs",
+                "sqlite-libs",
+                "xz-libs",
+                "zlib",
+            }.issubset(result_names)
+        )
+
+    def test_locked_host_runtime_policy_is_plan_independent_and_fail_closed(self):
+        runtime = VALIDATOR["load_json"](self.transactions[-1])
+        VALIDATOR["validate_locked_transaction_semantics"](runtime)
+
+        wrong_origin = copy.deepcopy(runtime)
+        next(
+            item
+            for item in wrong_origin["items"]
+            if item["repo_id"] == "powertools"
+        )["repo_id"] = "appstream"
+
+        wrong_root = copy.deepcopy(runtime)
+        wrong_root["requests"][0]["name"] = "forged-root"
+
+        lock_base = copy.deepcopy(runtime)
+        lock_base["base"] = {
+            "mode": "lock",
+            "parent_lock": "locks/host-build-common-el8-x86_64.json",
+            "parent_sha256": "0" * 64,
+        }
+
+        weak_dependencies = copy.deepcopy(runtime)
+        weak_dependencies["solver_policy"]["install_weak_deps"] = True
+
+        forbidden = copy.deepcopy(runtime)
+        fake = "rpm-build-0:4.14.3-31.el8.x86_64"
+        for name in ("base", "result"):
+            manifest = forbidden["manifests"][name]
+            manifest["packages"].append(fake)
+            manifest["packages"].sort()
+            manifest["canonical_sha256"] = VALIDATOR["canonical_sha256"](
+                manifest["packages"]
+            )
+
+        extra_devel = copy.deepcopy(runtime)
+        fake = "forged-devel-0:1-1.el8.x86_64"
+        for name in ("base", "result"):
+            manifest = extra_devel["manifests"][name]
+            manifest["packages"].append(fake)
+            manifest["packages"].sort()
+            manifest["canonical_sha256"] = VALIDATOR["canonical_sha256"](
+                manifest["packages"]
+            )
+
+        for candidate in (
+            wrong_origin,
+            wrong_root,
+            lock_base,
+            weak_dependencies,
+            forbidden,
+            extra_devel,
+        ):
+            with self.subTest(candidate=candidate["manifests"]["result"]):
+                with self.assertRaises(VALIDATOR["ValidationError"]):
+                    VALIDATOR["validate_locked_transaction_semantics"](
+                        candidate
+                    )
 
     def test_unknown_plan_field_is_rejected(self):
         plan = VALIDATOR["load_json"](self.plans[0])

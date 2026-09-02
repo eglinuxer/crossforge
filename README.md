@@ -15,8 +15,8 @@ build-system-independent DEB/RPM packaging.
 > Phase 10. CPython 3.14.7 additionally passes compile qualification with a
 > private static zstd 1.5.7. Frozen EL8 ABI sets and Python's complete
 > provider-ownership/ELF gates are implemented for both targets. vcpkg,
-> packaging, the full GCC/Qt suites and the independent minimal host-runtime
-> lock remain pending.
+> packaging, the full GCC/Qt suites and the final host-runtime SDK rebase
+> remain pending; the independent host-runtime RPM lock itself is complete.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -384,6 +384,29 @@ while Python's eight external providers remain byte-exact in both tiers.
 digest. They project into two target-baseline components and one shared Python
 provider component; only toolchain/Python qualification identities change,
 while every row-local build identity remains stable.
+
+## Phase 12: independent host runtime lock
+
+The user-facing amd64 runtime is now an independent 41-root Rocky transaction,
+not a delta from any compiler or CPython build image:
+
+```console
+$ ./scripts/validate-rpm-lock.py \
+    locks/host-runtime-el8-x86_64.json --require-lock
+$ docker buildx bake host-runtime-locked
+```
+
+Maintainers refresh the evidence with the cache-only
+`rpm-lock-host-runtime` target and review its local output before replacing the
+tracked transaction, lock, and signed `repomd.xml` files.
+
+The lock contains 140 verified RPM payloads and replays 119 installs plus 21
+upgrades offline. It includes native GTS15, CMake, Meson, Ninja, Autotools,
+Git core, pkg-config and common archive/text tools. PowerTools may supply only
+Meson and Ninja. Crossforge build-only RPM tooling and CPython dependency
+development roots are rejected from the resulting closure. Replacing the
+current SDK ancestor and qualifying all build Pythons on this runtime is the
+next slice.
 
 ## Product contract
 

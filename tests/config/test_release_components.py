@@ -744,6 +744,24 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             )
         self.assertEqual(changed(self.components, after), expected)
 
+    def test_host_runtime_lock_promotes_only_its_delivery_component(self):
+        runtime = self.components["rpm/host-runtime"]
+        self.assertEqual(runtime["scope"], "build")
+        release = copy.deepcopy(self.release)
+        release["host_locks"]["host-runtime"] = {
+            "status": "pending",
+            "lock_file": None,
+            "canonical_sha256": None,
+        }
+        pending = RENDERER["render_component_documents"](
+            release, self.rows
+        )
+        self.assertEqual(pending["rpm/host-runtime"]["scope"], "future")
+        self.assertEqual(
+            changed(self.components, pending),
+            {"rpm/host-runtime", "future/product"},
+        )
+
     def test_trust_changes_all_rpm_srpm_and_exact_consumers(self):
         after = self.render_mutation(
             lambda release: release["trust"]["rocky_rpm_key"].__setitem__(

@@ -89,9 +89,9 @@
       "canonical_sha256": "0c3c32ed8090717bd2275d143fd42f444b16bd8a9b37ea1549154cc018a72091"
     },
     "host-runtime": {
-      "status": "pending",
-      "lock_file": null,
-      "canonical_sha256": null
+      "status": "locked",
+      "lock_file": "locks/host-runtime-el8-x86_64.json",
+      "canonical_sha256": "d59a0d3b4f70524d370e6db6f3e001fc4447ee123f51a71d6a50af6722139d57"
     }
   },
   "gts": {

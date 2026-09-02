@@ -5,18 +5,6 @@
   "kind": "crossforge-release-component",
   "materials": [
     {
-      "path": "/host_locks/host-runtime/canonical_sha256",
-      "value": null
-    },
-    {
-      "path": "/host_locks/host-runtime/lock_file",
-      "value": null
-    },
-    {
-      "path": "/host_locks/host-runtime/status",
-      "value": "pending"
-    },
-    {
       "path": "/nfpm/source/sha256",
       "value": null
     },

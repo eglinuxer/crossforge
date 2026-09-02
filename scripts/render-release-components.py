@@ -276,6 +276,18 @@ def python_row_name(entry):
     return "cp" + minor.replace(".", "")
 
 
+def host_lock_scope(release, role):
+    """Promote the independent runtime component only after it is locked."""
+    if role != "host-runtime":
+        return "build"
+    status = release["host_locks"][role]["status"]
+    require(
+        status in ("pending", "locked"),
+        "host runtime lock status is invalid",
+    )
+    return "build" if status == "locked" else "future"
+
+
 def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
     """Assign every release leaf one primary semantic cache class.
 
@@ -388,7 +400,7 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             }
             and path[2] in {"status", "lock_file", "canonical_sha256"}
         ):
-            category = "future" if path[1] == "host-runtime" else "build"
+            category = host_lock_scope(release, path[1])
         elif path in (("gts", "major"), ("gts", "gcc_version")):
             category = "build"
         elif (
@@ -590,7 +602,7 @@ def _render_expected_components(release, implemented_rows):
     ):
         add(
             "rpm/%s" % role,
-            "future" if role == "host-runtime" else "build",
+            host_lock_scope(release, role),
             selector(*(rpm_common + (("host_locks", role),))),
         )
 

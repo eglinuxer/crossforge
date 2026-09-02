@@ -78,6 +78,12 @@ target "host-build-common-locked" {
   output   = ["type=cacheonly"]
 }
 
+target "host-runtime-locked" {
+  inherits = ["_common"]
+  target   = "host-runtime-locked"
+  output   = ["type=cacheonly"]
+}
+
 target "host-gcc-build-locked" {
   inherits = ["_common"]
   target   = "host-gcc-build-locked"
@@ -150,6 +156,13 @@ target "rpm-lock-sysroot-aarch64" {
 target "rpm-lock-host-build-common" {
   inherits = ["_common"]
   target   = "rpm-lock-host-build-common"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-lock-host-runtime" {
+  inherits = ["_common"]
+  target   = "rpm-lock-host-runtime"
   no-cache = true
   output   = ["type=cacheonly"]
 }

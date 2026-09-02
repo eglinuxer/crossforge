@@ -79,7 +79,8 @@
             "target-sysroot",
             "host-build-common",
             "host-gcc-build",
-            "host-python-build"
+            "host-python-build",
+            "host-runtime"
           ]
         },
         "distribution": {

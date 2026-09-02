@@ -12,6 +12,17 @@ INSTALLER = runpy.run_path(str(REPOSITORY / "scripts/install-host-rpm-lock.py"))
 
 
 class InstallHostRPMLockTests(unittest.TestCase):
+    def test_all_locked_host_roles_are_supported(self):
+        self.assertEqual(
+            INSTALLER["ALLOWED_ROLES"],
+            {
+                "host-build-common",
+                "host-gcc-build",
+                "host-python-build",
+                "host-runtime",
+            },
+        )
+
     def test_install_marker_binds_release_component_digest(self):
         base = ["base-0:1-1.x86_64"]
         result = ["base-0:1-1.x86_64", "extra-0:1-1.x86_64"]

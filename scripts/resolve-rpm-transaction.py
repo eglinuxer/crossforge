@@ -580,6 +580,13 @@ def validate_plan_semantics(plan):
                 "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/",
             ),
         ]
+        if role == "host-runtime":
+            expected_repositories.append(
+                (
+                    "powertools",
+                    "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/",
+                )
+            )
     if identity["name"] != expected_name:
         raise ResolutionError("plan identity name differs from its role/architecture")
     policy = plan["solver_policy"]
@@ -615,11 +622,31 @@ def validate_plan_semantics(plan):
             if root["name"] in FORBIDDEN_PACKAGES:
                 raise ResolutionError("forbidden RPM root: %s" % root["name"])
     base = plan["base"]
+    expected_base_mode = (
+        "empty"
+        if role == "target-sysroot"
+        else (
+            "image"
+            if role in ("host-build-common", "host-runtime")
+            else "lock"
+        )
+    )
+    if base["mode"] != expected_base_mode:
+        raise ResolutionError(
+            "%s must use a %s base" % (role, expected_base_mode)
+        )
     if base["mode"] == "lock":
         if not base["parent_lock"] or not base["parent_sha256"]:
             raise ResolutionError("lock base requires parent_lock and parent_sha256")
     elif base["parent_lock"] is not None or base["parent_sha256"] is not None:
         raise ResolutionError("non-lock base must not name a parent lock")
+    contract = runpy.run_path(
+        str(Path(__file__).with_name("validate-rpm-lock.py"))
+    )
+    try:
+        contract["validate_plan_semantics"](plan)
+    except contract["ValidationError"] as error:
+        raise ResolutionError(str(error)) from error
 
 
 def package_identity(package):
