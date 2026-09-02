@@ -11,6 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import abi_contract
 from loader_evidence import normalize_loader_listing
 
 
@@ -20,16 +21,16 @@ class QualificationError(RuntimeError):
 
 TARGET_PROFILES = {
     "x86_64-unknown-linux-gnu": {
-        "machine": "Advanced Micro Devices X86-64",
-        "interpreter": "/lib64/ld-linux-x86-64.so.2",
         "arch": "x86_64",
     },
     "aarch64-unknown-linux-gnu": {
-        "machine": "AArch64",
-        "interpreter": "/lib/ld-linux-aarch64.so.1",
         "arch": "aarch64",
     },
 }
+
+QUALIFIED_ELF_PROFILE = "crossforge-qualified-v1"
+COMPILER_DEFAULT_ELF_PROFILE = "compiler-default-observation"
+HARDENED_LINKER_FLAG = "-Wl,-z,relro,-z,now"
 
 
 def run(arguments, cwd=None, env=None):
@@ -54,29 +55,45 @@ def require(condition, message):
         raise QualificationError(message)
 
 
-def version_tuple(text):
-    return tuple(int(part) for part in text.split("."))
-
-
-def audit_versions(readelf_output, binary):
-    ceilings = {
-        "GLIBC": version_tuple("2.28"),
-        "GLIBCXX": version_tuple("3.4.25"),
-        "CXXABI": version_tuple("1.3.11"),
-        "GCC": version_tuple("7.0.0"),
+def load_abi_baseline(path, arch, triple):
+    """Load the exact canonical EL8 baseline for one trusted target input."""
+    baseline = abi_contract.load_baseline(
+        path,
+        expected_arch=arch,
+        expected_triple=triple,
+    )
+    require(baseline["baseline"] == "el8", "unsupported ABI baseline identity")
+    canonical = abi_contract.canonical_bytes(baseline) + b"\n"
+    try:
+        serialized = path.read_bytes()
+    except OSError as error:
+        raise QualificationError("%s: %s" % (path, error)) from error
+    require(serialized == canonical, "ABI baseline is not canonical JSON")
+    return baseline, {
+        "baseline": baseline["baseline"],
+        "canonical_sha256": abi_contract.canonical_sha256(baseline),
+        "schema": baseline["$schema"],
+        "target": dict(baseline["target"]),
     }
-    seen = {}
-    for namespace, version in re.findall(
-        r"\b(GLIBC|GLIBCXX|CXXABI|GCC)_([0-9]+(?:\.[0-9]+)+)\b", readelf_output
-    ):
-        parsed = version_tuple(version)
-        seen[namespace] = max(parsed, seen.get(namespace, (0,)))
-        if parsed > ceilings[namespace]:
-            raise QualificationError(
-                "%s requires %s_%s above the EL8 ceiling"
-                % (binary, namespace, version)
-            )
-    return {name: ".".join(str(part) for part in value) for name, value in seen.items()}
+
+
+def audit_artifact(readelf, binary, baseline, artifact, profile_name):
+    """Collect GNU readelf evidence once and apply the shared ABI contract."""
+    dynamic_symbols, _ = run([readelf, "--wide", "--dyn-syms", binary])
+    version_info, _ = run([readelf, "--wide", "--version-info", binary])
+    dynamic_section, _ = run([readelf, "--wide", "-d", binary])
+    program_headers, _ = run([readelf, "--wide", "-l", binary])
+    elf_header, _ = run([readelf, "--wide", "-h", binary])
+    return abi_contract.audit_readelf(
+        baseline,
+        artifact,
+        dynamic_symbols,
+        version_info,
+        dynamic_section,
+        program_headers,
+        elf_header,
+        profile_name=profile_name,
+    )
 
 
 def main():
@@ -88,6 +105,7 @@ def main():
     parser.add_argument("--work", type=Path, required=True)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--release", type=Path, required=True)
+    parser.add_argument("--abi-baseline", type=Path, required=True)
     parser.add_argument("--skip-sysroot-execution", action="store_true")
     arguments = parser.parse_args()
 
@@ -134,9 +152,16 @@ def main():
         release_targets[0]["sysroot"]["canonical_sha256"] == sysroot_digest,
         "qualified sysroot differs from release.json",
     )
+    abi_baseline, abi_baseline_identity = load_abi_baseline(
+        arguments.abi_baseline,
+        profile["arch"],
+        arguments.target,
+    )
+    target_interpreter = abi_contract.TARGETS[profile["arch"]]["interpreter"]
     report = {
         "target": arguments.target,
         "binaries": {},
+        "abi_baseline": abi_baseline_identity,
         "release_sha256": hashlib.sha256(release_canonical.encode("utf-8")).hexdigest(),
         "sysroot_sha256": sysroot_digest,
         "sources": {
@@ -220,6 +245,7 @@ def main():
     lto = arguments.work / "lto"
     throw_library = arguments.work / "libthrow.so"
     catch = arguments.work / "catch"
+    compiler_default_canary = arguments.work / "compiler-default-canary"
     link_map = arguments.work / "modern.map"
     nonshared_audit = arguments.work / "libstdc++-nonshared-audit.so"
     libgcc_helper_object = arguments.work / "libgcc-helper.o"
@@ -228,7 +254,10 @@ def main():
     lto_archive_object = arguments.work / "lto-archive.o"
     lto_archive = arguments.work / "liblto-archive.a"
     lto_archive_executable = arguments.work / "lto-archive"
-    run([gcc, "-O2", smoke / "hello.c", "-o", hello])
+    run([gcc, "-O2", smoke / "hello.c", HARDENED_LINKER_FLAG, "-o", hello])
+    # This one binary deliberately observes the unmodified compiler defaults.
+    # It is compile-only evidence and is not a qualified runtime smoke binary.
+    run([gcc, "-O2", smoke / "hello.c", "-o", compiler_default_canary])
     trace_stdout, trace_stderr = run(
         [
             gxx,
@@ -237,6 +266,7 @@ def main():
             smoke / "modern.cc",
             "-Wl,-t",
             "-Wl,-Map=%s" % link_map,
+            HARDENED_LINKER_FLAG,
             "-o",
             modern,
         ]
@@ -254,7 +284,17 @@ def main():
     )
     require(nonshared_members, "modern C++ link extracted no nonshared archive member")
     report["nonshared_members"] = nonshared_members
-    run([gcc, "-O2", "-flto", smoke / "lto.c", "-o", lto])
+    run(
+        [
+            gcc,
+            "-O2",
+            "-flto",
+            smoke / "lto.c",
+            HARDENED_LINKER_FLAG,
+            "-o",
+            lto,
+        ]
+    )
     run([gcc, "-O2", "-flto", "-c", smoke / "lto_archive.c", "-o", lto_archive_object])
     run([gcc_ar, "rcs", lto_archive, lto_archive_object])
     run([gcc_ranlib, lto_archive])
@@ -265,6 +305,7 @@ def main():
             "-flto",
             smoke / "lto_archive_main.c",
             lto_archive,
+            HARDENED_LINKER_FLAG,
             "-o",
             lto_archive_executable,
         ]
@@ -278,6 +319,7 @@ def main():
             gcc,
             libgcc_helper_object,
             "-Wl,-Map=%s" % libgcc_map,
+            HARDENED_LINKER_FLAG,
             "-o",
             libgcc_helper,
         ]
@@ -298,7 +340,19 @@ def main():
     require(libgcc_members, "libgcc helper link extracted no cross-built archive member")
     report["libgcc_helper_symbols"] = helper_symbols
     report["libgcc_members"] = libgcc_members
-    run([gxx, "-std=c++20", "-O2", "-fPIC", "-shared", smoke / "throw.cc", "-o", throw_library])
+    run(
+        [
+            gxx,
+            "-std=c++20",
+            "-O2",
+            "-fPIC",
+            "-shared",
+            smoke / "throw.cc",
+            HARDENED_LINKER_FLAG,
+            "-o",
+            throw_library,
+        ]
+    )
     run(
         [
             gxx,
@@ -309,6 +363,7 @@ def main():
             "-lthrow",
             "-Wl,-z,origin",
             "-Wl,-rpath,$ORIGIN",
+            HARDENED_LINKER_FLAG,
             "-o",
             catch,
         ]
@@ -330,34 +385,38 @@ def main():
             "-lm",
             "-lpthread",
             "-ldl",
+            HARDENED_LINKER_FLAG,
             "-o",
             nonshared_audit,
         ]
     )
 
-    expected_machine = profile["machine"]
-    for binary in (
-        hello,
-        modern,
-        lto,
-        lto_archive_executable,
-        libgcc_helper,
-        throw_library,
-        catch,
-        nonshared_audit,
+    for binary, artifact, profile_name in (
+        (hello, "toolchain/hello", QUALIFIED_ELF_PROFILE),
+        (modern, "toolchain/modern", QUALIFIED_ELF_PROFILE),
+        (lto, "toolchain/lto", QUALIFIED_ELF_PROFILE),
+        (lto_archive_executable, "toolchain/lto-archive", QUALIFIED_ELF_PROFILE),
+        (libgcc_helper, "toolchain/libgcc-helper", QUALIFIED_ELF_PROFILE),
+        (throw_library, "toolchain/libthrow.so", QUALIFIED_ELF_PROFILE),
+        (catch, "toolchain/catch", QUALIFIED_ELF_PROFILE),
+        (
+            nonshared_audit,
+            "toolchain/libstdc++-nonshared-audit.so",
+            QUALIFIED_ELF_PROFILE,
+        ),
+        (
+            compiler_default_canary,
+            "toolchain/compiler-default-canary",
+            COMPILER_DEFAULT_ELF_PROFILE,
+        ),
     ):
-        headers, _ = run([readelf, "-h", binary])
-        require("Machine:" in headers and expected_machine in headers, "%s has wrong ELF machine" % binary)
-        dynamic, _ = run([readelf, "-d", binary])
-        require("/work" not in dynamic and str(arguments.work) not in dynamic, "%s embeds a build path" % binary)
-        require("TEXTREL" not in dynamic, "%s contains text relocations" % binary)
-        require("RELR" not in dynamic, "%s uses DT_RELR above the EL8 contract" % binary)
-        program_headers, _ = run([readelf, "--wide", "-l", binary])
-        stack_lines = [line for line in program_headers.splitlines() if "GNU_STACK" in line]
-        require(stack_lines and all("RWE" not in line for line in stack_lines), "%s requests an executable stack" % binary)
-        symbols, _ = run([readelf, "--wide", "--dyn-syms", binary])
-        require("GLIBC_PRIVATE" not in symbols, "%s requires GLIBC_PRIVATE" % binary)
-        report["binaries"][binary.name] = audit_versions(symbols, binary)
+        report["binaries"][binary.name] = audit_artifact(
+            readelf,
+            binary,
+            abi_baseline,
+            artifact,
+            profile_name,
+        )
 
     catch_dynamic, _ = run([readelf, "-d", catch])
     for needed in ("libthrow.so", "libstdc++.so.6", "libgcc_s.so.1", "libc.so.6"):
@@ -367,11 +426,6 @@ def main():
         "catch binary does not carry an origin-relative runtime search path",
     )
 
-    program_headers, _ = run([readelf, "-l", hello])
-    require(
-        profile["interpreter"] in program_headers,
-        "unexpected target ELF interpreter",
-    )
     if arguments.skip_sysroot_execution:
         report["locked_sysroot_execution"] = {
             "status": "not_run",
@@ -414,7 +468,7 @@ def main():
             [
                 "chroot",
                 arguments.sysroot,
-                profile["interpreter"],
+                target_interpreter,
                 "--list",
                 "/opt/crossforge-qualification/catch",
             ]
@@ -467,6 +521,6 @@ def main():
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except QualificationError as error:
+    except (QualificationError, abi_contract.AbiContractError) as error:
         print("error: %s" % error, file=sys.stderr)
         raise SystemExit(1)

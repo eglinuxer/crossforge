@@ -693,12 +693,14 @@ COPY --from=gcc-aarch64 /work/gcc-stage/opt/ /opt/
 # ABI sets, full tests and the release supply chain exist.
 FROM host-build-common-locked AS toolchain-x86_64-qualify-build
 COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY abi/el8/x86_64.json /src/abi/el8/x86_64.json
 COPY --from=sysroot-x86_64 \
   /opt/crossforge/sysroots/el8/x86_64/ \
   /opt/crossforge/sysroots/el8/x86_64/
 COPY --from=binutils-x86_64 /work/binutils-stage/ /
 COPY --from=gcc-x86_64 /work/gcc-stage/ /
 COPY scripts/qualify-toolchain.py /work/scripts/qualify-toolchain.py
+COPY scripts/abi_contract.py /work/scripts/abi_contract.py
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY tests/smoke/ /work/tests/smoke/
 RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py \
@@ -707,16 +709,19 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
       --target x86_64-unknown-linux-gnu \
       --work /work/qualification/x86_64 \
       --report /work/qualification/x86_64.json \
-      --release /src/config/release.json
+      --release /src/config/release.json \
+      --abi-baseline /src/abi/el8/x86_64.json
 
 FROM host-build-common-locked AS toolchain-aarch64-qualify-build
 COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY abi/el8/aarch64.json /src/abi/el8/aarch64.json
 COPY --from=sysroot-aarch64 \
   /opt/crossforge/sysroots/el8/aarch64/ \
   /opt/crossforge/sysroots/el8/aarch64/
 COPY --from=binutils-aarch64 /work/binutils-stage/ /
 COPY --from=gcc-aarch64 /work/gcc-stage/ /
 COPY scripts/qualify-toolchain.py /work/scripts/qualify-toolchain.py
+COPY scripts/abi_contract.py /work/scripts/abi_contract.py
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY tests/smoke/ /work/tests/smoke/
 RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py \
@@ -726,6 +731,7 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
       --work /work/qualification/aarch64 \
       --report /work/qualification/aarch64-compile.json \
       --release /src/config/release.json \
+      --abi-baseline /src/abi/el8/aarch64.json \
       --skip-sysroot-execution
 
 # Run the aarch64 artifacts in both the locked sysroot and a clean arm64 Rocky
