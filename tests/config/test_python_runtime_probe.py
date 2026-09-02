@@ -192,14 +192,13 @@ class PythonRuntimeProbeContractTests(unittest.TestCase):
             ZIP_ZSTANDARD = 93
             ZipFile = FakeZipArchive
 
-        original_import = PROBE["importlib"].import_module
+        imported_modules = []
 
         def import_module(name):
+            imported_modules.append(name)
             if name == "compression.zstd":
                 return FakeZstd
-            if name == "_zstd":
-                return object()
-            return original_import(name)
+            return object()
 
         probe_globals = PROBE["exercise_zstd"].__globals__
         with mock.patch.object(
@@ -235,6 +234,12 @@ class PythonRuntimeProbeContractTests(unittest.TestCase):
             },
         )
         self.assertEqual(imports[-2:], ["_zstd", "compression.zstd"])
+        self.assertEqual(
+            imports,
+            list(PROBE["REQUIRED_IMPORTS"])
+            + ["_zstd", "compression.zstd"],
+        )
+        self.assertEqual(imported_modules[-len(imports):], imports)
         for expected in (
             "corrupt",
             "dictionary-roundtrip",
