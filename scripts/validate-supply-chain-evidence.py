@@ -83,6 +83,28 @@ def load_cpython_patch(repository, relative_path):
     return payload
 
 
+def load_locked_file(repository, relative_path, description):
+    require(
+        isinstance(relative_path, str)
+        and relative_path
+        and not relative_path.startswith("/")
+        and ".." not in Path(relative_path).parts,
+        "invalid %s path" % description,
+    )
+    root = repository.resolve()
+    expected = root / relative_path
+    try:
+        path = expected.resolve()
+        path.relative_to(root)
+    except (OSError, RuntimeError, ValueError) as error:
+        raise EvidenceError("%s path escaped repository" % description) from error
+    require(path == expected and path.is_file(), "%s is missing or non-canonical" % description)
+    try:
+        return path.read_bytes()
+    except OSError as error:
+        raise EvidenceError("%s: %s" % (path, error)) from error
+
+
 def sha256(payload):
     return "sha256:" + hashlib.sha256(payload).hexdigest()
 
@@ -377,6 +399,87 @@ def validate_evidence(config, repository):
     )
     git_headers(commit_payload)
 
+    zstd = config["python"]["zstd"]
+    zstd_source = zstd["source"]
+    zstd_signature = zstd_source["signature"]
+    zstd_key = zstd_signature["key"]
+    zstd_git = zstd_source["git"]
+    zstd_license = zstd["license"]
+    require(zstd["version"] == "1.5.7", "zstd version policy mismatch")
+    expected_zstd_url = (
+        "https://github.com/facebook/zstd/releases/download/v1.5.7/"
+        "zstd-1.5.7.tar.gz"
+    )
+    require(
+        zstd_source["status"] == "locked"
+        and zstd_source["url"] == expected_zstd_url
+        and zstd_source["sha256"]
+        == "eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3"
+        and zstd_source["size"] == 2434947,
+        "zstd release archive identity mismatch",
+    )
+    signature_payload = load_evidence(repository, zstd_signature["evidence"])
+    require(
+        zstd_signature["url"] == expected_zstd_url + ".sig"
+        and len(signature_payload) == zstd_signature["size"] == 858
+        and hashlib.sha256(signature_payload).hexdigest()
+        == zstd_signature["sha256"]
+        == "24425933fb954f4608ae9383bc37ad8398e50364c1ec30bbdb5adbfe88209fb1"
+        and signature_payload.startswith(b"-----BEGIN PGP SIGNATURE-----\n")
+        and signature_payload.rstrip().endswith(b"-----END PGP SIGNATURE-----"),
+        "zstd detached signature evidence mismatch",
+    )
+    key_payload = load_locked_file(repository, zstd_key["file"], "zstd release key")
+    require(
+        hashlib.sha256(key_payload).hexdigest()
+        == zstd_key["sha256"]
+        == "7ef8dd39f90db88f1f95e9a57db783cfc96eba95c9a8f91d52f6ca99d98fc13d"
+        and zstd_key["fingerprint"]
+        == "4ef4ac63455fc9f4545d9b7def8fe99528b52ffd"
+        and key_payload.startswith(b"-----BEGIN PGP PUBLIC KEY BLOCK-----\n")
+        and key_payload.rstrip().endswith(b"-----END PGP PUBLIC KEY BLOCK-----"),
+        "zstd release key identity mismatch",
+    )
+    zstd_tag_payload = load_evidence(repository, zstd_git["tag_evidence"])
+    zstd_commit_payload = load_evidence(repository, zstd_git["commit_evidence"])
+    require(
+        zstd_git["repository"] == "https://github.com/facebook/zstd.git"
+        and zstd_git["tag"] == "v1.5.7"
+        and git_object_id("tag", zstd_tag_payload)
+        == zstd_git["tag_object"]
+        == "ac66b19e6bd6b83238bf008eecc1298105298532"
+        and git_object_id("commit", zstd_commit_payload)
+        == zstd_git["commit"]
+        == "f8745da6ff1ad1e7bab384bd1f9d742439278e99",
+        "zstd Git identity mismatch",
+    )
+    zstd_tag_headers = git_headers(zstd_tag_payload)
+    require(
+        single_header(zstd_tag_headers, "object") == zstd_git["commit"]
+        and single_header(zstd_tag_headers, "type") == "commit"
+        and single_header(zstd_tag_headers, "tag") == zstd_git["tag"]
+        and b"-----BEGIN PGP SIGNATURE-----" in zstd_tag_payload
+        and b"-----END PGP SIGNATURE-----" in zstd_tag_payload,
+        "zstd signed tag evidence mismatch",
+    )
+    require(
+        zstd_commit_payload.startswith(b"tree ")
+        and b"\ngpgsig -----BEGIN PGP SIGNATURE-----\n" in zstd_commit_payload
+        and b" -----END PGP SIGNATURE-----\n" in zstd_commit_payload,
+        "zstd commit evidence is malformed",
+    )
+    require(
+        zstd_license
+        == {
+            "expression": "BSD-3-Clause",
+            "license_file": "LICENSE",
+            "license_sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8",
+            "copying_file": "COPYING",
+            "copying_sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505",
+        },
+        "zstd selected license identity mismatch",
+    )
+
     python_signers = {
         "3.9": ("lukasz@langa.pl", "https://github.com/login/oauth"),
         "3.10": ("pablogsal@python.org", "https://accounts.google.com"),
@@ -569,6 +672,9 @@ def validate_evidence(config, repository):
         "python_sources": len(config["python"]["versions"]),
         "python_patches": python_patch_count,
         "python_sigstore_status": "archived-unverified",
+        "zstd_tag_object": zstd_git["tag_object"],
+        "zstd_commit": zstd_git["commit"],
+        "zstd_signature_sha256": zstd_signature["sha256"],
     }
 
 
@@ -586,13 +692,14 @@ def main():
     result = validate_evidence(config, repository)
     print(
         "valid supply-chain evidence: Rocky %s; QEMU %s; source %s; "
-        "CPython Sigstore bundles %s; patches %d"
+        "CPython Sigstore bundles %s; patches %d; zstd %s"
         % (
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
             result["qemu_commit"],
             result["python_sigstore_status"],
             result["python_patches"],
+            result["zstd_commit"],
         )
     )
     return 0

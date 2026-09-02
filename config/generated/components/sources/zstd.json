@@ -1,0 +1,102 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "sources/zstd",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/python/zstd/license/copying_file",
+      "value": "COPYING"
+    },
+    {
+      "path": "/python/zstd/license/copying_sha256",
+      "value": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+    },
+    {
+      "path": "/python/zstd/license/expression",
+      "value": "BSD-3-Clause"
+    },
+    {
+      "path": "/python/zstd/license/license_file",
+      "value": "LICENSE"
+    },
+    {
+      "path": "/python/zstd/license/license_sha256",
+      "value": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+    },
+    {
+      "path": "/python/zstd/source/git/commit",
+      "value": "f8745da6ff1ad1e7bab384bd1f9d742439278e99"
+    },
+    {
+      "path": "/python/zstd/source/git/commit_evidence",
+      "value": "evidence/git/zstd-v1.5.7.commit.b64"
+    },
+    {
+      "path": "/python/zstd/source/git/repository",
+      "value": "https://github.com/facebook/zstd.git"
+    },
+    {
+      "path": "/python/zstd/source/git/tag",
+      "value": "v1.5.7"
+    },
+    {
+      "path": "/python/zstd/source/git/tag_evidence",
+      "value": "evidence/git/zstd-v1.5.7.tag.b64"
+    },
+    {
+      "path": "/python/zstd/source/git/tag_object",
+      "value": "ac66b19e6bd6b83238bf008eecc1298105298532"
+    },
+    {
+      "path": "/python/zstd/source/sha256",
+      "value": "eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3"
+    },
+    {
+      "path": "/python/zstd/source/signature/evidence",
+      "value": "evidence/gpg/zstd-1.5.7.tar.gz.sig.b64"
+    },
+    {
+      "path": "/python/zstd/source/signature/key/file",
+      "value": "keys/ZSTD-RELEASE-KEY.asc"
+    },
+    {
+      "path": "/python/zstd/source/signature/key/fingerprint",
+      "value": "4ef4ac63455fc9f4545d9b7def8fe99528b52ffd"
+    },
+    {
+      "path": "/python/zstd/source/signature/key/sha256",
+      "value": "7ef8dd39f90db88f1f95e9a57db783cfc96eba95c9a8f91d52f6ca99d98fc13d"
+    },
+    {
+      "path": "/python/zstd/source/signature/sha256",
+      "value": "24425933fb954f4608ae9383bc37ad8398e50364c1ec30bbdb5adbfe88209fb1"
+    },
+    {
+      "path": "/python/zstd/source/signature/size",
+      "value": 858
+    },
+    {
+      "path": "/python/zstd/source/signature/url",
+      "value": "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz.sig"
+    },
+    {
+      "path": "/python/zstd/source/size",
+      "value": 2434947
+    },
+    {
+      "path": "/python/zstd/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/python/zstd/source/url",
+      "value": "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz"
+    },
+    {
+      "path": "/python/zstd/version",
+      "value": "1.5.7"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

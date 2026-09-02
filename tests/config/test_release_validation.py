@@ -119,6 +119,55 @@ class ReleaseValidationTests(unittest.TestCase):
             self.assertGreater(source["size"], 0)
             self.assertRegex(source["spec_sha256"], r"^[0-9a-f]{64}$")
 
+    def test_zstd_release_supply_chain_is_exact(self):
+        zstd = self.config["python"]["zstd"]
+        source = zstd["source"]
+        signature = source["signature"]
+        git = source["git"]
+        self.assertEqual(zstd["version"], "1.5.7")
+        self.assertEqual(source["status"], "locked")
+        self.assertEqual(source["size"], 2434947)
+        self.assertEqual(
+            source["sha256"],
+            "eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3",
+        )
+        self.assertEqual(signature["size"], 858)
+        self.assertEqual(
+            signature["key"]["fingerprint"],
+            "4ef4ac63455fc9f4545d9b7def8fe99528b52ffd",
+        )
+        self.assertEqual(
+            git["tag_object"], "ac66b19e6bd6b83238bf008eecc1298105298532"
+        )
+        self.assertEqual(
+            git["commit"], "f8745da6ff1ad1e7bab384bd1f9d742439278e99"
+        )
+        self.assertEqual(zstd["license"]["expression"], "BSD-3-Clause")
+        evidence = EVIDENCE_VALIDATOR["validate_evidence"](
+            self.config, REPOSITORY
+        )
+        self.assertEqual(evidence["zstd_tag_object"], git["tag_object"])
+        self.assertEqual(evidence["zstd_commit"], git["commit"])
+
+    def test_zstd_evidence_and_license_tampering_is_rejected(self):
+        mutations = (
+            (("source", "signature", "sha256"), "0" * 64),
+            (("source", "signature", "key", "fingerprint"), "0" * 40),
+            (("source", "git", "tag_object"), "0" * 40),
+            (("source", "git", "commit"), "0" * 40),
+            (("license", "expression"), "GPL-2.0-only"),
+            (("license", "license_sha256"), "0" * 64),
+        )
+        for path, value in mutations:
+            with self.subTest(path=path):
+                config = copy.deepcopy(self.config)
+                parent = config["python"]["zstd"]
+                for part in path[:-1]:
+                    parent = parent[part]
+                parent[path[-1]] = value
+                with self.assertRaises(EVIDENCE_VALIDATOR["EvidenceError"]):
+                    EVIDENCE_VALIDATOR["validate_evidence"](config, REPOSITORY)
+
     def test_rocky_trust_root_matches_key_file(self):
         trust = self.config["trust"]["rocky_rpm_key"]
         digest = hashlib.sha256((REPOSITORY / trust["file"]).read_bytes()).hexdigest()

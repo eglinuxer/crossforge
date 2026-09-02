@@ -1,0 +1,47 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "zstd/x86_64-build",
+  "dependencies": [
+    {
+      "canonical_sha256": "be14b05aebc58eeb91642e1f3fb019cba033e4801fe489c727e88c7b6bfa1a93",
+      "component": "implementation/zstd-build-policy"
+    },
+    {
+      "canonical_sha256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+      "component": "rpm/host-build-common"
+    },
+    {
+      "canonical_sha256": "6622b38249173dc6521ef3a412f656df5774d2d77c2d86fd21f91dba01e802e5",
+      "component": "sources/zstd"
+    },
+    {
+      "canonical_sha256": "639bdd7c9185ba832790744b2323f95bc4854d2da1aa7c7931ed8f9f0b0ae2a1",
+      "component": "toolchain/x86_64-build"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/targets/0/arch",
+      "value": "x86_64"
+    },
+    {
+      "path": "/targets/0/sysroot/canonical_sha256",
+      "value": "ffe67b4d7448b02be7db774c8d85fdc8b13da695c0184de444949c641876ef57"
+    },
+    {
+      "path": "/targets/0/sysroot/lock_file",
+      "value": "locks/sysroot-el8-x86_64.json"
+    },
+    {
+      "path": "/targets/0/sysroot/status",
+      "value": "locked"
+    },
+    {
+      "path": "/targets/0/triple",
+      "value": "x86_64-unknown-linux-gnu"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

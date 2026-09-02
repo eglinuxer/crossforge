@@ -336,6 +336,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "toolchain/aarch64-build",
             "toolchain/aarch64-qualification",
             "python/qualification",
+            "zstd/aarch64-build",
         }
         expected.update(
             "python/%s-aarch64-build" % row for row in self.row_names
@@ -353,6 +354,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "toolchain/x86_64-build",
             "toolchain/x86_64-qualification",
             "python/qualification",
+            "zstd/x86_64-build",
         }
         expected.update(
             "python/%s-x86_64-build" % row for row in self.row_names
@@ -394,7 +396,8 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         expected = {
             name
             for name in self.components
-            if name.startswith("rpm/") or name.startswith("sources/")
+            if name.startswith("rpm/")
+            or (name.startswith("sources/") and name != "sources/zstd")
         }
         expected.update(
             {
@@ -403,6 +406,9 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "toolchain/x86_64-qualification",
                 "toolchain/aarch64-qualification",
                 "python/qualification",
+                "zstd/host-build",
+                "zstd/x86_64-build",
+                "zstd/aarch64-build",
             }
         )
         for row in self.row_names:
@@ -414,6 +420,93 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 }
             )
         self.assertEqual(changed(self.components, after), expected)
+
+    def test_zstd_source_and_policy_are_isolated_from_python_rows(self):
+        source = self.components["sources/zstd"]
+        self.assertEqual(source["scope"], "build")
+        self.assertEqual(source["dependencies"], [])
+        self.assertTrue(
+            all(
+                material["path"].startswith("/python/zstd/")
+                for material in source["materials"]
+            )
+        )
+        policy = self.components["implementation/zstd-build-policy"]
+        self.assertEqual(policy["scope"], "build")
+        self.assertEqual(policy["dependencies"], [])
+        self.assertEqual(
+            {material["path"] for material in policy["materials"]},
+            {
+                "/@implementation/zstd/exclude_archive_symbols",
+                "/@implementation/zstd/linkage",
+                "/@implementation/zstd/multithread",
+                "/@implementation/zstd/no_trace",
+                "/@implementation/zstd/position_independent_code",
+                "/@implementation/zstd/private",
+                "/@implementation/zstd/selected_license",
+                "/@implementation/zstd/visibility",
+            },
+        )
+        expected_dependencies = {
+            "zstd/host-build": {
+                "rpm/host-build-common",
+                "sources/zstd",
+                "implementation/zstd-build-policy",
+            },
+            "zstd/x86_64-build": {
+                "rpm/host-build-common",
+                "toolchain/x86_64-build",
+                "sources/zstd",
+                "implementation/zstd-build-policy",
+            },
+            "zstd/aarch64-build": {
+                "rpm/host-build-common",
+                "toolchain/aarch64-build",
+                "sources/zstd",
+                "implementation/zstd-build-policy",
+            },
+        }
+        for component, expected in expected_dependencies.items():
+            self.assertEqual(
+                {
+                    dependency["component"]
+                    for dependency in self.components[component]["dependencies"]
+                },
+                expected,
+            )
+        for component, document in self.components.items():
+            if component.startswith("python/cp"):
+                self.assertFalse(
+                    any(
+                        dependency["component"].startswith(("zstd/", "sources/zstd"))
+                        for dependency in document["dependencies"]
+                    ),
+                    component,
+                )
+
+    def test_zstd_metadata_change_has_exact_build_impact(self):
+        mutations = (
+            lambda zstd: zstd["source"].__setitem__("sha256", "0" * 64),
+            lambda zstd: zstd["source"]["signature"].__setitem__(
+                "evidence", "evidence/gpg/changed.b64"
+            ),
+            lambda zstd: zstd["license"].__setitem__(
+                "license_sha256", "0" * 64
+            ),
+        )
+        for mutation in mutations:
+            release = copy.deepcopy(self.release)
+            mutation(release["python"]["zstd"])
+            after = RENDERER["render_component_documents"](release, self.rows)
+            self.assertEqual(
+                changed(self.components, after),
+                {
+                    "sources/zstd",
+                    "zstd/host-build",
+                    "zstd/x86_64-build",
+                    "zstd/aarch64-build",
+                },
+            )
 
     def test_future_python_change_does_not_pollute_current_matrix(self):
         after = self.render_mutation(

@@ -82,6 +82,14 @@ class DockerComponentWiringTests(unittest.TestCase):
         )
         self.assert_no_full_release(block)
 
+    def test_config_validation_copies_the_locked_zstd_release_key(self):
+        block = self.stages["config-validate"]
+        self.assertIn(
+            "COPY keys/ZSTD-RELEASE-KEY.asc ./keys/ZSTD-RELEASE-KEY.asc",
+            block,
+        )
+        self.assertIn("validate-supply-chain-evidence.py", block)
+
     def test_source_fetches_are_exact_component_only_branches(self):
         cases = {
             "gts-gcc-source": "sources/gcc",

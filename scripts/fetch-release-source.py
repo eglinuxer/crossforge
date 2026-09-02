@@ -68,9 +68,14 @@ def source_for(config, component, version=None):
         if len(matches) != 1:
             raise ValidationError("Python source version is not unique: %s" % version)
         source = matches[0]["source"]
+    elif component == "zstd":
+        selected = config["python"]["zstd"]
+        if version is not None and selected["version"] != version:
+            raise ValidationError("zstd source version differs: %s" % version)
+        source = selected["source"]
     else:
         if version is not None:
-            raise ValidationError("--version is only valid for Python sources")
+            raise ValidationError("--version is only valid for Python or zstd sources")
         source = config["gts" if component == "gcc" else "binutils"]["source"]
     if source["status"] != "locked":
         raise ValidationError("%s source is not locked" % component)
@@ -140,7 +145,7 @@ def source_for_component(
     """Read one authenticated source projection without loading release.json."""
     require(expected_scope == "build", "source component scope must be build")
     require(
-        source_kind in ("gcc", "binutils", "python"),
+        source_kind in ("gcc", "binutils", "python", "zstd"),
         "unsupported source kind: %r" % source_kind,
     )
     reader = component_reader()
@@ -155,7 +160,7 @@ def source_for_component(
         raise ValidationError(str(error)) from error
 
     if source_kind == "gcc":
-        require(version is None, "--version is only valid for Python sources")
+        require(version is None, "--version is only valid for Python or zstd sources")
         require(
             expected_component == "sources/gcc",
             "GCC source requires component sources/gcc",
@@ -172,7 +177,7 @@ def source_for_component(
             "string",
         )
     elif source_kind == "binutils":
-        require(version is None, "--version is only valid for Python sources")
+        require(version is None, "--version is only valid for Python or zstd sources")
         require(
             expected_component == "sources/binutils",
             "binutils source requires component sources/binutils",
@@ -188,7 +193,7 @@ def source_for_component(
             "/binutils/version",
             "string",
         )
-    else:
+    elif source_kind == "python":
         require(version is not None, "Python source fetch requires --version")
         match = PYTHON_COMPONENT_RE.match(expected_component)
         require(match is not None, "invalid Python source component name")
@@ -217,6 +222,32 @@ def source_for_component(
         require(
             component_version == version,
             "Python component version differs: expected %s, found %s"
+            % (version, component_version),
+        )
+    else:
+        require(version is not None, "zstd source fetch requires --version")
+        require(
+            expected_component == "sources/zstd",
+            "zstd source requires component sources/zstd",
+        )
+        require(
+            type(version) is str and SOURCE_VERSION_RE.match(version),
+            "invalid zstd source version: %s" % version,
+        )
+        base = "/python/zstd"
+        source_base = base + "/source"
+        component_version = _component_material(
+            reader,
+            document,
+            expected_component,
+            expected_scope,
+            expected_sha256,
+            base + "/version",
+            "string",
+        )
+        require(
+            component_version == version,
+            "zstd component version differs: expected %s, found %s"
             % (version, component_version),
         )
 
@@ -249,6 +280,15 @@ def source_for_component(
         require(
             source["url"] == expected_url,
             "Python source URL differs from version %s" % version,
+        )
+    elif source_kind == "zstd":
+        expected_url = (
+            "https://github.com/facebook/zstd/releases/download/v%s/"
+            "zstd-%s.tar.gz" % (version, version)
+        )
+        require(
+            source["url"] == expected_url,
+            "zstd source URL differs from version %s" % version,
         )
     return source
 
@@ -428,7 +468,9 @@ def fetch(source, output):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("source_kind", choices=("gcc", "binutils", "python"))
+    parser.add_argument(
+        "source_kind", choices=("gcc", "binutils", "python", "zstd")
+    )
     parser.add_argument("--version")
     parser.add_argument("--output", type=Path, required=True)
     inputs = parser.add_mutually_exclusive_group()

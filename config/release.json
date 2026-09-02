@@ -129,6 +129,41 @@
     }
   ],
   "python": {
+    "zstd": {
+      "version": "1.5.7",
+      "source": {
+        "status": "locked",
+        "url": "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz",
+        "sha256": "eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3",
+        "size": 2434947,
+        "signature": {
+          "url": "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz.sig",
+          "sha256": "24425933fb954f4608ae9383bc37ad8398e50364c1ec30bbdb5adbfe88209fb1",
+          "size": 858,
+          "evidence": "evidence/gpg/zstd-1.5.7.tar.gz.sig.b64",
+          "key": {
+            "file": "keys/ZSTD-RELEASE-KEY.asc",
+            "sha256": "7ef8dd39f90db88f1f95e9a57db783cfc96eba95c9a8f91d52f6ca99d98fc13d",
+            "fingerprint": "4ef4ac63455fc9f4545d9b7def8fe99528b52ffd"
+          }
+        },
+        "git": {
+          "repository": "https://github.com/facebook/zstd.git",
+          "tag": "v1.5.7",
+          "tag_object": "ac66b19e6bd6b83238bf008eecc1298105298532",
+          "tag_evidence": "evidence/git/zstd-v1.5.7.tag.b64",
+          "commit": "f8745da6ff1ad1e7bab384bd1f9d742439278e99",
+          "commit_evidence": "evidence/git/zstd-v1.5.7.commit.b64"
+        }
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "license_file": "LICENSE",
+        "license_sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8",
+        "copying_file": "COPYING",
+        "copying_sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+      }
+    },
     "versions": [
       {
         "version": "3.9.25",

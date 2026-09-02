@@ -1,6 +1,6 @@
 # Supply-chain Evidence
 
-Files below `oci/`, `git/`, and `sigstore/` are base64 envelopes of exact upstream bytes.
+Files below `oci/`, `git/`, `gpg/`, and `sigstore/` are base64 envelopes of exact upstream bytes.
 Base64 keeps OCI manifest digests and Git object IDs reproducible even when a
 text editor changes line endings. `scripts/validate-supply-chain-evidence.py`
 decodes each file, recomputes its content identity, and verifies every
@@ -12,6 +12,16 @@ verification. The validator does prove that the archived tag object names the
 archived commit and that the pinned binfmt provenance used that tag in its
 checkout step. Refresh evidence only as part of an audited release-input
 update; never edit decoded JSON or Git object bodies by hand.
+
+The zstd release input has a separate, locked trust boundary. The checked-in
+release key is content- and fingerprint-locked, `gpg/` preserves the detached
+signature over the selected tarball, and normal source preparation must verify
+that signature offline after verifying the downloaded size and SHA256. The Git
+envelopes preserve the exact signed annotated tag and target commit bytes; the
+supply validator recomputes their Git object IDs and tag-to-commit relationship.
+It also binds the selected BSD-3-Clause license and the upstream `LICENSE` and
+`COPYING` digests. Structural Git evidence is not a substitute for the detached
+tarball signature, and no QEMU OpenPGP claim is implied by the zstd key.
 
 The CPython bundles are content-addressed archival evidence only. The validator
 checks their structure and binds their message/Rekor digests to the selected

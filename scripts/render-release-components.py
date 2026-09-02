@@ -59,6 +59,16 @@ COMPONENT_KEYS = {
     "materials",
 }
 COMPONENT_SCOPES = {"build", "qualification", "supply", "future"}
+ZSTD_BUILD_POLICY = {
+    "linkage": "static",
+    "private": True,
+    "position_independent_code": True,
+    "multithread": True,
+    "visibility": "hidden",
+    "no_trace": True,
+    "exclude_archive_symbols": True,
+    "selected_license": "BSD-3-Clause",
+}
 
 
 class ProjectionError(RuntimeError):
@@ -194,6 +204,16 @@ def python_policy_materials(implemented_rows, fields):
             )
     records.sort(key=lambda record: record["path"])
     return records
+
+
+def zstd_policy_materials():
+    return [
+        {
+            "path": "/@implementation/zstd/%s" % field,
+            "value": copy.deepcopy(ZSTD_BUILD_POLICY[field]),
+        }
+        for field in sorted(ZSTD_BUILD_POLICY)
+    ]
 
 
 def component_path(component):
@@ -424,6 +444,11 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
                 and relative[2] in sigstore_fields
             ):
                 category = "supply"
+        elif len(path) >= 3 and path[:2] == ("python", "zstd"):
+            # The source preparation boundary authenticates archive, detached
+            # signature, Git provenance, key and selected license together.
+            # Any change must therefore invalidate the one source identity.
+            category = "build"
         elif path in {
             ("vcpkg", "repository"),
             ("vcpkg", "pin", "status"),
@@ -559,6 +584,7 @@ def _render_expected_components(release, implemented_rows):
     add(
         "sources/binutils", "build", selector(("binutils",), ("trust",))
     )
+    add("sources/zstd", "build", selector(("python", "zstd")))
 
     toolchain_builds = {}
     toolchain_qualifications = {}
@@ -614,6 +640,33 @@ def _render_expected_components(release, implemented_rows):
             implemented_rows, QUALIFICATION_POLICY_FIELDS
         ),
     )
+    add(
+        "implementation/zstd-build-policy",
+        "build",
+        explicit_materials=zstd_policy_materials(),
+    )
+    add(
+        "zstd/host-build",
+        "build",
+        selector(("baseline",), ("platforms",)),
+        (
+            "rpm/host-build-common",
+            "sources/zstd",
+            "implementation/zstd-build-policy",
+        ),
+    )
+    for arch in ("x86_64", "aarch64"):
+        add(
+            "zstd/%s-build" % arch,
+            "build",
+            selector(("targets", target_indices[arch])),
+            (
+                "rpm/host-build-common",
+                toolchain_builds[arch],
+                "sources/zstd",
+                "implementation/zstd-build-policy",
+            ),
+        )
 
     release_entries = {}
     release_entry_indices = {}
@@ -855,7 +908,7 @@ def validate_component_set(
             "%s repeats a dependency" % component,
         )
         edges[component] = dependency_names
-        if component.startswith(("rpm/", "sources/", "toolchain/")):
+        if component.startswith(("rpm/", "sources/", "toolchain/")) and component != "sources/zstd":
             require(
                 not any(path.startswith("/python/") for path in paths),
                 "%s improperly owns Python release material" % component,

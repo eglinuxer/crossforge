@@ -50,6 +50,12 @@
       "scope": "qualification"
     },
     {
+      "canonical_sha256": "be14b05aebc58eeb91642e1f3fb019cba033e4801fe489c727e88c7b6bfa1a93",
+      "component": "implementation/zstd-build-policy",
+      "path": "config/generated/components/implementation/zstd-build-policy.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "eaddaf36ddc024a20971db3aacda6d1fd3705ba572225bd9c57bba15078f954d",
       "component": "product/release",
       "path": "config/generated/components/product/release.json",
@@ -182,6 +188,12 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "6622b38249173dc6521ef3a412f656df5774d2d77c2d86fd21f91dba01e802e5",
+      "component": "sources/zstd",
+      "path": "config/generated/components/sources/zstd.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "3d90b44b46932a0b29ffc940f37a619eec21a22ad1de481afd5ed53b370d5a40",
       "component": "supply/evidence",
       "path": "config/generated/components/supply/evidence.json",
@@ -210,11 +222,29 @@
       "component": "toolchain/x86_64-qualification",
       "path": "config/generated/components/toolchain/x86_64-qualification.json",
       "scope": "qualification"
+    },
+    {
+      "canonical_sha256": "3768be8994a6a59fed6048706d77003eac38481c458fbbc0630b9b151ccb77ad",
+      "component": "zstd/aarch64-build",
+      "path": "config/generated/components/zstd/aarch64-build.json",
+      "scope": "build"
+    },
+    {
+      "canonical_sha256": "a8fb4881342c630e2e9a11c4b018185dacd43f8fab25f29b46ed7014a791084b",
+      "component": "zstd/host-build",
+      "path": "config/generated/components/zstd/host-build.json",
+      "scope": "build"
+    },
+    {
+      "canonical_sha256": "1b27e662224c9d8e0dd66352c02e133b95f866ad99dc9bf114107e072ae2654e",
+      "component": "zstd/x86_64-build",
+      "path": "config/generated/components/zstd/x86_64-build.json",
+      "scope": "build"
     }
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "54600decbe36345e815ef31b0bacbd63e3a651bc1ab84fb8e15baf017a2aca58",
+    "canonical_sha256": "9fdd1988271f6a386f75f0deae86906f5a3ad3ba2327a3714bab684846d024df",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

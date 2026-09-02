@@ -395,9 +395,13 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "zstd",
         "versions"
       ],
       "properties": {
+        "zstd": {
+          "$ref": "#/$defs/python_zstd"
+        },
         "versions": {
           "type": "array",
           "minItems": 6,
@@ -779,6 +783,175 @@
           "$ref": "#/$defs/locked_python_source"
         }
       ]
+    },
+    "python_zstd": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "source",
+        "license"
+      ],
+      "properties": {
+        "version": {
+          "const": "1.5.7"
+        },
+        "source": {
+          "$ref": "#/$defs/zstd_source"
+        },
+        "license": {
+          "$ref": "#/$defs/zstd_license"
+        }
+      }
+    },
+    "zstd_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256",
+        "size",
+        "signature",
+        "git"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "url": {
+          "const": "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "signature": {
+          "$ref": "#/$defs/zstd_signature"
+        },
+        "git": {
+          "$ref": "#/$defs/zstd_git"
+        }
+      }
+    },
+    "zstd_signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sha256",
+        "size",
+        "evidence",
+        "key"
+      ],
+      "properties": {
+        "url": {
+          "const": "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz.sig"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "evidence": {
+          "const": "evidence/gpg/zstd-1.5.7.tar.gz.sig.b64"
+        },
+        "key": {
+          "$ref": "#/$defs/zstd_key"
+        }
+      }
+    },
+    "zstd_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "fingerprint"
+      ],
+      "properties": {
+        "file": {
+          "const": "keys/ZSTD-RELEASE-KEY.asc"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "fingerprint": {
+          "const": "4ef4ac63455fc9f4545d9b7def8fe99528b52ffd"
+        }
+      }
+    },
+    "zstd_git": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "tag",
+        "tag_object",
+        "tag_evidence",
+        "commit",
+        "commit_evidence"
+      ],
+      "properties": {
+        "repository": {
+          "const": "https://github.com/facebook/zstd.git"
+        },
+        "tag": {
+          "const": "v1.5.7"
+        },
+        "tag_object": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "tag_evidence": {
+          "const": "evidence/git/zstd-v1.5.7.tag.b64"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "commit_evidence": {
+          "const": "evidence/git/zstd-v1.5.7.commit.b64"
+        }
+      }
+    },
+    "zstd_license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "license_file",
+        "license_sha256",
+        "copying_file",
+        "copying_sha256"
+      ],
+      "properties": {
+        "expression": {
+          "const": "BSD-3-Clause"
+        },
+        "license_file": {
+          "const": "LICENSE"
+        },
+        "license_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "copying_file": {
+          "const": "COPYING"
+        },
+        "copying_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
     },
     "pending_rpm_source": {
       "type": "object",

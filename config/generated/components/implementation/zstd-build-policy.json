@@ -1,0 +1,42 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/zstd-build-policy",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/zstd/exclude_archive_symbols",
+      "value": true
+    },
+    {
+      "path": "/@implementation/zstd/linkage",
+      "value": "static"
+    },
+    {
+      "path": "/@implementation/zstd/multithread",
+      "value": true
+    },
+    {
+      "path": "/@implementation/zstd/no_trace",
+      "value": true
+    },
+    {
+      "path": "/@implementation/zstd/position_independent_code",
+      "value": true
+    },
+    {
+      "path": "/@implementation/zstd/private",
+      "value": true
+    },
+    {
+      "path": "/@implementation/zstd/selected_license",
+      "value": "BSD-3-Clause"
+    },
+    {
+      "path": "/@implementation/zstd/visibility",
+      "value": "hidden"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}
