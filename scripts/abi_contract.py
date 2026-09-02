@@ -89,7 +89,7 @@ SAFE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*\Z")
 SONAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9+_.-]*\Z")
 SYMBOL_RE = re.compile(r"^[^@\s]+\Z")
 VERSION_RE = re.compile(
-    r"^(GLIBCXX|GLIBC|CXXABI|GCC)_([A-Za-z0-9][A-Za-z0-9_.-]*)\Z"
+    r"^(GLIBCXX|GLIBC|CXXABI|GCC|XCRYPT)_([A-Za-z0-9][A-Za-z0-9_.-]*)\Z"
 )
 SYMBOL_LINE_RE = re.compile(r"^\s*[0-9]+:\s+")
 VERSION_SUFFIX_RE = re.compile(r"\s+\(([0-9]+)\)\s*\Z")
@@ -105,7 +105,10 @@ TARGETS = {
         "interpreter": "/lib/ld-linux-aarch64.so.1",
     },
 }
-PUBLIC_NAMESPACES = ("GLIBC", "GLIBCXX", "CXXABI", "GCC")
+PUBLIC_NAMESPACES = ("GLIBC", "GLIBCXX", "CXXABI", "GCC", "XCRYPT")
+PROVIDER_SCOPED_PUBLIC_NAMESPACES = {
+    "XCRYPT": frozenset(("libcrypt.so.1",)),
+}
 UNVERSIONED_DISPOSITION = "recorded-not-allowlisted"
 EXPECTED_PROVIDERS = {
     "aarch64": (
@@ -333,17 +336,21 @@ def _validate_target(target, expected_arch=None, expected_triple=None):
     return target
 
 
-def classify_version(version):
+def classify_version(version, provider=None):
     """Classify one GNU symbol-version node without numeric assumptions."""
     require(type(version) is str and version, "symbol version must be a string")
     match = VERSION_RE.match(version)
     if not match:
         return "unknown-namespace"
+    namespace = match.group(1)
     suffix = match.group(2)
     if suffix == "PRIVATE" or suffix.startswith("PRIVATE_"):
         return "private"
-    if match.group(1) == "GLIBC" and suffix.startswith("ABI_"):
+    if namespace == "GLIBC" and suffix.startswith("ABI_"):
         return "abi-internal"
+    allowed_providers = PROVIDER_SCOPED_PUBLIC_NAMESPACES.get(namespace)
+    if allowed_providers is not None and provider not in allowed_providers:
+        return "unknown-namespace"
     return "public"
 
 
@@ -355,11 +362,11 @@ def _validate_symbol_name(value, label):
     return value
 
 
-def _validate_public_export(record, label):
+def _validate_public_export(record, label, provider):
     require(type(record) is dict and set(record) == EXPORT_KEYS, "%s fields differ" % label)
     _validate_symbol_name(record["name"], label + " name")
     version = record["version"]
-    classification = classify_version(version)
+    classification = classify_version(version, provider)
     require(
         classification == "public",
         "%s uses a %s version node: %r" % (label, classification, version),
@@ -375,12 +382,12 @@ def _nonpublic_export_key(record):
     return (record["name"], record["version"], record["classification"])
 
 
-def _validate_exports(exports, label, require_nonempty):
+def _validate_exports(exports, label, require_nonempty, provider):
     require(type(exports) is list, "%s must be an array" % label)
     if require_nonempty:
         require(exports, "%s must not be empty" % label)
     for index, record in enumerate(exports):
-        _validate_public_export(record, "%s[%d]" % (label, index))
+        _validate_public_export(record, "%s[%d]" % (label, index), provider)
     keys = [_export_key(record) for record in exports]
     require(keys == sorted(keys), "%s are not sorted" % label)
     require(len(keys) == len(set(keys)), "%s contain duplicates" % label)
@@ -515,7 +522,12 @@ def validate_baseline(document, expected_arch=None, expected_triple=None):
     require(type(providers) is dict and providers, "ABI baseline providers must be a nonempty object")
     for provider, exports in providers.items():
         _validate_soname(provider, "ABI baseline provider")
-        _validate_exports(exports, "ABI baseline provider %s exports" % provider, True)
+        _validate_exports(
+            exports,
+            "ABI baseline provider %s exports" % provider,
+            True,
+            provider,
+        )
     _validate_elf_policy(document["elf_policy"], document["target"])
     return document
 
@@ -548,7 +560,7 @@ def _validate_inventory_provider(provider_key, provider):
         "%s path is not absolute and canonical" % label,
     )
     _validate_sha256(provider["sha256"], label + " SHA256")
-    _validate_exports(provider["exports"], label + " exports", False)
+    _validate_exports(provider["exports"], label + " exports", False, provider_key)
     unversioned = provider["unversioned_exports"]
     require(type(unversioned) is list, "%s unversioned_exports must be an array" % label)
     for index, name in enumerate(unversioned):
@@ -564,7 +576,7 @@ def _validate_inventory_provider(provider_key, provider):
             "%s fields differ" % item_label,
         )
         _validate_symbol_name(record["name"], item_label + " name")
-        classification = classify_version(record["version"])
+        classification = classify_version(record["version"], provider_key)
         require(classification != "public", "%s contains a public version" % item_label)
         require(
             record["classification"] == classification,
@@ -883,7 +895,7 @@ def provider_inventory_from_readelf(path, soname, sha256, dynamic_symbols):
             continue
         if name == version and row["index"] == "ABS":
             continue
-        classification = classify_version(version)
+        classification = classify_version(version, soname)
         if classification == "public":
             public.add((name, version))
         else:
@@ -925,12 +937,6 @@ def audit_symbol_requirements(baseline, dynamic_symbols, version_info):
         name = record["name"]
         version = record["version"]
         version_index = record["version_index"]
-        classification = classify_version(version)
-        require(
-            classification == "public",
-            "required symbol %s uses a %s version node %s"
-            % (name, classification, version),
-        )
         require(
             version_index in needs,
             "required version index %s has no readelf provider" % version_index,
@@ -941,6 +947,12 @@ def audit_symbol_requirements(baseline, dynamic_symbols, version_info):
             "dynamic symbol version differs from its readelf version need",
         )
         provider = need["provider"]
+        classification = classify_version(version, provider)
+        require(
+            classification == "public",
+            "required symbol %s uses a %s version node %s"
+            % (name, classification, version),
+        )
         require(provider in allowed, "required ABI provider is not allowlisted: %s" % provider)
         require(
             (name, version) in allowed[provider],

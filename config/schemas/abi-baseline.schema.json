@@ -41,13 +41,13 @@
       "propertyNames": {
         "$ref": "#/$defs/soname"
       },
-      "additionalProperties": {
-        "type": "array",
-        "minItems": 1,
-        "uniqueItems": true,
-        "items": {
-          "$ref": "#/$defs/export"
+      "properties": {
+        "libcrypt.so.1": {
+          "$ref": "#/$defs/libcrypt_exports"
         }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/exports"
       }
     },
     "elf_policy": {
@@ -121,8 +121,43 @@
         },
         "version": {
           "type": "string",
-          "pattern": "^(?:GLIBC|GLIBCXX|CXXABI|GCC)_[A-Za-z0-9][A-Za-z0-9_.-]*$"
+          "pattern": "^(?:(?:GLIBCXX|CXXABI|GCC)_(?!PRIVATE(?:_|$))[A-Za-z0-9][A-Za-z0-9_.-]*|GLIBC_(?!(?:PRIVATE(?:_|$)|ABI_))[A-Za-z0-9][A-Za-z0-9_.-]*)$"
         }
+      }
+    },
+    "libcrypt_export": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^@\\s]+$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(?:(?:GLIBCXX|CXXABI|GCC|XCRYPT)_(?!PRIVATE(?:_|$))[A-Za-z0-9][A-Za-z0-9_.-]*|GLIBC_(?!(?:PRIVATE(?:_|$)|ABI_))[A-Za-z0-9][A-Za-z0-9_.-]*)$"
+        }
+      }
+    },
+    "exports": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/export"
+      }
+    },
+    "libcrypt_exports": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/libcrypt_export"
       }
     },
     "interpreter_rule": {

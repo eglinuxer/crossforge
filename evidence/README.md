@@ -28,3 +28,22 @@ checks their structure and binds their message/Rekor digests to the selected
 tarballs, but does not yet verify the message signature, Fulcio certificate
 chain or identity, Rekor SET/inclusion proof, or TSA. Accordingly release.json
 must label them `archived-unverified`; changing that label is a schema error.
+
+## ABI evidence
+
+Files below `abi/` are maintainer-generated inventories, not public ABI
+allowlists. Export the four release-bound roots with the cache-only
+`abi-export` Bake target, overriding its output to a new tar review archive,
+then extract that archive into a new directory. Run
+`scripts/extract-abi-inventory.py` separately for each clean OCI root and
+locked sysroot; the extractor binds provider bytes, the fixed provider
+manifest, the release-derived source identity, GNU readelf commands, and the
+canonical inventory digest.
+
+Only a clean inventory at the fixed path
+`evidence/abi/el8-{arch}-clean.json` can be promoted. After reviewing its exact
+symbol set and comparing the locked-sysroot inventory, invoke
+`scripts/freeze-abi-baseline.py` with `--arch <arch>` and
+`--accept-inventory-sha256 <canonical-digest>`. The repeated digest is the
+explicit approval boundary; the tool creates `abi/el8/{arch}.json` once and
+never replaces an existing baseline.

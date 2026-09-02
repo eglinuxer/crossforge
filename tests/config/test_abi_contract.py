@@ -1,6 +1,7 @@
 import ast
 import copy
 import json
+import re
 import runpy
 import tempfile
 import unittest
@@ -282,6 +283,18 @@ class AbiDocumentTests(unittest.TestCase):
             [abi_export("debug_message", "GLIBCXX_DEBUG_MESSAGE_LENGTH")],
         )
 
+    def test_xcrypt_is_public_only_for_the_libcrypt_provider(self):
+        document = baseline()
+        document["providers"]["libcrypt.so.1"] = [
+            abi_export("crypt_r", "XCRYPT_2.0")
+        ]
+        ABI["validate_baseline"](document)
+
+        document = baseline()
+        document["providers"]["libc.so.6"][0]["version"] = "XCRYPT_2.0"
+        with self.assertRaisesRegex(AbiContractError, "unknown-namespace"):
+            ABI["validate_baseline"](document)
+
     def test_profiles_are_fixed_and_no_policy_is_silently_selected(self):
         document = baseline()
         del document["elf_policy"]["profiles"]["compiler-default-observation"]
@@ -475,6 +488,71 @@ Symbol table '.dynsym' contains 3 entries:
             ],
         )
 
+    def test_xcrypt_export_and_import_are_bound_to_libcrypt(self):
+        dynamic_symbols = """
+Symbol table '.dynsym' contains 2 entries:
+   Num: Value Size Type Bind Vis Ndx Name
+     1: 0000000000001000 8 FUNC GLOBAL DEFAULT 12 crypt_r@@XCRYPT_2.0 (2)
+"""
+        record = ABI["provider_inventory_from_readelf"](
+            "/usr/lib64/libcrypt.so.1",
+            "libcrypt.so.1",
+            "a" * 64,
+            dynamic_symbols,
+        )
+        self.assertEqual(
+            record["exports"],
+            [abi_export("crypt_r", "XCRYPT_2.0")],
+        )
+
+        wrong_provider = ABI["provider_inventory_from_readelf"](
+            "/usr/lib64/libc.so.6",
+            "libc.so.6",
+            "b" * 64,
+            dynamic_symbols,
+        )
+        self.assertEqual(wrong_provider["exports"], [])
+        self.assertEqual(
+            wrong_provider["nonpublic_versioned_exports"],
+            [
+                {
+                    "name": "crypt_r",
+                    "version": "XCRYPT_2.0",
+                    "classification": "unknown-namespace",
+                }
+            ],
+        )
+
+        reviewed = baseline()
+        reviewed["providers"]["libcrypt.so.1"] = [
+            abi_export("crypt_r", "XCRYPT_2.0")
+        ]
+        imports = """
+Symbol table '.dynsym' contains 2 entries:
+   Num: Value Size Type Bind Vis Ndx Name
+     1: 0000000000000000 0 FUNC GLOBAL DEFAULT UND crypt_r@XCRYPT_2.0 (2)
+"""
+        needs = """
+Version needs section '.gnu.version_r' contains 1 entry:
+  000000: Version: 1  File: libcrypt.so.1  Cnt: 1
+  0x0010:   Name: XCRYPT_2.0  Flags: none  Version: 2
+"""
+        self.assertEqual(
+            ABI["audit_symbol_requirements"](reviewed, imports, needs)[
+                "versioned_imports"
+            ],
+            [
+                {
+                    "provider": "libcrypt.so.1",
+                    "name": "crypt_r",
+                    "version": "XCRYPT_2.0",
+                }
+            ],
+        )
+        wrong_needs = needs.replace("File: libcrypt.so.1", "File: libc.so.6")
+        with self.assertRaisesRegex(AbiContractError, "unknown-namespace"):
+            ABI["audit_symbol_requirements"](reviewed, imports, wrong_needs)
+
     def test_qualified_profile_and_exact_catch_runpath(self):
         ordinary = ABI["audit_elf_policy"](
             baseline(),
@@ -629,6 +707,90 @@ Symbol table '.dynsym' contains 3 entries:
                     )
 
 
+class AbiExportBakeTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        hcl = (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8")
+        matches = re.findall(
+            r'^target "abi-export"\s*\{\n(?P<body>.*?)^\}\n',
+            hcl,
+            re.MULTILINE | re.DOTALL,
+        )
+        if len(matches) != 1:
+            raise AssertionError("docker-bake.hcl must define abi-export exactly once")
+        cls.body = matches[0]
+
+    def test_target_is_fixed_cache_only_and_uses_only_build_targets(self):
+        self.assertEqual(
+            re.findall(r'^\s*context\s*=\s*"([^"]+)"$', self.body, re.MULTILINE),
+            ["."],
+        )
+        self.assertEqual(
+            re.findall(r"^\s*platforms\s*=\s*(\[[^\n]+\])$", self.body, re.MULTILINE),
+            ['["linux/amd64"]'],
+        )
+        self.assertEqual(
+            re.findall(r"^\s*output\s*=\s*(\[[^\n]+\])$", self.body, re.MULTILINE),
+            ['["type=cacheonly"]'],
+        )
+        contexts_match = re.search(
+            r"^\s*contexts\s*=\s*\{\n(?P<contexts>.*?)^\s*\}\n",
+            self.body,
+            re.MULTILINE | re.DOTALL,
+        )
+        self.assertIsNotNone(contexts_match)
+        context_pairs = re.findall(
+            r'^\s*([a-z0-9_]+)\s*=\s*"([^"]+)"\s*$',
+            contexts_match.group("contexts"),
+            re.MULTILINE,
+        )
+        self.assertEqual(
+            dict(context_pairs),
+            {
+                "clean_x86_64": "target:python-runtime-clean-x86_64",
+                "clean_aarch64": "target:python-runtime-clean-aarch64",
+                "sysroot_x86_64": "target:sysroot-x86_64",
+                "sysroot_aarch64": "target:sysroot-aarch64",
+            },
+        )
+        self.assertEqual(len(context_pairs), 4)
+        self.assertTrue(all(value.startswith("target:") for _, value in context_pairs))
+        self.assertNotIn("/tmp", self.body)
+
+    def test_inline_scratch_export_copies_only_the_four_library_roots(self):
+        dockerfile_match = re.search(
+            r"^\s*dockerfile-inline\s*=\s*<<EOF\n(?P<dockerfile>.*?)^EOF$",
+            self.body,
+            re.MULTILINE | re.DOTALL,
+        )
+        self.assertIsNotNone(dockerfile_match)
+        dockerfile = dockerfile_match.group("dockerfile")
+        self.assertEqual(
+            dockerfile.splitlines(),
+            [
+                "# syntax=docker/dockerfile:1@sha256:ecfaec9ed6d810b56388c508f4121597bfbba70d41a6dfeee4d8cad5f295fc32",
+                "FROM scratch",
+                "COPY --from=clean_x86_64 /runtime-root/usr/lib64/ /clean/x86_64/usr/lib64/",
+                "COPY --from=clean_aarch64 /runtime-root/usr/lib64/ /clean/aarch64/usr/lib64/",
+                "COPY --from=sysroot_x86_64 /opt/crossforge/sysroots/el8/x86_64/usr/lib64/ /sysroot/x86_64/usr/lib64/",
+                "COPY --from=sysroot_aarch64 /opt/crossforge/sysroots/el8/aarch64/usr/lib64/ /sysroot/aarch64/usr/lib64/",
+            ],
+        )
+        copies = [line for line in dockerfile.splitlines() if line.startswith("COPY ")]
+        self.assertEqual(len(copies), 4)
+        self.assertTrue(all(line.startswith("COPY --from=") for line in copies))
+        for forbidden in (
+            "RUN ",
+            "ADD ",
+            "http://",
+            "https://",
+            "docker-image://",
+            "local://",
+            "/tmp",
+        ):
+            self.assertNotIn(forbidden, dockerfile)
+
+
 class AbiSchemaTests(unittest.TestCase):
     def test_abi_tools_remain_python36_syntax_compatible(self):
         for relative in (
@@ -655,20 +817,74 @@ class AbiSchemaTests(unittest.TestCase):
         )
         self.assertFalse(baseline_schema["additionalProperties"])
         self.assertFalse(inventory_schema["additionalProperties"])
-        baseline_provider = baseline_schema["properties"]["providers"][
-            "additionalProperties"
-        ]
+        baseline_providers = baseline_schema["properties"]["providers"]
         self.assertEqual(
-            baseline_provider["items"]["$ref"], "#/$defs/export"
+            baseline_providers["additionalProperties"]["$ref"],
+            "#/$defs/exports",
+        )
+        self.assertEqual(
+            baseline_providers["properties"]["libcrypt.so.1"]["$ref"],
+            "#/$defs/libcrypt_exports",
         )
         self.assertEqual(
             set(baseline_schema["$defs"]["export"]["required"]),
             {"name", "version"},
         )
-        self.assertNotIn("unversioned_exports", baseline_provider)
-        inventory_provider = inventory_schema["$defs"]["provider"]
+        self.assertNotIn("unversioned_exports", baseline_schema["$defs"]["exports"])
+        inventory_provider = inventory_schema["$defs"]["provider_shape"]
         self.assertIn("unversioned_exports", inventory_provider["required"])
         self.assertIn("source", inventory_schema["required"])
+
+        inventory_providers = inventory_schema["properties"]["providers"]
+        self.assertEqual(
+            inventory_providers["additionalProperties"]["$ref"],
+            "#/$defs/provider",
+        )
+        self.assertEqual(
+            inventory_providers["properties"]["libcrypt.so.1"]["$ref"],
+            "#/$defs/libcrypt_provider",
+        )
+
+    def test_schema_public_version_patterns_are_provider_scoped(self):
+        for relative in (
+            "config/schemas/abi-baseline.schema.json",
+            "config/schemas/abi-inventory.schema.json",
+        ):
+            with self.subTest(schema=relative):
+                schema = json.loads((REPOSITORY / relative).read_text(encoding="utf-8"))
+                core_pattern = re.compile(
+                    schema["$defs"]["export"]["properties"]["version"]["pattern"]
+                )
+                libcrypt_pattern = re.compile(
+                    schema["$defs"]["libcrypt_export"]["properties"]["version"][
+                        "pattern"
+                    ]
+                )
+                for version in (
+                    "GLIBC_2.28",
+                    "GLIBCXX_DEBUG_MESSAGE_LENGTH",
+                    "CXXABI_1.3",
+                    "GCC_3.0",
+                ):
+                    self.assertIsNotNone(core_pattern.fullmatch(version))
+                    self.assertIsNotNone(libcrypt_pattern.fullmatch(version))
+                for version in (
+                    "XCRYPT_2.0",
+                    "GLIBC_PRIVATE",
+                    "GLIBC_PRIVATE_FUTURE",
+                    "GLIBC_ABI_DT_RELR",
+                    "OPENSSL_1_1_0",
+                ):
+                    self.assertIsNone(core_pattern.fullmatch(version))
+                self.assertIsNotNone(libcrypt_pattern.fullmatch("XCRYPT_2.0"))
+                for version in (
+                    "XCRYPT_PRIVATE",
+                    "XCRYPT_PRIVATE_FUTURE",
+                    "GLIBC_PRIVATE",
+                    "GLIBC_ABI_DT_RELR",
+                    "OPENSSL_1_1_0",
+                ):
+                    self.assertIsNone(libcrypt_pattern.fullmatch(version))
 
 
 if __name__ == "__main__":

@@ -108,6 +108,29 @@ target "qemu-aarch64-validated" {
   output   = ["type=cacheonly"]
 }
 
+# Export only the library roots needed for ABI inventory maintenance. The
+# default is cache-only; opt in to a review archive with
+# `--set abi-export.output=type=tar,dest=...`.
+target "abi-export" {
+  context   = "."
+  platforms = ["linux/amd64"]
+  contexts = {
+    clean_x86_64    = "target:python-runtime-clean-x86_64"
+    clean_aarch64   = "target:python-runtime-clean-aarch64"
+    sysroot_x86_64  = "target:sysroot-x86_64"
+    sysroot_aarch64 = "target:sysroot-aarch64"
+  }
+  dockerfile-inline = <<EOF
+# syntax=docker/dockerfile:1@sha256:ecfaec9ed6d810b56388c508f4121597bfbba70d41a6dfeee4d8cad5f295fc32
+FROM scratch
+COPY --from=clean_x86_64 /runtime-root/usr/lib64/ /clean/x86_64/usr/lib64/
+COPY --from=clean_aarch64 /runtime-root/usr/lib64/ /clean/aarch64/usr/lib64/
+COPY --from=sysroot_x86_64 /opt/crossforge/sysroots/el8/x86_64/usr/lib64/ /sysroot/x86_64/usr/lib64/
+COPY --from=sysroot_aarch64 /opt/crossforge/sysroots/el8/aarch64/usr/lib64/ /sysroot/aarch64/usr/lib64/
+EOF
+  output = ["type=cacheonly"]
+}
+
 # Maintenance targets are cache-only unless a maintainer explicitly overrides
 # output to a local directory for reviewing a lock refresh.
 target "rpm-lock-sysroot-x86_64" {

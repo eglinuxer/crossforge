@@ -108,7 +108,7 @@ Crossforge 不定义 staging/overlay 目录、产品级 sysroot profile 或第�
 
 - glibc 2.28 floor；EL8 `libstdc++.so.6` 与 `libgcc_s.so.1` 动态运行时；
 - x86_64 使用 `-march=x86-64 -mtune=generic`，aarch64 使用 `-march=armv8-a -mtune=generic`；
-- 禁止 host 头文件/库泄漏、超出冻结集合的 GLIBC/GLIBCXX/CXXABI/GCC 符号、DT_RELR、text relocation、可执行栈和构建目录绝对 RUNPATH；
+- 禁止 host 头文件/库泄漏、超出冻结集合的 GLIBC/GLIBCXX/CXXABI/GCC 符号以及 `libcrypt.so.1` 专属的 XCRYPT 符号、DT_RELR、text relocation、可执行栈和构建目录绝对 RUNPATH；
 - “glibc >= 2.28”只是 ABI floor，不代表无条件支持所有此类发行版。
 
 `locks/sysroot-*.json` 可因 Rocky errata 更新；`abi/el8/{x86_64,aarch64}.json` 则冻结最低允许的符号集合。sysroot 更新不得静默扩大 ABI，只有显式升级产品 baseline 才能修改冻结集合。
