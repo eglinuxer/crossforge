@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch a content-locked GCC or binutils SRPM from release.json."""
+"""Fetch a content-locked source artifact from release.json."""
 
 import argparse
 import hashlib
@@ -19,8 +19,20 @@ validate = RELEASE_VALIDATOR["validate"]
 validate_schema_subset = RELEASE_VALIDATOR["validate_schema_subset"]
 
 
-def source_for(config, component):
-    source = config["gts" if component == "gcc" else "binutils"]["source"]
+def source_for(config, component, version=None):
+    if component == "python":
+        matches = [
+            entry
+            for entry in config["python"]["versions"]
+            if entry["version"] == version
+        ]
+        if len(matches) != 1:
+            raise ValidationError("Python source version is not unique: %s" % version)
+        source = matches[0]["source"]
+    else:
+        if version is not None:
+            raise ValidationError("--version is only valid for Python sources")
+        source = config["gts" if component == "gcc" else "binutils"]["source"]
     if source["status"] != "locked":
         raise ValidationError("%s source is not locked" % component)
     if source["size"] <= 0:
@@ -97,7 +109,8 @@ def fetch(source, output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("component", choices=("gcc", "binutils"))
+    parser.add_argument("component", choices=("gcc", "binutils", "python"))
+    parser.add_argument("--version")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
         "--config", type=Path, default=REPOSITORY / "config/release.json"
@@ -113,7 +126,12 @@ def main():
         schema = load_json(arguments.schema)
         validate_schema_subset(schema)
         validate(config, schema, schema, "$")
-        fetch(source_for(config, arguments.component), arguments.output)
+        if arguments.component == "python" and not arguments.version:
+            raise ValidationError("Python source fetch requires --version")
+        fetch(
+            source_for(config, arguments.component, arguments.version),
+            arguments.output,
+        )
     except (OSError, ValidationError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1

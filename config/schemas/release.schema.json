@@ -148,6 +148,7 @@
       "required": [
         "host-build-common",
         "host-gcc-build",
+        "host-python-build",
         "host-runtime"
       ],
       "properties": {
@@ -155,6 +156,9 @@
           "$ref": "#/$defs/host_lock"
         },
         "host-gcc-build": {
+          "$ref": "#/$defs/host_lock"
+        },
+        "host-python-build": {
           "$ref": "#/$defs/host_lock"
         },
         "host-runtime": {
@@ -412,6 +416,9 @@
                     },
                     "adapter": {
                       "const": "legacy"
+                    },
+                    "support": {
+                      "const": "eol"
                     }
                   }
                 }
@@ -429,6 +436,9 @@
                     },
                     "adapter": {
                       "const": "legacy"
+                    },
+                    "support": {
+                      "const": "security"
                     }
                   }
                 }
@@ -446,6 +456,9 @@
                     },
                     "adapter": {
                       "const": "transition"
+                    },
+                    "support": {
+                      "const": "security"
                     }
                   }
                 }
@@ -463,6 +476,9 @@
                     },
                     "adapter": {
                       "const": "modern"
+                    },
+                    "support": {
+                      "const": "security"
                     }
                   }
                 }
@@ -480,6 +496,9 @@
                     },
                     "adapter": {
                       "const": "modern"
+                    },
+                    "support": {
+                      "const": "bugfix"
                     }
                   }
                 }
@@ -497,6 +516,9 @@
                     },
                     "adapter": {
                       "const": "modern"
+                    },
+                    "support": {
+                      "const": "bugfix"
                     }
                   }
                 }
@@ -591,6 +613,114 @@
         },
         {
           "$ref": "#/$defs/locked_artifact_source"
+        }
+      ]
+    },
+    "pending_python_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256",
+        "size",
+        "sigstore"
+      ],
+      "properties": {
+        "status": {
+          "const": "pending"
+        },
+        "url": {
+          "const": null
+        },
+        "sha256": {
+          "const": null
+        },
+        "size": {
+          "const": null
+        },
+        "sigstore": {
+          "const": null
+        }
+      }
+    },
+    "locked_python_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256",
+        "size",
+        "sigstore"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://www\\.python\\.org/ftp/python/[0-9]+\\.[0-9]+\\.[0-9]+/Python-[0-9]+\\.[0-9]+\\.[0-9]+\\.tar\\.xz$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sigstore": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "verification",
+            "bundle_url",
+            "bundle_sha256",
+            "bundle_size",
+            "bundle_evidence",
+            "identity",
+            "oidc_issuer"
+          ],
+          "properties": {
+            "verification": {
+              "const": "archived-unverified"
+            },
+            "bundle_url": {
+              "type": "string",
+              "pattern": "^https://www\\.python\\.org/ftp/python/[0-9]+\\.[0-9]+\\.[0-9]+/Python-[0-9]+\\.[0-9]+\\.[0-9]+\\.tar\\.xz\\.sigstore$"
+            },
+            "bundle_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bundle_size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "bundle_evidence": {
+              "type": "string",
+              "pattern": "^evidence/sigstore/cpython-[0-9]+\\.[0-9]+\\.[0-9]+\\.tar\\.xz\\.sigstore\\.b64$"
+            },
+            "identity": {
+              "type": "string",
+              "minLength": 1
+            },
+            "oidc_issuer": {
+              "type": "string",
+              "pattern": "^https://"
+            }
+          }
+        }
+      }
+    },
+    "python_source": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/pending_python_source"
+        },
+        {
+          "$ref": "#/$defs/locked_python_source"
         }
       ]
     },
@@ -784,7 +914,7 @@
             },
             "lock_file": {
               "type": "string",
-              "pattern": "^locks/host-(build-common|gcc-build|runtime)-el8-x86_64\\.json$"
+              "pattern": "^locks/host-(build-common|gcc-build|python-build|runtime)-el8-x86_64\\.json$"
             },
             "canonical_sha256": {
               "type": "string",
@@ -816,12 +946,13 @@
         },
         "support": {
           "enum": [
-            "active",
-            "legacy"
+            "eol",
+            "security",
+            "bugfix"
           ]
         },
         "source": {
-          "$ref": "#/$defs/artifact_source"
+          "$ref": "#/$defs/python_source"
         }
       }
     },

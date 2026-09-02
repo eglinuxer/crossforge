@@ -17,18 +17,21 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "config/rpm/sysroot-el8-aarch64.plan.json",
             REPOSITORY / "config/rpm/host-build-common-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/host-gcc-build-el8-x86_64.plan.json",
+            REPOSITORY / "config/rpm/host-python-build-el8-x86_64.plan.json",
         ]
         cls.transactions = [
             REPOSITORY / "locks/transactions/sysroot-el8-x86_64.json",
             REPOSITORY / "locks/transactions/sysroot-el8-aarch64.json",
             REPOSITORY / "locks/transactions/host-build-common-el8-x86_64.json",
             REPOSITORY / "locks/transactions/host-gcc-build-el8-x86_64.json",
+            REPOSITORY / "locks/transactions/host-python-build-el8-x86_64.json",
         ]
         cls.locks = [
             REPOSITORY / "locks/sysroot-el8-x86_64.json",
             REPOSITORY / "locks/sysroot-el8-aarch64.json",
             REPOSITORY / "locks/host-build-common-el8-x86_64.json",
             REPOSITORY / "locks/host-gcc-build-el8-x86_64.json",
+            REPOSITORY / "locks/host-python-build-el8-x86_64.json",
         ]
 
     def test_current_plans_are_strict_and_semantically_valid(self):
@@ -83,6 +86,24 @@ class RpmLockValidationTests(unittest.TestCase):
         }
         self.assertNotIn("libzstd-devel", common_names)
         self.assertEqual(gcc_names, {"bison", "flex", "libzstd-devel", "m4"})
+
+    def test_python_build_delta_has_only_declared_development_roots(self):
+        python = VALIDATOR["load_json"](self.transactions[4])
+        self.assertEqual(
+            {request["name"] for request in python["requests"]},
+            {
+                "bzip2-devel",
+                "libffi-devel",
+                "libuuid-devel",
+                "openssl-devel",
+                "sqlite-devel",
+                "xz-devel",
+            },
+        )
+        self.assertNotIn(
+            "libzstd-devel",
+            {item["name"] for item in python["items"]},
+        )
 
     def test_unknown_plan_field_is_rejected(self):
         plan = VALIDATOR["load_json"](self.plans[0])

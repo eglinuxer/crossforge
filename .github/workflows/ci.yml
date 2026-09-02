@@ -1,5 +1,9 @@
 name: ci
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
@@ -20,23 +24,29 @@ jobs:
           ./scripts/validate-rpm-lock.py config/rpm/sysroot-el8-aarch64.plan.json
           ./scripts/validate-rpm-lock.py config/rpm/host-build-common-el8-x86_64.plan.json
           ./scripts/validate-rpm-lock.py config/rpm/host-gcc-build-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/host-python-build-el8-x86_64.plan.json
           ./scripts/validate-rpm-lock.py locks/sysroot-el8-x86_64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/sysroot-el8-aarch64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/host-gcc-build-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/host-python-build-el8-x86_64.json --require-lock
       - name: Configuration tests
         run: python3 -m unittest discover -s tests/config -p 'test_*.py'
       - name: Script syntax
         run: |
           python3 -m py_compile scripts/*.py
           bash -n scripts/*.sh
+          gcc -fsyntax-only -fPIC -Wall -Wextra -Werror scripts/deny-target-exec.c
+          gcc -fsyntax-only -Wall -Wextra -Werror scripts/target-exec-canary.c
       - name: Generated Bake definition
         run: ./scripts/render-bake.py --check
       - name: Docker/Bake static checks
-        run: docker buildx bake --check phase4
-      - name: Locked host layers, QEMU executor, and target sysroots
+        run: docker buildx bake --check phase5
+      - name: Locked Phase 5 inputs and native build Python
         run: |
           docker buildx bake validate platform-python-check \
             host-build-common-locked host-gcc-build-locked \
-            qemu-aarch64-validated sysroot-x86_64 sysroot-aarch64 \
+            host-python-build-locked qemu-aarch64-validated \
+            sysroot-x86_64 sysroot-aarch64 cpython-build-cp313 \
+            python-runtime-clean-x86_64 python-runtime-clean-aarch64 \
             --progress=plain

@@ -40,6 +40,11 @@ def render(repository):
         qemu_executor["manifest_digest"],
     )
     platform = config["platforms"]["image"]
+    cp313 = next(
+        entry
+        for entry in config["python"]["versions"]
+        if entry["version"].startswith("3.13.")
+    )
     targets = {}
     plan_names = []
     for target in config["targets"]:
@@ -60,11 +65,23 @@ def render(repository):
         },
         "platforms": [platform],
     }
+    arguments = {
+        "ROCKY_RPM_TRUST_FINGERPRINT": config["trust"]["rocky_rpm_key"][
+            "fingerprint"
+        ],
+        "ROCKY_RPM_TRUST_SHA256": config["trust"]["rocky_rpm_key"]["sha256"],
+        "ROCKY_AMD64_MANIFEST_DIGEST": base["manifests"]["amd64"],
+        "ROCKY_ARM64_MANIFEST_DIGEST": base["manifests"]["arm64"],
+        "QEMU_EXECUTOR_VERSION": qemu["version"],
+        "QEMU_EXECUTOR_BINARY_SHA256": qemu_executor["binary_sha256"],
+        "QEMU_EXECUTOR_CPU": qemu_executor["cpu"],
+        "QEMU_EXECUTOR_UNAME_RELEASE": qemu_executor["uname_release"],
+    }
     if (
         config["gts"]["source"]["status"] == "locked"
         and config["binutils"]["source"]["status"] == "locked"
     ):
-        common["args"] = {
+        arguments.update({
             "GTS_BINUTILS_HEADER_ARCH": config["binutils"]["source"]["header_arch"],
             "GTS_BINUTILS_REPOSITORY_NEVRA": config["binutils"]["source"][
                 "repository_nevra"
@@ -79,15 +96,13 @@ def render(repository):
             ],
             "GTS_GCC_SHA256": config["gts"]["source"]["sha256"],
             "GTS_GCC_SPEC_SHA256": config["gts"]["source"]["spec_sha256"],
-            "ROCKY_RPM_TRUST_FINGERPRINT": config["trust"]["rocky_rpm_key"][
-                "fingerprint"
-            ],
-            "ROCKY_RPM_TRUST_SHA256": config["trust"]["rocky_rpm_key"]["sha256"],
-            "QEMU_EXECUTOR_VERSION": qemu["version"],
-            "QEMU_EXECUTOR_BINARY_SHA256": qemu_executor["binary_sha256"],
-            "QEMU_EXECUTOR_CPU": qemu_executor["cpu"],
-            "QEMU_EXECUTOR_UNAME_RELEASE": qemu_executor["uname_release"],
-        }
+        })
+    if cp313["source"]["status"] == "locked":
+        arguments.update({
+            "CPYTHON_CP313_VERSION": cp313["version"],
+            "CPYTHON_CP313_ADAPTER": cp313["adapter"],
+        })
+    common["args"] = arguments
     targets["_common"] = common
     document = {
         "group": {"toolchain-plan": {"targets": plan_names}},

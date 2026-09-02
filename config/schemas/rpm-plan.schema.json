@@ -78,7 +78,8 @@
           "enum": [
             "target-sysroot",
             "host-build-common",
-            "host-gcc-build"
+            "host-gcc-build",
+            "host-python-build"
           ]
         },
         "distribution": {

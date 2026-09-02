@@ -2,29 +2,30 @@
 
 ## Project Structure & Module Organization
 
-`docs/architecture.md` is canonical. Release inputs and RPM plans live under `config/`; exact OCI/Git bytes live under `evidence/`. `locks/transactions/` records DNF decisions and `locks/metadata/` pins signed repositories. Docker/Bake defines the graph, `scripts/` contains its tools, and smoke fixtures live under `tests/smoke/`.
+`docs/architecture.md` is canonical. Configuration lives under `config/`, raw provenance under `evidence/`, and DNF decisions under `locks/`. Docker/Bake defines the graph; tools are in `scripts/`, compiler fixtures in `tests/smoke/`, CPython probes in `tests/python/`, and regressions in `tests/config/`.
 
-The deleted Rust prototype is recoverable from tag `prototype-rust-2026-08-28`; do not reintroduce its wheel, registry, runner, or custom binary-parser abstractions. Generated `work/`, build output, package staging trees, and local caches must remain uncommitted.
+The deleted Rust prototype is recoverable from tag `prototype-rust-2026-08-28`; do not restore its abstractions. Keep generated work, staging trees, and caches uncommitted.
 
 ## Build, Test, and Development Commands
 
 - `./scripts/validate-release.py` validates strict JSON and prints its canonical digest.
-- `./scripts/validate-rpm-lock.py locks/sysroot-el8-{x86_64,aarch64}.json --require-lock` represents the equivalent per-target lock checks; invoke each concrete path separately.
-- `./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock` validates the common host build closure; use the same command for the GCC delta lock.
+- `./scripts/validate-rpm-lock.py locks/sysroot-el8-{x86_64,aarch64}.json --require-lock` represents per-target checks; invoke each concrete path.
+- `./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock` validates a host closure; repeat for the GCC and Python delta locks.
 - `./scripts/render-bake.py --check` detects drift in the generated Bake override.
 - `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
-- `docker buildx bake host-build-common-locked host-gcc-build-locked` replays both host transactions offline.
+- `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked` replays all host transactions offline.
 - `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both real cross slices; aarch64 uses explicit pinned QEMU, never implicit binfmt.
+- `docker buildx bake phase5` builds and qualifies the representative CPython 3.13 row for both targets.
 
 Never publish `sdk-skeleton` or a target ending in `-dev`; only a fully locked and qualified future candidate may receive user-facing tags.
 
 ## Coding Style & Naming Conventions
 
-Use strict JSON plus JSON Schema; reject duplicate keys, unknown fields, and unknown schema versions. Keep Bash scripts structured, quoted, and under `set -Eeuo pipefail`. Python infrastructure should prefer the standard library and remain compatible with the documented build-stage interpreter. Delegate package, ELF, RPM, and dependency semantics to upstream tools instead of recreating their parsers.
+Use strict JSON plus JSON Schema; reject duplicate keys, unknown fields, and schema versions. Keep Bash quoted and under `set -Eeuo pipefail`. Python infrastructure should prefer the standard library. Delegate package, ELF, RPM, and dependency semantics to upstream tools.
 
 ## Testing Guidelines
 
-Add a regression test for every defect. Build changes must name the image digest, target, sysroot/config digest, and validation tier. x86_64 and aarch64 remain distinct targets although the image runs on amd64. Pending pins may exist only in non-candidate planning/dev targets; every consumed input must be locked. Candidates require `--require-locked`.
+Add a regression test for every defect. Build changes must name the image digest, target, sysroot/config digest, and validation tier. x86_64 and aarch64 remain distinct targets although the image runs on amd64. Target execution belongs only in qualification stages; cross-build stages must not set `HOSTRUNNER` or QEMU. Pending pins may exist only in non-candidate planning/dev targets; candidates require `--require-locked`.
 
 ## Commit & Pull Request Guidelines
 

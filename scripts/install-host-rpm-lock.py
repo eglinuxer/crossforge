@@ -16,7 +16,7 @@ from pathlib import Path, PurePosixPath
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
-ALLOWED_ROLES = {"host-build-common", "host-gcc-build"}
+ALLOWED_ROLES = {"host-build-common", "host-gcc-build", "host-python-build"}
 ALLOWED_ACTIONS = {"install", "upgrade"}
 HEX_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 HEX_FINGERPRINT = re.compile(r"^[0-9a-f]{40}$")

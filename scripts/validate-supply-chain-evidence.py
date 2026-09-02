@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate checked-in OCI and Git evidence against release.json."""
+"""Validate checked-in OCI/Git evidence and archive CPython Sigstore bundles."""
 
 import argparse
 import base64
@@ -349,6 +349,95 @@ def validate_evidence(config, repository):
     )
     git_headers(commit_payload)
 
+    python_signers = {
+        "3.9": ("lukasz@langa.pl", "https://github.com/login/oauth"),
+        "3.10": ("pablogsal@python.org", "https://accounts.google.com"),
+        "3.11": ("pablogsal@python.org", "https://accounts.google.com"),
+        "3.12": ("thomas@python.org", "https://accounts.google.com"),
+        "3.13": ("thomas@python.org", "https://accounts.google.com"),
+        "3.14": ("hugo@python.org", "https://github.com/login/oauth"),
+    }
+    for version_entry in config["python"]["versions"]:
+        version = version_entry["version"]
+        minor = ".".join(version.split(".")[:2])
+        python_source = version_entry["source"]
+        expected_url = (
+            "https://www.python.org/ftp/python/%s/Python-%s.tar.xz"
+            % (version, version)
+        )
+        require(python_source["status"] == "locked", "CPython source is not locked")
+        require(python_source["url"] == expected_url, "CPython source URL mismatch")
+        sigstore = python_source["sigstore"]
+        require(
+            sigstore["verification"] == "archived-unverified",
+            "CPython Sigstore evidence must not claim unimplemented verification",
+        )
+        require(
+            sigstore["bundle_url"] == expected_url + ".sigstore",
+            "CPython Sigstore URL mismatch",
+        )
+        require(
+            (sigstore["identity"], sigstore["oidc_issuer"])
+            == python_signers[minor],
+            "CPython Sigstore signer policy mismatch",
+        )
+        bundle_payload, bundle = evidence_json(
+            repository,
+            sigstore["bundle_evidence"],
+            "sha256:" + sigstore["bundle_sha256"],
+            sigstore["bundle_size"],
+        )
+        require(
+            bundle.get("mediaType")
+            == "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "CPython Sigstore bundle media type mismatch",
+        )
+        message_digest = bundle.get("messageSignature", {}).get(
+            "messageDigest", {}
+        )
+        require(
+            message_digest.get("algorithm") == "SHA2_256",
+            "CPython Sigstore digest algorithm mismatch",
+        )
+        try:
+            signed_digest = base64.b64decode(
+                message_digest.get("digest", ""), validate=True
+            ).hex()
+        except (ValueError, binascii.Error) as error:
+            raise EvidenceError("invalid CPython Sigstore message digest") from error
+        require(
+            signed_digest == python_source["sha256"],
+            "CPython Sigstore message digest differs from source",
+        )
+        tlog_entries = bundle.get("verificationMaterial", {}).get(
+            "tlogEntries", []
+        )
+        tlog_entry = one(tlog_entries, "CPython Sigstore transparency entry")
+        try:
+            body = json.loads(
+                base64.b64decode(
+                    tlog_entry["canonicalizedBody"], validate=True
+                ).decode("utf-8"),
+                object_pairs_hook=reject_duplicate_keys,
+            )
+        except (
+            KeyError,
+            ValueError,
+            binascii.Error,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as error:
+            raise EvidenceError("invalid CPython transparency entry") from error
+        require(
+            body.get("spec", {})
+            .get("data", {})
+            .get("hash", {})
+            .get("value")
+            == python_source["sha256"],
+            "CPython transparency entry differs from source",
+        )
+        require(bundle_payload, "CPython Sigstore bundle is empty")
+
     return {
         "rocky_index_sha256": sha256(_rocky_payload),
         "qemu_index_sha256": sha256(qemu_index_payload),
@@ -356,6 +445,8 @@ def validate_evidence(config, repository):
         "qemu_attestation_sha256": sha256(attestation_payload),
         "qemu_tag_object": source["tag_object"],
         "qemu_commit": source["commit"],
+        "python_sources": len(config["python"]["versions"]),
+        "python_sigstore_status": "archived-unverified",
     }
 
 
@@ -372,11 +463,13 @@ def main():
     config = load_json(arguments.config)
     result = validate_evidence(config, repository)
     print(
-        "valid supply-chain evidence: Rocky %s; QEMU %s; source %s"
+        "valid supply-chain evidence: Rocky %s; QEMU %s; source %s; "
+        "CPython Sigstore bundles %s"
         % (
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
             result["qemu_commit"],
+            result["python_sigstore_status"],
         )
     )
     return 0

@@ -75,6 +75,14 @@ HOST_COMMON_ROOTS = {
     "zlib-devel",
 }
 HOST_GCC_ROOTS = {"bison", "flex", "libzstd-devel"}
+HOST_PYTHON_ROOTS = {
+    "bzip2-devel",
+    "libffi-devel",
+    "libuuid-devel",
+    "openssl-devel",
+    "sqlite-devel",
+    "xz-devel",
+}
 HOST_MODULES = [
     "perl:5.26",
     "perl-IO-Socket-SSL:2.066",
@@ -341,6 +349,7 @@ def expected_role_roots(role):
         "target-sysroot": SYSROOT_ROOTS,
         "host-build-common": HOST_COMMON_ROOTS,
         "host-gcc-build": HOST_GCC_ROOTS,
+        "host-python-build": HOST_PYTHON_ROOTS,
     }[role]
 
 

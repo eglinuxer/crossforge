@@ -10,6 +10,8 @@
   "target": {
     "_common": {
       "args": {
+        "CPYTHON_CP313_ADAPTER": "modern",
+        "CPYTHON_CP313_VERSION": "3.13.15",
         "GTS_BINUTILS_HEADER_ARCH": "i686",
         "GTS_BINUTILS_REPOSITORY_NEVRA": "gcc-toolset-15-binutils-0:2.44-3.el8.src",
         "GTS_BINUTILS_SHA256": "d47b3f86eb62be337ffb6110c7513a63a62ac4bcf280ad1e80055c1af8b17117",
@@ -22,6 +24,8 @@
         "QEMU_EXECUTOR_CPU": "cortex-a53",
         "QEMU_EXECUTOR_UNAME_RELEASE": "4.18.0",
         "QEMU_EXECUTOR_VERSION": "10.2.3",
+        "ROCKY_AMD64_MANIFEST_DIGEST": "sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+        "ROCKY_ARM64_MANIFEST_DIGEST": "sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7",
         "ROCKY_RPM_TRUST_FINGERPRINT": "7051c470a929f454cebe37b715af5dac6d745a60",
         "ROCKY_RPM_TRUST_SHA256": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab"
       },

@@ -39,6 +39,11 @@
       "lock_file": "locks/host-gcc-build-el8-x86_64.json",
       "canonical_sha256": "de271a4ba8a9e4bc31c8fc8a92c05fde4736afbc64b1251e06751a0cb96c2be0"
     },
+    "host-python-build": {
+      "status": "locked",
+      "lock_file": "locks/host-python-build-el8-x86_64.json",
+      "canonical_sha256": "0c3c32ed8090717bd2275d143fd42f444b16bd8a9b37ea1549154cc018a72091"
+    },
     "host-runtime": {
       "status": "pending",
       "lock_file": null,
@@ -128,61 +133,121 @@
       {
         "version": "3.9.25",
         "adapter": "legacy",
-        "support": "legacy",
+        "support": "eol",
         "source": {
-          "status": "pending",
-          "url": null,
-          "sha256": null
+          "status": "locked",
+          "url": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz",
+          "sha256": "00e07d7c0f2f0cc002432d1ee84d2a40dae404a99303e3f97701c10966c91834",
+          "size": 20183236,
+          "sigstore": {
+            "verification": "archived-unverified",
+            "bundle_url": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz.sigstore",
+            "bundle_sha256": "09243be5b795dbccf2e3a28b1a478a51ccdc1d2e102122737fc012798a5b17ad",
+            "bundle_size": 5079,
+            "bundle_evidence": "evidence/sigstore/cpython-3.9.25.tar.xz.sigstore.b64",
+            "identity": "lukasz@langa.pl",
+            "oidc_issuer": "https://github.com/login/oauth"
+          }
         }
       },
       {
         "version": "3.10.21",
         "adapter": "legacy",
-        "support": "active",
+        "support": "security",
         "source": {
-          "status": "pending",
-          "url": null,
-          "sha256": null
+          "status": "locked",
+          "url": "https://www.python.org/ftp/python/3.10.21/Python-3.10.21.tar.xz",
+          "sha256": "a0da1e72132e950154eca0f6f47d5db828454700de20e5113667940d81e0db04",
+          "size": 19896516,
+          "sigstore": {
+            "verification": "archived-unverified",
+            "bundle_url": "https://www.python.org/ftp/python/3.10.21/Python-3.10.21.tar.xz.sigstore",
+            "bundle_sha256": "8b907f7134ea6e0deb5236948be626a0ef1548da10650d2d44efe4547e2f73f3",
+            "bundle_size": 7329,
+            "bundle_evidence": "evidence/sigstore/cpython-3.10.21.tar.xz.sigstore.b64",
+            "identity": "pablogsal@python.org",
+            "oidc_issuer": "https://accounts.google.com"
+          }
         }
       },
       {
         "version": "3.11.16",
         "adapter": "transition",
-        "support": "active",
+        "support": "security",
         "source": {
-          "status": "pending",
-          "url": null,
-          "sha256": null
+          "status": "locked",
+          "url": "https://www.python.org/ftp/python/3.11.16/Python-3.11.16.tar.xz",
+          "sha256": "91bcdebfdde239a003ae93738a7fce0f9230fee5c4bc2b86f6e6e8c6f98aabe8",
+          "size": 20328716,
+          "sigstore": {
+            "verification": "archived-unverified",
+            "bundle_url": "https://www.python.org/ftp/python/3.11.16/Python-3.11.16.tar.xz.sigstore",
+            "bundle_sha256": "c2e6222a3d80c6acb99c13d8084bee23802d51ecbfe0e8b74718c0a92274c39e",
+            "bundle_size": 7309,
+            "bundle_evidence": "evidence/sigstore/cpython-3.11.16.tar.xz.sigstore.b64",
+            "identity": "pablogsal@python.org",
+            "oidc_issuer": "https://accounts.google.com"
+          }
         }
       },
       {
         "version": "3.12.14",
         "adapter": "modern",
-        "support": "active",
+        "support": "security",
         "source": {
-          "status": "pending",
-          "url": null,
-          "sha256": null
+          "status": "locked",
+          "url": "https://www.python.org/ftp/python/3.12.14/Python-3.12.14.tar.xz",
+          "sha256": "5c8462af5790baf43a321a1559dbe0db06d1be4300fb85fb53c40060668e548a",
+          "size": 20820300,
+          "sigstore": {
+            "verification": "archived-unverified",
+            "bundle_url": "https://www.python.org/ftp/python/3.12.14/Python-3.12.14.tar.xz.sigstore",
+            "bundle_sha256": "0e8c44607a6bee9541cf2ba6bef366a72fe4678053e54f796ea6c0489a3d5dbc",
+            "bundle_size": 7391,
+            "bundle_evidence": "evidence/sigstore/cpython-3.12.14.tar.xz.sigstore.b64",
+            "identity": "thomas@python.org",
+            "oidc_issuer": "https://accounts.google.com"
+          }
         }
       },
       {
         "version": "3.13.15",
         "adapter": "modern",
-        "support": "active",
+        "support": "bugfix",
         "source": {
-          "status": "pending",
-          "url": null,
-          "sha256": null
+          "status": "locked",
+          "url": "https://www.python.org/ftp/python/3.13.15/Python-3.13.15.tar.xz",
+          "sha256": "1e66a7945a48390ee4c2a4268a0e4185884059a13c4aab6d148aa208deea4a76",
+          "size": 23160540,
+          "sigstore": {
+            "verification": "archived-unverified",
+            "bundle_url": "https://www.python.org/ftp/python/3.13.15/Python-3.13.15.tar.xz.sigstore",
+            "bundle_sha256": "bf4a892d7a8a1d8795ae555960b5838d72202cbd37c28f9e4be10ed084f89ee3",
+            "bundle_size": 7121,
+            "bundle_evidence": "evidence/sigstore/cpython-3.13.15.tar.xz.sigstore.b64",
+            "identity": "thomas@python.org",
+            "oidc_issuer": "https://accounts.google.com"
+          }
         }
       },
       {
         "version": "3.14.7",
         "adapter": "modern",
-        "support": "active",
+        "support": "bugfix",
         "source": {
-          "status": "pending",
-          "url": null,
-          "sha256": null
+          "status": "locked",
+          "url": "https://www.python.org/ftp/python/3.14.7/Python-3.14.7.tar.xz",
+          "sha256": "3b48dac8fb59f62eaa67ac83c1eb12bda1b7a08406dd286e252c11a66be27f81",
+          "size": 24053924,
+          "sigstore": {
+            "verification": "archived-unverified",
+            "bundle_url": "https://www.python.org/ftp/python/3.14.7/Python-3.14.7.tar.xz.sigstore",
+            "bundle_sha256": "6f41efc358b146b5548dbfc0414e9247441f8524fb6ef59f1c4ca946ffc70701",
+            "bundle_size": 7101,
+            "bundle_evidence": "evidence/sigstore/cpython-3.14.7.tar.xz.sigstore.b64",
+            "identity": "hugo@python.org",
+            "oidc_issuer": "https://github.com/login/oauth"
+          }
         }
       }
     ]

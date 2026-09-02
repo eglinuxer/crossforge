@@ -18,6 +18,11 @@ FROM --platform=${CROSSFORGE_ARM64_PLATFORM} crossforge_rocky_arm64 AS rocky-run
 # The amd64 QEMU executor is supplied by a manifest-pinned named context.
 FROM crossforge_qemu AS qemu-executor-source
 
+# Unmodified roots used by the CPython clean-Rocky qualification tier. Runtime
+# libraries are added later from exact RPMs already present in each sysroot
+# content lock; no repository is consulted during qualification.
+FROM crossforge_rocky_amd64 AS rocky-runtime-x86_64-source
+
 FROM rocky-base AS config-validate
 COPY config/ ./config/
 COPY evidence/ ./evidence/
@@ -87,6 +92,16 @@ RUN mkdir -p /sources \
          --config ./config/release.json \
          --schema ./config/schemas/release.schema.json \
          --output /sources/gcc-toolset-15-binutils.src.rpm
+
+FROM config-validate AS cpython-source-cp313
+ARG CPYTHON_CP313_VERSION
+COPY scripts/fetch-release-source.py ./scripts/fetch-release-source.py
+RUN mkdir -p /sources \
+    && /usr/libexec/platform-python ./scripts/fetch-release-source.py python \
+         --version "$CPYTHON_CP313_VERSION" \
+         --config ./config/release.json \
+         --schema ./config/schemas/release.schema.json \
+         --output /sources/Python-cp313.tar.xz
 
 # Shared code and configuration for independently cached RPM bundles. Locks and
 # transaction manifests stay in their component branches below.
@@ -219,6 +234,72 @@ RUN --network=none \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --marker /usr/share/crossforge/rpm-locks/host-gcc-build.json
 
+# CPython's native build interpreter has its own additive development closure;
+# it must not inherit GCC-only bison/flex or couple Python to that lock.
+FROM rpm-input-base AS host-python-build-rpms
+COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
+COPY locks/transactions/host-build-common-el8-x86_64.json ./locks/transactions/host-build-common-el8-x86_64.json
+COPY locks/host-python-build-el8-x86_64.json ./locks/host-python-build-el8-x86_64.json
+COPY locks/transactions/host-python-build-el8-x86_64.json ./locks/transactions/host-python-build-el8-x86_64.json
+COPY locks/metadata/host-python-build-el8-x86_64/ ./locks/metadata/host-python-build-el8-x86_64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/host-python-build-el8-x86_64.json --require-lock \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/host-python-build-el8-x86_64.json fetch \
+      --output /rpm-bundle --jobs 8
+
+FROM host-build-common-locked AS host-python-build-locked
+COPY locks/host-python-build-el8-x86_64.json ./locks/host-python-build-el8-x86_64.json
+COPY locks/transactions/host-python-build-el8-x86_64.json ./locks/transactions/host-python-build-el8-x86_64.json
+COPY locks/metadata/host-python-build-el8-x86_64/ ./locks/metadata/host-python-build-el8-x86_64/
+COPY scripts/install-host-rpm-lock.py ./scripts/install-host-rpm-lock.py
+RUN --network=none \
+    --mount=type=bind,from=host-python-build-rpms,source=/rpm-bundle,target=/rpm-bundle-python,ro \
+    /usr/libexec/platform-python ./scripts/install-host-rpm-lock.py \
+      ./locks/host-python-build-el8-x86_64.json \
+      --transaction ./locks/transactions/host-python-build-el8-x86_64.json \
+      --bundle /rpm-bundle-python \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --marker /usr/share/crossforge/rpm-locks/host-python-build.json
+
+# Qualification-only clean Rocky roots. Each starts from the exact OCI child
+# and receives only the seven target runtime RPMs needed by the CPython module
+# contract. The complete sysroot bundle is nevertheless re-hashed and
+# re-verified before those RPMs are selected.
+FROM host-build-common-locked AS python-runtime-clean-x86_64
+ARG ROCKY_AMD64_MANIFEST_DIGEST
+COPY --from=rocky-runtime-x86_64-source / /runtime-root/
+COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
+COPY locks/transactions/sysroot-el8-x86_64.json ./locks/transactions/sysroot-el8-x86_64.json
+COPY locks/metadata/sysroot-el8-x86_64/ ./locks/metadata/sysroot-el8-x86_64/
+COPY scripts/assemble-python-runtime.py ./scripts/assemble-python-runtime.py
+RUN --network=none \
+    --mount=type=bind,from=sysroot-rpms-x86_64,source=/rpm-bundle,target=/rpm-bundle,ro \
+    /usr/libexec/platform-python ./scripts/assemble-python-runtime.py \
+      ./locks/sysroot-el8-x86_64.json \
+      --bundle /rpm-bundle \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --runtime-root /runtime-root \
+      --base-image-manifest-digest "$ROCKY_AMD64_MANIFEST_DIGEST" \
+      --evidence /work/qualification/python/runtime-clean-x86_64.json
+
+FROM host-build-common-locked AS python-runtime-clean-aarch64
+ARG ROCKY_ARM64_MANIFEST_DIGEST
+COPY --from=rocky-runtime-aarch64-source / /runtime-root/
+COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
+COPY locks/transactions/sysroot-el8-aarch64.json ./locks/transactions/sysroot-el8-aarch64.json
+COPY locks/metadata/sysroot-el8-aarch64/ ./locks/metadata/sysroot-el8-aarch64/
+COPY scripts/assemble-python-runtime.py ./scripts/assemble-python-runtime.py
+RUN --network=none \
+    --mount=type=bind,from=sysroot-rpms-aarch64,source=/rpm-bundle,target=/rpm-bundle,ro \
+    /usr/libexec/platform-python ./scripts/assemble-python-runtime.py \
+      ./locks/sysroot-el8-aarch64.json \
+      --bundle /rpm-bundle \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --runtime-root /runtime-root \
+      --base-image-manifest-digest "$ROCKY_ARM64_MANIFEST_DIGEST" \
+      --evidence /work/qualification/python/runtime-clean-aarch64.json
+
 # Maintenance-only canonical resolvers. They are not dependencies of normal
 # builds: release stages consume checked-in manifests/locks exclusively. Export
 # one with `--set <target>.output=type=local,dest=...` for an audited lock update.
@@ -309,6 +390,46 @@ RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
 
 FROM scratch AS rpm-lock-host-gcc-build
 COPY --from=rpm-resolve-host-gcc-build /resolved/ /
+
+FROM host-build-common-locked AS rpm-resolve-host-python-build
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/host-python-build-el8-x86_64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/host-python-build-el8-x86_64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-host-python-build
+COPY --from=rpm-resolve-host-python-build /resolved/ /
+
+FROM host-python-build-locked AS cpython-build-cp313
+ARG CPYTHON_CP313_VERSION
+ARG CPYTHON_CP313_ADAPTER
+ARG CROSSFORGE_JOBS=4
+COPY --from=cpython-source-cp313 \
+  /sources/Python-cp313.tar.xz /sources/Python-cp313.tar.xz
+COPY scripts/build-cpython-native.sh /work/scripts/build-cpython-native.sh
+RUN mkdir -p /work/src/cpython-cp313 \
+    && tar -xJf /sources/Python-cp313.tar.xz \
+      -C /work/src/cpython-cp313 --strip-components=1 \
+    && /work/scripts/build-cpython-native.sh \
+      /work/src/cpython-cp313 \
+      /work/build/cpython-cp313-native \
+      /opt/crossforge/python/cp313/build \
+      "$CPYTHON_CP313_VERSION" \
+      "$CPYTHON_CP313_ADAPTER" \
+      "$CROSSFORGE_JOBS"
 
 FROM host-build-common-locked AS binutils-prep-input
 ARG GTS_BINUTILS_SHA256
@@ -620,3 +741,261 @@ COPY --from=runtime-smoke-aarch64 \
 RUN test ! -e /rpm-bundle \
     && test ! -e /rpm-bundle-gcc \
     && test ! -e /usr/local/libexec/crossforge/qemu-aarch64
+
+FROM host-python-build-locked AS cpython-cross-cp313-x86_64
+ARG CPYTHON_CP313_VERSION
+ARG CPYTHON_CP313_ADAPTER
+ARG CROSSFORGE_JOBS=4
+COPY --from=toolchain-x86_64-dev \
+  /opt/crossforge/targets/x86_64-unknown-linux-gnu/ \
+  /opt/crossforge/targets/x86_64-unknown-linux-gnu/
+COPY --from=toolchain-x86_64-dev \
+  /opt/crossforge/sysroots/el8/x86_64/ \
+  /opt/crossforge/sysroots/el8/x86_64/
+COPY --from=cpython-build-cp313 \
+  /work/src/cpython-cp313/ /work/src/cpython-cp313/
+COPY --from=cpython-build-cp313 \
+  /opt/crossforge/python/cp313/build/ \
+  /opt/crossforge/python/cp313/build/
+COPY scripts/build-cpython-cross.sh /work/scripts/build-cpython-cross.sh
+COPY scripts/deny-target-exec.c scripts/target-exec-canary.c /work/scripts/
+RUN --network=none /work/scripts/build-cpython-cross.sh \
+      /work/src/cpython-cp313 \
+      /work/build/cpython-cp313-x86_64 \
+      /opt/crossforge/python/cp313/targets/x86_64-unknown-linux-gnu \
+      /opt/crossforge/sysroots/el8/x86_64 \
+      /opt/crossforge/targets/x86_64-unknown-linux-gnu \
+      x86_64-unknown-linux-gnu \
+      /opt/crossforge/python/cp313/build/bin/python3.13 \
+      "$CPYTHON_CP313_VERSION" \
+      "$CPYTHON_CP313_ADAPTER" \
+      "$CROSSFORGE_JOBS"
+
+FROM host-python-build-locked AS cpython-cross-cp313-aarch64
+ARG CPYTHON_CP313_VERSION
+ARG CPYTHON_CP313_ADAPTER
+ARG CROSSFORGE_JOBS=4
+COPY --from=toolchain-aarch64-dev \
+  /opt/crossforge/targets/aarch64-unknown-linux-gnu/ \
+  /opt/crossforge/targets/aarch64-unknown-linux-gnu/
+COPY --from=toolchain-aarch64-dev \
+  /opt/crossforge/sysroots/el8/aarch64/ \
+  /opt/crossforge/sysroots/el8/aarch64/
+COPY --from=cpython-build-cp313 \
+  /work/src/cpython-cp313/ /work/src/cpython-cp313/
+COPY --from=cpython-build-cp313 \
+  /opt/crossforge/python/cp313/build/ \
+  /opt/crossforge/python/cp313/build/
+COPY scripts/build-cpython-cross.sh /work/scripts/build-cpython-cross.sh
+COPY scripts/deny-target-exec.c scripts/target-exec-canary.c /work/scripts/
+RUN --network=none /work/scripts/build-cpython-cross.sh \
+      /work/src/cpython-cp313 \
+      /work/build/cpython-cp313-aarch64 \
+      /opt/crossforge/python/cp313/targets/aarch64-unknown-linux-gnu \
+      /opt/crossforge/sysroots/el8/aarch64 \
+      /opt/crossforge/targets/aarch64-unknown-linux-gnu \
+      aarch64-unknown-linux-gnu \
+      /opt/crossforge/python/cp313/build/bin/python3.13 \
+      "$CPYTHON_CP313_VERSION" \
+      "$CPYTHON_CP313_ADAPTER" \
+      "$CROSSFORGE_JOBS"
+
+# Compile a minimal extension with each installed target SDK, then statically
+# audit the interpreter and every lib-dynload ELF before any target execution.
+FROM cpython-cross-cp313-x86_64 AS cpython-cp313-x86_64-qualify-build
+ARG CPYTHON_CP313_VERSION
+COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY scripts/qualify-cpython.py /work/scripts/qualify-cpython.py
+COPY tests/python/minimal_extension.c /work/tests/python/minimal_extension.c
+RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-cpython.py \
+      --prefix /opt/crossforge/python/cp313/targets/x86_64-unknown-linux-gnu \
+      --build-python /opt/crossforge/python/cp313/build/bin/python3.13 \
+      --build-directory /work/build/cpython-cp313-x86_64 \
+      --toolchain /opt/crossforge/targets/x86_64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/x86_64 \
+      --target x86_64-unknown-linux-gnu \
+      --version "$CPYTHON_CP313_VERSION" \
+      --extension-source /work/tests/python/minimal_extension.c \
+      --work /work/qualification/python/cp313/x86_64 \
+      --release /src/config/release.json \
+      --report /work/qualification/python/cp313/x86_64/compile.json
+
+FROM cpython-cross-cp313-aarch64 AS cpython-cp313-aarch64-qualify-build
+ARG CPYTHON_CP313_VERSION
+COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY scripts/qualify-cpython.py /work/scripts/qualify-cpython.py
+COPY tests/python/minimal_extension.c /work/tests/python/minimal_extension.c
+RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-cpython.py \
+      --prefix /opt/crossforge/python/cp313/targets/aarch64-unknown-linux-gnu \
+      --build-python /opt/crossforge/python/cp313/build/bin/python3.13 \
+      --build-directory /work/build/cpython-cp313-aarch64 \
+      --toolchain /opt/crossforge/targets/aarch64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/aarch64 \
+      --target aarch64-unknown-linux-gnu \
+      --version "$CPYTHON_CP313_VERSION" \
+      --extension-source /work/tests/python/minimal_extension.c \
+      --work /work/qualification/python/cp313/aarch64 \
+      --release /src/config/release.json \
+      --report /work/qualification/python/cp313/aarch64/compile.json
+
+# Execute the same Python and extension in both runtime tiers. Core probes run
+# inside chroot; the PTY leg uses the selected runtime loader outside chroot so
+# the build sandbox's real devpts mount is visible. No runner exists in either
+# cross-build stage above.
+FROM host-python-build-locked AS cpython-cp313-x86_64-qualify
+ARG CPYTHON_CP313_VERSION
+COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY --from=sysroot-x86_64 \
+  /opt/crossforge/sysroots/el8/x86_64/ /runtime-locked/
+COPY --from=python-runtime-clean-x86_64 /runtime-root/ /runtime-clean/
+COPY --from=python-runtime-clean-x86_64 \
+  /work/qualification/python/runtime-clean-x86_64.json \
+  /work/qualification/python/runtime-clean-x86_64.json
+COPY --from=cpython-cp313-x86_64-qualify-build \
+  /opt/crossforge/python/cp313/targets/x86_64-unknown-linux-gnu/ \
+  /opt/crossforge/python/cp313/targets/x86_64-unknown-linux-gnu/
+COPY --from=cpython-cp313-x86_64-qualify-build \
+  /work/qualification/python/cp313/x86_64/ \
+  /work/qualification/python/cp313/x86_64/
+COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
+COPY scripts/run-cpython-runtime.py /work/scripts/run-cpython-runtime.py
+COPY scripts/finalize-cpython-qualification.py \
+  /work/scripts/finalize-cpython-qualification.py
+COPY tests/python/runtime_probe.py /work/tests/python/runtime_probe.py
+RUN --network=none /usr/libexec/platform-python /work/scripts/run-cpython-runtime.py \
+      --compile-report /work/qualification/python/cp313/x86_64/compile.json \
+      --release /src/config/release.json \
+      --runtime-root /runtime-locked \
+      --target-prefix /opt/crossforge/python/cp313/targets/x86_64-unknown-linux-gnu \
+      --extension /work/qualification/python/cp313/x86_64/_crossforge.cpython-313-x86_64-linux-gnu.so \
+      --probe /work/tests/python/runtime_probe.py \
+      --target x86_64-unknown-linux-gnu \
+      --version "$CPYTHON_CP313_VERSION" \
+      --tier locked-sysroot \
+      --output /work/qualification/python/cp313/x86_64/locked-sysroot.json
+RUN --network=none /usr/libexec/platform-python /work/scripts/run-cpython-runtime.py \
+      --compile-report /work/qualification/python/cp313/x86_64/compile.json \
+      --release /src/config/release.json \
+      --runtime-root /runtime-clean \
+      --runtime-evidence /work/qualification/python/runtime-clean-x86_64.json \
+      --target-prefix /opt/crossforge/python/cp313/targets/x86_64-unknown-linux-gnu \
+      --extension /work/qualification/python/cp313/x86_64/_crossforge.cpython-313-x86_64-linux-gnu.so \
+      --probe /work/tests/python/runtime_probe.py \
+      --target x86_64-unknown-linux-gnu \
+      --version "$CPYTHON_CP313_VERSION" \
+      --tier clean-rocky \
+      --output /work/qualification/python/cp313/x86_64/clean-rocky.json
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/finalize-cpython-qualification.py \
+      --compile-report /work/qualification/python/cp313/x86_64/compile.json \
+      --locked-sysroot-result /work/qualification/python/cp313/x86_64/locked-sysroot.json \
+      --clean-runtime-result /work/qualification/python/cp313/x86_64/clean-rocky.json \
+      --release /src/config/release.json \
+      --target x86_64-unknown-linux-gnu \
+      --version "$CPYTHON_CP313_VERSION" \
+      --output /work/qualification/python/cp313/x86_64.json
+
+FROM host-python-build-locked AS cpython-cp313-aarch64-qualify
+ARG CPYTHON_CP313_VERSION
+COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY --from=sysroot-aarch64 \
+  /opt/crossforge/sysroots/el8/aarch64/ /runtime-locked/
+COPY --from=python-runtime-clean-aarch64 /runtime-root/ /runtime-clean/
+COPY --from=python-runtime-clean-aarch64 \
+  /work/qualification/python/runtime-clean-aarch64.json \
+  /work/qualification/python/runtime-clean-aarch64.json
+COPY --from=cpython-cp313-aarch64-qualify-build \
+  /opt/crossforge/python/cp313/targets/aarch64-unknown-linux-gnu/ \
+  /opt/crossforge/python/cp313/targets/aarch64-unknown-linux-gnu/
+COPY --from=cpython-cp313-aarch64-qualify-build \
+  /work/qualification/python/cp313/aarch64/ \
+  /work/qualification/python/cp313/aarch64/
+COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
+COPY scripts/run-cpython-runtime.py /work/scripts/run-cpython-runtime.py
+COPY scripts/finalize-cpython-qualification.py \
+  /work/scripts/finalize-cpython-qualification.py
+COPY tests/python/runtime_probe.py /work/tests/python/runtime_probe.py
+RUN mkdir -p /runtime-locked/.crossforge /runtime-clean/.crossforge
+RUN --network=none \
+    --mount=type=bind,from=qemu-aarch64-validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-locked/.crossforge/qemu-aarch64,ro \
+    --mount=type=bind,from=qemu-aarch64-validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/work/qemu-aarch64,ro \
+    /usr/libexec/platform-python /work/scripts/run-cpython-runtime.py \
+      --compile-report /work/qualification/python/cp313/aarch64/compile.json \
+      --release /src/config/release.json \
+      --runtime-root /runtime-locked \
+      --target-prefix /opt/crossforge/python/cp313/targets/aarch64-unknown-linux-gnu \
+      --extension /work/qualification/python/cp313/aarch64/_crossforge.cpython-313-aarch64-linux-gnu.so \
+      --probe /work/tests/python/runtime_probe.py \
+      --target aarch64-unknown-linux-gnu \
+      --version "$CPYTHON_CP313_VERSION" \
+      --tier locked-sysroot \
+      --qemu /work/qemu-aarch64 \
+      --output /work/qualification/python/cp313/aarch64/locked-sysroot.json
+RUN --network=none \
+    --mount=type=bind,from=qemu-aarch64-validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-clean/.crossforge/qemu-aarch64,ro \
+    --mount=type=bind,from=qemu-aarch64-validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/work/qemu-aarch64,ro \
+    /usr/libexec/platform-python /work/scripts/run-cpython-runtime.py \
+      --compile-report /work/qualification/python/cp313/aarch64/compile.json \
+      --release /src/config/release.json \
+      --runtime-root /runtime-clean \
+      --runtime-evidence /work/qualification/python/runtime-clean-aarch64.json \
+      --target-prefix /opt/crossforge/python/cp313/targets/aarch64-unknown-linux-gnu \
+      --extension /work/qualification/python/cp313/aarch64/_crossforge.cpython-313-aarch64-linux-gnu.so \
+      --probe /work/tests/python/runtime_probe.py \
+      --target aarch64-unknown-linux-gnu \
+      --version "$CPYTHON_CP313_VERSION" \
+      --tier clean-rocky \
+      --qemu /work/qemu-aarch64 \
+      --output /work/qualification/python/cp313/aarch64/clean-rocky.json
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/finalize-cpython-qualification.py \
+      --compile-report /work/qualification/python/cp313/aarch64/compile.json \
+      --locked-sysroot-result /work/qualification/python/cp313/aarch64/locked-sysroot.json \
+      --clean-runtime-result /work/qualification/python/cp313/aarch64/clean-rocky.json \
+      --release /src/config/release.json \
+      --target aarch64-unknown-linux-gnu \
+      --version "$CPYTHON_CP313_VERSION" \
+      --output /work/qualification/python/cp313/aarch64.json
+
+# Inspectable Phase-5 SDK slice. It remains cache-only and inherits build host
+# packages until the independent product runtime lock exists. QEMU, clean
+# runtime roots and qualification extensions stay in test stages.
+FROM host-python-build-locked AS python-cp313-dev
+COPY --from=toolchain-x86_64-dev \
+  /opt/crossforge/targets/x86_64-unknown-linux-gnu/ \
+  /opt/crossforge/targets/x86_64-unknown-linux-gnu/
+COPY --from=toolchain-x86_64-dev \
+  /opt/crossforge/sysroots/el8/x86_64/ \
+  /opt/crossforge/sysroots/el8/x86_64/
+COPY --from=toolchain-aarch64-dev \
+  /opt/crossforge/targets/aarch64-unknown-linux-gnu/ \
+  /opt/crossforge/targets/aarch64-unknown-linux-gnu/
+COPY --from=toolchain-aarch64-dev \
+  /opt/crossforge/sysroots/el8/aarch64/ \
+  /opt/crossforge/sysroots/el8/aarch64/
+COPY --from=cpython-build-cp313 \
+  /opt/crossforge/python/cp313/build/ \
+  /opt/crossforge/python/cp313/build/
+COPY --from=cpython-cp313-x86_64-qualify-build \
+  /opt/crossforge/python/cp313/targets/x86_64-unknown-linux-gnu/ \
+  /opt/crossforge/python/cp313/targets/x86_64-unknown-linux-gnu/
+COPY --from=cpython-cp313-aarch64-qualify-build \
+  /opt/crossforge/python/cp313/targets/aarch64-unknown-linux-gnu/ \
+  /opt/crossforge/python/cp313/targets/aarch64-unknown-linux-gnu/
+COPY --from=cpython-cp313-x86_64-qualify \
+  /work/qualification/python/cp313/x86_64.json \
+  /opt/crossforge/qualification/python/cp313/x86_64.json
+COPY --from=cpython-cp313-aarch64-qualify \
+  /work/qualification/python/cp313/aarch64.json \
+  /opt/crossforge/qualification/python/cp313/aarch64.json
+RUN test ! -e /work/qemu-aarch64 \
+    && test ! -e /runtime-locked \
+    && test ! -e /runtime-clean \
+    && test ! -e /rpm-bundle \
+    && test ! -e /rpm-bundle-python \
+    && test -x /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc \
+    && test -x /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc \
+    && test -x /opt/crossforge/python/cp313/targets/x86_64-unknown-linux-gnu/bin/python3.13-config \
+    && test -x /opt/crossforge/python/cp313/targets/aarch64-unknown-linux-gnu/bin/python3.13-config \
+    && test -f /opt/crossforge/qualification/python/cp313/x86_64.json \
+    && test -f /opt/crossforge/qualification/python/cp313/aarch64.json

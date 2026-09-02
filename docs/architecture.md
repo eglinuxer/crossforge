@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、host common/GCC 增量 locks 与两套 GTS15 C/C++/LTO cross slice 已完成。x86_64 通过原生 smoke；aarch64 通过显式固定 QEMU 的 clean-Rocky smoke。它们仍是非发布 `-dev` target；最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、两套 GTS15 C/C++/LTO cross slice，以及 CPython 3.13 的 build/x86_64/aarch64 代表性切片已完成。Python 3.9–3.12/3.14、最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -129,10 +129,11 @@ arm64 根文件系统只作为 source stage 被复制，所有 arm ELF 都由 am
 显式调用 QEMU 执行。该结果只能标记为 QEMU-qualified，不能替代发布前原生
 EL8/aarch64 终检；QEMU 当前也只存在于测试 stage，尚未进入最终用户镜像。
 
-Host 构建环境使用两个独立 transaction：common 从固定基础镜像解析为 119 install
+Host 构建环境使用三个独立 transaction：common 从固定基础镜像解析为 119 install
 以及 9 upgrade（并记录对应 9 remove）；GCC additive delta 只含 `bison`、`flex`、
-`libzstd-devel` 与依赖 `m4`。两层均逐包验签后在 `--network=none` 下执行真实
-scripts/triggers，并核对完整 rpmdb。`libzstd-devel` 不进入 common 层，避免改变
+`libzstd-devel` 与依赖 `m4`；Python additive delta 只声明 bzip2、libffi、libuuid、
+OpenSSL、SQLite 与 xz 的开发 roots。三层均逐包验签后在 `--network=none` 下执行真实
+scripts/triggers，并核对完整 rpmdb。`libzstd-devel` 不进入 common/Python 层，避免改变
 binutils 的 `--with-zstd=auto` 探测。最终用户镜像的 host runtime lock 必须从干净
 Rocky base 独立求解，不得继承这些 build-only packages。
 
@@ -147,9 +148,13 @@ CPython source
 └── target: aarch64-unknown-linux-gnu + EL8
 ```
 
-首发支持 3.9–3.14，共 6 个 build Python 和 12 个 target Python。3.9–3.10 使用 legacy adapter，3.11 使用 transition adapter，3.12–3.14 使用 modern adapter；精确 patch 版本写在 `release.json`。3.9 及后续进入 EOL 的 minor 明确标记为 legacy，不承诺上游安全修复。
+首发支持 3.9–3.14，共 6 个 build Python 和 12 个 target Python。3.9–3.10 使用 legacy adapter，3.11 使用 transition adapter，3.12–3.14 使用 modern adapter；精确 patch 版本与独立的 `eol`/`security`/`bugfix` 支持状态写在 `release.json`。EOL minor 不承诺上游安全修复。
+
+当前已完成 CPython 3.13.15 代表性行：amd64 build Python、两个真正 cross target SDK、最小 C extension、全量 `lib-dynload` ELF 审计，以及 locked-sysroot/clean-Rocky 双运行时探针。cross build 以预加载 exec guard 和目标 ELF canary 主动阻止 build/prefix 内目标程序执行，不能因 x86_64 同 ISA 或宿主 binfmt 静默退化为 native execution。clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七个精确验签 runtime RPM；因 OCI 与 sysroot errata 版本可不同，该 `--nodeps` overlay 仅验证精确 DSO 字节兼容性，不是可部署的 RPM transaction，也不进入 SDK。aarch64 只使用固定 QEMU，发布前仍需原生 ARM 终检。
 
 target SDK 包含解释器、stdlib、headers、`pyconfig.h`、`_sysconfigdata_*`、扩展模块和构建元数据。即使 x86_64 build/target 架构相同，也不得复用。每个 target 必须验证 zlib、bz2、lzma、ctypes、ssl、hashlib、sqlite3、uuid 等约定模块，以及最小 C extension 的编译、ELF 架构和 import；3.14 另验 `compression.zstd`。
+
+Rocky 8 的 zstd 1.4.4 低于 CPython 3.14 `compression.zstd` 所需的 1.4.5。3.14 adapter 必须构建固定来源、PIC 的私有静态 zstd，并只链接进 `_zstd`；不得修改全局不可变 sysroot。资格化必须确认 `_zstd` 没有新增 zstd `DT_NEEDED`，并实际执行 `compression.zstd` round-trip。
 
 Python 契约是“支持交叉编译扩展”，不是 PEP 517/wheel 编排器。Crossforge 不做 wheel retag、vendoring、manylinux repair，也不支持 PyPy、free-threaded 或 debug Python。
 
@@ -208,7 +213,7 @@ source commit → build once → candidate digest → 原物验收 → registry-
 
 测试分层如下：
 
-- PR：JSON/Schema、shellcheck/shfmt、Python 单测、crosspack、Docker/Bake 静态检查和相关 smoke；
+- PR：JSON/Schema、Bash/Python syntax、Python 单测、Docker/Bake 静态检查和相关轻量 smoke；crosspack 实现后加入同层；
 - candidate：双 target C/C++/ABI、代表 Python、vcpkg ports、DEB/RPM 安装测试；
 - nightly/full：双 target 的 `check-gcc`、`check-g++`、`check-target-libgcc`、`check-target-libstdc++-v3`、`check-target-libgomp`，完整 Python 矩阵，以及 Qt 6.8.4 双 target；
 - release：同一 digest 的原生 aarch64 终检和资格化证明检查。
@@ -222,6 +227,8 @@ Qt 验收固定 Qt 6.8.4 `qt-everywhere` 官方源码和 SHA256，构建完整�
 Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单一供应链。所有源码、RPM、工具和基础镜像均固定 hash 或 digest；禁止 `curl | sh`。BuildKit cache 只用于加速，不构成发布身份或测试证据。
 
 Rocky OCI index、QEMU index/manifest/attestation/SLSA predicate 以及 QEMU Git tag/commit 原始字节以 base64 envelope 签入 `evidence/`。离线 validator 必须重算 OCI digest 与 Git object ID，并验证 platform child manifest、attestation subject、provenance builder/build arguments 和源码 tag→commit 关系。当前只归档 QEMU annotated tag 内的 OpenPGP 签名，不宣称已建立 QEMU maintainer keyring 信任；正式发布前需补齐该信任根或使用等价的上游签名策略。
+
+CPython 的上游 Sigstore bundle 同样以原始 base64 envelope 归档，并在结构层将 message/Rekor digest 绑定到 tarball SHA256；当前明确标记为 `archived-unverified`。配置中的预期 signer 仅是维护策略，尚未从证书 SAN/issuer 验证。在固定 Fulcio/Rekor/TSA trust roots 并执行真实签名、证书链、身份、SET 与 inclusion proof 验证前，不得把该归档描述为密码学真实性证明。
 
 每个 release 同时提供：
 
@@ -261,4 +268,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：x86_64 与 aarch64 cross compiler、hybrid runtime 和分层 smoke 已完成；下一步加入双架构 Python，随后依次实现 vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：双 target compiler/hybrid runtime 与 CPython 3.13 双 target 代表性行已完成；下一步按 adapter 风险依次扩展其余 Python minors，再实现 vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

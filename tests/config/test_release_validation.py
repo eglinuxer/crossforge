@@ -11,6 +11,7 @@ VALIDATOR = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
 EVIDENCE_VALIDATOR = runpy.run_path(
     str(REPOSITORY / "scripts/validate-supply-chain-evidence.py")
 )
+SOURCE_FETCHER = runpy.run_path(str(REPOSITORY / "scripts/fetch-release-source.py"))
 
 
 class ReleaseValidationTests(unittest.TestCase):
@@ -41,6 +42,11 @@ class ReleaseValidationTests(unittest.TestCase):
             (("base_image", "manifests", "arm64"), "sha256:" + "0" * 64),
             (("qemu", "executor", "provenance", "builder_commit"), "0" * 40),
             (("qemu", "executor", "source", "commit"), "0" * 40),
+            (("python", "versions", 4, "source", "sha256"), "0" * 64),
+            (
+                ("python", "versions", 4, "source", "sigstore", "bundle_sha256"),
+                "0" * 64,
+            ),
         )
         for path, value in mutations:
             with self.subTest(path=path):
@@ -120,6 +126,24 @@ class ReleaseValidationTests(unittest.TestCase):
         config["gts"]["source"]["size"] = 0
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate"](config, self.schema, self.schema, "$")
+
+    def test_python_sigstore_evidence_cannot_claim_unimplemented_verification(self):
+        config = copy.deepcopy(self.config)
+        config["python"]["versions"][4]["source"]["sigstore"][
+            "verification"
+        ] = "verified"
+        with self.assertRaises(VALIDATOR["ValidationError"]):
+            VALIDATOR["validate"](config, self.schema, self.schema, "$")
+
+    def test_python_source_selection_requires_one_exact_version(self):
+        with self.assertRaises(SOURCE_FETCHER["ValidationError"]):
+            SOURCE_FETCHER["source_for"](self.config, "python", None)
+        config = copy.deepcopy(self.config)
+        config["python"]["versions"].append(
+            copy.deepcopy(config["python"]["versions"][4])
+        )
+        with self.assertRaises(SOURCE_FETCHER["ValidationError"]):
+            SOURCE_FETCHER["source_for"](config, "python", "3.13.15")
 
     def test_bake_override_is_current(self):
         renderer = runpy.run_path(str(REPOSITORY / "scripts/render-bake.py"))

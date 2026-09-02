@@ -9,8 +9,11 @@ build-system-independent DEB/RPM packaging.
 > **Not yet publishable as the complete SDK.** Both cross-toolchain slices now
 > build from locked host and sysroot transactions. x86_64 passes native smoke;
 > aarch64 passes the same compile/ABI gates and explicit QEMU smoke against a
-> locked sysroot and clean Rocky arm64 root. Python, vcpkg, packaging, frozen
-> ABI sets and the independent minimal host-runtime lock remain pending.
+> locked sysroot and clean Rocky arm64 root. The representative CPython 3.13
+> slice now supplies one amd64 build Python plus genuine x86_64/aarch64 target
+> SDKs, each qualified in locked-sysroot and clean-Rocky runtime tiers. The
+> remaining Python minors, vcpkg, packaging, frozen ABI sets and the independent
+> minimal host-runtime lock remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -82,19 +85,23 @@ cross-DSO exceptions, link traces and ABI ceilings. The `-dev` suffix is
 intentional: frozen ABI sets, full GCC/Qt qualification and the complete
 release supply chain are not implemented yet.
 
-The compiler gate is currently a documented manual/heavy check; regular CI
-builds both locked host layers and both sysroots, but not the full compilers.
+The compiler and dual-target Python gates remain heavy candidate checks.
+Regular PR CI validates their graph, locked inputs, clean runtime overlays and
+native build Python without rebuilding both GCC toolchains from scratch.
 
 ## Phase 3: reproducible RPM foundation
 
 Host preparation is split deliberately: common tools contain the exact
-qualified binutils environment, while `bison`, `flex`, `libzstd-devel` and `m4`
-form a GCC-only additive lock. Validate and install both offline:
+qualified binutils environment; `bison`, `flex`, `libzstd-devel` and `m4` form
+a GCC-only additive lock; CPython development libraries form a third additive
+lock. Validate and install them offline:
 
 ```console
 $ ./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock
 $ ./scripts/validate-rpm-lock.py locks/host-gcc-build-el8-x86_64.json --require-lock
-$ docker buildx bake host-build-common-locked host-gcc-build-locked
+$ ./scripts/validate-rpm-lock.py locks/host-python-build-el8-x86_64.json --require-lock
+$ docker buildx bake host-build-common-locked host-gcc-build-locked \
+    host-python-build-locked
 ```
 
 Maintenance targets run the canonical resolver in the pinned Rocky image and
@@ -107,7 +114,8 @@ $ docker buildx bake rpm-lock-host-build-common \
 ```
 
 Equivalent targets exist for both `rpm-lock-sysroot-*` targets and
-`rpm-lock-host-gcc-build`; refresh common before its GCC delta. Bake forces
+`rpm-lock-host-gcc-build` and `rpm-lock-host-python-build`; refresh common
+before either delta. Bake forces
 these maintenance targets to bypass cache.
 
 These are build-environment locks, not the final image runtime. That runtime is
@@ -154,6 +162,31 @@ Exact Rocky index, QEMU OCI/SLSA, and QEMU Git tag/commit bytes are checked in
 under `evidence/` as base64 envelopes. The evidence validator recomputes their
 content identities and verifies the index-to-manifest, attestation, provenance,
 builder, checkout, signed-tag, and source-commit relationships offline.
+
+## Phase 5: representative CPython 3.13 slice
+
+Build and qualify the first complete Python matrix row:
+
+```console
+$ docker buildx bake cpython-cp313-x86_64-qualify
+$ docker buildx bake cpython-cp313-aarch64-qualify
+$ docker buildx bake python-cp313-dev
+```
+
+CPython 3.13.15 is built once as an amd64 build interpreter and twice as a
+real cross target. The build stages never execute target code. Qualification
+compiles a minimal extension, audits every `lib-dynload` ELF and runs zlib,
+bz2, lzma, ctypes, OpenSSL, SQLite, UUID, threading, semaphore, timezone,
+resolver, wide-character and PTY probes. Each target runs against both its
+exact build sysroot and the pinned Rocky 8.10 image augmented with seven exact,
+signed runtime RPMs. That `--nodeps` overlay is qualification-only, not a
+deployable package transaction. aarch64 uses only the locked explicit QEMU
+executor.
+
+All six CPython 3.9–3.14 source tarballs are content-locked. Their upstream
+Sigstore bundles are archived and structurally bound to those digests, but are
+explicitly marked `archived-unverified`: cryptographic Fulcio/Rekor verification
+is a later release-supply-chain gate and is not claimed by this phase.
 
 ## Product contract
 

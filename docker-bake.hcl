@@ -44,6 +44,12 @@ target "gts-binutils-source" {
   output   = ["type=cacheonly"]
 }
 
+target "cpython-source-cp313" {
+  inherits = ["_common"]
+  target   = "cpython-source-cp313"
+  output   = ["type=cacheonly"]
+}
+
 target "sysroot-x86_64" {
   inherits = ["_common"]
   target   = "sysroot-x86_64"
@@ -65,6 +71,72 @@ target "host-build-common-locked" {
 target "host-gcc-build-locked" {
   inherits = ["_common"]
   target   = "host-gcc-build-locked"
+  output   = ["type=cacheonly"]
+}
+
+target "host-python-build-locked" {
+  inherits = ["_common"]
+  target   = "host-python-build-locked"
+  output   = ["type=cacheonly"]
+}
+
+target "cpython-build-cp313" {
+  inherits = ["_common"]
+  target   = "cpython-build-cp313"
+  output   = ["type=cacheonly"]
+}
+
+target "cpython-cross-cp313-x86_64" {
+  inherits = ["_common"]
+  target   = "cpython-cross-cp313-x86_64"
+  output   = ["type=cacheonly"]
+}
+
+target "cpython-cross-cp313-aarch64" {
+  inherits = ["_common"]
+  target   = "cpython-cross-cp313-aarch64"
+  output   = ["type=cacheonly"]
+}
+
+target "python-runtime-clean-x86_64" {
+  inherits = ["_common"]
+  target   = "python-runtime-clean-x86_64"
+  output   = ["type=cacheonly"]
+}
+
+target "python-runtime-clean-aarch64" {
+  inherits = ["_common"]
+  target   = "python-runtime-clean-aarch64"
+  output   = ["type=cacheonly"]
+}
+
+target "cpython-cp313-x86_64-qualify-build" {
+  inherits = ["_common"]
+  target   = "cpython-cp313-x86_64-qualify-build"
+  output   = ["type=cacheonly"]
+}
+
+target "cpython-cp313-aarch64-qualify-build" {
+  inherits = ["_common"]
+  target   = "cpython-cp313-aarch64-qualify-build"
+  output   = ["type=cacheonly"]
+}
+
+target "cpython-cp313-x86_64-qualify" {
+  inherits = ["_common"]
+  target   = "cpython-cp313-x86_64-qualify"
+  output   = ["type=cacheonly"]
+}
+
+target "cpython-cp313-aarch64-qualify" {
+  inherits = ["_common"]
+  target   = "cpython-cp313-aarch64-qualify"
+  output   = ["type=cacheonly"]
+}
+
+target "python-cp313-dev" {
+  inherits = ["_common"]
+  target   = "python-cp313-dev"
   output   = ["type=cacheonly"]
 }
 
@@ -100,6 +172,13 @@ target "rpm-lock-host-build-common" {
 target "rpm-lock-host-gcc-build" {
   inherits = ["_common"]
   target   = "rpm-lock-host-gcc-build"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-lock-host-python-build" {
+  inherits = ["_common"]
+  target   = "rpm-lock-host-python-build"
   no-cache = true
   output   = ["type=cacheonly"]
 }
@@ -193,5 +272,19 @@ group "phase4" {
     "sysroot-aarch64",
     "toolchain-x86_64-dev",
     "toolchain-aarch64-dev"
+  ]
+}
+
+group "phase5" {
+  targets = [
+    "validate",
+    "platform-python-check",
+    "host-python-build-locked",
+    "cpython-build-cp313",
+    "python-runtime-clean-x86_64",
+    "python-runtime-clean-aarch64",
+    "cpython-cp313-x86_64-qualify",
+    "cpython-cp313-aarch64-qualify",
+    "python-cp313-dev"
   ]
 }
