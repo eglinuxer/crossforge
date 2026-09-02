@@ -71,7 +71,8 @@ class FinalSdkQualificationTests(unittest.TestCase):
         self.assertIn("COPY --from=crossforge_qemu_validated", block)
         self.assertIn("/opt/crossforge/qualification/toolchain", dockerfile)
         self.assertIn("scripts/qualify-final-sdk.py", block)
-        self.assertIn("scripts/render-release-components.py", block)
+        self.assertIn("scripts/release-components-core.py", block)
+        self.assertNotIn("scripts/render-release-components.py", block)
         self.assertIn("/opt/crossforge/qualification/final-sdk.json", block)
         self.assertIn("RUN --network=none", block)
         self.assertLess(

@@ -59,6 +59,7 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
             "release.schema.json",
             "finalize",
             "render-release-components.py",
+            "release-components-core.py",
             "python_source_release_binding.py",
         ):
             self.assertNotIn(forbidden, build_host)
@@ -67,7 +68,8 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         self.assertIn("config/release.json", full_host)
         self.assertIn("config/schemas/release.schema.json", full_host)
         self.assertIn("python_source_release_binding.py", full_host)
-        self.assertIn("render-release-components.py", full_host)
+        self.assertIn("release-components-core.py", full_host)
+        self.assertNotIn("render-release-components.py", full_host)
         self.assertIn("python_zstd_evidence.py", full_host)
 
     def test_prepared_native_and_cross_are_component_only_build_stages(self):
@@ -88,6 +90,7 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
                     "finalize-python-row.py",
                     "python_source_release_binding.py",
                     "render-release-components.py",
+                    "release-components-core.py",
                     "python_row_contract.py",
                 ):
                     self.assertNotIn(forbidden, block)
@@ -237,7 +240,8 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         qualify = self.stages["cpython-qualify-build"]
         self.assertIn("config/schemas/release.schema.json", qualify)
         self.assertIn("python_source_release_binding.py", qualify)
-        self.assertIn("render-release-components.py", qualify)
+        self.assertIn("release-components-core.py", qualify)
+        self.assertNotIn("render-release-components.py", qualify)
         self.assertIn("python_row_contract.py", qualify)
         self.assertIn("python_zstd_evidence.py", qualify)
         self.assertIn("validate-release.py", qualify)
@@ -253,7 +257,8 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         append = self.stages["python-sdk-append"]
         self.assertIn("config/schemas/release.schema.json", append)
         self.assertIn("python_source_release_binding.py", append)
-        self.assertIn("render-release-components.py", append)
+        self.assertIn("release-components-core.py", append)
+        self.assertNotIn("render-release-components.py", append)
         self.assertIn("/work/scripts/validate-release.py", append)
         for script in (
             "finalize-cpython-qualification.py",

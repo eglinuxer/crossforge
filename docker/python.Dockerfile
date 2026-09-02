@@ -59,7 +59,7 @@ COPY scripts/finalize-cpython-qualification.py \
   scripts/python_sdk_identity.py scripts/python_zstd_evidence.py \
   scripts/target_artifact_audit.py \
   scripts/python_source_release_binding.py \
-  scripts/render-release-components.py \
+  scripts/release-components-core.py \
   /work/scripts/
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 docker/finalize-python-row.py /work/scripts/finalize-python-row.py
@@ -232,7 +232,7 @@ COPY --chmod=0755 scripts/qualify-cpython.py /work/scripts/qualify-cpython.py
 COPY scripts/abi_contract.py scripts/python_abi_audit.py \
   scripts/python_runtime_providers.py scripts/python_sdk_identity.py \
   scripts/target_artifact_audit.py \
-  scripts/python_source_release_binding.py scripts/render-release-components.py \
+  scripts/python_source_release_binding.py scripts/release-components-core.py \
   scripts/python_row_contract.py scripts/python_zstd_evidence.py \
   scripts/validate-release.py /work/scripts/
 COPY tests/python/minimal_extension.c /work/tests/python/minimal_extension.c
@@ -435,7 +435,7 @@ COPY scripts/abi_contract.py scripts/finalize-cpython-qualification.py \
   scripts/python_sdk_identity.py scripts/python_zstd_evidence.py \
   scripts/target_artifact_audit.py /work/scripts/
 COPY scripts/python_source_release_binding.py \
-  scripts/render-release-components.py scripts/python_row_contract.py \
+  scripts/release-components-core.py scripts/python_row_contract.py \
   scripts/validate-release.py /work/scripts/
 COPY abi/el8/x86_64.json /work/abi-inputs/x86_64/abi-baseline.json
 COPY evidence/abi/el8-x86_64-sysroot.json \
@@ -499,7 +499,7 @@ COPY --from=crossforge_qemu_validated \
 COPY config/release.json /opt/crossforge/release.json
 COPY --chmod=0755 scripts/qualify-final-sdk.py \
   scripts/loader_evidence.py scripts/python_row_contract.py \
-  scripts/python_sdk_identity.py scripts/render-release-components.py \
+  scripts/python_sdk_identity.py scripts/release-components-core.py \
   scripts/validate-release.py /work/scripts/
 RUN --network=none test ! -e /runtime-locked \
     && test ! -e /runtime-clean \

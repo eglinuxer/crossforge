@@ -25,7 +25,7 @@ LOADER_EVIDENCE = runpy.run_path(
     str(Path(__file__).with_name("loader_evidence.py"))
 )
 RELEASE_COMPONENTS = runpy.run_path(
-    str(Path(__file__).with_name("render-release-components.py"))
+    str(Path(__file__).with_name("release-components-core.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
 

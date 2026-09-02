@@ -84,7 +84,7 @@ def component_renderer():
     global COMPONENT_RENDERER
     if COMPONENT_RENDERER is None:
         COMPONENT_RENDERER = runpy.run_path(
-            str(support_script("render-release-components.py"))
+            str(support_script("release-components-core.py"))
         )
     return COMPONENT_RENDERER
 

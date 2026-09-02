@@ -15,7 +15,7 @@ class FinalizationError(RuntimeError):
 
 
 RELEASE_COMPONENTS = runpy.run_path(
-    str(Path(__file__).with_name("render-release-components.py"))
+    str(Path(__file__).with_name("release-components-core.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
 

@@ -778,7 +778,7 @@ COPY --from=binutils-x86_64 /work/binutils-stage/ /
 COPY --from=gcc-x86_64 /work/gcc-stage/ /
 COPY scripts/qualify-toolchain.py /work/scripts/qualify-toolchain.py
 COPY scripts/abi_contract.py /work/scripts/abi_contract.py
-COPY scripts/python_row_contract.py scripts/render-release-components.py \
+COPY scripts/python_row_contract.py scripts/release-components-core.py \
   scripts/validate-release.py /work/scripts/
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY tests/smoke/ /work/tests/smoke/
@@ -804,7 +804,7 @@ COPY --from=binutils-aarch64 /work/binutils-stage/ /
 COPY --from=gcc-aarch64 /work/gcc-stage/ /
 COPY scripts/qualify-toolchain.py /work/scripts/qualify-toolchain.py
 COPY scripts/abi_contract.py /work/scripts/abi_contract.py
-COPY scripts/python_row_contract.py scripts/render-release-components.py \
+COPY scripts/python_row_contract.py scripts/release-components-core.py \
   scripts/validate-release.py /work/scripts/
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY tests/smoke/ /work/tests/smoke/
@@ -839,7 +839,7 @@ COPY scripts/run-aarch64-smoke.sh /work/scripts/run-aarch64-smoke.sh
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY scripts/finalize-aarch64-qualification.py \
   /work/scripts/finalize-aarch64-qualification.py
-COPY scripts/python_row_contract.py scripts/render-release-components.py \
+COPY scripts/python_row_contract.py scripts/release-components-core.py \
   scripts/validate-release.py /work/scripts/
 RUN mkdir -p \
       /sysroot/.crossforge \

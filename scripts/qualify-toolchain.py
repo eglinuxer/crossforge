@@ -33,7 +33,7 @@ QUALIFIED_ELF_PROFILE = "crossforge-qualified-v1"
 COMPILER_DEFAULT_ELF_PROFILE = "compiler-default-observation"
 HARDENED_LINKER_FLAG = "-Wl,-z,relro,-z,now"
 RELEASE_COMPONENTS = runpy.run_path(
-    str(Path(__file__).with_name("render-release-components.py"))
+    str(Path(__file__).with_name("release-components-core.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
 

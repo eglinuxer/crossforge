@@ -37,7 +37,7 @@ SOURCE_BINDING = runpy.run_path(
 )
 SourceBindingError = SOURCE_BINDING["BindingError"]
 RELEASE_COMPONENTS = runpy.run_path(
-    str(support_script("render-release-components.py"))
+    str(support_script("release-components-core.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
 

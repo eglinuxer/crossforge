@@ -317,6 +317,8 @@ Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单�
 
 `release.json` 是唯一人工维护的版本源。`config/generated/` 将它投影为 build、qualification、supply 与 future 四类组件身份，并用单向 `release-binding.json` 绑定完整 release digest；共享 Python 实现策略另有显式投影。生成器要求每个 release 叶字段有明确分类，并保证版本行、架构及 host closure 的无关变化不会污染其他 build identity。ABI 输入只生成 `abi/{x86_64,aarch64}-baseline` 与 `abi/python-providers` 三个 qualification component：对应 toolchain qualification 依赖各自 baseline，Python aggregate 直接依赖三者。ABI pin 更新因此不会改变 GCC、Python row 或 zstd 的任何 build component。维护与资格化边界继续显式读取完整 release identity，因此无关 future 元数据只会触发重验，不会重编 GCC/binutils。
 
+组件实现也遵循同一边界：`release-components-core.py` 只包含 toolchain、ABI、Python 等稳定核心，`release-components-vcpkg.py` 是 Ninja/vcpkg 扩展，`render-release-components.py` 仅组合两者并写入完整 63-component graph。Python 和 toolchain 的 Docker 资格 stage 只复制核心文件；vcpkg policy 或 fixture 变化因此只能改变 vcpkg 组件身份与门禁层，不再因共享渲染脚本的字节变化重跑 12 套 Python target 资格化。回归测试同时锁定共享组件摘要不变性和 Docker COPY 边界。
+
 Rocky OCI index、QEMU index/manifest/attestation/SLSA predicate、QEMU Git tag/commit，以及 Ninja GitHub tag-ref/release 与 commit 原始字节以 base64 envelope 签入 `evidence/`。离线 validator 必须重算 OCI/GitHub evidence digest 与 Git object ID，并验证 platform child manifest、attestation subject、provenance builder/build arguments 和源码 tag→commit 关系。当前只归档 QEMU annotated tag 内的 OpenPGP 签名，不宣称已建立 QEMU maintainer keyring 信任；Ninja lightweight tag 也无独立签名，因此依赖完整 commit 与多重内容摘要。正式发布前需补齐相应信任根或保留明确的 hash-pinned 风险边界。
 
 CPython 的上游 Sigstore bundle 同样以原始 base64 envelope 归档，并在结构层将 message/Rekor digest 绑定到 tarball SHA256；当前明确标记为 `archived-unverified`。配置中的预期 signer 仅是维护策略，尚未从证书 SAN/issuer 验证。在固定 Fulcio/Rekor/TSA trust roots 并执行真实签名、证书链、身份、SET 与 inclusion proof 验证前，不得把该归档描述为密码学真实性证明。
