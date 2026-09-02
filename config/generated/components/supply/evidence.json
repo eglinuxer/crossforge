@@ -1,0 +1,142 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "supply/evidence",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/base_image/index_evidence",
+      "value": "evidence/oci/rocky-linux-8.index.json.b64"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.11.16.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/bundle_sha256",
+      "value": "c2e6222a3d80c6acb99c13d8084bee23802d51ecbfe0e8b74718c0a92274c39e"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/bundle_size",
+      "value": 7309
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.11.16/Python-3.11.16.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/identity",
+      "value": "pablogsal@python.org"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/oidc_issuer",
+      "value": "https://accounts.google.com"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.12.14.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/bundle_sha256",
+      "value": "0e8c44607a6bee9541cf2ba6bef366a72fe4678053e54f796ea6c0489a3d5dbc"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/bundle_size",
+      "value": 7391
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.12.14/Python-3.12.14.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/identity",
+      "value": "thomas@python.org"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/oidc_issuer",
+      "value": "https://accounts.google.com"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.13.15.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/bundle_sha256",
+      "value": "bf4a892d7a8a1d8795ae555960b5838d72202cbd37c28f9e4be10ed084f89ee3"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/bundle_size",
+      "value": 7121
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.13.15/Python-3.13.15.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/identity",
+      "value": "thomas@python.org"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/oidc_issuer",
+      "value": "https://accounts.google.com"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
+      "path": "/qemu/executor/index_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.index.json.b64"
+    },
+    {
+      "path": "/qemu/executor/manifest_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.manifest.json.b64"
+    },
+    {
+      "path": "/qemu/executor/provenance/attestation_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.attestation.json.b64"
+    },
+    {
+      "path": "/qemu/executor/provenance/attestation_manifest_digest",
+      "value": "sha256:ef170a4793bba100e90da65274f01e79f591fa9437393bd325e1b2cdd468ad06"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_commit",
+      "value": "e29e7d72c9672c8c8bf846655ab149b50e1a62bd"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_repository",
+      "value": "https://github.com/tonistiigi/binfmt.git"
+    },
+    {
+      "path": "/qemu/executor/provenance/predicate_digest",
+      "value": "sha256:76bf583f0cc90f74bf597e20381e492d5b47ffb58cf1f4becf62ceab2786cffa"
+    },
+    {
+      "path": "/qemu/executor/provenance/predicate_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.provenance.json.b64"
+    },
+    {
+      "path": "/qemu/executor/provenance/predicate_size",
+      "value": 37813
+    },
+    {
+      "path": "/qemu/executor/source/commit_evidence",
+      "value": "evidence/git/qemu-v10.2.3.commit.b64"
+    },
+    {
+      "path": "/qemu/executor/source/tag_evidence",
+      "value": "evidence/git/qemu-v10.2.3.tag.b64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "supply"
+}

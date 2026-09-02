@@ -1,0 +1,58 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "sources/gcc",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/gts/gcc_version",
+      "value": "15.2.1"
+    },
+    {
+      "path": "/gts/major",
+      "value": 15
+    },
+    {
+      "path": "/gts/source/header_arch",
+      "value": "i686"
+    },
+    {
+      "path": "/gts/source/repository_nevra",
+      "value": "gcc-toolset-15-gcc-0:15.2.1-7.1.el8_10.src"
+    },
+    {
+      "path": "/gts/source/sha256",
+      "value": "b7245477ce388b9c9758a4e0b0610af495da6a1961bf5bab9305d8560cfbbd82"
+    },
+    {
+      "path": "/gts/source/size",
+      "value": 97511212
+    },
+    {
+      "path": "/gts/source/spec_sha256",
+      "value": "ef976467ff1a7946136121d6213caa5688b08ad64e6b4033b60866881972bb84"
+    },
+    {
+      "path": "/gts/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/gts/source/url",
+      "value": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/source/tree/Packages/g/gcc-toolset-15-gcc-15.2.1-7.1.el8_10.src.rpm"
+    },
+    {
+      "path": "/trust/rocky_rpm_key/file",
+      "value": "keys/RPM-GPG-KEY-rockyofficial"
+    },
+    {
+      "path": "/trust/rocky_rpm_key/fingerprint",
+      "value": "7051c470a929f454cebe37b715af5dac6d745a60"
+    },
+    {
+      "path": "/trust/rocky_rpm_key/sha256",
+      "value": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

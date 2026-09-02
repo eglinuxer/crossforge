@@ -40,6 +40,7 @@ FROM config-validate AS platform-python-check
 COPY scripts/ ./scripts/
 COPY docker/*.py ./docker/
 RUN /usr/libexec/platform-python -m py_compile ./scripts/*.py ./docker/*.py
+RUN /usr/libexec/platform-python ./scripts/render-release-components.py --check
 
 # Matrix-shaped placeholder used only to verify that Bake expands the two
 # compiler targets correctly. It writes an explicit NOT-BUILT marker instead of

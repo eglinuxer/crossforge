@@ -1,0 +1,67 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "toolchain/aarch64-build",
+  "dependencies": [
+    {
+      "canonical_sha256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+      "component": "rpm/host-build-common"
+    },
+    {
+      "canonical_sha256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
+      "component": "rpm/host-gcc-build"
+    },
+    {
+      "canonical_sha256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
+      "component": "rpm/sysroot-aarch64"
+    },
+    {
+      "canonical_sha256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
+      "component": "sources/binutils"
+    },
+    {
+      "canonical_sha256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
+      "component": "sources/gcc"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/platforms/build",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/image",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/tool_host",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/targets/1/arch",
+      "value": "aarch64"
+    },
+    {
+      "path": "/targets/1/sysroot/canonical_sha256",
+      "value": "70436d94443b019fbe61237bf93b8bb457927f3de09429e6ef7f37598b482b67"
+    },
+    {
+      "path": "/targets/1/sysroot/lock_file",
+      "value": "locks/sysroot-el8-aarch64.json"
+    },
+    {
+      "path": "/targets/1/sysroot/status",
+      "value": "locked"
+    },
+    {
+      "path": "/targets/1/triple",
+      "value": "aarch64-unknown-linux-gnu"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

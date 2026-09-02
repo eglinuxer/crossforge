@@ -1,0 +1,54 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "sources/binutils",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/binutils/source/header_arch",
+      "value": "i686"
+    },
+    {
+      "path": "/binutils/source/repository_nevra",
+      "value": "gcc-toolset-15-binutils-0:2.44-3.el8.src"
+    },
+    {
+      "path": "/binutils/source/sha256",
+      "value": "d47b3f86eb62be337ffb6110c7513a63a62ac4bcf280ad1e80055c1af8b17117"
+    },
+    {
+      "path": "/binutils/source/size",
+      "value": 28611047
+    },
+    {
+      "path": "/binutils/source/spec_sha256",
+      "value": "2969c9be7a7c4a4bb3176be3423fbc5b892316cc2359c046a4d17c5c300b8afa"
+    },
+    {
+      "path": "/binutils/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/binutils/source/url",
+      "value": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/source/tree/Packages/g/gcc-toolset-15-binutils-2.44-3.el8.src.rpm"
+    },
+    {
+      "path": "/binutils/version",
+      "value": "2.44"
+    },
+    {
+      "path": "/trust/rocky_rpm_key/file",
+      "value": "keys/RPM-GPG-KEY-rockyofficial"
+    },
+    {
+      "path": "/trust/rocky_rpm_key/fingerprint",
+      "value": "7051c470a929f454cebe37b715af5dac6d745a60"
+    },
+    {
+      "path": "/trust/rocky_rpm_key/sha256",
+      "value": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

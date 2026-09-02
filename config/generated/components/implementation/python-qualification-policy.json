@@ -1,0 +1,95 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/python-qualification-policy",
+  "dependencies": [
+    {
+      "canonical_sha256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+      "component": "implementation/python-cp311-build-policy"
+    },
+    {
+      "canonical_sha256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+      "component": "implementation/python-cp312-build-policy"
+    },
+    {
+      "canonical_sha256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+      "component": "implementation/python-cp313-build-policy"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/python_rows/cp311/adapter",
+      "value": "transition"
+    },
+    {
+      "path": "/@implementation/python_rows/cp311/gil_policy",
+      "value": "absent"
+    },
+    {
+      "path": "/@implementation/python_rows/cp311/introduced_phase",
+      "value": 6
+    },
+    {
+      "path": "/@implementation/python_rows/cp311/minor",
+      "value": "3.11"
+    },
+    {
+      "path": "/@implementation/python_rows/cp311/row",
+      "value": "cp311"
+    },
+    {
+      "path": "/@implementation/python_rows/cp311/sysconfig_isolation",
+      "value": true
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/adapter",
+      "value": "modern"
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/gil_policy",
+      "value": "absent"
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/introduced_phase",
+      "value": 7
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/minor",
+      "value": "3.12"
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/row",
+      "value": "cp312"
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/sysconfig_isolation",
+      "value": true
+    },
+    {
+      "path": "/@implementation/python_rows/cp313/adapter",
+      "value": "modern"
+    },
+    {
+      "path": "/@implementation/python_rows/cp313/gil_policy",
+      "value": "zero"
+    },
+    {
+      "path": "/@implementation/python_rows/cp313/introduced_phase",
+      "value": 5
+    },
+    {
+      "path": "/@implementation/python_rows/cp313/minor",
+      "value": "3.13"
+    },
+    {
+      "path": "/@implementation/python_rows/cp313/row",
+      "value": "cp313"
+    },
+    {
+      "path": "/@implementation/python_rows/cp313/sysconfig_isolation",
+      "value": true
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

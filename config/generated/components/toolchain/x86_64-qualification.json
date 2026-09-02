@@ -1,0 +1,63 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "toolchain/x86_64-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "639bdd7c9185ba832790744b2323f95bc4854d2da1aa7c7931ed8f9f0b0ae2a1",
+      "component": "toolchain/x86_64-build"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/base_image/digest",
+      "value": "sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6"
+    },
+    {
+      "path": "/base_image/index_evidence",
+      "value": "evidence/oci/rocky-linux-8.index.json.b64"
+    },
+    {
+      "path": "/base_image/manifests/amd64",
+      "value": "sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+    },
+    {
+      "path": "/base_image/manifests/arm64",
+      "value": "sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+    },
+    {
+      "path": "/base_image/repository",
+      "value": "quay.io/rockylinux/rockylinux"
+    },
+    {
+      "path": "/base_image/tag",
+      "value": "8"
+    },
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/targets/0/arch",
+      "value": "x86_64"
+    },
+    {
+      "path": "/targets/0/sysroot/canonical_sha256",
+      "value": "ffe67b4d7448b02be7db774c8d85fdc8b13da695c0184de444949c641876ef57"
+    },
+    {
+      "path": "/targets/0/sysroot/lock_file",
+      "value": "locks/sysroot-el8-x86_64.json"
+    },
+    {
+      "path": "/targets/0/sysroot/status",
+      "value": "locked"
+    },
+    {
+      "path": "/targets/0/triple",
+      "value": "x86_64-unknown-linux-gnu"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

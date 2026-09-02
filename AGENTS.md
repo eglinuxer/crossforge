@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-`docs/architecture.md` is canonical. Configuration lives under `config/`, raw provenance under `evidence/`, and DNF decisions under `locks/`. `docker/Dockerfile` owns toolchains; `docker/python.Dockerfile` owns parameterized Python rows. Tools are in `scripts/`, CPython backports in `patches/`, probes in `tests/python/`, and regressions in `tests/config/`.
+`docs/architecture.md` is canonical. Configuration lives under `config/`; tracked `config/generated/` projections come only from `render-release-components.py`. Raw provenance is under `evidence/`, and DNF decisions under `locks/`. `docker/Dockerfile` owns toolchains; `docker/python.Dockerfile` owns parameterized Python rows. Tools are in `scripts/`, backports in `patches/`, and tests in `tests/`.
 
 The deleted Rust prototype is recoverable from tag `prototype-rust-2026-08-28`; do not restore its abstractions. Keep generated work, staging trees, and caches uncommitted.
 
@@ -12,6 +12,7 @@ The deleted Rust prototype is recoverable from tag `prototype-rust-2026-08-28`; 
 - `./scripts/validate-rpm-lock.py locks/sysroot-el8-{x86_64,aarch64}.json --require-lock` represents per-target checks; invoke each concrete path.
 - `./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock` validates a host closure; repeat for the GCC and Python delta locks.
 - `./scripts/render-bake.py --check` detects drift in the generated Bake override.
+- `./scripts/render-release-components.py --check` verifies cache-scoped component identities and their release binding.
 - `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
 - `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked` replays all host transactions offline.
 - `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both real cross slices; aarch64 uses explicit pinned QEMU, never implicit binfmt.

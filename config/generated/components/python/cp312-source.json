@@ -1,0 +1,47 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp312-source",
+  "dependencies": [
+    {
+      "canonical_sha256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+      "component": "implementation/python-cp312-build-policy"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/python/versions/3/adapter",
+      "value": "modern"
+    },
+    {
+      "path": "/python/versions/3/patches/0/file",
+      "value": "patches/cpython/3.12/0001-gh-115382-isolate-target-sysconfig.patch"
+    },
+    {
+      "path": "/python/versions/3/patches/0/sha256",
+      "value": "ff3a8e2695b4c66d0f60e6c73ac0028221ef803a308ff4e81393a54c9404dd33"
+    },
+    {
+      "path": "/python/versions/3/source/sha256",
+      "value": "5c8462af5790baf43a321a1559dbe0db06d1be4300fb85fb53c40060668e548a"
+    },
+    {
+      "path": "/python/versions/3/source/size",
+      "value": 20820300
+    },
+    {
+      "path": "/python/versions/3/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/python/versions/3/source/url",
+      "value": "https://www.python.org/ftp/python/3.12.14/Python-3.12.14.tar.xz"
+    },
+    {
+      "path": "/python/versions/3/version",
+      "value": "3.12.14"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

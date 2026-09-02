@@ -1,0 +1,50 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "future/product",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/host_locks/host-runtime/canonical_sha256",
+      "value": null
+    },
+    {
+      "path": "/host_locks/host-runtime/lock_file",
+      "value": null
+    },
+    {
+      "path": "/host_locks/host-runtime/status",
+      "value": "pending"
+    },
+    {
+      "path": "/nfpm/source/sha256",
+      "value": null
+    },
+    {
+      "path": "/nfpm/source/status",
+      "value": "pending"
+    },
+    {
+      "path": "/nfpm/source/url",
+      "value": null
+    },
+    {
+      "path": "/nfpm/version",
+      "value": "2.47.0"
+    },
+    {
+      "path": "/vcpkg/pin/commit",
+      "value": null
+    },
+    {
+      "path": "/vcpkg/pin/status",
+      "value": "pending"
+    },
+    {
+      "path": "/vcpkg/repository",
+      "value": "https://github.com/microsoft/vcpkg.git"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "future"
+}

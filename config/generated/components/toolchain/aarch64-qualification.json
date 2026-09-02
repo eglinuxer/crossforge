@@ -1,0 +1,163 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "toolchain/aarch64-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "ff75a8428b27f5c4b1193693a81ca8a820b1c042951ea3ae0d181d0a8202a24e",
+      "component": "toolchain/aarch64-build"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/base_image/digest",
+      "value": "sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6"
+    },
+    {
+      "path": "/base_image/index_evidence",
+      "value": "evidence/oci/rocky-linux-8.index.json.b64"
+    },
+    {
+      "path": "/base_image/manifests/amd64",
+      "value": "sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+    },
+    {
+      "path": "/base_image/manifests/arm64",
+      "value": "sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+    },
+    {
+      "path": "/base_image/repository",
+      "value": "quay.io/rockylinux/rockylinux"
+    },
+    {
+      "path": "/base_image/tag",
+      "value": "8"
+    },
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/qemu/executor/binary_path",
+      "value": "/usr/bin/qemu-aarch64"
+    },
+    {
+      "path": "/qemu/executor/binary_sha256",
+      "value": "1ad17b7bd5e15ce60075d0994d5c5e3914d16899a1e3119040b5c9e76e067f24"
+    },
+    {
+      "path": "/qemu/executor/cpu",
+      "value": "cortex-a53"
+    },
+    {
+      "path": "/qemu/executor/index_digest",
+      "value": "sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0"
+    },
+    {
+      "path": "/qemu/executor/index_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.index.json.b64"
+    },
+    {
+      "path": "/qemu/executor/manifest_digest",
+      "value": "sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
+    },
+    {
+      "path": "/qemu/executor/manifest_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.manifest.json.b64"
+    },
+    {
+      "path": "/qemu/executor/provenance/attestation_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.attestation.json.b64"
+    },
+    {
+      "path": "/qemu/executor/provenance/attestation_manifest_digest",
+      "value": "sha256:ef170a4793bba100e90da65274f01e79f591fa9437393bd325e1b2cdd468ad06"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_commit",
+      "value": "e29e7d72c9672c8c8bf846655ab149b50e1a62bd"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_repository",
+      "value": "https://github.com/tonistiigi/binfmt.git"
+    },
+    {
+      "path": "/qemu/executor/provenance/predicate_digest",
+      "value": "sha256:76bf583f0cc90f74bf597e20381e492d5b47ffb58cf1f4becf62ceab2786cffa"
+    },
+    {
+      "path": "/qemu/executor/provenance/predicate_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.provenance.json.b64"
+    },
+    {
+      "path": "/qemu/executor/provenance/predicate_size",
+      "value": 37813
+    },
+    {
+      "path": "/qemu/executor/repository",
+      "value": "docker.io/tonistiigi/binfmt"
+    },
+    {
+      "path": "/qemu/executor/source/commit",
+      "value": "2e7e8b7eae85ad523378eefefd03bfa7fbbe92f4"
+    },
+    {
+      "path": "/qemu/executor/source/commit_evidence",
+      "value": "evidence/git/qemu-v10.2.3.commit.b64"
+    },
+    {
+      "path": "/qemu/executor/source/repository",
+      "value": "https://github.com/qemu/qemu.git"
+    },
+    {
+      "path": "/qemu/executor/source/tag",
+      "value": "v10.2.3"
+    },
+    {
+      "path": "/qemu/executor/source/tag_evidence",
+      "value": "evidence/git/qemu-v10.2.3.tag.b64"
+    },
+    {
+      "path": "/qemu/executor/source/tag_object",
+      "value": "2eac5ce9722e819072171cfbf8f2d34b39e84b80"
+    },
+    {
+      "path": "/qemu/executor/status",
+      "value": "locked"
+    },
+    {
+      "path": "/qemu/executor/tag",
+      "value": "qemu-v10.2.3-68"
+    },
+    {
+      "path": "/qemu/executor/uname_release",
+      "value": "4.18.0"
+    },
+    {
+      "path": "/qemu/version",
+      "value": "10.2.3"
+    },
+    {
+      "path": "/targets/1/arch",
+      "value": "aarch64"
+    },
+    {
+      "path": "/targets/1/sysroot/canonical_sha256",
+      "value": "70436d94443b019fbe61237bf93b8bb457927f3de09429e6ef7f37598b482b67"
+    },
+    {
+      "path": "/targets/1/sysroot/lock_file",
+      "value": "locks/sysroot-el8-aarch64.json"
+    },
+    {
+      "path": "/targets/1/sysroot/status",
+      "value": "locked"
+    },
+    {
+      "path": "/targets/1/triple",
+      "value": "aarch64-unknown-linux-gnu"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

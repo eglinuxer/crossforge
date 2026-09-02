@@ -1,0 +1,70 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "rpm/host-gcc-build",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/base_image/digest",
+      "value": "sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6"
+    },
+    {
+      "path": "/base_image/manifests/amd64",
+      "value": "sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+    },
+    {
+      "path": "/base_image/manifests/arm64",
+      "value": "sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+    },
+    {
+      "path": "/base_image/repository",
+      "value": "quay.io/rockylinux/rockylinux"
+    },
+    {
+      "path": "/base_image/tag",
+      "value": "8"
+    },
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/host_locks/host-gcc-build/canonical_sha256",
+      "value": "de271a4ba8a9e4bc31c8fc8a92c05fde4736afbc64b1251e06751a0cb96c2be0"
+    },
+    {
+      "path": "/host_locks/host-gcc-build/lock_file",
+      "value": "locks/host-gcc-build-el8-x86_64.json"
+    },
+    {
+      "path": "/host_locks/host-gcc-build/status",
+      "value": "locked"
+    },
+    {
+      "path": "/platforms/build",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/image",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/tool_host",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/trust/rocky_rpm_key/file",
+      "value": "keys/RPM-GPG-KEY-rockyofficial"
+    },
+    {
+      "path": "/trust/rocky_rpm_key/fingerprint",
+      "value": "7051c470a929f454cebe37b715af5dac6d745a60"
+    },
+    {
+      "path": "/trust/rocky_rpm_key/sha256",
+      "value": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

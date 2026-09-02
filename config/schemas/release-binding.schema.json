@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/release-binding.schema.json",
+  "title": "Crossforge canonical release binding",
+  "description": "Binds one canonical release identity to every cache-scoped component projection without pushing the global identity down into build inputs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "release",
+    "components"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/release-binding.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-release-binding"
+    },
+    "release": {
+      "$ref": "#/$defs/release"
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/component"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "schema_version",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "schema": {
+          "const": "./schemas/release.schema.json"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "scope",
+        "path",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*(?:/[a-z0-9][a-z0-9_-]*)*$"
+        },
+        "scope": {
+          "enum": [
+            "build",
+            "qualification",
+            "supply",
+            "future"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^config/generated/components/[a-z0-9][a-z0-9_-]*(?:/[a-z0-9][a-z0-9_-]*)*\\.json$"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

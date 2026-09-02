@@ -1,0 +1,26 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "product/release",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/$schema",
+      "value": "./schemas/release.schema.json"
+    },
+    {
+      "path": "/product/image_repository",
+      "value": "ghcr.io/eglinuxer/crossforge"
+    },
+    {
+      "path": "/product/stable_channel",
+      "value": "gts15-el8"
+    },
+    {
+      "path": "/schema_version",
+      "value": 1
+    }
+  ],
+  "schema_version": 1,
+  "scope": "supply"
+}

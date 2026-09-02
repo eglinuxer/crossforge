@@ -1,0 +1,47 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp311-source",
+  "dependencies": [
+    {
+      "canonical_sha256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+      "component": "implementation/python-cp311-build-policy"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/python/versions/2/adapter",
+      "value": "transition"
+    },
+    {
+      "path": "/python/versions/2/patches/0/file",
+      "value": "patches/cpython/3.11/0001-gh-115382-isolate-target-sysconfig.patch"
+    },
+    {
+      "path": "/python/versions/2/patches/0/sha256",
+      "value": "072dacfcc57b06bc1e5382726990627593a36e1f08232cb790db42ae334a49aa"
+    },
+    {
+      "path": "/python/versions/2/source/sha256",
+      "value": "91bcdebfdde239a003ae93738a7fce0f9230fee5c4bc2b86f6e6e8c6f98aabe8"
+    },
+    {
+      "path": "/python/versions/2/source/size",
+      "value": 20328716
+    },
+    {
+      "path": "/python/versions/2/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/python/versions/2/source/url",
+      "value": "https://www.python.org/ftp/python/3.11.16/Python-3.11.16.tar.xz"
+    },
+    {
+      "path": "/python/versions/2/version",
+      "value": "3.11.16"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

@@ -1,0 +1,311 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "422849b1faa1f6d17a7e4d22178bad8a081668044df16f6ec54b85342740786d",
+      "component": "implementation/python-qualification-policy"
+    },
+    {
+      "canonical_sha256": "6008a45ee300380d6c2a2da86a1297f2e0b03b04c54aabacad48b5c4d5400973",
+      "component": "python/cp311-aarch64-build"
+    },
+    {
+      "canonical_sha256": "90cb4a2b26ad4624c6a5710a35b28d3c47d5d9823e1d75caa530e8c71f0b1774",
+      "component": "python/cp311-x86_64-build"
+    },
+    {
+      "canonical_sha256": "2930c213e853c924bce2e112526142401fc96cbc69219a7a4c77c658e258156d",
+      "component": "python/cp312-aarch64-build"
+    },
+    {
+      "canonical_sha256": "bcbd28b151216ee2355cf76cf42cae7fd5c26c384419447a530b51757c5c1481",
+      "component": "python/cp312-x86_64-build"
+    },
+    {
+      "canonical_sha256": "05889c0e1d523c7e406581871c10358ae786455514c599cc0a46fbcda81759a1",
+      "component": "python/cp313-aarch64-build"
+    },
+    {
+      "canonical_sha256": "ab87916b414cd783300275c033b227496ac08e75e6ec55d1e91167db353f6a1b",
+      "component": "python/cp313-x86_64-build"
+    },
+    {
+      "canonical_sha256": "303e97f2d655738d717d89d0277789e5094da56d6fdc427f757ee4fa503c685c",
+      "component": "toolchain/aarch64-qualification"
+    },
+    {
+      "canonical_sha256": "da303980237ff9c09cf5fdf78c3cac5b5cd61c20415b434395bb8f4f153b64f5",
+      "component": "toolchain/x86_64-qualification"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/base_image/digest",
+      "value": "sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6"
+    },
+    {
+      "path": "/base_image/index_evidence",
+      "value": "evidence/oci/rocky-linux-8.index.json.b64"
+    },
+    {
+      "path": "/base_image/manifests/amd64",
+      "value": "sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+    },
+    {
+      "path": "/base_image/manifests/arm64",
+      "value": "sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+    },
+    {
+      "path": "/base_image/repository",
+      "value": "quay.io/rockylinux/rockylinux"
+    },
+    {
+      "path": "/base_image/tag",
+      "value": "8"
+    },
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.11.16.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/bundle_sha256",
+      "value": "c2e6222a3d80c6acb99c13d8084bee23802d51ecbfe0e8b74718c0a92274c39e"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/bundle_size",
+      "value": 7309
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.11.16/Python-3.11.16.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/identity",
+      "value": "pablogsal@python.org"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/oidc_issuer",
+      "value": "https://accounts.google.com"
+    },
+    {
+      "path": "/python/versions/2/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
+      "path": "/python/versions/2/support",
+      "value": "security"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.12.14.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/bundle_sha256",
+      "value": "0e8c44607a6bee9541cf2ba6bef366a72fe4678053e54f796ea6c0489a3d5dbc"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/bundle_size",
+      "value": 7391
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.12.14/Python-3.12.14.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/identity",
+      "value": "thomas@python.org"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/oidc_issuer",
+      "value": "https://accounts.google.com"
+    },
+    {
+      "path": "/python/versions/3/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
+      "path": "/python/versions/3/support",
+      "value": "security"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.13.15.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/bundle_sha256",
+      "value": "bf4a892d7a8a1d8795ae555960b5838d72202cbd37c28f9e4be10ed084f89ee3"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/bundle_size",
+      "value": 7121
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.13.15/Python-3.13.15.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/identity",
+      "value": "thomas@python.org"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/oidc_issuer",
+      "value": "https://accounts.google.com"
+    },
+    {
+      "path": "/python/versions/4/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
+      "path": "/python/versions/4/support",
+      "value": "bugfix"
+    },
+    {
+      "path": "/qemu/executor/binary_path",
+      "value": "/usr/bin/qemu-aarch64"
+    },
+    {
+      "path": "/qemu/executor/binary_sha256",
+      "value": "1ad17b7bd5e15ce60075d0994d5c5e3914d16899a1e3119040b5c9e76e067f24"
+    },
+    {
+      "path": "/qemu/executor/cpu",
+      "value": "cortex-a53"
+    },
+    {
+      "path": "/qemu/executor/index_digest",
+      "value": "sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0"
+    },
+    {
+      "path": "/qemu/executor/index_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.index.json.b64"
+    },
+    {
+      "path": "/qemu/executor/manifest_digest",
+      "value": "sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
+    },
+    {
+      "path": "/qemu/executor/manifest_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.manifest.json.b64"
+    },
+    {
+      "path": "/qemu/executor/provenance/attestation_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.attestation.json.b64"
+    },
+    {
+      "path": "/qemu/executor/provenance/attestation_manifest_digest",
+      "value": "sha256:ef170a4793bba100e90da65274f01e79f591fa9437393bd325e1b2cdd468ad06"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_commit",
+      "value": "e29e7d72c9672c8c8bf846655ab149b50e1a62bd"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_repository",
+      "value": "https://github.com/tonistiigi/binfmt.git"
+    },
+    {
+      "path": "/qemu/executor/provenance/predicate_digest",
+      "value": "sha256:76bf583f0cc90f74bf597e20381e492d5b47ffb58cf1f4becf62ceab2786cffa"
+    },
+    {
+      "path": "/qemu/executor/provenance/predicate_evidence",
+      "value": "evidence/oci/tonistiigi-binfmt-qemu-v10.2.3-68.amd64.provenance.json.b64"
+    },
+    {
+      "path": "/qemu/executor/provenance/predicate_size",
+      "value": 37813
+    },
+    {
+      "path": "/qemu/executor/repository",
+      "value": "docker.io/tonistiigi/binfmt"
+    },
+    {
+      "path": "/qemu/executor/source/commit",
+      "value": "2e7e8b7eae85ad523378eefefd03bfa7fbbe92f4"
+    },
+    {
+      "path": "/qemu/executor/source/commit_evidence",
+      "value": "evidence/git/qemu-v10.2.3.commit.b64"
+    },
+    {
+      "path": "/qemu/executor/source/repository",
+      "value": "https://github.com/qemu/qemu.git"
+    },
+    {
+      "path": "/qemu/executor/source/tag",
+      "value": "v10.2.3"
+    },
+    {
+      "path": "/qemu/executor/source/tag_evidence",
+      "value": "evidence/git/qemu-v10.2.3.tag.b64"
+    },
+    {
+      "path": "/qemu/executor/source/tag_object",
+      "value": "2eac5ce9722e819072171cfbf8f2d34b39e84b80"
+    },
+    {
+      "path": "/qemu/executor/status",
+      "value": "locked"
+    },
+    {
+      "path": "/qemu/executor/tag",
+      "value": "qemu-v10.2.3-68"
+    },
+    {
+      "path": "/qemu/executor/uname_release",
+      "value": "4.18.0"
+    },
+    {
+      "path": "/qemu/version",
+      "value": "10.2.3"
+    },
+    {
+      "path": "/targets/0/arch",
+      "value": "x86_64"
+    },
+    {
+      "path": "/targets/0/sysroot/canonical_sha256",
+      "value": "ffe67b4d7448b02be7db774c8d85fdc8b13da695c0184de444949c641876ef57"
+    },
+    {
+      "path": "/targets/0/sysroot/lock_file",
+      "value": "locks/sysroot-el8-x86_64.json"
+    },
+    {
+      "path": "/targets/0/sysroot/status",
+      "value": "locked"
+    },
+    {
+      "path": "/targets/0/triple",
+      "value": "x86_64-unknown-linux-gnu"
+    },
+    {
+      "path": "/targets/1/arch",
+      "value": "aarch64"
+    },
+    {
+      "path": "/targets/1/sysroot/canonical_sha256",
+      "value": "70436d94443b019fbe61237bf93b8bb457927f3de09429e6ef7f37598b482b67"
+    },
+    {
+      "path": "/targets/1/sysroot/lock_file",
+      "value": "locks/sysroot-el8-aarch64.json"
+    },
+    {
+      "path": "/targets/1/sysroot/status",
+      "value": "locked"
+    },
+    {
+      "path": "/targets/1/triple",
+      "value": "aarch64-unknown-linux-gnu"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

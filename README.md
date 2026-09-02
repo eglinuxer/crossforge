@@ -36,11 +36,16 @@ invented URLs or hashes. Candidate and release builds will require:
 $ ./scripts/validate-release.py --require-locked
 ```
 
-Check that the generated Bake override matches `config/release.json`:
+Check that the cache-scoped release projections and Bake override match
+`config/release.json`:
 
 ```console
+$ ./scripts/render-release-components.py --check
 $ ./scripts/render-bake.py --check
 ```
+
+Files under `config/generated/` are deterministic build, qualification,
+supply, and future-policy projections. Do not edit them by hand.
 
 Inspect or execute the honest phase-one graph:
 

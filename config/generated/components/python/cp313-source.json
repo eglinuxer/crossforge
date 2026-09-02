@@ -1,0 +1,43 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp313-source",
+  "dependencies": [
+    {
+      "canonical_sha256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+      "component": "implementation/python-cp313-build-policy"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/python/versions/4/adapter",
+      "value": "modern"
+    },
+    {
+      "path": "/python/versions/4/patches",
+      "value": []
+    },
+    {
+      "path": "/python/versions/4/source/sha256",
+      "value": "1e66a7945a48390ee4c2a4268a0e4185884059a13c4aab6d148aa208deea4a76"
+    },
+    {
+      "path": "/python/versions/4/source/size",
+      "value": 23160540
+    },
+    {
+      "path": "/python/versions/4/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/python/versions/4/source/url",
+      "value": "https://www.python.org/ftp/python/3.13.15/Python-3.13.15.tar.xz"
+    },
+    {
+      "path": "/python/versions/4/version",
+      "value": "3.13.15"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}
