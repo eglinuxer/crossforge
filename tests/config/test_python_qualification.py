@@ -17,17 +17,18 @@ try:
     RUNTIME_RUNNER = runpy.run_path(
         str(REPOSITORY / "scripts/run-cpython-runtime.py")
     )
+    FINALIZER = runpy.run_path(
+        str(REPOSITORY / "scripts/finalize-cpython-qualification.py")
+    )
+    QUALIFIER = runpy.run_path(str(REPOSITORY / "scripts/qualify-cpython.py"))
 finally:
     sys.path.remove(SCRIPTS)
-FINALIZER = runpy.run_path(
-    str(REPOSITORY / "scripts/finalize-cpython-qualification.py")
-)
-QUALIFIER = runpy.run_path(str(REPOSITORY / "scripts/qualify-cpython.py"))
 ROW_CONTRACT = runpy.run_path(str(REPOSITORY / "scripts/python_row_contract.py"))
 RELEASE_CONFIG = json.loads(
     (REPOSITORY / "config/release.json").read_text(encoding="utf-8")
 )
 TARGET = "x86_64-unknown-linux-gnu"
+ABI_CONTEXT = FINALIZER["default_abi_context"](TARGET)
 IMPLEMENTED_VERSIONS = tuple(
     next(
         entry["version"]
@@ -44,7 +45,6 @@ ZSTD_VERSION = next(
 )
 PYTHON_SHA256 = "1" * 64
 EXTENSION_SHA256 = "2" * 64
-SYSROOT_SHA256 = "3" * 64
 SYSROOT_TRANSACTION_SHA256 = "e" * 64
 
 
@@ -113,7 +113,11 @@ class PythonQualificationTests(unittest.TestCase):
         selected_target = next(
             item for item in self.release["targets"] if item["triple"] == TARGET
         )
-        selected_target["sysroot"]["canonical_sha256"] = SYSROOT_SHA256
+        self.abi_context = copy.deepcopy(ABI_CONTEXT)
+        self.sysroot_sha256 = self.abi_context[
+            "runtime_provider_evidence"
+        ]["sysroot_lock_sha256"]
+        selected_target["sysroot"]["canonical_sha256"] = self.sysroot_sha256
         self.write_json(self.release_path, self.release)
         self.compile = self.valid_compile()
         self.write_json(self.compile_path, self.compile)
@@ -128,6 +132,161 @@ class PythonQualificationTests(unittest.TestCase):
     @staticmethod
     def write_json(path, value):
         path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    def valid_compile_abi(self):
+        arch = self.abi_context["arch"]
+        catalog = json.loads(
+            (
+                REPOSITORY
+                / (
+                    "evidence/abi/el8-%s-python-provider-catalog.json"
+                    % arch
+                )
+            ).read_text(encoding="utf-8")
+        )
+        catalog_sha256 = canonical_sha256(catalog)
+        self.provider_catalog_records = catalog
+        if catalog_sha256 != self.abi_context[
+            "runtime_provider_evidence"
+        ]["provider_catalog_sha256"]:
+            raise AssertionError("fixture provider catalog pin mismatch")
+        providers = []
+        for provider in self.abi_context["expected_providers"]:
+            summary = copy.deepcopy(provider)
+            summary["elf_record_sha256"] = canonical_sha256(
+                catalog[provider["soname"]]
+            )
+            providers.append(summary)
+        python_record = self.valid_elf_record(
+            "bin/python%s" % self.minor,
+            needed=["libc.so.6"],
+            unversioned_exports=["PyFixture_Global"],
+        )
+        self.python_global_record = python_record
+        return dict(
+            copy.deepcopy(self.abi_context["expected_identities"]),
+            provider_catalog={
+                "file": self.abi_context[
+                    "reviewed_provider_catalog_file"
+                ],
+                "provider_count": len(providers),
+                "elf_records_sha256": catalog_sha256,
+                "records": catalog,
+                "providers": providers,
+            },
+            python_global={
+                "identity": "bin/python%s" % self.minor,
+                "sha256": PYTHON_SHA256,
+                "elf_record_sha256": canonical_sha256(python_record),
+                "needed": ["libc.so.6"],
+                "default_export_count": 1,
+                "record": python_record,
+            },
+        )
+
+    @staticmethod
+    def valid_elf_record(
+        identity,
+        needed=None,
+        soname=None,
+        unversioned_exports=None,
+    ):
+        if needed is None:
+            needed = []
+        if unversioned_exports is None:
+            unversioned_exports = []
+        return {
+            "identity": identity,
+            "soname": soname,
+            "needed": list(needed),
+            "versioned_exports": [],
+            "unversioned_exports": sorted(unversioned_exports),
+            "default_exports": sorted(unversioned_exports),
+            "versioned_imports": [],
+            "unversioned_imports": [],
+        }
+
+    def valid_elf_policy(self, artifact, executable=False):
+        return {
+            "artifact": artifact,
+            "profile": "crossforge-qualified-v1",
+            "elf_kind": "dynamic-executable" if executable else "shared-object",
+            "not_applicable": [] if executable else ["interpreter"],
+            "properties": {
+                "dynamic_section": True,
+                "textrel": False,
+                "relr": False,
+                "rpath": [],
+                "runpath": [],
+                "path_tags": [],
+                "pie": False,
+                "bind_now": True,
+                "interpreter": (
+                    self.abi_context["interpreter"] if executable else None
+                ),
+                "gnu_stack_present": True,
+                "gnu_stack_executable": False,
+                "writable_executable_segments": False,
+                "relro": True,
+                "machine": self.abi_context["machine"],
+                "elf_class": "ELF64",
+                "elf_data": "2's complement, little endian",
+                "elf_type": "DYN",
+            },
+            "used_exceptions": [],
+        }
+
+    @staticmethod
+    def valid_ownership(artifact, needed):
+        return {
+            "status": "passed",
+            "artifact": artifact,
+            "needed": list(needed),
+            "provider_closure": sorted(set(needed) | {"libc.so.6"}),
+            "core_versioned": [],
+            "external_versioned": [],
+            "strong_unversioned": [],
+            "optional_weak": [],
+        }
+
+    def valid_elf_audit(self, artifact, sha256, needed=None, executable=False):
+        if needed is None:
+            needed = ["libc.so.6"]
+        if (
+            executable
+            and hasattr(self, "python_global_record")
+            and artifact == self.python_global_record["identity"]
+        ):
+            record = copy.deepcopy(self.python_global_record)
+        else:
+            record = self.valid_elf_record(artifact, needed=needed)
+        ownership = QUALIFIER["python_abi_audit"].audit_python_elf(
+            self.abi_context["baseline"],
+            self.abi_context["external_providers"],
+            self.provider_catalog_records,
+            self.python_global_record,
+            record,
+        )
+        return {
+            "needed": list(needed),
+            "sha256": sha256,
+            "elf_record_sha256": canonical_sha256(record),
+            "elf_record": record,
+            "elf_policy": self.valid_elf_policy(artifact, executable=executable),
+            "ownership": ownership,
+        }
+
+    def actual_elf_evidence(self, report=None):
+        if report is None:
+            report = self.compile
+        return {
+            name: {
+                "sha256": audit["sha256"],
+                "elf_record": copy.deepcopy(audit["elf_record"]),
+                "elf_policy": copy.deepcopy(audit["elf_policy"]),
+            }
+            for name, audit in report["elf_audit"].items()
+        }
 
     def valid_compile(self):
         source = next(
@@ -146,7 +305,7 @@ class PythonQualificationTests(unittest.TestCase):
             for operation in FINALIZER["LOADER_OPERATIONS"]
         ]
         report = {
-            "qualification_schema_version": 3,
+            "qualification_schema_version": 4,
             "report_kind": "crossforge-cpython-compile",
             "target": TARGET,
             "version": self.version,
@@ -160,9 +319,9 @@ class PythonQualificationTests(unittest.TestCase):
                 "size": source["size"],
                 "sha256": source["sha256"],
                 "sigstore_bundle_sha256": source["sigstore"]["bundle_sha256"],
-                "sigstore_verification": "archived-unverified",
+                "sigstore_verification": source["sigstore"]["verification"],
             },
-            "sysroot_sha256": SYSROOT_SHA256,
+            "sysroot_sha256": self.sysroot_sha256,
             "sysroot_transaction_sha256": SYSROOT_TRANSACTION_SHA256,
             "target_prefix": "/opt/crossforge/python/%s/targets/%s"
             % (self.row, TARGET),
@@ -206,39 +365,26 @@ class PythonQualificationTests(unittest.TestCase):
                 "SOABI": "cpython-%s-x86_64-linux-gnu" % self.compact,
             },
             "sdk_tree": {"entries": 100, "canonical_sha256": "7" * 64},
-            "elf_audit": {
-                "bin/python%s" % self.minor: {
-                    "needed": ["libc.so.6"],
-                    "required_versions": {"GLIBC": "2.28"},
-                    "sha256": PYTHON_SHA256,
-                },
-                "qualification/_crossforge.cpython-%s-x86_64-linux-gnu.so"
-                % self.compact: {
-                    "needed": [],
-                    "required_versions": {},
-                    "sha256": EXTENSION_SHA256,
-                },
-                **{
-                    relative: {
-                        "needed": ["libc.so.6"],
-                        "required_versions": {"GLIBC": "2.28"},
-                        "sha256": ("%064x" % (index + 16)),
-                    }
-                    for index, relative in enumerate(
-                        {
-                            name: "lib/python%s/lib-dynload/%s.cpython-%s-x86_64-linux-gnu.so"
-                            % (self.minor, name, self.compact)
-                            for name in sorted(
-                                set(FINALIZER["REQUIRED_MODULES"])
-                                | ({"_zstd"} if self.contract["zstd"] else set())
-                            )
-                        }.values()
-                    )
-                },
-                **self.valid_zstd_elf_entries(),
-            },
+            "elf_audit": {},
+            "abi": self.valid_compile_abi(),
             "zstd": self.valid_compile_zstd(),
         }
+        python_path = "bin/python%s" % self.minor
+        extension_path = (
+            "qualification/_crossforge.cpython-%s-x86_64-linux-gnu.so"
+            % self.compact
+        )
+        report["elf_audit"][python_path] = self.valid_elf_audit(
+            python_path, PYTHON_SHA256, executable=True
+        )
+        report["elf_audit"][extension_path] = self.valid_elf_audit(
+            extension_path, EXTENSION_SHA256, needed=[]
+        )
+        for index, relative in enumerate(report["required_modules"].values()):
+            report["elf_audit"][relative] = self.valid_elf_audit(
+                relative, "%064x" % (index + 16)
+            )
+        report["elf_audit"].update(self.valid_zstd_elf_entries())
         if self.contract["gil_policy"] == "zero":
             report["sysconfig"]["Py_GIL_DISABLED"] = 0
         return report
@@ -373,22 +519,17 @@ class PythonQualificationTests(unittest.TestCase):
             % (self.minor, self.compact)
         )
         return {
-            path: {
-                "needed": ["libc.so.6"],
-                "required_versions": {"GLIBC": "2.28"},
-                "sha256": "c" * 64,
-            }
+            path: self.valid_elf_audit(path, "c" * 64)
         }
 
     def valid_overlay(self):
-        packages = [
-            {
-                "name": name,
-                "nevra": "%s-0:1-1.el8.x86_64" % name,
-                "received_sha256": "%064x" % (index + 32),
-            }
-            for index, name in enumerate(FINALIZER["RUNTIME_PACKAGE_NAMES"])
-        ]
+        packages_by_name = {
+            provider["owner"]["name"]: copy.deepcopy(provider["owner"])
+            for provider in self.abi_context["runtime_provider_evidence"][
+                "providers"
+            ]
+        }
+        packages = [packages_by_name[name] for name in sorted(packages_by_name)]
         identity = {
             "base_image": {
                 "index_digest": self.release["base_image"]["digest"],
@@ -397,7 +538,7 @@ class PythonQualificationTests(unittest.TestCase):
             "release_sha256": canonical_sha256(self.release),
             "target": {"arch": "x86_64", "triple": TARGET},
             "sysroot": {
-                "lock_sha256": SYSROOT_SHA256,
+                "lock_sha256": self.sysroot_sha256,
                 "transaction_sha256": SYSROOT_TRANSACTION_SHA256,
             },
             "selected_packages": packages,
@@ -439,17 +580,10 @@ class PythonQualificationTests(unittest.TestCase):
         overlay = self.valid_overlay() if tier == "clean-rocky" else None
         runtime_root = "/runtime-locked" if tier == "locked-sysroot" else "/runtime-clean"
         loaded_objects = [
-            runtime_root + "/usr/lib64/" + name
-            for name in (
-                "libbz2.so.1",
-                "libcrypto.so.1.1",
-                "libffi.so.6",
-                "liblzma.so.5",
-                "libsqlite3.so.0",
-                "libssl.so.1.1",
-                "libuuid.so.1",
-                "libz.so.1",
-            )
+            runtime_root + provider["path"]
+            for provider in self.abi_context["runtime_provider_evidence"][
+                "providers"
+            ]
         ]
         if self.contract["zstd"]:
             loaded_objects.append(
@@ -463,7 +597,7 @@ class PythonQualificationTests(unittest.TestCase):
             imports.extend(["_zstd", "compression.zstd"])
         probe_zstd = zstd_evidence(self.contract["zstd"])
         return {
-            "qualification_schema_version": 2,
+            "qualification_schema_version": 3,
             "report_kind": "crossforge-cpython-runtime",
             "target": TARGET,
             "version": self.version,
@@ -478,7 +612,7 @@ class PythonQualificationTests(unittest.TestCase):
             "runtime": {
                 "kind": "locked-sysroot" if tier == "locked-sysroot" else "clean-rocky-overlay",
                 "identity_sha256": (
-                    SYSROOT_SHA256
+                    self.sysroot_sha256
                     if tier == "locked-sysroot"
                     else overlay["identity_sha256"]
                 ),
@@ -502,6 +636,9 @@ class PythonQualificationTests(unittest.TestCase):
                 "libc.so.6 => " + runtime_root + "/usr/lib64/libc.so.6",
             ],
             "device_loaded_objects": loaded_objects,
+            "runtime_providers": copy.deepcopy(
+                self.abi_context["runtime_provider_evidence"]
+            ),
             "probe": {
                 "schema_version": 2,
                 "report_kind": "crossforge-cpython-probe",
@@ -568,6 +705,19 @@ class PythonQualificationTests(unittest.TestCase):
             self.release_path,
             TARGET,
             self.version,
+            actual_elf_evidence=self.actual_elf_evidence(),
+            abi_context_override=self.abi_context,
+        )
+
+    def validate_final_report(self, report):
+        return FINALIZER["validate_final_report"](
+            report,
+            self.release,
+            TARGET,
+            self.version,
+            self.abi_context,
+            self.actual_elf_evidence(self.compile),
+            True,
         )
 
     def refresh_runtime_bindings(self):
@@ -583,7 +733,8 @@ class PythonQualificationTests(unittest.TestCase):
         report = self.finalize()
         self.assertEqual(report["status"], "passed")
         self.assertEqual(report["report_kind"], "crossforge-cpython-qualification")
-        self.assertEqual(report["qualification_schema_version"], 3)
+        self.assertEqual(report["qualification_schema_version"], 4)
+        self.assertEqual(report["abi"], report["compile"]["abi"])
         self.assertEqual(
             report["qualification_components"],
             QUALIFIER["RELEASE_COMPONENTS"][
@@ -603,6 +754,37 @@ class PythonQualificationTests(unittest.TestCase):
             json.dumps(report, sort_keys=True),
             json.dumps(self.finalize(), sort_keys=True),
         )
+
+    def test_actual_elf_collection_rejects_paths_outside_target_prefix(self):
+        collector = FINALIZER["collect_actual_elf_evidence"]
+        readelf = REPOSITORY / "scripts/finalize-cpython-qualification.py"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "target"
+            root.mkdir()
+            for name in ("../escape.so", "/tmp/escape.so"):
+                with self.subTest(name=name), self.assertRaisesRegex(
+                    FINALIZER["FinalizationError"], "unsafe"
+                ):
+                    collector(
+                        {"elf_audit": {name: {}}},
+                        self.abi_context,
+                        root,
+                        readelf,
+                    )
+
+            outside = Path(temporary) / "outside"
+            outside.mkdir()
+            (outside / "escape.so").write_bytes(b"not an ELF")
+            (root / "lib").symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(
+                FINALIZER["FinalizationError"], "escapes the target prefix"
+            ):
+                collector(
+                    {"elf_audit": {"lib/escape.so": {}}},
+                    self.abi_context,
+                    root,
+                    readelf,
+                )
 
     def test_compile_qualification_component_identity_is_fail_closed(self):
         mutations = {
@@ -642,9 +824,7 @@ class PythonQualificationTests(unittest.TestCase):
             FINALIZER["FinalizationError"],
             "qualification_components|component",
         ):
-            FINALIZER["validate_final_report"](
-                report, self.release, TARGET, VERSION
-            )
+            self.validate_final_report(report)
 
     def test_runtime_rejects_component_substitution_before_artifact_access(self):
         self.compile["qualification_components"]["policy"][
@@ -661,6 +841,10 @@ class PythonQualificationTests(unittest.TestCase):
             str(self.release_path),
             "--runtime-root",
             str(runtime_root),
+            "--runtime-provider-policy",
+            "/src/config/python-runtime-providers.json",
+            "--python-provider-catalog",
+            "/work/config/python-provider-catalog.json",
             "--target-prefix",
             str(self.directory / "missing-prefix"),
             "--extension",
@@ -676,11 +860,218 @@ class PythonQualificationTests(unittest.TestCase):
             "--output",
             str(self.directory / "runtime.json"),
         ]
-        with mock.patch.object(sys, "argv", argv):
+        provider_target = {
+            "owners": [
+                provider["owner"]
+                for provider in self.abi_context[
+                    "runtime_provider_evidence"
+                ]["providers"]
+            ],
+            "providers": self.abi_context["runtime_provider_evidence"][
+                "providers"
+            ],
+        }
+        provider_functions = {
+            "load_json": lambda _path: {},
+            "policy_target": lambda *_args: provider_target,
+            "runtime_provider_evidence": lambda *_args, **_kwargs: copy.deepcopy(
+                self.abi_context["runtime_provider_evidence"]
+            ),
+        }
+        with mock.patch.object(sys, "argv", argv), mock.patch.dict(
+            RUNTIME_RUNNER["RUNTIME_PROVIDERS"], provider_functions
+        ):
             with self.assertRaisesRegex(
                 RUNTIME_RUNNER["RuntimeError_"], "qualification_components"
             ):
                 RUNTIME_RUNNER["main"]()
+
+    def test_runtime_provider_catalog_hashes_each_reviewed_dso(self):
+        arch = self.abi_context["arch"]
+        policy = RUNTIME_RUNNER["RUNTIME_PROVIDERS"]["load_json"](
+            REPOSITORY / "config/python-runtime-providers.json"
+        )
+        catalog_path = REPOSITORY / (
+            "evidence/abi/el8-%s-python-provider-catalog.json" % arch
+        )
+        reviewed = json.loads(catalog_path.read_text(encoding="utf-8"))
+        summaries = self.compile["abi"]["provider_catalog"]["providers"]
+        soname_by_path = {
+            summary["path"]: summary["soname"] for summary in summaries
+        }
+        digest_by_soname = {
+            summary["soname"]: summary["dso_sha256"]
+            for summary in summaries
+        }
+        source_by_soname = {
+            summary["soname"]: summary["source"]
+            for summary in summaries
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            runtime_root = Path(temporary)
+            for soname in reviewed:
+                (runtime_root / soname).write_bytes(b"provider")
+
+            def fake_root_path(_root, logical):
+                return runtime_root / soname_by_path[logical]
+
+            def fake_record(_readelf, _path, identity, expected_soname=None):
+                self.assertEqual(identity, expected_soname)
+                return {}, copy.deepcopy(reviewed[identity])
+
+            function = RUNTIME_RUNNER["validate_runtime_provider_catalog"]
+            globals_ = function.__globals__
+            with mock.patch.dict(
+                globals_,
+                {
+                    "safe_root_path": fake_root_path,
+                    "sha256_file": lambda path: digest_by_soname[
+                        Path(path).name
+                    ],
+                },
+            ), mock.patch.dict(
+                RUNTIME_RUNNER["PYTHON_ABI"],
+                {"elf_record_from_file": fake_record},
+            ):
+                result = function(
+                    runtime_root,
+                    self.compile,
+                    policy,
+                    catalog_path,
+                    arch,
+                    TARGET,
+                    "locked-sysroot",
+                    REPOSITORY / ("abi/el8/%s.json" % arch),
+                    REPOSITORY
+                    / ("evidence/abi/el8-%s-sysroot.json" % arch),
+                )
+                self.assertEqual(
+                    result["canonical_sha256"],
+                    self.abi_context["runtime_provider_evidence"][
+                        "provider_catalog_sha256"
+                    ],
+                )
+
+            def clean_runtime_sha256(path):
+                soname = Path(path).name
+                if source_by_soname[soname] == "python-runtime":
+                    return digest_by_soname[soname]
+                return "0" * 64
+
+            with mock.patch.dict(
+                globals_,
+                {
+                    "safe_root_path": fake_root_path,
+                    "sha256_file": clean_runtime_sha256,
+                },
+            ), mock.patch.dict(
+                RUNTIME_RUNNER["PYTHON_ABI"],
+                {"elf_record_from_file": fake_record},
+            ):
+                function(
+                    runtime_root,
+                    self.compile,
+                    policy,
+                    catalog_path,
+                    arch,
+                    TARGET,
+                    "clean-rocky",
+                    REPOSITORY / ("abi/el8/%s.json" % arch),
+                    REPOSITORY
+                    / ("evidence/abi/el8-%s-sysroot.json" % arch),
+                )
+
+            with mock.patch.dict(
+                globals_,
+                {
+                    "safe_root_path": fake_root_path,
+                    "sha256_file": lambda _path: "0" * 64,
+                },
+            ):
+                with self.assertRaisesRegex(
+                    RUNTIME_RUNNER["RuntimeError_"],
+                    "runtime provider bytes differ",
+                ):
+                    function(
+                        runtime_root,
+                        self.compile,
+                        policy,
+                        catalog_path,
+                        arch,
+                        TARGET,
+                        "locked-sysroot",
+                        REPOSITORY / ("abi/el8/%s.json" % arch),
+                        REPOSITORY
+                        / (
+                            "evidence/abi/el8-%s-sysroot.json" % arch
+                        ),
+                    )
+
+    def test_device_loader_must_use_the_reviewed_provider_path(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "runtime"
+            prefix = Path(temporary) / "sdk"
+            reviewed = root / "usr/lib64/libssl.so.1.1"
+            alternate = root / "lib64/libssl.so.1.1"
+            loader = root / "usr/lib64/ld-linux-x86-64.so.2"
+            reviewed.parent.mkdir(parents=True)
+            alternate.parent.mkdir(parents=True)
+            prefix.mkdir()
+            reviewed.write_bytes(b"reviewed")
+            alternate.write_bytes(b"alternate")
+            loader.write_bytes(b"loader")
+            guest_loader = alternate.parent / "ld-linux-x86-64.so.2"
+            guest_loader.symlink_to("../usr/lib64/ld-linux-x86-64.so.2")
+            catalog = {
+                "paths": {
+                    "ld-linux-x86-64.so.2": loader,
+                    "libssl.so.1.1": reviewed,
+                },
+                "required_external": ["libssl.so.1.1"],
+            }
+            validate = RUNTIME_RUNNER["validate_device_loaded_objects"]
+            accepted = validate(
+                "calling init: %s\n" % reviewed,
+                root,
+                prefix,
+                catalog,
+                "/lib64/ld-linux-x86-64.so.2",
+            )
+            self.assertEqual(accepted, [str(reviewed)])
+            accepted = validate(
+                "calling init: /lib64/ld-linux-x86-64.so.2\n"
+                "calling init: %s\n" % reviewed,
+                root,
+                prefix,
+                catalog,
+                "/lib64/ld-linux-x86-64.so.2",
+            )
+            self.assertEqual(accepted, sorted((str(loader), str(reviewed))))
+            guest_loader.unlink()
+            guest_loader.write_bytes(b"unreviewed loader")
+            with self.assertRaisesRegex(
+                RUNTIME_RUNNER["RuntimeError_"],
+                "unreviewed guest loader",
+            ):
+                validate(
+                    "calling init: /lib64/ld-linux-x86-64.so.2\n"
+                    "calling init: %s\n" % reviewed,
+                    root,
+                    prefix,
+                    catalog,
+                    "/lib64/ld-linux-x86-64.so.2",
+                )
+            with self.assertRaisesRegex(
+                RUNTIME_RUNNER["RuntimeError_"],
+                "unreviewed provider path",
+            ):
+                validate(
+                    "calling init: %s\n" % alternate,
+                    root,
+                    prefix,
+                    catalog,
+                    "/lib64/ld-linux-x86-64.so.2",
+                )
 
     def test_target_artifact_audit_requires_every_dynamic_guard_canary(self):
         build = Path("/work/build/cpython-cp313-x86_64")
@@ -1085,9 +1476,7 @@ class PythonQualificationTests(unittest.TestCase):
         with self.assertRaisesRegex(
             FINALIZER["FinalizationError"], "zstd evidence mismatch"
         ):
-            FINALIZER["validate_final_report"](
-                report, self.release, TARGET, ZSTD_VERSION
-            )
+            self.validate_final_report(report)
 
     def test_absent_compile_zstd_contract_rejects_module_inventory(self):
         path = (
@@ -1095,11 +1484,9 @@ class PythonQualificationTests(unittest.TestCase):
             "_zstd.cpython-313-x86_64-linux-gnu.so"
         )
         self.compile["required_modules"]["_zstd"] = path
-        self.compile["elf_audit"][path] = {
-            "needed": ["libc.so.6"],
-            "required_versions": {"GLIBC": "2.28"},
-            "sha256": "0" * 64,
-        }
+        self.compile["elf_audit"][path] = self.valid_elf_audit(
+            path, "0" * 64
+        )
         self.write_json(self.compile_path, self.compile)
         with self.assertRaises(FINALIZER["FinalizationError"]):
             self.finalize()
@@ -1225,10 +1612,7 @@ class PythonQualificationTests(unittest.TestCase):
                 )
                 self.compile["elf_audit"][path]["needed"].sort()
                 self.write_json(self.compile_path, self.compile)
-                with self.assertRaisesRegex(
-                    FINALIZER["FinalizationError"],
-                    "dynamically depends on libzstd",
-                ):
+                with self.assertRaises(FINALIZER["FinalizationError"]):
                     self.finalize()
 
     def test_qualifier_applies_dynamic_zstd_policy_to_complete_inventory(self):
@@ -1440,6 +1824,23 @@ class PythonQualificationTests(unittest.TestCase):
         with self.assertRaisesRegex(FINALIZER["FinalizationError"], "not canonical"):
             self.finalize()
 
+    def test_runtime_report_rejects_same_soname_from_another_path(self):
+        provider = self.abi_context["runtime_provider_evidence"][
+            "providers"
+        ][0]
+        expected = "/runtime-locked" + provider["path"]
+        self.locked["device_loaded_objects"].remove(expected)
+        self.locked["device_loaded_objects"].append(
+            "/runtime-locked/lib64/" + provider["soname"]
+        )
+        self.locked["device_loaded_objects"].sort()
+        self.write_json(self.locked_path, self.locked)
+        with self.assertRaisesRegex(
+            FINALIZER["FinalizationError"],
+            "unreviewed provider path",
+        ):
+            self.finalize()
+
     def test_probe_semantics_cannot_be_relabelled_passed(self):
         mutations = (
             ("imports", ["forged"]),
@@ -1489,6 +1890,49 @@ class PythonQualificationTests(unittest.TestCase):
         with self.assertRaisesRegex(FINALIZER["FinalizationError"], "ELF audit"):
             self.finalize()
 
+    def test_python_is_the_only_dynamic_executable_in_the_elf_audit(self):
+        module = self.compile["required_modules"]["_ssl"]
+        self.compile["elf_audit"][module]["elf_policy"] = (
+            self.valid_elf_policy(module, executable=True)
+        )
+        self.write_json(self.compile_path, self.compile)
+        with self.assertRaisesRegex(
+            FINALIZER["FinalizationError"],
+            "shared-object classification mismatch",
+        ):
+            self.finalize()
+
+    def test_python_extension_cannot_be_marked_pie(self):
+        module = self.compile["required_modules"]["_ssl"]
+        self.compile["elf_audit"][module]["elf_policy"]["properties"][
+            "pie"
+        ] = True
+        self.write_json(self.compile_path, self.compile)
+        with self.assertRaisesRegex(
+            FINALIZER["FinalizationError"],
+            "shared-object classification mismatch",
+        ):
+            self.finalize()
+
+    def test_python_global_record_is_the_actual_python_elf_record(self):
+        python_global = self.compile["abi"]["python_global"]
+        python_global["record"]["unversioned_exports"].append(
+            "forged_python_api"
+        )
+        python_global["record"]["default_exports"].append(
+            "forged_python_api"
+        )
+        python_global["elf_record_sha256"] = canonical_sha256(
+            python_global["record"]
+        )
+        python_global["default_export_count"] += 1
+        self.write_json(self.compile_path, self.compile)
+        with self.assertRaisesRegex(
+            FINALIZER["FinalizationError"],
+            "Python global record differs from the actual Python audit",
+        ):
+            self.finalize()
+
     def test_required_module_paths_are_unique_and_abi_exact(self):
         shared = next(iter(self.compile["required_modules"].values()))
         self.compile["required_modules"] = {
@@ -1498,11 +1942,33 @@ class PythonQualificationTests(unittest.TestCase):
         with self.assertRaisesRegex(FINALIZER["FinalizationError"], "module paths"):
             self.finalize()
 
-    def test_elf_version_namespaces_and_ceilings_are_strict(self):
-        for versions in ({"GLIBC": "999.0"}, {"EVIL": "1.0"}, {"GLIBC": []}):
-            with self.subTest(versions=versions):
+    def test_elf_ownership_version_namespaces_and_allowlists_are_strict(self):
+        invalid_imports = (
+            {
+                "provider": "libc.so.6",
+                "name": "memcpy",
+                "version": "GLIBC_999.0",
+                "binding": "GLOBAL",
+            },
+            {
+                "provider": "libc.so.6",
+                "name": "memcpy",
+                "version": "EVIL_1.0",
+                "binding": "GLOBAL",
+            },
+            {
+                "provider": "libc.so.6",
+                "name": "memcpy",
+                "version": [],
+                "binding": "GLOBAL",
+            },
+        )
+        for imported in invalid_imports:
+            with self.subTest(imported=imported):
                 report = copy.deepcopy(self.compile)
-                report["elf_audit"]["bin/python3.13"]["required_versions"] = versions
+                report["elf_audit"]["bin/python3.13"]["ownership"][
+                    "core_versioned"
+                ] = [imported]
                 self.write_json(self.compile_path, report)
                 with self.assertRaises(FINALIZER["FinalizationError"]):
                     self.finalize()
@@ -1526,9 +1992,7 @@ class PythonQualificationTests(unittest.TestCase):
         report = self.finalize()
         report["compile"]["surprise"] = True
         with self.assertRaisesRegex(FINALIZER["FinalizationError"], "unknown field"):
-            FINALIZER["validate_final_report"](
-                report, self.release, TARGET, VERSION
-            )
+            self.validate_final_report(report)
 
     def test_nested_compile_contract_is_strict(self):
         self.compile["source"]["signature"] = "unexpected"
@@ -1544,8 +2008,15 @@ class PythonQualificationTests(unittest.TestCase):
 
     def test_aarch64_runtime_binds_the_release_qemu(self):
         target = "aarch64-unknown-linux-gnu"
+        abi_context = FINALIZER["default_abi_context"](target)
         report = copy.deepcopy(self.locked)
         report["target"] = target
+        report["runtime"]["identity_sha256"] = abi_context[
+            "runtime_provider_evidence"
+        ]["sysroot_lock_sha256"]
+        report["runtime_providers"] = copy.deepcopy(
+            abi_context["runtime_provider_evidence"]
+        )
         report["executor"] = {
             "kind": "explicit-qemu",
             "binary_sha256": self.release["qemu"]["executor"]["binary_sha256"],
@@ -1577,7 +2048,9 @@ class PythonQualificationTests(unittest.TestCase):
             "zstd": self.contract["zstd"],
             "hash_algorithm": self.contract["hash_algorithm"],
             "release_sha256": canonical_sha256(self.release),
-            "sysroot_sha256": SYSROOT_SHA256,
+            "sysroot_sha256": abi_context["runtime_provider_evidence"][
+                "sysroot_lock_sha256"
+            ],
         }
         compile_report = {
             "python_sha256": PYTHON_SHA256,
@@ -1591,6 +2064,7 @@ class PythonQualificationTests(unittest.TestCase):
             report["compile_report_sha256"],
             target,
             VERSION,
+            abi_context,
         )
         self.assertEqual(parsed["executor"]["kind"], "explicit-qemu")
 
@@ -1604,6 +2078,7 @@ class PythonQualificationTests(unittest.TestCase):
                 report["compile_report_sha256"],
                 target,
                 VERSION,
+                abi_context,
             )
 
 

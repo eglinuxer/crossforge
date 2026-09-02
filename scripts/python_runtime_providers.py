@@ -38,7 +38,14 @@ ROOT_KEYS = {
     "runtime_contract",
     "targets",
 }
-TARGET_KEYS = {"arch", "triple", "sysroot_lock", "owners", "providers"}
+TARGET_KEYS = {
+    "arch",
+    "triple",
+    "sysroot_lock",
+    "provider_catalog_sha256",
+    "owners",
+    "providers",
+}
 SYSROOT_LOCK_KEYS = {"file", "canonical_sha256"}
 PROVIDER_KEYS = {
     "soname",
@@ -268,6 +275,10 @@ def validate_policy(document):
             sysroot_lock["canonical_sha256"],
             label + " sysroot lock canonical_sha256",
         )
+        _sha256(
+            target["provider_catalog_sha256"],
+            label + " provider catalog SHA256",
+        )
         owners = target["owners"]
         require(
             type(owners) is list and len(owners) == len(EXPECTED_OWNERS),
@@ -410,6 +421,37 @@ def _lock_packages(lock, arch, label):
     return by_name
 
 
+def validate_policy_target_against_lock(document, arch, lock):
+    """Bind one target policy to its exact embedded sysroot content lock."""
+    validate_policy(document)
+    require(arch in TARGETS, "unsupported provider policy architecture")
+    label = "%s sysroot lock" % arch
+    packages = _lock_packages(lock, arch, label)
+    lock_sha256 = canonical_sha256(lock)
+    target = policy_target(document, arch)
+    require(
+        target["sysroot_lock"]["canonical_sha256"] == lock_sha256,
+        "%s target sysroot lock SHA256 differs" % arch,
+    )
+    for owner in target["owners"]:
+        package = packages[owner["name"]]
+        require(
+            owner
+            == {
+                "name": package["header"]["name"],
+                "nevra": package["nevra"],
+                "received_sha256": package["received_sha256"],
+            },
+            "%s owner %s differs from locked RPM"
+            % (arch, owner["name"]),
+        )
+    return {
+        "sysroot_lock_sha256": lock_sha256,
+        "provider_count": len(target["providers"]),
+        "rpm_owner_count": len(packages),
+    }
+
+
 def validate_policy_against_locks(document, locks_by_arch):
     """Bind every provider to one exact package in its target sysroot lock."""
     validate_policy(document)
@@ -419,32 +461,9 @@ def validate_policy_against_locks(document, locks_by_arch):
     )
     summary = {}
     for arch in TARGET_ORDER:
-        lock = locks_by_arch[arch]
-        label = "%s sysroot lock" % arch
-        packages = _lock_packages(lock, arch, label)
-        lock_sha256 = canonical_sha256(lock)
-        target = policy_target(document, arch)
-        require(
-            target["sysroot_lock"]["canonical_sha256"] == lock_sha256,
-            "%s target sysroot lock SHA256 differs" % arch,
+        summary[arch] = validate_policy_target_against_lock(
+            document, arch, locks_by_arch[arch]
         )
-        for owner in target["owners"]:
-            package = packages[owner["name"]]
-            require(
-                owner
-                == {
-                    "name": package["header"]["name"],
-                    "nevra": package["nevra"],
-                    "received_sha256": package["received_sha256"],
-                },
-                "%s owner %s differs from locked RPM"
-                % (arch, owner["name"]),
-            )
-        summary[arch] = {
-            "sysroot_lock_sha256": lock_sha256,
-            "provider_count": len(target["providers"]),
-            "rpm_owner_count": len(packages),
-        }
     return summary
 
 
@@ -535,6 +554,35 @@ def validate_provider_roots(document, sysroot_roots, clean_roots):
     return result
 
 
+def runtime_provider_evidence(document, arch, root=None):
+    """Return the canonical target policy projection, optionally hashing a root."""
+    target = policy_target(document, arch)
+    owners = {owner["name"]: owner for owner in target["owners"]}
+    records = []
+    for provider in target["providers"]:
+        if root is not None:
+            provider_file_sha256(
+                root,
+                provider,
+                "%s runtime %s" % (arch, provider["soname"]),
+            )
+        records.append(
+            {
+                "soname": provider["soname"],
+                "path": provider["path"],
+                "owner": dict(owners[provider["owner"]]),
+                "dso_sha256": provider["dso_sha256"],
+            }
+        )
+    return {
+        "policy_sha256": canonical_sha256(document),
+        "target": {"arch": arch, "triple": target["triple"]},
+        "sysroot_lock_sha256": target["sysroot_lock"]["canonical_sha256"],
+        "provider_catalog_sha256": target["provider_catalog_sha256"],
+        "providers": records,
+    }
+
+
 def _validate_schema_identity(schema):
     require(type(schema) is dict, "provider policy schema must be an object")
     require(schema.get("$schema") == SCHEMA_DRAFT, "provider policy schema draft differs")
@@ -555,6 +603,39 @@ def validate_repository(repository=REPOSITORY, provider_roots=None):
         for arch in TARGET_ORDER
     }
     summary = validate_policy_against_locks(policy, locks)
+    python_abi = runpy.run_path(
+        str(repository / "scripts/python_abi_audit.py")
+    )
+    for arch in TARGET_ORDER:
+        target = policy_target(policy, arch)
+        catalog_path = repository / (
+            "evidence/abi/el8-%s-python-provider-catalog.json" % arch
+        )
+        catalog = load_json(catalog_path)
+        require(
+            catalog_path.read_bytes() == canonical_bytes(catalog) + b"\n",
+            "%s provider catalog is not canonical JSON" % arch,
+        )
+        baseline = ABI_CONTRACT["load_baseline"](
+            repository / ("abi/el8/%s.json" % arch),
+            arch,
+            TARGETS[arch]["triple"],
+        )
+        try:
+            python_abi["validate_provider_catalog"](
+                baseline,
+                [provider["soname"] for provider in target["providers"]],
+                catalog,
+            )
+        except python_abi["PythonAbiAuditError"] as error:
+            raise RuntimeProviderPolicyError(str(error)) from error
+        require(
+            canonical_sha256(catalog) == target["provider_catalog_sha256"],
+            "%s provider catalog digest differs from policy" % arch,
+        )
+        summary[arch]["provider_catalog_sha256"] = target[
+            "provider_catalog_sha256"
+        ]
 
     rpm_validator = runpy.run_path(
         str(repository / "scripts/validate-rpm-lock.py")

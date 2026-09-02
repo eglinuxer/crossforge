@@ -1,7 +1,11 @@
 import ast
 import copy
+import re
 import runpy
+import shutil
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -88,9 +92,9 @@ class PythonAbiAuditTests(unittest.TestCase):
         catalog["libc.so.6"] = elf_record(
             "libc.so.6",
             versioned_exports=[
-                versioned_export("puts", "GLIBC_2.2.5")
+                versioned_export("malloc", "GLIBC_2.2.5"),
+                versioned_export("puts", "GLIBC_2.2.5"),
             ],
-            unversioned_exports=["transitive_api"],
         )
         catalog["libexternal.so.1"] = elf_record(
             "libexternal.so.1",
@@ -186,7 +190,6 @@ class PythonAbiAuditTests(unittest.TestCase):
         catalog["libc.so.6"] = elf_record(
             "libc.so.6",
             versioned_exports=[versioned_export("puts", "GLIBC_PRIVATE")],
-            unversioned_exports=["transitive_api"],
         )
         with self.assertRaisesRegex(PythonAbiAuditError, "private version node"):
             self.audit(catalog, python, artifact)
@@ -244,19 +247,39 @@ class PythonAbiAuditTests(unittest.TestCase):
     def test_transitive_closure_and_cycle_detection_are_strict(self):
         catalog, python, artifact = self.fixture()
         artifact["unversioned_imports"].append(
-            unversioned_import("transitive_api")
+            unversioned_import("malloc")
         )
         artifact["unversioned_imports"].sort(
             key=lambda item: (item["name"], item["binding"])
         )
         result = self.audit(catalog, python, artifact)
         self.assertIn(
-            {"name": "transitive_api", "owner": "libc.so.6"},
+            {"name": "malloc", "owner": "libc.so.6"},
             result["strong_unversioned"],
         )
-
         catalog["libc.so.6"]["needed"] = ["libexternal.so.1"]
         with self.assertRaisesRegex(PythonAbiAuditError, "contains a cycle"):
+            self.audit(catalog, python, artifact)
+
+    def test_private_default_core_export_cannot_own_unversioned_import(self):
+        catalog, python, artifact = self.fixture()
+        catalog["libc.so.6"]["versioned_exports"].append(
+            versioned_export("__libc_dlopen_mode", "GLIBC_PRIVATE")
+        )
+        catalog["libc.so.6"]["versioned_exports"].sort(
+            key=lambda item: (item["name"], item["version"], item["default"])
+        )
+        catalog["libc.so.6"]["default_exports"].append(
+            "__libc_dlopen_mode"
+        )
+        catalog["libc.so.6"]["default_exports"].sort()
+        artifact["unversioned_imports"].append(
+            unversioned_import("__libc_dlopen_mode")
+        )
+        artifact["unversioned_imports"].sort(
+            key=lambda item: (item["name"], item["binding"])
+        )
+        with self.assertRaisesRegex(PythonAbiAuditError, "has no owner"):
             self.audit(catalog, python, artifact)
 
     def test_catalog_membership_and_dependencies_are_closed(self):
@@ -266,9 +289,30 @@ class PythonAbiAuditTests(unittest.TestCase):
             self.audit(catalog, python, artifact)
 
         catalog, python, artifact = self.fixture()
+        artifact["soname"] = "libexternal.so.1"
+        with self.assertRaisesRegex(PythonAbiAuditError, "must not define DT_SONAME"):
+            self.audit(catalog, python, artifact)
+
+        catalog, python, artifact = self.fixture()
         catalog["libexternal.so.1"]["needed"].append("libescape.so.1")
         with self.assertRaisesRegex(PythonAbiAuditError, "outside the owned universe"):
             self.audit(catalog, python, artifact)
+
+    def test_pinned_provider_may_use_symbolic_but_artifact_may_not(self):
+        dynamic = (
+            " 0x1 (SONAME) Library soname: [libexternal.so.1]\n"
+            " 0x2 (SYMBOLIC) 0x0\n"
+        )
+        self.assertEqual(
+            AUDIT["parse_dynamic_identities"](
+                dynamic, expected_soname="libexternal.so.1"
+            ),
+            ([], "libexternal.so.1"),
+        )
+        with self.assertRaisesRegex(
+            PythonAbiAuditError, "load-affecting dynamic tags"
+        ):
+            AUDIT["parse_dynamic_identities"](dynamic)
 
     def test_readelf_parser_preserves_default_version_and_import_provider(self):
         dynamic_symbols = """
@@ -280,6 +324,7 @@ Symbol table '.dynsym' contains 7 entries:
      4: 0000000000000000 0 FUNC GLOBAL DEFAULT UND need@EXT_2 (4)
      5: 0000000000000000 0 NOTYPE WEAK DEFAULT UND weak_hook
      6: 0000000000000000 0 OBJECT GLOBAL DEFAULT ABS EXT_2
+     7: 0000000000002000 8 OBJECT GLOBAL DEFAULT 14 copied@EXT_2 (4)
 """
         version_info = """
 Version needs section '.gnu.version_r' contains 1 entry:
@@ -295,11 +340,13 @@ Version needs section '.gnu.version_r' contains 1 entry:
             dynamic_symbols,
             version_info,
             dynamic,
+            "0000 0000 R_X86_64_COPY 0000 copied@EXT_2 + 0\n",
             expected_soname="libexternal.so.1",
         )
         self.assertEqual(
             record["versioned_exports"],
             [
+                versioned_export("copied", "EXT_2", default=False),
                 versioned_export("current", "EXT_2", default=True),
                 versioned_export("legacy", "EXT_1", default=False),
             ],
@@ -308,7 +355,10 @@ Version needs section '.gnu.version_r' contains 1 entry:
         self.assertEqual(record["default_exports"], ["current", "plain"])
         self.assertEqual(
             record["versioned_imports"],
-            [versioned_import("libdependency.so.1", "need", "EXT_2")],
+            [
+                versioned_import("libdependency.so.1", "copied", "EXT_2"),
+                versioned_import("libdependency.so.1", "need", "EXT_2"),
+            ],
         )
         self.assertEqual(
             record["unversioned_imports"],
@@ -326,6 +376,31 @@ Version needs section '.gnu.version_r' contains 1 entry:
         with self.assertRaisesRegex(PythonAbiAuditError, "not sorted"):
             self.audit(catalog, python, artifact)
 
+    def test_report_revalidation_rejects_forged_ownership(self):
+        catalog, python, artifact = self.fixture()
+        result = self.audit(catalog, python, artifact)
+
+        forged = copy.deepcopy(result)
+        forged["core_versioned"][0]["name"] = "not_frozen"
+        with self.assertRaisesRegex(PythonAbiAuditError, "frozen baseline"):
+            AUDIT["validate_audit_result"](
+                forged, self.baseline, EXTERNAL, python["identity"]
+            )
+
+        forged = copy.deepcopy(result)
+        forged["strong_unversioned"][0]["owner"] = "libunknown.so.1"
+        with self.assertRaisesRegex(PythonAbiAuditError, "outside the loader scope"):
+            AUDIT["validate_audit_result"](
+                forged, self.baseline, EXTERNAL, python["identity"]
+            )
+
+        forged = copy.deepcopy(result)
+        forged["optional_weak"][0]["resolution"] = "resolved"
+        with self.assertRaisesRegex(PythonAbiAuditError, "differs from its owners"):
+            AUDIT["validate_audit_result"](
+                forged, self.baseline, EXTERNAL, python["identity"]
+            )
+
     def test_module_remains_python36_syntax_compatible(self):
         path = REPOSITORY / "scripts/python_abi_audit.py"
         ast.parse(
@@ -333,6 +408,94 @@ Version needs section '.gnu.version_r' contains 1 entry:
             filename=str(path),
             feature_version=(3, 6),
         )
+
+    @unittest.skipUnless(
+        shutil.which("gcc") and shutil.which("readelf"),
+        "host GCC/readelf are required",
+    )
+    def test_real_dt_audit_binary_is_rejected_by_both_parsers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            source = directory / "audit.c"
+            library = directory / "libaudit-canary.so"
+            source.write_text("void crossforge_audit_canary(void) {}\n", encoding="utf-8")
+            subprocess.run(
+                [
+                    "gcc",
+                    "-shared",
+                    "-fPIC",
+                    "-nostdlib",
+                    "-Wl,-z,relro,-z,now",
+                    "-Wl,--audit,/tmp/libevil.so",
+                    str(source),
+                    "-o",
+                    str(library),
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            dynamic = subprocess.run(
+                ["readelf", "--wide", "-d", str(library)],
+                check=True,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ).stdout
+        self.assertIn("(AUDIT)", dynamic)
+        for function in (
+            abi_contract._dynamic_properties,
+            AUDIT["parse_dynamic_identities"],
+        ):
+            with self.subTest(function=function.__name__):
+                with self.assertRaisesRegex(
+                    (abi_contract.AbiContractError, PythonAbiAuditError),
+                    "load-affecting dynamic tags",
+                ):
+                    function(dynamic)
+
+    @unittest.skipUnless(
+        shutil.which("gcc") and shutil.which("readelf"),
+        "host GCC/readelf are required",
+    )
+    def test_real_copy_relocation_is_recorded_as_a_versioned_import(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            source = directory / "copy.c"
+            executable = directory / "copy-canary"
+            source.write_text(
+                "extern char **environ; int main(void) { return environ == 0; }\n",
+                encoding="utf-8",
+            )
+            subprocess.run(
+                ["gcc", "-no-pie", str(source), "-o", str(executable)],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            evidence = AUDIT["readelf_evidence"]("readelf", executable)
+            self.assertRegex(
+                evidence["relocations"], r"R_X86_64_COPY|R_AARCH64_COPY"
+            )
+            record = AUDIT["elf_record_from_readelf"](
+                "copy-canary",
+                evidence["dynamic_symbols"],
+                evidence["version_info"],
+                evidence["dynamic_section"],
+                evidence["relocations"],
+            )
+        copy_names = {
+            match.group(1).split("@", 1)[0]
+            for match in re.finditer(
+                r"\bR_(?:X86_64|AARCH64)_COPY\b\s+\S+\s+(\S+)",
+                evidence["relocations"],
+            )
+        }
+        imported = {
+            item["name"] for item in record["versioned_imports"]
+        }
+        self.assertTrue(copy_names)
+        self.assertTrue(copy_names.issubset(imported))
 
 
 if __name__ == "__main__":

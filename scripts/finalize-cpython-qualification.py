@@ -7,7 +7,7 @@ import json
 import re
 import runpy
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 class FinalizationError(RuntimeError):
@@ -32,6 +32,20 @@ ZSTD_EVIDENCE = runpy.run_path(
     str(Path(__file__).with_name("python_zstd_evidence.py"))
 )
 ZstdEvidenceError = ZSTD_EVIDENCE["ZstdEvidenceError"]
+ABI_CONTRACT = runpy.run_path(
+    str(Path(__file__).with_name("abi_contract.py"))
+)
+AbiContractError = ABI_CONTRACT["AbiContractError"]
+PYTHON_ABI = runpy.run_path(
+    str(Path(__file__).with_name("python_abi_audit.py"))
+)
+PythonAbiAuditError = PYTHON_ABI["PythonAbiAuditError"]
+RUNTIME_PROVIDERS = runpy.run_path(
+    str(Path(__file__).with_name("python_runtime_providers.py"))
+)
+RuntimeProviderPolicyError = RUNTIME_PROVIDERS[
+    "RuntimeProviderPolicyError"
+]
 
 
 COMPILE_KEYS = {
@@ -54,6 +68,7 @@ COMPILE_KEYS = {
     "sysconfig",
     "sdk_tree",
     "elf_audit",
+    "abi",
     "zstd",
 }
 COMPILE_SOURCE_KEYS = {
@@ -66,7 +81,49 @@ COMPILE_SOURCE_KEYS = {
 BUILD_PYTHON_KEYS = {"path", "version", "sha256", "sdk_tree"}
 EXTENSION_KEYS = {"name", "sha256"}
 SDK_TREE_KEYS = {"entries", "canonical_sha256"}
-ELF_AUDIT_KEYS = {"needed", "required_versions", "sha256"}
+ELF_AUDIT_KEYS = {
+    "needed",
+    "sha256",
+    "elf_record_sha256",
+    "elf_record",
+    "elf_policy",
+    "ownership",
+}
+COMPILE_ABI_KEYS = {
+    "baseline",
+    "provider_manifest",
+    "sysroot_inventory",
+    "runtime_provider_policy",
+    "provider_catalog",
+    "python_global",
+}
+ELF_POLICY_RESULT_KEYS = {
+    "artifact",
+    "profile",
+    "elf_kind",
+    "not_applicable",
+    "properties",
+    "used_exceptions",
+}
+ELF_PROPERTY_KEYS = {
+    "dynamic_section",
+    "textrel",
+    "relr",
+    "rpath",
+    "runpath",
+    "path_tags",
+    "pie",
+    "bind_now",
+    "interpreter",
+    "gnu_stack_present",
+    "gnu_stack_executable",
+    "writable_executable_segments",
+    "relro",
+    "machine",
+    "elf_class",
+    "elf_data",
+    "elf_type",
+}
 TARGET_ARTIFACT_GUARD_KEYS = {
     "execution_canaries",
     "loader_canaries",
@@ -94,6 +151,7 @@ RUNTIME_KEYS = {
     "loader_dependencies",
     "device_loader_dependencies",
     "device_loaded_objects",
+    "runtime_providers",
     "probe",
     "device_probe",
 }
@@ -120,6 +178,7 @@ FINAL_REPORT_KEYS = {
     "probe_sha256",
     "compile_report_sha256",
     "compile",
+    "abi",
     "zstd",
     "runtime_result_sha256",
     "executions",
@@ -217,15 +276,6 @@ REQUIRED_MODULES = {
     "_uuid",
     "zlib",
 }
-RUNTIME_PACKAGE_NAMES = (
-    "bzip2-libs",
-    "libffi",
-    "libuuid",
-    "openssl-libs",
-    "sqlite-libs",
-    "xz-libs",
-    "zlib",
-)
 REQUIRED_PROBE_IMPORTS = [
     "_bz2",
     "_ctypes",
@@ -342,10 +392,6 @@ def require_sha256(value, path):
     return value
 
 
-def version_tuple(value):
-    return tuple(int(part) for part in value.split("."))
-
-
 def release_context(release, target, version):
     require(target in TARGETS, "unsupported CPython target: %s" % target)
 
@@ -395,6 +441,509 @@ def validate_python_qualification_components(value, release, path):
         )
     except ProjectionError as error:
         raise FinalizationError("%s: %s" % (path, error)) from error
+
+
+def load_abi_context(
+    target,
+    baseline_path,
+    provider_manifest_path,
+    sysroot_inventory_path,
+    runtime_provider_policy_path,
+    provider_catalog_path,
+):
+    """Load the reviewed ABI inputs used to revalidate compile evidence."""
+    arch = "x86_64" if target.startswith("x86_64-") else "aarch64"
+    try:
+        baseline = ABI_CONTRACT["load_baseline"](
+            baseline_path, expected_arch=arch, expected_triple=target
+        )
+        manifest = ABI_CONTRACT["load_provider_manifest"](
+            provider_manifest_path
+        )
+        inventory = ABI_CONTRACT["load_inventory"](
+            sysroot_inventory_path,
+            expected_arch=arch,
+            expected_triple=target,
+        )
+        ABI_CONTRACT["validate_inventory_provider_manifest"](
+            inventory, manifest
+        )
+        ABI_CONTRACT["validate_inventory_superset"](inventory, baseline)
+    except AbiContractError as error:
+        raise FinalizationError(str(error)) from error
+    require(
+        inventory["source"]["kind"] == "locked-sysroot",
+        "ABI inventory is not a locked sysroot inventory",
+    )
+    for path, document, label in (
+        (baseline_path, baseline, "ABI baseline"),
+        (sysroot_inventory_path, inventory, "ABI sysroot inventory"),
+    ):
+        require(
+            path.read_bytes()
+            == ABI_CONTRACT["canonical_bytes"](document) + b"\n",
+            "%s is not canonical JSON" % label,
+        )
+
+    try:
+        policy = RUNTIME_PROVIDERS["load_json"](
+            runtime_provider_policy_path
+        )
+        runtime_target = RUNTIME_PROVIDERS["policy_target"](
+            policy, arch, target
+        )
+        runtime_evidence = RUNTIME_PROVIDERS[
+            "runtime_provider_evidence"
+        ](policy, arch)
+        reviewed_provider_catalog = RUNTIME_PROVIDERS["load_json"](
+            provider_catalog_path
+        )
+    except RuntimeProviderPolicyError as error:
+        raise FinalizationError(str(error)) from error
+    require(
+        provider_catalog_path.read_bytes()
+        == RUNTIME_PROVIDERS["canonical_bytes"](
+            reviewed_provider_catalog
+        )
+        + b"\n",
+        "reviewed Python provider catalog is not canonical JSON",
+    )
+    external_providers = [
+        provider["soname"] for provider in runtime_target["providers"]
+    ]
+    try:
+        PYTHON_ABI["validate_provider_catalog"](
+            baseline,
+            external_providers,
+            reviewed_provider_catalog,
+        )
+    except PythonAbiAuditError as error:
+        raise FinalizationError(str(error)) from error
+    require(
+        RUNTIME_PROVIDERS["canonical_sha256"](
+            reviewed_provider_catalog
+        )
+        == runtime_evidence["provider_catalog_sha256"],
+        "reviewed Python provider catalog differs from policy",
+    )
+
+    manifest_sha256 = ABI_CONTRACT["canonical_sha256"](manifest)
+    baseline_sha256 = ABI_CONTRACT["canonical_sha256"](baseline)
+    inventory_sha256 = ABI_CONTRACT["canonical_sha256"](inventory)
+    expected_identities = {
+        "baseline": {
+            "file": "abi/el8/%s.json" % arch,
+            "canonical_sha256": baseline_sha256,
+            "source_inventory": baseline["review"]["source_inventory"],
+            "source_inventory_sha256": baseline["review"][
+                "source_inventory_sha256"
+            ],
+        },
+        "provider_manifest": {
+            "file": "config/abi-providers.json",
+            "canonical_sha256": manifest_sha256,
+        },
+        "sysroot_inventory": {
+            "file": "evidence/abi/el8-%s-sysroot.json" % arch,
+            "canonical_sha256": inventory_sha256,
+            "source": dict(inventory["source"]),
+        },
+        "runtime_provider_policy": {
+            "file": "config/python-runtime-providers.json",
+            "canonical_sha256": runtime_evidence["policy_sha256"],
+            "sysroot_lock_sha256": runtime_evidence[
+                "sysroot_lock_sha256"
+            ],
+            "provider_catalog_sha256": runtime_evidence[
+                "provider_catalog_sha256"
+            ],
+        },
+    }
+    expected_providers = []
+    for soname, provider in inventory["providers"].items():
+        expected_providers.append(
+            {
+                "soname": soname,
+                "path": provider["path"],
+                "source": "frozen-core",
+                "dso_sha256": provider["sha256"],
+                "rpm_owner": None,
+            }
+        )
+    for provider in runtime_evidence["providers"]:
+        expected_providers.append(
+            {
+                "soname": provider["soname"],
+                "path": provider["path"],
+                "source": "python-runtime",
+                "dso_sha256": provider["dso_sha256"],
+                "rpm_owner": dict(provider["owner"]),
+            }
+        )
+    expected_providers.sort(key=lambda item: item["soname"])
+    return {
+        "arch": arch,
+        "target": target,
+        "baseline": baseline,
+        "external_providers": external_providers,
+        "runtime_provider_evidence": runtime_evidence,
+        "reviewed_provider_catalog": reviewed_provider_catalog,
+        "reviewed_provider_catalog_file": (
+            "evidence/abi/el8-%s-python-provider-catalog.json" % arch
+        ),
+        "expected_identities": expected_identities,
+        "expected_providers": expected_providers,
+        "machine": ABI_CONTRACT["TARGETS"][arch]["readelf_machine"],
+        "interpreter": ABI_CONTRACT["TARGETS"][arch]["interpreter"],
+    }
+
+
+def validate_compile_abi(value, report, context, minor):
+    path = "compile report abi"
+    require_exact_keys(value, COMPILE_ABI_KEYS, path)
+    for name in (
+        "baseline",
+        "provider_manifest",
+        "sysroot_inventory",
+        "runtime_provider_policy",
+    ):
+        require(
+            value[name] == context["expected_identities"][name],
+            "%s %s identity mismatch" % (path, name),
+        )
+
+    catalog = value["provider_catalog"]
+    require_exact_keys(
+        catalog,
+        {
+            "file",
+            "provider_count",
+            "elf_records_sha256",
+            "records",
+            "providers",
+        },
+        path + " provider_catalog",
+    )
+    require(
+        catalog["file"] == context["reviewed_provider_catalog_file"],
+        "%s provider catalog file identity mismatch" % path,
+    )
+    expected = context["expected_providers"]
+    require(
+        type(catalog["provider_count"]) is int
+        and catalog["provider_count"] == len(expected),
+        "%s provider count mismatch" % path,
+    )
+    require_sha256(
+        catalog["elf_records_sha256"], path + " provider catalog digest"
+    )
+    records = catalog["records"]
+    try:
+        PYTHON_ABI["validate_provider_catalog"](
+            context["baseline"],
+            context["external_providers"],
+            records,
+        )
+    except PythonAbiAuditError as error:
+        raise FinalizationError(
+            "%s provider catalog: %s" % (path, error)
+        ) from error
+    require(
+        catalog["elf_records_sha256"]
+        == RUNTIME_PROVIDERS["canonical_sha256"](records)
+        == context["runtime_provider_evidence"][
+            "provider_catalog_sha256"
+        ]
+        and records == context["reviewed_provider_catalog"],
+        "%s provider catalog digest differs from the reviewed policy" % path,
+    )
+    providers = catalog["providers"]
+    require(
+        isinstance(providers, list) and len(providers) == len(expected),
+        "%s provider summaries differ" % path,
+    )
+    for index, (observed, expected_provider) in enumerate(
+        zip(providers, expected)
+    ):
+        require_exact_keys(
+            observed,
+            {
+                "soname",
+                "path",
+                "source",
+                "dso_sha256",
+                "elf_record_sha256",
+                "rpm_owner",
+            },
+            "%s provider %d" % (path, index),
+        )
+        require(
+            {
+                key: observed[key]
+                for key in (
+                    "soname",
+                    "path",
+                    "source",
+                    "dso_sha256",
+                    "rpm_owner",
+                )
+            }
+            == expected_provider,
+            "%s provider %d identity mismatch" % (path, index),
+        )
+        require_sha256(
+            observed["elf_record_sha256"],
+            "%s provider %d ELF record digest" % (path, index),
+        )
+        require(
+            observed["elf_record_sha256"]
+            == RUNTIME_PROVIDERS["canonical_sha256"](
+                records[observed["soname"]]
+            ),
+            "%s provider %d ELF record digest mismatch" % (path, index),
+        )
+
+    python_global = value["python_global"]
+    require_exact_keys(
+        python_global,
+        {
+            "identity",
+            "sha256",
+            "elf_record_sha256",
+            "needed",
+            "default_export_count",
+            "record",
+        },
+        path + " python_global",
+    )
+    expected_identity = "bin/python%s" % minor
+    require(
+        python_global["identity"] == expected_identity
+        and python_global["sha256"] == report["python_sha256"],
+        "%s Python global identity mismatch" % path,
+    )
+    require_sha256(
+        python_global["elf_record_sha256"],
+        path + " Python global ELF record digest",
+    )
+    try:
+        PYTHON_ABI["validate_elf_record"](python_global["record"])
+    except PythonAbiAuditError as error:
+        raise FinalizationError(
+            "%s Python global record: %s" % (path, error)
+        ) from error
+    require(
+        python_global["record"]["identity"] == expected_identity
+        and python_global["record"]["soname"] is None
+        and python_global["elf_record_sha256"]
+        == RUNTIME_PROVIDERS["canonical_sha256"](
+            python_global["record"]
+        )
+        and python_global["needed"] == python_global["record"]["needed"]
+        and python_global["default_export_count"]
+        == len(python_global["record"]["default_exports"]),
+        "%s Python global ELF record binding mismatch" % path,
+    )
+    require(
+        isinstance(python_global["needed"], list)
+        and len(python_global["needed"])
+        == len(set(python_global["needed"]))
+        and all(
+            isinstance(item, str) and item and "/" not in item
+            for item in python_global["needed"]
+        ),
+        "%s Python global DT_NEEDED is invalid" % path,
+    )
+    require(
+        type(python_global["default_export_count"]) is int
+        and python_global["default_export_count"] > 0,
+        "%s Python global export count is invalid" % path,
+    )
+    return value
+
+
+def validate_elf_policy_result(
+    value, name, context, expected_executable
+):
+    path = "compile report elf_audit %s elf_policy" % name
+    require_exact_keys(value, ELF_POLICY_RESULT_KEYS, path)
+    require(
+        value["artifact"] == name
+        and value["profile"] == "crossforge-qualified-v1"
+        and value["used_exceptions"] == [],
+        "%s identity/profile/exception mismatch" % path,
+    )
+    properties = value["properties"]
+    require_exact_keys(properties, ELF_PROPERTY_KEYS, path + " properties")
+    require(
+        properties["machine"] == context["machine"]
+        and properties["elf_class"] == "ELF64"
+        and properties["elf_data"] == "2's complement, little endian"
+        and properties["dynamic_section"] is True
+        and properties["textrel"] is False
+        and properties["relr"] is False
+        and properties["rpath"] == []
+        and properties["runpath"] == []
+        and properties["path_tags"] == []
+        and type(properties["pie"]) is bool
+        and properties["bind_now"] is True
+        and properties["gnu_stack_present"] is True
+        and properties["gnu_stack_executable"] is False
+        and properties["writable_executable_segments"] is False
+        and properties["relro"] is True,
+        "%s violates the qualified ELF profile" % path,
+    )
+    require(
+        type(expected_executable) is bool,
+        "%s expected role is invalid" % path,
+    )
+    if expected_executable:
+        require(
+            value["elf_kind"] == "dynamic-executable"
+            and value["not_applicable"] == []
+            and properties["interpreter"] == context["interpreter"],
+            "%s executable interpreter mismatch" % path,
+        )
+    else:
+        require(
+            value["elf_kind"] == "shared-object"
+            and value["not_applicable"] == ["interpreter"]
+            and properties["interpreter"] is None
+            and properties["pie"] is False,
+            "%s shared-object classification mismatch" % path,
+        )
+    return value
+
+
+def validate_runtime_provider_evidence(value, context, path):
+    require(
+        value == context["runtime_provider_evidence"],
+        "%s differs from the reviewed runtime provider policy" % path,
+    )
+    return value
+
+
+def collect_actual_elf_evidence(
+    compile_report,
+    abi_context,
+    target_prefix,
+    readelf,
+    qualification_extension=None,
+):
+    """Recompute ELF records and policy from the actual qualified bytes."""
+    target_prefix = Path(target_prefix)
+    readelf = Path(readelf)
+    require(
+        target_prefix.is_dir() and not target_prefix.is_symlink(),
+        "actual target prefix is missing or unsafe",
+    )
+    require(readelf.is_file(), "actual readelf is missing")
+    resolved_prefix = target_prefix.resolve()
+    result = {}
+    for name in sorted(compile_report["elf_audit"]):
+        require(
+            type(name) is str and name,
+            "qualified ELF path is invalid",
+        )
+        if name.startswith("qualification/"):
+            if qualification_extension is None:
+                continue
+            path = Path(qualification_extension)
+            require(
+                name == "qualification/" + path.name
+                and path.is_file()
+                and not path.is_symlink(),
+                "qualification ELF path differs from compile report",
+            )
+        else:
+            relative = PurePosixPath(name)
+            require(
+                not relative.is_absolute()
+                and ".." not in relative.parts,
+                "qualified ELF path is unsafe: %s" % name,
+            )
+            path = target_prefix.joinpath(*relative.parts)
+            try:
+                resolved = path.resolve(strict=True)
+            except OSError as error:
+                raise FinalizationError(
+                    "qualified ELF is missing or unsafe: %s" % name
+                ) from error
+            require(
+                resolved_prefix in resolved.parents,
+                "qualified ELF escapes the target prefix: %s" % name,
+            )
+        require(
+            path.is_file() and not path.is_symlink(),
+            "qualified ELF is missing or unsafe: %s" % name,
+        )
+        try:
+            evidence, record = PYTHON_ABI["elf_record_from_file"](
+                readelf, path, name
+            )
+            policy = ABI_CONTRACT["audit_elf_policy"](
+                abi_context["baseline"],
+                name,
+                evidence["dynamic_section"],
+                evidence["program_headers"],
+                evidence["elf_header"],
+                profile_name="crossforge-qualified-v1",
+            )
+        except (PythonAbiAuditError, AbiContractError) as error:
+            raise FinalizationError(
+                "actual ELF audit failed for %s: %s" % (name, error)
+            ) from error
+        result[name] = {
+            "sha256": sha256_file(path),
+            "elf_record": record,
+            "elf_policy": policy,
+        }
+    expected_sdk = {
+        name
+        for name in compile_report["elf_audit"]
+        if not name.startswith("qualification/")
+    }
+    actual_sdk = set(result).intersection(expected_sdk)
+    require(actual_sdk == expected_sdk, "actual SDK ELF inventory is incomplete")
+    return result
+
+
+def validate_actual_elf_evidence(
+    report,
+    actual,
+    require_qualification_artifact,
+):
+    require(isinstance(actual, dict), "actual ELF evidence is required")
+    expected_names = set(report["elf_audit"])
+    qualification_names = {
+        name for name in expected_names if name.startswith("qualification/")
+    }
+    required_names = (
+        expected_names
+        if require_qualification_artifact
+        else expected_names - qualification_names
+    )
+    require(
+        set(actual) == required_names,
+        "actual ELF evidence inventory differs from compile report",
+    )
+    for name in sorted(actual):
+        require_exact_keys(
+            actual[name],
+            {"sha256", "elf_record", "elf_policy"},
+            "actual ELF evidence %s" % name,
+        )
+        declared = report["elf_audit"][name]
+        require(
+            actual[name]
+            == {
+                "sha256": declared["sha256"],
+                "elf_record": declared["elf_record"],
+                "elf_policy": declared["elf_policy"],
+            },
+            "actual ELF bytes differ from compile evidence: %s" % name,
+        )
+    return actual
 
 
 def validate_global_zstd_linkage(elf_audit):
@@ -464,7 +1013,7 @@ def validate_compile_zstd_evidence(value, context, report, target, version):
     audit = report["elf_audit"][expected_path]
     require(
         module["sha256"] == audit["sha256"]
-        and module["needed"] == audit["needed"],
+        and module["needed"] == sorted(audit["needed"]),
         "%s module ELF binding mismatch" % path,
     )
     require(
@@ -554,7 +1103,9 @@ def validate_dynamic_map(value, path):
         require_string(key, "%s key" % path)
 
 
-def validate_overlay_evidence(value, context, compile_report, target, path):
+def validate_overlay_evidence(
+    value, context, compile_report, target, abi_context, path
+):
     require_exact_keys(
         value,
         {
@@ -627,8 +1178,16 @@ def validate_overlay_evidence(value, context, compile_report, target, path):
         "%s sysroot contract mismatch" % path,
     )
     packages = identity["selected_packages"]
+    expected_packages_by_name = {
+        provider["owner"]["name"]: provider["owner"]
+        for provider in abi_context["runtime_provider_evidence"]["providers"]
+    }
+    expected_packages = [
+        expected_packages_by_name[name]
+        for name in sorted(expected_packages_by_name)
+    ]
     require(
-        isinstance(packages, list) and len(packages) == len(RUNTIME_PACKAGE_NAMES),
+        isinstance(packages, list) and len(packages) == len(expected_packages),
         "%s package count mismatch" % path,
     )
     for index, package in enumerate(packages):
@@ -641,8 +1200,8 @@ def validate_overlay_evidence(value, context, compile_report, target, path):
         require_string(package["nevra"], "%s package NEVRA" % path)
         require_sha256(package["received_sha256"], "%s package digest" % path)
     require(
-        [package["name"] for package in packages] == list(RUNTIME_PACKAGE_NAMES),
-        "%s package names/order mismatch" % path,
+        packages == expected_packages,
+        "%s packages differ from runtime provider ownership" % path,
     )
     require(
         identity["selected_packages_sha256"] == canonical_sha256(packages),
@@ -680,10 +1239,18 @@ def validate_overlay_evidence(value, context, compile_report, target, path):
     return value
 
 
-def validate_compile_report(report, context, target, version):
+def validate_compile_report(
+    report,
+    context,
+    target,
+    version,
+    abi_context,
+    actual_elf_evidence,
+    require_qualification_artifact,
+):
     require_exact_keys(report, COMPILE_KEYS, "compile report")
     require(
-        report["qualification_schema_version"] == 3,
+        report["qualification_schema_version"] == 4,
         "compile report schema version mismatch",
     )
     require(
@@ -707,6 +1274,18 @@ def validate_compile_report(report, context, target, version):
     require(
         report["sysroot_sha256"] == context["sysroot_sha256"],
         "compile report sysroot digest mismatch",
+    )
+    require(
+        abi_context["target"] == target
+        and abi_context["expected_identities"]["sysroot_inventory"]["source"][
+            "identity_sha256"
+        ]
+        == context["sysroot_sha256"]
+        and abi_context["runtime_provider_evidence"][
+            "sysroot_lock_sha256"
+        ]
+        == context["sysroot_sha256"],
+        "compile report ABI inputs differ from the release sysroot",
     )
     require_sha256(
         report["sysroot_transaction_sha256"],
@@ -880,6 +1459,7 @@ def validate_compile_report(report, context, target, version):
         report["sdk_tree"]["canonical_sha256"],
         "compile report sdk_tree canonical_sha256",
     )
+    validate_compile_abi(report["abi"], report, abi_context, minor)
     validate_dynamic_map(report["elf_audit"], "compile report elf_audit")
     require(report["elf_audit"], "compile report elf_audit must not be empty")
     python_audit_path = "bin/python%s" % minor
@@ -907,29 +1487,66 @@ def validate_compile_report(report, context, target, version):
             "compile report ELF needed list is invalid: %s" % name,
         )
         require(
-            audit["needed"] == sorted(set(audit["needed"])),
-            "compile report ELF needed list is not canonical: %s" % name,
+            len(audit["needed"]) == len(set(audit["needed"])),
+            "compile report ELF needed list repeats a provider: %s" % name,
         )
         require(
             all("/" not in item for item in audit["needed"]),
             "compile report ELF has a path-qualified dependency: %s" % name,
         )
-        versions = audit["required_versions"]
-        require(
-            isinstance(versions, dict)
-            and set(versions).issubset({"GLIBC", "GCC"}),
-            "compile report ELF version namespace is invalid: %s" % name,
-        )
-        ceilings = {"GLIBC": (2, 28), "GCC": (7, 0, 0)}
-        for namespace, observed in versions.items():
-            require(
-                isinstance(observed, str)
-                and re.fullmatch(r"[0-9]+(?:\.[0-9]+)+", observed)
-                and version_tuple(observed) <= ceilings[namespace],
-                "compile report ELF version exceeds policy: %s %s_%r"
-                % (name, namespace, observed),
-            )
         require_sha256(audit["sha256"], "compile report elf_audit %s sha256" % name)
+        require_sha256(
+            audit["elf_record_sha256"],
+            "compile report elf_audit %s ELF record digest" % name,
+        )
+        try:
+            PYTHON_ABI["validate_elf_record"](audit["elf_record"])
+        except PythonAbiAuditError as error:
+            raise FinalizationError(
+                "compile report ELF record %s: %s" % (name, error)
+            ) from error
+        require(
+            audit["elf_record"]["identity"] == name
+            and audit["elf_record_sha256"]
+            == RUNTIME_PROVIDERS["canonical_sha256"](
+                audit["elf_record"]
+            )
+            and audit["elf_record"]["needed"] == audit["needed"],
+            "compile report ELF record binding mismatch: %s" % name,
+        )
+        validate_elf_policy_result(
+            audit["elf_policy"],
+            name,
+            abi_context,
+            name == python_audit_path,
+        )
+        try:
+            expected_ownership = PYTHON_ABI["audit_python_elf"](
+                abi_context["baseline"],
+                abi_context["external_providers"],
+                report["abi"]["provider_catalog"]["records"],
+                report["abi"]["python_global"]["record"],
+                audit["elf_record"],
+            )
+        except PythonAbiAuditError as error:
+            raise FinalizationError(
+                "compile report ELF ownership %s: %s" % (name, error)
+            ) from error
+        require(
+            audit["ownership"] == expected_ownership,
+            "compile report ELF ownership binding mismatch: %s" % name,
+        )
+    python_global = report["abi"]["python_global"]
+    python_audit = report["elf_audit"][python_audit_path]
+    require(
+        python_global["identity"] == python_audit_path
+        and python_global["sha256"] == python_audit["sha256"]
+        and python_global["elf_record_sha256"]
+        == python_audit["elf_record_sha256"]
+        and python_global["record"] == python_audit["elf_record"]
+        and python_global["needed"] == python_audit["needed"],
+        "compile report Python global record differs from the actual Python audit",
+    )
     validate_global_zstd_linkage(report["elf_audit"])
     require(
         set(modules.values()).issubset(report["elf_audit"]),
@@ -947,6 +1564,11 @@ def validate_compile_report(report, context, target, version):
     )
     validate_compile_zstd_evidence(
         report["zstd"], context, report, target, version
+    )
+    validate_actual_elf_evidence(
+        report,
+        actual_elf_evidence,
+        require_qualification_artifact,
     )
     return report
 
@@ -1138,10 +1760,11 @@ def validate_runtime_result(
     compile_report_sha256,
     target,
     version,
+    abi_context,
 ):
     path = "%s runtime result" % expected_tier
     require_exact_keys(report, RUNTIME_KEYS, path)
-    require(report["qualification_schema_version"] == 2, "%s schema mismatch" % path)
+    require(report["qualification_schema_version"] == 3, "%s schema mismatch" % path)
     require(report["report_kind"] == "crossforge-cpython-runtime", "%s kind mismatch" % path)
     require(report["target"] == target, "%s target mismatch" % path)
     require(report["version"] == version, "%s version mismatch" % path)
@@ -1187,6 +1810,7 @@ def validate_runtime_result(
             context,
             compile_report,
             target,
+            abi_context,
             path + " overlay_evidence",
         )
         require(
@@ -1198,6 +1822,12 @@ def validate_runtime_result(
             == overlay["runtime_inventory"]["os_release_sha256"],
             "%s overlay os-release mismatch" % path,
         )
+
+    validate_runtime_provider_evidence(
+        report["runtime_providers"],
+        abi_context,
+        path + " runtime_providers",
+    )
 
     executor = report["executor"]
     require_exact_keys(executor, EXECUTOR_KEYS, "%s executor" % path)
@@ -1273,19 +1903,37 @@ def validate_runtime_result(
         "%s device_loaded_objects are not canonical" % path,
     )
     required_libraries = {
-        "libbz2.so.1",
-        "libcrypto.so.1.1",
-        "libffi.so.6",
-        "liblzma.so.5",
-        "libsqlite3.so.0",
-        "libssl.so.1.1",
-        "libuuid.so.1",
-        "libz.so.1",
+        provider["soname"]
+        for provider in abi_context["runtime_provider_evidence"]["providers"]
     }
+    runtime_root = (
+        "/runtime-locked"
+        if expected_tier == "locked-sysroot"
+        else "/runtime-clean"
+    )
+    provider_paths = {
+        provider["soname"]: str(
+            PurePosixPath(runtime_root)
+            / provider["path"].lstrip("/")
+        )
+        for provider in abi_context["expected_providers"]
+    }
+    loaded_by_soname = {soname: [] for soname in provider_paths}
+    for item in loaded_objects:
+        soname = Path(item).name
+        if soname in provider_paths:
+            require(
+                item == provider_paths[soname],
+                "%s loaded an unreviewed provider path: %s"
+                % (path, item),
+            )
+            loaded_by_soname[soname].append(item)
     require(
-        required_libraries.issubset(
-            {Path(item).name for item in loaded_objects}
-        ),
+        all(
+            len(loaded_by_soname[soname]) == 1
+            for soname in required_libraries
+        )
+        and all(len(items) <= 1 for items in loaded_by_soname.values()),
         "%s device loaded-object evidence is incomplete" % path,
     )
     loaded_basenames = {Path(item).name for item in loaded_objects}
@@ -1350,10 +1998,34 @@ def validate_qualification_zstd(report, release, target, version):
     return evidence
 
 
-def validate_final_report(report, release, target, version):
+def default_abi_context(target):
+    repository = Path(__file__).resolve().parents[1]
+    arch = "x86_64" if target.startswith("x86_64-") else "aarch64"
+    return load_abi_context(
+        target,
+        repository / ("abi/el8/%s.json" % arch),
+        repository / "config/abi-providers.json",
+        repository / ("evidence/abi/el8-%s-sysroot.json" % arch),
+        repository / "config/python-runtime-providers.json",
+        repository
+        / ("evidence/abi/el8-%s-python-provider-catalog.json" % arch),
+    )
+
+
+def validate_final_report(
+    report,
+    release,
+    target,
+    version,
+    abi_context=None,
+    actual_elf_evidence=None,
+    require_qualification_artifact=True,
+):
+    if abi_context is None:
+        abi_context = default_abi_context(target)
     require_exact_keys(report, FINAL_REPORT_KEYS, "qualification report")
     require(
-        report["qualification_schema_version"] == 3
+        report["qualification_schema_version"] == 4
         and report["report_kind"] == "crossforge-cpython-qualification"
         and report["status"] == "passed",
         "qualification report identity mismatch",
@@ -1364,7 +2036,17 @@ def validate_final_report(report, release, target, version):
     context = release_context(release, target, version)
     context["release"] = release
     compile_report = validate_compile_report(
-        report["compile"], context, target, version
+        report["compile"],
+        context,
+        target,
+        version,
+        abi_context,
+        actual_elf_evidence,
+        require_qualification_artifact,
+    )
+    require(
+        report["abi"] == compile_report["abi"],
+        "qualification report ABI evidence differs from compile report",
     )
     qualification_components = validate_python_qualification_components(
         report["qualification_components"],
@@ -1390,6 +2072,7 @@ def validate_final_report(report, release, target, version):
         compile_digest,
         target,
         version,
+        abi_context,
     )
     clean = validate_runtime_result(
         report["executions"]["clean-rocky"],
@@ -1399,6 +2082,7 @@ def validate_final_report(report, release, target, version):
         compile_digest,
         target,
         version,
+        abi_context,
     )
     require_exact_keys(
         report["runtime_result_sha256"],
@@ -1434,12 +2118,70 @@ def validate_final_report(report, release, target, version):
     return report
 
 
-def finalize(compile_path, locked_path, clean_path, release_path, target, version):
+def finalize(
+    compile_path,
+    locked_path,
+    clean_path,
+    release_path,
+    target,
+    version,
+    abi_baseline_path=None,
+    abi_provider_manifest_path=None,
+    sysroot_abi_inventory_path=None,
+    runtime_provider_policy_path=None,
+    provider_catalog_path=None,
+    target_prefix=None,
+    qualification_extension=None,
+    readelf=None,
+    actual_elf_evidence=None,
+    abi_context_override=None,
+):
     release = load_json(release_path)
     context = release_context(release, target, version)
     context["release"] = release
+    if abi_context_override is not None:
+        abi_context = abi_context_override
+    elif abi_baseline_path is None:
+        abi_context = default_abi_context(target)
+    else:
+        require(
+            abi_provider_manifest_path is not None
+            and sysroot_abi_inventory_path is not None
+            and runtime_provider_policy_path is not None
+            and provider_catalog_path is not None,
+            "finalizer ABI input paths are incomplete",
+        )
+        abi_context = load_abi_context(
+            target,
+            abi_baseline_path,
+            abi_provider_manifest_path,
+            sysroot_abi_inventory_path,
+            runtime_provider_policy_path,
+            provider_catalog_path,
+        )
+    unvalidated_compile = load_json(compile_path)
+    if actual_elf_evidence is None:
+        require(
+            target_prefix is not None
+            and qualification_extension is not None
+            and readelf is not None,
+            "finalizer actual ELF inputs are incomplete",
+        )
+        actual_elf_evidence = collect_actual_elf_evidence(
+            unvalidated_compile,
+            abi_context,
+            target_prefix,
+            readelf,
+            qualification_extension,
+        )
     compile_report = validate_compile_report(
-        load_json(compile_path), context, target, version
+        unvalidated_compile,
+        context,
+        target,
+        version,
+        abi_context,
+        actual_elf_evidence,
+        True,
     )
     compile_digest = sha256_file(compile_path)
     locked = validate_runtime_result(
@@ -1450,6 +2192,7 @@ def finalize(compile_path, locked_path, clean_path, release_path, target, versio
         compile_digest,
         target,
         version,
+        abi_context,
     )
     clean = validate_runtime_result(
         load_json(clean_path),
@@ -1459,6 +2202,7 @@ def finalize(compile_path, locked_path, clean_path, release_path, target, versio
         compile_digest,
         target,
         version,
+        abi_context,
     )
     require(
         locked["executor"] == clean["executor"],
@@ -1472,7 +2216,7 @@ def finalize(compile_path, locked_path, clean_path, release_path, target, versio
     )
 
     report = {
-        "qualification_schema_version": 3,
+        "qualification_schema_version": 4,
         "report_kind": "crossforge-cpython-qualification",
         "status": "passed",
         "target": target,
@@ -1489,6 +2233,7 @@ def finalize(compile_path, locked_path, clean_path, release_path, target, versio
         "probe_sha256": locked["probe_sha256"],
         "compile_report_sha256": compile_digest,
         "compile": compile_report,
+        "abi": compile_report["abi"],
         "zstd": compile_report["zstd"],
         "runtime_result_sha256": {
             "locked-sysroot": sha256_file(locked_path),
@@ -1499,7 +2244,15 @@ def finalize(compile_path, locked_path, clean_path, release_path, target, versio
             "clean-rocky": clean,
         },
     }
-    return validate_final_report(report, release, target, version)
+    return validate_final_report(
+        report,
+        release,
+        target,
+        version,
+        abi_context,
+        actual_elf_evidence,
+        True,
+    )
 
 
 def main():
@@ -1508,6 +2261,14 @@ def main():
     parser.add_argument("--locked-sysroot-result", type=Path, required=True)
     parser.add_argument("--clean-runtime-result", type=Path, required=True)
     parser.add_argument("--release", type=Path, required=True)
+    parser.add_argument("--abi-baseline", type=Path, required=True)
+    parser.add_argument("--abi-provider-manifest", type=Path, required=True)
+    parser.add_argument("--sysroot-abi-inventory", type=Path, required=True)
+    parser.add_argument("--runtime-provider-policy", type=Path, required=True)
+    parser.add_argument("--python-provider-catalog", type=Path, required=True)
+    parser.add_argument("--target-prefix", type=Path, required=True)
+    parser.add_argument("--qualification-extension", type=Path, required=True)
+    parser.add_argument("--readelf", type=Path, required=True)
     parser.add_argument("--target", required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -1520,6 +2281,14 @@ def main():
         arguments.release,
         arguments.target,
         arguments.version,
+        arguments.abi_baseline,
+        arguments.abi_provider_manifest,
+        arguments.sysroot_abi_inventory,
+        arguments.runtime_provider_policy,
+        arguments.python_provider_catalog,
+        arguments.target_prefix,
+        arguments.qualification_extension,
+        arguments.readelf,
     )
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.output.with_name(arguments.output.name + ".tmp")

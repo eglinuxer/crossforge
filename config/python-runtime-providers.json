@@ -13,6 +13,7 @@
         "file": "locks/sysroot-el8-aarch64.json",
         "canonical_sha256": "70436d94443b019fbe61237bf93b8bb457927f3de09429e6ef7f37598b482b67"
       },
+      "provider_catalog_sha256": "bf72f411578653617091dd414b876fb2beba4074d95aa7b7930fdfc2e15a1108",
       "owners": [
         {
           "name": "bzip2-libs",
@@ -108,6 +109,7 @@
         "file": "locks/sysroot-el8-x86_64.json",
         "canonical_sha256": "ffe67b4d7448b02be7db774c8d85fdc8b13da695c0184de444949c641876ef57"
       },
+      "provider_catalog_sha256": "048b180ab090eb993ed47e92b1d9f923f332c82993b0eaa126a19d64ab07faed",
       "owners": [
         {
           "name": "bzip2-libs",

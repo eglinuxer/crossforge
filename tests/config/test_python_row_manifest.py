@@ -13,6 +13,8 @@ from types import SimpleNamespace
 from pathlib import Path
 from unittest import mock
 
+from tests.config import test_python_qualification as qualification_fixtures
+
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 VERIFY_PATH = REPOSITORY / "docker/verify-python-row.py"
@@ -27,6 +29,10 @@ IMPLEMENTED_MINORS = tuple(
 TARGETS = {
     "x86_64": "x86_64-unknown-linux-gnu",
     "aarch64": "aarch64-unknown-linux-gnu",
+}
+ABI_CONTEXTS = {
+    arch: FINALIZE["QUALIFICATION_VALIDATOR"]["default_abi_context"](target)
+    for arch, target in TARGETS.items()
 }
 
 
@@ -65,6 +71,26 @@ class PythonRowManifestTests(unittest.TestCase):
         self.qualification_components = FINALIZE["RELEASE_COMPONENTS"][
             "python_qualification_components"
         ](self.release)
+        self.abi_input_root = self.directory / "abi-inputs"
+        self.abi_evidence = {}
+        for arch in TARGETS:
+            target_root = self.abi_input_root / arch
+            target_root.mkdir(parents=True)
+            sources = {
+                "abi-baseline.json": REPOSITORY / ("abi/el8/%s.json" % arch),
+                "abi-providers.json": REPOSITORY / "config/abi-providers.json",
+                "abi-sysroot-inventory.json": REPOSITORY
+                / ("evidence/abi/el8-%s-sysroot.json" % arch),
+                "python-runtime-providers.json": REPOSITORY
+                / "config/python-runtime-providers.json",
+                "python-provider-catalog.json": REPOSITORY
+                / (
+                    "evidence/abi/el8-%s-python-provider-catalog.json"
+                    % arch
+                ),
+            }
+            for name, source in sources.items():
+                (target_root / name).symlink_to(source)
 
     def tearDown(self):
         self.temporary.cleanup()
@@ -75,6 +101,56 @@ class PythonRowManifestTests(unittest.TestCase):
             json.dumps(value, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
+
+    def compile_abi(self, arch, minor, python_sha256):
+        helper = SimpleNamespace(
+            abi_context=copy.deepcopy(ABI_CONTEXTS[arch]),
+            minor=minor,
+            valid_elf_record=(
+                qualification_fixtures.PythonQualificationTests.valid_elf_record
+            ),
+        )
+        evidence = qualification_fixtures.PythonQualificationTests.valid_compile_abi(
+            helper
+        )
+        evidence["python_global"]["sha256"] = python_sha256
+        self.abi_evidence[arch] = evidence
+        return evidence
+
+    def qualification_elf_audit(
+        self, arch, artifact, sha256, needed=None, executable=False
+    ):
+        if needed is None:
+            needed = ["libc.so.6"]
+        helper = SimpleNamespace(abi_context=ABI_CONTEXTS[arch])
+        abi = self.abi_evidence[arch]
+        if executable:
+            record = copy.deepcopy(abi["python_global"]["record"])
+        else:
+            record = (
+                qualification_fixtures.PythonQualificationTests.valid_elf_record(
+                    artifact, needed=needed
+                )
+            )
+        ownership = qualification_fixtures.QUALIFIER[
+            "python_abi_audit"
+        ].audit_python_elf(
+            ABI_CONTEXTS[arch]["baseline"],
+            ABI_CONTEXTS[arch]["external_providers"],
+            abi["provider_catalog"]["records"],
+            abi["python_global"]["record"],
+            record,
+        )
+        return {
+            "needed": list(needed),
+            "sha256": sha256,
+            "elf_record_sha256": canonical_sha256(record),
+            "elf_record": record,
+            "elf_policy": qualification_fixtures.PythonQualificationTests.valid_elf_policy(
+                helper, artifact, executable=executable
+            ),
+            "ownership": ownership,
+        }
 
     def entry(self, minor):
         matches = [
@@ -321,6 +397,7 @@ class PythonRowManifestTests(unittest.TestCase):
         }
         for arch, target in TARGETS.items():
             python_bytes = ("target-python-%s-%s" % (row, arch)).encode("ascii")
+            python_sha256 = sha256_bytes(python_bytes)
             target_python = (
                 root
                 / "opt/crossforge/python"
@@ -332,9 +409,16 @@ class PythonRowManifestTests(unittest.TestCase):
             )
             target_python.parent.mkdir(parents=True, exist_ok=True)
             target_python.write_bytes(python_bytes)
+            abi = self.compile_abi(arch, minor, python_sha256)
             required_modules = {}
+            python_artifact = "bin/python" + minor
             elf_audit = {
-                "bin/python" + minor: {"sha256": sha256_bytes(python_bytes)}
+                python_artifact: self.qualification_elf_audit(
+                    arch,
+                    python_artifact,
+                    python_sha256,
+                    executable=True,
+                )
             }
             if contract["zstd"]:
                 module_relative = (
@@ -362,16 +446,17 @@ class PythonRowManifestTests(unittest.TestCase):
                     },
                 }
                 required_modules["_zstd"] = module_relative
-                elf_audit[module_relative] = {
-                    "needed": module_evidence["needed"],
-                    "required_versions": {},
-                    "sha256": sha256_bytes(module_bytes),
-                }
+                elf_audit[module_relative] = self.qualification_elf_audit(
+                    arch,
+                    module_relative,
+                    sha256_bytes(module_bytes),
+                    needed=module_evidence["needed"],
+                )
             else:
                 zstd = {"policy": "absent", "module": None, "builds": None}
             target_tree = FINALIZE["sdk_tree_identity"](target_python.parents[1])
             report = {
-                "qualification_schema_version": 3,
+                "qualification_schema_version": 4,
                 "report_kind": "crossforge-cpython-qualification",
                 "status": "passed",
                 "target": target,
@@ -382,12 +467,16 @@ class PythonRowManifestTests(unittest.TestCase):
                     self.qualification_components
                 ),
                 "source": copy.deepcopy(report_source),
-                "sysroot_sha256": sha256_bytes(("sysroot-" + arch).encode()),
-                "python_sha256": sha256_bytes(python_bytes),
+                "sysroot_sha256": ABI_CONTEXTS[arch][
+                    "runtime_provider_evidence"
+                ]["sysroot_lock_sha256"],
+                "python_sha256": python_sha256,
                 "extension_sha256": sha256_bytes(("extension-" + arch).encode()),
                 "probe_sha256": sha256_bytes(("probe-" + arch).encode()),
                 "compile_report_sha256": sha256_bytes(("compile-" + arch).encode()),
                 "compile": {
+                    "qualification_schema_version": 4,
+                    "report_kind": "crossforge-cpython-compile",
                     "target": target,
                     "version": entry["version"],
                     "adapter": entry["adapter"],
@@ -400,8 +489,10 @@ class PythonRowManifestTests(unittest.TestCase):
                         "sdk_tree": build_tree,
                     },
                     "elf_audit": elf_audit,
+                    "abi": copy.deepcopy(abi),
                     "zstd": copy.deepcopy(zstd),
                 },
+                "abi": copy.deepcopy(abi),
                 "zstd": copy.deepcopy(zstd),
                 "runtime_result_sha256": {
                     "locked-sysroot": sha256_bytes(("locked-" + arch).encode()),
@@ -458,16 +549,32 @@ class PythonRowManifestTests(unittest.TestCase):
                 str(self.release_path),
                 "--source-manifest",
                 str(fixture["source_path"]),
+                "--abi-input-root",
+                str(self.abi_input_root),
                 "--output",
                 str(output),
             ]
         globals_ = FINALIZE["main"].__globals__
         validator = globals_["QUALIFICATION_VALIDATOR"]
         original = validator["validate_final_report"]
+        original_collect = validator["collect_actual_elf_evidence"]
         original_audit = globals_["audit_exported_zstd_module"]
         if not strict:
             validator["validate_final_report"] = (
-                lambda report, release, target, version: report
+                lambda report, release, target, version, abi_context,
+                actual_elf_evidence, require_qualification_artifact: report
+            )
+            validator["collect_actual_elf_evidence"] = (
+                lambda report, abi_context, target_prefix, readelf,
+                qualification_extension: {
+                    name: {
+                        "sha256": audit["sha256"],
+                        "elf_record": copy.deepcopy(audit["elf_record"]),
+                        "elf_policy": copy.deepcopy(audit["elf_policy"]),
+                    }
+                    for name, audit in report["elf_audit"].items()
+                    if not name.startswith("qualification/")
+                }
             )
             globals_["audit_exported_zstd_module"] = self.fake_zstd_module_audit
         stdout = io.StringIO()
@@ -482,6 +589,7 @@ class PythonRowManifestTests(unittest.TestCase):
             stderr.write(str(error))
         finally:
             validator["validate_final_report"] = original
+            validator["collect_actual_elf_evidence"] = original_collect
             globals_["audit_exported_zstd_module"] = original_audit
         return SimpleNamespace(returncode=return_code, stderr=stderr.getvalue()), output
 
@@ -1072,7 +1180,7 @@ class PythonRowManifestTests(unittest.TestCase):
             ] = "0" * 64
 
         def old_schema(report):
-            report["qualification_schema_version"] = 2
+            report["qualification_schema_version"] = 3
 
         mutations = {
             "missing": remove_identity,

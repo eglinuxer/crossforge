@@ -30,15 +30,6 @@ TARGETS = {
         "interpreter": "/lib/ld-linux-aarch64.so.1",
     },
 }
-RUNTIME_PACKAGE_NAMES = (
-    "bzip2-libs",
-    "libffi",
-    "libuuid",
-    "openssl-libs",
-    "sqlite-libs",
-    "xz-libs",
-    "zlib",
-)
 ROW_CONTRACT = runpy.run_path(
     str(Path(__file__).with_name("python_row_contract.py"))
 )
@@ -47,6 +38,20 @@ RELEASE_COMPONENTS = runpy.run_path(
     str(Path(__file__).with_name("render-release-components.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+RUNTIME_PROVIDERS = runpy.run_path(
+    str(Path(__file__).with_name("python_runtime_providers.py"))
+)
+RuntimeProviderPolicyError = RUNTIME_PROVIDERS[
+    "RuntimeProviderPolicyError"
+]
+ABI_CONTRACT = runpy.run_path(
+    str(Path(__file__).with_name("abi_contract.py"))
+)
+AbiContractError = ABI_CONTRACT["AbiContractError"]
+PYTHON_ABI = runpy.run_path(
+    str(Path(__file__).with_name("python_abi_audit.py"))
+)
+PythonAbiAuditError = PYTHON_ABI["PythonAbiAuditError"]
 
 
 def require(condition, message):
@@ -102,7 +107,7 @@ def require_sha256(value, label):
 
 def validate_compile_qualification_components(compile_report, release):
     require(
-        compile_report.get("qualification_schema_version") == 3,
+        compile_report.get("qualification_schema_version") == 4,
         "compile report schema version mismatch",
     )
     try:
@@ -115,7 +120,15 @@ def validate_compile_qualification_components(compile_report, release):
         ) from error
 
 
-def validate_overlay_evidence(value, release, profile, target, compile_report, root):
+def validate_overlay_evidence(
+    value,
+    release,
+    profile,
+    target,
+    compile_report,
+    root,
+    runtime_package_names,
+):
     require_exact_keys(
         value,
         {
@@ -186,7 +199,7 @@ def validate_overlay_evidence(value, release, profile, target, compile_report, r
 
     packages = identity["selected_packages"]
     require(
-        isinstance(packages, list) and len(packages) == len(RUNTIME_PACKAGE_NAMES),
+        isinstance(packages, list) and len(packages) == len(runtime_package_names),
         "clean runtime package set has the wrong size",
     )
     names = []
@@ -200,7 +213,7 @@ def validate_overlay_evidence(value, release, profile, target, compile_report, r
         require(isinstance(package["nevra"], str) and package["nevra"], "runtime NEVRA is invalid")
         require_sha256(package["received_sha256"], "runtime package digest")
         names.append(package["name"])
-    require(names == list(RUNTIME_PACKAGE_NAMES), "clean runtime package names/order mismatch")
+    require(names == list(runtime_package_names), "clean runtime package names/order mismatch")
     require(
         identity["selected_packages_sha256"] == canonical_sha256(packages),
         "clean runtime package-set digest mismatch",
@@ -346,6 +359,170 @@ def safe_root_path(root, absolute):
     return path
 
 
+def validate_runtime_provider_catalog(
+    runtime_root,
+    compile_report,
+    provider_policy,
+    provider_catalog_path,
+    arch,
+    target,
+    tier,
+    baseline_path=Path("/work/config/abi-baseline.json"),
+    inventory_path=Path("/work/config/abi-sysroot-inventory.json"),
+    readelf=Path("/usr/bin/readelf"),
+):
+    """Rebuild the complete core+external catalog from one runtime tier."""
+    require(
+        tier in {"locked-sysroot", "clean-rocky"},
+        "runtime provider catalog tier is invalid",
+    )
+    try:
+        baseline = ABI_CONTRACT["load_baseline"](
+            baseline_path,
+            expected_arch=arch,
+            expected_triple=target,
+        )
+        inventory = ABI_CONTRACT["load_inventory"](
+            inventory_path,
+            expected_arch=arch,
+            expected_triple=target,
+        )
+    except AbiContractError as error:
+        raise RuntimeError_(str(error)) from error
+    require(
+        inventory_path.read_bytes()
+        == ABI_CONTRACT["canonical_bytes"](inventory) + b"\n",
+        "runtime ABI inventory is not canonical JSON",
+    )
+    policy_target = RUNTIME_PROVIDERS["policy_target"](
+        provider_policy, arch, target
+    )
+    external = [
+        provider["soname"] for provider in policy_target["providers"]
+    ]
+    reviewed = RUNTIME_PROVIDERS["load_json"](provider_catalog_path)
+    require(
+        provider_catalog_path.read_bytes()
+        == RUNTIME_PROVIDERS["canonical_bytes"](reviewed) + b"\n",
+        "runtime provider catalog is not canonical JSON",
+    )
+    try:
+        PYTHON_ABI["validate_provider_catalog"](
+            baseline, external, reviewed
+        )
+    except PythonAbiAuditError as error:
+        raise RuntimeError_(str(error)) from error
+    reviewed_sha256 = RUNTIME_PROVIDERS["canonical_sha256"](reviewed)
+    require(
+        reviewed_sha256 == policy_target["provider_catalog_sha256"],
+        "runtime provider catalog differs from policy",
+    )
+
+    compile_abi = compile_report["abi"]
+    require(
+        compile_abi["sysroot_inventory"]["canonical_sha256"]
+        == ABI_CONTRACT["canonical_sha256"](inventory)
+        and inventory["source"]["identity_sha256"]
+        == policy_target["sysroot_lock"]["canonical_sha256"],
+        "runtime ABI inventory differs from compile/policy",
+    )
+    compile_catalog = compile_abi["provider_catalog"]
+    require_exact_keys(
+        compile_catalog,
+        {
+            "file",
+            "provider_count",
+            "elf_records_sha256",
+            "records",
+            "providers",
+        },
+        "compile provider catalog",
+    )
+    require(
+        compile_catalog["file"]
+        == "evidence/abi/el8-%s-python-provider-catalog.json" % arch
+        and compile_catalog["elf_records_sha256"] == reviewed_sha256
+        and compile_catalog["records"] == reviewed,
+        "compile provider catalog differs from reviewed bytes",
+    )
+
+    expected_summaries = []
+    for soname, provider in inventory["providers"].items():
+        expected_summaries.append(
+            {
+                "soname": soname,
+                "path": provider["path"],
+                "source": "frozen-core",
+                "dso_sha256": provider["sha256"],
+                "elf_record_sha256": RUNTIME_PROVIDERS[
+                    "canonical_sha256"
+                ](reviewed[soname]),
+                "rpm_owner": None,
+            }
+        )
+    owners = {owner["name"]: owner for owner in policy_target["owners"]}
+    for provider in policy_target["providers"]:
+        expected_summaries.append(
+            {
+                "soname": provider["soname"],
+                "path": provider["path"],
+                "source": "python-runtime",
+                "dso_sha256": provider["dso_sha256"],
+                "elf_record_sha256": RUNTIME_PROVIDERS[
+                    "canonical_sha256"
+                ](reviewed[provider["soname"]]),
+                "rpm_owner": dict(owners[provider["owner"]]),
+            }
+        )
+    expected_summaries.sort(key=lambda item: item["soname"])
+    require(
+        compile_catalog["provider_count"] == len(expected_summaries)
+        and compile_catalog["providers"] == expected_summaries,
+        "compile provider summaries differ from reviewed inputs",
+    )
+
+    records = {}
+    canonical_paths = {}
+    for summary in expected_summaries:
+        soname = summary["soname"]
+        path = safe_root_path(runtime_root, summary["path"])
+        require(
+            path.is_file(),
+            "runtime provider is missing: %s" % soname,
+        )
+        if summary["source"] == "python-runtime" or tier == "locked-sysroot":
+            require(
+                sha256_file(path) == summary["dso_sha256"],
+                "runtime provider bytes differ: %s" % soname,
+            )
+        canonical_paths[soname] = path
+        try:
+            _evidence, record = PYTHON_ABI["elf_record_from_file"](
+                readelf,
+                path,
+                soname,
+                expected_soname=soname,
+            )
+        except PythonAbiAuditError as error:
+            raise RuntimeError_(str(error)) from error
+        records[soname] = record
+    try:
+        PYTHON_ABI["validate_provider_catalog"](
+            baseline, external, records
+        )
+    except PythonAbiAuditError as error:
+        raise RuntimeError_(str(error)) from error
+    require(
+        records == reviewed,
+        "runtime provider catalog differs from compile/reviewed policy",
+    )
+    return {
+        "canonical_sha256": reviewed_sha256,
+        "paths": canonical_paths,
+        "required_external": external,
+    }
+
+
 def validate_device_loader_listing(text, runtime_root):
     require("not found" not in text, "device loader has unresolved dependencies")
     dependencies = normalize_loader_listing(text)
@@ -370,32 +547,90 @@ def validate_device_loader_listing(text, runtime_root):
     return dependencies
 
 
-def validate_device_loaded_objects(text, runtime_root, target_prefix):
-    objects = sorted(set(re.findall(r"calling init: (\/\S+)", text)))
-    require(objects, "device probe produced no dynamic-loader object evidence")
-    reject_dynamic_zstd(objects, "device probe")
-    root = str(runtime_root.resolve())
-    prefix = str(target_prefix.resolve())
-    for path in objects:
-        if os.path.basename(path).startswith("ld-linux-"):
+def validate_device_loaded_objects(
+    text,
+    runtime_root,
+    target_prefix,
+    provider_catalog,
+    guest_interpreter,
+):
+    raw_objects = sorted(
+        set(re.findall(r"calling init: (\/\S+)", text))
+    )
+    require(
+        raw_objects,
+        "device probe produced no dynamic-loader object evidence",
+    )
+    reject_dynamic_zstd(raw_objects, "device probe")
+    root = runtime_root.resolve()
+    prefix = target_prefix.resolve()
+    provider_paths = provider_catalog["paths"]
+    seen_providers = {soname: [] for soname in provider_paths}
+    objects = []
+    for raw_path in raw_objects:
+        if raw_path == guest_interpreter:
+            loader_soname = Path(raw_path).name
+            require(
+                loader_soname in provider_paths,
+                "device probe used an unreviewed guest loader",
+            )
+            guest_loader = safe_root_path(runtime_root, raw_path)
+            require(
+                guest_loader.is_file()
+                and guest_loader.resolve()
+                == provider_paths[loader_soname].resolve(),
+                "device probe used an unreviewed guest loader",
+            )
+            canonical = str(provider_paths[loader_soname])
+            seen_providers[loader_soname].append(canonical)
+            objects.append(canonical)
+            continue
+        resolved = Path(raw_path).resolve()
+        if resolved.name.startswith("ld-linux-"):
+            loader_soname = Path(raw_path).name
+            if loader_soname in provider_paths:
+                require(
+                    resolved == provider_paths[loader_soname].resolve(),
+                    "device probe loaded an unreviewed loader path: %s"
+                    % raw_path,
+                )
+                canonical = str(provider_paths[loader_soname])
+                seen_providers[loader_soname].append(canonical)
+                objects.append(canonical)
+            else:
+                objects.append(str(resolved))
             continue
         require(
-            path.startswith(root + os.sep) or path.startswith(prefix + os.sep),
-            "device probe loaded an object outside the selected runtime/SDK: %s" % path,
+            root in resolved.parents or prefix in resolved.parents,
+            "device probe loaded an object outside the selected runtime/SDK: %s"
+            % raw_path,
         )
-    basenames = {os.path.basename(path) for path in objects}
-    required = {
-        "libbz2.so.1",
-        "libcrypto.so.1.1",
-        "libffi.so.6",
-        "liblzma.so.5",
-        "libsqlite3.so.0",
-        "libssl.so.1.1",
-        "libuuid.so.1",
-        "libz.so.1",
-    }
-    require(required.issubset(basenames), "device probe did not map every runtime library")
-    return objects
+        soname = Path(raw_path).name
+        if soname in provider_paths:
+            require(
+                resolved == provider_paths[soname].resolve(),
+                "device probe loaded an unreviewed provider path: %s"
+                % raw_path,
+            )
+            canonical = str(provider_paths[soname])
+            seen_providers[soname].append(canonical)
+            objects.append(canonical)
+        else:
+            objects.append(str(resolved))
+    for soname, paths in seen_providers.items():
+        require(
+            len(paths) <= 1,
+            "device probe loaded one provider through multiple paths: %s"
+            % soname,
+        )
+    require(
+        all(
+            len(seen_providers[soname]) == 1
+            for soname in provider_catalog["required_external"]
+        ),
+        "device probe did not map every runtime library",
+    )
+    return sorted(set(objects))
 
 
 def reject_dynamic_zstd(values, label):
@@ -410,6 +645,8 @@ def main():
     parser.add_argument("--compile-report", type=Path, required=True)
     parser.add_argument("--release", type=Path, required=True)
     parser.add_argument("--runtime-root", type=Path, required=True)
+    parser.add_argument("--runtime-provider-policy", type=Path, required=True)
+    parser.add_argument("--python-provider-catalog", type=Path, required=True)
     parser.add_argument("--runtime-evidence", type=Path)
     parser.add_argument("--target-prefix", type=Path, required=True)
     parser.add_argument("--extension", type=Path, required=True)
@@ -430,6 +667,28 @@ def main():
     require(arguments.runtime_root.resolve() != Path("/"), "unsafe runtime root")
     release = load_json(arguments.release)
     release_sha256 = canonical_sha256(release)
+    require(
+        arguments.runtime_provider_policy
+        == Path("/src/config/python-runtime-providers.json"),
+        "unexpected runtime provider policy path",
+    )
+    require(
+        arguments.python_provider_catalog
+        == Path("/work/config/python-provider-catalog.json"),
+        "unexpected Python provider catalog path",
+    )
+    provider_policy = RUNTIME_PROVIDERS["load_json"](
+        arguments.runtime_provider_policy
+    )
+    provider_target = RUNTIME_PROVIDERS["policy_target"](
+        provider_policy, profile["arch"], arguments.target
+    )
+    runtime_provider_evidence = RUNTIME_PROVIDERS[
+        "runtime_provider_evidence"
+    ](provider_policy, profile["arch"], arguments.runtime_root)
+    runtime_package_names = [
+        owner["name"] for owner in provider_target["owners"]
+    ]
     try:
         binding = ROW_CONTRACT["bind_release"](
             release, version=arguments.version
@@ -445,6 +704,47 @@ def main():
     require(compile_report.get("adapter") == contract["adapter"], "compile report adapter mismatch")
     require(compile_report.get("release_sha256") == release_sha256, "compile report release mismatch")
     validate_compile_qualification_components(compile_report, release)
+    compile_abi = compile_report.get("abi")
+    require(isinstance(compile_abi, dict), "compile report ABI evidence is missing")
+    compile_provider_policy = compile_abi.get("runtime_provider_policy")
+    require_exact_keys(
+        compile_provider_policy,
+        {
+            "file",
+            "canonical_sha256",
+            "sysroot_lock_sha256",
+            "provider_catalog_sha256",
+        },
+        "compile report runtime provider policy",
+    )
+    require(
+        compile_provider_policy
+        == {
+            "file": "config/python-runtime-providers.json",
+            "canonical_sha256": runtime_provider_evidence["policy_sha256"],
+            "sysroot_lock_sha256": runtime_provider_evidence[
+                "sysroot_lock_sha256"
+            ],
+            "provider_catalog_sha256": runtime_provider_evidence[
+                "provider_catalog_sha256"
+            ],
+        },
+        "compile report runtime provider policy differs from runtime",
+    )
+    observed_provider_catalog = validate_runtime_provider_catalog(
+        arguments.runtime_root,
+        compile_report,
+        provider_policy,
+        arguments.python_provider_catalog,
+        profile["arch"],
+        arguments.target,
+        arguments.tier,
+    )
+    require(
+        observed_provider_catalog["canonical_sha256"]
+        == runtime_provider_evidence["provider_catalog_sha256"],
+        "runtime provider catalog digest differs from policy",
+    )
     compile_report_sha256 = sha256_file(arguments.compile_report)
 
     minor = contract["minor"]
@@ -471,6 +771,12 @@ def main():
     if arguments.tier == "locked-sysroot":
         require(arguments.runtime_evidence is None, "locked tier accepts no overlay evidence")
         sysroot_lock = load_json(sysroot_marker)
+        try:
+            RUNTIME_PROVIDERS["validate_policy_target_against_lock"](
+                provider_policy, profile["arch"], sysroot_lock
+            )
+        except RuntimeProviderPolicyError as error:
+            raise RuntimeError_(str(error)) from error
         identity_sha256 = canonical_sha256(sysroot_lock)
         require(
             identity_sha256 == compile_report["sysroot_sha256"],
@@ -488,6 +794,7 @@ def main():
             arguments.target,
             compile_report,
             arguments.runtime_root,
+            runtime_package_names,
         )
         identity_sha256 = runtime_evidence["identity_sha256"]
         runtime_kind = "clean-rocky-overlay"
@@ -719,10 +1026,12 @@ def main():
         device_stderr,
         arguments.runtime_root,
         arguments.target_prefix,
+        observed_provider_catalog,
+        profile["interpreter"],
     )
 
     result = {
-        "qualification_schema_version": 2,
+        "qualification_schema_version": 3,
         "report_kind": "crossforge-cpython-runtime",
         "target": arguments.target,
         "version": arguments.version,
@@ -745,6 +1054,7 @@ def main():
         "loader_dependencies": loader_dependencies,
         "device_loader_dependencies": device_loader_dependencies,
         "device_loaded_objects": device_loaded_objects,
+        "runtime_providers": runtime_provider_evidence,
         "probe": probe,
         "device_probe": device_probe,
     }

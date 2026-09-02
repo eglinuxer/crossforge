@@ -13,8 +13,10 @@ build-system-independent DEB/RPM packaging.
 > transition and 3.12–3.14 modern rows have completed their amd64 build-Python,
 > true dual-target SDK, locked-sysroot and clean-Rocky runtime gates through
 > Phase 10. CPython 3.14.7 additionally passes compile qualification with a
-> private static zstd 1.5.7. vcpkg, packaging, frozen ABI sets, the full GCC/Qt
-> suites and the independent minimal host-runtime lock remain pending.
+> private static zstd 1.5.7. Frozen EL8 ABI sets and Python's complete
+> provider-ownership/ELF gates are implemented for both targets. vcpkg,
+> packaging, the full GCC/Qt suites and the independent minimal host-runtime
+> lock remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -92,9 +94,9 @@ $ docker buildx bake toolchain-x86_64-dev
 This applies the complete Rocky GCC/binutils SRPM patch sets, builds binutils
 2.44 and GCC 15.2.1 for `x86_64-unknown-linux-gnu`, installs the EL8 shared
 runtime plus RH `libstdc++_nonshared80`, then exercises C, C++20, LTO,
-cross-DSO exceptions, link traces and ABI ceilings. The `-dev` suffix is
-intentional: frozen ABI sets, full GCC/Qt qualification and the complete
-release supply chain are not implemented yet.
+cross-DSO exceptions, link traces and the frozen ABI contract. The `-dev`
+suffix is intentional: full GCC/Qt qualification and the complete release
+supply chain are not implemented yet.
 
 The compiler and dual-target Python gates remain heavy candidate checks.
 Regular PR CI validates their graph, locked inputs, clean runtime overlays and
@@ -356,6 +358,28 @@ cp313+cp311+cp312+cp314+cp310+cp39; Phases 5–9 retain their original members.
 Adding cp39 preserves all five earlier row-local build component identities
 and deliberately rebinds the shared qualification identities. The complete
 Phase 10 dual-target, dual-runtime gate has passed locally.
+
+## Phase 11: frozen ABI and Python ELF ownership
+
+Validate the reviewed EL8 provider sets and Python's additional runtime DSO
+owners:
+
+```console
+$ ./scripts/validate-frozen-abi.py
+$ ./scripts/validate-python-runtime-providers.py
+$ docker buildx bake phase10
+```
+
+The frozen baselines contain 15 x86_64 and 14 aarch64 core providers. Python
+adds eight exact SONAMEs owned by seven locked RPMs. Each target has a tracked,
+canonical provider catalog; qualification reconstructs it from actual runtime
+bytes and compares it exactly. Every Python executable and `lib-dynload` ELF
+is re-read at compile finalization, row aggregation and cumulative SDK append.
+The audit binds ELF class, endianness, role, hardening, dependency closure,
+versioned imports, COPY relocations and deterministic strong/weak symbol
+ownership. The locked tier byte-checks all providers; clean Rocky permits core
+errata byte differences only when the full reviewed ELF catalog is unchanged,
+while Python's eight external providers remain byte-exact in both tiers.
 
 ## Product contract
 

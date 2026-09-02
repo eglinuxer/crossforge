@@ -216,6 +216,16 @@ class PythonRuntimeProviderPolicyTests(unittest.TestCase):
         with self.assertRaisesRegex(PolicyError, "lowercase hexadecimal"):
             PROVIDERS["validate_policy"](self.policy)
 
+    def test_single_target_lock_binding_matches_matrix_validation(self):
+        matrix = self.validate()
+        for arch in PROVIDERS["TARGET_ORDER"]:
+            self.assertEqual(
+                PROVIDERS["validate_policy_target_against_lock"](
+                    self.policy, arch, self.locks[arch]
+                ),
+                matrix[arch],
+            )
+
     def test_rpm_owner_name_nevra_and_received_hash_are_exact(self):
         mutations = (
             ("name", "zlib", "fixed ownership"),
@@ -333,6 +343,38 @@ class PythonRuntimeProviderPolicyTests(unittest.TestCase):
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
         self.assertIn("8 providers, 7 RPM owners", process.stdout)
         self.assertNotIn(str(REPOSITORY), process.stdout)
+
+    def test_runtime_evidence_is_the_exact_target_policy_projection(self):
+        evidence = PROVIDERS["runtime_provider_evidence"](
+            self.policy, "x86_64"
+        )
+        target = PROVIDERS["policy_target"](self.policy, "x86_64")
+        owners = {item["name"]: item for item in target["owners"]}
+        self.assertEqual(
+            evidence,
+            {
+                "policy_sha256": PROVIDERS["canonical_sha256"](self.policy),
+                "target": {
+                    "arch": "x86_64",
+                    "triple": "x86_64-unknown-linux-gnu",
+                },
+                "sysroot_lock_sha256": target["sysroot_lock"][
+                    "canonical_sha256"
+                ],
+                "provider_catalog_sha256": target[
+                    "provider_catalog_sha256"
+                ],
+                "providers": [
+                    {
+                        "soname": item["soname"],
+                        "path": item["path"],
+                        "owner": owners[item["owner"]],
+                        "dso_sha256": item["dso_sha256"],
+                    }
+                    for item in target["providers"]
+                ],
+            },
+        )
 
     def test_validator_sources_parse_with_python_3_6_grammar(self):
         for relative in (

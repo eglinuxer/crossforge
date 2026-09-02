@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、两套 GTS15 C/C++/LTO cross slice，以及 CPython 3.9–3.10 legacy、3.11 transition、3.12–3.14 modern 的 build/x86_64/aarch64 行已完成并通过 Phase 10；3.14 包含私有静态 zstd 1.5.7 的编译资格化和双 target 运行时资格化。最终 host runtime lock、冻结 ABI 集、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 host runtime lock、vcpkg、分包、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -113,7 +113,9 @@ Crossforge 不定义 staging/overlay 目录、产品级 sysroot profile 或第�
 
 `locks/sysroot-*.json` 可因 Rocky errata 更新；`abi/el8/{x86_64,aarch64}.json` 则冻结最低允许的符号集合。sysroot 更新不得静默扩大 ABI，只有显式升级产品 baseline 才能修改冻结集合。
 
-Python 的非 core 动态依赖不进入上述通用 ABI baseline。`config/python-runtime-providers.json` 固定 8 个 SONAME、7 个 RPM owner、NEVRA、实收 RPM 摘要与 DSO 摘要；clean runtime 中这些 DSO 必须与锁定 sysroot 逐字节相同。资格化必须用实际锁定 DSO 的导出表解析 versioned 与 unversioned import，未知 provider、无 owner 或多 owner 的 strong symbol 均失败；动态 `libzstd` 始终禁止。
+Python 的非 core 动态依赖不进入上述通用 ABI baseline。`config/python-runtime-providers.json` 固定 8 个 SONAME、7 个 RPM owner、NEVRA、实收 RPM 摘要与 DSO 摘要；`evidence/abi/el8-*-python-provider-catalog.json` 冻结 core+Python provider 的完整 ELF record，并由 policy digest、compile report、runtime tier、row manifest 与 cumulative SDK 共同绑定。locked tier 对所有 provider 做逐字节核验；clean Rocky 只允许 core DSO 的 errata 字节差异，且完整 catalog 必须不变，8 个 Python provider 在两层始终逐字节相同。
+
+资格化重新读取 Python 主程序、最小扩展及全部 `lib-dynload` ELF 的实际字节，绑定 ELF class/endianness、主程序与 shared-object 角色、PIE/RELRO/NOW/RPATH/loader tags、`DT_NEEDED` closure、versioned import、COPY relocation，以及 strong/weak unversioned symbol 的唯一所有权。主程序的全局导出 record 必须与其实际 ELF record 完全相同；未知 provider、私有 core 版本、无 owner 或多 owner 的 strong symbol 均失败。运行时还要求实际加载的 SONAME resolve 到受审 provider 路径；动态 `libzstd` 始终禁止。
 
 两份 target transaction 由固定 Rocky digest 内的 `python3-dnf` 从空 installroot
 通过上游 [`Base.resolve()`/`download_packages()` API](https://dnf.readthedocs.io/en/latest/api_base.html)
@@ -316,4 +318,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：双 target compiler/hybrid runtime 与 CPython 3.9–3.14 双 target 行已完成；后续实现最终 host runtime/冻结 ABI、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：双 target compiler/hybrid runtime、冻结 ABI 与 CPython 3.9–3.14 双 target 行已完成；后续实现最终 host runtime、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

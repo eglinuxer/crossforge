@@ -220,9 +220,18 @@ ARG CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256
 ARG CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256
 COPY config/release.json /src/config/release.json
 COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
+COPY abi/el8/${CROSSFORGE_TARGET_ARCH}.json /work/config/abi-baseline.json
+COPY evidence/abi/el8-${CROSSFORGE_TARGET_ARCH}-sysroot.json \
+  /work/config/abi-sysroot-inventory.json
+COPY evidence/abi/el8-${CROSSFORGE_TARGET_ARCH}-python-provider-catalog.json \
+  /work/config/python-provider-catalog.json
+COPY config/abi-providers.json config/python-runtime-providers.json \
+  /work/config/
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 scripts/qualify-cpython.py /work/scripts/qualify-cpython.py
-COPY scripts/python_sdk_identity.py scripts/target_artifact_audit.py \
+COPY scripts/abi_contract.py scripts/python_abi_audit.py \
+  scripts/python_runtime_providers.py scripts/python_sdk_identity.py \
+  scripts/target_artifact_audit.py \
   scripts/python_source_release_binding.py scripts/render-release-components.py \
   scripts/python_row_contract.py scripts/python_zstd_evidence.py \
   scripts/validate-release.py /work/scripts/
@@ -248,6 +257,11 @@ RUN --network=none minor="${CPYTHON_VERSION%.*}" \
       --extension-source /work/tests/python/minimal_extension.c \
       --work "/work/qualification/python/$CPYTHON_ROW/$CROSSFORGE_TARGET_ARCH" \
       --release /src/config/release.json \
+      --abi-baseline /work/config/abi-baseline.json \
+      --abi-provider-manifest /work/config/abi-providers.json \
+      --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json \
+      --runtime-provider-policy /work/config/python-runtime-providers.json \
+      --python-provider-catalog /work/config/python-provider-catalog.json \
       --qualification-policy-component-sha256 \
         "$CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256" \
       --qualification-component-sha256 \
@@ -260,6 +274,8 @@ ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
 ARG CROSSFORGE_TARGET_ARCH
 ARG CROSSFORGE_TARGET_TRIPLE
+COPY config/python-runtime-providers.json \
+  /src/config/python-runtime-providers.json
 COPY --from=crossforge_sysroot \
   /opt/crossforge/sysroots/el8/${CROSSFORGE_TARGET_ARCH}/ /runtime-locked/
 COPY --from=crossforge_clean_runtime /runtime-root/ /runtime-clean/
@@ -269,7 +285,11 @@ COPY --from=crossforge_cpython_qualify_build \
   /opt/crossforge/python/ /opt/crossforge/python/
 COPY --from=crossforge_cpython_qualify_build \
   /work/qualification/python/ /work/qualification/python/
+COPY --from=crossforge_cpython_qualify_build \
+  /work/config/ /work/config/
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
+COPY scripts/abi_contract.py scripts/python_abi_audit.py \
+  scripts/python_runtime_providers.py /work/scripts/
 COPY --chmod=0755 scripts/run-cpython-runtime.py /work/scripts/run-cpython-runtime.py
 COPY --chmod=0755 scripts/finalize-cpython-qualification.py \
   /work/scripts/finalize-cpython-qualification.py
@@ -341,6 +361,12 @@ COPY --from=crossforge_cpython_x86_64 \
 COPY --from=crossforge_cpython_aarch64 \
   /work/qualification/python/${CPYTHON_ROW}/aarch64.json \
   /row-export/opt/crossforge/qualification/python/${CPYTHON_ROW}/aarch64.json
+COPY --from=crossforge_cpython_x86_64 \
+  /work/config/ /work/abi-inputs/x86_64/
+COPY --from=crossforge_cpython_aarch64 \
+  /work/config/ /work/abi-inputs/aarch64/
+COPY scripts/abi_contract.py scripts/python_abi_audit.py \
+  scripts/python_runtime_providers.py /work/scripts/
 RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
       --release /src/config/release.json \
       --row "$CPYTHON_ROW" \
@@ -354,6 +380,7 @@ RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
       --adapter "$CPYTHON_ADAPTER" \
       --release /src/config/release.json \
       --source-manifest "/row-export/opt/crossforge/qualification/python/$CPYTHON_ROW/source.json" \
+      --abi-input-root /work/abi-inputs \
       --output "/row-export/opt/crossforge/qualification/python/$CPYTHON_ROW/row.json"
 
 FROM scratch AS cpython-row-export
@@ -389,9 +416,29 @@ COPY config/release.json /src/config/release.json
 COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 docker/finalize-python-row.py /work/scripts/finalize-python-row.py
+COPY scripts/abi_contract.py scripts/python_abi_audit.py \
+  scripts/python_runtime_providers.py /work/scripts/
 COPY scripts/python_source_release_binding.py \
   scripts/render-release-components.py scripts/python_row_contract.py \
   scripts/validate-release.py /work/scripts/
+COPY abi/el8/x86_64.json /work/abi-inputs/x86_64/abi-baseline.json
+COPY evidence/abi/el8-x86_64-sysroot.json \
+  /work/abi-inputs/x86_64/abi-sysroot-inventory.json
+COPY config/abi-providers.json \
+  /work/abi-inputs/x86_64/abi-providers.json
+COPY config/python-runtime-providers.json \
+  /work/abi-inputs/x86_64/python-runtime-providers.json
+COPY evidence/abi/el8-x86_64-python-provider-catalog.json \
+  /work/abi-inputs/x86_64/python-provider-catalog.json
+COPY abi/el8/aarch64.json /work/abi-inputs/aarch64/abi-baseline.json
+COPY evidence/abi/el8-aarch64-sysroot.json \
+  /work/abi-inputs/aarch64/abi-sysroot-inventory.json
+COPY config/abi-providers.json \
+  /work/abi-inputs/aarch64/abi-providers.json
+COPY config/python-runtime-providers.json \
+  /work/abi-inputs/aarch64/python-runtime-providers.json
+COPY evidence/abi/el8-aarch64-python-provider-catalog.json \
+  /work/abi-inputs/aarch64/python-provider-catalog.json
 RUN /usr/libexec/platform-python /work/scripts/validate-release.py \
       /src/config/release.json \
       --schema /src/config/schemas/release.schema.json \
@@ -421,10 +468,12 @@ RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
       --adapter "$CPYTHON_ADAPTER" \
       --release /src/config/release.json \
       --source-manifest "/opt/crossforge/qualification/python/$CPYTHON_ROW/source.json" \
+      --abi-input-root /work/abi-inputs \
       --output /tmp/python-row.json \
     && cmp -s /tmp/python-row.json \
       "/opt/crossforge/qualification/python/$CPYTHON_ROW/row.json" \
-    && rm -f /tmp/python-row.json
+    && rm -f /tmp/python-row.json \
+    && rm -rf /work/abi-inputs
 
 FROM crossforge_sdk_base AS python-sdk-final
 ARG CROSSFORGE_PYTHON_ROWS

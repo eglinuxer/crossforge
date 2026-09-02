@@ -154,6 +154,8 @@ Version needs section '.gnu.version_r' contains 2 entries:
 
 ELF_HEADER_DYN = """
 ELF Header:
+  Class:                             ELF64
+  Data:                              2's complement, little endian
   Type:                              DYN (Position-Independent Executable file)
   Machine:                           Advanced Micro Devices X86-64
 """
@@ -615,6 +617,55 @@ Version needs section '.gnu.version_r' contains 1 entry:
                 " 0x2 (RUNPATH) Library runpath: [/tmp]\n"
             )
 
+    def test_loader_injection_and_symbolic_tags_are_always_forbidden(self):
+        for dynamic in (
+            " 0x1 (AUDIT) Audit library: [/tmp/libevil.so]\n",
+            " 0x1 (DEPAUDIT) Dependency audit library: [libevil.so]\n",
+            " 0x1 (FILTER) Filter library: [libevil.so]\n",
+            " 0x1 (AUXILIARY) Auxiliary library: [libevil.so]\n",
+            " 0x1 (SYMBOLIC) 0x0\n",
+            " 0x1 (FLAGS) SYMBOLIC BIND_NOW\n",
+        ):
+            with self.subTest(dynamic=dynamic):
+                with self.assertRaisesRegex(
+                    AbiContractError, "load-affecting dynamic tags"
+                ):
+                    ABI["_dynamic_properties"](dynamic)
+
+    def test_elf_class_and_data_encoding_are_target_bound(self):
+        for changed in (
+            ELF_HEADER_DYN.replace("ELF64", "ELF32"),
+            ELF_HEADER_DYN.replace("little endian", "big endian"),
+        ):
+            with self.subTest(header=changed):
+                with self.assertRaisesRegex(
+                    AbiContractError, "class or data encoding"
+                ):
+                    ABI["audit_elf_policy"](
+                        baseline(),
+                        "python/cp314/bin/python3.14",
+                        DYNAMIC_NOW,
+                        PROGRAM_HEADERS,
+                        changed,
+                    )
+
+    def test_shared_objects_reject_the_pie_dynamic_flag(self):
+        shared_headers = PROGRAM_HEADERS.replace(
+            "  INTERP         0x000238 0x0000000000000238 0x0000000000000238 0x00001c 0x00001c R   0x1\n"
+            "      [Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]\n",
+            "",
+        )
+        dynamic = DYNAMIC_NOW + "\n 0x1 (FLAGS_1) Flags: NOW PIE\n"
+        self.assertTrue(ABI["_dynamic_properties"](dynamic)["pie"])
+        with self.assertRaisesRegex(AbiContractError, "PIE dynamic flag"):
+            ABI["audit_elf_policy"](
+                baseline(),
+                "lib/python3.14/lib-dynload/_ssl.so",
+                dynamic,
+                shared_headers,
+                ELF_HEADER_DYN,
+            )
+
     def test_compiler_default_observes_now_absent(self):
         result = ABI["audit_elf_policy"](
             baseline(),
@@ -650,6 +701,7 @@ Version needs section '.gnu.version_r' contains 1 entry:
             "objects/helper.o",
             "There is no dynamic section in this file.\n",
             "There are no program headers in this file.\n",
+            "  Class: ELF64\n  Data: 2's complement, little endian\n"
             "  Type: REL (Relocatable file)\n  Machine: Advanced Micro Devices X86-64\n",
         )
         self.assertEqual(
@@ -667,6 +719,7 @@ Version needs section '.gnu.version_r' contains 1 entry:
             "bin/static-probe",
             "There is no dynamic section in this file.\n",
             static_headers,
+            "  Class: ELF64\n  Data: 2's complement, little endian\n"
             "  Type: EXEC (Executable file)\n  Machine: Advanced Micro Devices X86-64\n",
         )
         self.assertEqual(

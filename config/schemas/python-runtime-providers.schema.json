@@ -51,6 +51,10 @@
     }
   },
   "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
     "owner": {
       "type": "object",
       "additionalProperties": false,
@@ -145,6 +149,7 @@
         "arch",
         "triple",
         "sysroot_lock",
+        "provider_catalog_sha256",
         "owners",
         "providers"
       ],
@@ -157,6 +162,9 @@
         },
         "sysroot_lock": {
           "$ref": "#/$defs/sysroot_lock"
+        },
+        "provider_catalog_sha256": {
+          "$ref": "#/$defs/sha256"
         },
         "owners": {
           "$ref": "#/$defs/owner_list"
@@ -173,6 +181,7 @@
         "arch",
         "triple",
         "sysroot_lock",
+        "provider_catalog_sha256",
         "owners",
         "providers"
       ],
@@ -185,6 +194,9 @@
         },
         "sysroot_lock": {
           "$ref": "#/$defs/sysroot_lock"
+        },
+        "provider_catalog_sha256": {
+          "$ref": "#/$defs/sha256"
         },
         "owners": {
           "$ref": "#/$defs/owner_list"

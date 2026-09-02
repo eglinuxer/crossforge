@@ -97,11 +97,15 @@ TARGETS = {
     "x86_64": {
         "triple": "x86_64-unknown-linux-gnu",
         "readelf_machine": "Advanced Micro Devices X86-64",
+        "elf_class": "ELF64",
+        "elf_data": "2's complement, little endian",
         "interpreter": "/lib64/ld-linux-x86-64.so.2",
     },
     "aarch64": {
         "triple": "aarch64-unknown-linux-gnu",
         "readelf_machine": "AArch64",
+        "elf_class": "ELF64",
+        "elf_data": "2's complement, little endian",
         "interpreter": "/lib/ld-linux-aarch64.so.1",
     },
 }
@@ -972,6 +976,7 @@ def audit_symbol_requirements(baseline, dynamic_symbols, version_info):
 
 def _dynamic_properties(dynamic_section):
     require(type(dynamic_section) is str, "readelf dynamic-section output must be text")
+    reject_load_affecting_dynamic_tags(dynamic_section)
     paths = {"rpath": [], "runpath": []}
     seen_path_tags = set()
     path_tags = []
@@ -998,11 +1003,42 @@ def _dynamic_properties(dynamic_section):
         "rpath": paths["rpath"],
         "runpath": paths["runpath"],
         "path_tags": path_tags,
+        "pie": bool(
+            re.search(r"\(FLAGS_1\).*\bPIE\b", dynamic_section)
+        ),
         "bind_now": bool(
             re.search(r"\(BIND_NOW\)", dynamic_section)
             or re.search(r"\((?:FLAGS|FLAGS_1)\).*\b(?:BIND_NOW|NOW)\b", dynamic_section)
         ),
     }
+
+
+def reject_load_affecting_dynamic_tags(dynamic_section, allow_symbolic=False):
+    """Reject dynamic-loader injection and lookup-order overrides globally."""
+    require(type(dynamic_section) is str, "readelf dynamic-section output must be text")
+    tags = sorted(
+        set(
+            re.findall(
+                r"\((AUDIT|DEPAUDIT|FILTER|AUXILIARY)\)",
+                dynamic_section,
+            )
+        )
+    )
+    require(type(allow_symbolic) is bool, "allow_symbolic must be a boolean")
+    if not allow_symbolic:
+        if re.search(r"\(SYMBOLIC\)", dynamic_section):
+            tags.append("SYMBOLIC")
+        if re.search(
+            r"\((?:FLAGS|FLAGS_1)\).*\bSYMBOLIC\b",
+            dynamic_section,
+        ):
+            tags.append("SYMBOLIC-FLAG")
+    require(
+        not tags,
+        "load-affecting dynamic tags are forbidden: %s"
+        % ", ".join(sorted(set(tags))),
+    )
+    return []
 
 
 def _program_header_properties(program_headers):
@@ -1040,10 +1076,25 @@ def _program_header_properties(program_headers):
 def _elf_header_properties(elf_header):
     require(type(elf_header) is str, "readelf ELF-header output must be text")
     machine = re.search(r"^\s*Machine:\s*(.*?)\s*$", elf_header, re.MULTILINE)
+    elf_class = re.search(r"^\s*Class:\s*(.*?)\s*$", elf_header, re.MULTILINE)
+    elf_data = re.search(r"^\s*Data:\s*(.*?)\s*$", elf_header, re.MULTILINE)
     elf_type = re.search(r"^\s*Type:\s*([A-Z]+)\b", elf_header, re.MULTILINE)
-    require(machine is not None and machine.group(1), "readelf ELF header has no machine")
+    require(
+        machine is not None
+        and machine.group(1)
+        and elf_class is not None
+        and elf_class.group(1)
+        and elf_data is not None
+        and elf_data.group(1),
+        "readelf ELF header omits class, data encoding, or machine",
+    )
     require(elf_type is not None, "readelf ELF header has no type")
-    return {"machine": machine.group(1), "elf_type": elf_type.group(1)}
+    return {
+        "machine": machine.group(1),
+        "elf_class": elf_class.group(1),
+        "elf_data": elf_data.group(1),
+        "elf_type": elf_type.group(1),
+    }
 
 
 def parse_elf_properties(dynamic_section, program_headers, elf_header):
@@ -1112,6 +1163,11 @@ def audit_elf_policy(
         properties["machine"] == TARGETS[target["arch"]]["readelf_machine"],
         "ELF machine differs from ABI baseline target",
     )
+    require(
+        properties["elf_class"] == TARGETS[target["arch"]]["elf_class"]
+        and properties["elf_data"] == TARGETS[target["arch"]]["elf_data"],
+        "ELF class or data encoding differs from ABI baseline target",
+    )
     policy = baseline["elf_policy"]
     require(profile_name in ELF_PROFILE_NAMES, "requested ELF profile is invalid")
     override = _artifact_override(policy, artifact)
@@ -1126,6 +1182,10 @@ def audit_elf_policy(
             "requested ELF profile differs from the artifact override",
         )
     elf_kind = _infer_elf_kind(properties)
+    require(
+        elf_kind != "shared-object" or not properties["pie"],
+        "PIE dynamic flag is forbidden for shared objects",
+    )
     profile = policy["profiles"][profile_name]
     not_applicable = {
         "dynamic-executable": set(),

@@ -34,6 +34,11 @@ case "$arch:$target" in
 esac
 
 release=/src/config/release.json
+runtime_provider_policy=/src/config/python-runtime-providers.json
+python_provider_catalog=/work/config/python-provider-catalog.json
+abi_baseline=/work/config/abi-baseline.json
+abi_provider_manifest=/work/config/abi-providers.json
+sysroot_abi_inventory=/work/config/abi-sysroot-inventory.json
 work=/work/qualification/python/$row/$arch
 compile_report=$work/compile.json
 target_prefix=/opt/crossforge/python/$row/targets/$target
@@ -62,6 +67,8 @@ extension=$work/$extension_name
 common=(
   --compile-report "$compile_report"
   --release "$release"
+  --runtime-provider-policy "$runtime_provider_policy"
+  --python-provider-catalog "$python_provider_catalog"
   --target-prefix "$target_prefix"
   --extension "$extension"
   --probe "$probe"
@@ -93,6 +100,14 @@ fi
   --locked-sysroot-result "$work/locked-sysroot.json" \
   --clean-runtime-result "$work/clean-rocky.json" \
   --release "$release" \
+  --abi-baseline "$abi_baseline" \
+  --abi-provider-manifest "$abi_provider_manifest" \
+  --sysroot-abi-inventory "$sysroot_abi_inventory" \
+  --runtime-provider-policy "$runtime_provider_policy" \
+  --python-provider-catalog "$python_provider_catalog" \
+  --target-prefix "$target_prefix" \
+  --qualification-extension "$extension" \
+  --readelf /usr/bin/readelf \
   --target "$target" \
   --version "$version" \
   --output "/work/qualification/python/$row/$arch.json"

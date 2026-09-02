@@ -69,6 +69,7 @@ QUALIFICATION_KEYS = {
     "probe_sha256",
     "compile_report_sha256",
     "compile",
+    "abi",
     "zstd",
     "runtime_result_sha256",
     "executions",
@@ -461,6 +462,7 @@ def main():
     parser.add_argument("--adapter", required=True)
     parser.add_argument("--release", type=Path, required=True)
     parser.add_argument("--source-manifest", type=Path, required=True)
+    parser.add_argument("--abi-input-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     arguments = parser.parse_args()
 
@@ -504,6 +506,15 @@ def main():
     zstd_evidence = {}
     qualification_components_by_arch = {}
     for arch, target in TARGETS.items():
+        abi_input = arguments.abi_input_root / arch
+        abi_context = QUALIFICATION_VALIDATOR["load_abi_context"](
+            target,
+            abi_input / "abi-baseline.json",
+            abi_input / "abi-providers.json",
+            abi_input / "abi-sysroot-inventory.json",
+            abi_input / "python-runtime-providers.json",
+            abi_input / "python-provider-catalog.json",
+        )
         report_path = (
             arguments.root
             / "opt/crossforge/qualification/python"
@@ -511,9 +522,28 @@ def main():
             / (arch + ".json")
         )
         report = load_json(report_path)
+        actual_elf_evidence = QUALIFICATION_VALIDATOR[
+            "collect_actual_elf_evidence"
+        ](
+            report["compile"],
+            abi_context,
+            arguments.root
+            / "opt/crossforge/python"
+            / arguments.row
+            / "targets"
+            / target,
+            host_binutils("readelf"),
+            None,
+        )
         try:
             QUALIFICATION_VALIDATOR["validate_final_report"](
-                report, release, target, arguments.version
+                report,
+                release,
+                target,
+                arguments.version,
+                abi_context,
+                actual_elf_evidence,
+                False,
             )
             validated_zstd = QUALIFICATION_VALIDATOR[
                 "validate_qualification_zstd"
@@ -533,7 +563,7 @@ def main():
             ) from error
         require(
             set(report) == QUALIFICATION_KEYS
-            and report.get("qualification_schema_version") == 3
+            and report.get("qualification_schema_version") == 4
             and report.get("report_kind") == "crossforge-cpython-qualification"
             and report.get("status") == "passed",
             "%s qualification did not pass" % arch,

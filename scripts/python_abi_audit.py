@@ -12,7 +12,13 @@ interfaces so it can run in the locked EL8 qualification environment.
 """
 
 import re
+import subprocess
+import sys
+from pathlib import Path
 
+SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+if str(SCRIPT_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIRECTORY))
 import abi_contract
 
 
@@ -29,6 +35,18 @@ ELF_RECORD_KEYS = {
 VERSIONED_EXPORT_KEYS = {"name", "version", "default"}
 VERSIONED_IMPORT_KEYS = {"provider", "name", "version", "binding"}
 UNVERSIONED_IMPORT_KEYS = {"name", "binding"}
+AUDIT_RESULT_KEYS = {
+    "status",
+    "artifact",
+    "needed",
+    "provider_closure",
+    "core_versioned",
+    "external_versioned",
+    "strong_unversioned",
+    "optional_weak",
+}
+STRONG_OWNER_KEYS = {"name", "owner"}
+WEAK_OWNER_KEYS = {"name", "resolution", "owners"}
 IMPORT_BINDINGS = {"GLOBAL", "WEAK"}
 EXPORT_BINDINGS = {"GLOBAL", "WEAK", "UNIQUE"}
 EXPORT_VISIBILITIES = {"DEFAULT", "PROTECTED"}
@@ -76,6 +94,13 @@ def _split_defined_symbol(value):
 def parse_dynamic_identities(dynamic_section, expected_soname=None):
     """Return ordered DT_NEEDED entries and the optional exact DT_SONAME."""
     require(type(dynamic_section) is str, "readelf dynamic section must be text")
+    try:
+        abi_contract.reject_load_affecting_dynamic_tags(
+            dynamic_section,
+            allow_symbolic=expected_soname is not None,
+        )
+    except abi_contract.AbiContractError as error:
+        raise PythonAbiAuditError(str(error)) from error
     needed = NEEDED_RE.findall(dynamic_section)
     for soname in needed:
         _validate_soname(soname, "DT_NEEDED")
@@ -91,11 +116,52 @@ def parse_dynamic_identities(dynamic_section, expected_soname=None):
     return needed, observed
 
 
+def readelf_evidence(readelf, path):
+    """Collect every GNU readelf section used by qualification."""
+    result = {}
+    for name, options in (
+        ("elf_header", ("-h",)),
+        ("dynamic_section", ("--wide", "-d")),
+        ("program_headers", ("--wide", "-l")),
+        ("dynamic_symbols", ("--wide", "--dyn-syms")),
+        ("version_info", ("--wide", "--version-info")),
+        ("relocations", ("--wide", "--relocs")),
+    ):
+        process = subprocess.run(
+            [str(readelf)] + list(options) + [str(path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        require(
+            process.returncode == 0,
+            "readelf failed for %s: %s" % (path, process.stdout + process.stderr),
+        )
+        result[name] = process.stdout
+    return result
+
+
+def elf_record_from_file(
+    readelf, path, identity, expected_soname=None
+):
+    evidence = readelf_evidence(readelf, path)
+    record = elf_record_from_readelf(
+        identity,
+        evidence["dynamic_symbols"],
+        evidence["version_info"],
+        evidence["dynamic_section"],
+        evidence["relocations"],
+        expected_soname=expected_soname,
+    )
+    return evidence, record
+
+
 def elf_record_from_readelf(
     identity,
     dynamic_symbols,
     version_info,
     dynamic_section,
+    relocations="",
     expected_soname=None,
 ):
     """Build a deterministic import/export record while preserving ``@@``."""
@@ -113,6 +179,20 @@ def elf_record_from_readelf(
         raise PythonAbiAuditError(str(error)) from error
 
     version_nodes = set(re.findall(r"\bName:\s+(\S+)", version_info))
+    require(type(relocations) is str, "readelf relocation output must be text")
+    copy_relocations = []
+    for raw_line in relocations.splitlines():
+        match = re.search(
+            r"\bR_(?:X86_64|AARCH64)_COPY\b\s+\S+\s+(\S+)",
+            raw_line,
+        )
+        if match:
+            copy_relocations.append(match.group(1))
+    require(
+        len(copy_relocations) == len(set(copy_relocations)),
+        "ELF repeats a COPY relocation symbol",
+    )
+    copy_rows = {name: [] for name in copy_relocations}
     versioned_exports = set()
     unversioned_exports = set()
     default_exports = set()
@@ -120,6 +200,8 @@ def elf_record_from_readelf(
     unversioned_imports = set()
     for row in rows:
         raw_name = row["name"]
+        if raw_name in copy_rows:
+            copy_rows[raw_name].append(row)
         if row["index"] == "UND":
             name, version = abi_contract._split_symbol_version(raw_name)
             _validate_symbol(name, "undefined symbol")
@@ -155,6 +237,34 @@ def elf_record_from_readelf(
             versioned_exports.add((name, version, default))
             if default:
                 default_exports.add(name)
+
+    for raw_name in copy_relocations:
+        matches = copy_rows[raw_name]
+        require(
+            len(matches) == 1,
+            "COPY relocation has no unique dynamic symbol: %s" % raw_name,
+        )
+        row = matches[0]
+        name, version = abi_contract._split_symbol_version(raw_name)
+        _validate_symbol(name, "COPY relocation symbol")
+        require(version is not None, "COPY relocation symbol is unversioned")
+        require(
+            row["version_index"] is not None
+            and row["version_index"] in version_needs,
+            "COPY relocation has no provider mapping",
+        )
+        need = version_needs[row["version_index"]]
+        require(
+            need["version"] == version,
+            "COPY relocation version differs from provider mapping",
+        )
+        require(
+            row["binding"] in IMPORT_BINDINGS,
+            "COPY relocation symbol binding is unsupported",
+        )
+        versioned_imports.add(
+            (need["provider"], name, version, row["binding"])
+        )
 
     record = {
         "identity": identity,
@@ -224,6 +334,13 @@ def validate_elf_record(record, expected_soname=None):
         export_keys.append((item["name"], item["version"], item["default"]))
     require(export_keys == sorted(export_keys), "versioned exports are not sorted")
     require(len(export_keys) == len(set(export_keys)), "versioned exports repeat")
+    default_version_names = [
+        item["name"] for item in exports if item["default"]
+    ]
+    require(
+        len(default_version_names) == len(set(default_version_names)),
+        "versioned exports define multiple defaults for one symbol",
+    )
 
     unversioned_exports = record["unversioned_exports"]
     require(type(unversioned_exports) is list, "unversioned exports must be an array")
@@ -338,6 +455,10 @@ def audit_python_elf(
     validate_elf_record(python_global)
     validate_elf_record(artifact)
     require(python_global["soname"] is None, "Python global record must be an executable")
+    require(
+        artifact["soname"] is None,
+        "qualified Python artifact must not define DT_SONAME",
+    )
 
     global_closure = _dependency_closure(python_global["needed"], catalog)
     artifact_closure = _dependency_closure(artifact["needed"], catalog)
@@ -400,7 +521,22 @@ def audit_python_elf(
         if name in python_global["default_exports"]:
             owners.append(python_global["identity"])
         for soname in scope[1:]:
-            if name in catalog[soname]["default_exports"] and soname not in owners:
+            provider = catalog[soname]
+            if name not in provider["default_exports"]:
+                continue
+            if soname in core_allowlist:
+                default_versions = [
+                    record["version"]
+                    for record in provider["versioned_exports"]
+                    if record["name"] == name and record["default"]
+                ]
+                if len(default_versions) == 1 and (
+                    name,
+                    default_versions[0],
+                ) in core_allowlist[soname]:
+                    owners.append(soname)
+                continue
+            if soname not in owners:
                 owners.append(soname)
         if item["binding"] == "GLOBAL":
             require(owners, "strong unversioned import has no owner: %s" % name)
@@ -430,7 +566,7 @@ def audit_python_elf(
     )
     strong.sort(key=lambda item: (item["name"], item["owner"]))
     optional_weak.sort(key=lambda item: item["name"])
-    return {
+    result = {
         "status": "passed",
         "artifact": artifact["identity"],
         "needed": list(artifact["needed"]),
@@ -440,3 +576,165 @@ def audit_python_elf(
         "strong_unversioned": strong,
         "optional_weak": optional_weak,
     }
+    validate_audit_result(
+        result,
+        baseline,
+        external_providers,
+        python_global["identity"],
+    )
+    return result
+
+
+def validate_audit_result(
+    result,
+    baseline,
+    external_providers,
+    python_global_identity,
+):
+    """Revalidate deterministic ownership evidence without provider bytes."""
+    try:
+        abi_contract.validate_baseline(baseline)
+    except abi_contract.AbiContractError as error:
+        raise PythonAbiAuditError(str(error)) from error
+    require(
+        type(result) is dict and set(result) == AUDIT_RESULT_KEYS,
+        "Python ABI audit result fields differ",
+    )
+    require(result["status"] == "passed", "Python ABI audit did not pass")
+    require(
+        type(result["artifact"]) is str
+        and result["artifact"]
+        and not any(character.isspace() for character in result["artifact"]),
+        "Python ABI audit artifact is invalid",
+    )
+    require(
+        type(python_global_identity) is str and python_global_identity,
+        "Python global identity is invalid",
+    )
+    external = list(external_providers)
+    for soname in external:
+        _validate_soname(soname, "external provider")
+    require(external == sorted(set(external)), "external providers are not canonical")
+    core = set(baseline["providers"])
+    require(not core.intersection(external), "external providers overlap core ABI")
+    provider_universe = core.union(external)
+
+    needed = result["needed"]
+    require(type(needed) is list, "Python ABI audit needed must be an array")
+    for soname in needed:
+        _validate_soname(soname, "Python ABI audit DT_NEEDED")
+    require(len(needed) == len(set(needed)), "Python ABI audit repeats DT_NEEDED")
+    closure = result["provider_closure"]
+    require(
+        type(closure) is list and closure == sorted(set(closure)),
+        "Python ABI provider closure is not canonical",
+    )
+    require(
+        set(closure).issubset(provider_universe),
+        "Python ABI provider closure escapes the owned universe",
+    )
+    require(set(needed).issubset(closure), "Python ABI provider closure omits DT_NEEDED")
+
+    baseline_exports = {
+        provider: {
+            (record["name"], record["version"])
+            for record in exports
+        }
+        for provider, exports in baseline["providers"].items()
+    }
+    for field, allowed_providers in (
+        ("core_versioned", core),
+        ("external_versioned", set(external)),
+    ):
+        records = result[field]
+        require(type(records) is list, "%s must be an array" % field)
+        keys = []
+        for item in records:
+            require(
+                type(item) is dict and set(item) == VERSIONED_IMPORT_KEYS,
+                "%s record fields differ" % field,
+            )
+            provider = item["provider"]
+            _validate_soname(provider, "%s provider" % field)
+            _validate_symbol(item["name"], "%s symbol" % field)
+            require(
+                type(item["version"]) is str
+                and item["version"]
+                and "@" not in item["version"]
+                and not any(
+                    character.isspace() for character in item["version"]
+                ),
+                "%s version is invalid" % field,
+            )
+            require(item["binding"] in IMPORT_BINDINGS, "%s binding is invalid" % field)
+            require(provider in allowed_providers, "%s provider is not owned" % field)
+            require(provider in closure, "%s provider is outside the closure" % field)
+            if field == "core_versioned":
+                classification = abi_contract.classify_version(
+                    item["version"], provider
+                )
+                require(
+                    classification == "public"
+                    and (item["name"], item["version"])
+                    in baseline_exports[provider],
+                    "reported core import is outside the frozen baseline",
+                )
+            keys.append(
+                (
+                    provider,
+                    item["name"],
+                    item["version"],
+                    item["binding"],
+                )
+            )
+        require(keys == sorted(set(keys)), "%s is not canonical" % field)
+
+    strong = result["strong_unversioned"]
+    require(type(strong) is list, "strong_unversioned must be an array")
+    strong_keys = []
+    allowed_owners = set(closure).union((python_global_identity,))
+    for item in strong:
+        require(
+            type(item) is dict and set(item) == STRONG_OWNER_KEYS,
+            "strong unversioned owner fields differ",
+        )
+        _validate_symbol(item["name"], "strong unversioned symbol")
+        require(
+            item["owner"] in allowed_owners,
+            "strong unversioned owner is outside the loader scope",
+        )
+        strong_keys.append((item["name"], item["owner"]))
+    require(
+        strong_keys == sorted(set(strong_keys)),
+        "strong unversioned ownership is not canonical",
+    )
+
+    weak = result["optional_weak"]
+    require(type(weak) is list, "optional_weak must be an array")
+    weak_names = []
+    for item in weak:
+        require(
+            type(item) is dict and set(item) == WEAK_OWNER_KEYS,
+            "optional weak owner fields differ",
+        )
+        _validate_symbol(item["name"], "optional weak symbol")
+        owners = item["owners"]
+        require(
+            type(owners) is list
+            and len(owners) == len(set(owners))
+            and all(owner in allowed_owners for owner in owners),
+            "optional weak owners are invalid",
+        )
+        expected_resolution = (
+            "resolved" if owners else "optional-unresolved-weak"
+        )
+        require(
+            item["resolution"] == expected_resolution,
+            "optional weak resolution differs from its owners",
+        )
+        weak_names.append(item["name"])
+    require(
+        weak_names == sorted(set(weak_names)),
+        "optional weak evidence is not canonical",
+    )
+    return result
