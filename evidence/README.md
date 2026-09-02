@@ -46,4 +46,7 @@ symbol set and comparing the locked-sysroot inventory, invoke
 `scripts/freeze-abi-baseline.py` with `--arch <arch>` and
 `--accept-inventory-sha256 <canonical-digest>`. The repeated digest is the
 explicit approval boundary; the tool creates `abi/el8/{arch}.json` once and
-never replaces an existing baseline.
+never replaces an existing baseline. Run `scripts/validate-frozen-abi.py` to
+recheck the complete two-target matrix, release identities, extraction
+provenance, exact clean baselines, and the locked-sysroot ABI diff; CI runs the
+same read-only gate.
