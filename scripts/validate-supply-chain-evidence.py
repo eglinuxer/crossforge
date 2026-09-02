@@ -480,6 +480,133 @@ def validate_evidence(config, repository):
         "zstd selected license identity mismatch",
     )
 
+    vcpkg = config["vcpkg"]
+    vcpkg_release = vcpkg["release"]
+    vcpkg_tool = vcpkg["tool"]
+    vcpkg_signature = vcpkg_tool["signature"]
+    vcpkg_key = vcpkg_signature["key"]
+    vcpkg_tag_payload = load_evidence(
+        repository, vcpkg_release["tag_evidence"]
+    )
+    vcpkg_commit_payload = load_evidence(
+        repository, vcpkg_release["commit_evidence"]
+    )
+    tool_commit_payload = load_evidence(
+        repository, vcpkg_tool["commit_evidence"]
+    )
+    require(
+        vcpkg["repository"] == "https://github.com/microsoft/vcpkg.git"
+        and vcpkg_release["status"] == "locked"
+        and vcpkg_release["tag"] == "2026.07.29"
+        and git_object_id("tag", vcpkg_tag_payload)
+        == vcpkg_release["tag_object"]
+        == "c76c06644034521fb761a39f8f52d8e87d1103d5"
+        and git_object_id("commit", vcpkg_commit_payload)
+        == vcpkg_release["commit"]
+        == "9e593bb18ea69cc5095e012465dcd675a822ed0d",
+        "vcpkg registry Git identity mismatch",
+    )
+    vcpkg_tag_headers = git_headers(vcpkg_tag_payload)
+    require(
+        single_header(vcpkg_tag_headers, "object")
+        == vcpkg_release["commit"]
+        and single_header(vcpkg_tag_headers, "type") == "commit"
+        and single_header(vcpkg_tag_headers, "tag")
+        == vcpkg_release["tag"]
+        and b"-----BEGIN SSH SIGNATURE-----" in vcpkg_tag_payload
+        and b"-----END SSH SIGNATURE-----" in vcpkg_tag_payload
+        and b"\ngpgsig -----BEGIN PGP SIGNATURE-----\n"
+        in vcpkg_commit_payload,
+        "vcpkg signed release evidence mismatch",
+    )
+    require(
+        vcpkg_commit_payload.startswith(b"tree "),
+        "vcpkg release commit evidence is malformed",
+    )
+    require(
+        vcpkg_tool["status"] == "locked"
+        and vcpkg_tool["repository"]
+        == "https://github.com/microsoft/vcpkg-tool.git"
+        and vcpkg_tool["tag"] == "2026-07-27"
+        and git_object_id("commit", tool_commit_payload)
+        == vcpkg_tool["commit"]
+        == "98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8"
+        and b"\ngpgsig -----BEGIN PGP SIGNATURE-----\n"
+        in tool_commit_payload
+        and vcpkg_tool["url"]
+        == "https://github.com/microsoft/vcpkg-tool/releases/download/"
+        "2026-07-27/vcpkg-glibc"
+        and vcpkg_tool["sha256"]
+        == "7e97ef6bcd58f74d079f40d086b801a0222c5d15e4ea0d8d507a538033493d04"
+        and vcpkg_tool["sha512"]
+        == "be59d1fdf3725d2fb4bd1c0b435266726aaff2f87cb2503b775f44fb9b392ab4"
+        "74e6370d7e90e9d07b2c584b7deacc0670f98b477905c2e0d5cba5e01cee93dc"
+        and vcpkg_tool["size"] == 8548168,
+        "vcpkg-tool release identity mismatch",
+    )
+    require(
+        tool_commit_payload.startswith(b"tree "),
+        "vcpkg-tool commit evidence is malformed",
+    )
+    signature_payload = load_evidence(
+        repository, vcpkg_signature["evidence"]
+    )
+    require(
+        vcpkg_signature["url"] == vcpkg_tool["url"] + ".sig"
+        and len(signature_payload) == vcpkg_signature["size"] == 481
+        and hashlib.sha256(signature_payload).hexdigest()
+        == vcpkg_signature["sha256"]
+        == "8b7176edd2699187c021ab72ae2c2713bafb2b1daabf4c320eaa05c13b2e80c7"
+        and signature_payload.startswith(b"-----BEGIN PGP SIGNATURE-----\n")
+        and signature_payload.rstrip().endswith(
+            b"-----END PGP SIGNATURE-----"
+        ),
+        "vcpkg-tool detached signature evidence mismatch",
+    )
+    key_payload = load_locked_file(
+        repository, vcpkg_key["file"], "Microsoft release key"
+    )
+    require(
+        hashlib.sha256(key_payload).hexdigest()
+        == vcpkg_key["sha256"]
+        == "2fa9c05d591a1582a9aba276272478c262e95ad00acf60eaee1644d93941e3c6"
+        and vcpkg_key["fingerprint"]
+        == "bc528686b50d79e339d3721ceb3e94adbe1229cf"
+        and key_payload.startswith(b"-----BEGIN PGP PUBLIC KEY BLOCK-----\n")
+        and key_payload.rstrip().endswith(
+            b"-----END PGP PUBLIC KEY BLOCK-----"
+        ),
+        "Microsoft vcpkg-tool signing key identity mismatch",
+    )
+    require(
+        vcpkg["registry_license"]
+        == {
+            "expression": "MIT",
+            "license_file": "LICENSE.txt",
+            "license_sha256": "1ee376fc340e0aa6ad6a3581c94126e741468705096ac92263048a21daa86460",
+            "notice_file": "NOTICE.txt",
+            "notice_sha256": "e46407f44d1f439e1f62fdfd1479418cf221d90e8d8fd27bfa4a362e23065c87",
+        },
+        "vcpkg registry license identity mismatch",
+    )
+    tool_license = vcpkg_tool["license"]
+    tool_license_payload = load_locked_file(
+        repository, tool_license["license_file"], "vcpkg-tool license"
+    )
+    tool_notice_payload = load_locked_file(
+        repository, tool_license["notice_file"], "vcpkg-tool notice"
+    )
+    require(
+        tool_license["expression"] == "MIT"
+        and hashlib.sha256(tool_license_payload).hexdigest()
+        == tool_license["license_sha256"]
+        == "16e3c9cdb4fa14a8627bc4b5ef0237773a79c3ad1d012c288f37e29573e116cc"
+        and hashlib.sha256(tool_notice_payload).hexdigest()
+        == tool_license["notice_sha256"]
+        == "6b9a0fc7d06f94019adc9705b92d0b2e53509f23f9d43744bbd663aa2c1597d5",
+        "vcpkg-tool license identity mismatch",
+    )
+
     python_signers = {
         "3.9": ("lukasz@langa.pl", "https://github.com/login/oauth"),
         "3.10": ("pablogsal@python.org", "https://accounts.google.com"),
@@ -705,6 +832,10 @@ def validate_evidence(config, repository):
         "zstd_tag_object": zstd_git["tag_object"],
         "zstd_commit": zstd_git["commit"],
         "zstd_signature_sha256": zstd_signature["sha256"],
+        "vcpkg_tag_object": vcpkg_release["tag_object"],
+        "vcpkg_commit": vcpkg_release["commit"],
+        "vcpkg_tool_commit": vcpkg_tool["commit"],
+        "vcpkg_tool_signature_sha256": vcpkg_signature["sha256"],
     }
 
 
@@ -722,7 +853,7 @@ def main():
     result = validate_evidence(config, repository)
     print(
         "valid supply-chain evidence: Rocky %s; QEMU %s; source %s; "
-        "CPython Sigstore bundles %s; patches %d; zstd %s"
+        "CPython Sigstore bundles %s; patches %d; zstd %s; vcpkg %s"
         % (
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
@@ -730,6 +861,7 @@ def main():
             result["python_sigstore_status"],
             result["python_patches"],
             result["zstd_commit"],
+            result["vcpkg_commit"],
         )
     )
     return 0

@@ -43,6 +43,16 @@ class ReleaseValidationTests(unittest.TestCase):
             (("base_image", "manifests", "arm64"), "sha256:" + "0" * 64),
             (("qemu", "executor", "provenance", "builder_commit"), "0" * 40),
             (("qemu", "executor", "source", "commit"), "0" * 40),
+            (("vcpkg", "release", "commit"), "0" * 40),
+            (("vcpkg", "tool", "sha256"), "0" * 64),
+            (
+                ("vcpkg", "tool", "signature", "key", "fingerprint"),
+                "0" * 40,
+            ),
+            (
+                ("vcpkg", "tool", "license", "notice_sha256"),
+                "0" * 64,
+            ),
             (("python", "versions", 4, "source", "sha256"), "0" * 64),
             (
                 ("python", "versions", 4, "source", "sigstore", "bundle_sha256"),
@@ -212,6 +222,48 @@ class ReleaseValidationTests(unittest.TestCase):
                 parent[path[-1]] = value
                 with self.assertRaises(EVIDENCE_VALIDATOR["EvidenceError"]):
                     EVIDENCE_VALIDATOR["validate_evidence"](config, REPOSITORY)
+
+    def test_vcpkg_registry_tool_signature_and_licenses_are_exact(self):
+        vcpkg = self.config["vcpkg"]
+        release = vcpkg["release"]
+        tool = vcpkg["tool"]
+        self.assertEqual(release["tag"], "2026.07.29")
+        self.assertEqual(
+            release["commit"],
+            "9e593bb18ea69cc5095e012465dcd675a822ed0d",
+        )
+        self.assertEqual(tool["tag"], "2026-07-27")
+        self.assertEqual(
+            tool["commit"],
+            "98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8",
+        )
+        self.assertEqual(tool["size"], 8548168)
+        self.assertEqual(
+            tool["signature"]["key"]["fingerprint"],
+            "bc528686b50d79e339d3721ceb3e94adbe1229cf",
+        )
+        evidence = EVIDENCE_VALIDATOR["validate_evidence"](
+            self.config, REPOSITORY
+        )
+        self.assertEqual(evidence["vcpkg_commit"], release["commit"])
+        self.assertEqual(evidence["vcpkg_tool_commit"], tool["commit"])
+
+    def test_vcpkg_schema_rejects_incomplete_or_unlocked_tool(self):
+        for mutate in (
+            lambda value: value["vcpkg"]["tool"].pop("sha512"),
+            lambda value: value["vcpkg"]["tool"].__setitem__(
+                "status", "pending"
+            ),
+            lambda value: value["vcpkg"]["release"].__setitem__(
+                "commit", None
+            ),
+        ):
+            config = copy.deepcopy(self.config)
+            mutate(config)
+            with self.assertRaises(VALIDATOR["ValidationError"]):
+                VALIDATOR["validate"](
+                    config, self.schema, self.schema, "$"
+                )
 
     def test_rocky_trust_root_matches_key_file(self):
         trust = self.config["trust"]["rocky_rpm_key"]

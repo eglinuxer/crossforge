@@ -772,7 +772,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             name
             for name in self.components
             if name.startswith("rpm/")
-            or (name.startswith("sources/") and name != "sources/zstd")
+            or name in {"sources/gcc", "sources/binutils"}
         }
         expected.update(
             {
@@ -795,6 +795,25 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 }
             )
         self.assertEqual(changed(self.components, after), expected)
+
+    def test_vcpkg_source_pin_is_one_isolated_build_component(self):
+        source = self.components["sources/vcpkg"]
+        self.assertEqual(source["scope"], "build")
+        self.assertEqual(source["dependencies"], [])
+        self.assertTrue(
+            all(
+                material["path"].startswith("/vcpkg/")
+                for material in source["materials"]
+            )
+        )
+        after = self.render_mutation(
+            lambda release: release["vcpkg"]["tool"].__setitem__(
+                "sha256", "0" * 64
+            )
+        )
+        self.assertEqual(
+            changed(self.components, after), {"sources/vcpkg"}
+        )
 
     def test_zstd_source_and_policy_are_isolated_from_python_rows(self):
         source = self.components["sources/zstd"]

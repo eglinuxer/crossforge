@@ -16,8 +16,9 @@ build-system-independent DEB/RPM packaging.
 > private static zstd 1.5.7. Frozen EL8 ABI sets and Python's complete
 > provider-ownership/ELF gates are implemented for both targets. The final SDK
 > now rebases those qualified artifacts onto its independently locked host
-> runtime and passes the complete offline integration gate. vcpkg, packaging,
-> the full GCC/Qt suites and the release supply chain remain pending.
+> runtime and passes the complete offline integration gate. The vcpkg registry
+> and signed host tool are source-locked; triplets/port qualification,
+> packaging, the full GCC/Qt suites and release supply chain remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -413,6 +414,26 @@ Its networkless final gate rehashes the RPMDB/marker, prior toolchain reports,
 sysroot locks, every build/target Python tree and QEMU; it also builds and runs
 C, C++ and LTO probes for both targets. Build-only roots and markers are absent
 from the resulting cache-only image.
+
+## Phase 13: vcpkg supply-chain foundation
+
+Crossforge pins the immutable vcpkg `2026.07.29` release at commit
+`9e593bb18ea69cc5095e012465dcd675a822ed0d`. Its matching vcpkg-tool
+`2026-07-27` binary is independently bound by SHA256, the upstream SHA512,
+Microsoft's detached PGP signature and exact LICENSE/NOTICE files:
+
+```console
+$ ./scripts/validate-supply-chain-evidence.py
+$ docker buildx bake vcpkg-source
+```
+
+The source target clones the complete commit history and fetches the 22 fixed
+port trees referenced by the version database but not reachable from the tag.
+It rejects shallow repositories and batch-checks all 39,823 historical trees.
+Bootstrap is never executed online. Network access is confined to fetching
+content-addressed registry objects and the signed tool; checkout, signature
+verification, tool execution and scratch export run offline. The five
+Crossforge triplets and representative-port qualification are the next slice.
 
 ## Product contract
 

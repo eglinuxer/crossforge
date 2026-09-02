@@ -359,9 +359,49 @@
   },
   "vcpkg": {
     "repository": "https://github.com/microsoft/vcpkg.git",
-    "pin": {
-      "status": "pending",
-      "commit": null
+    "release": {
+      "status": "locked",
+      "tag": "2026.07.29",
+      "tag_object": "c76c06644034521fb761a39f8f52d8e87d1103d5",
+      "tag_evidence": "evidence/git/vcpkg-2026.07.29.tag.b64",
+      "commit": "9e593bb18ea69cc5095e012465dcd675a822ed0d",
+      "commit_evidence": "evidence/git/vcpkg-2026.07.29.commit.b64"
+    },
+    "registry_license": {
+      "expression": "MIT",
+      "license_file": "LICENSE.txt",
+      "license_sha256": "1ee376fc340e0aa6ad6a3581c94126e741468705096ac92263048a21daa86460",
+      "notice_file": "NOTICE.txt",
+      "notice_sha256": "e46407f44d1f439e1f62fdfd1479418cf221d90e8d8fd27bfa4a362e23065c87"
+    },
+    "tool": {
+      "status": "locked",
+      "repository": "https://github.com/microsoft/vcpkg-tool.git",
+      "tag": "2026-07-27",
+      "commit": "98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8",
+      "commit_evidence": "evidence/git/vcpkg-tool-2026-07-27.commit.b64",
+      "url": "https://github.com/microsoft/vcpkg-tool/releases/download/2026-07-27/vcpkg-glibc",
+      "sha256": "7e97ef6bcd58f74d079f40d086b801a0222c5d15e4ea0d8d507a538033493d04",
+      "sha512": "be59d1fdf3725d2fb4bd1c0b435266726aaff2f87cb2503b775f44fb9b392ab474e6370d7e90e9d07b2c584b7deacc0670f98b477905c2e0d5cba5e01cee93dc",
+      "size": 8548168,
+      "signature": {
+        "url": "https://github.com/microsoft/vcpkg-tool/releases/download/2026-07-27/vcpkg-glibc.sig",
+        "sha256": "8b7176edd2699187c021ab72ae2c2713bafb2b1daabf4c320eaa05c13b2e80c7",
+        "size": 481,
+        "evidence": "evidence/gpg/vcpkg-glibc-2026-07-27.sig.b64",
+        "key": {
+          "file": "keys/MICROSOFT-RELEASE-KEY.asc",
+          "sha256": "2fa9c05d591a1582a9aba276272478c262e95ad00acf60eaee1644d93941e3c6",
+          "fingerprint": "bc528686b50d79e339d3721ceb3e94adbe1229cf"
+        }
+      },
+      "license": {
+        "expression": "MIT",
+        "license_file": "licenses/vcpkg-tool/LICENSE.txt",
+        "license_sha256": "16e3c9cdb4fa14a8627bc4b5ef0237773a79c3ad1d012c288f37e29573e116cc",
+        "notice_file": "licenses/vcpkg-tool/NOTICE.txt",
+        "notice_sha256": "6b9a0fc7d06f94019adc9705b92d0b2e53509f23f9d43744bbd663aa2c1597d5"
+      }
     }
   },
   "nfpm": {

@@ -159,6 +159,43 @@ def render_zstd_graph(config, targets, component_arguments, rocky_amd64_image):
         }
 
 
+def render_vcpkg_graph(config, targets, component_arguments):
+    vcpkg = config["vcpkg"]
+    source_argument = component_argument_name("sources/vcpkg")
+    try:
+        source_sha256 = component_arguments[source_argument]
+    except KeyError as error:
+        raise ValueError("missing vcpkg source component digest") from error
+    targets["vcpkg-source"] = {
+        "inherits": ["_vcpkg_common"],
+        "target": "vcpkg-source-export",
+        "args": {
+            "VCPKG_REPOSITORY": vcpkg["repository"],
+            "VCPKG_RELEASE_TAG": vcpkg["release"]["tag"],
+            "VCPKG_RELEASE_COMMIT": vcpkg["release"]["commit"],
+            "VCPKG_TOOL_URL": vcpkg["tool"]["url"],
+            "VCPKG_TOOL_SHA256": vcpkg["tool"]["sha256"],
+            "VCPKG_TOOL_SIGNATURE_URL": vcpkg["tool"]["signature"][
+                "url"
+            ],
+            "VCPKG_SOURCE_COMPONENT_SHA256": source_sha256,
+        },
+        "contexts": {
+            "crossforge_host_runtime": "target:host-runtime-qualified"
+        },
+        "output": ["type=cacheonly"],
+    }
+    return {
+        "phase13-source": {
+            "targets": [
+                "validate",
+                "host-runtime-qualified",
+                "vcpkg-source",
+            ]
+        }
+    }
+
+
 def python_row(contract, entry):
     version = entry["version"]
     return {
@@ -640,10 +677,12 @@ def render(repository):
             "contexts": {"crossforge_qemu": "docker-image://%s" % qemu_image}
         }
     render_zstd_graph(config, targets, component_arguments, rocky_amd64_image)
+    vcpkg_groups = render_vcpkg_graph(config, targets, component_arguments)
     python_groups = render_python_graph(config, targets, component_arguments)
     document = {
         "group": {
             "toolchain-plan": {"targets": plan_names},
+            **vcpkg_groups,
             **python_groups,
         },
         "target": targets,

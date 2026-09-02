@@ -19,18 +19,6 @@
     {
       "path": "/nfpm/version",
       "value": "2.47.0"
-    },
-    {
-      "path": "/vcpkg/pin/commit",
-      "value": null
-    },
-    {
-      "path": "/vcpkg/pin/status",
-      "value": "pending"
-    },
-    {
-      "path": "/vcpkg/repository",
-      "value": "https://github.com/microsoft/vcpkg.git"
     }
   ],
   "schema_version": 1,

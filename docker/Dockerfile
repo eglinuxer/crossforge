@@ -27,6 +27,8 @@ FROM rocky-base AS config-validate
 COPY config/ ./config/
 COPY evidence/ ./evidence/
 COPY keys/ZSTD-RELEASE-KEY.asc ./keys/ZSTD-RELEASE-KEY.asc
+COPY keys/MICROSOFT-RELEASE-KEY.asc ./keys/MICROSOFT-RELEASE-KEY.asc
+COPY licenses/ ./licenses/
 COPY patches/ ./patches/
 COPY scripts/validate-release.py ./scripts/validate-release.py
 COPY scripts/validate-supply-chain-evidence.py \

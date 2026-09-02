@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；vcpkg、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；vcpkg registry/host tool 的供应链锁定已完成，triplet/port 资格化、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -214,6 +214,16 @@ Python 契约是“支持交叉编译扩展”，不是 PEP 517/wheel 编排器�
 
 ## 8. vcpkg 集成
 
+供应链基础固定 vcpkg `2026.07.29` / commit
+`9e593bb18ea69cc5095e012465dcd675a822ed0d`，并保留非 shallow 的完整 commit
+历史；version database 中 22 个不可由 tag 到达的 port tree 按固定 OID 补齐，离线
+批量验证全部 3,054 个文件引用的 39,823 个 `git-tree`。匹配的 vcpkg-tool
+`2026-07-27` amd64 glibc 二进制单独绑定 SHA256、上游 SHA512、Microsoft PGP
+签名、公钥指纹及 LICENSE/NOTICE；构建不在线执行 bootstrap。网络 stage 只获取
+registry 与签名工具，Git object/许可证核验、PGP 验证、Rocky 8 工具执行和 scratch
+导出均离线完成。上游未把 EL8 系列列为完整支持 host；Crossforge 只声明对该固定
+版本和下述资格化端口集合负责，不将本项目结果表述为上游平台支持。
+
 镜像内固定一个 vcpkg commit，并提供资格化 triplets：
 
 ```text
@@ -324,4 +334,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI 与 CPython 3.9–3.14 双 target 行已完成；后续实现 vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行及 vcpkg source lock 已完成；后续实现 vcpkg triplet/port 资格化、分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

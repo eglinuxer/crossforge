@@ -2,9 +2,9 @@
 
 ## Project Structure & Module Organization
 
-`docs/architecture.md` is canonical. Configuration lives under `config/`; tracked `config/generated/` projections come only from `render-release-components.py`. Frozen compatibility policy is in `abi/el8/`, raw provenance and ABI inventories in `evidence/`, and DNF decisions in `locks/`. `docker/Dockerfile` owns toolchains, `docker/zstd.Dockerfile` private static zstd, and `docker/python.Dockerfile` parameterized Python rows. Tools are in `scripts/`, backports in `patches/`, and tests in `tests/`.
+`docs/architecture.md` is canonical. Configuration lives under `config/`; `config/generated/` comes only from `render-release-components.py`. Compatibility policy is in `abi/el8/`, provenance in `evidence/`, third-party notices in `licenses/`, and DNF decisions in `locks/`. Dockerfiles own toolchains, private zstd, Python rows, and vcpkg. Tools are in `scripts/`, backports in `patches/`, and tests in `tests/`.
 
-The deleted Rust prototype remains at tag `prototype-rust-2026-08-28`. Keep work trees and caches uncommitted.
+Rust prototype: tag `prototype-rust-2026-08-28`. Do not commit caches.
 
 ## Build, Test, and Development Commands
 
@@ -14,6 +14,7 @@ The deleted Rust prototype remains at tag `prototype-rust-2026-08-28`. Keep work
 - `./scripts/render-bake.py --check` and `./scripts/render-release-components.py --check` detect generated-file drift.
 - `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
 - `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked host-runtime-qualified` replays and qualifies all host closures offline.
+- `docker buildx bake vcpkg-source` authenticates the full registry history and signed host tool.
 - `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both real cross slices; aarch64 uses explicit pinned QEMU, never implicit binfmt.
 - `docker buildx bake phase10` requalifies all Python 3.9–3.14 rows for both targets. `python-native-latest` and `python-matrix` select the same six-row contract. Graph existence or a build probe alone is not qualification evidence.
 

@@ -26,6 +26,12 @@ target "_zstd_common" {
   platforms  = ["linux/amd64"]
 }
 
+target "_vcpkg_common" {
+  context    = "."
+  dockerfile = "docker/vcpkg.Dockerfile"
+  platforms  = ["linux/amd64"]
+}
+
 group "default" {
   targets = ["validate"]
 }

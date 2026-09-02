@@ -496,10 +496,9 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             # signature, Git provenance, key and selected license together.
             # Any change must therefore invalidate the one source identity.
             category = "build"
+        elif len(path) >= 2 and path[0] == "vcpkg":
+            category = "build"
         elif path in {
-            ("vcpkg", "repository"),
-            ("vcpkg", "pin", "status"),
-            ("vcpkg", "pin", "commit"),
             ("nfpm", "version"),
             ("nfpm", "source", "status"),
             ("nfpm", "source", "url"),
@@ -652,6 +651,7 @@ def _render_expected_components(release, implemented_rows):
         "sources/binutils", "build", selector(("binutils",), ("trust",))
     )
     add("sources/zstd", "build", selector(("python", "zstd")))
+    add("sources/vcpkg", "build", selector(("vcpkg",)))
 
     toolchain_builds = {}
     toolchain_qualifications = {}

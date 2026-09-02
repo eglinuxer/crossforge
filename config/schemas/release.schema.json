@@ -635,14 +635,22 @@
       "additionalProperties": false,
       "required": [
         "repository",
-        "pin"
+        "release",
+        "registry_license",
+        "tool"
       ],
       "properties": {
         "repository": {
           "const": "https://github.com/microsoft/vcpkg.git"
         },
-        "pin": {
-          "$ref": "#/$defs/git_pin"
+        "release": {
+          "$ref": "#/$defs/vcpkg_release"
+        },
+        "registry_license": {
+          "$ref": "#/$defs/vcpkg_registry_license"
+        },
+        "tool": {
+          "$ref": "#/$defs/vcpkg_tool"
         }
       }
     },
@@ -1444,42 +1452,210 @@
         }
       }
     },
-    "git_pin": {
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "status",
-            "commit"
-          ],
-          "properties": {
-            "status": {
-              "const": "pending"
-            },
-            "commit": {
-              "const": null
-            }
-          }
+    "vcpkg_release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "tag",
+        "tag_object",
+        "tag_evidence",
+        "commit",
+        "commit_evidence"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
         },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "status",
-            "commit"
-          ],
-          "properties": {
-            "status": {
-              "const": "locked"
-            },
-            "commit": {
-              "type": "string",
-              "pattern": "^[0-9a-f]{40}$"
-            }
-          }
+        "tag": {
+          "type": "string",
+          "pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$"
+        },
+        "tag_object": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "tag_evidence": {
+          "const": "evidence/git/vcpkg-2026.07.29.tag.b64"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "commit_evidence": {
+          "const": "evidence/git/vcpkg-2026.07.29.commit.b64"
         }
-      ]
+      }
+    },
+    "vcpkg_registry_license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "license_file",
+        "license_sha256",
+        "notice_file",
+        "notice_sha256"
+      ],
+      "properties": {
+        "expression": {
+          "const": "MIT"
+        },
+        "license_file": {
+          "const": "LICENSE.txt"
+        },
+        "license_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "notice_file": {
+          "const": "NOTICE.txt"
+        },
+        "notice_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "vcpkg_tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "repository",
+        "tag",
+        "commit",
+        "commit_evidence",
+        "url",
+        "sha256",
+        "sha512",
+        "size",
+        "signature",
+        "license"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "repository": {
+          "const": "https://github.com/microsoft/vcpkg-tool.git"
+        },
+        "tag": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "commit_evidence": {
+          "const": "evidence/git/vcpkg-tool-2026-07-27.commit.b64"
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/microsoft/vcpkg-tool/releases/download/[0-9]{4}-[0-9]{2}-[0-9]{2}/vcpkg-glibc$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sha512": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "signature": {
+          "$ref": "#/$defs/vcpkg_tool_signature"
+        },
+        "license": {
+          "$ref": "#/$defs/vcpkg_tool_license"
+        }
+      }
+    },
+    "vcpkg_tool_signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sha256",
+        "size",
+        "evidence",
+        "key"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/microsoft/vcpkg-tool/releases/download/[0-9]{4}-[0-9]{2}-[0-9]{2}/vcpkg-glibc\\.sig$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "evidence": {
+          "const": "evidence/gpg/vcpkg-glibc-2026-07-27.sig.b64"
+        },
+        "key": {
+          "$ref": "#/$defs/vcpkg_tool_key"
+        }
+      }
+    },
+    "vcpkg_tool_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "fingerprint"
+      ],
+      "properties": {
+        "file": {
+          "const": "keys/MICROSOFT-RELEASE-KEY.asc"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "fingerprint": {
+          "const": "bc528686b50d79e339d3721ceb3e94adbe1229cf"
+        }
+      }
+    },
+    "vcpkg_tool_license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "license_file",
+        "license_sha256",
+        "notice_file",
+        "notice_sha256"
+      ],
+      "properties": {
+        "expression": {
+          "const": "MIT"
+        },
+        "license_file": {
+          "const": "licenses/vcpkg-tool/LICENSE.txt"
+        },
+        "license_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "notice_file": {
+          "const": "licenses/vcpkg-tool/NOTICE.txt"
+        },
+        "notice_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
     }
   }
 }
