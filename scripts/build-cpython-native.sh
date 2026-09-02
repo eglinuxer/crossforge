@@ -14,6 +14,10 @@ zstd_directory=$5
 jobs=$6
 minor=${version%.*}
 compact_minor=${minor/./}
+legacy_setup_build=0
+if [[ "$minor" == 3.10 ]]; then
+  legacy_setup_build=1
+fi
 
 [[ -x "$source_directory/configure" && -x "$source_directory/config.guess" ]] || {
   echo "error: invalid CPython source: $source_directory" >&2
@@ -116,13 +120,33 @@ else
   fi
 fi
 
-"$source_directory/configure" \
-  --build="$build" \
-  --prefix="$prefix" \
-  --with-pkg-config=yes \
-  --with-computed-gotos=yes \
-  --with-ensurepip=no \
+configure_arguments=(
+  --build="$build"
+  --prefix="$prefix"
+)
+if [[ "$legacy_setup_build" -eq 0 ]]; then
+  configure_arguments+=(--with-pkg-config=yes)
+fi
+configure_arguments+=(
+  --with-computed-gotos=yes
+  --with-ensurepip=no
   --disable-test-modules
+)
+"$source_directory/configure" "${configure_arguments[@]}"
+if grep -Fq 'unrecognized options:' config.log; then
+  echo "error: CPython configure accepted an unsupported option" >&2
+  exit 1
+fi
+
+if [[ "$legacy_setup_build" -eq 1 ]]; then
+  grep -Eq '^sharedmods:[[:space:]].*pybuilddir\.txt' Makefile \
+    && grep -Fq '$(PYTHON_FOR_BUILD) $(srcdir)/setup.py $$quiet build' Makefile \
+    && grep -Fq '$(PYTHON_FOR_BUILD) $(srcdir)/setup.py install' Makefile || {
+      echo "error: legacy native CPython lacks its setup.py extension paths" >&2
+      exit 1
+    }
+  export PYTHONSTRICTEXTENSIONBUILD=1
+fi
 
 if [[ "$zstd_enabled" -eq 1 ]]; then
   expected_zstd_cflags="-I$zstd_directory/include"

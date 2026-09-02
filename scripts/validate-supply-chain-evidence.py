@@ -489,6 +489,12 @@ def validate_evidence(config, repository):
         "3.14": ("hugo@python.org", "https://github.com/login/oauth"),
     }
     python_patch_policy = {
+        "3.10.21": {
+            "adapter": "legacy",
+            "file": "patches/cpython/3.10/0001-gh-115382-isolate-target-sysconfig.patch",
+            "sha256": "af23410fcaef3bb630dc0b986b5de52a542f3e1945c2493261a92500357773d3",
+            "layout_marker": b"to the 3.10 source\nlayout",
+        },
         "3.11.16": {
             "adapter": "transition",
             "file": "patches/cpython/3.11/0001-gh-115382-isolate-target-sysconfig.patch",
@@ -529,7 +535,7 @@ def validate_evidence(config, repository):
         )
         patches = version_entry["patches"]
         patch_policy = python_patch_policy.get(version)
-        if minor in ("3.11", "3.12"):
+        if minor in ("3.10", "3.11", "3.12"):
             require(
                 patch_policy is not None,
                 "CPython %s has no audited isolation patch policy" % version,

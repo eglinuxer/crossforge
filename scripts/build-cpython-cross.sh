@@ -19,6 +19,10 @@ jobs=${10}
 minor=${version%.*}
 compact_minor=${minor/./}
 script_directory=$(cd "$(dirname "$0")" && pwd)
+legacy_setup_build=0
+if [[ "$minor" == 3.10 ]]; then
+  legacy_setup_build=1
+fi
 
 [[ -x "$source_directory/configure" && -x "$source_directory/config.guess" ]] || {
   echo "error: invalid CPython source: $source_directory" >&2
@@ -146,7 +150,19 @@ export PKG_CONFIG=/usr/bin/pkg-config
 export PKG_CONFIG_SYSROOT_DIR=$sysroot
 export PKG_CONFIG_LIBDIR=$sysroot/usr/lib64/pkgconfig:$sysroot/usr/share/pkgconfig
 export SOURCE_DATE_EPOCH=0
-unset HOSTRUNNER MAKEFLAGS MFLAGS PYTHON_FOR_BUILD
+unset HOSTRUNNER MAKEFLAGS MFLAGS PYTHON_FOR_BUILD PYTHON_FOR_REGEN \
+  PYTHONSTRICTEXTENSIONBUILD
+if [[ "$legacy_setup_build" -eq 1 ]]; then
+  legacy_python_for_build='_PYTHON_PROJECT_BASE=$(abs_builddir)'
+  legacy_python_for_build+=' _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM)'
+  legacy_python_for_build+=' PYTHONPATH=$(srcdir)/Lib'
+  legacy_python_for_build+=' _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH)'
+  legacy_python_for_build+=' _PYTHON_SYSCONFIGDATA_PATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`)'
+  legacy_python_for_build+=" $build_python"
+  export PYTHON_FOR_BUILD="$legacy_python_for_build"
+  export PYTHON_FOR_REGEN="$build_python"
+  export PYTHONSTRICTEXTENSIONBUILD=1
+fi
 export PYTHONDONTWRITEBYTECODE=1
 
 zstd_enabled=0
@@ -273,15 +289,27 @@ for operation in dlopen dlmopen; do
   }
 done
 
-"$source_directory/configure" \
-  --build="$build" \
-  --host="$target" \
-  --prefix="$prefix" \
-  --with-build-python="$build_python" \
-  --with-pkg-config=yes \
-  --with-computed-gotos=yes \
-  --with-ensurepip=no \
+configure_arguments=(
+  --build="$build"
+  --host="$target"
+  --prefix="$prefix"
+)
+if [[ "$legacy_setup_build" -eq 0 ]]; then
+  configure_arguments+=(
+    --with-build-python="$build_python"
+    --with-pkg-config=yes
+  )
+fi
+configure_arguments+=(
+  --with-computed-gotos=yes
+  --with-ensurepip=no
   --disable-test-modules
+)
+"$source_directory/configure" "${configure_arguments[@]}"
+if grep -Fq 'unrecognized options:' config.log; then
+  echo "error: CPython configure accepted an unsupported option" >&2
+  exit 1
+fi
 
 if [[ "$zstd_enabled" -eq 1 ]]; then
   expected_zstd_cflags="-I$zstd_directory/include"
@@ -298,20 +326,57 @@ if [[ "$zstd_enabled" -eq 1 ]]; then
   fi
 fi
 
-grep -F "PYTHON_FOR_BUILD=" Makefile | grep -F "$build_python" >/dev/null || {
-  echo "error: Makefile does not use the matching build Python" >&2
+mapfile -t python_for_build_lines < <(grep -E '^PYTHON_FOR_BUILD=' Makefile)
+[[ ${#python_for_build_lines[@]} -eq 1 ]] || {
+  echo "error: Makefile must define PYTHON_FOR_BUILD exactly once" >&2
   exit 1
 }
-grep -Eq '^HOSTRUNNER=[[:space:]]*$' Makefile || {
-  echo "error: target execution leaked into the cross-build stage" >&2
-  exit 1
-}
-grep -F 'PYTHON_FOR_BUILD=' Makefile \
-  | grep -F 'PYTHONPATH=$(srcdir)/Lib' \
-  | grep -F '_PYTHON_SYSCONFIGDATA_PATH=' >/dev/null || {
+python_for_build_line=${python_for_build_lines[0]}
+for required in \
+    '_PYTHON_PROJECT_BASE=$(abs_builddir)' \
+    '_PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM)' \
+    ' PYTHONPATH=$(srcdir)/Lib ' \
+    '_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH)' \
+    '_PYTHON_SYSCONFIGDATA_PATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`)'; do
+  grep -Fq "$required" <<<"$python_for_build_line" || {
+    echo "error: build Python isolation token is missing: $required" >&2
+    exit 1
+  }
+done
+if grep -Fq 'PYTHONPATH=$(shell' <<<"$python_for_build_line"; then
   echo "error: build Python is not isolated from target extension modules" >&2
   exit 1
+fi
+grep -Fqx "PYTHON_FOR_REGEN?=$build_python" Makefile || {
+  echo "error: Makefile does not bind the exact regeneration Python" >&2
+  exit 1
 }
+
+if [[ "$legacy_setup_build" -eq 1 ]]; then
+  [[ "$python_for_build_line" == "PYTHON_FOR_BUILD=$legacy_python_for_build" ]] || {
+    echo "error: legacy Makefile changed the exact decorated build Python" >&2
+    exit 1
+  }
+  if grep -Eq '^HOSTRUNNER=' Makefile; then
+    echo "error: legacy CPython unexpectedly defines HOSTRUNNER" >&2
+    exit 1
+  fi
+  grep -Eq '^sharedmods:[[:space:]].*pybuilddir\.txt' Makefile \
+    && grep -Fq '$(PYTHON_FOR_BUILD) $(srcdir)/setup.py $$quiet build' Makefile \
+    && grep -Fq '$(PYTHON_FOR_BUILD) $(srcdir)/setup.py install' Makefile || {
+      echo "error: legacy cross CPython lacks its setup.py extension paths" >&2
+      exit 1
+    }
+else
+  grep -Fq "$build_python" <<<"$python_for_build_line" || {
+    echo "error: Makefile does not use the matching build Python" >&2
+    exit 1
+  }
+  grep -Eq '^HOSTRUNNER=[[:space:]]*$' Makefile || {
+    echo "error: target execution leaked into the cross-build stage" >&2
+    exit 1
+  }
+fi
 
 make -j"$jobs"
 make install

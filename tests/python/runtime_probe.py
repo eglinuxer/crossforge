@@ -15,6 +15,7 @@ import multiprocessing
 import os
 import platform
 import re
+import shlex
 import socket
 import sqlite3
 import ssl
@@ -77,6 +78,28 @@ def is_exact_integer(value: object, expected: int) -> bool:
     return type(value) is int and value == expected
 
 
+def validate_configure_arguments(
+    config_args: object, expected_options: tuple[str, ...]
+) -> None:
+    require(isinstance(config_args, str), "sysconfig CONFIG_ARGS is not text")
+    try:
+        tokens = shlex.split(config_args)
+    except ValueError as error:
+        raise ProbeError("sysconfig CONFIG_ARGS cannot be parsed") from error
+    require(tokens, "sysconfig CONFIG_ARGS is empty")
+    for expected in expected_options:
+        name = expected.split("=", 1)[0]
+        matches = [
+            token
+            for token in tokens
+            if token == name or token.startswith(name + "=")
+        ]
+        require(
+            matches == [expected],
+            f"sysconfig CONFIG_ARGS must contain exactly {expected}",
+        )
+
+
 def validate_gil_policy(
     config_vars: dict[str, object], minor: str, gil_policy: str
 ) -> None:
@@ -101,6 +124,9 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--target", choices=tuple(TARGETS), required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--gil-policy", choices=("absent", "zero"), required=True)
+    parser.add_argument(
+        "--hash-algorithm", choices=("siphash13", "siphash24"), required=True
+    )
     parser.add_argument(
         "--zstd-policy", choices=("required", "absent"), required=True
     )
@@ -176,15 +202,17 @@ def validate_identity(
     config_vars = sysconfig.get_config_vars()
     validate_gil_policy(config_vars, minor, gil_policy)
     config_args = sysconfig.get_config_var("CONFIG_ARGS")
-    require(isinstance(config_args, str), "sysconfig CONFIG_ARGS is not text")
-    for option in (
-        f"--host={target}",
-        f"--prefix={prefix}",
-        "--with-computed-gotos=yes",
-        "--with-ensurepip=no",
-        "--disable-test-modules",
-    ):
-        require(option in config_args, f"sysconfig CONFIG_ARGS omits {option}")
+    validate_configure_arguments(
+        config_args,
+        (
+            f"--host={target}",
+            "--build=x86_64-pc-linux-gnu",
+            f"--prefix={prefix}",
+            "--with-computed-gotos=yes",
+            "--with-ensurepip=no",
+            "--disable-test-modules",
+        ),
+    )
 
     return {
         "arch": arch,
@@ -390,11 +418,14 @@ def exercise_libraries() -> dict[str, object]:
     }
 
 
-def exercise_hash_algorithm() -> dict[str, object]:
+def exercise_hash_algorithm(expected_algorithm: str) -> dict[str, object]:
     info = sys.hash_info
-    require(info.algorithm == "siphash13", "CPython hash algorithm is not siphash13")
-    require(info.hash_bits == 64, "siphash13 output is not 64-bit")
-    require(info.seed_bits == 128, "siphash13 seed is not 128-bit")
+    require(
+        info.algorithm == expected_algorithm,
+        f"CPython hash algorithm is not {expected_algorithm}",
+    )
+    require(info.hash_bits == 64, "siphash output is not 64-bit")
+    require(info.seed_bits == 128, "siphash seed is not 128-bit")
     return {
         "algorithm": info.algorithm,
         "hash_bits": info.hash_bits,
@@ -587,7 +618,7 @@ def core_report(arguments: argparse.Namespace) -> dict[str, object]:
     return {
         "extension": extension_report,
         "functionality": exercise_libraries(),
-        "hash_algorithm": exercise_hash_algorithm(),
+        "hash_algorithm": exercise_hash_algorithm(arguments.hash_algorithm),
         "imports": exercise_imports(arguments.zstd_policy),
         "mode": "core",
         "network": exercise_network(),

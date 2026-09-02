@@ -1,0 +1,47 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp310-source",
+  "dependencies": [
+    {
+      "canonical_sha256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
+      "component": "implementation/python-cp310-build-policy"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/python/versions/1/adapter",
+      "value": "legacy"
+    },
+    {
+      "path": "/python/versions/1/patches/0/file",
+      "value": "patches/cpython/3.10/0001-gh-115382-isolate-target-sysconfig.patch"
+    },
+    {
+      "path": "/python/versions/1/patches/0/sha256",
+      "value": "af23410fcaef3bb630dc0b986b5de52a542f3e1945c2493261a92500357773d3"
+    },
+    {
+      "path": "/python/versions/1/source/sha256",
+      "value": "a0da1e72132e950154eca0f6f47d5db828454700de20e5113667940d81e0db04"
+    },
+    {
+      "path": "/python/versions/1/source/size",
+      "value": 19896516
+    },
+    {
+      "path": "/python/versions/1/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/python/versions/1/source/url",
+      "value": "https://www.python.org/ftp/python/3.10.21/Python-3.10.21.tar.xz"
+    },
+    {
+      "path": "/python/versions/1/version",
+      "value": "3.10.21"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

@@ -8,16 +8,16 @@
       "scope": "future"
     },
     {
-      "canonical_sha256": "ba48332c2da1957ec9c7e2b942ed8491060997b41b5506bf93261c522068b4bd",
-      "component": "future/python-cp310",
-      "path": "config/generated/components/future/python-cp310.json",
-      "scope": "future"
-    },
-    {
       "canonical_sha256": "0f78f3b21efec0cde70e084f5c8bd6d4e6727d113238e5cac4cd3de35344730d",
       "component": "future/python-cp39",
       "path": "config/generated/components/future/python-cp39.json",
       "scope": "future"
+    },
+    {
+      "canonical_sha256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
+      "component": "implementation/python-cp310-build-policy",
+      "path": "config/generated/components/implementation/python-cp310-build-policy.json",
+      "scope": "build"
     },
     {
       "canonical_sha256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
@@ -44,7 +44,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "5ae0b9f1e9e99c0001bc1285cbbcd529cd7f77a10f574d2e3b6ffc718f2e3f73",
+      "canonical_sha256": "72f505ebdc79810a7e74f6f61a85923e608b0abfb641014e4050ebfd6caeb2f0",
       "component": "implementation/python-qualification-policy",
       "path": "config/generated/components/implementation/python-qualification-policy.json",
       "scope": "qualification"
@@ -60,6 +60,30 @@
       "component": "product/release",
       "path": "config/generated/components/product/release.json",
       "scope": "supply"
+    },
+    {
+      "canonical_sha256": "f2536351de8df0207af967bb4ad686613e5d2104f37bb40a1a907376e6ecb410",
+      "component": "python/cp310-aarch64-build",
+      "path": "config/generated/components/python/cp310-aarch64-build.json",
+      "scope": "build"
+    },
+    {
+      "canonical_sha256": "06f91d2b66c85b20e864dbc792b44f1e17772cb865fd18d7bbea7f3f3acfa6d8",
+      "component": "python/cp310-native-build",
+      "path": "config/generated/components/python/cp310-native-build.json",
+      "scope": "build"
+    },
+    {
+      "canonical_sha256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
+      "component": "python/cp310-source",
+      "path": "config/generated/components/python/cp310-source.json",
+      "scope": "build"
+    },
+    {
+      "canonical_sha256": "85c9e7466beba18ab614d4393573cd2a23db247265feae9e95650a40fbeb5be7",
+      "component": "python/cp310-x86_64-build",
+      "path": "config/generated/components/python/cp310-x86_64-build.json",
+      "scope": "build"
     },
     {
       "canonical_sha256": "6008a45ee300380d6c2a2da86a1297f2e0b03b04c54aabacad48b5c4d5400973",
@@ -158,7 +182,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "5de116bc3feef260b2ec3532da145050b3cc820d46760bd606235674d4ac4985",
+      "canonical_sha256": "d1a9228fd430c2fa66ef948e3fa063db86c4731e240247bd7150c7e9a23cc7d5",
       "component": "python/qualification",
       "path": "config/generated/components/python/qualification.json",
       "scope": "qualification"
@@ -218,7 +242,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "efb28ecef0855e22c87d3c16e470543273dd51921c30e160d22ce4e709c0e404",
+      "canonical_sha256": "d14986c71ac49967d54120fdb1d6911578919deb279f8c002ef353e2a24346cd",
       "component": "supply/evidence",
       "path": "config/generated/components/supply/evidence.json",
       "scope": "supply"
@@ -268,7 +292,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "9fdd1988271f6a386f75f0deae86906f5a3ad3ba2327a3714bab684846d024df",
+    "canonical_sha256": "eaf7b065ab8a2718ce92f3fa5ed5535266c1dbb341ebd1c9602a7717841b9078",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

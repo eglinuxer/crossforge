@@ -92,6 +92,64 @@ def require_abi_value(actual, expected, name):
         )
 
 
+def validate_configure_arguments(
+    config_args, contract, target, build_triple, build_python
+):
+    require(isinstance(config_args, str), "target CONFIG_ARGS is not text")
+    try:
+        tokens = shlex.split(config_args)
+    except ValueError as error:
+        raise QualificationError("target CONFIG_ARGS cannot be parsed") from error
+    require(tokens, "target CONFIG_ARGS is empty")
+
+    def option_matches(name):
+        return [
+            token
+            for token in tokens
+            if token == name or token.startswith(name + "=")
+        ]
+
+    required = [
+        "--host=" + target,
+        "--build=" + build_triple,
+        "--prefix=/opt/crossforge/python/%s/targets/%s"
+        % (contract["row"], target),
+        "--with-computed-gotos=yes",
+        "--with-ensurepip=no",
+        "--disable-test-modules",
+    ]
+    adapter = contract["adapter"]
+    if adapter == "legacy":
+        require(
+            not option_matches("--with-build-python"),
+            "legacy target CONFIG_ARGS contains unsupported --with-build-python",
+        )
+        require(
+            not option_matches("--with-pkg-config"),
+            "legacy target CONFIG_ARGS contains unsupported --with-pkg-config",
+        )
+    elif adapter in ("transition", "modern"):
+        required.extend(
+            [
+                "--with-build-python=" + str(build_python),
+                "--with-pkg-config=yes",
+            ]
+        )
+    else:
+        raise QualificationError("unsupported CPython adapter")
+    for option in required:
+        name = option.split("=", 1)[0]
+        require(
+            option_matches(name) == [option],
+            "target CONFIG_ARGS must contain exactly %s" % option,
+        )
+    require(
+        all("HOSTRUNNER" not in token for token in tokens),
+        "target execution leaked into CONFIG_ARGS",
+    )
+    return config_args
+
+
 def reject_duplicate_keys(pairs):
     result = {}
     for key, value in pairs:
@@ -553,16 +611,13 @@ def main():
         variables.get("AR") == str(arguments.toolchain / "bin" / (arguments.target + "-ar")),
         "target sysconfig AR mismatch",
     )
-    config_args = variables.get("CONFIG_ARGS", "")
-    for option in (
-        "--host=" + arguments.target,
-        "--build=" + build_triple,
-        "--with-build-python=" + str(arguments.build_python),
-        "--with-ensurepip=no",
-        "--disable-test-modules",
-    ):
-        require(option in config_args, "target CONFIG_ARGS is missing %s" % option)
-    require("HOSTRUNNER" not in config_args, "target execution leaked into CONFIG_ARGS")
+    validate_configure_arguments(
+        variables.get("CONFIG_ARGS"),
+        contract,
+        arguments.target,
+        build_triple,
+        arguments.build_python,
+    )
 
     gcc = arguments.toolchain / "bin" / (arguments.target + "-gcc")
     readelf = arguments.toolchain / "bin" / (arguments.target + "-readelf")

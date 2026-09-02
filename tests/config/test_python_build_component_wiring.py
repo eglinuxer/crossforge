@@ -139,11 +139,12 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
                     self.assertEqual(arguments["CPYTHON_MINOR"], contract["minor"])
             self.assertEqual(
                 bool(entry["patches"]),
-                row in ("cp311", "cp312"),
+                row in ("cp310", "cp311", "cp312"),
             )
 
     def test_patch_named_contexts_are_minor_scoped_or_controlled_empty(self):
         expected = {
+            "cp310": "target:cpython-patches-cp310",
             "cp311": "target:cpython-patches-cp311",
             "cp312": "target:cpython-patches-cp312",
             "cp313": "target:cpython-empty-patches",
@@ -155,7 +156,11 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
                 prepared["contexts"]["crossforge_cpython_patches"],
                 context,
             )
-        for row, minor in (("cp311", "3.11"), ("cp312", "3.12")):
+        for row, minor in (
+            ("cp310", "3.10"),
+            ("cp311", "3.11"),
+            ("cp312", "3.12"),
+        ):
             target = self.targets["cpython-patches-%s" % row]
             self.assertEqual(target["target"], "cpython-patch-context")
             self.assertEqual(

@@ -190,7 +190,12 @@
         "version": "3.10.21",
         "adapter": "legacy",
         "support": "security",
-        "patches": [],
+        "patches": [
+          {
+            "file": "patches/cpython/3.10/0001-gh-115382-isolate-target-sysconfig.patch",
+            "sha256": "af23410fcaef3bb630dc0b986b5de52a542f3e1945c2493261a92500357773d3"
+          }
+        ],
         "source": {
           "status": "locked",
           "url": "https://www.python.org/ftp/python/3.10.21/Python-3.10.21.tar.xz",

@@ -3,6 +3,10 @@
   "component": "implementation/python-qualification-policy",
   "dependencies": [
     {
+      "canonical_sha256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
+      "component": "implementation/python-cp310-build-policy"
+    },
+    {
       "canonical_sha256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
       "component": "implementation/python-cp311-build-policy"
     },
@@ -22,12 +26,48 @@
   "kind": "crossforge-release-component",
   "materials": [
     {
+      "path": "/@implementation/python_rows/cp310/adapter",
+      "value": "legacy"
+    },
+    {
+      "path": "/@implementation/python_rows/cp310/gil_policy",
+      "value": "absent"
+    },
+    {
+      "path": "/@implementation/python_rows/cp310/hash_algorithm",
+      "value": "siphash24"
+    },
+    {
+      "path": "/@implementation/python_rows/cp310/introduced_phase",
+      "value": 9
+    },
+    {
+      "path": "/@implementation/python_rows/cp310/minor",
+      "value": "3.10"
+    },
+    {
+      "path": "/@implementation/python_rows/cp310/row",
+      "value": "cp310"
+    },
+    {
+      "path": "/@implementation/python_rows/cp310/sysconfig_isolation",
+      "value": true
+    },
+    {
+      "path": "/@implementation/python_rows/cp310/zstd",
+      "value": false
+    },
+    {
       "path": "/@implementation/python_rows/cp311/adapter",
       "value": "transition"
     },
     {
       "path": "/@implementation/python_rows/cp311/gil_policy",
       "value": "absent"
+    },
+    {
+      "path": "/@implementation/python_rows/cp311/hash_algorithm",
+      "value": "siphash13"
     },
     {
       "path": "/@implementation/python_rows/cp311/introduced_phase",
@@ -58,6 +98,10 @@
       "value": "absent"
     },
     {
+      "path": "/@implementation/python_rows/cp312/hash_algorithm",
+      "value": "siphash13"
+    },
+    {
       "path": "/@implementation/python_rows/cp312/introduced_phase",
       "value": 7
     },
@@ -86,6 +130,10 @@
       "value": "zero"
     },
     {
+      "path": "/@implementation/python_rows/cp313/hash_algorithm",
+      "value": "siphash13"
+    },
+    {
       "path": "/@implementation/python_rows/cp313/introduced_phase",
       "value": 5
     },
@@ -112,6 +160,10 @@
     {
       "path": "/@implementation/python_rows/cp314/gil_policy",
       "value": "zero"
+    },
+    {
+      "path": "/@implementation/python_rows/cp314/hash_algorithm",
+      "value": "siphash13"
     },
     {
       "path": "/@implementation/python_rows/cp314/introduced_phase",

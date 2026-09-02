@@ -365,6 +365,7 @@ def release_context(release, target, version):
         "adapter": contract["adapter"],
         "gil_policy": contract["gil_policy"],
         "zstd": contract["zstd"],
+        "hash_algorithm": contract["hash_algorithm"],
         "release_sha256": canonical_sha256(release),
         "source": source,
         "sysroot_sha256": require_sha256(
@@ -980,7 +981,15 @@ def validate_zstd_evidence(value, required, path):
     )
 
 
-def validate_probe(value, path, target, version, expected_mode, zstd_required):
+def validate_probe(
+    value,
+    path,
+    target,
+    version,
+    expected_mode,
+    zstd_required,
+    expected_hash_algorithm,
+):
     expected_keys = CORE_PROBE_KEYS if expected_mode == "core" else DEVICE_PROBE_KEYS
     require_exact_keys(value, expected_keys, path)
     require(value["schema_version"] == 2, "%s schema mismatch" % path)
@@ -1060,7 +1069,11 @@ def validate_probe(value, path, target, version, expected_mode, zstd_required):
         )
         require(
             value["hash_algorithm"]
-            == {"algorithm": "siphash13", "hash_bits": 64, "seed_bits": 128},
+            == {
+                "algorithm": expected_hash_algorithm,
+                "hash_bits": 64,
+                "seed_bits": 128,
+            },
             "%s hash algorithm evidence mismatch" % path,
         )
         require(
@@ -1283,6 +1296,7 @@ def validate_runtime_result(
         version,
         "core",
         context["zstd"],
+        context["hash_algorithm"],
     )
     validate_probe(
         report["device_probe"],
@@ -1291,6 +1305,7 @@ def validate_runtime_result(
         version,
         "devices",
         context["zstd"],
+        context["hash_algorithm"],
     )
     return report
 

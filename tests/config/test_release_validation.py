@@ -36,7 +36,7 @@ class ReleaseValidationTests(unittest.TestCase):
             result["qemu_manifest_sha256"],
             self.config["qemu"]["executor"]["manifest_digest"],
         )
-        self.assertEqual(result["python_patches"], 2)
+        self.assertEqual(result["python_patches"], 3)
 
     def test_supply_chain_identity_tampering_is_rejected(self):
         mutations = (
@@ -48,6 +48,7 @@ class ReleaseValidationTests(unittest.TestCase):
                 ("python", "versions", 4, "source", "sigstore", "bundle_sha256"),
                 "0" * 64,
             ),
+            (("python", "versions", 1, "patches", 0, "sha256"), "0" * 64),
             (("python", "versions", 2, "patches", 0, "sha256"), "0" * 64),
             (("python", "versions", 3, "patches", 0, "sha256"), "0" * 64),
         )
@@ -190,6 +191,14 @@ class ReleaseValidationTests(unittest.TestCase):
     def test_python_isolation_patches_are_explicit_and_content_locked(self):
         versions = self.config["python"]["versions"]
         expected = {
+            1: {
+                "version": "3.10.21",
+                "adapter": "legacy",
+                "patch": {
+                    "file": "patches/cpython/3.10/0001-gh-115382-isolate-target-sysconfig.patch",
+                    "sha256": "af23410fcaef3bb630dc0b986b5de52a542f3e1945c2493261a92500357773d3",
+                },
+            },
             2: {
                 "version": "3.11.16",
                 "adapter": "transition",
@@ -239,25 +248,16 @@ class ReleaseValidationTests(unittest.TestCase):
     def test_python_isolation_patch_schema_rejects_contract_drift(self):
         mutations = []
 
-        missing = copy.deepcopy(self.config)
-        del missing["python"]["versions"][2]["patches"]
-        mutations.append(missing)
+        for index, minor in ((1, "3.10"), (2, "3.11"), (3, "3.12")):
+            missing = copy.deepcopy(self.config)
+            missing["python"]["versions"][index]["patches"] = []
+            mutations.append(missing)
 
-        missing_312 = copy.deepcopy(self.config)
-        missing_312["python"]["versions"][3]["patches"] = []
-        mutations.append(missing_312)
-
-        wrong_path = copy.deepcopy(self.config)
-        wrong_path["python"]["versions"][2]["patches"][0]["file"] = (
-            "patches/cpython/3.11/0001-other.patch"
-        )
-        mutations.append(wrong_path)
-
-        wrong_path_312 = copy.deepcopy(self.config)
-        wrong_path_312["python"]["versions"][3]["patches"][0]["file"] = (
-            "patches/cpython/3.12/0001-other.patch"
-        )
-        mutations.append(wrong_path_312)
+            wrong_path = copy.deepcopy(self.config)
+            wrong_path["python"]["versions"][index]["patches"][0]["file"] = (
+                "patches/cpython/%s/0001-other.patch" % minor
+            )
+            mutations.append(wrong_path)
 
         unexpected = copy.deepcopy(self.config)
         unexpected["python"]["versions"][4]["patches"] = copy.deepcopy(
@@ -279,7 +279,11 @@ class ReleaseValidationTests(unittest.TestCase):
             )
 
     def test_python_isolation_policy_fails_closed_for_unknown_patch_release(self):
-        for index, replacement in ((2, "3.11.17"), (3, "3.12.15")):
+        for index, replacement in (
+            (1, "3.10.22"),
+            (2, "3.11.17"),
+            (3, "3.12.15"),
+        ):
             with self.subTest(version=replacement):
                 config = copy.deepcopy(self.config)
                 entry = config["python"]["versions"][index]

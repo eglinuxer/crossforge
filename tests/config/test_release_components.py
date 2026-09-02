@@ -11,6 +11,33 @@ RENDERER_PATH = REPOSITORY / "scripts/render-release-components.py"
 RENDERER = runpy.run_path(str(RENDERER_PATH))
 VALIDATOR = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
 
+PHASE8_PYTHON_BUILD_DIGESTS = {
+    "implementation/python-cp311-build-policy": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+    "python/cp311-source": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
+    "python/cp311-native-build": "d329b20de620e9d6be4d82dd847a41c2ce9a114a5754c60122af573c8e19106b",
+    "python/cp311-x86_64-build": "90cb4a2b26ad4624c6a5710a35b28d3c47d5d9823e1d75caa530e8c71f0b1774",
+    "python/cp311-aarch64-build": "6008a45ee300380d6c2a2da86a1297f2e0b03b04c54aabacad48b5c4d5400973",
+    "implementation/python-cp312-build-policy": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+    "python/cp312-source": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
+    "python/cp312-native-build": "4152d187113fd903a542f2758c3adfca7079feb3c229b83b7c31d48d8e31e15e",
+    "python/cp312-x86_64-build": "bcbd28b151216ee2355cf76cf42cae7fd5c26c384419447a530b51757c5c1481",
+    "python/cp312-aarch64-build": "2930c213e853c924bce2e112526142401fc96cbc69219a7a4c77c658e258156d",
+    "implementation/python-cp313-build-policy": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+    "python/cp313-source": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
+    "python/cp313-native-build": "a428511db9354cf7798ee6c934863cc359d1837b9dd8f90bc3bab34177ab57c0",
+    "python/cp313-x86_64-build": "ab87916b414cd783300275c033b227496ac08e75e6ec55d1e91167db353f6a1b",
+    "python/cp313-aarch64-build": "05889c0e1d523c7e406581871c10358ae786455514c599cc0a46fbcda81759a1",
+    "implementation/python-cp314-build-policy": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
+    "python/cp314-source": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
+    "python/cp314-native-build": "ffdb1374ce4ab354e80dde8df21a15eda0875f6c0fb4fe2b10f8058986dc8202",
+    "python/cp314-x86_64-build": "67a6e878e8fc9e592765ce0318a709b2686683b132900431ace217b774c712ae",
+    "python/cp314-aarch64-build": "f28bfec58ec2bddafe6dcace24e970db9003135fb59a2eb3c784a30dd639683d",
+}
+PHASE8_PYTHON_QUALIFICATION_DIGESTS = {
+    "implementation/python-qualification-policy": "5ae0b9f1e9e99c0001bc1285cbbcd529cd7f77a10f574d2e3b6ffc718f2e3f73",
+    "python/qualification": "5de116bc3feef260b2ec3532da145050b3cc820d46760bd606235674d4ac4985",
+}
+
 
 def component_documents(documents):
     return {
@@ -129,12 +156,22 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         )
         self.assertNotIn("zstd", RENDERER["BUILD_POLICY_FIELDS"])
         self.assertIn("zstd", RENDERER["QUALIFICATION_POLICY_FIELDS"])
+        self.assertNotIn("hash_algorithm", RENDERER["BUILD_POLICY_FIELDS"])
+        self.assertIn(
+            "hash_algorithm", RENDERER["QUALIFICATION_POLICY_FIELDS"]
+        )
         for row in self.row_names:
             materials = self.components[
                 "implementation/python-%s-build-policy" % row
             ]["materials"]
             self.assertFalse(
                 any(material["path"].endswith("/zstd") for material in materials)
+            )
+            self.assertFalse(
+                any(
+                    material["path"].endswith("/hash_algorithm")
+                    for material in materials
+                )
             )
         malformed = [copy.deepcopy(row) for row in self.rows]
         malformed[0]["extra"] = True
@@ -326,6 +363,62 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "python/qualification",
             },
         )
+
+    def test_cp310_append_preserves_existing_build_component_identities(self):
+        self.assertEqual(self.rows[-1]["row"], "cp310")
+        phase8_rows = self.rows[:-1]
+        before = RENDERER["render_component_documents"](
+            self.release, phase8_rows
+        )
+        after = self.components
+
+        protected = set()
+        for row in ("cp311", "cp312", "cp313", "cp314"):
+            protected.update(
+                {
+                    "implementation/python-%s-build-policy" % row,
+                    "python/%s-source" % row,
+                    "python/%s-native-build" % row,
+                    "python/%s-x86_64-build" % row,
+                    "python/%s-aarch64-build" % row,
+                }
+            )
+        for component in sorted(protected):
+            with self.subTest(component=component):
+                self.assertEqual(
+                    RENDERER["canonical_sha256"](before[component]),
+                    RENDERER["canonical_sha256"](after[component]),
+                )
+                self.assertEqual(
+                    RENDERER["canonical_sha256"](after[component]),
+                    PHASE8_PYTHON_BUILD_DIGESTS[component],
+                )
+        self.assertEqual(protected, set(PHASE8_PYTHON_BUILD_DIGESTS))
+
+        for component in (
+            "implementation/python-qualification-policy",
+            "python/qualification",
+        ):
+            with self.subTest(component=component):
+                self.assertNotEqual(
+                    RENDERER["canonical_sha256"](before[component]),
+                    RENDERER["canonical_sha256"](after[component]),
+                )
+                self.assertNotEqual(
+                    RENDERER["canonical_sha256"](after[component]),
+                    PHASE8_PYTHON_QUALIFICATION_DIGESTS[component],
+                )
+        for component in (
+            "toolchain/x86_64-qualification",
+            "toolchain/aarch64-qualification",
+        ):
+            self.assertEqual(
+                RENDERER["canonical_sha256"](before[component]),
+                RENDERER["canonical_sha256"](after[component]),
+            )
+        self.assertIn("future/python-cp310", before)
+        self.assertNotIn("future/python-cp310", after)
+        self.assertIn("python/cp310-source", after)
 
     def test_support_and_sigstore_have_no_build_impact(self):
         release = copy.deepcopy(self.release)
@@ -550,13 +643,20 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         self.assertEqual(changed(self.components, after), {"future/python-cp39"})
 
     def test_cp314_implementation_preserves_existing_row_build_digests(self):
-        prior_rows = self.rows[:-1]
-        self.assertEqual(self.rows[-1]["row"], "cp314")
+        prior_rows = tuple(
+            row for row in self.rows if row["introduced_phase"] <= 7
+        )
+        phase8_rows = tuple(
+            row for row in self.rows if row["introduced_phase"] <= 8
+        )
         before = RENDERER["render_component_documents"](
             self.release, prior_rows
         )
+        after = RENDERER["render_component_documents"](
+            self.release, phase8_rows
+        )
         self.assertEqual(
-            set(self.components) - set(before),
+            set(after) - set(before),
             {
                 "implementation/python-cp314-build-policy",
                 "python/cp314-source",
@@ -565,9 +665,9 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "python/cp314-aarch64-build",
             },
         )
-        self.assertEqual(set(before) - set(self.components), {"future/python-cp314"})
+        self.assertEqual(set(before) - set(after), {"future/python-cp314"})
         self.assertEqual(
-            changed(before, self.components),
+            changed(before, after),
             {
                 "implementation/python-qualification-policy",
                 "python/qualification",
@@ -579,12 +679,12 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 name = "python/%s-%s" % (row, suffix)
                 self.assertEqual(
                     RENDERER["canonical_sha256"](before[name]),
-                    RENDERER["canonical_sha256"](self.components[name]),
+                    RENDERER["canonical_sha256"](after[name]),
                 )
             policy = "implementation/python-%s-build-policy" % row
             self.assertEqual(
                 RENDERER["canonical_sha256"](before[policy]),
-                RENDERER["canonical_sha256"](self.components[policy]),
+                RENDERER["canonical_sha256"](after[policy]),
             )
 
     def test_writer_rejects_escape_paths_before_any_side_effect(self):

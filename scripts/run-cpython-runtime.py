@@ -511,6 +511,14 @@ def main():
         "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
         "TZ": "UTC0",
     }
+    probe_policy_arguments = [
+        "--gil-policy",
+        contract["gil_policy"],
+        "--zstd-policy",
+        zstd_policy,
+        "--hash-algorithm",
+        contract["hash_algorithm"],
+    ]
     if arguments.target == "x86_64-unknown-linux-gnu":
         require(arguments.qemu is None, "x86_64 runtime must not use QEMU")
         executor = {
@@ -534,10 +542,7 @@ def main():
             arguments.target,
             "--version",
             arguments.version,
-            "--gil-policy",
-            contract["gil_policy"],
-            "--zstd-policy",
-            zstd_policy,
+        ] + probe_policy_arguments + [
             "--extension-dir",
             guest_extension_dir,
         ]
@@ -567,11 +572,7 @@ def main():
             arguments.target,
             "--version",
             arguments.version,
-            "--gil-policy",
-            contract["gil_policy"],
-            "--zstd-policy",
-            zstd_policy,
-        ]
+        ] + probe_policy_arguments
         device_loader_command = [
             loader_host,
             "--library-path",
@@ -627,10 +628,7 @@ def main():
             arguments.target,
             "--version",
             arguments.version,
-            "--gil-policy",
-            contract["gil_policy"],
-            "--zstd-policy",
-            zstd_policy,
+        ] + probe_policy_arguments + [
             "--extension-dir",
             guest_extension_dir,
         ]
@@ -664,11 +662,7 @@ def main():
             arguments.target,
             "--version",
             arguments.version,
-            "--gil-policy",
-            contract["gil_policy"],
-            "--zstd-policy",
-            zstd_policy,
-        ]
+        ] + probe_policy_arguments
         device_loader_command = [
             arguments.qemu,
             "-L",

@@ -21,6 +21,7 @@ IMPLEMENTED_ROWS = (
         "gil_policy": "zero",
         "sysconfig_isolation": True,
         "zstd": False,
+        "hash_algorithm": "siphash13",
         "introduced_phase": 5,
     },
     {
@@ -30,6 +31,7 @@ IMPLEMENTED_ROWS = (
         "gil_policy": "absent",
         "sysconfig_isolation": True,
         "zstd": False,
+        "hash_algorithm": "siphash13",
         "introduced_phase": 6,
     },
     {
@@ -39,6 +41,7 @@ IMPLEMENTED_ROWS = (
         "gil_policy": "absent",
         "sysconfig_isolation": True,
         "zstd": False,
+        "hash_algorithm": "siphash13",
         "introduced_phase": 7,
     },
     {
@@ -48,7 +51,18 @@ IMPLEMENTED_ROWS = (
         "gil_policy": "zero",
         "sysconfig_isolation": True,
         "zstd": True,
+        "hash_algorithm": "siphash13",
         "introduced_phase": 8,
+    },
+    {
+        "minor": "3.10",
+        "row": "cp310",
+        "adapter": "legacy",
+        "gil_policy": "absent",
+        "sysconfig_isolation": True,
+        "zstd": False,
+        "hash_algorithm": "siphash24",
+        "introduced_phase": 9,
     },
 )
 RECORD_FIELDS = (
@@ -58,6 +72,7 @@ RECORD_FIELDS = (
     "gil_policy",
     "sysconfig_isolation",
     "zstd",
+    "hash_algorithm",
     "introduced_phase",
 )
 RECORD_KEYS = set(RECORD_FIELDS)
@@ -105,6 +120,10 @@ def validate_contract_table():
         require(
             type(record["zstd"]) is bool,
             "implemented CPython zstd policy is invalid",
+        )
+        require(
+            record["hash_algorithm"] in ("siphash13", "siphash24"),
+            "implemented CPython hash algorithm is invalid",
         )
         require(
             type(record["introduced_phase"]) is int

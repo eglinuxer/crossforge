@@ -3,8 +3,16 @@
   "component": "python/qualification",
   "dependencies": [
     {
-      "canonical_sha256": "5ae0b9f1e9e99c0001bc1285cbbcd529cd7f77a10f574d2e3b6ffc718f2e3f73",
+      "canonical_sha256": "72f505ebdc79810a7e74f6f61a85923e608b0abfb641014e4050ebfd6caeb2f0",
       "component": "implementation/python-qualification-policy"
+    },
+    {
+      "canonical_sha256": "f2536351de8df0207af967bb4ad686613e5d2104f37bb40a1a907376e6ecb410",
+      "component": "python/cp310-aarch64-build"
+    },
+    {
+      "canonical_sha256": "85c9e7466beba18ab614d4393573cd2a23db247265feae9e95650a40fbeb5be7",
+      "component": "python/cp310-x86_64-build"
     },
     {
       "canonical_sha256": "6008a45ee300380d6c2a2da86a1297f2e0b03b04c54aabacad48b5c4d5400973",
@@ -76,6 +84,38 @@
     {
       "path": "/baseline",
       "value": "el8"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.10.21.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/bundle_sha256",
+      "value": "8b907f7134ea6e0deb5236948be626a0ef1548da10650d2d44efe4547e2f73f3"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/bundle_size",
+      "value": 7329
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.10.21/Python-3.10.21.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/identity",
+      "value": "pablogsal@python.org"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/oidc_issuer",
+      "value": "https://accounts.google.com"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
+      "path": "/python/versions/1/support",
+      "value": "security"
     },
     {
       "path": "/python/versions/2/source/sigstore/bundle_evidence",

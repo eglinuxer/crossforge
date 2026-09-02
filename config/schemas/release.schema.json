@@ -448,7 +448,25 @@
                       "const": "security"
                     },
                     "patches": {
-                      "maxItems": 0
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "prefixItems": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/$defs/python_patch"
+                            },
+                            {
+                              "properties": {
+                                "file": {
+                                  "const": "patches/cpython/3.10/0001-gh-115382-isolate-target-sysconfig.patch"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
                     }
                   }
                 }

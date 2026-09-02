@@ -44,6 +44,7 @@ POLICY_FIELD_SCOPES = {
     "gil_policy": ("qualification",),
     "sysconfig_isolation": ("build", "qualification"),
     "zstd": ("qualification",),
+    "hash_algorithm": ("qualification",),
     "introduced_phase": ("qualification",),
 }
 BUILD_POLICY_FIELDS = tuple(
@@ -139,6 +140,10 @@ def validate_policy_registry(implemented_rows):
         require(
             type(record["zstd"]) is bool,
             "implemented Python zstd policy is invalid",
+        )
+        require(
+            record["hash_algorithm"] in ("siphash13", "siphash24"),
+            "implemented Python hash algorithm is invalid",
         )
         require(
             type(record["introduced_phase"]) is int

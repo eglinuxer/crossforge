@@ -1,0 +1,26 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/python-cp310-build-policy",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/python_rows/cp310/adapter",
+      "value": "legacy"
+    },
+    {
+      "path": "/@implementation/python_rows/cp310/minor",
+      "value": "3.10"
+    },
+    {
+      "path": "/@implementation/python_rows/cp310/row",
+      "value": "cp310"
+    },
+    {
+      "path": "/@implementation/python_rows/cp310/sysconfig_isolation",
+      "value": true
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

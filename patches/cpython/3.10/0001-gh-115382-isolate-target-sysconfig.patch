@@ -1,0 +1,65 @@
+From: Vincent Fazio <vfazio@gmail.com>
+Subject: [PATCH] Backport gh-115382: isolate target sysconfig data
+
+Backport the build-critical part of CPython gh-115382 to the 3.10 source
+layout. A build Python must not see target extension modules through
+PYTHONPATH when build and target have the same SOABI. Point sysconfig at the
+target's generated data explicitly instead.
+
+Upstream-Issue: https://github.com/python/cpython/issues/115382
+Backport-Of: https://github.com/python/cpython/commit/909d5ac2959ea88e1d3b38f35676a1c7e5dd44f6
+---
+ Lib/sysconfig.py | 15 ++++++++++++++-
+ configure        |  2 +-
+ configure.ac     |  2 +-
+ 3 files changed, 16 insertions(+), 3 deletions(-)
+
+diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
+--- a/Lib/sysconfig.py
++++ b/Lib/sysconfig.py
+@@ -474,7 +474,20 @@ def _init_posix(vars):
+     """Initialize the module as appropriate for POSIX systems."""
+     # _sysconfigdata is generated at build time, see _generate_posix_vars()
+     name = _get_sysconfigdata_name()
+-    _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)
++
++    # For cross builds, the path to the target's sysconfigdata must be specified
++    # so it can be imported. It cannot be in PYTHONPATH, as foreign modules in
++    # sys.path can cause crashes when loaded by the host interpreter.
++    # Rely on truthiness as a valueless env variable is still an empty string.
++    # See OS X note in _generate_posix_vars re _sysconfigdata.
++    if (path := os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')):
++        from importlib.machinery import FileFinder, SourceFileLoader, SOURCE_SUFFIXES
++        from importlib.util import module_from_spec
++        spec = FileFinder(path, (SourceFileLoader, SOURCE_SUFFIXES)).find_spec(name)
++        _temp = module_from_spec(spec)
++        spec.loader.exec_module(_temp)
++    else:
++        _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)
+     build_time_vars = _temp.build_time_vars
+     vars.update(build_time_vars)
+ 
+diff --git a/configure b/configure
+--- a/configure
++++ b/configure
+@@ -3019,7 +3019,7 @@ if test "$cross_compiling" = yes; then
+ 	fi
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $interp" >&5
+ $as_echo "$interp" >&6; }
+-	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) '$interp
++	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) _PYTHON_SYSCONFIGDATA_PATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`) '$interp
+     fi
+ elif test "$cross_compiling" = maybe; then
+     as_fn_error $? "Cross compiling required --host=HOST-TUPLE and --build=ARCH" "$LINENO" 5
+diff --git a/configure.ac b/configure.ac
+--- a/configure.ac
++++ b/configure.ac
+@@ -82,7 +82,7 @@ if test "$cross_compiling" = yes; then
+ 	    AC_MSG_ERROR([python$PACKAGE_VERSION interpreter not found])
+ 	fi
+         AC_MSG_RESULT($interp)
+-	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) '$interp
++	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) _PYTHON_SYSCONFIGDATA_PATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`) '$interp
+     fi
+ elif test "$cross_compiling" = maybe; then
+     AC_MSG_ERROR([Cross compiling required --host=HOST-TUPLE and --build=ARCH])

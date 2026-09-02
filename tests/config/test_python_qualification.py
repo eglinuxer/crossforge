@@ -575,7 +575,7 @@ class PythonQualificationTests(unittest.TestCase):
                     "module": "_crossforge",
                 },
                 "hash_algorithm": {
-                    "algorithm": "siphash13",
+                    "algorithm": self.contract["hash_algorithm"],
                     "hash_bits": 64,
                     "seed_bits": 128,
                 },
@@ -740,6 +740,10 @@ class PythonQualificationTests(unittest.TestCase):
                     self.assertEqual(
                         execution["probe"]["imports"], expected_imports
                     )
+                    self.assertEqual(
+                        execution["probe"]["hash_algorithm"]["algorithm"],
+                        contract["hash_algorithm"],
+                    )
                     loaded_names = {
                         Path(item).name
                         for item in execution["device_loaded_objects"]
@@ -747,6 +751,104 @@ class PythonQualificationTests(unittest.TestCase):
                     self.assertEqual(
                         any(name.startswith("_zstd.") for name in loaded_names),
                         contract["zstd"],
+                    )
+
+    def test_configure_arguments_follow_the_selected_adapter_api(self):
+        validate = QUALIFIER["validate_configure_arguments"]
+        build_triple = "x86_64-pc-linux-gnu"
+        build_python = Path(
+            "/opt/crossforge/python/cp310/build/bin/python3.10"
+        )
+        common = " ".join(
+            (
+                "--host=" + TARGET,
+                "--build=" + build_triple,
+                "--prefix=/opt/crossforge/python/cp310/targets/" + TARGET,
+                "--with-computed-gotos=yes",
+                "--with-ensurepip=no",
+                "--disable-test-modules",
+            )
+        )
+        legacy = ROW_CONTRACT["contract_for_version"]("3.10.21")
+        self.assertEqual(
+            validate(common, legacy, TARGET, build_triple, build_python), common
+        )
+        for unsupported in (
+            "--with-build-python=" + str(build_python),
+            "--with-pkg-config=yes",
+        ):
+            with self.subTest(unsupported=unsupported):
+                with self.assertRaises(QUALIFIER["QualificationError"]):
+                    validate(
+                        common + " " + unsupported,
+                        legacy,
+                        TARGET,
+                        build_triple,
+                        build_python,
+                    )
+
+        modern = ROW_CONTRACT["contract_for_version"]("3.13.15")
+        modern_build_python = Path(
+            "/opt/crossforge/python/cp313/build/bin/python3.13"
+        )
+        modern_common = common.replace("/cp310/", "/cp313/")
+        modern_args = modern_common + " --with-build-python=" + str(
+            modern_build_python
+        ) + " --with-pkg-config=yes"
+        self.assertEqual(
+            validate(
+                modern_args,
+                modern,
+                TARGET,
+                build_triple,
+                modern_build_python,
+            ),
+            modern_args,
+        )
+        for invalid in (
+            modern_common,
+            modern_common + " --with-build-python=" + str(modern_build_python),
+            modern_common + " --with-pkg-config=yes",
+            modern_common + " HOSTRUNNER=qemu",
+            modern_args + " --host=" + TARGET,
+            modern_args.replace("--with-ensurepip=no", "--with-ensurepip=nope"),
+            None,
+        ):
+            with self.subTest(invalid=invalid):
+                with self.assertRaises(QUALIFIER["QualificationError"]):
+                    validate(
+                        invalid,
+                        modern,
+                        TARGET,
+                        build_triple,
+                        modern_build_python,
+                    )
+
+        for malformed in (
+            common.replace("--host=" + TARGET, "--host=" + TARGET + "-evil"),
+            common.replace(
+                "--build=" + build_triple,
+                "--build=" + build_triple + "-junk",
+            ),
+            common.replace(
+                "--with-computed-gotos=yes",
+                "--with-computed-gotos=yes-no",
+            ),
+            common.replace("--with-ensurepip=no", "--with-ensurepip=nope"),
+            common.replace(
+                "--disable-test-modules",
+                "--disable-test-modules-extra",
+            ),
+            common + " --host=" + TARGET,
+        ):
+            with self.subTest(malformed=malformed):
+                with self.assertRaises(QUALIFIER["QualificationError"]):
+                    validate(
+                        malformed,
+                        legacy,
+                        TARGET,
+                        build_triple,
+                        build_python,
                     )
 
     def test_required_zstd_evidence_imports_and_loaded_object_are_all_mandatory(self):
@@ -1382,6 +1484,7 @@ class PythonQualificationTests(unittest.TestCase):
             "release": self.release,
             "adapter": "modern",
             "zstd": self.contract["zstd"],
+            "hash_algorithm": self.contract["hash_algorithm"],
             "release_sha256": canonical_sha256(self.release),
             "sysroot_sha256": SYSROOT_SHA256,
         }

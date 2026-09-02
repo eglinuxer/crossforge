@@ -70,7 +70,7 @@ jobs:
       - name: Docker/Bake static checks
         run: |
           docker buildx bake --check phase4
-          docker buildx bake --print phase5 phase6 phase7 phase8 >/dev/null
+          docker buildx bake --print phase5 phase6 phase7 phase8 phase9 >/dev/null
       - name: Locked latest inputs and native build Pythons
         run: |
           docker buildx bake validate platform-python-check \

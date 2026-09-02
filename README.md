@@ -9,10 +9,11 @@ build-system-independent DEB/RPM packaging.
 > **Not yet publishable as the complete SDK.** Both cross-toolchain slices now
 > build from locked host and sysroot transactions. x86_64 passes native smoke;
 > aarch64 passes the same compile/ABI gates and explicit QEMU smoke against a
-> locked sysroot and clean Rocky arm64 root. CPython 3.11 transition and
-> 3.12–3.14 modern rows have completed their amd64 build-Python and dual-target
-> runtime gates through Phase 8. CPython 3.14.7 additionally passes compile
-> qualification with a private static zstd 1.5.7. Python 3.9–3.10, vcpkg,
+> locked sysroot and clean Rocky arm64 root. CPython 3.10 legacy, 3.11
+> transition and 3.12–3.14 modern rows have completed their amd64 build-Python,
+> true dual-target SDK, locked-sysroot and clean-Rocky runtime gates through
+> Phase 9. CPython 3.14.7 additionally passes compile
+> qualification with a private static zstd 1.5.7. Python 3.9, vcpkg,
 > packaging, frozen ABI sets, the full GCC/Qt suites and the independent
 > minimal host-runtime lock remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
@@ -204,7 +205,7 @@ is a later release-supply-chain gate and is not claimed by this phase.
 
 ## Phase 6: parameterized CPython rows
 
-Build the 3.11 transition row or the frozen two-row Phase 6 snapshot:
+Build the 3.11 transition row or the fixed-membership two-row Phase 6 snapshot:
 
 ```console
 $ docker buildx bake cpython-cp311-x86_64-qualify
@@ -219,8 +220,10 @@ version, adapter and target edges from `release.json`. Rows build and qualify
 independently, export through scratch, and enter phase snapshots only through an
 append-only aggregation chain. `python-phase6-dev` is permanently limited to
 cp313+cp311 even as the latest `python-dev` matrix grows. Rows do not inherit
-each other's build state; changing the global release identity intentionally
-rebinds and requalifies all enabled rows.
+each other's build state. Row-local source and build projections preserve
+unrelated component identities; changes to shared implementation scripts still
+invalidate the corresponding BuildKit layers. Aggregate qualification identity
+changes whenever the supported matrix or its policy changes.
 
 CPython 3.11.16 carries a hash-locked backport of upstream gh-115382 so the
 amd64 build interpreter cannot discover same-SOABI target extensions through
@@ -232,9 +235,9 @@ and exercises an actual `multiprocessing.Lock()` on both targets. Each row
 manifest binds its prepared source, patches, complete build/target SDK tree
 identities and both self-validating qualification reports.
 
-## Phase 7: frozen CPython 3.12 snapshot
+## Phase 7: fixed-membership CPython 3.12 snapshot
 
-Build and qualify the third row and its frozen aggregate graph:
+Build and qualify the third row and its fixed-membership aggregate graph:
 
 ```console
 $ docker buildx bake python-native-phase7
@@ -252,7 +255,7 @@ did not receive the same-SOABI isolation fix. Crossforge therefore carries a
 separate hash-locked gh-115382 backport for the 3.12 source layout. The shared
 row contract defines its adapter, absent `Py_GIL_DISABLED` policy and Phase 7
 introduction once; build, qualification, runtime and Bake consume that same
-contract. `python-phase7-dev` remains frozen at cp313+cp311+cp312 and appends
+contract. `python-phase7-dev` remains limited to cp313+cp311+cp312 and appends
 cp312 only through its qualified scratch row.
 
 ## Phase 8: CPython 3.14 with private zstd
@@ -282,10 +285,45 @@ resolution and the absence of `libzstd.so`, exported private symbols, RPATHs
 and text relocations. Both locked-sysroot and clean-Rocky runtime tiers execute
 one-shot, streaming, dictionary, multithreaded, tarfile and zipfile zstd probes.
 
-Phase 5, 6 and 7 aggregates remain frozen at cp313, cp313+cp311 and
-cp313+cp311+cp312. `python-phase8-dev`, `python-dev` and `python-matrix` are the
-latest four-row graph: cp313+cp311+cp312+cp314, assembled only from qualified
-scratch rows. These are still cache-only development artifacts, not a release.
+Phase 5, 6 and 7 retain fixed row membership at cp313, cp313+cp311 and
+cp313+cp311+cp312. `python-phase8-dev` remains limited to the four-row
+cp313+cp311+cp312+cp314 set. Release or qualification-policy maintenance may
+rebind those reports; these are cache-only development artifacts, not immutable
+release snapshots.
+
+## Phase 9: CPython 3.10 legacy adapter
+
+Build and qualify CPython 3.10 without weakening the true-cross or
+same-SOABI isolation contracts:
+
+```console
+$ docker buildx bake python-native-phase9
+$ docker buildx bake cpython-cp310-x86_64-qualify-build \
+    cpython-cp310-aarch64-qualify-build
+$ docker buildx bake cpython-cp310-x86_64-qualify \
+    cpython-cp310-aarch64-qualify
+$ docker buildx bake python-cp310-dev python-phase9-dev
+$ docker buildx bake python-matrix
+$ docker buildx bake phase9
+```
+
+CPython 3.10.21 predates `--with-build-python`, `HOSTRUNNER` and the modern
+Makefile extension build. The legacy adapter therefore supplies exact
+`PYTHON_FOR_BUILD` and `PYTHON_FOR_REGEN` commands, uses `setup.py` under
+`PYTHONSTRICTEXTENSIONBUILD=1`, and rejects unsupported configure options.
+Crossforge carries a separately hash-locked gh-115382 backport for the 3.10
+source layout so the build interpreter loads target sysconfigdata as source
+without exposing target extension directories through `PYTHONPATH`.
+
+Both target triples remain real cross builds, including x86_64. Qualification
+expects CPython 3.10's `siphash24` runtime contract and independently audits
+required extensions because legacy `setup.py` reports some missing modules
+without failing. Adding cp310 preserves every cp311–cp314 source, build-policy,
+native and target build component digest; it deliberately changes the shared
+Python qualification identities. `python-phase9-dev`, `python-dev` and
+`python-matrix` select cp313+cp311+cp312+cp314+cp310. Python 3.9 remains the
+last planned legacy row. The complete Phase 9 gate has passed locally; CI
+repeats the latest matrix on main.
 
 ## Product contract
 

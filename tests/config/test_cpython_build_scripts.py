@@ -52,6 +52,67 @@ class CPythonBuildScriptTests(unittest.TestCase):
                 self.assertNotIn("ADAPTER", script)
                 self.assertNotIn("adapter=", script)
 
+    def test_cp310_uses_the_explicit_legacy_setup_build_boundary(self):
+        for name, script in (("native", self.native), ("cross", self.cross)):
+            with self.subTest(script=name):
+                self.assertIn('if [[ "$minor" == 3.10 ]]', script)
+                self.assertIn('if [[ "$legacy_setup_build" -eq 0 ]]', script)
+                self.assertIn("configure_arguments+=(", script)
+                self.assertIn("--with-pkg-config=yes", script)
+                self.assertIn("export PYTHONSTRICTEXTENSIONBUILD=1", script)
+                self.assertIn(
+                    "'$(PYTHON_FOR_BUILD) $(srcdir)/setup.py $$quiet build'",
+                    script,
+                )
+                self.assertIn(
+                    "'$(PYTHON_FOR_BUILD) $(srcdir)/setup.py install'",
+                    script,
+                )
+
+        self.assertIn("--with-build-python=\"$build_python\"", self.cross)
+        self.assertIn(
+            "unset HOSTRUNNER MAKEFLAGS MFLAGS PYTHON_FOR_BUILD PYTHON_FOR_REGEN",
+            self.cross,
+        )
+        self.assertIn('export PYTHON_FOR_REGEN="$build_python"', self.cross)
+        self.assertIn(
+            'grep -Fqx "PYTHON_FOR_REGEN?=$build_python" Makefile',
+            self.cross,
+        )
+        for fragment in (
+            "legacy_python_for_build='_PYTHON_PROJECT_BASE=$(abs_builddir)'",
+            "legacy_python_for_build+=' _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM)'",
+            "legacy_python_for_build+=' PYTHONPATH=$(srcdir)/Lib'",
+            "legacy_python_for_build+=' _PYTHON_SYSCONFIGDATA_NAME="
+            "_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH)'",
+            "legacy_python_for_build+=' _PYTHON_SYSCONFIGDATA_PATH=$(shell test -f "
+            "pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`)'",
+            'legacy_python_for_build+=" $build_python"',
+        ):
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, self.cross)
+        self.assertIn(
+            '[[ "$python_for_build_line" == "PYTHON_FOR_BUILD=$legacy_python_for_build" ]]',
+            self.cross,
+        )
+
+    def test_cp310_and_newer_rows_have_distinct_hostrunner_contracts(self):
+        self.assertIn("legacy CPython unexpectedly defines HOSTRUNNER", self.cross)
+        self.assertIn("grep -Eq '^HOSTRUNNER=' Makefile", self.cross)
+        self.assertIn("grep -Eq '^HOSTRUNNER=[[:space:]]*$' Makefile", self.cross)
+        self.assertIn('export PATH="$toolchain/bin:/usr/bin:/bin"', self.cross)
+        self.assertNotIn('PATH="$build_python', self.cross)
+        self.assertNotIn('command -v "python$minor"', self.cross)
+
+    def test_configure_rejects_every_unrecognized_option_warning(self):
+        expected = "grep -Fq 'unrecognized options:' config.log"
+        for name, script in (("native", self.native), ("cross", self.cross)):
+            with self.subTest(script=name):
+                self.assertEqual(script.count(expected), 1)
+                self.assertIn(
+                    "CPython configure accepted an unsupported option", script
+                )
+
     def test_cross_build_locates_all_guard_sources_from_its_script_directory(self):
         self.assertIn(
             'script_directory=$(cd "$(dirname "$0")" && pwd)',

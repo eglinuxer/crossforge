@@ -1,3 +1,4 @@
+import ast
 import io
 import runpy
 import unittest
@@ -10,6 +11,14 @@ PROBE = runpy.run_path(str(REPOSITORY / "tests/python/runtime_probe.py"))
 
 
 class PythonRuntimeProbeContractTests(unittest.TestCase):
+    def test_runtime_probe_is_python310_syntax_compatible(self):
+        path = REPOSITORY / "tests/python/runtime_probe.py"
+        ast.parse(
+            path.read_text(encoding="utf-8"),
+            filename=str(path),
+            feature_version=(3, 10),
+        )
+
     def test_absent_and_zero_gil_policies_are_distinct(self):
         PROBE["validate_gil_policy"]({}, "3.11", "absent")
         PROBE["validate_gil_policy"]({}, "3.12", "absent")
@@ -34,6 +43,56 @@ class PythonRuntimeProbeContractTests(unittest.TestCase):
         self.assertTrue(PROBE["is_exact_integer"](0, 0))
         self.assertFalse(PROBE["is_exact_integer"](False, 0))
         self.assertFalse(PROBE["is_exact_integer"](0.0, 0))
+
+    def test_hash_algorithm_policy_distinguishes_legacy_and_new_rows(self):
+        class FakeHashInfo:
+            algorithm = "siphash24"
+            hash_bits = 64
+            seed_bits = 128
+
+        class FakeSys:
+            hash_info = FakeHashInfo()
+
+        globals_ = PROBE["exercise_hash_algorithm"].__globals__
+        with mock.patch.dict(globals_, {"sys": FakeSys}):
+            self.assertEqual(
+                PROBE["exercise_hash_algorithm"]("siphash24"),
+                {
+                    "algorithm": "siphash24",
+                    "hash_bits": 64,
+                    "seed_bits": 128,
+                },
+            )
+            with self.assertRaisesRegex(PROBE["ProbeError"], "siphash13"):
+                PROBE["exercise_hash_algorithm"]("siphash13")
+
+    def test_configure_arguments_require_exact_unique_tokens(self):
+        expected = (
+            "--host=x86_64-unknown-linux-gnu",
+            "--build=x86_64-pc-linux-gnu",
+            "--prefix=/opt/crossforge/python/cp310/targets/"
+            "x86_64-unknown-linux-gnu",
+            "--with-computed-gotos=yes",
+            "--with-ensurepip=no",
+            "--disable-test-modules",
+        )
+        valid = " ".join(expected)
+        PROBE["validate_configure_arguments"](valid, expected)
+        for malformed in (
+            valid.replace(expected[0], expected[0] + "-evil"),
+            valid.replace(expected[1], expected[1] + "-junk"),
+            valid.replace(expected[3], expected[3] + "-no"),
+            valid.replace(expected[4], expected[4] + "pe"),
+            valid.replace(expected[5], expected[5] + "-extra"),
+            valid + " " + expected[0],
+            "'unterminated",
+            None,
+        ):
+            with self.subTest(malformed=malformed):
+                with self.assertRaises(PROBE["ProbeError"]):
+                    PROBE["validate_configure_arguments"](
+                        malformed, expected
+                    )
 
     def test_absent_zstd_policy_proves_both_imports_are_unavailable(self):
         def missing_module(name):

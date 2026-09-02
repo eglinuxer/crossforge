@@ -516,7 +516,10 @@ class PythonRowManifestTests(unittest.TestCase):
 
     def test_source_manifest_identity_tampering_is_rejected(self):
         mutations = {
-            "adapter": lambda value: value.__setitem__("adapter", "legacy"),
+            "adapter": lambda value: value.__setitem__(
+                "adapter",
+                "modern" if value["adapter"] == "legacy" else "legacy",
+            ),
             "release": lambda value: value.__setitem__("release_sha256", "0" * 64),
             "source": lambda value: value["source"].__setitem__("sha256", "0" * 64),
             "patches": lambda value: value.__setitem__("patches", []),

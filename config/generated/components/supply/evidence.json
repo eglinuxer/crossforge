@@ -9,6 +9,34 @@
       "value": "evidence/oci/rocky-linux-8.index.json.b64"
     },
     {
+      "path": "/python/versions/1/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.10.21.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/bundle_sha256",
+      "value": "8b907f7134ea6e0deb5236948be626a0ef1548da10650d2d44efe4547e2f73f3"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/bundle_size",
+      "value": 7329
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.10.21/Python-3.10.21.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/identity",
+      "value": "pablogsal@python.org"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/oidc_issuer",
+      "value": "https://accounts.google.com"
+    },
+    {
+      "path": "/python/versions/1/source/sigstore/verification",
+      "value": "archived-unverified"
+    },
+    {
       "path": "/python/versions/2/source/sigstore/bundle_evidence",
       "value": "evidence/sigstore/cpython-3.11.16.tar.xz.sigstore.b64"
     },
