@@ -15,6 +15,59 @@ PreparationError = PREPARER["PreparationError"]
 ROW_CONTRACT = runpy.run_path(str(REPOSITORY / "scripts/python_row_contract.py"))
 
 
+FILEFINDER_SYSCONFIG = '''import os
+def _init_posix(vars):
+    name = _get_sysconfigdata_name()
+    if (path := os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')):
+        from importlib.machinery import FileFinder, SourceFileLoader, SOURCE_SUFFIXES
+        from importlib.util import module_from_spec
+        spec = FileFinder(path, (SourceFileLoader, SOURCE_SUFFIXES)).find_spec(name)
+        _temp = module_from_spec(spec)
+        spec.loader.exec_module(_temp)
+    else:
+        _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)
+    vars.update(_temp.build_time_vars)
+
+def _init_non_posix(vars):
+    pass
+'''
+
+
+PATHFINDER_SYSCONFIG = '''import os
+import sys
+
+def _import_from_directory(path, name):
+    if name not in sys.modules:
+        import importlib.machinery
+        import importlib.util
+
+        spec = importlib.machinery.PathFinder.find_spec(name, [path])
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        sys.modules[name] = module
+    return sys.modules[name]
+
+def _get_sysconfigdata_name():
+    return '_sysconfigdata_test'
+
+def _get_sysconfigdata():
+    import importlib
+
+    name = _get_sysconfigdata_name()
+    path = os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')
+    module = _import_from_directory(path, name) if path else importlib.import_module(name)
+
+    return module.build_time_vars
+
+def _init_posix(vars):
+    """Initialize the module as appropriate for POSIX systems."""
+    vars.update(_get_sysconfigdata() | vars)
+
+def _init_non_posix(vars):
+    pass
+'''
+
+
 class PrepareCPythonSourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -204,6 +257,98 @@ class PrepareCPythonSourceTests(unittest.TestCase):
                     },
                 )
 
+    def test_cp313_package_layout_keeps_filefinder_profile(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "Python-3.13.15"
+            self.write_isolation_tree(source, FILEFINDER_SYSCONFIG)
+            PREPARER["validate_sysconfig_isolation"](source, "3.13.15")
+
+    def test_cp314_pathfinder_sysconfig_isolation_profile(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "Python-3.14.7"
+            self.write_isolation_tree(source, PATHFINDER_SYSCONFIG)
+            PREPARER["validate_sysconfig_isolation"](source, "3.14.7")
+
+    def test_cp314_pathfinder_profile_rejects_missing_or_redirected_semantics(self):
+        mutations = {
+            "missing environment read": PATHFINDER_SYSCONFIG.replace(
+                "path = os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')",
+                "path = None",
+            ),
+            "duplicate environment read": PATHFINDER_SYSCONFIG.replace(
+                "path = os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')",
+                "path = os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')\n"
+                "    other = os.environ.get('_PYTHON_SYSCONFIGDATA_PATH')",
+            ),
+            "ambient search path": PATHFINDER_SYSCONFIG.replace(
+                "PathFinder.find_spec(name, [path])",
+                "PathFinder.find_spec(name, sys.path)",
+            ),
+            "reversed path branch": PATHFINDER_SYSCONFIG.replace(
+                "if path else importlib.import_module(name)",
+                "if not path else importlib.import_module(name)",
+            ),
+            "missing fallback import": PATHFINDER_SYSCONFIG.replace(
+                "importlib.import_module(name)",
+                "_import_from_directory(path, name)",
+            ),
+            "missing module factory": PATHFINDER_SYSCONFIG.replace(
+                "module = importlib.util.module_from_spec(spec)",
+                "module = object()",
+            ),
+            "missing module execution": PATHFINDER_SYSCONFIG.replace(
+                "spec.loader.exec_module(module)",
+                "pass",
+            ),
+            "missing module publication": PATHFINDER_SYSCONFIG.replace(
+                "sys.modules[name] = module",
+                "pass",
+            ),
+            "redirected module publication": PATHFINDER_SYSCONFIG.replace(
+                "sys.modules[name] = module",
+                "sys.modules['other'] = module",
+            ),
+            "missing cached module return": PATHFINDER_SYSCONFIG.replace(
+                "return sys.modules[name]",
+                "return module",
+            ),
+            "redirected cached module return": PATHFINDER_SYSCONFIG.replace(
+                "return sys.modules[name]",
+                "return sys.modules['other']",
+            ),
+            "initializer ignores target data": PATHFINDER_SYSCONFIG.replace(
+                "vars.update(_get_sysconfigdata() | vars)",
+                "vars.update(vars)",
+            ),
+        }
+        for name, sysconfig in mutations.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                source = Path(temporary) / "Python-3.14.7"
+                self.write_isolation_tree(source, sysconfig)
+                with self.assertRaises(PreparationError):
+                    PREPARER["validate_sysconfig_isolation"](source, "3.14.7")
+
+    def test_cp314_comment_and_docstring_decoys_do_not_satisfy_profile(self):
+        deceptive = PATHFINDER_SYSCONFIG.replace(
+            "        spec = importlib.machinery.PathFinder.find_spec(name, [path])\n"
+            "        module = importlib.util.module_from_spec(spec)\n"
+            "        spec.loader.exec_module(module)",
+            "        # spec = importlib.machinery.PathFinder.find_spec(name, [path])\n"
+            "        # module = importlib.util.module_from_spec(spec)\n"
+            "        # spec.loader.exec_module(module)\n"
+            "        details = \"\"\"\n"
+            "        spec = importlib.machinery.PathFinder.find_spec(name, [path])\n"
+            "        module = importlib.util.module_from_spec(spec)\n"
+            "        spec.loader.exec_module(module)\n"
+            "        \"\"\"\n"
+            "        module = None",
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "Python-3.14.7"
+            self.write_isolation_tree(source, deceptive)
+            with self.assertRaises(PreparationError):
+                PREPARER["validate_sysconfig_isolation"](source, "3.14.7")
+
     def test_archive_links_are_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             archive = Path(temporary) / "unsafe.tar.xz"
@@ -296,6 +441,23 @@ def _init_non_posix(vars):
                 member.mode = mode
                 member.size = len(payload)
                 output.addfile(member, io.BytesIO(payload))
+
+    @staticmethod
+    def write_isolation_tree(source, sysconfig):
+        assignment = (
+            "PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) "
+            "_PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) "
+            "PYTHONPATH=$(srcdir)/Lib "
+            "_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) "
+            "_PYTHON_SYSCONFIGDATA_PATH=$(shell test -f pybuilddir.txt && echo "
+            "$(abs_builddir)/`cat pybuilddir.txt`) '$with_build_python\n"
+        )
+        (source / "Lib/sysconfig").mkdir(parents=True)
+        (source / "configure").write_text(assignment, encoding="utf-8")
+        (source / "configure.ac").write_text(assignment, encoding="utf-8")
+        (source / "Lib/sysconfig/__init__.py").write_text(
+            sysconfig, encoding="utf-8"
+        )
 
     @staticmethod
     def configuration_for(

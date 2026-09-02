@@ -413,6 +413,165 @@ def apply_patches(source_root, patches, repository):
     return applied
 
 
+def _function_block(source, name, parameters, version):
+    definition = re.compile(
+        r"^def[ \t]+%s[ \t]*\([ \t]*%s[ \t]*\)[ \t]*:[ \t]*(?:#.*)?$"
+        % (re.escape(name), parameters),
+        re.MULTILINE,
+    )
+    matches = list(definition.finditer(source))
+    if len(matches) != 1:
+        raise PreparationError(
+            "CPython %s sysconfig must define %s exactly once" % (version, name)
+        )
+    start = matches[0].start()
+    following = re.search(r"^(?:def|class)[ \t]+", source[matches[0].end():], re.MULTILINE)
+    end = len(source) if following is None else matches[0].end() + following.start()
+    return source[start:end]
+
+
+def _semantic_source(source):
+    """Remove comment-only and triple-quoted text without parsing target syntax."""
+    result = []
+    quote = None
+    triple = re.compile(r"(?:[rRuUbBfF]{0,2})?(\"\"\"|''')")
+    for line in source.splitlines():
+        if quote is not None:
+            if quote in line:
+                quote = None
+            result.append("")
+            continue
+        if line.lstrip().startswith("#"):
+            result.append("")
+            continue
+        match = triple.search(line)
+        if match is not None:
+            delimiter = match.group(1)
+            remainder = line[match.end():]
+            if delimiter not in remainder:
+                quote = delimiter
+            result.append("")
+            continue
+        result.append(line)
+    if quote is not None:
+        raise PreparationError("CPython sysconfig has an unterminated triple-quoted string")
+    return "\n".join(result)
+
+
+def _validate_filefinder_sysconfig(sysconfig, version):
+    initializer = _function_block(sysconfig, "_init_posix", r"vars", version)
+    machinery_import = re.search(
+        r"^\s+from importlib\.machinery import ([^\n]+)$",
+        initializer,
+        re.MULTILINE,
+    )
+    imported_names = set()
+    if machinery_import is not None:
+        imported_names = {
+            item.strip() for item in machinery_import.group(1).split(",")
+        }
+    required_patterns = (
+        r"os\.environ\.get\((['\"])_PYTHON_SYSCONFIGDATA_PATH\1\)",
+        r"FileFinder\s*\(\s*path\s*,\s*\(\s*SourceFileLoader\s*,\s*"
+        r"SOURCE_SUFFIXES\s*\)\s*\)\.find_spec\s*\(\s*name\s*\)",
+        r"from importlib\.util import module_from_spec",
+        r"module_from_spec\s*\(\s*spec\s*\)",
+        r"spec\.loader\.exec_module\s*\(\s*_temp\s*\)",
+    )
+    if (
+        not {"FileFinder", "SourceFileLoader", "SOURCE_SUFFIXES"}.issubset(
+            imported_names
+        )
+        or any(re.search(pattern, initializer) is None for pattern in required_patterns)
+    ):
+        raise PreparationError(
+            "CPython %s sysconfig lacks isolated target-data loading" % version
+        )
+
+
+def _validate_pathfinder_sysconfig(sysconfig, version):
+    semantic = _semantic_source(sysconfig)
+    importer = _function_block(
+        semantic, "_import_from_directory", r"path[ \t]*,[ \t]*name", version
+    )
+    getter = _function_block(semantic, "_get_sysconfigdata", r"", version)
+    initializer = _function_block(semantic, "_init_posix", r"vars", version)
+
+    environment_read = (
+        r"os\.environ\.get\([ \t]*(['\"])"
+        r"_PYTHON_SYSCONFIGDATA_PATH\1[ \t]*\)"
+    )
+    if len(re.findall(environment_read, semantic)) != 1 or re.search(
+        r"^[ \t]+path[ \t]*=[ \t]*%s[ \t]*$" % environment_read,
+        getter,
+        re.MULTILINE,
+    ) is None:
+        raise PreparationError(
+            "CPython %s sysconfig must read the target-data path exactly once"
+            % version
+        )
+
+    importer_patterns = (
+        r"^[ \t]+spec[ \t]*=[ \t]*importlib\.machinery\.PathFinder\.find_spec"
+        r"\([ \t]*name[ \t]*,[ \t]*\[[ \t]*path[ \t]*\][ \t]*\)[ \t]*$",
+        r"^[ \t]+module[ \t]*=[ \t]*importlib\.util\.module_from_spec"
+        r"\([ \t]*spec[ \t]*\)[ \t]*$",
+        r"^[ \t]+spec\.loader\.exec_module\([ \t]*module[ \t]*\)[ \t]*$",
+        r"^[ \t]+sys\.modules\[[ \t]*name[ \t]*\][ \t]*=[ \t]*module[ \t]*$",
+        r"^[ \t]+return[ \t]+sys\.modules\[[ \t]*name[ \t]*\][ \t]*$",
+    )
+    if any(
+        re.search(pattern, importer, re.MULTILINE) is None
+        for pattern in importer_patterns
+    ) or any(
+        len(re.findall(pattern, importer)) != 1
+        for pattern in (
+            r"importlib\.machinery\.PathFinder\.find_spec\s*\(",
+            r"importlib\.util\.module_from_spec\s*\(",
+            r"spec\.loader\.exec_module\s*\(",
+        )
+    ) or re.search(r"(?:sys\.path|import_module\s*\()", importer):
+        raise PreparationError(
+            "CPython %s sysconfig lacks explicit PathFinder target-data loading"
+            % version
+        )
+
+    branch = (
+        r"^[ \t]+module[ \t]*=[ \t]*_import_from_directory"
+        r"\([ \t]*path[ \t]*,[ \t]*name[ \t]*\)[ \t]+if[ \t]+path[ \t]+else[ \t]+"
+        r"importlib\.import_module\([ \t]*name[ \t]*\)[ \t]*$"
+    )
+    if (
+        re.search(branch, getter, re.MULTILINE) is None
+        or len(re.findall(r"_import_from_directory\s*\(", getter)) != 1
+        or len(re.findall(r"importlib\.import_module\s*\(", getter)) != 1
+        or re.search(
+            r"^[ \t]+return[ \t]+module\.build_time_vars[ \t]*$",
+            getter,
+            re.MULTILINE,
+        )
+        is None
+    ):
+        raise PreparationError(
+            "CPython %s sysconfig target-data path/fallback branch differs" % version
+        )
+
+    if (
+        re.search(
+            r"^[ \t]+vars\.update\([ \t]*_get_sysconfigdata\(\)"
+            r"(?:[ \t]*\|[ \t]*vars)?[ \t]*\)[ \t]*$",
+            initializer,
+            re.MULTILINE,
+        )
+        is None
+        or len(re.findall(r"_get_sysconfigdata\s*\(\s*\)", initializer)) != 1
+    ):
+        raise PreparationError(
+            "CPython %s sysconfig POSIX initializer ignores isolated target data"
+            % version
+        )
+
+
 def validate_sysconfig_isolation(source_root, version):
     sysconfig_candidates = (
         "Lib/sysconfig.py",
@@ -460,46 +619,14 @@ def validate_sysconfig_isolation(source_root, version):
                 % (version, name)
             )
     # Do not parse a newer CPython standard library with the Rocky 8 host's
-    # Python 3.6 parser.  Limit the check to the exact initializer affected by
-    # gh-115382 and recognize its required operations independent of grammar
-    # additions in the target Python release.
+    # Python 3.6 parser.  The 3.11-3.13 profile performs the gh-115382 loading
+    # directly in _init_posix.  CPython 3.14 moved it behind _get_sysconfigdata
+    # and uses PathFinder with an explicit one-element search path.
     sysconfig = contents["sysconfig"]
-    start = sysconfig.find("def _init_posix(vars):")
-    end = sysconfig.find("def _init_non_posix(vars):", start)
-    if start < 0:
-        raise PreparationError(
-            "CPython %s sysconfig lacks the POSIX initializer" % version
-        )
-    if end < 0:
-        end = len(sysconfig)
-    initializer = sysconfig[start:end]
-    machinery_import = re.search(
-        r"^\s+from importlib\.machinery import ([^\n]+)$",
-        initializer,
-        re.MULTILINE,
-    )
-    imported_names = set()
-    if machinery_import is not None:
-        imported_names = {
-            item.strip() for item in machinery_import.group(1).split(",")
-        }
-    required_patterns = (
-        r"os\.environ\.get\((['\"])_PYTHON_SYSCONFIGDATA_PATH\1\)",
-        r"FileFinder\s*\(\s*path\s*,\s*\(\s*SourceFileLoader\s*,\s*"
-        r"SOURCE_SUFFIXES\s*\)\s*\)\.find_spec\s*\(\s*name\s*\)",
-        r"from importlib\.util import module_from_spec",
-        r"module_from_spec\s*\(\s*spec\s*\)",
-        r"spec\.loader\.exec_module\s*\(\s*_temp\s*\)",
-    )
-    if (
-        not {"FileFinder", "SourceFileLoader", "SOURCE_SUFFIXES"}.issubset(
-            imported_names
-        )
-        or any(re.search(pattern, initializer) is None for pattern in required_patterns)
-    ):
-        raise PreparationError(
-            "CPython %s sysconfig lacks isolated target-data loading" % version
-        )
+    if version.startswith("3.14."):
+        _validate_pathfinder_sysconfig(sysconfig, version)
+    else:
+        _validate_filefinder_sysconfig(sysconfig, version)
 
 
 def fsync_directory(path):
