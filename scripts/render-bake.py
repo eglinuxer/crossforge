@@ -104,10 +104,15 @@ def python_row(contract, entry):
 def cacheonly_python_target(target, row, contexts=None, extra_args=None):
     arguments = {
         "CPYTHON_ROW": row["row"],
+        "CPYTHON_MINOR": row["minor"],
         "CPYTHON_VERSION": row["version"],
         "CPYTHON_ADAPTER": row["adapter"],
         "CPYTHON_SOURCE_COMPONENT": row["source_component"],
         "CPYTHON_SOURCE_COMPONENT_SHA256": row["source_component_sha256"],
+        "CPYTHON_BUILD_POLICY_COMPONENT": row["build_policy_component"],
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": row[
+            "build_policy_component_sha256"
+        ],
     }
     if extra_args:
         arguments.update(extra_args)
@@ -140,11 +145,45 @@ def render_python_graph(config, targets, component_arguments):
             ) from error
         row["source_component"] = source_component
         row["source_component_sha256"] = source_digest
+        build_policy_component = (
+            "implementation/python-%s-build-policy" % row["row"]
+        )
+        build_policy_argument = component_argument_name(
+            build_policy_component
+        )
+        try:
+            build_policy_digest = component_arguments[build_policy_argument]
+        except KeyError as error:
+            raise ValueError(
+                "Python row lacks a build-policy component digest: %s"
+                % row["row"]
+            ) from error
+        row["build_policy_component"] = build_policy_component
+        row["build_policy_component_sha256"] = build_policy_digest
         source = binding["entry"]["source"]
         if source["status"] != "locked":
             raise ValueError(
                 "enabled CPython row is not source-locked: %s" % row["minor"]
             )
+        patches = binding["entry"].get("patches", [])
+        if not isinstance(patches, list):
+            raise ValueError("Python row patch list is not an array")
+        expected_prefix = "patches/cpython/%s/" % row["minor"]
+        if any(
+            not isinstance(patch, dict)
+            or not isinstance(patch.get("file"), str)
+            or not patch["file"].startswith(expected_prefix)
+            for patch in patches
+        ):
+            raise ValueError(
+                "Python row patch escapes its minor context: %s" % row["row"]
+            )
+        row["patch_context_target"] = (
+            "cpython-patches-%s" % row["row"] if patches else None
+        )
+        row["patch_context"] = "target:%s" % (
+            row["patch_context_target"] or "cpython-empty-patches"
+        )
         rows.append(row)
 
     phase_order = [row["introduced_phase"] for row in rows]
@@ -163,6 +202,25 @@ def render_python_graph(config, targets, component_arguments):
         base["tag"],
         base["manifests"]["amd64"],
     )
+
+    targets["cpython-empty-patches"] = {
+        "inherits": ["_python_common"],
+        "target": "cpython-empty-patches",
+        "contexts": {"crossforge_rocky_amd64": rocky_amd64_context},
+        "output": ["type=cacheonly"],
+    }
+    for row in rows:
+        if row["patch_context_target"] is None:
+            continue
+        targets[row["patch_context_target"]] = {
+            "inherits": ["_python_common"],
+            "target": "cpython-patch-context",
+            "contexts": {
+                "crossforge_cpython_patch_files": "patches/cpython/%s"
+                % row["minor"]
+            },
+            "output": ["type=cacheonly"],
+        }
 
     groups = {}
     for row in rows:
@@ -184,6 +242,7 @@ def render_python_graph(config, targets, component_arguments):
             {
                 "crossforge_host_python": "target:host-python-build-locked",
                 "crossforge_cpython_source": "target:%s" % source_name,
+                "crossforge_cpython_patches": row["patch_context"],
             },
         )
         targets[build_name] = cacheonly_python_target(

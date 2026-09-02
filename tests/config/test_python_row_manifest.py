@@ -1,3 +1,4 @@
+import ast
 import copy
 import contextlib
 import hashlib
@@ -16,6 +17,7 @@ from unittest import mock
 REPOSITORY = Path(__file__).resolve().parents[2]
 VERIFY_PATH = REPOSITORY / "docker/verify-python-row.py"
 FINALIZE_PATH = REPOSITORY / "docker/finalize-python-row.py"
+SOURCE_BINDING_PATH = REPOSITORY / "scripts/python_source_release_binding.py"
 VERIFY = runpy.run_path(str(VERIFY_PATH))
 FINALIZE = runpy.run_path(str(FINALIZE_PATH))
 ROW_CONTRACT = runpy.run_path(str(REPOSITORY / "scripts/python_row_contract.py"))
@@ -52,6 +54,14 @@ class PythonRowManifestTests(unittest.TestCase):
         )
         self.release_path = self.directory / "release.json"
         self.write_json(self.release_path, self.release)
+        binding = json.loads(
+            (REPOSITORY / "config/generated/release-binding.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.component_records = {
+            record["component"]: record for record in binding["components"]
+        }
 
     def tearDown(self):
         self.temporary.cleanup()
@@ -82,6 +92,23 @@ class PythonRowManifestTests(unittest.TestCase):
             entry["adapter"],
         )
 
+    def source_contract_v2(self, minor):
+        entry = self.entry(minor)
+        row = ROW_CONTRACT["contract_for_version"](entry["version"])["row"]
+        source_name = "python/%s-source" % row
+        policy_name = "implementation/python-%s-build-policy" % row
+        source_record = self.component_records[source_name]
+        policy_record = self.component_records[policy_name]
+        return VERIFY["component_row_contract"](
+            row,
+            entry["version"],
+            entry["adapter"],
+            REPOSITORY / source_record["path"],
+            source_record["canonical_sha256"],
+            REPOSITORY / policy_record["path"],
+            policy_record["canonical_sha256"],
+        )
+
     def run_verify(self, minor, manifest):
         entry = self.entry(minor)
         row = ROW_CONTRACT["contract_for_version"](entry["version"])["row"]
@@ -107,11 +134,15 @@ class PythonRowManifestTests(unittest.TestCase):
             text=True,
         )
 
-    def fixture(self, minor):
+    def fixture(self, minor, source_schema_version=1):
         entry = self.entry(minor)
         row = ROW_CONTRACT["contract_for_version"](entry["version"])["row"]
         root = self.directory / (row + "-root")
-        source_manifest = self.source_contract(minor)
+        source_manifest = (
+            self.source_contract(minor)
+            if source_schema_version == 1
+            else self.source_contract_v2(minor)
+        )
         source_path = self.directory / (row + "-prepared-source.json")
         self.write_json(source_path, source_manifest)
 
@@ -337,6 +368,116 @@ class PythonRowManifestTests(unittest.TestCase):
                         sha256_file(fixture["reports"][arch]["path"]),
                     )
 
+    def test_v2_source_manifest_is_rebound_to_complete_release_row(self):
+        fixture = self.fixture("3.12", source_schema_version=2)
+        self.assertEqual(fixture["source"]["schema_version"], 2)
+        self.assertNotIn("release_sha256", fixture["source"])
+        self.assertNotIn("support", fixture["source"])
+        process, output = self.run_finalize(fixture)
+        self.assertEqual(process.returncode, 0, process.stderr)
+        manifest = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["support"], fixture["entry"]["support"])
+        self.assertEqual(
+            manifest["release_sha256"], canonical_sha256(self.release)
+        )
+        self.assertEqual(
+            manifest["source_manifest_sha256"],
+            sha256_file(fixture["source_path"]),
+        )
+        self.assertEqual(manifest["patches"], fixture["entry"]["patches"])
+
+    def test_reusable_bridge_accepts_loaded_v2_manifest_and_release(self):
+        manifest = self.source_contract_v2("3.12")
+        context = FINALIZE["SOURCE_BINDING"]["bind_source_manifest"](
+            manifest,
+            self.release,
+            "cp312",
+            "3.12.14",
+            "modern",
+        )
+        self.assertEqual(context["schema_version"], 2)
+        self.assertEqual(
+            context["release_sha256"], canonical_sha256(self.release)
+        )
+        self.assertEqual(
+            context["source_component"], manifest["source_component"]
+        )
+        self.assertEqual(context["build_policy"], manifest["build_policy"])
+
+    def test_v2_component_policy_and_type_tampering_is_rejected(self):
+        mutations = {
+            "source_name": lambda manifest: manifest["source_component"].__setitem__(
+                "component", "python/cp313-source"
+            ),
+            "source_digest": lambda manifest: manifest["source_component"].__setitem__(
+                "canonical_sha256", "0" * 64
+            ),
+            "policy_digest": lambda manifest: manifest["build_policy"].__setitem__(
+                "canonical_sha256", "0" * 64
+            ),
+            "policy_adapter": lambda manifest: manifest["build_policy"].__setitem__(
+                "adapter", "legacy"
+            ),
+            "policy_bool": lambda manifest: manifest["build_policy"].__setitem__(
+                "sysconfig_isolation", 1
+            ),
+            "schema_float": lambda manifest: manifest.__setitem__(
+                "schema_version", 2.0
+            ),
+            "schema_bool": lambda manifest: manifest.__setitem__(
+                "schema_version", True
+            ),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(mutation=name):
+                fixture = self.fixture("3.12", source_schema_version=2)
+                manifest = copy.deepcopy(fixture["source"])
+                mutate(manifest)
+                self.write_json(fixture["source_path"], manifest)
+                process, _unused_output = self.run_finalize(fixture)
+                self.assertNotEqual(process.returncode, 0)
+
+    def test_v2_source_and_patch_must_still_match_full_release(self):
+        mutations = {
+            "source": lambda manifest: manifest["source"].__setitem__(
+                "sha256", "0" * 64
+            ),
+            "patch": lambda manifest: manifest["patches"][0].__setitem__(
+                "sha256", "0" * 64
+            ),
+            "unknown": lambda manifest: manifest.__setitem__("unknown", True),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(mutation=name):
+                fixture = self.fixture("3.12", source_schema_version=2)
+                manifest = copy.deepcopy(fixture["source"])
+                mutate(manifest)
+                self.write_json(fixture["source_path"], manifest)
+                process, _unused_output = self.run_finalize(fixture)
+                self.assertNotEqual(process.returncode, 0)
+
+    def test_v1_maintenance_validation_does_not_require_component_renderer(self):
+        manifest = self.source_contract("3.11")
+        bridge = FINALIZE["SOURCE_BINDING"]
+        globals_ = bridge["bind_source_manifest"].__globals__
+        original = globals_["component_renderer"]
+
+        def forbidden_renderer():
+            raise AssertionError("v1 path loaded component renderer")
+
+        globals_["component_renderer"] = forbidden_renderer
+        try:
+            context = bridge["bind_source_manifest"](
+                manifest,
+                self.release,
+                "cp311",
+                "3.11.16",
+                "transition",
+            )
+        finally:
+            globals_["component_renderer"] = original
+        self.assertEqual(context["schema_version"], 1)
+
     def test_qualification_identity_tampering_is_rejected(self):
         mutations = {
             "adapter": lambda report: report.__setitem__("adapter", "legacy"),
@@ -447,6 +588,15 @@ class PythonRowManifestTests(unittest.TestCase):
         self.write_json(fixture["source_path"], source)
         process, unused_output = self.run_finalize(fixture)
         self.assertNotEqual(process.returncode, 0)
+
+    def test_row_finalizer_remains_python36_syntax_compatible(self):
+        for path in (FINALIZE_PATH, SOURCE_BINDING_PATH):
+            with self.subTest(path=path.name):
+                ast.parse(
+                    path.read_text(encoding="utf-8"),
+                    filename=str(path),
+                    feature_version=(3, 6),
+                )
 
 
 if __name__ == "__main__":

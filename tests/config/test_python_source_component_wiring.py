@@ -30,7 +30,9 @@ class PythonSourceComponentWiringTests(unittest.TestCase):
         )
         cls.source_block = dockerfile.split(
             "FROM crossforge_rocky_amd64 AS cpython-source", 1
-        )[1].split("FROM crossforge_host_python AS python-host", 1)[0]
+        )[1].split(
+            "FROM crossforge_rocky_amd64 AS cpython-empty-patches-build", 1
+        )[0]
 
     def expected_row(self, contract):
         entry = next(
@@ -39,14 +41,20 @@ class PythonSourceComponentWiringTests(unittest.TestCase):
             if item["version"].rsplit(".", 1)[0] == contract["minor"]
         )
         component = "python/%s-source" % contract["row"]
+        policy = "implementation/python-%s-build-policy" % contract["row"]
         return {
             "CPYTHON_ROW": contract["row"],
+            "CPYTHON_MINOR": contract["minor"],
             "CPYTHON_VERSION": entry["version"],
             "CPYTHON_ADAPTER": contract["adapter"],
             "CPYTHON_SOURCE_COMPONENT": component,
             "CPYTHON_SOURCE_COMPONENT_SHA256": self.binding_records[component][
                 "canonical_sha256"
             ],
+            "CPYTHON_BUILD_POLICY_COMPONENT": policy,
+            "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": self.binding_records[
+                policy
+            ]["canonical_sha256"],
         }
 
     def test_source_stage_copies_only_the_selected_projection_and_three_tools(self):

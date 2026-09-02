@@ -25,14 +25,32 @@ RUN /usr/libexec/platform-python /work/scripts/python_row_contract.py \
       --expected-sha256 "$CPYTHON_SOURCE_COMPONENT_SHA256" \
       --output /out/Python.tar.xz
 
-FROM crossforge_host_python AS python-host
+# Row patch contexts are normalized to one scratch layout. Patched rows receive
+# only their minor directory as a named local context; unpatched rows receive a
+# controlled empty directory with no repository fallback.
+FROM crossforge_rocky_amd64 AS cpython-empty-patches-build
+RUN mkdir -p /row-patches
+
+FROM scratch AS cpython-empty-patches
+COPY --from=cpython-empty-patches-build /row-patches/ /row-patches/
+
+FROM scratch AS cpython-patch-context
+COPY --from=crossforge_cpython_patch_files / /row-patches/
+
+# Build stages inherit only the locked host tool closure. Release-wide policy
+# and qualification/finalization tools enter through the sibling host below.
+FROM crossforge_host_python AS python-build-host
 WORKDIR /src
+
+FROM python-build-host AS python-host
 COPY config/release.json /src/config/release.json
 COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY scripts/validate-release.py /work/scripts/validate-release.py
 COPY scripts/python_row_contract.py /work/scripts/python_row_contract.py
 COPY scripts/finalize-cpython-qualification.py \
   scripts/python_sdk_identity.py scripts/target_artifact_audit.py \
+  scripts/python_source_release_binding.py \
+  scripts/render-release-components.py \
   /work/scripts/
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 docker/finalize-python-row.py /work/scripts/finalize-python-row.py
@@ -40,47 +58,79 @@ RUN /usr/libexec/platform-python /work/scripts/validate-release.py \
       /src/config/release.json \
       --schema /src/config/schemas/release.schema.json
 
-FROM python-host AS cpython-prepared
+FROM python-build-host AS cpython-prepared
 ARG CPYTHON_ROW
+ARG CPYTHON_MINOR
 ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
+ARG CPYTHON_SOURCE_COMPONENT
+ARG CPYTHON_SOURCE_COMPONENT_SHA256
+ARG CPYTHON_BUILD_POLICY_COMPONENT
+ARG CPYTHON_BUILD_POLICY_COMPONENT_SHA256
 COPY --from=crossforge_cpython_source /out/Python.tar.xz /work/source/Python.tar.xz
-COPY --chmod=0755 scripts/prepare-cpython-source.py /work/scripts/prepare-cpython-source.py
-COPY patches/ /work/patches/
+COPY --from=crossforge_cpython_source \
+  /work/config/python-source-component.json \
+  /work/config/python-source-component.json
+COPY config/generated/components/implementation/python-${CPYTHON_ROW}-build-policy.json \
+  /work/config/python-build-policy-component.json
+COPY --from=crossforge_cpython_patches /row-patches/ \
+  /work/patches/cpython/${CPYTHON_MINOR}/
+COPY --chmod=0755 scripts/prepare-cpython-source.py \
+  scripts/release_component.py scripts/python_row_contract.py \
+  /work/scripts/
+COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 RUN --network=none command -v patch >/dev/null \
+    && test "$CPYTHON_MINOR" = "${CPYTHON_VERSION%.*}" \
+    && test "$CPYTHON_SOURCE_COMPONENT" = "python/$CPYTHON_ROW-source" \
+    && test "$CPYTHON_BUILD_POLICY_COMPONENT" = \
+      "implementation/python-$CPYTHON_ROW-build-policy" \
     && /usr/libexec/platform-python /work/scripts/verify-python-row.py \
-      --release /src/config/release.json \
       --row "$CPYTHON_ROW" \
       --version "$CPYTHON_VERSION" \
       --adapter "$CPYTHON_ADAPTER" \
+      --source-component /work/config/python-source-component.json \
+      --source-component-sha256 "$CPYTHON_SOURCE_COMPONENT_SHA256" \
+      --policy-component /work/config/python-build-policy-component.json \
+      --policy-component-sha256 "$CPYTHON_BUILD_POLICY_COMPONENT_SHA256" \
     && /usr/libexec/platform-python /work/scripts/prepare-cpython-source.py \
       --row "$CPYTHON_ROW" \
       --archive /work/source/Python.tar.xz \
       --destination /work/src/cpython \
       --manifest /work/source/source-manifest.json \
-      --config /src/config/release.json \
-      --schema /src/config/schemas/release.schema.json \
+      --source-component /work/config/python-source-component.json \
+      --source-component-sha256 "$CPYTHON_SOURCE_COMPONENT_SHA256" \
+      --policy-component /work/config/python-build-policy-component.json \
+      --policy-component-sha256 "$CPYTHON_BUILD_POLICY_COMPONENT_SHA256" \
     && /usr/libexec/platform-python /work/scripts/verify-python-row.py \
-      --release /src/config/release.json \
       --row "$CPYTHON_ROW" \
       --version "$CPYTHON_VERSION" \
       --adapter "$CPYTHON_ADAPTER" \
+      --source-component /work/config/python-source-component.json \
+      --source-component-sha256 "$CPYTHON_SOURCE_COMPONENT_SHA256" \
+      --policy-component /work/config/python-build-policy-component.json \
+      --policy-component-sha256 "$CPYTHON_BUILD_POLICY_COMPONENT_SHA256" \
       --manifest /work/source/source-manifest.json
 
 FROM crossforge_cpython_prepared AS cpython-build
 ARG CPYTHON_ROW
+ARG CPYTHON_MINOR
 ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
+ARG CPYTHON_SOURCE_COMPONENT_SHA256
+ARG CPYTHON_BUILD_POLICY_COMPONENT_SHA256
 ARG CROSSFORGE_JOBS=4
 COPY --chmod=0755 scripts/build-cpython-native.sh /work/scripts/build-cpython-native.sh
 RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
-      --release /src/config/release.json \
       --row "$CPYTHON_ROW" \
       --version "$CPYTHON_VERSION" \
       --adapter "$CPYTHON_ADAPTER" \
+      --source-component /work/config/python-source-component.json \
+      --source-component-sha256 "$CPYTHON_SOURCE_COMPONENT_SHA256" \
+      --policy-component /work/config/python-build-policy-component.json \
+      --policy-component-sha256 "$CPYTHON_BUILD_POLICY_COMPONENT_SHA256" \
       --manifest /work/source/source-manifest.json
-RUN --network=none minor="${CPYTHON_VERSION%.*}" \
-    && compact_minor="${minor/./}" \
+RUN --network=none test "$CPYTHON_MINOR" = "${CPYTHON_VERSION%.*}" \
+    && compact_minor="${CPYTHON_MINOR/./}" \
     && /work/scripts/build-cpython-native.sh \
       /work/src/cpython \
       "/work/build/cpython-$CPYTHON_ROW-native" \
@@ -90,10 +140,13 @@ RUN --network=none minor="${CPYTHON_VERSION%.*}" \
       "$CROSSFORGE_JOBS" \
     && test "$CPYTHON_ROW" = "cp$compact_minor"
 
-FROM python-host AS cpython-cross
+FROM python-build-host AS cpython-cross
 ARG CPYTHON_ROW
+ARG CPYTHON_MINOR
 ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
+ARG CPYTHON_SOURCE_COMPONENT_SHA256
+ARG CPYTHON_BUILD_POLICY_COMPONENT_SHA256
 ARG CROSSFORGE_TARGET_ARCH
 ARG CROSSFORGE_TARGET_TRIPLE
 ARG CROSSFORGE_JOBS=4
@@ -103,22 +156,27 @@ COPY --from=crossforge_toolchain \
   /opt/crossforge/sysroots/ /opt/crossforge/sysroots/
 COPY --from=crossforge_cpython_prepared /work/src/cpython/ /work/src/cpython/
 COPY --from=crossforge_cpython_prepared /work/source/ /work/source/
+COPY --from=crossforge_cpython_prepared /work/config/ /work/config/
+COPY --from=crossforge_cpython_prepared /work/scripts/ /work/scripts/
 COPY --from=crossforge_cpython_build \
   /opt/crossforge/python/ /opt/crossforge/python/
 COPY --chmod=0755 scripts/build-cpython-cross.sh /work/scripts/build-cpython-cross.sh
 COPY scripts/deny-target-exec.c scripts/target-artifact-canary.c \
   scripts/target-exec-canary.c /work/scripts/
 RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
-      --release /src/config/release.json \
       --row "$CPYTHON_ROW" \
       --version "$CPYTHON_VERSION" \
       --adapter "$CPYTHON_ADAPTER" \
+      --source-component /work/config/python-source-component.json \
+      --source-component-sha256 "$CPYTHON_SOURCE_COMPONENT_SHA256" \
+      --policy-component /work/config/python-build-policy-component.json \
+      --policy-component-sha256 "$CPYTHON_BUILD_POLICY_COMPONENT_SHA256" \
       --manifest /work/source/source-manifest.json
 RUN --network=none case "$CROSSFORGE_TARGET_ARCH:$CROSSFORGE_TARGET_TRIPLE" in \
       x86_64:x86_64-unknown-linux-gnu|aarch64:aarch64-unknown-linux-gnu) ;; \
       *) echo "error: target architecture/triple mismatch" >&2; exit 1 ;; \
     esac \
-    && minor="${CPYTHON_VERSION%.*}" \
+    && test "$CPYTHON_MINOR" = "${CPYTHON_VERSION%.*}" \
     && /work/scripts/build-cpython-cross.sh \
       /work/src/cpython \
       "/work/build/cpython-$CPYTHON_ROW-$CROSSFORGE_TARGET_ARCH" \
@@ -126,7 +184,7 @@ RUN --network=none case "$CROSSFORGE_TARGET_ARCH:$CROSSFORGE_TARGET_TRIPLE" in \
       "/opt/crossforge/sysroots/el8/$CROSSFORGE_TARGET_ARCH" \
       "/opt/crossforge/targets/$CROSSFORGE_TARGET_TRIPLE" \
       "$CROSSFORGE_TARGET_TRIPLE" \
-      "/opt/crossforge/python/$CPYTHON_ROW/build/bin/python$minor" \
+      "/opt/crossforge/python/$CPYTHON_ROW/build/bin/python$CPYTHON_MINOR" \
       "$CPYTHON_VERSION" \
       "$CPYTHON_ADAPTER" \
       "$CROSSFORGE_JOBS"
@@ -140,15 +198,22 @@ ARG CPYTHON_ADAPTER
 ARG CROSSFORGE_TARGET_ARCH
 ARG CROSSFORGE_TARGET_TRIPLE
 COPY config/release.json /src/config/release.json
+COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 scripts/qualify-cpython.py /work/scripts/qualify-cpython.py
-COPY scripts/python_sdk_identity.py scripts/target_artifact_audit.py /work/scripts/
+COPY scripts/python_sdk_identity.py scripts/target_artifact_audit.py \
+  scripts/python_source_release_binding.py scripts/render-release-components.py \
+  scripts/python_row_contract.py scripts/validate-release.py /work/scripts/
 COPY tests/python/minimal_extension.c /work/tests/python/minimal_extension.c
-RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
+RUN /usr/libexec/platform-python /work/scripts/validate-release.py \
+      /src/config/release.json \
+      --schema /src/config/schemas/release.schema.json \
+    && /usr/libexec/platform-python /work/scripts/verify-python-row.py \
       --release /src/config/release.json \
       --row "$CPYTHON_ROW" \
       --version "$CPYTHON_VERSION" \
-      --adapter "$CPYTHON_ADAPTER"
+      --adapter "$CPYTHON_ADAPTER" \
+      --manifest /work/source/source-manifest.json
 RUN --network=none minor="${CPYTHON_VERSION%.*}" \
     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py \
       --prefix "/opt/crossforge/python/$CPYTHON_ROW/targets/$CROSSFORGE_TARGET_TRIPLE" \
@@ -295,9 +360,16 @@ ARG CPYTHON_ROW
 ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
 COPY config/release.json /src/config/release.json
+COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 docker/finalize-python-row.py /work/scripts/finalize-python-row.py
-RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
+COPY scripts/python_source_release_binding.py \
+  scripts/render-release-components.py scripts/python_row_contract.py \
+  scripts/validate-release.py /work/scripts/
+RUN /usr/libexec/platform-python /work/scripts/validate-release.py \
+      /src/config/release.json \
+      --schema /src/config/schemas/release.schema.json \
+    && /usr/libexec/platform-python /work/scripts/verify-python-row.py \
       --release /src/config/release.json \
       --row "$CPYTHON_ROW" \
       --version "$CPYTHON_VERSION" \

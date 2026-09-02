@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify generated CPython row metadata against the canonical release file."""
+"""Verify CPython row metadata against release and component identities."""
 
 import argparse
 import hashlib
@@ -26,6 +26,7 @@ def support_script(name):
 
 ROW_CONTRACT = None
 PREPARER = None
+SOURCE_BINDING = None
 
 
 def row_contract_tools():
@@ -44,6 +45,15 @@ def preparation_tools():
             str(support_script("prepare-cpython-source.py"))
         )
     return PREPARER
+
+
+def source_binding_tools():
+    global SOURCE_BINDING
+    if SOURCE_BINDING is None:
+        SOURCE_BINDING = runpy.run_path(
+            str(support_script("python_source_release_binding.py"))
+        )
+    return SOURCE_BINDING
 
 
 def require(condition, message):
@@ -180,6 +190,17 @@ def verify_source_manifest(path, expected):
     return actual
 
 
+def bridge_source_manifest(manifest, release, row, version, adapter):
+    """Bind one loaded v1/v2 source manifest to a complete release row."""
+    tools = source_binding_tools()
+    try:
+        return tools["bind_source_manifest"](
+            manifest, release, row, version, adapter
+        )
+    except tools["BindingError"] as error:
+        raise RowError(str(error)) from error
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--release", type=Path)
@@ -208,6 +229,7 @@ def main():
         (arguments.release is not None) != component_mode,
         "select exactly one full release or component input mode",
     )
+    release = None
     if component_mode:
         contract = component_row_contract(
             arguments.row,
@@ -219,14 +241,24 @@ def main():
             arguments.policy_component_sha256,
         )
     else:
+        release = load_json(arguments.release)
         contract = row_contract(
-            load_json(arguments.release),
+            release,
             arguments.row,
             arguments.version,
             arguments.adapter,
         )
     if arguments.manifest is not None:
-        verify_source_manifest(arguments.manifest, contract)
+        if component_mode:
+            verify_source_manifest(arguments.manifest, contract)
+        else:
+            bridge_source_manifest(
+                load_json(arguments.manifest),
+                release,
+                arguments.row,
+                arguments.version,
+                arguments.adapter,
+            )
     print("valid CPython row: %s %s %s" % (arguments.row, arguments.version, arguments.adapter))
     return 0
 

@@ -181,6 +181,9 @@
     "cpython-build-cp311": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -200,6 +203,9 @@
     "cpython-build-cp312": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -219,6 +225,9 @@
     "cpython-build-cp313": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -238,6 +247,9 @@
     "cpython-cp311-aarch64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -263,6 +275,9 @@
     "cpython-cp311-aarch64-qualify-build": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -284,6 +299,9 @@
     "cpython-cp311-x86_64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -308,6 +326,9 @@
     "cpython-cp311-x86_64-qualify-build": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -329,6 +350,9 @@
     "cpython-cp312-aarch64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -354,6 +378,9 @@
     "cpython-cp312-aarch64-qualify-build": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -375,6 +402,9 @@
     "cpython-cp312-x86_64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -399,6 +429,9 @@
     "cpython-cp312-x86_64-qualify-build": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -420,6 +453,9 @@
     "cpython-cp313-aarch64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -445,6 +481,9 @@
     "cpython-cp313-aarch64-qualify-build": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -466,6 +505,9 @@
     "cpython-cp313-x86_64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -490,6 +532,9 @@
     "cpython-cp313-x86_64-qualify-build": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -511,6 +556,9 @@
     "cpython-cross-cp311-aarch64": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -535,6 +583,9 @@
     "cpython-cross-cp311-x86_64": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -559,6 +610,9 @@
     "cpython-cross-cp312-aarch64": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -583,6 +637,9 @@
     "cpython-cross-cp312-x86_64": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -607,6 +664,9 @@
     "cpython-cross-cp313-aarch64": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -631,6 +691,9 @@
     "cpython-cross-cp313-x86_64": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -652,15 +715,55 @@
       ],
       "target": "cpython-cross"
     },
+    "cpython-empty-patches": {
+      "contexts": {
+        "crossforge_rocky_amd64": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-empty-patches"
+    },
+    "cpython-patches-cp311": {
+      "contexts": {
+        "crossforge_cpython_patch_files": "patches/cpython/3.11"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-patch-context"
+    },
+    "cpython-patches-cp312": {
+      "contexts": {
+        "crossforge_cpython_patch_files": "patches/cpython/3.12"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-patch-context"
+    },
     "cpython-prepared-cp311": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16"
       },
       "contexts": {
+        "crossforge_cpython_patches": "target:cpython-patches-cp311",
         "crossforge_cpython_source": "target:cpython-source-cp311",
         "crossforge_host_python": "target:host-python-build-locked"
       },
@@ -675,12 +778,16 @@
     "cpython-prepared-cp312": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14"
       },
       "contexts": {
+        "crossforge_cpython_patches": "target:cpython-patches-cp312",
         "crossforge_cpython_source": "target:cpython-source-cp312",
         "crossforge_host_python": "target:host-python-build-locked"
       },
@@ -695,12 +802,16 @@
     "cpython-prepared-cp313": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15"
       },
       "contexts": {
+        "crossforge_cpython_patches": "target:cpython-empty-patches",
         "crossforge_cpython_source": "target:cpython-source-cp313",
         "crossforge_host_python": "target:host-python-build-locked"
       },
@@ -715,6 +826,9 @@
     "cpython-source-cp311": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -734,6 +848,9 @@
     "cpython-source-cp312": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -753,6 +870,9 @@
     "cpython-source-cp313": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -772,6 +892,9 @@
     "python-cp311-dev": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -792,6 +915,9 @@
     "python-cp312-dev": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -812,6 +938,9 @@
     "python-cp313-dev": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -847,6 +976,9 @@
     "python-dev-append-cp311": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -867,6 +999,9 @@
     "python-dev-append-cp312": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -887,6 +1022,9 @@
     "python-dev-append-cp313": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -952,6 +1090,9 @@
     "python-row-cp311": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -974,6 +1115,9 @@
     "python-row-cp312": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -996,6 +1140,9 @@
     "python-row-cp313": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",

@@ -31,27 +31,16 @@ QualificationError = QUALIFICATION_VALIDATOR["FinalizationError"]
 SDK_IDENTITY = runpy.run_path(str(support_script("python_sdk_identity.py")))
 SDKIdentityError = SDK_IDENTITY["IdentityError"]
 sdk_tree_identity = SDK_IDENTITY["sdk_tree_identity"]
+SOURCE_BINDING = runpy.run_path(
+    str(support_script("python_source_release_binding.py"))
+)
+SourceBindingError = SOURCE_BINDING["BindingError"]
 
 
 TARGETS = {
     "x86_64": "x86_64-unknown-linux-gnu",
     "aarch64": "aarch64-unknown-linux-gnu",
 }
-SOURCE_MANIFEST_KEYS = {
-    "schema_version",
-    "kind",
-    "row",
-    "version",
-    "minor",
-    "compact",
-    "adapter",
-    "support",
-    "release_sha256",
-    "source",
-    "patches",
-}
-SOURCE_KEYS = {"url", "size", "sha256"}
-PATCH_KEYS = {"file", "sha256"}
 QUALIFICATION_SOURCE_KEYS = {
     "url",
     "size",
@@ -134,32 +123,24 @@ def main():
     release = load_json(arguments.release)
     release_sha256 = canonical_sha256(release)
     source_manifest = load_json(arguments.source_manifest)
+    try:
+        source_context = SOURCE_BINDING["bind_source_manifest"](
+            source_manifest,
+            release,
+            arguments.row,
+            arguments.version,
+            arguments.adapter,
+        )
+    except SourceBindingError as error:
+        raise FinalizationError(
+            "prepared source manifest is not release-bound: %s" % error
+        ) from error
     require(
-        set(source_manifest) == SOURCE_MANIFEST_KEYS,
-        "prepared source manifest fields differ from row contract",
+        source_context["release_sha256"] == release_sha256,
+        "prepared source bridge release identity differs",
     )
-    require(
-        source_manifest.get("kind") == "crossforge-cpython-source-row"
-        and source_manifest.get("row") == arguments.row
-        and source_manifest.get("version") == arguments.version
-        and source_manifest.get("adapter") == arguments.adapter
-        and source_manifest.get("release_sha256") == release_sha256,
-        "prepared source manifest differs from row contract",
-    )
-    source = source_manifest.get("source")
-    require(
-        isinstance(source, dict) and set(source) == SOURCE_KEYS,
-        "prepared source identity is invalid",
-    )
-    patches = source_manifest.get("patches")
-    require(
-        isinstance(patches, list)
-        and all(
-            isinstance(patch, dict) and set(patch) == PATCH_KEYS
-            for patch in patches
-        ),
-        "prepared patch identity is invalid",
-    )
+    source = source_context["source"]
+    patches = source_context["patches"]
     build_python = (
         arguments.root
         / "opt/crossforge/python"
@@ -288,7 +269,7 @@ def main():
         "row": arguments.row,
         "version": arguments.version,
         "adapter": arguments.adapter,
-        "support": source_manifest.get("support"),
+        "support": source_context["support"],
         "release_sha256": release_sha256,
         "source": source,
         "source_manifest_sha256": sha256_file(arguments.source_manifest),

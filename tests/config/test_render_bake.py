@@ -46,13 +46,19 @@ class RenderBakeTests(unittest.TestCase):
         entry = matches[0]
         row = "cp" + minor.replace(".", "")
         source_component = "python/%s-source" % row
+        policy_component = "implementation/python-%s-build-policy" % row
         return {
             "CPYTHON_ROW": row,
+            "CPYTHON_MINOR": minor,
             "CPYTHON_VERSION": entry["version"],
             "CPYTHON_ADAPTER": entry["adapter"],
             "CPYTHON_SOURCE_COMPONENT": source_component,
             "CPYTHON_SOURCE_COMPONENT_SHA256": self.binding_records[
                 source_component
+            ]["canonical_sha256"],
+            "CPYTHON_BUILD_POLICY_COMPONENT": policy_component,
+            "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": self.binding_records[
+                policy_component
             ]["canonical_sha256"],
         }
 
@@ -303,14 +309,17 @@ class RenderBakeTests(unittest.TestCase):
             {
                 "crossforge_host_python": "target:host-python-build-locked",
                 "crossforge_cpython_source": "target:cpython-source-cp311",
+                "crossforge_cpython_patches": "target:cpython-patches-cp311",
             },
         )
         source_block = self.python_dockerfile.split(
             "FROM crossforge_rocky_amd64 AS cpython-source", 1
-        )[1].split("FROM crossforge_host_python AS python-host", 1)[0]
+        )[1].split(
+            "FROM crossforge_rocky_amd64 AS cpython-empty-patches-build", 1
+        )[0]
         self.assertNotIn("prepare-cpython-source.py", source_block)
         prepared_block = self.python_dockerfile.split(
-            "FROM python-host AS cpython-prepared", 1
+            "FROM python-build-host AS cpython-prepared", 1
         )[1].split("FROM crossforge_cpython_prepared AS cpython-build", 1)[0]
         self.assertIn("command -v patch", prepared_block)
         self.assertIn("--network=none", prepared_block)
@@ -366,7 +375,7 @@ class RenderBakeTests(unittest.TestCase):
                     name,
                 )
         cross_block = self.python_dockerfile.split(
-            "FROM python-host AS cpython-cross", 1
+            "FROM python-build-host AS cpython-cross", 1
         )[1].split("FROM crossforge_cpython_cross AS cpython-qualify-build", 1)[0]
         self.assertNotIn("crossforge_qemu", cross_block)
         self.assertNotIn("qemu-aarch64", cross_block)
