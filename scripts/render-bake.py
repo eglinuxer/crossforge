@@ -445,7 +445,7 @@ def render_python_graph(config, targets, component_arguments):
         "inherits": ["_python_common"],
         "target": "sdk-toolchains-dev",
         "contexts": {
-            "crossforge_host_python": "target:host-python-build-locked",
+            "crossforge_host_runtime": "target:host-runtime-qualified",
             "crossforge_toolchain_x86_64": "target:toolchain-x86_64-dev",
             "crossforge_toolchain_aarch64": "target:toolchain-aarch64-dev",
         },
@@ -499,7 +499,8 @@ def render_python_graph(config, targets, component_arguments):
                 )
             },
             "contexts": {
-                "crossforge_sdk_base": "target:%s" % snapshot_base
+                "crossforge_sdk_base": "target:%s" % snapshot_base,
+                "crossforge_qemu_validated": "target:qemu-aarch64-validated",
             },
             "output": ["type=cacheonly"],
         }
@@ -533,7 +534,10 @@ def render_python_graph(config, targets, component_arguments):
         "args": {
             "CROSSFORGE_PYTHON_ROWS": " ".join(latest_row_names)
         },
-        "contexts": {"crossforge_sdk_base": "target:%s" % aggregate_base},
+        "contexts": {
+            "crossforge_sdk_base": "target:%s" % aggregate_base,
+            "crossforge_qemu_validated": "target:qemu-aarch64-validated",
+        },
         "output": ["type=cacheonly"],
     }
     groups["python-matrix"] = {"targets": ["python-dev"]}

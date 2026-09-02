@@ -235,6 +235,18 @@ RUN --network=none \
       --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_RUNTIME_SHA256"
 ENV PATH="/opt/rh/gcc-toolset-15/root/usr/bin:${PATH}"
 
+FROM host-runtime-locked AS host-runtime-qualified
+ARG CROSSFORGE_COMPONENT_RPM_HOST_RUNTIME_SHA256
+COPY --chmod=0755 scripts/qualify-host-runtime.py ./scripts/qualify-host-runtime.py
+RUN --network=none ./scripts/qualify-host-runtime.py \
+      --lock ./locks/host-runtime-el8-x86_64.json \
+      --transaction ./locks/transactions/host-runtime-el8-x86_64.json \
+      --marker /usr/share/crossforge/rpm-locks/host-runtime.json \
+      --release-component ./config/components/rpm-host-runtime.json \
+      --release-component-sha256 \
+        "$CROSSFORGE_COMPONENT_RPM_HOST_RUNTIME_SHA256" \
+      --output /opt/crossforge/qualification/host-runtime.json
+
 # The common host transaction exactly reproduces the previously qualified prep
 # environment. RPM scripts/triggers execute, but the package set is immutable
 # and installation runs without repositories or network access.

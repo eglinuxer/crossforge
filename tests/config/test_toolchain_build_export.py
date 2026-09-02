@@ -141,6 +141,11 @@ class ToolchainBuildExportTests(unittest.TestCase):
             sdk["crossforge_toolchain_aarch64"],
             "target:toolchain-aarch64-dev",
         )
+        self.assertEqual(
+            sdk["crossforge_host_runtime"],
+            "target:host-runtime-qualified",
+        )
+        self.assertNotIn("crossforge_host_python", sdk)
 
     def test_build_export_internal_closures_exclude_qualification_and_qemu(self):
         edges = {

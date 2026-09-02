@@ -386,8 +386,10 @@ RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
 FROM scratch AS cpython-row-export
 COPY --from=cpython-row-assemble /row-export/ /
 
-# The common dev base carries both qualified toolchains/sysroots exactly once.
-FROM python-host AS sdk-toolchains-dev
+# The user-facing base starts from the independently locked and qualified host
+# runtime. Python/GCC build closures remain confined to earlier stages.
+FROM crossforge_host_runtime AS sdk-toolchains-dev
+WORKDIR /
 COPY --from=crossforge_toolchain_x86_64 \
   /opt/crossforge/targets/x86_64-unknown-linux-gnu/ \
   /opt/crossforge/targets/x86_64-unknown-linux-gnu/
@@ -400,11 +402,23 @@ COPY --from=crossforge_toolchain_aarch64 \
 COPY --from=crossforge_toolchain_aarch64 \
   /opt/crossforge/sysroots/el8/aarch64/ \
   /opt/crossforge/sysroots/el8/aarch64/
+COPY --from=crossforge_toolchain_x86_64 \
+  /work/qualification/x86_64.json \
+  /opt/crossforge/qualification/toolchain/x86_64.json
+COPY --from=crossforge_toolchain_x86_64 \
+  /work/qualification/clean-rocky.ok \
+  /opt/crossforge/qualification/toolchain/x86_64-clean-runtime.ok
+COPY --from=crossforge_toolchain_aarch64 \
+  /work/qualification/aarch64.json \
+  /opt/crossforge/qualification/toolchain/aarch64.json
 RUN test ! -e /usr/local/libexec/crossforge/qemu-aarch64 \
     && test ! -e /runtime-locked \
     && test ! -e /runtime-clean \
     && test ! -e /rpm-bundle \
-    && test ! -e /rpm-bundle-python
+    && test ! -e /rpm-bundle-python \
+    && rm -rf /src /work \
+    && mkdir -p /workspace
+WORKDIR /workspace
 
 # This is the only cumulative stage. It appends one already-qualified scratch
 # row to an SDK base and rejects duplicate rows before COPY can overwrite them.
@@ -416,8 +430,10 @@ COPY config/release.json /src/config/release.json
 COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 docker/finalize-python-row.py /work/scripts/finalize-python-row.py
-COPY scripts/abi_contract.py scripts/python_abi_audit.py \
-  scripts/python_runtime_providers.py /work/scripts/
+COPY scripts/abi_contract.py scripts/finalize-cpython-qualification.py \
+  scripts/python_abi_audit.py scripts/python_runtime_providers.py \
+  scripts/python_sdk_identity.py scripts/python_zstd_evidence.py \
+  scripts/target_artifact_audit.py /work/scripts/
 COPY scripts/python_source_release_binding.py \
   scripts/render-release-components.py scripts/python_row_contract.py \
   scripts/validate-release.py /work/scripts/
@@ -477,8 +493,15 @@ RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
 
 FROM crossforge_sdk_base AS python-sdk-final
 ARG CROSSFORGE_PYTHON_ROWS
-RUN test ! -e /usr/local/libexec/crossforge/qemu-aarch64 \
-    && test ! -e /runtime-locked \
+COPY --from=crossforge_qemu_validated \
+  /usr/local/libexec/crossforge/qemu-aarch64 \
+  /usr/local/libexec/crossforge/qemu-aarch64
+COPY config/release.json /opt/crossforge/release.json
+COPY --chmod=0755 scripts/qualify-final-sdk.py \
+  scripts/loader_evidence.py scripts/python_row_contract.py \
+  scripts/python_sdk_identity.py scripts/render-release-components.py \
+  scripts/validate-release.py /work/scripts/
+RUN --network=none test ! -e /runtime-locked \
     && test ! -e /runtime-clean \
     && expected=0 \
     && for row in $CROSSFORGE_PYTHON_ROWS; do \
@@ -487,4 +510,31 @@ RUN test ! -e /usr/local/libexec/crossforge/qemu-aarch64 \
        done \
     && actual=$(find /opt/crossforge/qualification/python \
          -mindepth 2 -maxdepth 2 -name row.json -type f | wc -l) \
-    && test "$actual" -eq "$expected"
+    && test "$actual" -eq "$expected" \
+    && /work/scripts/qualify-final-sdk.py \
+      --release /opt/crossforge/release.json \
+      --rows $CROSSFORGE_PYTHON_ROWS \
+      --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
+      --output /opt/crossforge/qualification/final-sdk.json \
+    && rm -rf /src /work /sources /out /resolved /row-export /plans \
+      /runtime-root /runtime-locked /runtime-clean /sysroot \
+      /rpm-bundle /rpm-bundle-gcc \
+      /rpm-bundle-python \
+    && mkdir -p /workspace \
+    && test ! -e /src \
+    && test ! -e /work \
+    && test ! -e /sources \
+    && test ! -e /out \
+    && test ! -e /resolved \
+    && test ! -e /row-export \
+    && test ! -e /runtime-root \
+    && test ! -e /sysroot \
+    && test ! -e /rpm-bundle \
+    && test ! -e /rpm-bundle-gcc \
+    && test ! -e /rpm-bundle-python \
+    && test ! -e /opt/crossforge/README.phase1 \
+    && ! find /opt/crossforge \
+      \( -name .crossforge-empty -o -name '_crossforge*.so' \) \
+      -print -quit | grep -q .
+ENV CROSSFORGE_QEMU_AARCH64=/usr/local/libexec/crossforge/qemu-aarch64
+WORKDIR /workspace

@@ -1946,6 +1946,7 @@
         "CROSSFORGE_PYTHON_ROWS": "cp313 cp311 cp312 cp314 cp310 cp39"
       },
       "contexts": {
+        "crossforge_qemu_validated": "target:qemu-aarch64-validated",
         "crossforge_sdk_base": "target:python-dev-append-cp39"
       },
       "inherits": [
@@ -2099,6 +2100,7 @@
         "CROSSFORGE_PYTHON_ROWS": "cp313 cp311 cp312 cp314 cp310 cp39"
       },
       "contexts": {
+        "crossforge_qemu_validated": "target:qemu-aarch64-validated",
         "crossforge_sdk_base": "target:python-dev-append-cp39"
       },
       "inherits": [
@@ -2114,6 +2116,7 @@
         "CROSSFORGE_PYTHON_ROWS": "cp313"
       },
       "contexts": {
+        "crossforge_qemu_validated": "target:qemu-aarch64-validated",
         "crossforge_sdk_base": "target:python-dev-append-cp313"
       },
       "inherits": [
@@ -2129,6 +2132,7 @@
         "CROSSFORGE_PYTHON_ROWS": "cp313 cp311"
       },
       "contexts": {
+        "crossforge_qemu_validated": "target:qemu-aarch64-validated",
         "crossforge_sdk_base": "target:python-dev-append-cp311"
       },
       "inherits": [
@@ -2144,6 +2148,7 @@
         "CROSSFORGE_PYTHON_ROWS": "cp313 cp311 cp312"
       },
       "contexts": {
+        "crossforge_qemu_validated": "target:qemu-aarch64-validated",
         "crossforge_sdk_base": "target:python-dev-append-cp312"
       },
       "inherits": [
@@ -2159,6 +2164,7 @@
         "CROSSFORGE_PYTHON_ROWS": "cp313 cp311 cp312 cp314"
       },
       "contexts": {
+        "crossforge_qemu_validated": "target:qemu-aarch64-validated",
         "crossforge_sdk_base": "target:python-dev-append-cp314"
       },
       "inherits": [
@@ -2174,6 +2180,7 @@
         "CROSSFORGE_PYTHON_ROWS": "cp313 cp311 cp312 cp314 cp310"
       },
       "contexts": {
+        "crossforge_qemu_validated": "target:qemu-aarch64-validated",
         "crossforge_sdk_base": "target:python-dev-append-cp310"
       },
       "inherits": [
@@ -2346,7 +2353,7 @@
     },
     "sdk-toolchains-dev": {
       "contexts": {
-        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_host_runtime": "target:host-runtime-qualified",
         "crossforge_toolchain_aarch64": "target:toolchain-aarch64-dev",
         "crossforge_toolchain_x86_64": "target:toolchain-x86_64-dev"
       },

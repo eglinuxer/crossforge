@@ -227,7 +227,12 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         }
         self.assertEqual(
             stages_with_release_copy,
-            {"python-host", "cpython-qualify-build", "python-sdk-append"},
+            {
+                "python-host",
+                "cpython-qualify-build",
+                "python-sdk-append",
+                "python-sdk-final",
+            },
         )
         qualify = self.stages["cpython-qualify-build"]
         self.assertIn("config/schemas/release.schema.json", qualify)
@@ -250,12 +255,19 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         self.assertIn("python_source_release_binding.py", append)
         self.assertIn("render-release-components.py", append)
         self.assertIn("/work/scripts/validate-release.py", append)
-        for stage in (
-            "cpython-runtime-input",
-            "cpython-row-assemble",
-            "sdk-toolchains-dev",
+        for script in (
+            "finalize-cpython-qualification.py",
+            "python_sdk_identity.py",
+            "python_zstd_evidence.py",
+            "target_artifact_audit.py",
         ):
+            self.assertIn(script, append)
+        for stage in ("cpython-runtime-input", "cpython-row-assemble"):
             self.assertIn("FROM python-host AS %s" % stage, self.stages[stage])
+        self.assertIn(
+            "FROM crossforge_host_runtime AS sdk-toolchains-dev",
+            self.stages["sdk-toolchains-dev"],
+        )
 
     def test_static_qualifier_binds_both_qualification_components(self):
         qualify = self.stages["cpython-qualify-build"]

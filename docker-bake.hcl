@@ -84,6 +84,12 @@ target "host-runtime-locked" {
   output   = ["type=cacheonly"]
 }
 
+target "host-runtime-qualified" {
+  inherits = ["_common"]
+  target   = "host-runtime-qualified"
+  output   = ["type=cacheonly"]
+}
+
 target "host-gcc-build-locked" {
   inherits = ["_common"]
   target   = "host-gcc-build-locked"

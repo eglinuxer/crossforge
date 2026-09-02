@@ -14,9 +14,10 @@ build-system-independent DEB/RPM packaging.
 > true dual-target SDK, locked-sysroot and clean-Rocky runtime gates through
 > Phase 10. CPython 3.14.7 additionally passes compile qualification with a
 > private static zstd 1.5.7. Frozen EL8 ABI sets and Python's complete
-> provider-ownership/ELF gates are implemented for both targets. vcpkg,
-> packaging, the full GCC/Qt suites and the final host-runtime SDK rebase
-> remain pending; the independent host-runtime RPM lock itself is complete.
+> provider-ownership/ELF gates are implemented for both targets. The final SDK
+> now rebases those qualified artifacts onto its independently locked host
+> runtime and passes the complete offline integration gate. vcpkg, packaging,
+> the full GCC/Qt suites and the release supply chain remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -385,7 +386,7 @@ digest. They project into two target-baseline components and one shared Python
 provider component; only toolchain/Python qualification identities change,
 while every row-local build identity remains stable.
 
-## Phase 12: independent host runtime lock
+## Phase 12: independent host runtime and final SDK rebase
 
 The user-facing amd64 runtime is now an independent 41-root Rocky transaction,
 not a delta from any compiler or CPython build image:
@@ -393,7 +394,8 @@ not a delta from any compiler or CPython build image:
 ```console
 $ ./scripts/validate-rpm-lock.py \
     locks/host-runtime-el8-x86_64.json --require-lock
-$ docker buildx bake host-runtime-locked
+$ docker buildx bake host-runtime-qualified
+$ docker buildx bake python-phase10-dev
 ```
 
 Maintainers refresh the evidence with the cache-only
@@ -405,8 +407,12 @@ upgrades offline. It includes native GTS15, CMake, Meson, Ninja, Autotools,
 Git core, pkg-config and common archive/text tools. PowerTools may supply only
 Meson and Ninja. Crossforge build-only RPM tooling and CPython dependency
 development roots are rejected from the resulting closure. Replacing the
-current SDK ancestor and qualifying all build Pythons on this runtime is the
-next slice.
+old SDK ancestor is complete: the cumulative image inherits only this runtime,
+then copies the two qualified toolchains, six Python rows and static QEMU.
+Its networkless final gate rehashes the RPMDB/marker, prior toolchain reports,
+sysroot locks, every build/target Python tree and QEMU; it also builds and runs
+C, C++ and LTO probes for both targets. Build-only roots and markers are absent
+from the resulting cache-only image.
 
 ## Product contract
 

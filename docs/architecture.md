@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime lock、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 的 host-runtime rebase、vcpkg、分包、完整 GCC/Qt 验收及发布供应链尚未实现；当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；vcpkg、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -131,7 +131,8 @@ amd64 static PIE，绑定 tonistiigi/binfmt 的 index/amd64 manifest、二进制
 及 source commit；执行时固定 `cortex-a53` 与 EL8 `4.18.0` uname override。Rocky
 arm64 根文件系统只作为 source stage 被复制，所有 arm ELF 都由 amd64 stage
 显式调用 QEMU 执行。该结果只能标记为 QEMU-qualified，不能替代发布前原生
-EL8/aarch64 终检；QEMU 当前也只存在于测试 stage，尚未进入最终用户镜像。
+EL8/aarch64 终检。QEMU 不进入任何 cross-build stage；最终 amd64 SDK 只复制已经
+固定并验证的静态执行器，供显式运行 aarch64 产物使用。
 
 Host 构建环境使用三个独立 transaction：common 从固定基础镜像解析为 119 install
 以及 9 upgrade（并记录对应 9 remove）；GCC additive delta 只含 `bison`、`flex`、
@@ -142,8 +143,9 @@ binutils 的 `--with-zstd=auto` 探测。最终用户镜像的 host runtime lock
 Rocky base 独立求解，不继承这些 build-only packages：41 个显式 roots 产生 140 个
 验签 payload，PowerTools 只允许提供 Meson 与 Ninja，正式安装在无网络阶段重放。
 Rocky 的 Meson 包强制依赖系统 Python development package；这是受审的上游打包闭包，
-不等同于 Crossforge 的 CPython build-devel transaction。最终 SDK 改用该 runtime 作为
-祖先并完成 build-Python/host-tool 终检仍属于下一切片。
+不等同于 Crossforge 的 CPython build-devel transaction。最终 SDK 只以该 runtime 为
+祖先，再通过 COPY 汇入已资格化的 toolchain、sysroot 与 Python row；GCC/Python build
+transaction、源码和 staging 根不会进入产品闭包。
 
 ## 7. Python SDK
 
@@ -322,4 +324,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime lock、双 target compiler/hybrid runtime、冻结 ABI 与 CPython 3.9–3.14 双 target 行已完成；后续实现最终镜像 runtime rebase、vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI 与 CPython 3.9–3.14 双 target 行已完成；后续实现 vcpkg/分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

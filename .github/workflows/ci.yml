@@ -73,14 +73,14 @@ jobs:
         run: ./scripts/render-bake.py --check
       - name: Docker/Bake static checks
         run: |
-          docker buildx bake --check phase4 host-runtime-locked
+          docker buildx bake --check phase4 host-runtime-qualified
           docker buildx bake --print phase5 phase6 phase7 phase8 phase9 phase10 >/dev/null
       - name: Locked latest inputs and native build Pythons
         run: |
           docker buildx bake validate platform-python-check \
             host-build-common-locked host-gcc-build-locked \
             host-python-build-locked qemu-aarch64-validated \
-            host-runtime-locked \
+            host-runtime-qualified \
             sysroot-x86_64 sysroot-aarch64 python-native-latest \
             python-runtime-clean-x86_64 python-runtime-clean-aarch64 \
             --progress=plain

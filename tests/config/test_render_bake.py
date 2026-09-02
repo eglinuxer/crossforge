@@ -465,7 +465,7 @@ class RenderBakeTests(unittest.TestCase):
                 name,
             )
 
-    def test_qemu_edge_exists_only_on_aarch64_runtime_qualification(self):
+    def test_qemu_edge_exists_only_on_runtime_and_final_sdk_boundaries(self):
         self.assertNotIn(
             "crossforge_qemu", self.targets["_common"].get("contexts", {})
         )
@@ -491,6 +491,11 @@ class RenderBakeTests(unittest.TestCase):
             {
                 "cpython-%s-aarch64-qualify" % contract["row"]
                 for contract in RENDERER["IMPLEMENTED_ROWS"]
+            }
+            | {"python-dev"}
+            | {
+                "python-phase%d-dev" % phase
+                for phase in range(5, RENDERER["LATEST_PHASE"] + 1)
             },
         )
         for name, target in self.targets.items():
@@ -541,6 +546,12 @@ class RenderBakeTests(unittest.TestCase):
         self.assertEqual(
             self.targets["python-dev"]["contexts"]["crossforge_sdk_base"],
             "target:%s" % previous,
+        )
+        self.assertEqual(
+            self.targets["python-dev"]["contexts"][
+                "crossforge_qemu_validated"
+            ],
+            "target:qemu-aarch64-validated",
         )
 
     def test_generated_target_context_graph_is_acyclic(self):
