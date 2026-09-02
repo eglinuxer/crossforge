@@ -175,6 +175,18 @@ target "gcc-aarch64" {
   output   = ["type=cacheonly"]
 }
 
+target "toolchain-x86_64-build-export" {
+  inherits = ["_common"]
+  target   = "toolchain-x86_64-build-export"
+  output   = ["type=cacheonly"]
+}
+
+target "toolchain-aarch64-build-export" {
+  inherits = ["_common"]
+  target   = "toolchain-aarch64-build-export"
+  output   = ["type=cacheonly"]
+}
+
 target "toolchain-x86_64-dev" {
   inherits = ["_common"]
   target   = "toolchain-x86_64-dev"

@@ -57,7 +57,7 @@ class PythonSourceComponentWiringTests(unittest.TestCase):
             ]["canonical_sha256"],
         }
 
-    def test_source_stage_copies_only_the_selected_projection_and_three_tools(self):
+    def test_source_stage_copies_only_the_selected_projection_and_two_tools(self):
         block = self.source_block
         self.assertIn("ARG CPYTHON_SOURCE_COMPONENT\n", block)
         self.assertIn("ARG CPYTHON_SOURCE_COMPONENT_SHA256\n", block)
@@ -69,7 +69,6 @@ class PythonSourceComponentWiringTests(unittest.TestCase):
         copy_region = block.split("RUN ", 1)[0]
         for tool in (
             "scripts/release_component.py",
-            "scripts/python_row_contract.py",
             "scripts/fetch-release-source.py",
         ):
             self.assertEqual(copy_region.count(tool), 1, tool)
@@ -82,15 +81,13 @@ class PythonSourceComponentWiringTests(unittest.TestCase):
             "patches/",
             "verify-python-row.py",
             "prepare-cpython-source.py",
+            "python_row_contract.py",
         ):
             self.assertNotIn(forbidden, block)
 
-    def test_source_stage_checks_contract_then_uses_component_fetch_mode(self):
+    def test_source_stage_uses_only_authenticated_component_fetch_mode(self):
         block = self.source_block
-        self.assertIn(
-            "/work/scripts/python_row_contract.py \\\n      check \"$CPYTHON_VERSION\" \"$CPYTHON_ADAPTER\"",
-            block,
-        )
+        self.assertNotIn("python_row_contract.py", block)
         self.assertIn(
             "--component-file /work/config/python-source-component.json",
             block,

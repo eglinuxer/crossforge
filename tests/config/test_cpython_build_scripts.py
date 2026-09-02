@@ -43,6 +43,27 @@ class CPythonBuildScriptTests(unittest.TestCase):
             self.assertIn('[[ ! -e "$build_directory"', script)
             self.assertIn('[[ ! -e "$prefix"', script)
 
+    def test_build_scripts_do_not_reopen_global_row_contract(self):
+        for name, script in (("native", self.native), ("cross", self.cross)):
+            with self.subTest(script=name):
+                self.assertNotIn("python_row_contract.py", script)
+                self.assertNotIn("contract_checker", script)
+                self.assertNotIn("platform_python", script)
+                self.assertNotIn("ADAPTER", script)
+                self.assertNotIn("adapter=", script)
+
+    def test_cross_build_locates_all_guard_sources_from_its_script_directory(self):
+        self.assertIn(
+            'script_directory=$(cd "$(dirname "$0")" && pwd)',
+            self.cross,
+        )
+        for source in (
+            "deny-target-exec.c",
+            "target-artifact-canary.c",
+            "target-exec-canary.c",
+        ):
+            self.assertIn('"$script_directory/%s"' % source, self.cross)
+
 
 if __name__ == "__main__":
     unittest.main()

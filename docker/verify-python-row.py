@@ -165,6 +165,8 @@ def component_row_contract(
     try:
         entry, identities = tools["row_from_components"](
             row,
+            version,
+            adapter,
             source_component,
             source_component_sha256,
             policy_component,

@@ -271,7 +271,9 @@ def render_python_graph(config, targets, component_arguments):
                     "crossforge_host_python": "target:host-python-build-locked",
                     "crossforge_cpython_prepared": "target:%s" % prepared_name,
                     "crossforge_cpython_build": "target:%s" % build_name,
-                    "crossforge_toolchain": "target:toolchain-%s-dev" % arch,
+                    "crossforge_toolchain": (
+                        "target:toolchain-%s-build-export" % arch
+                    ),
                 },
                 target_args,
             )

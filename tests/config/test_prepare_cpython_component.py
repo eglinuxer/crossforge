@@ -122,6 +122,8 @@ class PrepareCPythonComponentTests(unittest.TestCase):
     def row(self, **overrides):
         arguments = {
             "row": "cp311",
+            "expected_version": "3.11.16",
+            "expected_adapter": "transition",
             "source_component": self.source_path,
             "source_component_sha256": self.source_digest,
             "policy_component": self.policy_path,
@@ -135,6 +137,8 @@ class PrepareCPythonComponentTests(unittest.TestCase):
         manifest = self.directory / "manifest.json"
         identity = PREPARER["prepare_component"](
             "cp311",
+            "3.11.16",
+            "transition",
             self.archive,
             destination,
             manifest,
@@ -195,7 +199,8 @@ class PrepareCPythonComponentTests(unittest.TestCase):
         source_path = self.directory / "source312.json"
         source_digest = write_document(source_path, source)
         entry, _identities = PREPARER["row_from_components"](
-            "cp312", source_path, source_digest, policy_path, policy_digest
+            "cp312", "3.12.14", "modern",
+            source_path, source_digest, policy_path, policy_digest
         )
         self.assertEqual(entry["patches"], patches)
 
@@ -204,6 +209,10 @@ class PrepareCPythonComponentTests(unittest.TestCase):
             self.row(source_component_sha256="0" * 64)
         with self.assertRaises(PREPARER["PreparationError"]):
             self.row(policy_component_sha256="0" * 64)
+        with self.assertRaises(PREPARER["PreparationError"]):
+            self.row(expected_version="3.11.15")
+        with self.assertRaises(PREPARER["PreparationError"]):
+            self.row(expected_adapter="modern")
         with self.assertRaises(PREPARER["PreparationError"]):
             self.row(row="cp312")
 
@@ -263,7 +272,8 @@ class PrepareCPythonComponentTests(unittest.TestCase):
             digest = write_document(path, source)
             with self.assertRaisesRegex(PREPARER["PreparationError"], "patch"):
                 PREPARER["row_from_components"](
-                    "cp312", path, digest, policy_path, policy_digest
+                    "cp312", "3.12.14", "modern",
+                    path, digest, policy_path, policy_digest
                 )
 
     def test_duplicate_json_keys_are_rejected(self):
@@ -281,7 +291,6 @@ class PrepareCPythonComponentTests(unittest.TestCase):
         for source in (
             PREPARER_PATH,
             REPOSITORY / "scripts/release_component.py",
-            REPOSITORY / "scripts/python_row_contract.py",
         ):
             shutil.copy2(str(source), str(scripts / source.name))
         module = runpy.run_path(str(scripts / PREPARER_PATH.name))
@@ -289,6 +298,8 @@ class PrepareCPythonComponentTests(unittest.TestCase):
         manifest = isolated / "manifest.json"
         identity = module["prepare_component"](
             "cp311",
+            "3.11.16",
+            "transition",
             self.archive,
             destination,
             manifest,
@@ -300,6 +311,7 @@ class PrepareCPythonComponentTests(unittest.TestCase):
         )
         self.assertEqual(identity["schema_version"], 2)
         self.assertFalse((scripts / "validate-release.py").exists())
+        self.assertFalse((scripts / "python_row_contract.py").exists())
 
     def test_coordinated_policy_and_source_adapter_resigning_is_rejected(self):
         policy = copy.deepcopy(self.policy)
@@ -318,7 +330,7 @@ class PrepareCPythonComponentTests(unittest.TestCase):
         )["value"] = "legacy"
         source_digest = write_document(self.source_path, source)
         with self.assertRaisesRegex(
-            PREPARER["PreparationError"], "implementation contract"
+            PREPARER["PreparationError"], "build policy"
         ):
             self.row(
                 source_component_sha256=source_digest,

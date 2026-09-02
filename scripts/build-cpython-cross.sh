@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-if [[ $# -ne 10 ]]; then
-  echo "usage: $0 SOURCE BUILD_DIR PREFIX SYSROOT TOOLCHAIN TARGET BUILD_PYTHON VERSION ADAPTER JOBS" >&2
+if [[ $# -ne 9 ]]; then
+  echo "usage: $0 SOURCE BUILD_DIR PREFIX SYSROOT TOOLCHAIN TARGET BUILD_PYTHON VERSION JOBS" >&2
   exit 2
 fi
 
@@ -14,23 +14,15 @@ toolchain=$5
 target=$6
 build_python=$7
 version=$8
-adapter=$9
-jobs=${10}
+jobs=$9
 minor=${version%.*}
 compact_minor=${minor/./}
 script_directory=$(cd "$(dirname "$0")" && pwd)
-contract_checker=$script_directory/python_row_contract.py
-platform_python=/usr/libexec/platform-python
 
 [[ -x "$source_directory/configure" && -x "$source_directory/config.guess" ]] || {
   echo "error: invalid CPython source: $source_directory" >&2
   exit 1
 }
-[[ -x "$platform_python" && -f "$contract_checker" ]] || {
-  echo "error: CPython row contract checker is missing" >&2
-  exit 1
-}
-"$platform_python" "$contract_checker" check "$version" "$adapter"
 expected_build_python=/opt/crossforge/python/cp"$compact_minor"/build/bin/python"$minor"
 [[ "$build_python" == "$expected_build_python" ]] || {
   echo "error: build Python path differs from version" >&2

@@ -152,18 +152,6 @@ def _policy_from_component(row, path, digest):
         or policy["sysconfig_isolation"] is not True
     ):
         raise PreparationError("Python build policy differs from row contract")
-    contract_tools = row_contract_tools()
-    try:
-        contract = contract_tools["contract_for_row"](row)
-    except contract_tools["ContractError"] as error:
-        raise PreparationError(str(error)) from error
-    for field in ("minor", "row", "adapter", "sysconfig_isolation"):
-        if policy[field] != contract[field] or type(policy[field]) is not type(
-            contract[field]
-        ):
-            raise PreparationError(
-                "Python build policy differs from current implementation contract"
-            )
     return policy, document
 
 
@@ -210,11 +198,23 @@ def _patches_from_materials(materials, prefix, minor):
 
 def row_from_components(
     row,
+    expected_version,
+    expected_adapter,
     source_component,
     source_component_sha256,
     policy_component,
     policy_component_sha256,
 ):
+    if (
+        type(expected_version) is not str
+        or EXACT_VERSION.match(expected_version) is None
+        or type(expected_adapter) is not str
+        or expected_adapter not in ("legacy", "transition", "modern")
+    ):
+        raise PreparationError("invalid expected CPython version/adapter")
+    expected_minor = expected_version.rsplit(".", 1)[0]
+    if row != "cp" + expected_minor.replace(".", ""):
+        raise PreparationError("expected CPython row/version mismatch")
     policy, _policy_document = _policy_from_component(
         row, policy_component, policy_component_sha256
     )
@@ -287,6 +287,8 @@ def row_from_components(
         or type(source["size"]) is not int
         or source["size"] <= 0
         or adapter != policy["adapter"]
+        or version != expected_version
+        or adapter != expected_adapter
         or minor != policy["minor"]
         or row != "cp" + minor.replace(".", "")
     ):
@@ -627,6 +629,8 @@ def prepare(config, row, archive, destination, manifest, repository):
 
 def prepare_component(
     row,
+    version,
+    adapter,
     archive,
     destination,
     manifest,
@@ -638,6 +642,8 @@ def prepare_component(
 ):
     entry, identities = row_from_components(
         row,
+        version,
+        adapter,
         source_component,
         source_component_sha256,
         policy_component,
@@ -665,6 +671,8 @@ def load_release_configuration(config_path, schema_path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--row", required=True)
+    parser.add_argument("--version")
+    parser.add_argument("--adapter")
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--destination", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
@@ -693,9 +701,23 @@ def main():
             raise PreparationError(
                 "component inputs and full release inputs are mutually exclusive"
             )
+        if component_mode and (
+            arguments.version is None or arguments.adapter is None
+        ):
+            raise PreparationError(
+                "component mode requires expected version and adapter"
+            )
+        if not component_mode and (
+            arguments.version is not None or arguments.adapter is not None
+        ):
+            raise PreparationError(
+                "expected version/adapter are component-mode inputs"
+            )
         if component_mode:
             identity = prepare_component(
                 arguments.row,
+                arguments.version,
+                arguments.adapter,
                 arguments.archive,
                 arguments.destination,
                 arguments.manifest,

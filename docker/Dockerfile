@@ -671,6 +671,23 @@ RUN --network=none /work/scripts/install-hybrid-runtime.sh \
       15 \
       aarch64
 
+# Build-only toolchain boundaries for downstream cross builds. These scratch
+# exports deliberately precede every qualification/runtime stage and contain
+# only one target compiler tree plus its matching hybrid sysroot.
+FROM scratch AS toolchain-x86_64-build-export
+COPY --from=sysroot-x86_64 \
+  /opt/crossforge/sysroots/el8/x86_64/ \
+  /opt/crossforge/sysroots/el8/x86_64/
+COPY --from=binutils-x86_64 /work/binutils-stage/opt/ /opt/
+COPY --from=gcc-x86_64 /work/gcc-stage/opt/ /opt/
+
+FROM scratch AS toolchain-aarch64-build-export
+COPY --from=sysroot-aarch64 \
+  /opt/crossforge/sysroots/el8/aarch64/ \
+  /opt/crossforge/sysroots/el8/aarch64/
+COPY --from=binutils-aarch64 /work/binutils-stage/opt/ /opt/
+COPY --from=gcc-aarch64 /work/gcc-stage/opt/ /opt/
+
 # Real compiler smoke gate. This target remains non-publishable until frozen
 # ABI sets, full tests and the release supply chain exist.
 FROM host-build-common-locked AS toolchain-x86_64-qualify-build

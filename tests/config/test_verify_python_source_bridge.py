@@ -144,6 +144,62 @@ class VerifyPythonSourceBridgeTests(unittest.TestCase):
         with self.assertRaises(VERIFY["RowError"]):
             self.bridge(manifest=manifest)
 
+    def test_fully_resigned_build_contract_is_rejected_by_release_bridge(self):
+        resigned_adapter = "transition"
+        policy = json.loads(self.policy_path.read_text(encoding="utf-8"))
+        next(
+            material
+            for material in policy["materials"]
+            if material["path"].endswith("/adapter")
+        )["value"] = resigned_adapter
+        policy_path = self.directory / "resigned-policy.json"
+        policy_path.write_text(
+            json.dumps(policy, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        policy_digest = VERIFY["canonical_sha256"](policy)
+
+        source = json.loads(self.source_path.read_text(encoding="utf-8"))
+        source["dependencies"][0]["canonical_sha256"] = policy_digest
+        next(
+            material
+            for material in source["materials"]
+            if material["path"].endswith("/adapter")
+        )["value"] = resigned_adapter
+        source_path = self.directory / "resigned-source.json"
+        source_path.write_text(
+            json.dumps(source, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        source_digest = VERIFY["canonical_sha256"](source)
+
+        manifest = VERIFY["component_row_contract"](
+            self.row,
+            self.version,
+            resigned_adapter,
+            source_path,
+            source_digest,
+            policy_path,
+            policy_digest,
+        )
+        self.assertEqual(manifest["adapter"], resigned_adapter)
+        self.assertEqual(manifest["build_policy"]["adapter"], resigned_adapter)
+        self.assertEqual(
+            manifest["source_component"]["canonical_sha256"], source_digest
+        )
+        self.assertEqual(
+            manifest["build_policy"]["canonical_sha256"], policy_digest
+        )
+
+        with self.assertRaises(VERIFY["RowError"]):
+            VERIFY["bridge_source_manifest"](
+                manifest,
+                self.release,
+                self.row,
+                self.version,
+                resigned_adapter,
+            )
+
     def test_wrong_component_projection_path_and_digest_are_rejected(self):
         wrong_source = (
             REPOSITORY / "config/generated/components/python/cp313-source.json"

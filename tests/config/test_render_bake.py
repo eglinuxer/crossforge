@@ -262,7 +262,7 @@ class RenderBakeTests(unittest.TestCase):
                     self.assertEqual(cross["target"], "cpython-cross")
                     self.assertEqual(
                         cross["contexts"]["crossforge_toolchain"],
-                        "target:toolchain-%s-dev" % arch,
+                        "target:toolchain-%s-build-export" % arch,
                     )
                     self.assertEqual(
                         cross["contexts"]["crossforge_cpython_prepared"],

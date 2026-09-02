@@ -7,17 +7,13 @@
 FROM crossforge_rocky_amd64 AS cpython-source
 ARG CPYTHON_ROW
 ARG CPYTHON_VERSION
-ARG CPYTHON_ADAPTER
 ARG CPYTHON_SOURCE_COMPONENT
 ARG CPYTHON_SOURCE_COMPONENT_SHA256
 COPY config/generated/components/python/${CPYTHON_ROW}-source.json \
   /work/config/python-source-component.json
 COPY --chmod=0755 scripts/release_component.py \
-  scripts/python_row_contract.py scripts/fetch-release-source.py \
-  /work/scripts/
-RUN /usr/libexec/platform-python /work/scripts/python_row_contract.py \
-      check "$CPYTHON_VERSION" "$CPYTHON_ADAPTER" \
-    && /usr/libexec/platform-python /work/scripts/fetch-release-source.py python \
+  scripts/fetch-release-source.py /work/scripts/
+RUN /usr/libexec/platform-python /work/scripts/fetch-release-source.py python \
       --version "$CPYTHON_VERSION" \
       --component-file /work/config/python-source-component.json \
       --expected-component "$CPYTHON_SOURCE_COMPONENT" \
@@ -76,8 +72,7 @@ COPY config/generated/components/implementation/python-${CPYTHON_ROW}-build-poli
 COPY --from=crossforge_cpython_patches /row-patches/ \
   /work/patches/cpython/${CPYTHON_MINOR}/
 COPY --chmod=0755 scripts/prepare-cpython-source.py \
-  scripts/release_component.py scripts/python_row_contract.py \
-  /work/scripts/
+  scripts/release_component.py /work/scripts/
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 RUN --network=none command -v patch >/dev/null \
     && test "$CPYTHON_MINOR" = "${CPYTHON_VERSION%.*}" \
@@ -94,6 +89,8 @@ RUN --network=none command -v patch >/dev/null \
       --policy-component-sha256 "$CPYTHON_BUILD_POLICY_COMPONENT_SHA256" \
     && /usr/libexec/platform-python /work/scripts/prepare-cpython-source.py \
       --row "$CPYTHON_ROW" \
+      --version "$CPYTHON_VERSION" \
+      --adapter "$CPYTHON_ADAPTER" \
       --archive /work/source/Python.tar.xz \
       --destination /work/src/cpython \
       --manifest /work/source/source-manifest.json \
@@ -136,7 +133,6 @@ RUN --network=none test "$CPYTHON_MINOR" = "${CPYTHON_VERSION%.*}" \
       "/work/build/cpython-$CPYTHON_ROW-native" \
       "/opt/crossforge/python/$CPYTHON_ROW/build" \
       "$CPYTHON_VERSION" \
-      "$CPYTHON_ADAPTER" \
       "$CROSSFORGE_JOBS" \
     && test "$CPYTHON_ROW" = "cp$compact_minor"
 
@@ -186,7 +182,6 @@ RUN --network=none case "$CROSSFORGE_TARGET_ARCH:$CROSSFORGE_TARGET_TRIPLE" in \
       "$CROSSFORGE_TARGET_TRIPLE" \
       "/opt/crossforge/python/$CPYTHON_ROW/build/bin/python$CPYTHON_MINOR" \
       "$CPYTHON_VERSION" \
-      "$CPYTHON_ADAPTER" \
       "$CROSSFORGE_JOBS"
 
 # Static qualification remains host-only. It compiles a target extension and

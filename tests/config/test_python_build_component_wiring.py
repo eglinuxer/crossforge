@@ -87,6 +87,7 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
                     "finalize-python-row.py",
                     "python_source_release_binding.py",
                     "render-release-components.py",
+                    "python_row_contract.py",
                 ):
                     self.assertNotIn(forbidden, block)
                 self.assertIn("--source-component", block)
