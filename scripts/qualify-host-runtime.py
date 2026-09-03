@@ -270,11 +270,28 @@ def smoke_builds(work):
         [autotools / "crossforge-autotools"], env=environment
     )
     require(autotools_stdout == c_stdout, "Autotools smoke differs")
+    perl_ipc_stdout, _stderr = run(
+        [
+            "/usr/bin/perl",
+            "-MIPC::Cmd",
+            "-MTime::Piece",
+            "-e",
+            'print "$IPC::Cmd::VERSION\\n"',
+        ],
+        env=environment,
+    )
+    require(
+        perl_ipc_stdout == "1.02\n",
+        "Perl IPC::Cmd host-tool dependency differs",
+    )
 
     return {
         "autotools": hashlib.sha256(autotools_stdout.encode("utf-8")).hexdigest(),
         "cmake_ninja": hashlib.sha256(cmake_stdout.encode("utf-8")).hexdigest(),
         "meson_ninja": hashlib.sha256(meson_stdout.encode("utf-8")).hexdigest(),
+        "perl_ipc_cmd": hashlib.sha256(
+            perl_ipc_stdout.encode("utf-8")
+        ).hexdigest(),
         "native_c": hashlib.sha256(c_stdout.encode("utf-8")).hexdigest(),
         "native_cxx": hashlib.sha256(cxx_stdout.encode("utf-8")).hexdigest(),
     }

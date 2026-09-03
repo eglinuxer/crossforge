@@ -3,11 +3,11 @@
   "component": "vcpkg/upstream-tier1-qualification",
   "dependencies": [
     {
-      "canonical_sha256": "462a4eca540daf5109c75c79321e8fae5609ee2430c754368d357ccda8e03251",
+      "canonical_sha256": "507e2e46735c7c5427bf35b699798f2106a4529c3d3133d062e57d0925d0e9b9",
       "component": "implementation/vcpkg-upstream-tier1-qualification"
     },
     {
-      "canonical_sha256": "9ff556b2c027516ef017f13c3eb18afc949eb383dd10f9c4d97146cfa9c3291c",
+      "canonical_sha256": "4b77524b4f5f369cd70ecc60d5da0f3f18aaf50d69df01429565902ea10333f1",
       "component": "vcpkg/contract-qualification"
     }
   ],

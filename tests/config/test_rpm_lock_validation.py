@@ -132,6 +132,8 @@ class RpmLockValidationTests(unittest.TestCase):
                 "ninja-build",
                 "git-core",
                 "gcc-toolset-15-gcc-c++",
+                "perl-IPC-Cmd",
+                "perl-Time-Piece",
             }.issubset(roots)
         )
         self.assertFalse(
@@ -169,11 +171,11 @@ class RpmLockValidationTests(unittest.TestCase):
         runtime = VALIDATOR["load_json"](self.transactions[-1])
         common = VALIDATOR["load_json"](self.transactions[2])
         lock = VALIDATOR["load_json"](self.locks[-1])
-        self.assertEqual(len(runtime["requests"]), 41)
-        self.assertEqual(len(runtime["items"]), 161)
-        self.assertEqual(len(lock["packages"]), 140)
+        self.assertEqual(len(runtime["requests"]), 43)
+        self.assertEqual(len(runtime["items"]), 173)
+        self.assertEqual(len(lock["packages"]), 152)
         self.assertEqual(
-            len(runtime["manifests"]["result"]["packages"]), 267
+            len(runtime["manifests"]["result"]["packages"]), 279
         )
         self.assertEqual(
             runtime["manifests"]["base"], common["manifests"]["base"]

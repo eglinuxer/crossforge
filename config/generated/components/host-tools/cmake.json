@@ -3,7 +3,7 @@
   "component": "host-tools/cmake",
   "dependencies": [
     {
-      "canonical_sha256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
+      "canonical_sha256": "d083d530430bac2b26d229f11083450f68405c9aa0c3b84a867983bd82b5b640",
       "component": "host-tools/ninja"
     },
     {
@@ -11,7 +11,7 @@
       "component": "implementation/cmake-host-tool"
     },
     {
-      "canonical_sha256": "b037782d2cefa64c6b88f75478081f85706ee6c7fe95f6e5c8b4092b464edabd",
+      "canonical_sha256": "15bebccbafc2f5b849de9b0f36ec694fb0cc829aebada4d936c1c595ec1ef029",
       "component": "rpm/host-runtime"
     },
     {

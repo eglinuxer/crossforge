@@ -120,6 +120,34 @@ RUN --network=none /usr/libexec/platform-python \
 FROM scratch AS vcpkg-upstream-tier1-assets-export
 COPY --from=vcpkg-upstream-tier1-assets /work/assets/ /
 
+FROM crossforge_host_runtime AS vcpkg-upstream-tier2-assets-fetch
+ARG VCPKG_UPSTREAM_TIER2_POLICY_COMPONENT_SHA256
+COPY config/generated/components/implementation/vcpkg-upstream-tier2-qualification.json \
+  /work/config/vcpkg-upstream-tier2-policy.json
+COPY --chmod=0755 scripts/release_component.py \
+  scripts/fetch-vcpkg-assets.py /work/scripts/
+RUN /usr/libexec/platform-python /work/scripts/fetch-vcpkg-assets.py fetch \
+      --component /work/config/vcpkg-upstream-tier2-policy.json \
+      --expected-component \
+        implementation/vcpkg-upstream-tier2-qualification \
+      --component-sha256 \
+        "$VCPKG_UPSTREAM_TIER2_POLICY_COMPONENT_SHA256" \
+      --output /work/assets
+
+FROM vcpkg-upstream-tier2-assets-fetch AS vcpkg-upstream-tier2-assets
+ARG VCPKG_UPSTREAM_TIER2_POLICY_COMPONENT_SHA256
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/fetch-vcpkg-assets.py verify \
+      --component /work/config/vcpkg-upstream-tier2-policy.json \
+      --expected-component \
+        implementation/vcpkg-upstream-tier2-qualification \
+      --component-sha256 \
+        "$VCPKG_UPSTREAM_TIER2_POLICY_COMPONENT_SHA256" \
+      --output /work/assets
+
+FROM scratch AS vcpkg-upstream-tier2-assets-export
+COPY --from=vcpkg-upstream-tier2-assets /work/assets/ /
+
 # Phase 13 integrates only the authenticated registry/tool and generated
 # configuration. Port build trees and installed packages are qualification
 # artifacts and never enter this user-facing base.
@@ -129,6 +157,10 @@ ARG VCPKG_INTEGRATION_COMPONENT_SHA256
 ARG VCPKG_SDK_COMPONENT_SHA256
 ARG NINJA_TOOL_COMPONENT_SHA256
 ARG CMAKE_TOOL_COMPONENT_SHA256
+COPY --from=crossforge_qemu_validated \
+  /usr/local/libexec/crossforge/qemu-aarch64 \
+  /usr/local/libexec/crossforge/qemu-aarch64
+COPY config/release.json /opt/crossforge/release.json
 COPY --from=crossforge_cmake_host_tool \
   /opt/crossforge/host-tools/cmake/ \
   /opt/crossforge/host-tools/cmake/
@@ -263,6 +295,7 @@ COPY --chmod=0755 scripts/release_component.py \
   scripts/qualify-vcpkg-upstream.py /work/scripts/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-vcpkg-upstream.py \
+      --tier tier1 \
       --release /opt/crossforge/release.json \
       --vcpkg-root /opt/crossforge/vcpkg/root \
       --fixture-root /work/upstream-tier1 \
@@ -278,6 +311,49 @@ RUN --network=none /usr/libexec/platform-python \
         "$VCPKG_UPSTREAM_TIER1_QUALIFICATION_COMPONENT_SHA256" \
       --output \
         /opt/crossforge/qualification/vcpkg/upstream-tier1.json \
+    && rm -rf /work \
+    && test ! -e /opt/crossforge/vcpkg/root/downloads \
+    && test ! -e /opt/crossforge/vcpkg/root/buildtrees \
+    && test ! -e /opt/crossforge/vcpkg/root/packages \
+    && test ! -e /opt/crossforge/vcpkg/root/installed \
+    && test ! -e /opt/crossforge/vcpkg/root/vcpkg_installed
+WORKDIR /workspace
+
+# Tier 2 adds the TLS/configure surface: curated curl with OpenSSL and zlib,
+# using only the three explicitly bound source archives.
+FROM crossforge_vcpkg_tier1 AS vcpkg-upstream-tier2-qualified
+ARG VCPKG_UPSTREAM_TIER2_POLICY_COMPONENT_SHA256
+ARG VCPKG_UPSTREAM_TIER2_QUALIFICATION_COMPONENT_SHA256
+COPY tests/vcpkg/upstream-tier2/ /work/upstream-tier2/
+COPY --from=crossforge_vcpkg_upstream_tier2_assets \
+  / /work/assets/
+COPY --from=crossforge_vcpkg_contract_assets \
+  /patchelf-0.19.0-x86_64.tar.gz /work/patchelf-0.19.0-x86_64.tar.gz
+COPY config/generated/components/implementation/vcpkg-upstream-tier2-qualification.json \
+  /work/config/vcpkg-upstream-tier2-policy.json
+COPY config/generated/components/vcpkg/upstream-tier2-qualification.json \
+  /work/config/vcpkg-upstream-tier2-qualification.json
+COPY --chmod=0755 scripts/release_component.py \
+  scripts/fetch-vcpkg-assets.py scripts/vcpkg_qualification.py \
+  scripts/qualify-vcpkg-upstream.py /work/scripts/
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/qualify-vcpkg-upstream.py \
+      --tier tier2 \
+      --release /opt/crossforge/release.json \
+      --vcpkg-root /opt/crossforge/vcpkg/root \
+      --fixture-root /work/upstream-tier2 \
+      --asset-root /work/assets \
+      --patchelf-archive /work/patchelf-0.19.0-x86_64.tar.gz \
+      --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
+      --policy-component /work/config/vcpkg-upstream-tier2-policy.json \
+      --policy-component-sha256 \
+        "$VCPKG_UPSTREAM_TIER2_POLICY_COMPONENT_SHA256" \
+      --qualification-component \
+        /work/config/vcpkg-upstream-tier2-qualification.json \
+      --qualification-component-sha256 \
+        "$VCPKG_UPSTREAM_TIER2_QUALIFICATION_COMPONENT_SHA256" \
+      --output \
+        /opt/crossforge/qualification/vcpkg/upstream-tier2.json \
     && rm -rf /work \
     && test ! -e /opt/crossforge/vcpkg/root/downloads \
     && test ! -e /opt/crossforge/vcpkg/root/buildtrees \

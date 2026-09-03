@@ -91,7 +91,16 @@ def run(arguments, cwd=None, env=None):
             None,
         )
         if buildtrees is not None and buildtrees.is_dir():
-            logs = sorted(
+            referenced = []
+            for line in details.splitlines():
+                candidate = Path(line.strip())
+                try:
+                    candidate.relative_to(buildtrees)
+                except ValueError:
+                    continue
+                if candidate.suffix == ".log" and candidate.is_file():
+                    referenced.append(candidate)
+            discovered = sorted(
                 buildtrees.rglob("*.log"),
                 key=lambda path: (
                     "/crossforge-host-probe/" not in path.as_posix()
@@ -100,6 +109,10 @@ def run(arguments, cwd=None, env=None):
                     path.as_posix(),
                 ),
             )
+            logs = []
+            for path in referenced + discovered:
+                if path not in logs:
+                    logs.append(path)
             for path in logs[:20]:
                 try:
                     content = path.read_text(encoding="utf-8", errors="replace")

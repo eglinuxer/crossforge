@@ -53,6 +53,11 @@ class VcpkgIntegrationTests(unittest.TestCase):
                 for material in policy["materials"]
             )
         )
+        materials = QUALIFIER["material_map"](policy)
+        self.assertEqual(
+            materials["/@implementation/vcpkg/find_root_path_policy"],
+            "prepend-sysroot-preserve-existing",
+        )
 
     def test_integration_manifest_binds_all_generated_files(self):
         manifest = json.loads(
@@ -117,6 +122,22 @@ class VcpkgIntegrationTests(unittest.TestCase):
                 source,
             )
             self.assertIn("CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER", source)
+            self.assertIn(
+                'list(PREPEND CMAKE_FIND_ROOT_PATH '
+                '"/opt/crossforge/sysroots/el8/%s")' % arch,
+                source,
+            )
+            self.assertIn(
+                "list(REMOVE_DUPLICATES CMAKE_FIND_ROOT_PATH)", source
+            )
+            self.assertIn(
+                'set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}"', source
+            )
+            self.assertNotIn(
+                'set(CMAKE_FIND_ROOT_PATH '
+                '"/opt/crossforge/sysroots/el8/%s"' % arch,
+                source,
+            )
             self.assertIn("CMAKE_CROSSCOMPILING_EMULATOR", source)
             self.assertIn("HOSTRUNNER", source)
             self.assertNotIn("qemu", source.lower())
@@ -182,7 +203,8 @@ class VcpkgIntegrationTests(unittest.TestCase):
             {
                 "crossforge_cmake_host_tool": "target:cmake-host-tool",
                 "crossforge_ninja_host_tool": "target:ninja-host-tool",
-                "crossforge_sdk_base": "target:python-phase10-dev",
+                "crossforge_qemu_validated": "target:qemu-aarch64-validated",
+                "crossforge_sdk_base": "target:sdk-toolchains-dev",
                 "crossforge_vcpkg_source": "target:vcpkg-source",
             },
         )
@@ -190,6 +212,10 @@ class VcpkgIntegrationTests(unittest.TestCase):
         self.assertNotIn(
             "crossforge_vcpkg_source",
             rendered["target"]["python-phase10-dev"]["contexts"],
+        )
+        self.assertNotIn(
+            "python-phase10-dev",
+            rendered["group"]["phase13-integration"]["targets"],
         )
 
     def test_sdk_stage_is_offline_and_has_no_default_target_or_ports(self):

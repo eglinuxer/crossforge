@@ -90,6 +90,93 @@ def component_digest_arguments(repository, release, require_tracked=True):
     return arguments
 
 
+def main_docker_stage_contract(repository):
+    dockerfile = (repository / "docker/Dockerfile").read_text(encoding="utf-8")
+    matches = list(
+        re.finditer(
+            r"^FROM(?:\s+--platform=[^\s]+)?\s+([^\s]+)"
+            r"(?:\s+AS\s+([a-zA-Z0-9_.-]+))?\s*$",
+            dockerfile,
+            re.MULTILINE,
+        )
+    )
+    stages = {}
+    for index, match in enumerate(matches):
+        name = match.group(2)
+        if name is None:
+            continue
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(
+            dockerfile
+        )
+        block = dockerfile[match.start():end]
+        stages[name] = {
+            "arguments": set(
+                re.findall(
+                    r"^ARG\s+(CROSSFORGE_COMPONENT_[A-Z0-9_]+_SHA256)\s*$",
+                    block,
+                    re.MULTILINE,
+                )
+            ),
+            "dependencies": {
+                dependency
+                for dependency in set(
+                    re.findall(r"(?:--from=|,from=)([a-zA-Z0-9_.-]+)", block)
+                )
+                | {match.group(1)}
+                if dependency in {item.group(2) for item in matches}
+            },
+        }
+    return stages
+
+
+def main_bake_target_stages(repository):
+    hcl = (repository / "docker-bake.hcl").read_text(encoding="utf-8")
+    result = {}
+    for match in re.finditer(
+        r'^target\s+"([^"]+)"\s*\{\s*\n(.*?)^\}',
+        hcl,
+        re.MULTILINE | re.DOTALL,
+    ):
+        target = re.search(
+            r'^\s*target\s*=\s*"([^"]+)"\s*$',
+            match.group(2),
+            re.MULTILINE,
+        )
+        if target is not None:
+            result[match.group(1)] = target.group(1)
+    return result
+
+
+def scoped_main_component_arguments(repository, component_arguments):
+    stages = main_docker_stage_contract(repository)
+    target_stages = main_bake_target_stages(repository)
+    result = {}
+    for target, root in target_stages.items():
+        if root not in stages:
+            raise ValueError("Bake target references an unknown Docker stage: %s" % root)
+        pending = [root]
+        closure = set()
+        arguments = set()
+        while pending:
+            stage = pending.pop()
+            if stage in closure:
+                continue
+            closure.add(stage)
+            arguments.update(stages[stage]["arguments"])
+            pending.extend(stages[stage]["dependencies"])
+        missing = arguments - set(component_arguments)
+        if missing:
+            raise ValueError(
+                "%s requires unknown component arguments: %s"
+                % (target, ", ".join(sorted(missing)))
+            )
+        if arguments:
+            result[target] = {
+                name: component_arguments[name] for name in sorted(arguments)
+            }
+    return result
+
+
 def render_zstd_graph(config, targets, component_arguments, rocky_amd64_image):
     version = config["python"]["zstd"]["version"]
 
@@ -285,6 +372,19 @@ def render_vcpkg_graph(
         },
         "output": ["type=cacheonly"],
     }
+    targets["vcpkg-upstream-tier2-assets"] = {
+        "inherits": ["_vcpkg_common"],
+        "target": "vcpkg-upstream-tier2-assets-export",
+        "args": {
+            "VCPKG_UPSTREAM_TIER2_POLICY_COMPONENT_SHA256": digest(
+                "implementation/vcpkg-upstream-tier2-qualification"
+            ),
+        },
+        "contexts": {
+            "crossforge_host_runtime": "target:host-runtime-qualified"
+        },
+        "output": ["type=cacheonly"],
+    }
 
     targets["vcpkg-source"] = {
         "inherits": ["_vcpkg_common"],
@@ -318,9 +418,10 @@ def render_vcpkg_graph(
             "CMAKE_TOOL_COMPONENT_SHA256": digest("host-tools/cmake"),
         },
         "contexts": {
-            "crossforge_sdk_base": "target:python-phase10-dev",
+            "crossforge_sdk_base": "target:sdk-toolchains-dev",
             "crossforge_cmake_host_tool": "target:cmake-host-tool",
             "crossforge_ninja_host_tool": "target:ninja-host-tool",
+            "crossforge_qemu_validated": "target:qemu-aarch64-validated",
             "crossforge_vcpkg_source": "target:vcpkg-source",
         },
         "output": ["type=cacheonly"],
@@ -362,6 +463,26 @@ def render_vcpkg_graph(
         },
         "output": ["type=cacheonly"],
     }
+    targets["vcpkg-upstream-tier2-qualified"] = {
+        "inherits": ["_vcpkg_common"],
+        "target": "vcpkg-upstream-tier2-qualified",
+        "args": {
+            "VCPKG_UPSTREAM_TIER2_POLICY_COMPONENT_SHA256": digest(
+                "implementation/vcpkg-upstream-tier2-qualification"
+            ),
+            "VCPKG_UPSTREAM_TIER2_QUALIFICATION_COMPONENT_SHA256": digest(
+                "vcpkg/upstream-tier2-qualification"
+            ),
+        },
+        "contexts": {
+            "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
+            "crossforge_vcpkg_tier1": "target:vcpkg-upstream-tier1-qualified",
+            "crossforge_vcpkg_upstream_tier2_assets": (
+                "target:vcpkg-upstream-tier2-assets"
+            ),
+        },
+        "output": ["type=cacheonly"],
+    }
     return {
         "phase13-source": {
             "targets": [
@@ -374,7 +495,7 @@ def render_vcpkg_graph(
             "targets": [
                 "ninja-host-tool",
                 "vcpkg-source",
-                "python-phase10-dev",
+                "sdk-toolchains-dev",
                 "sdk-phase13-base",
             ]
         },
@@ -382,7 +503,7 @@ def render_vcpkg_graph(
             "targets": ["vcpkg-contract-qualified"]
         },
         "phase13-ports": {
-            "targets": ["vcpkg-upstream-tier1-qualified"]
+            "targets": ["vcpkg-upstream-tier2-qualified"]
         },
     }
 
@@ -836,7 +957,6 @@ def render(repository):
         "QEMU_EXECUTOR_CPU": qemu_executor["cpu"],
         "QEMU_EXECUTOR_UNAME_RELEASE": qemu_executor["uname_release"],
     }
-    arguments.update(component_arguments)
     if (
         config["gts"]["source"]["status"] == "locked"
         and config["binutils"]["source"]["status"] == "locked"
@@ -879,6 +999,18 @@ def render(repository):
         component_renderer["VCPKG_CONTRACT_POLICY"],
     )
     python_groups = render_python_graph(config, targets, component_arguments)
+    for name, scoped_arguments in scoped_main_component_arguments(
+        repository, component_arguments
+    ).items():
+        target = targets.setdefault(name, {})
+        existing = target.setdefault("args", {})
+        overlap = set(existing) & set(scoped_arguments)
+        if overlap:
+            raise ValueError(
+                "%s repeats scoped component arguments: %s"
+                % (name, ", ".join(sorted(overlap)))
+            )
+        existing.update(scoped_arguments)
     document = {
         "group": {
             "toolchain-plan": {"targets": plan_names},

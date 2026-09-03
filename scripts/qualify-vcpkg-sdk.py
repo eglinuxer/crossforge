@@ -439,6 +439,12 @@ def qualify_integration(
         "qemu" not in target_text.lower()
         and target_text.count('set(CMAKE_SYSTEM_NAME "Linux"') == 2
         and "set(CMAKE_CROSSCOMPILING" not in target_text
+        and target_text.count("list(PREPEND CMAKE_FIND_ROOT_PATH") == 2
+        and target_text.count("list(REMOVE_DUPLICATES CMAKE_FIND_ROOT_PATH)") == 2
+        and target_text.count(
+            'set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}"'
+        )
+        == 2
         and "HOSTRUNNER" in target_text,
         "target toolchain execution policy differs",
     )
@@ -779,14 +785,18 @@ def qualify(
             release, ensure_ascii=False, sort_keys=True, separators=(",", ":")
         ).encode("utf-8")
     ).hexdigest()
-    final_report = load_json(
-        Path("/opt/crossforge/qualification/final-sdk.json")
-    )
-    require(
-        final_report.get("status") == "passed"
-        and final_report.get("release_sha256") == release_sha256,
-        "base SDK qualification is absent or stale",
-    )
+    toolchain_reports = {
+        arch: load_json(
+            Path("/opt/crossforge/qualification/toolchain") / (arch + ".json")
+        )
+        for arch in ("x86_64", "aarch64")
+    }
+    for arch, report in toolchain_reports.items():
+        require(
+            report.get("release_sha256") == release_sha256
+            and report.get("target") == TARGETS[arch]["triple"],
+            "%s base toolchain qualification is absent or stale" % arch,
+        )
     source_component = load_component(
         component_paths["source"],
         "sources/vcpkg",
@@ -900,6 +910,13 @@ def qualify(
         "integration": integration,
         "triplets": expected_triplets,
         "cmake": cmake,
+        "toolchain_report_sha256": {
+            arch: sha256_file(
+                Path("/opt/crossforge/qualification/toolchain")
+                / (arch + ".json")
+            )
+            for arch in ("x86_64", "aarch64")
+        },
     }
 
 

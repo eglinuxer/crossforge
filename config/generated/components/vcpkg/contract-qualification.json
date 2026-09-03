@@ -15,7 +15,7 @@
       "component": "toolchain/x86_64-qualification"
     },
     {
-      "canonical_sha256": "3ba5101626317b1d964205f50f567acc331b4f1cb95b57b32eef452aa277d320",
+      "canonical_sha256": "d9a2454538d62570ca6b67a19c08452a521bd46f191043f415297df8f5f0011e",
       "component": "vcpkg/sdk-build"
     }
   ],

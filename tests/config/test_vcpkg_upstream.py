@@ -41,6 +41,20 @@ class VcpkgUpstreamTests(unittest.TestCase):
                 "upstream-tier1-qualification.json"
             ).read_text(encoding="utf-8")
         )
+        cls.tier2_policy = json.loads(
+            (
+                REPOSITORY
+                / "config/generated/components/implementation/"
+                "vcpkg-upstream-tier2-qualification.json"
+            ).read_text(encoding="utf-8")
+        )
+        cls.tier2_qualification = json.loads(
+            (
+                REPOSITORY
+                / "config/generated/components/vcpkg/"
+                "upstream-tier2-qualification.json"
+            ).read_text(encoding="utf-8")
+        )
 
     def test_policy_binds_exact_ports_assets_triplets_and_fixtures(self):
         context = QUALIFIER["policy_context"](self.policy, FIXTURE_ROOT)
@@ -96,6 +110,94 @@ class VcpkgUpstreamTests(unittest.TestCase):
             },
         )
 
+    def test_tier2_binds_tls_ports_assets_and_tier1_prerequisite(self):
+        context = QUALIFIER["policy_context"](
+            self.tier2_policy,
+            REPOSITORY / "tests/vcpkg/upstream-tier2",
+            "tier2",
+        )
+        self.assertEqual(tuple(context["ports"]), QUALIFIER["TIER2_PORTS"])
+        self.assertEqual(
+            QUALIFIER["TIER_PROFILES"]["tier2"]["required_features"],
+            {
+                "curl": ("core", "openssl"),
+                "openssl": ("core",),
+                "zlib": ("core",),
+            },
+        )
+        self.assertEqual(
+            [asset["filename"] for asset in context["assets"]],
+            [
+                "curl-curl-curl-8_21_0.tar.gz",
+                "madler-zlib-v1.3.2.tar.gz",
+                "openssl-openssl-openssl-3.6.3.tar.gz",
+            ],
+        )
+        self.assertEqual(
+            {item["component"] for item in self.tier2_qualification["dependencies"]},
+            {
+                "implementation/vcpkg-upstream-tier2-qualification",
+                "vcpkg/upstream-tier1-qualification",
+            },
+        )
+        profile = QUALIFIER["TIER_PROFILES"]["tier2"]
+        self.assertEqual(profile["consumer_language"], "cc")
+        self.assertEqual(
+            {name for name, _stem in profile["libraries"]},
+            {"curl", "openssl-crypto", "openssl-ssl", "zlib"},
+        )
+
+    def test_installed_port_inventory_merges_feature_records(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "vcpkg").mkdir()
+            (root / "vcpkg/status").write_text(
+                "Package: curl\n"
+                "Version: 8.21.0#1\n"
+                "Architecture: test-triplet\n"
+                "Status: install ok installed\n\n"
+                "Package: curl\n"
+                "Feature: openssl\n"
+                "Architecture: test-triplet\n"
+                "Status: install ok installed\n",
+                encoding="utf-8",
+            )
+            versions = QUALIFIER["installed_port_versions"](
+                root,
+                "test-triplet",
+                ({"name": "curl", "port_version": 1, "version": "8.21.0"},),
+                {"curl": ("core", "openssl")},
+            )
+            self.assertEqual(versions, {"curl": "8.21.0#1"})
+
+    def test_installed_port_inventory_rejects_duplicate_features(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "vcpkg").mkdir()
+            record = (
+                "Package: curl\n"
+                "Version: 8.21.0#1\n"
+                "Architecture: test-triplet\n"
+                "Status: install ok installed\n"
+            )
+            (root / "vcpkg/status").write_text(
+                record + "\n" + record,
+                encoding="utf-8",
+            )
+            with self.assertRaises(QUALIFIER["QualificationError"]):
+                QUALIFIER["installed_port_versions"](
+                    root,
+                    "test-triplet",
+                    (
+                        {
+                            "name": "curl",
+                            "port_version": 1,
+                            "version": "8.21.0",
+                        },
+                    ),
+                    {"curl": ("core",)},
+                )
+
     def test_bake_graph_prefetches_then_qualifies_offline(self):
         rendered = json.loads(BAKE["render"](REPOSITORY))
         assets = rendered["target"]["vcpkg-upstream-tier1-assets"]
@@ -118,7 +220,18 @@ class VcpkgUpstreamTests(unittest.TestCase):
         )
         self.assertEqual(
             rendered["group"]["phase13-ports"]["targets"],
-            ["vcpkg-upstream-tier1-qualified"],
+            ["vcpkg-upstream-tier2-qualified"],
+        )
+        tier2 = rendered["target"]["vcpkg-upstream-tier2-qualified"]
+        self.assertEqual(
+            tier2["contexts"],
+            {
+                "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
+                "crossforge_vcpkg_tier1": "target:vcpkg-upstream-tier1-qualified",
+                "crossforge_vcpkg_upstream_tier2_assets": (
+                    "target:vcpkg-upstream-tier2-assets"
+                ),
+            },
         )
 
     def test_qualifier_uses_shared_isolated_install_without_downloads(self):
@@ -142,11 +255,13 @@ class VcpkgUpstreamTests(unittest.TestCase):
         )[1]
         self.assertIn("RUN --network=none", block)
         self.assertIn("qualify-vcpkg-upstream.py", block)
+        self.assertIn("--tier tier1", block)
+        self.assertIn("--tier tier2", block)
         self.assertIn("--expected-component", dockerfile)
         workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("vcpkg-upstream-tier1-qualified", workflow)
+        self.assertIn("vcpkg-upstream-tier2-qualified", workflow)
         self.assertIn("phase13-ports", workflow)
 
     def test_new_scripts_remain_python36_syntax_compatible(self):

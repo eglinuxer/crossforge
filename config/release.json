@@ -91,7 +91,7 @@
     "host-runtime": {
       "status": "locked",
       "lock_file": "locks/host-runtime-el8-x86_64.json",
-      "canonical_sha256": "d59a0d3b4f70524d370e6db6f3e001fc4447ee123f51a71d6a50af6722139d57"
+      "canonical_sha256": "69e34609d9781ab762fe13704e958672a90b603675b30e77b8152534d56d6bbd"
     }
   },
   "gts": {

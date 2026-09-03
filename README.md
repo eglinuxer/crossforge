@@ -393,7 +393,7 @@ while every row-local build identity remains stable.
 
 ## Phase 12: independent host runtime and final SDK rebase
 
-The user-facing amd64 runtime is now an independent 41-root Rocky transaction,
+The user-facing amd64 runtime is now an independent 43-root Rocky transaction,
 not a delta from any compiler or CPython build image:
 
 ```console
@@ -407,8 +407,8 @@ Maintainers refresh the evidence with the cache-only
 `rpm-lock-host-runtime` target and review its local output before replacing the
 tracked transaction, lock, and signed `repomd.xml` files.
 
-The lock contains 140 verified RPM payloads and replays 119 installs plus 21
-upgrades offline. It includes native GTS15, CMake, Meson, distro Ninja,
+The lock contains 152 verified RPM payloads and replays 131 installs plus 21
+upgrades and matching removals offline. It includes native GTS15, CMake, Meson, distro Ninja,
 Autotools,
 Git core, pkg-config and common archive/text tools. PowerTools may supply only
 Meson and Ninja. Crossforge build-only RPM tooling and CPython dependency
@@ -435,7 +435,7 @@ $ docker buildx bake vcpkg-source
 $ ./scripts/render-vcpkg-integration.py --check
 $ docker buildx bake sdk-phase13-base
 $ docker buildx bake vcpkg-contract-qualified
-$ docker buildx bake vcpkg-upstream-tier1-qualified
+$ docker buildx bake vcpkg-upstream-tier2-qualified
 ```
 
 The host-tool target installs Ninja 1.13.2 at
@@ -460,9 +460,11 @@ toolchains. No default target triplet is set: downstream builds must select
 x86_64 or aarch64 and static or dynamic linkage deliberately. The cache-only
 SDK gate rechecks the complete Git/tool identity, all generated file hashes,
 Ninja selection, host/target separation and PIC shared linking, then runs
-x86_64 directly and aarch64 only through pinned QEMU. The separate contract
-gate executes `vcpkg install` for all five triplets with downloads and binary
-caches disabled. Its target port consumes and runs a native host dependency,
+x86_64 directly and aarch64 only through pinned QEMU. This vcpkg base consumes
+the two toolchain slices directly and does not depend on the Python matrix. The
+separate contract gate executes `vcpkg install` for all five triplets with
+downloads and binary caches disabled. Its target port consumes and runs a
+native host dependency,
 builds both library linkages, checks the exact `$ORIGIN` shared-library
 RUNPATH, and executes both target consumers. The only preseeded vcpkg helper
 asset is an exact hash/size-bound patchelf archive; neither it nor downloads,
@@ -472,8 +474,11 @@ all five triplets. Three URL/SHA256/SHA512/size-bound source assets are fetched
 in a network stage, revalidated offline, and seeded into isolated downloads
 roots. The gate validates installed versions, linkage, target ELF machines,
 `$ORIGIN` shared-library RUNPATHs, then executes a combined zlib/fmt C++
-consumer natively or through pinned QEMU. OpenSSL/curl and protobuf/Boost are
-the next two tiers.
+consumer natively or through pinned QEMU. Tier 2 additionally builds
+`OpenSSL 3.6.3` and
+`curl 8.21.0#1` with the exact `curl[core,openssl]` feature set. It validates
+static and dynamic crypto/TLS libraries and executes a combined C consumer in
+all five triplets. Protobuf/Boost is the next tier.
 
 ## Product contract
 

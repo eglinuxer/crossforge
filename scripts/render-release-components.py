@@ -25,6 +25,7 @@ for name in (
     "VCPKG_CONTRACT_POLICY",
     "VCPKG_INTEGRATION_POLICY",
     "VCPKG_UPSTREAM_TIER1_POLICY",
+    "VCPKG_UPSTREAM_TIER2_POLICY",
 ):
     globals()[name] = VCPKG_EXTENSION[name]
 

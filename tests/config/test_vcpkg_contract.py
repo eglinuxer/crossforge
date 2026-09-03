@@ -1,6 +1,7 @@
 import ast
 import json
 import runpy
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -10,6 +11,8 @@ FIXTURE_ROOT = REPOSITORY / "tests/vcpkg/contract"
 QUALIFIER_PATH = REPOSITORY / "scripts/qualify-vcpkg-contract.py"
 QUALIFIER = runpy.run_path(str(QUALIFIER_PATH))
 BAKE = runpy.run_path(str(REPOSITORY / "scripts/render-bake.py"))
+COMMON_PATH = REPOSITORY / "scripts/vcpkg_qualification.py"
+COMMON = runpy.run_path(str(COMMON_PATH))
 
 
 class VcpkgContractTests(unittest.TestCase):
@@ -155,15 +158,41 @@ class VcpkgContractTests(unittest.TestCase):
         workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("vcpkg-upstream-tier1-qualified", workflow)
+        self.assertIn("vcpkg-upstream-tier2-qualified", workflow)
         self.assertIn("phase13-contract", workflow)
 
     def test_qualifier_remains_python36_syntax_compatible(self):
-        ast.parse(
-            QUALIFIER_PATH.read_text(encoding="utf-8"),
-            filename=str(QUALIFIER_PATH),
-            feature_version=(3, 6),
-        )
+        for path in (QUALIFIER_PATH, COMMON_PATH):
+            with self.subTest(path=path.name):
+                ast.parse(
+                    path.read_text(encoding="utf-8"),
+                    filename=str(path),
+                    feature_version=(3, 6),
+                )
+
+    def test_failed_install_prioritizes_referenced_vcpkg_logs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            buildtrees = root / "buildtrees"
+            buildtrees.mkdir()
+            for index in range(20):
+                (buildtrees / ("early-%02d-err.log" % index)).write_text(
+                    "unrelated\n", encoding="utf-8"
+                )
+            important = buildtrees / "z-important-out.log"
+            important.write_text("important failure\n", encoding="utf-8")
+            command = root / "fail.sh"
+            command.write_text(
+                "#!/bin/sh\nprintf '%s\\n' '%s'\nexit 1\n"
+                % ("%s", important),
+                encoding="utf-8",
+            )
+            command.chmod(0o755)
+            with self.assertRaises(COMMON["QualificationError"]) as context:
+                COMMON["run"](
+                    [command, "--x-buildtrees-root=" + str(buildtrees)]
+                )
+            self.assertIn("important failure", str(context.exception))
 
     def test_shared_library_accepts_only_the_relocatable_vcpkg_runpath(self):
         dynamic = (

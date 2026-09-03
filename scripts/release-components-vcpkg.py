@@ -35,6 +35,7 @@ VCPKG_INTEGRATION_POLICY = {
         "package": "ONLY",
         "program": "NEVER",
     },
+    "find_root_path_policy": "prepend-sysroot-preserve-existing",
     "host": {
         "architecture": "x64",
         "compiler_root": "/opt/rh/gcc-toolset-15/root/usr/bin",
@@ -193,6 +194,65 @@ VCPKG_UPSTREAM_TIER1_POLICY = {
             "version": "1.3.2",
         },
     ],
+    "required_features": {
+        "fmt": ["core"],
+        "zlib": ["core"],
+    },
+    "triplets": [
+        "crossforge-host-x64-el8",
+        "crossforge-x64-el8",
+        "crossforge-x64-el8-dynamic",
+        "crossforge-arm64-el8",
+        "crossforge-arm64-el8-dynamic",
+    ],
+}
+VCPKG_UPSTREAM_TIER2_POLICY = {
+    "schema_version": 1,
+    "assets": [
+        {
+            "filename": "curl-curl-curl-8_21_0.tar.gz",
+            "url": "https://github.com/curl/curl/archive/curl-8_21_0.tar.gz",
+            "sha256": "ec753aa6f408a3ca9f0d6d5f7a77417aecd1544db13c03ae5d443612bf367364",
+            "sha512": "0ab6c99c3d5b86fb65c526db517c3159b11db2f8d82552d635c4887059c0602288603c93b754ce0ec543ea2f275122ccec2c8dcd866c2611b5b949c728ee72df",
+            "size": 3592963,
+        },
+        {
+            "filename": "madler-zlib-v1.3.2.tar.gz",
+            "url": "https://github.com/madler/zlib/archive/v1.3.2.tar.gz",
+            "sha256": "b99a0b86c0ba9360ec7e78c4f1e43b1cbdf1e6936c8fa0f6835c0cd694a495a1",
+            "sha512": "16fea4df307a68cf0035858abe2fd550250618a97590e202037acd18a666f57afc10f8836cbbd472d54a0e76539d0e558cb26f059d53de52ff90634bbf4f47d4",
+            "size": 1566911,
+        },
+        {
+            "filename": "openssl-openssl-openssl-3.6.3.tar.gz",
+            "url": "https://github.com/openssl/openssl/archive/openssl-3.6.3.tar.gz",
+            "sha256": "c5524dd6bfaa8e8ff0f1be885c390d14f3ff0bd2de62a7311b65fcbb75cb7546",
+            "sha512": "a89c08101fa1d7e3c09b14f4a90d450bcf336a4f6a3e6e4ea990e4deddcd9ce250472f9114438fd134ff4b47fe93dd47232308567088b2b1c0b2eb50e3b56bdf",
+            "size": 55132237,
+        },
+    ],
+    "binary_sources": "clear",
+    "downloads": "forbidden",
+    "files": [
+        {
+            "path": "consumer.c",
+            "sha256": "a197ad39f22476e4d4fdea66eb3857c405fd83e05b3c46ef18316a75fcc479ff",
+        },
+        {
+            "path": "manifest/vcpkg.json",
+            "sha256": "51ac756cf1a47443b6e50be475857e68b091c30214a2fcf1e9c6f68d2f75f5fb",
+        },
+    ],
+    "ports": [
+        {"name": "curl", "port_version": 1, "version": "8.21.0"},
+        {"name": "openssl", "port_version": 0, "version": "3.6.3"},
+        {"name": "zlib", "port_version": 1, "version": "1.3.2"},
+    ],
+    "required_features": {
+        "curl": ["core", "openssl"],
+        "openssl": ["core"],
+        "zlib": ["core"],
+    },
     "triplets": [
         "crossforge-host-x64-el8",
         "crossforge-x64-el8",
@@ -343,5 +403,22 @@ def extend_component_graph(context):
         (
             "implementation/vcpkg-upstream-tier1-qualification",
             "vcpkg/contract-qualification",
+        ),
+    )
+    add(
+        "implementation/vcpkg-upstream-tier2-qualification",
+        "qualification",
+        explicit_materials=policy_materials(
+            "/@implementation/vcpkg-upstream-tier2/",
+            VCPKG_UPSTREAM_TIER2_POLICY,
+        ),
+    )
+    add(
+        "vcpkg/upstream-tier2-qualification",
+        "qualification",
+        selector(("baseline",), ("platforms",)),
+        (
+            "implementation/vcpkg-upstream-tier2-qualification",
+            "vcpkg/upstream-tier1-qualification",
         ),
     )

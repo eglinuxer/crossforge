@@ -4,7 +4,7 @@
   "kind": "rpm-lock",
   "transaction": {
     "file": "locks/transactions/host-runtime-el8-x86_64.json",
-    "canonical_sha256": "9eb2b3535495808227e1945241c3264558e9800ca8142c5e602436016b2a50f8"
+    "canonical_sha256": "8739dfc13044a608e5ba6cc944990670b0a9545a1040dada6c7cd07608a7d0f4"
   },
   "packages": [
     {
@@ -1232,6 +1232,23 @@
       }
     },
     {
+      "nevra": "perl-ExtUtils-MM-Utils-1:7.34-1.el8.noarch",
+      "received_sha256": "f96564590cadc5b11ab28c5c2dccc8be81f3529517add3da17d6bb792b5f44a2",
+      "header": {
+        "name": "perl-ExtUtils-MM-Utils",
+        "epoch": 1,
+        "version": "7.34",
+        "release": "1.el8",
+        "arch": "noarch",
+        "nevra": "perl-ExtUtils-MM-Utils-1:7.34-1.el8.noarch",
+        "source_rpm": "perl-ExtUtils-MakeMaker-7.34-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
       "nevra": "perl-File-Path-0:2.15-2.el8.noarch",
       "received_sha256": "c6286d5cf079a3a30452dc39c7b600cf35fe2b7e9aeae0ed4a4277c7314852fc",
       "header": {
@@ -1351,6 +1368,57 @@
       }
     },
     {
+      "nevra": "perl-IPC-Cmd-2:1.02-1.el8.noarch",
+      "received_sha256": "4871fe96244f05580e04c8d6266eea633b7c7ec1b7aeaecdb2cffaa610692078",
+      "header": {
+        "name": "perl-IPC-Cmd",
+        "epoch": 2,
+        "version": "1.02",
+        "release": "1.el8",
+        "arch": "noarch",
+        "nevra": "perl-IPC-Cmd-2:1.02-1.el8.noarch",
+        "source_rpm": "perl-IPC-Cmd-1.02-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Locale-Maketext-0:1.28-396.el8.noarch",
+      "received_sha256": "ea5fcac90e28d6049246f04a9c292f84aae7eb96366a42513a7f0f48dad1c243",
+      "header": {
+        "name": "perl-Locale-Maketext",
+        "epoch": 0,
+        "version": "1.28",
+        "release": "396.el8",
+        "arch": "noarch",
+        "nevra": "perl-Locale-Maketext-0:1.28-396.el8.noarch",
+        "source_rpm": "perl-Locale-Maketext-1.28-396.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Locale-Maketext-Simple-1:0.21-423.el8_10.noarch",
+      "received_sha256": "224b69f5c05cf2258f8225916a98bec360e261ae688711e8bca56e7ad4b381da",
+      "header": {
+        "name": "perl-Locale-Maketext-Simple",
+        "epoch": 1,
+        "version": "0.21",
+        "release": "423.el8_10",
+        "arch": "noarch",
+        "nevra": "perl-Locale-Maketext-Simple-1:0.21-423.el8_10.noarch",
+        "source_rpm": "perl-5.26.3-423.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
       "nevra": "perl-MIME-Base64-0:3.15-396.el8.x86_64",
       "received_sha256": "82d0838648209cb59e0ecc0442563ef2b07cf33d61ab1edfd83299597e608456",
       "header": {
@@ -1361,6 +1429,74 @@
         "arch": "x86_64",
         "nevra": "perl-MIME-Base64-0:3.15-396.el8.x86_64",
         "source_rpm": "perl-MIME-Base64-3.15-396.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Module-CoreList-1:5.20181130-1.el8.noarch",
+      "received_sha256": "64c38ae93a7e877bee4b2fafce254feb1e8ca300738b6337865044d8c7a720ac",
+      "header": {
+        "name": "perl-Module-CoreList",
+        "epoch": 1,
+        "version": "5.20181130",
+        "release": "1.el8",
+        "arch": "noarch",
+        "nevra": "perl-Module-CoreList-1:5.20181130-1.el8.noarch",
+        "source_rpm": "perl-Module-CoreList-5.20181130-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Module-Load-1:0.32-395.el8.noarch",
+      "received_sha256": "d59850f3d12c8c43489c3afab82f5d3b5a4f28540e211b92aa559f466cc34cf0",
+      "header": {
+        "name": "perl-Module-Load",
+        "epoch": 1,
+        "version": "0.32",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Module-Load-1:0.32-395.el8.noarch",
+        "source_rpm": "perl-Module-Load-0.32-395.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Module-Load-Conditional-0:0.68-395.el8.noarch",
+      "received_sha256": "31e6acb0e40cc41a76355632ae5c95dd7a9d8095fe44076ef06d53bba038baa1",
+      "header": {
+        "name": "perl-Module-Load-Conditional",
+        "epoch": 0,
+        "version": "0.68",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Module-Load-Conditional-0:0.68-395.el8.noarch",
+        "source_rpm": "perl-Module-Load-Conditional-0.68-395.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Module-Metadata-0:1.000033-395.el8.noarch",
+      "received_sha256": "db19b6ada1a65e7855b187506ec42cc6fb4cdf9565fd7d2e287ba0c56963ba77",
+      "header": {
+        "name": "perl-Module-Metadata",
+        "epoch": 0,
+        "version": "1.000033",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Module-Metadata-0:1.000033-395.el8.noarch",
+        "source_rpm": "perl-Module-Metadata-1.000033-395.el8.src.rpm"
       },
       "signature": {
         "status": "verified",
@@ -1395,6 +1531,23 @@
         "arch": "x86_64",
         "nevra": "perl-Net-SSLeay-0:1.88-2.module+el8.9.0+1517+e71a7a62.x86_64",
         "source_rpm": "perl-Net-SSLeay-1.88-2.module+el8.9.0+1517+e71a7a62.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Params-Check-1:0.38-395.el8.noarch",
+      "received_sha256": "d8366a81571adb7b81d98d5f48421ff7511cb5c910cf2760956e5d4afedef63a",
+      "header": {
+        "name": "perl-Params-Check",
+        "epoch": 1,
+        "version": "0.38",
+        "release": "395.el8",
+        "arch": "noarch",
+        "nevra": "perl-Params-Check-1:0.38-395.el8.noarch",
+        "source_rpm": "perl-Params-Check-0.38-395.el8.src.rpm"
       },
       "signature": {
         "status": "verified",
@@ -1623,6 +1776,23 @@
       }
     },
     {
+      "nevra": "perl-Time-HiRes-4:1.9758-2.el8.x86_64",
+      "received_sha256": "fae5102e437c83981a9c6cc1d957462bd4010e059ccd92d0c1542e6560ef1950",
+      "header": {
+        "name": "perl-Time-HiRes",
+        "epoch": 4,
+        "version": "1.9758",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "nevra": "perl-Time-HiRes-4:1.9758-2.el8.x86_64",
+        "source_rpm": "perl-Time-HiRes-1.9758-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
       "nevra": "perl-Time-Local-1:1.280-1.el8.noarch",
       "received_sha256": "a8051efdea7ee8c3613c1dd41d001061ac3c00760f04f475427184bad38f24a3",
       "header": {
@@ -1633,6 +1803,23 @@
         "arch": "noarch",
         "nevra": "perl-Time-Local-1:1.280-1.el8.noarch",
         "source_rpm": "perl-Time-Local-1.280-1.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-Time-Piece-0:1.31-423.el8_10.x86_64",
+      "received_sha256": "1e6839e69431ba38f8920f666c0215bab9571f82699de6ae23ac9905d025f535",
+      "header": {
+        "name": "perl-Time-Piece",
+        "epoch": 0,
+        "version": "1.31",
+        "release": "423.el8_10",
+        "arch": "x86_64",
+        "nevra": "perl-Time-Piece-0:1.31-423.el8_10.x86_64",
+        "source_rpm": "perl-5.26.3-423.el8_10.src.rpm"
       },
       "signature": {
         "status": "verified",
@@ -1820,6 +2007,23 @@
         "arch": "x86_64",
         "nevra": "perl-threads-shared-0:1.58-2.el8.x86_64",
         "source_rpm": "perl-threads-shared-1.58-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "perl-version-6:0.99.24-1.el8.x86_64",
+      "received_sha256": "184c36f5ac384049e54b768009033a0518b7c12cd5b7e30fcfc47611794bdec2",
+      "header": {
+        "name": "perl-version",
+        "epoch": 6,
+        "version": "0.99.24",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "nevra": "perl-version-6:0.99.24-1.el8.x86_64",
+        "source_rpm": "perl-version-0.99.24-1.el8.src.rpm"
       },
       "signature": {
         "status": "verified",

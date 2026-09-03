@@ -13,6 +13,12 @@ QUALIFIER = runpy.run_path(str(SCRIPT))
 
 
 class HostRuntimeQualificationTests(unittest.TestCase):
+    def test_smoke_contract_executes_the_openssl_perl_dependency(self):
+        source = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn('"-MIPC::Cmd"', source)
+        self.assertIn('"-MTime::Piece"', source)
+        self.assertIn('perl_ipc_stdout == "1.02\\n"', source)
+
     def fixture(self, directory):
         packages = ["base-0:1-1.x86_64", "tool-0:1-1.x86_64"]
         transaction = {

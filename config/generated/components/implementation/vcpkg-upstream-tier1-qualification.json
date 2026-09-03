@@ -113,6 +113,14 @@
       "value": "1.3.2"
     },
     {
+      "path": "/@implementation/vcpkg-upstream-tier1/required_features/fmt/0",
+      "value": "core"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/required_features/zlib/0",
+      "value": "core"
+    },
+    {
       "path": "/@implementation/vcpkg-upstream-tier1/schema_version",
       "value": 1
     },

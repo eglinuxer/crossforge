@@ -26,13 +26,13 @@
       "scope": "future"
     },
     {
-      "canonical_sha256": "75c332279418aba43f0f3ec8242f8a77878052faad43764feeb38dd4f7ba0a53",
+      "canonical_sha256": "f14d24f806b4d270d2455ade0ec8a0e3b7c7904188e5b93f900f41ad44a652a4",
       "component": "host-tools/cmake",
       "path": "config/generated/components/host-tools/cmake.json",
       "scope": "build"
     },
     {
-      "canonical_sha256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
+      "canonical_sha256": "d083d530430bac2b26d229f11083450f68405c9aa0c3b84a867983bd82b5b640",
       "component": "host-tools/ninja",
       "path": "config/generated/components/host-tools/ninja.json",
       "scope": "build"
@@ -98,15 +98,21 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "38a352f70de4a7c247d27c7c52ed55c0226a596c6c9f849f79027328355e31b0",
+      "canonical_sha256": "9e79c71089e00c2fac15d4e8ecedd47b3405fe0d240baa9d964ab2aeffb5e411",
       "component": "implementation/vcpkg-integration",
       "path": "config/generated/components/implementation/vcpkg-integration.json",
       "scope": "build"
     },
     {
-      "canonical_sha256": "462a4eca540daf5109c75c79321e8fae5609ee2430c754368d357ccda8e03251",
+      "canonical_sha256": "507e2e46735c7c5427bf35b699798f2106a4529c3d3133d062e57d0925d0e9b9",
       "component": "implementation/vcpkg-upstream-tier1-qualification",
       "path": "config/generated/components/implementation/vcpkg-upstream-tier1-qualification.json",
+      "scope": "qualification"
+    },
+    {
+      "canonical_sha256": "c59274ff500531dcda1e40f83bb2692743fcce69adc646fee100bc00e1bbc01f",
+      "component": "implementation/vcpkg-upstream-tier2-qualification",
+      "path": "config/generated/components/implementation/vcpkg-upstream-tier2-qualification.json",
       "scope": "qualification"
     },
     {
@@ -290,7 +296,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "b037782d2cefa64c6b88f75478081f85706ee6c7fe95f6e5c8b4092b464edabd",
+      "canonical_sha256": "15bebccbafc2f5b849de9b0f36ec694fb0cc829aebada4d936c1c595ec1ef029",
       "component": "rpm/host-runtime",
       "path": "config/generated/components/rpm/host-runtime.json",
       "scope": "build"
@@ -374,21 +380,27 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "9ff556b2c027516ef017f13c3eb18afc949eb383dd10f9c4d97146cfa9c3291c",
+      "canonical_sha256": "4b77524b4f5f369cd70ecc60d5da0f3f18aaf50d69df01429565902ea10333f1",
       "component": "vcpkg/contract-qualification",
       "path": "config/generated/components/vcpkg/contract-qualification.json",
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "3ba5101626317b1d964205f50f567acc331b4f1cb95b57b32eef452aa277d320",
+      "canonical_sha256": "d9a2454538d62570ca6b67a19c08452a521bd46f191043f415297df8f5f0011e",
       "component": "vcpkg/sdk-build",
       "path": "config/generated/components/vcpkg/sdk-build.json",
       "scope": "build"
     },
     {
-      "canonical_sha256": "84b013da64215a510cd248bd19db2ffb85884d980d27206ed615e02edf08cb91",
+      "canonical_sha256": "6792e7af3598cd212be93b65f3dbe7d1241d9064b47cb1042172b6cd958af003",
       "component": "vcpkg/upstream-tier1-qualification",
       "path": "config/generated/components/vcpkg/upstream-tier1-qualification.json",
+      "scope": "qualification"
+    },
+    {
+      "canonical_sha256": "4dab9af44a82b75706b6b9ea07bc7e71beba4e187c56687a54fee175e3dfe3b1",
+      "component": "vcpkg/upstream-tier2-qualification",
+      "path": "config/generated/components/vcpkg/upstream-tier2-qualification.json",
       "scope": "qualification"
     },
     {
@@ -412,7 +424,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "27ef3d57bb32a5e1ff7b7ab4953f151756a127f4fae9785ec74f5eeacfda4992",
+    "canonical_sha256": "e88c408ea70aeadf7e67440dc0a051663e281f290c30cd84565c85bb56671d1d",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

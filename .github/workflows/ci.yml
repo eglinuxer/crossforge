@@ -93,5 +93,5 @@ jobs:
       - name: Run the full Python and vcpkg SDK qualification gates
         if: github.event_name != 'pull_request'
         run: |
-          docker buildx bake python-matrix vcpkg-upstream-tier1-qualified \
+          docker buildx bake python-matrix vcpkg-upstream-tier2-qualified \
             --progress=plain

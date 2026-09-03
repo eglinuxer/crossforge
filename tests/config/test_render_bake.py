@@ -27,11 +27,9 @@ class RenderBakeTests(unittest.TestCase):
             record["component"]: record
             for record in cls.binding["components"]
         }
-        cls.component_arguments = {
-            key: value
-            for key, value in cls.targets["_common"]["args"].items()
-            if key.startswith("CROSSFORGE_COMPONENT_")
-        }
+        cls.component_arguments = RENDERER["component_digest_arguments"](
+            REPOSITORY, cls.release
+        )
         cls.python_dockerfile = (
             REPOSITORY / "docker/python.Dockerfile"
         ).read_text(encoding="utf-8")
@@ -64,7 +62,7 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_component_arguments_cover_the_complete_release_binding(self):
         records = self.binding["components"]
-        self.assertEqual(len(records), 68)
+        self.assertEqual(len(records), 70)
         expected = {
             RENDERER["component_argument_name"](record["component"]): record[
                 "canonical_sha256"
@@ -73,6 +71,31 @@ class RenderBakeTests(unittest.TestCase):
         }
         self.assertEqual(len(expected), len(records))
         self.assertEqual(self.component_arguments, expected)
+        self.assertFalse(
+            set(self.targets["_common"]["args"]) & set(expected)
+        )
+
+    def test_main_docker_component_args_follow_stage_ancestry(self):
+        expected = RENDERER["scoped_main_component_arguments"](
+            REPOSITORY, self.component_arguments
+        )
+        for name, arguments in expected.items():
+            self.assertEqual(
+                {
+                    key: value
+                    for key, value in self.targets[name].get("args", {}).items()
+                    if key.startswith("CROSSFORGE_COMPONENT_")
+                },
+                arguments,
+            )
+        runtime = RENDERER["component_argument_name"]("rpm/host-runtime")
+        for name in (
+            "gcc-x86_64",
+            "gcc-aarch64",
+            "toolchain-x86_64-dev",
+            "toolchain-aarch64-dev",
+        ):
+            self.assertNotIn(runtime, self.targets[name]["args"])
 
     def test_component_argument_names_are_stable_unique_and_content_locked(self):
         self.assertEqual(
@@ -492,7 +515,7 @@ class RenderBakeTests(unittest.TestCase):
                 "cpython-%s-aarch64-qualify" % contract["row"]
                 for contract in RENDERER["IMPLEMENTED_ROWS"]
             }
-            | {"python-dev"}
+            | {"python-dev", "sdk-phase13-base"}
             | {
                 "python-phase%d-dev" % phase
                 for phase in range(5, RENDERER["LATEST_PHASE"] + 1)

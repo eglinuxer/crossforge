@@ -37,6 +37,10 @@
       "value": "NEVER"
     },
     {
+      "path": "/@implementation/vcpkg/find_root_path_policy",
+      "value": "prepend-sysroot-preserve-existing"
+    },
+    {
       "path": "/@implementation/vcpkg/host/architecture",
       "value": "x64"
     },

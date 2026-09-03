@@ -627,6 +627,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                         "python/qualification",
                         "vcpkg/contract-qualification",
                         "vcpkg/upstream-tier1-qualification",
+                        "vcpkg/upstream-tier2-qualification",
                     },
                 )
             )
@@ -699,6 +700,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "vcpkg/sdk-build",
             "vcpkg/contract-qualification",
             "vcpkg/upstream-tier1-qualification",
+            "vcpkg/upstream-tier2-qualification",
         }
         expected.update(
             "python/%s-aarch64-build" % row for row in self.row_names
@@ -720,6 +722,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "vcpkg/sdk-build",
             "vcpkg/contract-qualification",
             "vcpkg/upstream-tier1-qualification",
+            "vcpkg/upstream-tier2-qualification",
         }
         expected.update(
             "python/%s-x86_64-build" % row for row in self.row_names
@@ -737,6 +740,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "python/qualification",
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
+                "vcpkg/upstream-tier2-qualification",
             },
         )
 
@@ -779,6 +783,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/sdk-build",
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
+                "vcpkg/upstream-tier2-qualification",
                 "future/product",
             },
         )
@@ -810,6 +815,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/sdk-build",
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
+                "vcpkg/upstream-tier2-qualification",
             }
         )
         for row in self.row_names:
@@ -844,6 +850,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/sdk-build",
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
+                "vcpkg/upstream-tier2-qualification",
             },
         )
 
@@ -883,6 +890,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/sdk-build",
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
+                "vcpkg/upstream-tier2-qualification",
             },
         )
 
@@ -918,6 +926,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/sdk-build",
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
+                "vcpkg/upstream-tier2-qualification",
             },
         )
 

@@ -112,6 +112,11 @@ def render_target_toolchain(
     sysroot = target["sysroot"]
     adapters = policy["execution_adapters"]
     modes = policy["find_root_modes"]
+    require(
+        policy["find_root_path_policy"]
+        == "prepend-sysroot-preserve-existing",
+        "unsupported CMake find-root path policy",
+    )
     lines = [
         header(
             integration_sha256,
@@ -129,7 +134,9 @@ def render_target_toolchain(
         'set(CMAKE_SYSTEM_PROCESSOR "%s" CACHE STRING "" FORCE)'
         % target["processor"],
         'set(CMAKE_SYSROOT "%s" CACHE PATH "" FORCE)' % sysroot,
-        'set(CMAKE_FIND_ROOT_PATH "%s" CACHE STRING "" FORCE)' % sysroot,
+        'list(PREPEND CMAKE_FIND_ROOT_PATH "%s")' % sysroot,
+        "list(REMOVE_DUPLICATES CMAKE_FIND_ROOT_PATH)",
+        'set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" CACHE STRING "" FORCE)',
         'set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM %s CACHE STRING "" FORCE)'
         % modes["program"],
         'set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY %s CACHE STRING "" FORCE)'

@@ -198,6 +198,16 @@
       "purpose": "host-runtime"
     },
     {
+      "name": "perl-IPC-Cmd",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
+      "name": "perl-Time-Piece",
+      "arch": "any",
+      "purpose": "host-runtime"
+    },
+    {
       "name": "pkgconf-pkg-config",
       "arch": "any",
       "purpose": "host-runtime"

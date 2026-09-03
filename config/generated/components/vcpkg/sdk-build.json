@@ -3,19 +3,19 @@
   "component": "vcpkg/sdk-build",
   "dependencies": [
     {
-      "canonical_sha256": "75c332279418aba43f0f3ec8242f8a77878052faad43764feeb38dd4f7ba0a53",
+      "canonical_sha256": "f14d24f806b4d270d2455ade0ec8a0e3b7c7904188e5b93f900f41ad44a652a4",
       "component": "host-tools/cmake"
     },
     {
-      "canonical_sha256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
+      "canonical_sha256": "d083d530430bac2b26d229f11083450f68405c9aa0c3b84a867983bd82b5b640",
       "component": "host-tools/ninja"
     },
     {
-      "canonical_sha256": "38a352f70de4a7c247d27c7c52ed55c0226a596c6c9f849f79027328355e31b0",
+      "canonical_sha256": "9e79c71089e00c2fac15d4e8ecedd47b3405fe0d240baa9d964ab2aeffb5e411",
       "component": "implementation/vcpkg-integration"
     },
     {
-      "canonical_sha256": "b037782d2cefa64c6b88f75478081f85706ee6c7fe95f6e5c8b4092b464edabd",
+      "canonical_sha256": "15bebccbafc2f5b849de9b0f36ec694fb0cc829aebada4d936c1c595ec1ef029",
       "component": "rpm/host-runtime"
     },
     {

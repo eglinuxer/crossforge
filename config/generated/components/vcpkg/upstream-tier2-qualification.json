@@ -1,18 +1,14 @@
 {
   "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
-  "component": "host-tools/ninja",
+  "component": "vcpkg/upstream-tier2-qualification",
   "dependencies": [
     {
-      "canonical_sha256": "732447444d086b975a7ec6a13f463dd7ced4696a37ad7015e12d5e64d8bcd862",
-      "component": "implementation/ninja-host-tool"
+      "canonical_sha256": "c59274ff500531dcda1e40f83bb2692743fcce69adc646fee100bc00e1bbc01f",
+      "component": "implementation/vcpkg-upstream-tier2-qualification"
     },
     {
-      "canonical_sha256": "15bebccbafc2f5b849de9b0f36ec694fb0cc829aebada4d936c1c595ec1ef029",
-      "component": "rpm/host-runtime"
-    },
-    {
-      "canonical_sha256": "2a98362c763cfe71b4d604cb2ccf563b7bb54cfde1b8ba7331ee1b9ef0d4cc38",
-      "component": "sources/ninja"
+      "canonical_sha256": "6792e7af3598cd212be93b65f3dbe7d1241d9064b47cb1042172b6cd958af003",
+      "component": "vcpkg/upstream-tier1-qualification"
     }
   ],
   "kind": "crossforge-release-component",
@@ -35,5 +31,5 @@
     }
   ],
   "schema_version": 1,
-  "scope": "build"
+  "scope": "qualification"
 }

@@ -126,6 +126,8 @@ HOST_RUNTIME_ROOTS = {
     "ninja-build",
     "openssl-libs",
     "patch",
+    "perl-IPC-Cmd",
+    "perl-Time-Piece",
     "pkgconf-pkg-config",
     "platform-python",
     "sed",

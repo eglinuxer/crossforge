@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约及 zlib/fmt curated-port Tier 1 已完成，OpenSSL/curl、protobuf/Boost、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约，以及 zlib/fmt Tier 1 与 OpenSSL/curl Tier 2 已完成，protobuf/Boost、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -142,8 +142,9 @@ Host 构建环境使用三个独立 transaction：common 从固定基础镜像�
 OpenSSL、SQLite 与 xz 的开发 roots。三层均逐包验签后在 `--network=none` 下执行真实
 scripts/triggers，并核对完整 rpmdb。`libzstd-devel` 不进入 common/Python 层，避免改变
 binutils 的 `--with-zstd=auto` 探测。最终用户镜像的 host runtime lock 已从干净
-Rocky base 独立求解，不继承这些 build-only packages：41 个显式 roots 产生 140 个
-验签 payload，PowerTools 只允许提供 Meson 与 Ninja，正式安装在无网络阶段重放。
+Rocky base 独立求解，不继承这些 build-only packages：43 个显式 roots 产生 152 个
+验签 payload，以 131 install、21 upgrade 与对应 21 remove 在无网络阶段重放；
+PowerTools 只允许提供 Meson 与 Ninja。
 Rocky 的 Meson 包强制依赖系统 Python development package；这是受审的上游打包闭包，
 不等同于 Crossforge 的 CPython build-devel transaction。最终 SDK 只以该 runtime 为
 祖先，再通过 COPY 汇入已资格化的 toolchain、sysroot 与 Python row；GCC/Python build
@@ -255,7 +256,7 @@ crossforge-arm64-el8-dynamic
 
 Crossforge 只承诺 triplet、host/target 分离和代表性 ports（zlib、fmt、OpenSSL、curl、protobuf、Boost）的持续验收。项目自己的 `vcpkg.json`、builtin baseline、registry、overlay ports、许可证判断和 binary cache 由下游管理；镜像不预装编译好的 ports。
 
-当前 `sdk-phase13-base` 已把固定 registry/tool 安装到
+当前 `sdk-phase13-base` 直接基于两套 toolchain slice（不依赖 Python matrix），并把固定 registry/tool 安装到
 `/opt/crossforge/vcpkg/root`，并从 release component policy 生成三份 CMake
 toolchain 与上述五套 triplet。镜像只设置 host triplet，不设置默认 target
 triplet；target 必须由用户显式选择。离线资格化会重验完整 Git 历史与工具身份，
@@ -273,8 +274,10 @@ installed tree 和该 helper 资产均不进入产品根目录。
 curated-port Tier 1 固定 `zlib 1.3.2#1` 与 `fmt 12.2.0#1`。网络 stage 只获取三份
 显式 URL/SHA256/SHA512/大小资产，离线 stage 在五套 triplet 中分别执行 manifest
 install，验证版本、静态/动态布局、ELF machine 与精确 `$ORIGIN` RUNPATH，并原生或
-通过固定 QEMU 执行组合 consumer。下一层为 OpenSSL/curl，之后为需要 host protoc
-与大依赖图的 protobuf/Boost。
+通过固定 QEMU 执行组合 consumer。Tier 2 固定 `OpenSSL 3.6.3`、`curl 8.21.0#1`
+与 `curl[core,openssl]` feature 集，使用同样的离线五 triplet 门禁验证 crypto/TLS
+静态与动态库并执行组合 C consumer。下一层为需要 host protoc 与大依赖图的
+protobuf/Boost。
 
 ## 9. 构建系统无关的分包
 
@@ -374,4 +377,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约与 zlib/fmt Tier 1 已完成；后续实现 OpenSSL/curl、protobuf/Boost、分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、zlib/fmt Tier 1 与 OpenSSL/curl Tier 2 已完成；后续实现 protobuf/Boost、分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

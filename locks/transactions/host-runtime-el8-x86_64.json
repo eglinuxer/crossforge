@@ -13,7 +13,7 @@
   },
   "plan": {
     "file": "config/rpm/host-runtime-el8-x86_64.plan.json",
-    "canonical_sha256": "48df76beb7aa3606fb687b23ad55550a0814b7abb67af8de194af38c78138eb8"
+    "canonical_sha256": "d0245cfa6142b1461d3265114c6522132372b8222051079e47ef5cf865f52d58"
   },
   "resolver": {
     "implementation": "python3-dnf",
@@ -755,6 +755,20 @@
       "arch": "any",
       "purpose": "host-runtime",
       "resolved_nevra": "patch-0:2.7.6-11.el8.x86_64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "perl-IPC-Cmd",
+      "arch": "any",
+      "purpose": "host-runtime",
+      "resolved_nevra": "perl-IPC-Cmd-2:1.02-1.el8.noarch",
+      "disposition": "transaction"
+    },
+    {
+      "name": "perl-Time-Piece",
+      "arch": "any",
+      "purpose": "host-runtime",
+      "resolved_nevra": "perl-Time-Piece-0:1.31-423.el8_10.x86_64",
       "disposition": "transaction"
     },
     {
@@ -2549,6 +2563,26 @@
       "reason": "dependency"
     },
     {
+      "name": "perl-ExtUtils-MM-Utils",
+      "epoch": 1,
+      "version": "7.34",
+      "release": "1.el8",
+      "arch": "noarch",
+      "nevra": "perl-ExtUtils-MM-Utils-1:7.34-1.el8.noarch",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-ExtUtils-MM-Utils-7.34-1.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-ExtUtils-MM-Utils-7.34-1.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "f96564590cadc5b11ab28c5c2dccc8be81f3529517add3da17d6bb792b5f44a2"
+      },
+      "size": 15828,
+      "install_size": 3226,
+      "source_rpm": "perl-ExtUtils-MakeMaker-7.34-1.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "perl-File-Path",
       "epoch": 0,
       "version": "2.15",
@@ -2689,6 +2723,66 @@
       "reason": "dependency"
     },
     {
+      "name": "perl-IPC-Cmd",
+      "epoch": 2,
+      "version": "1.02",
+      "release": "1.el8",
+      "arch": "noarch",
+      "nevra": "perl-IPC-Cmd-2:1.02-1.el8.noarch",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-IPC-Cmd-1.02-1.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-IPC-Cmd-1.02-1.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "4871fe96244f05580e04c8d6266eea633b7c7ec1b7aeaecdb2cffaa610692078"
+      },
+      "size": 43284,
+      "install_size": 87151,
+      "source_rpm": "perl-IPC-Cmd-1.02-1.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "perl-Locale-Maketext",
+      "epoch": 0,
+      "version": "1.28",
+      "release": "396.el8",
+      "arch": "noarch",
+      "nevra": "perl-Locale-Maketext-0:1.28-396.el8.noarch",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-Locale-Maketext-1.28-396.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-Locale-Maketext-1.28-396.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "ea5fcac90e28d6049246f04a9c292f84aae7eb96366a42513a7f0f48dad1c243"
+      },
+      "size": 100016,
+      "install_size": 174999,
+      "source_rpm": "perl-Locale-Maketext-1.28-396.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "perl-Locale-Maketext-Simple",
+      "epoch": 1,
+      "version": "0.21",
+      "release": "423.el8_10",
+      "arch": "noarch",
+      "nevra": "perl-Locale-Maketext-Simple-1:0.21-423.el8_10.noarch",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-Locale-Maketext-Simple-0.21-423.el8_10.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-Locale-Maketext-Simple-0.21-423.el8_10.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "224b69f5c05cf2258f8225916a98bec360e261ae688711e8bca56e7ad4b381da"
+      },
+      "size": 80288,
+      "install_size": 14015,
+      "source_rpm": "perl-5.26.3-423.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "perl-MIME-Base64",
       "epoch": 0,
       "version": "3.15",
@@ -2705,6 +2799,86 @@
       "size": 30296,
       "install_size": 41211,
       "source_rpm": "perl-MIME-Base64-3.15-396.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "perl-Module-CoreList",
+      "epoch": 1,
+      "version": "5.20181130",
+      "release": "1.el8",
+      "arch": "noarch",
+      "nevra": "perl-Module-CoreList-1:5.20181130-1.el8.noarch",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-Module-CoreList-5.20181130-1.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-Module-CoreList-5.20181130-1.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "64c38ae93a7e877bee4b2fafce254feb1e8ca300738b6337865044d8c7a720ac"
+      },
+      "size": 87696,
+      "install_size": 867850,
+      "source_rpm": "perl-Module-CoreList-5.20181130-1.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "perl-Module-Load",
+      "epoch": 1,
+      "version": "0.32",
+      "release": "395.el8",
+      "arch": "noarch",
+      "nevra": "perl-Module-Load-1:0.32-395.el8.noarch",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-Module-Load-0.32-395.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-Module-Load-0.32-395.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "d59850f3d12c8c43489c3afab82f5d3b5a4f28540e211b92aa559f466cc34cf0"
+      },
+      "size": 17936,
+      "install_size": 14310,
+      "source_rpm": "perl-Module-Load-0.32-395.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "perl-Module-Load-Conditional",
+      "epoch": 0,
+      "version": "0.68",
+      "release": "395.el8",
+      "arch": "noarch",
+      "nevra": "perl-Module-Load-Conditional-0:0.68-395.el8.noarch",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-Module-Load-Conditional-0.68-395.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-Module-Load-Conditional-0.68-395.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "31e6acb0e40cc41a76355632ae5c95dd7a9d8095fe44076ef06d53bba038baa1"
+      },
+      "size": 23836,
+      "install_size": 29291,
+      "source_rpm": "perl-Module-Load-Conditional-0.68-395.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "perl-Module-Metadata",
+      "epoch": 0,
+      "version": "1.000033",
+      "release": "395.el8",
+      "arch": "noarch",
+      "nevra": "perl-Module-Metadata-0:1.000033-395.el8.noarch",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-Module-Metadata-1.000033-395.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-Module-Metadata-1.000033-395.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "db19b6ada1a65e7855b187506ec42cc6fb4cdf9565fd7d2e287ba0c56963ba77"
+      },
+      "size": 44380,
+      "install_size": 67700,
+      "source_rpm": "perl-Module-Metadata-1.000033-395.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -2745,6 +2919,26 @@
       "size": 387154,
       "install_size": 1329471,
       "source_rpm": "perl-Net-SSLeay-1.88-2.module+el8.9.0+1517+e71a7a62.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "perl-Params-Check",
+      "epoch": 1,
+      "version": "0.38",
+      "release": "395.el8",
+      "arch": "noarch",
+      "nevra": "perl-Params-Check-1:0.38-395.el8.noarch",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-Params-Check-0.38-395.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-Params-Check-0.38-395.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "d8366a81571adb7b81d98d5f48421ff7511cb5c910cf2760956e5d4afedef63a"
+      },
+      "size": 23004,
+      "install_size": 28458,
+      "source_rpm": "perl-Params-Check-0.38-395.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -3009,6 +3203,26 @@
       "reason": "dependency"
     },
     {
+      "name": "perl-Time-HiRes",
+      "epoch": 4,
+      "version": "1.9758",
+      "release": "2.el8",
+      "arch": "x86_64",
+      "nevra": "perl-Time-HiRes-4:1.9758-2.el8.x86_64",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-Time-HiRes-1.9758-2.el8.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-Time-HiRes-1.9758-2.el8.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "fae5102e437c83981a9c6cc1d957462bd4010e059ccd92d0c1542e6560ef1950"
+      },
+      "size": 61236,
+      "install_size": 116456,
+      "source_rpm": "perl-Time-HiRes-1.9758-2.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "perl-Time-Local",
       "epoch": 1,
       "version": "1.280",
@@ -3027,6 +3241,26 @@
       "source_rpm": "perl-Time-Local-1.280-1.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
+    },
+    {
+      "name": "perl-Time-Piece",
+      "epoch": 0,
+      "version": "1.31",
+      "release": "423.el8_10",
+      "arch": "x86_64",
+      "nevra": "perl-Time-Piece-0:1.31-423.el8_10.x86_64",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-Time-Piece-1.31-423.el8_10.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-Time-Piece-1.31-423.el8_10.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "1e6839e69431ba38f8920f666c0215bab9571f82699de6ae23ac9905d025f535"
+      },
+      "size": 99900,
+      "install_size": 61666,
+      "source_rpm": "perl-5.26.3-423.el8_10.src.rpm",
+      "action": "install",
+      "reason": "user"
     },
     {
       "name": "perl-URI",
@@ -3245,6 +3479,26 @@
       "size": 47728,
       "install_size": 77970,
       "source_rpm": "perl-threads-shared-1.58-2.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "perl-version",
+      "epoch": 6,
+      "version": "0.99.24",
+      "release": "1.el8",
+      "arch": "x86_64",
+      "nevra": "perl-version-6:0.99.24-1.el8.x86_64",
+      "repo_id": "appstream",
+      "location": "Packages/p/perl-version-0.99.24-1.el8.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/perl-version-0.99.24-1.el8.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "184c36f5ac384049e54b768009033a0518b7c12cd5b7e30fcfc47611794bdec2"
+      },
+      "size": 67804,
+      "install_size": 127731,
+      "source_rpm": "perl-version-0.99.24-1.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -4345,6 +4599,7 @@
         "perl-Encode-4:2.97-3.el8.x86_64",
         "perl-Errno-0:1.28-423.el8_10.x86_64",
         "perl-Exporter-0:5.72-396.el8.noarch",
+        "perl-ExtUtils-MM-Utils-1:7.34-1.el8.noarch",
         "perl-File-Path-0:2.15-2.el8.noarch",
         "perl-File-Temp-0:0.230.600-1.el8.noarch",
         "perl-Getopt-Long-1:2.50-4.el8.noarch",
@@ -4352,9 +4607,17 @@
         "perl-IO-0:1.38-423.el8_10.x86_64",
         "perl-IO-Socket-IP-0:0.39-5.el8.noarch",
         "perl-IO-Socket-SSL-0:2.066-4.module+el8.9.0+1517+e71a7a62.noarch",
+        "perl-IPC-Cmd-2:1.02-1.el8.noarch",
+        "perl-Locale-Maketext-0:1.28-396.el8.noarch",
+        "perl-Locale-Maketext-Simple-1:0.21-423.el8_10.noarch",
         "perl-MIME-Base64-0:3.15-396.el8.x86_64",
+        "perl-Module-CoreList-1:5.20181130-1.el8.noarch",
+        "perl-Module-Load-1:0.32-395.el8.noarch",
+        "perl-Module-Load-Conditional-0:0.68-395.el8.noarch",
+        "perl-Module-Metadata-0:1.000033-395.el8.noarch",
         "perl-Mozilla-CA-0:20160104-7.module+el8.9.0+1521+0101edce.noarch",
         "perl-Net-SSLeay-0:1.88-2.module+el8.9.0+1517+e71a7a62.x86_64",
+        "perl-Params-Check-1:0.38-395.el8.noarch",
         "perl-PathTools-0:3.74-1.el8.x86_64",
         "perl-Pod-Escapes-1:1.07-395.el8.noarch",
         "perl-Pod-Perldoc-0:3.28-396.el8.noarch",
@@ -4368,7 +4631,9 @@
         "perl-Text-ParseWords-0:3.30-395.el8.noarch",
         "perl-Text-Tabs+Wrap-0:2013.0523-395.el8.noarch",
         "perl-Thread-Queue-0:3.13-1.el8.noarch",
+        "perl-Time-HiRes-4:1.9758-2.el8.x86_64",
         "perl-Time-Local-1:1.280-1.el8.noarch",
+        "perl-Time-Piece-0:1.31-423.el8_10.x86_64",
         "perl-URI-0:1.73-3.el8.noarch",
         "perl-Unicode-Normalize-0:1.25-396.el8.x86_64",
         "perl-constant-0:1.33-396.el8.noarch",
@@ -4380,6 +4645,7 @@
         "perl-podlators-0:4.11-1.el8.noarch",
         "perl-threads-1:2.21-2.el8.x86_64",
         "perl-threads-shared-0:1.58-2.el8.x86_64",
+        "perl-version-6:0.99.24-1.el8.x86_64",
         "pkgconf-0:1.4.2-1.el8.x86_64",
         "pkgconf-m4-0:1.4.2-1.el8.noarch",
         "pkgconf-pkg-config-0:1.4.2-1.el8.x86_64",
@@ -4444,7 +4710,7 @@
         "zip-0:3.0-23.el8.x86_64",
         "zlib-0:1.2.11-26.el8.x86_64"
       ],
-      "canonical_sha256": "2e60ee8354aa90ac42da4c08a6051dd47e0f07d935fa3a69cc349a97c4fe5826"
+      "canonical_sha256": "72e8d50f74bad308fd5c4b1f84204760f0a57b980fd67af9c3de2d07b11c3ed7"
     }
   }
 }

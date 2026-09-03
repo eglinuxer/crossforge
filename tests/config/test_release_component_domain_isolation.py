@@ -20,9 +20,11 @@ VCPKG_COMPONENTS = {
     "implementation/vcpkg-contract-qualification",
     "implementation/vcpkg-integration",
     "implementation/vcpkg-upstream-tier1-qualification",
+    "implementation/vcpkg-upstream-tier2-qualification",
     "vcpkg/contract-qualification",
     "vcpkg/sdk-build",
     "vcpkg/upstream-tier1-qualification",
+    "vcpkg/upstream-tier2-qualification",
 }
 
 
@@ -92,6 +94,7 @@ class ReleaseComponentDomainIsolationTests(unittest.TestCase):
                 "implementation/vcpkg-contract-qualification",
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
+                "vcpkg/upstream-tier2-qualification",
             },
         )
 
