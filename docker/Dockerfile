@@ -360,6 +360,45 @@ RUN --network=none \
       --release-component-name rpm/host-gcc-build \
       --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256"
 
+# DejaGNU and Expect are qualification-only. This additive closure starts from
+# the locked GCC build host and never becomes an ancestor of the product SDK.
+FROM rpm-locked-input-base AS host-gcc-test-rpms
+ARG CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256
+COPY config/generated/components/rpm/host-gcc-test.json ./config/components/rpm-host-gcc-test.json
+COPY locks/host-gcc-test-el8-x86_64.json ./locks/host-gcc-test-el8-x86_64.json
+COPY locks/transactions/host-gcc-test-el8-x86_64.json ./locks/transactions/host-gcc-test-el8-x86_64.json
+COPY locks/metadata/host-gcc-test-el8-x86_64/ ./locks/metadata/host-gcc-test-el8-x86_64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/host-gcc-test-el8-x86_64.json --require-lock \
+      --release-component ./config/components/rpm-host-gcc-test.json \
+      --release-component-name rpm/host-gcc-test \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256" \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/host-gcc-test-el8-x86_64.json fetch \
+      --output /rpm-bundle --jobs 2 \
+      --release-component ./config/components/rpm-host-gcc-test.json \
+      --release-component-name rpm/host-gcc-test \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256"
+
+FROM host-gcc-build-locked AS host-gcc-test-locked
+ARG CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256
+COPY config/generated/components/rpm/host-gcc-test.json ./config/components/rpm-host-gcc-test.json
+COPY locks/host-gcc-test-el8-x86_64.json ./locks/host-gcc-test-el8-x86_64.json
+COPY locks/transactions/host-gcc-test-el8-x86_64.json ./locks/transactions/host-gcc-test-el8-x86_64.json
+COPY locks/metadata/host-gcc-test-el8-x86_64/ ./locks/metadata/host-gcc-test-el8-x86_64/
+COPY scripts/install-host-rpm-lock.py ./scripts/install-host-rpm-lock.py
+RUN --network=none \
+    --mount=type=bind,from=host-gcc-test-rpms,source=/rpm-bundle,target=/rpm-bundle-gcc-test,ro \
+    /usr/libexec/platform-python ./scripts/install-host-rpm-lock.py \
+      ./locks/host-gcc-test-el8-x86_64.json \
+      --transaction ./locks/transactions/host-gcc-test-el8-x86_64.json \
+      --bundle /rpm-bundle-gcc-test \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --marker /usr/share/crossforge/rpm-locks/host-gcc-test.json \
+      --release-component ./config/components/rpm-host-gcc-test.json \
+      --release-component-name rpm/host-gcc-test \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256"
+
 # CPython's native build interpreter has its own additive development closure;
 # it must not inherit GCC-only bison/flex or couple Python to that lock.
 FROM rpm-locked-input-base AS host-python-build-rpms
@@ -560,6 +599,29 @@ RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
 
 FROM scratch AS rpm-lock-host-gcc-build
 COPY --from=rpm-resolve-host-gcc-build /resolved/ /
+
+FROM host-gcc-build-locked AS rpm-resolve-host-gcc-test
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/host-gcc-test-el8-x86_64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/host-gcc-test-el8-x86_64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-host-gcc-test
+COPY --from=rpm-resolve-host-gcc-test /resolved/ /
 
 FROM host-build-common-locked AS rpm-resolve-host-python-build
 COPY --from=rpm-input-base /src/config/ ./config/

@@ -83,6 +83,11 @@
       "lock_file": "locks/host-gcc-build-el8-x86_64.json",
       "canonical_sha256": "de271a4ba8a9e4bc31c8fc8a92c05fde4736afbc64b1251e06751a0cb96c2be0"
     },
+    "host-gcc-test": {
+      "status": "locked",
+      "lock_file": "locks/host-gcc-test-el8-x86_64.json",
+      "canonical_sha256": "d3e165755b968c72b9fc7644aa2706f6bb151458c3f99ec0192179ec06c69d6e"
+    },
     "host-python-build": {
       "status": "locked",
       "lock_file": "locks/host-python-build-el8-x86_64.json",

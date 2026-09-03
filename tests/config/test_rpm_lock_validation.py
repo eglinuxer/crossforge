@@ -20,6 +20,7 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "config/rpm/sysroot-el8-aarch64.plan.json",
             REPOSITORY / "config/rpm/host-build-common-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/host-gcc-build-el8-x86_64.plan.json",
+            REPOSITORY / "config/rpm/host-gcc-test-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/host-python-build-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/host-runtime-el8-x86_64.plan.json",
         ]
@@ -28,6 +29,7 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "locks/transactions/sysroot-el8-aarch64.json",
             REPOSITORY / "locks/transactions/host-build-common-el8-x86_64.json",
             REPOSITORY / "locks/transactions/host-gcc-build-el8-x86_64.json",
+            REPOSITORY / "locks/transactions/host-gcc-test-el8-x86_64.json",
             REPOSITORY / "locks/transactions/host-python-build-el8-x86_64.json",
             REPOSITORY / "locks/transactions/host-runtime-el8-x86_64.json",
         ]
@@ -36,6 +38,7 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "locks/sysroot-el8-aarch64.json",
             REPOSITORY / "locks/host-build-common-el8-x86_64.json",
             REPOSITORY / "locks/host-gcc-build-el8-x86_64.json",
+            REPOSITORY / "locks/host-gcc-test-el8-x86_64.json",
             REPOSITORY / "locks/host-python-build-el8-x86_64.json",
             REPOSITORY / "locks/host-runtime-el8-x86_64.json",
         ]
@@ -94,7 +97,7 @@ class RpmLockValidationTests(unittest.TestCase):
         self.assertEqual(gcc_names, {"bison", "flex", "libzstd-devel", "m4"})
 
     def test_python_build_delta_has_only_declared_development_roots(self):
-        python = VALIDATOR["load_json"](self.transactions[4])
+        python = VALIDATOR["load_json"](self.transactions[5])
         self.assertEqual(
             {request["name"] for request in python["requests"]},
             {
@@ -110,6 +113,40 @@ class RpmLockValidationTests(unittest.TestCase):
             "libzstd-devel",
             {item["name"] for item in python["items"]},
         )
+
+    def test_gcc_test_delta_is_exact_and_test_only(self):
+        plan = VALIDATOR["load_json"](self.plans[4])
+        transaction = VALIDATOR["load_json"](self.transactions[4])
+        lock = VALIDATOR["load_json"](self.locks[4])
+        self.assertEqual(
+            [repository["id"] for repository in plan["repositories"]],
+            ["baseos", "appstream", "powertools"],
+        )
+        self.assertEqual(
+            {request["name"] for request in transaction["requests"]},
+            {"dejagnu", "expect"},
+        )
+        self.assertEqual(
+            {
+                item["name"]: item["repo_id"]
+                for item in transaction["items"]
+            },
+            {"dejagnu": "powertools", "expect": "baseos"},
+        )
+        self.assertEqual(len(lock["packages"]), 2)
+        self.assertEqual(transaction["manifests"]["remove"]["packages"], [])
+
+    def test_locked_gcc_test_contract_rejects_origin_and_purpose_tampering(self):
+        transaction = VALIDATOR["load_json"](self.transactions[4])
+        wrong_origin = copy.deepcopy(transaction)
+        wrong_origin["items"][0]["repo_id"] = "baseos"
+        wrong_purpose = copy.deepcopy(transaction)
+        wrong_purpose["requests"][0]["purpose"] = "host-runtime"
+        wrong_parent = copy.deepcopy(transaction)
+        wrong_parent["base"]["parent_sha256"] = "0" * 64
+        for candidate in (wrong_origin, wrong_purpose, wrong_parent):
+            with self.assertRaises(VALIDATOR["ValidationError"]):
+                VALIDATOR["validate_locked_transaction_semantics"](candidate)
 
     def test_host_runtime_is_an_independent_user_tool_closure(self):
         plan = VALIDATOR["load_json"](self.plans[-1])

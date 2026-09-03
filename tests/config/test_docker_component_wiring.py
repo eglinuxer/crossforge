@@ -156,6 +156,10 @@ class DockerComponentWiringTests(unittest.TestCase):
                 "host-gcc-build-rpms",
                 "host-gcc-build-locked",
             ),
+            "rpm/host-gcc-test": (
+                "host-gcc-test-rpms",
+                "host-gcc-test-locked",
+            ),
             "rpm/host-python-build": (
                 "host-python-build-rpms",
                 "host-python-build-locked",
@@ -179,6 +183,7 @@ class DockerComponentWiringTests(unittest.TestCase):
             "host-build-common-rpms",
             "host-build-common-locked",
             "host-gcc-build-rpms",
+            "host-gcc-test-rpms",
             "host-python-build-rpms",
             "host-runtime-rpms",
             "host-runtime-locked",
@@ -198,6 +203,8 @@ class DockerComponentWiringTests(unittest.TestCase):
             "host-build-common-locked",
             "host-gcc-build-rpms",
             "host-gcc-build-locked",
+            "host-gcc-test-rpms",
+            "host-gcc-test-locked",
             "host-python-build-rpms",
             "host-python-build-locked",
             "host-runtime-rpms",
@@ -240,6 +247,17 @@ class DockerComponentWiringTests(unittest.TestCase):
                 self.stages[stage],
             )
             self.assertIn("rpm-input-base", self.dependencies[stage])
+        self.assertEqual(
+            self.parents["rpm-resolve-host-gcc-test"],
+            "host-gcc-build-locked",
+        )
+        self.assertIn(
+            "COPY --from=rpm-input-base /src/config/ ./config/",
+            self.stages["rpm-resolve-host-gcc-test"],
+        )
+        self.assertIn(
+            "rpm-input-base", self.dependencies["rpm-resolve-host-gcc-test"]
+        )
 
         for stage in (
             "python-runtime-clean-x86_64",
@@ -271,6 +289,7 @@ class DockerComponentWiringTests(unittest.TestCase):
         for stage in (
             "host-build-common-locked",
             "host-gcc-build-locked",
+            "host-gcc-test-locked",
             "host-python-build-locked",
             "host-runtime-locked",
         ):

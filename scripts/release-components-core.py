@@ -401,6 +401,7 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             in {
                 "host-build-common",
                 "host-gcc-build",
+                "host-gcc-test",
                 "host-python-build",
                 "host-runtime",
             }
@@ -601,6 +602,7 @@ def _render_expected_components(release, implemented_rows):
     for role in (
         "host-build-common",
         "host-gcc-build",
+        "host-gcc-test",
         "host-python-build",
         "host-runtime",
     ):

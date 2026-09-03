@@ -1,0 +1,61 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-plan.schema.json",
+  "schema_version": 1,
+  "kind": "rpm-plan",
+  "identity": {
+    "name": "host-gcc-test-el8-x86_64",
+    "role": "host-gcc-test",
+    "distribution": "rocky",
+    "release": "8.10",
+    "baseline": "el8",
+    "arch": "x86_64",
+    "target_triple": null
+  },
+  "base": {
+    "mode": "lock",
+    "parent_lock": "locks/host-gcc-build-el8-x86_64.json",
+    "parent_sha256": "de271a4ba8a9e4bc31c8fc8a92c05fde4736afbc64b1251e06751a0cb96c2be0"
+  },
+  "repositories": [
+    {
+      "id": "baseos",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/"
+    },
+    {
+      "id": "appstream",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/"
+    },
+    {
+      "id": "powertools",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/"
+    }
+  ],
+  "solver_policy": {
+    "allowed_arches": [
+      "x86_64",
+      "noarch"
+    ],
+    "install_weak_deps": false,
+    "best": true,
+    "strict": true,
+    "allow_erasing": false,
+    "module_platform_id": "platform:el8",
+    "enabled_modules": [
+      "perl:5.26",
+      "perl-IO-Socket-SSL:2.066",
+      "perl-libwww-perl:6.34"
+    ]
+  },
+  "roots": [
+    {
+      "name": "dejagnu",
+      "arch": "any",
+      "purpose": "gcc-testsuite"
+    },
+    {
+      "name": "expect",
+      "arch": "any",
+      "purpose": "gcc-testsuite"
+    }
+  ]
+}

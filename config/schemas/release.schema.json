@@ -153,6 +153,7 @@
       "required": [
         "host-build-common",
         "host-gcc-build",
+        "host-gcc-test",
         "host-python-build",
         "host-runtime"
       ],
@@ -161,6 +162,9 @@
           "$ref": "#/$defs/host_lock"
         },
         "host-gcc-build": {
+          "$ref": "#/$defs/host_lock"
+        },
+        "host-gcc-test": {
           "$ref": "#/$defs/host_lock"
         },
         "host-python-build": {
@@ -1596,7 +1600,7 @@
             },
             "lock_file": {
               "type": "string",
-              "pattern": "^locks/host-(build-common|gcc-build|python-build|runtime)-el8-x86_64\\.json$"
+              "pattern": "^locks/host-(build-common|gcc-build|gcc-test|python-build|runtime)-el8-x86_64\\.json$"
             },
             "canonical_sha256": {
               "type": "string",

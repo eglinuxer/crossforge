@@ -1888,6 +1888,13 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9"
       }
     },
+    "host-gcc-test-locked": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "116d37555c76dc252205f78ee4fbcd4e86e90c22fde8dfaeb4e0c21b00066989"
+      }
+    },
     "host-python-build-locked": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
@@ -2562,6 +2569,12 @@
     "rpm-lock-host-gcc-build": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d"
+      }
+    },
+    "rpm-lock-host-gcc-test": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9"
       }
     },
     "rpm-lock-host-python-build": {

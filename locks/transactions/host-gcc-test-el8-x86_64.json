@@ -1,0 +1,1167 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-transaction.schema.json",
+  "schema_version": 1,
+  "kind": "rpm-transaction",
+  "identity": {
+    "name": "host-gcc-test-el8-x86_64",
+    "role": "host-gcc-test",
+    "distribution": "rocky",
+    "release": "8.10",
+    "baseline": "el8",
+    "arch": "x86_64",
+    "target_triple": null
+  },
+  "plan": {
+    "file": "config/rpm/host-gcc-test-el8-x86_64.plan.json",
+    "canonical_sha256": "0824a26effad27d575eb0af48c6495e187478c350873b015615f8cf3d866b09d"
+  },
+  "resolver": {
+    "implementation": "python3-dnf",
+    "contract_version": 1,
+    "image": "quay.io/rockylinux/rockylinux:8",
+    "image_digest": "sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6",
+    "components": [
+      {
+        "name": "dnf",
+        "nevra": "dnf-0:4.7.0-20.el8.noarch"
+      },
+      {
+        "name": "libdnf",
+        "nevra": "libdnf-0:0.63.0-19.el8.x86_64"
+      },
+      {
+        "name": "librepo",
+        "nevra": "librepo-0:1.14.2-5.el8.x86_64"
+      },
+      {
+        "name": "libsolv",
+        "nevra": "libsolv-0:0.7.20-6.el8.x86_64"
+      },
+      {
+        "name": "python3-dnf",
+        "nevra": "python3-dnf-0:4.7.0-20.el8.noarch"
+      },
+      {
+        "name": "python3-rpm",
+        "nevra": "python3-rpm-0:4.14.3-32.el8_10.x86_64"
+      },
+      {
+        "name": "rpm",
+        "nevra": "rpm-0:4.14.3-32.el8_10.x86_64"
+      }
+    ],
+    "platform_python": "3.6.8",
+    "load_system_repo": true,
+    "plugins": false
+  },
+  "base": {
+    "mode": "lock",
+    "parent_lock": "locks/host-gcc-build-el8-x86_64.json",
+    "parent_sha256": "de271a4ba8a9e4bc31c8fc8a92c05fde4736afbc64b1251e06751a0cb96c2be0"
+  },
+  "repositories": [
+    {
+      "id": "appstream",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/",
+      "gpgcheck": true,
+      "repo_gpgcheck": true,
+      "gpg_key": {
+        "sha256": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      },
+      "repomd": {
+        "location": "repodata/repomd.xml",
+        "sha256": "f2da9237814b4a0ea3e99be386914db984a8ec4ba6185743ad14d88af48bac03",
+        "size": 4923,
+        "signature": {
+          "location": "repodata/repomd.xml.asc",
+          "sha256": "95ae869a0e033e5c7347a4a344c13e69833545a52ec854914841850105eb4805",
+          "size": 833,
+          "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+        },
+        "revision": "8.10"
+      },
+      "metadata": [
+        {
+          "type": "filelists",
+          "location": "repodata/948d902c504aba4422c98fab89a1a1bbdf6599ee32a5e23982a8b4bcfcc21b0e-filelists.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "948d902c504aba4422c98fab89a1a1bbdf6599ee32a5e23982a8b4bcfcc21b0e"
+          },
+          "size": 26785332,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "a769f949b28698d579cfcbe463d1ff0a7a343bf802e7c79948cbb8c3a232cdbc"
+          },
+          "open_size": 412453792
+        },
+        {
+          "type": "filelists_db",
+          "location": "repodata/f91f6a4e015ff4380f6752e0bba0f8762ba26e5bedf938d711a026e30a3f9eb1-filelists.sqlite.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "f91f6a4e015ff4380f6752e0bba0f8762ba26e5bedf938d711a026e30a3f9eb1"
+          },
+          "size": 12000708,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "9bbbceac8103a202586a033451e5d8638e103670bc54f50f4d1aa4e56a26fc08"
+          },
+          "open_size": 179613696
+        },
+        {
+          "type": "group",
+          "location": "repodata/ec2fa1982439f4b0ca7dc86f882f18657457a2d42f06ac6718298c7f7528df43-comps-AppStream.x86_64.xml",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "ec2fa1982439f4b0ca7dc86f882f18657457a2d42f06ac6718298c7f7528df43"
+          },
+          "size": 486316,
+          "open_checksum": null,
+          "open_size": null
+        },
+        {
+          "type": "group_xz",
+          "location": "repodata/7ba43f88671d8107d6603ebff822fc071e73596a1e20779855af577b0e6e343a-comps-AppStream.x86_64.xml.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "7ba43f88671d8107d6603ebff822fc071e73596a1e20779855af577b0e6e343a"
+          },
+          "size": 81840,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "ec2fa1982439f4b0ca7dc86f882f18657457a2d42f06ac6718298c7f7528df43"
+          },
+          "open_size": 486316
+        },
+        {
+          "type": "modules",
+          "location": "repodata/67a7a830f8f8a7afe0b55e11e42d3f8cab76d7eeb024b8b182ad7ccb2df77814-modules.yaml.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "67a7a830f8f8a7afe0b55e11e42d3f8cab76d7eeb024b8b182ad7ccb2df77814"
+          },
+          "size": 124864,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "0830b314dbdfe9901e81327aeabbb118a20c9b9c96528aff27b28573c2bc1695"
+          },
+          "open_size": 2550208
+        },
+        {
+          "type": "other",
+          "location": "repodata/182c1358b34206bc5af669c99786985542c8a5cf71252b4e72fa8c4e073bdb09-other.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "182c1358b34206bc5af669c99786985542c8a5cf71252b4e72fa8c4e073bdb09"
+          },
+          "size": 2501065,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "f3ad52a7e3d8f9037a63cfe1c7a6eb09c018c6fe4d4145299db4699a01cb58c9"
+          },
+          "open_size": 39092613
+        },
+        {
+          "type": "other_db",
+          "location": "repodata/d47ecfd1bd2243764d10ae5f809e6a6c53857f213a3e3bfc7a17c51604c8d98a-other.sqlite.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "d47ecfd1bd2243764d10ae5f809e6a6c53857f213a3e3bfc7a17c51604c8d98a"
+          },
+          "size": 2913308,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "f07612d25564ae94eb32438251f64fbc30df6772cbe3cc895628262c59ecc8f0"
+          },
+          "open_size": 34742272
+        },
+        {
+          "type": "primary",
+          "location": "repodata/f0c0511e1ba1608f3f3edf694dec9b754993740f2059228591db7cdb4fb3e009-primary.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "f0c0511e1ba1608f3f3edf694dec9b754993740f2059228591db7cdb4fb3e009"
+          },
+          "size": 3905952,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "94a7875472f439592d9812c74791f7f33dbfe2b093b83912b8e720239bb22617"
+          },
+          "open_size": 52715240
+        },
+        {
+          "type": "primary_db",
+          "location": "repodata/f82a5be55bfc649714de05263eaeed8337df0e36cc8b03787eddc49ed21552ec-primary.sqlite.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "f82a5be55bfc649714de05263eaeed8337df0e36cc8b03787eddc49ed21552ec"
+          },
+          "size": 6809324,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "be4cc3fb6c87fcbfd7ad3ec1c6ebc838a3ffdc18643f0a97c5a459911313e4b6"
+          },
+          "open_size": 57151488
+        },
+        {
+          "type": "updateinfo",
+          "location": "repodata/a9610bf239175aa6da18586935437ca6804abdc83d3da7ec7c657d6e30c9dcde-updateinfo.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "a9610bf239175aa6da18586935437ca6804abdc83d3da7ec7c657d6e30c9dcde"
+          },
+          "size": 3311428,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "fd7c6ff8accf2d94f07946ff190bda5fff340fd96890fd8aea0c3726db6e6ca8"
+          },
+          "open_size": 23184031
+        }
+      ]
+    },
+    {
+      "id": "baseos",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/",
+      "gpgcheck": true,
+      "repo_gpgcheck": true,
+      "gpg_key": {
+        "sha256": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      },
+      "repomd": {
+        "location": "repodata/repomd.xml",
+        "sha256": "b1821128b0b71f558fc63c82a3986e5a0c13ae8d171c1d4b41c63ebe1b23690e",
+        "size": 4458,
+        "signature": {
+          "location": "repodata/repomd.xml.asc",
+          "sha256": "d7fb1a4b16eaccaf0e3a59f1e29abd0a8714a5e9a6533eeed181a3fdf642bf1a",
+          "size": 833,
+          "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+        },
+        "revision": "8.10"
+      },
+      "metadata": [
+        {
+          "type": "filelists",
+          "location": "repodata/ae24f472aece52e43aeae4db5c7d6d77ec92369d4547e4243130be4e8fd1af24-filelists.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "ae24f472aece52e43aeae4db5c7d6d77ec92369d4547e4243130be4e8fd1af24"
+          },
+          "size": 31175889,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "23bd5e8562a7ef7def7bf23f9b0bb3aa3f9059a6c3cd6389c710485c6db2780a"
+          },
+          "open_size": 498526331
+        },
+        {
+          "type": "filelists_db",
+          "location": "repodata/2f8b8d5d975aac63919e29d76989874377858d9fd1a0e2210cc59ec59dcc90dd-filelists.sqlite.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "2f8b8d5d975aac63919e29d76989874377858d9fd1a0e2210cc59ec59dcc90dd"
+          },
+          "size": 20342568,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "48d9a4ed8ecbf99d1062b273819f7c69b7cbd9dc513aca3ceab7ec148764e63a"
+          },
+          "open_size": 264327168
+        },
+        {
+          "type": "group",
+          "location": "repodata/71f62d6dadfbf3238ce701da43cb69958ce4c546cc370f92e70ba933f3193c23-comps-BaseOS.x86_64.xml",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "71f62d6dadfbf3238ce701da43cb69958ce4c546cc370f92e70ba933f3193c23"
+          },
+          "size": 298616,
+          "open_checksum": null,
+          "open_size": null
+        },
+        {
+          "type": "group_xz",
+          "location": "repodata/e105891d2832b712e68b45a603e895845e4df1c99d988936f02d3e899f68b5e5-comps-BaseOS.x86_64.xml.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "e105891d2832b712e68b45a603e895845e4df1c99d988936f02d3e899f68b5e5"
+          },
+          "size": 57028,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "71f62d6dadfbf3238ce701da43cb69958ce4c546cc370f92e70ba933f3193c23"
+          },
+          "open_size": 298616
+        },
+        {
+          "type": "other",
+          "location": "repodata/b05051aeaf73ce7dbdcc96f68fe81c3e89c4b3020991e8f30cc57e427fd1fcbb-other.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "b05051aeaf73ce7dbdcc96f68fe81c3e89c4b3020991e8f30cc57e427fd1fcbb"
+          },
+          "size": 5349114,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "28806c45ab732defc3051f4fc4d7f2e01bcbd34ba890ff6c3945366ca1f2b3c1"
+          },
+          "open_size": 50388781
+        },
+        {
+          "type": "other_db",
+          "location": "repodata/a5fab0d00b67156408665704e631cafd02c7242e5fe7524579b0439989e0078f-other.sqlite.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "a5fab0d00b67156408665704e631cafd02c7242e5fe7524579b0439989e0078f"
+          },
+          "size": 1697292,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "6a746d6a8d1cc64609d0e8aa61ababa8aecf14ef5316a77ec25e08ffe80350a9"
+          },
+          "open_size": 52920320
+        },
+        {
+          "type": "primary",
+          "location": "repodata/395a85c6aa17dba7b458b89eae202dafff3e3a5b1e443008fbb91fb039efb0a4-primary.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "395a85c6aa17dba7b458b89eae202dafff3e3a5b1e443008fbb91fb039efb0a4"
+          },
+          "size": 48649738,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "8a4e7ca62737bf4646d93f732fd390a3469dc51b8ae5e74482fc4495acbfff7c"
+          },
+          "open_size": 340973444
+        },
+        {
+          "type": "primary_db",
+          "location": "repodata/007de901f87a4d5d6d69b50d40eff5d625ceb6e32a8821a043ed9bbe57998913-primary.sqlite.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "007de901f87a4d5d6d69b50d40eff5d625ceb6e32a8821a043ed9bbe57998913"
+          },
+          "size": 27036036,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "ae0c15be3532d10c2dfe0dbe3fa8bd1a01ff714f10230c86713fa45645c7f104"
+          },
+          "open_size": 394350592
+        },
+        {
+          "type": "updateinfo",
+          "location": "repodata/342003e13d07756dc6be82425c5ba546140e2eeedd85bac8ddf04eede80ae202-updateinfo.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "342003e13d07756dc6be82425c5ba546140e2eeedd85bac8ddf04eede80ae202"
+          },
+          "size": 1163431,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "d5af2e1e8726d28fc749b5ed8c7526d7cfca3eb1979e29b4392a27c79681511d"
+          },
+          "open_size": 8298356
+        }
+      ]
+    },
+    {
+      "id": "powertools",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/",
+      "gpgcheck": true,
+      "repo_gpgcheck": true,
+      "gpg_key": {
+        "sha256": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      },
+      "repomd": {
+        "location": "repodata/repomd.xml",
+        "sha256": "df8623bfc27d5b2e53ac0ab8f98fd90004fc80bdc94e7aaba65fca317f99b9d8",
+        "size": 4911,
+        "signature": {
+          "location": "repodata/repomd.xml.asc",
+          "sha256": "997b3a45b9243b750016a95bb206b32c43b89a3125e269af39ffb3db53fa4b48",
+          "size": 833,
+          "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+        },
+        "revision": "8.10"
+      },
+      "metadata": [
+        {
+          "type": "filelists",
+          "location": "repodata/ade4c07661d9e57a1224a3c7e392782d8a5550986cf7a8e6c677f77fa505a57a-filelists.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "ade4c07661d9e57a1224a3c7e392782d8a5550986cf7a8e6c677f77fa505a57a"
+          },
+          "size": 5339127,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "57ecfb42f7cacb49d8c1bdd9106b7be2be8f0f2b856780f9989d9e7a42eccafa"
+          },
+          "open_size": 85015946
+        },
+        {
+          "type": "filelists_db",
+          "location": "repodata/5f15902ea6aa9bf321b9123f466d0f558d903c0a37d5ce58e48502cd51b013b8-filelists.sqlite.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "5f15902ea6aa9bf321b9123f466d0f558d903c0a37d5ce58e48502cd51b013b8"
+          },
+          "size": 2924800,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "0dddb135ec3c9fd51da4b33be4089d9e5e9e565a2cd6255a2f229782383f3189"
+          },
+          "open_size": 39845888
+        },
+        {
+          "type": "group",
+          "location": "repodata/9420043d2269fbbb49a9051f93800aa9dfa32fc0e43c63cd544d9d14a9015298-comps-PowerTools.x86_64.xml",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "9420043d2269fbbb49a9051f93800aa9dfa32fc0e43c63cd544d9d14a9015298"
+          },
+          "size": 77687,
+          "open_checksum": null,
+          "open_size": null
+        },
+        {
+          "type": "group_xz",
+          "location": "repodata/9711309380a442ea6e2e4a91df4391d26e2a62c3ba1c8150e0bd7626fe55f39b-comps-PowerTools.x86_64.xml.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "9711309380a442ea6e2e4a91df4391d26e2a62c3ba1c8150e0bd7626fe55f39b"
+          },
+          "size": 7800,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "9420043d2269fbbb49a9051f93800aa9dfa32fc0e43c63cd544d9d14a9015298"
+          },
+          "open_size": 77687
+        },
+        {
+          "type": "modules",
+          "location": "repodata/5d85f3742babf8c659783ed072db2a999cb5e815f75637eca8a18a3100afe4da-modules.yaml.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "5d85f3742babf8c659783ed072db2a999cb5e815f75637eca8a18a3100afe4da"
+          },
+          "size": 25452,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "8d0a402fde7e9bf011dfd00aaa6eb26209890447e9e1c7350efafdcb416555b5"
+          },
+          "open_size": 573151
+        },
+        {
+          "type": "other",
+          "location": "repodata/b2e61edacb64c5f5fbf9efd67a4d848efc20a9299e106d8750f88207b328f354-other.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "b2e61edacb64c5f5fbf9efd67a4d848efc20a9299e106d8750f88207b328f354"
+          },
+          "size": 975092,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "d83c5c79e9487e5ff283880e4f6822feb7f1e13432b800baf54a6c767f2d0650"
+          },
+          "open_size": 11522963
+        },
+        {
+          "type": "other_db",
+          "location": "repodata/d47121a427bc3e4fb098f82ee3109c866315e0e84369bdb0d2f8cdb482d53326-other.sqlite.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "d47121a427bc3e4fb098f82ee3109c866315e0e84369bdb0d2f8cdb482d53326"
+          },
+          "size": 885236,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "448ec88a00121cb6e4839b8996eec7c07f650ea011f58a4f8661f97b7172db9b"
+          },
+          "open_size": 10543104
+        },
+        {
+          "type": "primary",
+          "location": "repodata/6483a821ecad44acf6e34571e769a4a84813e66844dd737334dc75e61c06bc64-primary.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "6483a821ecad44acf6e34571e769a4a84813e66844dd737334dc75e61c06bc64"
+          },
+          "size": 871892,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "82a58bfb27fa7400f2eb262a61df7d9fc4c2801f098193c7c9d1c680792fb590"
+          },
+          "open_size": 10652259
+        },
+        {
+          "type": "primary_db",
+          "location": "repodata/dd780825e950ff43ad0c02dba310fa4ad440b3f14039f998510e735c993bd38f-primary.sqlite.xz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "dd780825e950ff43ad0c02dba310fa4ad440b3f14039f998510e735c993bd38f"
+          },
+          "size": 1410532,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "0ab8b38ef2097c0f7778930087f7d0baafff7ee8faec828d0e66f32f1cec87c4"
+          },
+          "open_size": 10760192
+        },
+        {
+          "type": "updateinfo",
+          "location": "repodata/ddc45d16681a3698326214ebf10c1520e6f2fbbaa3182b65a4a86a49195b6fbd-updateinfo.xml.gz",
+          "checksum": {
+            "algorithm": "sha256",
+            "value": "ddc45d16681a3698326214ebf10c1520e6f2fbbaa3182b65a4a86a49195b6fbd"
+          },
+          "size": 174055,
+          "open_checksum": {
+            "algorithm": "sha256",
+            "value": "562a6f36b9da1ce3359a2a3cf33d0852889046159c2c2ff9c8bd6f4c503f1562"
+          },
+          "open_size": 1299426
+        }
+      ]
+    }
+  ],
+  "solver_policy": {
+    "allowed_arches": [
+      "x86_64",
+      "noarch"
+    ],
+    "install_weak_deps": false,
+    "best": true,
+    "strict": true,
+    "allow_erasing": false,
+    "module_platform_id": "platform:el8",
+    "enabled_modules": [
+      "perl-IO-Socket-SSL:2.066",
+      "perl-libwww-perl:6.34",
+      "perl:5.26"
+    ]
+  },
+  "requests": [
+    {
+      "name": "dejagnu",
+      "arch": "any",
+      "purpose": "gcc-testsuite",
+      "resolved_nevra": "dejagnu-1:1.6.1-2.el8.noarch",
+      "disposition": "transaction"
+    },
+    {
+      "name": "expect",
+      "arch": "any",
+      "purpose": "gcc-testsuite",
+      "resolved_nevra": "expect-0:5.45.4-5.el8.x86_64",
+      "disposition": "transaction"
+    }
+  ],
+  "items": [
+    {
+      "name": "dejagnu",
+      "epoch": 1,
+      "version": "1.6.1",
+      "release": "2.el8",
+      "arch": "noarch",
+      "nevra": "dejagnu-1:1.6.1-2.el8.noarch",
+      "repo_id": "powertools",
+      "location": "Packages/d/dejagnu-1.6.1-2.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/Packages/d/dejagnu-1.6.1-2.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "ff6423f8cd3d3a447c074cd0dcaa4336c0bdb24ae774353b1af90e8b69d80312"
+      },
+      "size": 243140,
+      "install_size": 838064,
+      "source_rpm": "dejagnu-1.6.1-2.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "expect",
+      "epoch": 0,
+      "version": "5.45.4",
+      "release": "5.el8",
+      "arch": "x86_64",
+      "nevra": "expect-0:5.45.4-5.el8.x86_64",
+      "repo_id": "baseos",
+      "location": "Packages/e/expect-5.45.4-5.el8.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/e/expect-5.45.4-5.el8.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "50544ca1d2c265952e5c44f5e30d4aedf180adb403dda3c23974547ddeecef52"
+      },
+      "size": 271684,
+      "install_size": 582287,
+      "source_rpm": "expect-5.45.4-5.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    }
+  ],
+  "manifests": {
+    "base": {
+      "packages": [
+        "acl-0:2.2.53-3.el8.x86_64",
+        "audit-libs-0:3.1.2-1.el8.x86_64",
+        "basesystem-0:11-5.el8.noarch",
+        "bash-0:4.4.20-5.el8.x86_64",
+        "binutils-0:2.30-123.el8.x86_64",
+        "bison-0:3.0.4-10.el8.x86_64",
+        "bzip2-0:1.0.6-28.el8_10.x86_64",
+        "bzip2-libs-0:1.0.6-26.el8.x86_64",
+        "ca-certificates-0:2023.2.60_v7.0.306-80.0.el8_8.noarch",
+        "checkpolicy-0:2.9-1.el8.x86_64",
+        "chkconfig-0:1.19.2-1.el8.x86_64",
+        "coreutils-single-0:8.30-15.el8.x86_64",
+        "cpio-0:2.12-11.el8.x86_64",
+        "cracklib-0:2.9.6-15.el8.x86_64",
+        "cracklib-dicts-0:2.9.6-15.el8.x86_64",
+        "crypto-policies-0:20230731-1.git3177e06.el8.noarch",
+        "cryptsetup-libs-0:2.3.7-7.el8.x86_64",
+        "curl-0:7.61.1-34.el8.x86_64",
+        "cyrus-sasl-lib-0:2.1.27-6.el8_5.x86_64",
+        "dbus-1:1.12.8-26.el8.x86_64",
+        "dbus-common-1:1.12.8-26.el8.noarch",
+        "dbus-daemon-1:1.12.8-26.el8.x86_64",
+        "dbus-libs-1:1.12.8-26.el8.x86_64",
+        "dbus-tools-1:1.12.8-26.el8.x86_64",
+        "device-mapper-8:1.02.181-14.el8.x86_64",
+        "device-mapper-libs-8:1.02.181-14.el8.x86_64",
+        "diffutils-0:3.6-6.el8.x86_64",
+        "dnf-0:4.7.0-20.el8.noarch",
+        "dnf-data-0:4.7.0-20.el8.noarch",
+        "dwz-0:0.12-10.el8.x86_64",
+        "efi-srpm-macros-0:3-3.el8.noarch",
+        "elfutils-0:0.190-2.el8.x86_64",
+        "elfutils-debuginfod-client-0:0.190-2.el8.x86_64",
+        "elfutils-default-yama-scope-0:0.190-2.el8.noarch",
+        "elfutils-libelf-0:0.190-2.el8.x86_64",
+        "elfutils-libs-0:0.190-2.el8.x86_64",
+        "environment-modules-0:4.5.2-4.el8.x86_64",
+        "expat-0:2.2.5-13.el8_10.x86_64",
+        "file-0:5.33-27.el8_10.x86_64",
+        "file-libs-0:5.33-27.el8_10.x86_64",
+        "filesystem-0:3.8-6.el8.x86_64",
+        "findutils-1:4.6.0-24.el8_10.x86_64",
+        "flex-0:2.6.1-9.el8.x86_64",
+        "gawk-0:4.2.1-4.el8.x86_64",
+        "gc-0:7.6.4-3.el8.x86_64",
+        "gcc-toolset-15-binutils-0:2.44-3.el8.x86_64",
+        "gcc-toolset-15-gcc-0:15.2.1-7.1.el8_10.x86_64",
+        "gcc-toolset-15-gcc-c++-0:15.2.1-7.1.el8_10.x86_64",
+        "gcc-toolset-15-libstdc++-devel-0:15.2.1-7.1.el8_10.x86_64",
+        "gcc-toolset-15-runtime-0:15.0-9.el8_10.x86_64",
+        "gdb-headless-0:8.2-20.el8.0.1.x86_64",
+        "gdbm-1:1.18-2.el8.x86_64",
+        "gdbm-libs-1:1.18-2.el8.x86_64",
+        "ghc-srpm-macros-0:1.4.2-7.el8.noarch",
+        "glib2-0:2.56.4-164.el8.x86_64",
+        "glibc-0:2.28-251.el8_10.40.x86_64",
+        "glibc-common-0:2.28-251.el8_10.40.x86_64",
+        "glibc-devel-0:2.28-251.el8_10.40.x86_64",
+        "glibc-gconv-extra-0:2.28-251.el8_10.40.x86_64",
+        "glibc-headers-0:2.28-251.el8_10.40.x86_64",
+        "glibc-minimal-langpack-0:2.28-251.el8_10.40.x86_64",
+        "gmp-1:6.1.2-12.el8.x86_64",
+        "gmp-c++-1:6.1.2-12.el8.x86_64",
+        "gmp-devel-1:6.1.2-12.el8.x86_64",
+        "gnupg2-0:2.2.20-3.el8_6.x86_64",
+        "gnutls-0:3.6.16-8.el8_10.2.x86_64",
+        "go-srpm-macros-0:2-17.el8.noarch",
+        "gpgme-0:1.13.1-12.el8.x86_64",
+        "grep-0:3.1-6.el8.x86_64",
+        "groff-base-0:1.22.3-18.el8.x86_64",
+        "guile-5:2.0.14-7.el8.x86_64",
+        "gzip-0:1.9-13.el8_5.x86_64",
+        "hostname-0:3.20-6.el8.x86_64",
+        "ima-evm-utils-0:1.3.2-12.el8.x86_64",
+        "info-0:6.5-7.el8.x86_64",
+        "iputils-0:20180629-11.el8.x86_64",
+        "iso-codes-0:3.79-2.el8.noarch",
+        "jansson-0:2.14-1.el8.x86_64",
+        "json-c-0:0.13.1-3.el8.x86_64",
+        "kernel-headers-0:4.18.0-553.158.1.el8_10.x86_64",
+        "keyutils-libs-0:1.5.10-9.el8.x86_64",
+        "kmod-libs-0:25-20.el8.x86_64",
+        "krb5-libs-0:1.18.2-27.el8_10.x86_64",
+        "langpacks-en-0:1.0-12.el8.noarch",
+        "less-0:530-2.el8_9.x86_64",
+        "libacl-0:2.2.53-3.el8.x86_64",
+        "libarchive-0:3.3.3-5.el8.x86_64",
+        "libassuan-0:2.5.1-3.el8.x86_64",
+        "libatomic_ops-0:7.6.2-3.el8.x86_64",
+        "libattr-0:2.4.48-3.el8.x86_64",
+        "libbabeltrace-0:1.5.4-4.el8.x86_64",
+        "libblkid-0:2.32.1-46.el8.x86_64",
+        "libcap-0:2.48-6.el8_9.x86_64",
+        "libcap-ng-0:0.7.11-1.el8.x86_64",
+        "libcom_err-0:1.45.6-5.el8.x86_64",
+        "libcomps-0:0.1.18-1.el8.x86_64",
+        "libcurl-minimal-0:7.61.1-34.el8.x86_64",
+        "libdb-0:5.3.28-42.el8_4.x86_64",
+        "libdb-utils-0:5.3.28-42.el8_4.x86_64",
+        "libdnf-0:0.63.0-19.el8.x86_64",
+        "libfdisk-0:2.32.1-46.el8.x86_64",
+        "libffi-0:3.1-24.el8.x86_64",
+        "libgcc-0:8.5.0-22.el8_10.x86_64",
+        "libgcrypt-0:1.8.5-7.el8_6.x86_64",
+        "libgomp-0:8.5.0-28.el8_10.x86_64",
+        "libgpg-error-0:1.31-1.el8.x86_64",
+        "libidn2-0:2.2.0-1.el8.x86_64",
+        "libipt-0:1.6.1-8.el8.x86_64",
+        "libksba-0:1.3.5-9.el8_7.x86_64",
+        "libmodulemd-0:2.13.0-1.el8.x86_64",
+        "libmount-0:2.32.1-46.el8.x86_64",
+        "libmpc-0:1.1.0-9.1.el8.x86_64",
+        "libmpc-devel-0:1.1.0-9.1.el8.x86_64",
+        "libnghttp2-0:1.33.0-5.el8_8.x86_64",
+        "libnsl2-0:1.2.0-2.20180605git4a062cf.el8.x86_64",
+        "libpipeline-0:1.5.0-2.el8.x86_64",
+        "libpkgconf-0:1.4.2-1.el8.x86_64",
+        "libpwquality-0:1.4.4-6.el8.x86_64",
+        "librepo-0:1.14.2-5.el8.x86_64",
+        "libreport-filesystem-0:2.9.5-15.el8.rocky.6.3.x86_64",
+        "libseccomp-0:2.5.2-1.el8.x86_64",
+        "libselinux-0:2.9-8.el8.x86_64",
+        "libselinux-utils-0:2.9-8.el8.x86_64",
+        "libsemanage-0:2.9-9.el8_6.x86_64",
+        "libsepol-0:2.9-3.el8.x86_64",
+        "libsigsegv-0:2.11-5.el8.x86_64",
+        "libsmartcols-0:2.32.1-46.el8.x86_64",
+        "libsolv-0:0.7.20-6.el8.x86_64",
+        "libstdc++-0:8.5.0-22.el8_10.x86_64",
+        "libtasn1-0:4.13-4.el8_7.x86_64",
+        "libtirpc-0:1.1.4-11.el8.x86_64",
+        "libtool-ltdl-0:2.4.6-25.el8.x86_64",
+        "libunistring-0:0.9.9-3.el8.x86_64",
+        "libusbx-0:1.0.23-4.el8.x86_64",
+        "libutempter-0:1.1.6-14.el8.x86_64",
+        "libuuid-0:2.32.1-46.el8.x86_64",
+        "libverto-0:0.3.2-2.el8.x86_64",
+        "libxcrypt-0:4.1.1-6.el8.x86_64",
+        "libxcrypt-devel-0:4.1.1-6.el8.x86_64",
+        "libxml2-0:2.9.7-18.el8.x86_64",
+        "libyaml-0:0.1.7-5.el8.x86_64",
+        "libzstd-0:1.4.4-1.el8.x86_64",
+        "libzstd-devel-0:1.4.4-1.el8.x86_64",
+        "lua-libs-0:5.3.4-12.el8.x86_64",
+        "lz4-libs-0:1.8.3-3.el8_4.x86_64",
+        "m4-0:1.4.18-7.el8.x86_64",
+        "make-1:4.2.1-11.el8.x86_64",
+        "man-db-0:2.7.6.1-18.el8.x86_64",
+        "mpfr-0:3.1.6-1.el8.x86_64",
+        "mpfr-devel-0:3.1.6-1.el8.x86_64",
+        "ncurses-0:6.1-10.20180224.el8.x86_64",
+        "ncurses-base-0:6.1-10.20180224.el8.noarch",
+        "ncurses-libs-0:6.1-10.20180224.el8.x86_64",
+        "nettle-0:3.4.1-7.el8.x86_64",
+        "npth-0:1.5-4.el8.x86_64",
+        "ocaml-srpm-macros-0:5-4.el8.noarch",
+        "openblas-srpm-macros-0:2-2.el8.noarch",
+        "openldap-0:2.4.46-18.el8.x86_64",
+        "openssl-1:1.1.1k-12.el8_9.x86_64",
+        "openssl-libs-1:1.1.1k-12.el8_9.x86_64",
+        "p11-kit-0:0.23.22-2.el8.x86_64",
+        "p11-kit-trust-0:0.23.22-2.el8.x86_64",
+        "pam-0:1.3.1-33.el8.x86_64",
+        "patch-0:2.7.6-11.el8.x86_64",
+        "pcre-0:8.42-6.el8.x86_64",
+        "pcre2-0:10.32-3.el8_6.x86_64",
+        "perl-Carp-0:1.42-396.el8.noarch",
+        "perl-Data-Dumper-0:2.167-399.el8.x86_64",
+        "perl-Digest-0:1.17-395.el8.noarch",
+        "perl-Digest-MD5-0:2.55-396.el8.x86_64",
+        "perl-Encode-4:2.97-3.el8.x86_64",
+        "perl-Errno-0:1.28-423.el8_10.x86_64",
+        "perl-Exporter-0:5.72-396.el8.noarch",
+        "perl-File-Path-0:2.15-2.el8.noarch",
+        "perl-File-Temp-0:0.230.600-1.el8.noarch",
+        "perl-Getopt-Long-1:2.50-4.el8.noarch",
+        "perl-HTTP-Tiny-0:0.074-3.el8.noarch",
+        "perl-IO-0:1.38-423.el8_10.x86_64",
+        "perl-IO-Socket-IP-0:0.39-5.el8.noarch",
+        "perl-IO-Socket-SSL-0:2.066-4.module+el8.9.0+1517+e71a7a62.noarch",
+        "perl-MIME-Base64-0:3.15-396.el8.x86_64",
+        "perl-Mozilla-CA-0:20160104-7.module+el8.9.0+1521+0101edce.noarch",
+        "perl-Net-SSLeay-0:1.88-2.module+el8.9.0+1517+e71a7a62.x86_64",
+        "perl-PathTools-0:3.74-1.el8.x86_64",
+        "perl-Pod-Escapes-1:1.07-395.el8.noarch",
+        "perl-Pod-Perldoc-0:3.28-396.el8.noarch",
+        "perl-Pod-Simple-1:3.35-395.el8.noarch",
+        "perl-Pod-Usage-4:1.69-395.el8.noarch",
+        "perl-Scalar-List-Utils-3:1.49-2.el8.x86_64",
+        "perl-Socket-4:2.027-3.el8.x86_64",
+        "perl-Storable-1:3.11-3.el8.x86_64",
+        "perl-Term-ANSIColor-0:4.06-396.el8.noarch",
+        "perl-Term-Cap-0:1.17-395.el8.noarch",
+        "perl-Text-ParseWords-0:3.30-395.el8.noarch",
+        "perl-Text-Tabs+Wrap-0:2013.0523-395.el8.noarch",
+        "perl-Time-Local-1:1.280-1.el8.noarch",
+        "perl-URI-0:1.73-3.el8.noarch",
+        "perl-Unicode-Normalize-0:1.25-396.el8.x86_64",
+        "perl-constant-0:1.33-396.el8.noarch",
+        "perl-interpreter-4:5.26.3-423.el8_10.x86_64",
+        "perl-libnet-0:3.11-3.el8.noarch",
+        "perl-libs-4:5.26.3-423.el8_10.x86_64",
+        "perl-macros-4:5.26.3-423.el8_10.x86_64",
+        "perl-parent-1:0.237-1.el8.noarch",
+        "perl-podlators-0:4.11-1.el8.noarch",
+        "perl-srpm-macros-0:1-25.el8.noarch",
+        "perl-threads-1:2.21-2.el8.x86_64",
+        "perl-threads-shared-0:1.58-2.el8.x86_64",
+        "pkgconf-0:1.4.2-1.el8.x86_64",
+        "pkgconf-m4-0:1.4.2-1.el8.noarch",
+        "pkgconf-pkg-config-0:1.4.2-1.el8.x86_64",
+        "platform-python-0:3.6.8-62.el8_10.rocky.0.x86_64",
+        "platform-python-setuptools-0:39.2.0-7.el8.noarch",
+        "policycoreutils-0:2.9-26.el8_10.x86_64",
+        "policycoreutils-python-utils-0:2.9-26.el8_10.noarch",
+        "popt-0:1.18-1.el8.x86_64",
+        "procps-ng-0:3.3.15-14.el8.x86_64",
+        "python-rpm-macros-0:3-45.el8.noarch",
+        "python-srpm-macros-0:3-45.el8.noarch",
+        "python3-audit-0:3.1.2-1.el8.x86_64",
+        "python3-dnf-0:4.7.0-20.el8.noarch",
+        "python3-gpg-0:1.13.1-12.el8.x86_64",
+        "python3-hawkey-0:0.63.0-19.el8.x86_64",
+        "python3-libcomps-0:0.1.18-1.el8.x86_64",
+        "python3-libdnf-0:0.63.0-19.el8.x86_64",
+        "python3-libs-0:3.6.8-62.el8_10.rocky.0.x86_64",
+        "python3-libselinux-0:2.9-8.el8.x86_64",
+        "python3-libsemanage-0:2.9-9.el8_6.x86_64",
+        "python3-pip-wheel-0:9.0.3-24.el8.rocky.0.noarch",
+        "python3-policycoreutils-0:2.9-26.el8_10.noarch",
+        "python3-rpm-0:4.14.3-32.el8_10.x86_64",
+        "python3-rpm-macros-0:3-45.el8.noarch",
+        "python3-setools-0:4.3.0-5.el8.x86_64",
+        "python3-setuptools-wheel-0:39.2.0-7.el8.noarch",
+        "qt5-srpm-macros-0:5.15.3-1.el8.noarch",
+        "readline-0:7.0-10.el8.x86_64",
+        "redhat-rpm-config-0:131-1.el8.noarch",
+        "rocky-gpg-keys-0:8.10-1.7.el8.noarch",
+        "rocky-release-0:8.10-1.7.el8.noarch",
+        "rocky-repos-0:8.10-1.7.el8.noarch",
+        "rootfiles-0:8.1-22.el8.noarch",
+        "rpm-0:4.14.3-32.el8_10.x86_64",
+        "rpm-build-0:4.14.3-32.el8_10.x86_64",
+        "rpm-build-libs-0:4.14.3-32.el8_10.x86_64",
+        "rpm-libs-0:4.14.3-32.el8_10.x86_64",
+        "rust-srpm-macros-0:5-2.el8.noarch",
+        "scl-utils-1:2.0.2-16.el8.x86_64",
+        "scl-utils-build-1:2.0.2-16.el8.x86_64",
+        "sed-0:4.5-5.el8.x86_64",
+        "setup-0:2.12.2-11.el8.noarch",
+        "shadow-utils-2:4.6-22.el8.x86_64",
+        "sqlite-libs-0:3.26.0-19.el8_9.x86_64",
+        "systemd-0:239-82.el8.x86_64",
+        "systemd-libs-0:239-82.el8.x86_64",
+        "systemd-pam-0:239-82.el8.x86_64",
+        "tar-2:1.30-11.el8_10.x86_64",
+        "tcl-1:8.6.8-2.el8.x86_64",
+        "tpm2-tss-0:2.3.2-6.el8.x86_64",
+        "tzdata-0:2024a-1.el8.noarch",
+        "unzip-0:6.0-48.el8_10.x86_64",
+        "util-linux-0:2.32.1-46.el8.x86_64",
+        "vim-minimal-2:8.0.1763-19.el8_6.4.x86_64",
+        "which-0:2.21-21.el8_10.x86_64",
+        "xml-common-0:0.6.3-50.el8.noarch",
+        "xz-0:5.2.4-4.el8_6.x86_64",
+        "xz-libs-0:5.2.4-4.el8_6.x86_64",
+        "yum-0:4.7.0-20.el8.noarch",
+        "zip-0:3.0-23.el8.x86_64",
+        "zlib-0:1.2.11-26.el8.x86_64",
+        "zlib-devel-0:1.2.11-26.el8.x86_64",
+        "zstd-0:1.4.4-1.el8.x86_64"
+      ],
+      "canonical_sha256": "fa48363024428aba74c74dabbb5bebe1c8c52342d3389cfefe56041bb26a7796"
+    },
+    "remove": {
+      "packages": [],
+      "canonical_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "result": {
+      "packages": [
+        "acl-0:2.2.53-3.el8.x86_64",
+        "audit-libs-0:3.1.2-1.el8.x86_64",
+        "basesystem-0:11-5.el8.noarch",
+        "bash-0:4.4.20-5.el8.x86_64",
+        "binutils-0:2.30-123.el8.x86_64",
+        "bison-0:3.0.4-10.el8.x86_64",
+        "bzip2-0:1.0.6-28.el8_10.x86_64",
+        "bzip2-libs-0:1.0.6-26.el8.x86_64",
+        "ca-certificates-0:2023.2.60_v7.0.306-80.0.el8_8.noarch",
+        "checkpolicy-0:2.9-1.el8.x86_64",
+        "chkconfig-0:1.19.2-1.el8.x86_64",
+        "coreutils-single-0:8.30-15.el8.x86_64",
+        "cpio-0:2.12-11.el8.x86_64",
+        "cracklib-0:2.9.6-15.el8.x86_64",
+        "cracklib-dicts-0:2.9.6-15.el8.x86_64",
+        "crypto-policies-0:20230731-1.git3177e06.el8.noarch",
+        "cryptsetup-libs-0:2.3.7-7.el8.x86_64",
+        "curl-0:7.61.1-34.el8.x86_64",
+        "cyrus-sasl-lib-0:2.1.27-6.el8_5.x86_64",
+        "dbus-1:1.12.8-26.el8.x86_64",
+        "dbus-common-1:1.12.8-26.el8.noarch",
+        "dbus-daemon-1:1.12.8-26.el8.x86_64",
+        "dbus-libs-1:1.12.8-26.el8.x86_64",
+        "dbus-tools-1:1.12.8-26.el8.x86_64",
+        "dejagnu-1:1.6.1-2.el8.noarch",
+        "device-mapper-8:1.02.181-14.el8.x86_64",
+        "device-mapper-libs-8:1.02.181-14.el8.x86_64",
+        "diffutils-0:3.6-6.el8.x86_64",
+        "dnf-0:4.7.0-20.el8.noarch",
+        "dnf-data-0:4.7.0-20.el8.noarch",
+        "dwz-0:0.12-10.el8.x86_64",
+        "efi-srpm-macros-0:3-3.el8.noarch",
+        "elfutils-0:0.190-2.el8.x86_64",
+        "elfutils-debuginfod-client-0:0.190-2.el8.x86_64",
+        "elfutils-default-yama-scope-0:0.190-2.el8.noarch",
+        "elfutils-libelf-0:0.190-2.el8.x86_64",
+        "elfutils-libs-0:0.190-2.el8.x86_64",
+        "environment-modules-0:4.5.2-4.el8.x86_64",
+        "expat-0:2.2.5-13.el8_10.x86_64",
+        "expect-0:5.45.4-5.el8.x86_64",
+        "file-0:5.33-27.el8_10.x86_64",
+        "file-libs-0:5.33-27.el8_10.x86_64",
+        "filesystem-0:3.8-6.el8.x86_64",
+        "findutils-1:4.6.0-24.el8_10.x86_64",
+        "flex-0:2.6.1-9.el8.x86_64",
+        "gawk-0:4.2.1-4.el8.x86_64",
+        "gc-0:7.6.4-3.el8.x86_64",
+        "gcc-toolset-15-binutils-0:2.44-3.el8.x86_64",
+        "gcc-toolset-15-gcc-0:15.2.1-7.1.el8_10.x86_64",
+        "gcc-toolset-15-gcc-c++-0:15.2.1-7.1.el8_10.x86_64",
+        "gcc-toolset-15-libstdc++-devel-0:15.2.1-7.1.el8_10.x86_64",
+        "gcc-toolset-15-runtime-0:15.0-9.el8_10.x86_64",
+        "gdb-headless-0:8.2-20.el8.0.1.x86_64",
+        "gdbm-1:1.18-2.el8.x86_64",
+        "gdbm-libs-1:1.18-2.el8.x86_64",
+        "ghc-srpm-macros-0:1.4.2-7.el8.noarch",
+        "glib2-0:2.56.4-164.el8.x86_64",
+        "glibc-0:2.28-251.el8_10.40.x86_64",
+        "glibc-common-0:2.28-251.el8_10.40.x86_64",
+        "glibc-devel-0:2.28-251.el8_10.40.x86_64",
+        "glibc-gconv-extra-0:2.28-251.el8_10.40.x86_64",
+        "glibc-headers-0:2.28-251.el8_10.40.x86_64",
+        "glibc-minimal-langpack-0:2.28-251.el8_10.40.x86_64",
+        "gmp-1:6.1.2-12.el8.x86_64",
+        "gmp-c++-1:6.1.2-12.el8.x86_64",
+        "gmp-devel-1:6.1.2-12.el8.x86_64",
+        "gnupg2-0:2.2.20-3.el8_6.x86_64",
+        "gnutls-0:3.6.16-8.el8_10.2.x86_64",
+        "go-srpm-macros-0:2-17.el8.noarch",
+        "gpgme-0:1.13.1-12.el8.x86_64",
+        "grep-0:3.1-6.el8.x86_64",
+        "groff-base-0:1.22.3-18.el8.x86_64",
+        "guile-5:2.0.14-7.el8.x86_64",
+        "gzip-0:1.9-13.el8_5.x86_64",
+        "hostname-0:3.20-6.el8.x86_64",
+        "ima-evm-utils-0:1.3.2-12.el8.x86_64",
+        "info-0:6.5-7.el8.x86_64",
+        "iputils-0:20180629-11.el8.x86_64",
+        "iso-codes-0:3.79-2.el8.noarch",
+        "jansson-0:2.14-1.el8.x86_64",
+        "json-c-0:0.13.1-3.el8.x86_64",
+        "kernel-headers-0:4.18.0-553.158.1.el8_10.x86_64",
+        "keyutils-libs-0:1.5.10-9.el8.x86_64",
+        "kmod-libs-0:25-20.el8.x86_64",
+        "krb5-libs-0:1.18.2-27.el8_10.x86_64",
+        "langpacks-en-0:1.0-12.el8.noarch",
+        "less-0:530-2.el8_9.x86_64",
+        "libacl-0:2.2.53-3.el8.x86_64",
+        "libarchive-0:3.3.3-5.el8.x86_64",
+        "libassuan-0:2.5.1-3.el8.x86_64",
+        "libatomic_ops-0:7.6.2-3.el8.x86_64",
+        "libattr-0:2.4.48-3.el8.x86_64",
+        "libbabeltrace-0:1.5.4-4.el8.x86_64",
+        "libblkid-0:2.32.1-46.el8.x86_64",
+        "libcap-0:2.48-6.el8_9.x86_64",
+        "libcap-ng-0:0.7.11-1.el8.x86_64",
+        "libcom_err-0:1.45.6-5.el8.x86_64",
+        "libcomps-0:0.1.18-1.el8.x86_64",
+        "libcurl-minimal-0:7.61.1-34.el8.x86_64",
+        "libdb-0:5.3.28-42.el8_4.x86_64",
+        "libdb-utils-0:5.3.28-42.el8_4.x86_64",
+        "libdnf-0:0.63.0-19.el8.x86_64",
+        "libfdisk-0:2.32.1-46.el8.x86_64",
+        "libffi-0:3.1-24.el8.x86_64",
+        "libgcc-0:8.5.0-22.el8_10.x86_64",
+        "libgcrypt-0:1.8.5-7.el8_6.x86_64",
+        "libgomp-0:8.5.0-28.el8_10.x86_64",
+        "libgpg-error-0:1.31-1.el8.x86_64",
+        "libidn2-0:2.2.0-1.el8.x86_64",
+        "libipt-0:1.6.1-8.el8.x86_64",
+        "libksba-0:1.3.5-9.el8_7.x86_64",
+        "libmodulemd-0:2.13.0-1.el8.x86_64",
+        "libmount-0:2.32.1-46.el8.x86_64",
+        "libmpc-0:1.1.0-9.1.el8.x86_64",
+        "libmpc-devel-0:1.1.0-9.1.el8.x86_64",
+        "libnghttp2-0:1.33.0-5.el8_8.x86_64",
+        "libnsl2-0:1.2.0-2.20180605git4a062cf.el8.x86_64",
+        "libpipeline-0:1.5.0-2.el8.x86_64",
+        "libpkgconf-0:1.4.2-1.el8.x86_64",
+        "libpwquality-0:1.4.4-6.el8.x86_64",
+        "librepo-0:1.14.2-5.el8.x86_64",
+        "libreport-filesystem-0:2.9.5-15.el8.rocky.6.3.x86_64",
+        "libseccomp-0:2.5.2-1.el8.x86_64",
+        "libselinux-0:2.9-8.el8.x86_64",
+        "libselinux-utils-0:2.9-8.el8.x86_64",
+        "libsemanage-0:2.9-9.el8_6.x86_64",
+        "libsepol-0:2.9-3.el8.x86_64",
+        "libsigsegv-0:2.11-5.el8.x86_64",
+        "libsmartcols-0:2.32.1-46.el8.x86_64",
+        "libsolv-0:0.7.20-6.el8.x86_64",
+        "libstdc++-0:8.5.0-22.el8_10.x86_64",
+        "libtasn1-0:4.13-4.el8_7.x86_64",
+        "libtirpc-0:1.1.4-11.el8.x86_64",
+        "libtool-ltdl-0:2.4.6-25.el8.x86_64",
+        "libunistring-0:0.9.9-3.el8.x86_64",
+        "libusbx-0:1.0.23-4.el8.x86_64",
+        "libutempter-0:1.1.6-14.el8.x86_64",
+        "libuuid-0:2.32.1-46.el8.x86_64",
+        "libverto-0:0.3.2-2.el8.x86_64",
+        "libxcrypt-0:4.1.1-6.el8.x86_64",
+        "libxcrypt-devel-0:4.1.1-6.el8.x86_64",
+        "libxml2-0:2.9.7-18.el8.x86_64",
+        "libyaml-0:0.1.7-5.el8.x86_64",
+        "libzstd-0:1.4.4-1.el8.x86_64",
+        "libzstd-devel-0:1.4.4-1.el8.x86_64",
+        "lua-libs-0:5.3.4-12.el8.x86_64",
+        "lz4-libs-0:1.8.3-3.el8_4.x86_64",
+        "m4-0:1.4.18-7.el8.x86_64",
+        "make-1:4.2.1-11.el8.x86_64",
+        "man-db-0:2.7.6.1-18.el8.x86_64",
+        "mpfr-0:3.1.6-1.el8.x86_64",
+        "mpfr-devel-0:3.1.6-1.el8.x86_64",
+        "ncurses-0:6.1-10.20180224.el8.x86_64",
+        "ncurses-base-0:6.1-10.20180224.el8.noarch",
+        "ncurses-libs-0:6.1-10.20180224.el8.x86_64",
+        "nettle-0:3.4.1-7.el8.x86_64",
+        "npth-0:1.5-4.el8.x86_64",
+        "ocaml-srpm-macros-0:5-4.el8.noarch",
+        "openblas-srpm-macros-0:2-2.el8.noarch",
+        "openldap-0:2.4.46-18.el8.x86_64",
+        "openssl-1:1.1.1k-12.el8_9.x86_64",
+        "openssl-libs-1:1.1.1k-12.el8_9.x86_64",
+        "p11-kit-0:0.23.22-2.el8.x86_64",
+        "p11-kit-trust-0:0.23.22-2.el8.x86_64",
+        "pam-0:1.3.1-33.el8.x86_64",
+        "patch-0:2.7.6-11.el8.x86_64",
+        "pcre-0:8.42-6.el8.x86_64",
+        "pcre2-0:10.32-3.el8_6.x86_64",
+        "perl-Carp-0:1.42-396.el8.noarch",
+        "perl-Data-Dumper-0:2.167-399.el8.x86_64",
+        "perl-Digest-0:1.17-395.el8.noarch",
+        "perl-Digest-MD5-0:2.55-396.el8.x86_64",
+        "perl-Encode-4:2.97-3.el8.x86_64",
+        "perl-Errno-0:1.28-423.el8_10.x86_64",
+        "perl-Exporter-0:5.72-396.el8.noarch",
+        "perl-File-Path-0:2.15-2.el8.noarch",
+        "perl-File-Temp-0:0.230.600-1.el8.noarch",
+        "perl-Getopt-Long-1:2.50-4.el8.noarch",
+        "perl-HTTP-Tiny-0:0.074-3.el8.noarch",
+        "perl-IO-0:1.38-423.el8_10.x86_64",
+        "perl-IO-Socket-IP-0:0.39-5.el8.noarch",
+        "perl-IO-Socket-SSL-0:2.066-4.module+el8.9.0+1517+e71a7a62.noarch",
+        "perl-MIME-Base64-0:3.15-396.el8.x86_64",
+        "perl-Mozilla-CA-0:20160104-7.module+el8.9.0+1521+0101edce.noarch",
+        "perl-Net-SSLeay-0:1.88-2.module+el8.9.0+1517+e71a7a62.x86_64",
+        "perl-PathTools-0:3.74-1.el8.x86_64",
+        "perl-Pod-Escapes-1:1.07-395.el8.noarch",
+        "perl-Pod-Perldoc-0:3.28-396.el8.noarch",
+        "perl-Pod-Simple-1:3.35-395.el8.noarch",
+        "perl-Pod-Usage-4:1.69-395.el8.noarch",
+        "perl-Scalar-List-Utils-3:1.49-2.el8.x86_64",
+        "perl-Socket-4:2.027-3.el8.x86_64",
+        "perl-Storable-1:3.11-3.el8.x86_64",
+        "perl-Term-ANSIColor-0:4.06-396.el8.noarch",
+        "perl-Term-Cap-0:1.17-395.el8.noarch",
+        "perl-Text-ParseWords-0:3.30-395.el8.noarch",
+        "perl-Text-Tabs+Wrap-0:2013.0523-395.el8.noarch",
+        "perl-Time-Local-1:1.280-1.el8.noarch",
+        "perl-URI-0:1.73-3.el8.noarch",
+        "perl-Unicode-Normalize-0:1.25-396.el8.x86_64",
+        "perl-constant-0:1.33-396.el8.noarch",
+        "perl-interpreter-4:5.26.3-423.el8_10.x86_64",
+        "perl-libnet-0:3.11-3.el8.noarch",
+        "perl-libs-4:5.26.3-423.el8_10.x86_64",
+        "perl-macros-4:5.26.3-423.el8_10.x86_64",
+        "perl-parent-1:0.237-1.el8.noarch",
+        "perl-podlators-0:4.11-1.el8.noarch",
+        "perl-srpm-macros-0:1-25.el8.noarch",
+        "perl-threads-1:2.21-2.el8.x86_64",
+        "perl-threads-shared-0:1.58-2.el8.x86_64",
+        "pkgconf-0:1.4.2-1.el8.x86_64",
+        "pkgconf-m4-0:1.4.2-1.el8.noarch",
+        "pkgconf-pkg-config-0:1.4.2-1.el8.x86_64",
+        "platform-python-0:3.6.8-62.el8_10.rocky.0.x86_64",
+        "platform-python-setuptools-0:39.2.0-7.el8.noarch",
+        "policycoreutils-0:2.9-26.el8_10.x86_64",
+        "policycoreutils-python-utils-0:2.9-26.el8_10.noarch",
+        "popt-0:1.18-1.el8.x86_64",
+        "procps-ng-0:3.3.15-14.el8.x86_64",
+        "python-rpm-macros-0:3-45.el8.noarch",
+        "python-srpm-macros-0:3-45.el8.noarch",
+        "python3-audit-0:3.1.2-1.el8.x86_64",
+        "python3-dnf-0:4.7.0-20.el8.noarch",
+        "python3-gpg-0:1.13.1-12.el8.x86_64",
+        "python3-hawkey-0:0.63.0-19.el8.x86_64",
+        "python3-libcomps-0:0.1.18-1.el8.x86_64",
+        "python3-libdnf-0:0.63.0-19.el8.x86_64",
+        "python3-libs-0:3.6.8-62.el8_10.rocky.0.x86_64",
+        "python3-libselinux-0:2.9-8.el8.x86_64",
+        "python3-libsemanage-0:2.9-9.el8_6.x86_64",
+        "python3-pip-wheel-0:9.0.3-24.el8.rocky.0.noarch",
+        "python3-policycoreutils-0:2.9-26.el8_10.noarch",
+        "python3-rpm-0:4.14.3-32.el8_10.x86_64",
+        "python3-rpm-macros-0:3-45.el8.noarch",
+        "python3-setools-0:4.3.0-5.el8.x86_64",
+        "python3-setuptools-wheel-0:39.2.0-7.el8.noarch",
+        "qt5-srpm-macros-0:5.15.3-1.el8.noarch",
+        "readline-0:7.0-10.el8.x86_64",
+        "redhat-rpm-config-0:131-1.el8.noarch",
+        "rocky-gpg-keys-0:8.10-1.7.el8.noarch",
+        "rocky-release-0:8.10-1.7.el8.noarch",
+        "rocky-repos-0:8.10-1.7.el8.noarch",
+        "rootfiles-0:8.1-22.el8.noarch",
+        "rpm-0:4.14.3-32.el8_10.x86_64",
+        "rpm-build-0:4.14.3-32.el8_10.x86_64",
+        "rpm-build-libs-0:4.14.3-32.el8_10.x86_64",
+        "rpm-libs-0:4.14.3-32.el8_10.x86_64",
+        "rust-srpm-macros-0:5-2.el8.noarch",
+        "scl-utils-1:2.0.2-16.el8.x86_64",
+        "scl-utils-build-1:2.0.2-16.el8.x86_64",
+        "sed-0:4.5-5.el8.x86_64",
+        "setup-0:2.12.2-11.el8.noarch",
+        "shadow-utils-2:4.6-22.el8.x86_64",
+        "sqlite-libs-0:3.26.0-19.el8_9.x86_64",
+        "systemd-0:239-82.el8.x86_64",
+        "systemd-libs-0:239-82.el8.x86_64",
+        "systemd-pam-0:239-82.el8.x86_64",
+        "tar-2:1.30-11.el8_10.x86_64",
+        "tcl-1:8.6.8-2.el8.x86_64",
+        "tpm2-tss-0:2.3.2-6.el8.x86_64",
+        "tzdata-0:2024a-1.el8.noarch",
+        "unzip-0:6.0-48.el8_10.x86_64",
+        "util-linux-0:2.32.1-46.el8.x86_64",
+        "vim-minimal-2:8.0.1763-19.el8_6.4.x86_64",
+        "which-0:2.21-21.el8_10.x86_64",
+        "xml-common-0:0.6.3-50.el8.noarch",
+        "xz-0:5.2.4-4.el8_6.x86_64",
+        "xz-libs-0:5.2.4-4.el8_6.x86_64",
+        "yum-0:4.7.0-20.el8.noarch",
+        "zip-0:3.0-23.el8.x86_64",
+        "zlib-0:1.2.11-26.el8.x86_64",
+        "zlib-devel-0:1.2.11-26.el8.x86_64",
+        "zstd-0:1.4.4-1.el8.x86_64"
+      ],
+      "canonical_sha256": "b12b56c90d831028d6be29d74cb8347e5cbc4a8e2f52f814ad69302a50b0ea41"
+    }
+  }
+}

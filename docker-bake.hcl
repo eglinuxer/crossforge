@@ -114,6 +114,12 @@ target "host-gcc-build-locked" {
   output   = ["type=cacheonly"]
 }
 
+target "host-gcc-test-locked" {
+  inherits = ["_common"]
+  target   = "host-gcc-test-locked"
+  output   = ["type=cacheonly"]
+}
+
 target "host-python-build-locked" {
   inherits = ["_common"]
   target   = "host-python-build-locked"
@@ -194,6 +200,13 @@ target "rpm-lock-host-runtime" {
 target "rpm-lock-host-gcc-build" {
   inherits = ["_common"]
   target   = "rpm-lock-host-gcc-build"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-lock-host-gcc-test" {
+  inherits = ["_common"]
+  target   = "rpm-lock-host-gcc-test"
   no-cache = true
   output   = ["type=cacheonly"]
 }

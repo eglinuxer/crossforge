@@ -87,6 +87,18 @@ HOST_COMMON_ROOTS = {
     "zlib-devel",
 }
 HOST_GCC_ROOTS = {"bison", "flex", "libzstd-devel"}
+HOST_GCC_TEST_ROOTS = {"dejagnu", "expect"}
+HOST_GCC_TEST_REPOSITORIES = {
+    "baseos": (
+        "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/"
+    ),
+    "appstream": (
+        "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/"
+    ),
+    "powertools": (
+        "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/"
+    ),
+}
 HOST_PYTHON_ROOTS = {
     "bzip2-devel",
     "libffi-devel",
@@ -444,6 +456,7 @@ def expected_role_roots(role):
         "target-sysroot": SYSROOT_ROOTS,
         "host-build-common": HOST_COMMON_ROOTS,
         "host-gcc-build": HOST_GCC_ROOTS,
+        "host-gcc-test": HOST_GCC_TEST_ROOTS,
         "host-python-build": HOST_PYTHON_ROOTS,
         "host-runtime": HOST_RUNTIME_ROOTS,
     }[role]
@@ -555,6 +568,89 @@ def validate_locked_host_runtime_contract(transaction):
         raise ValidationError("host runtime development package set differs")
 
 
+def validate_locked_host_gcc_test_contract(transaction):
+    """Keep the DejaGNU closure test-only and exactly origin-scoped."""
+    if transaction["identity"] != {
+        "name": "host-gcc-test-el8-x86_64",
+        "role": "host-gcc-test",
+        "distribution": "rocky",
+        "release": "8.10",
+        "baseline": "el8",
+        "arch": "x86_64",
+        "target_triple": None,
+    }:
+        raise ValidationError("locked GCC test host identity differs")
+    if transaction["base"] != {
+        "mode": "lock",
+        "parent_lock": "locks/host-gcc-build-el8-x86_64.json",
+        "parent_sha256": (
+            "de271a4ba8a9e4bc31c8fc8a92c05fde"
+            "4736afbc64b1251e06751a0cb96c2be0"
+        ),
+    }:
+        raise ValidationError("locked GCC test host base differs")
+    if transaction["solver_policy"] != {
+        "allowed_arches": ["x86_64", "noarch"],
+        "install_weak_deps": False,
+        "best": True,
+        "strict": True,
+        "allow_erasing": False,
+        "module_platform_id": "platform:el8",
+        "enabled_modules": sorted(HOST_MODULES),
+    }:
+        raise ValidationError("locked GCC test host solver policy differs")
+    if transaction["resolver"]["load_system_repo"] is not True:
+        raise ValidationError("GCC test host must resolve from its parent RPMDB")
+    repositories = {
+        item["id"]: item["baseurl"] for item in transaction["repositories"]
+    }
+    if repositories != HOST_GCC_TEST_REPOSITORIES:
+        raise ValidationError("locked GCC test host repositories differ")
+    requests = transaction["requests"]
+    if [request["name"] for request in requests] != sorted(HOST_GCC_TEST_ROOTS):
+        raise ValidationError("locked GCC test host roots differ")
+    expected_origins = {"dejagnu": "powertools", "expect": "baseos"}
+    forward = [
+        item
+        for item in transaction["items"]
+        if item["action"] in ("install", "upgrade")
+    ]
+    if any(item["action"] == "remove" for item in transaction["items"]):
+        raise ValidationError("GCC test host transaction may not remove packages")
+    if {item["name"] for item in forward} != HOST_GCC_TEST_ROOTS:
+        raise ValidationError("GCC test host delta differs")
+    for item in forward:
+        if (
+            item["action"] != "install"
+            or item["reason"] != "user"
+            or item["repo_id"] != expected_origins[item["name"]]
+        ):
+            raise ValidationError("GCC test host package origin differs")
+    forward_nevras = {item["nevra"] for item in forward}
+    for request in requests:
+        resolved_name, resolved_arch = nevra_name_arch(request["resolved_nevra"])
+        if (
+            request["arch"] != "any"
+            or request["purpose"] != "gcc-testsuite"
+            or request["disposition"] != "transaction"
+            or request["resolved_nevra"] not in forward_nevras
+            or resolved_name != request["name"]
+            or resolved_arch not in ("x86_64", "noarch")
+        ):
+            raise ValidationError("locked GCC test host request differs")
+    base = set(validate_manifest(
+        transaction["manifests"]["base"], "GCC test host base manifest"
+    ))
+    result = set(validate_manifest(
+        transaction["manifests"]["result"], "GCC test host result manifest"
+    ))
+    remove = validate_manifest(
+        transaction["manifests"]["remove"], "GCC test host remove manifest"
+    )
+    if remove or result != base | forward_nevras:
+        raise ValidationError("GCC test host transaction algebra differs")
+
+
 def validate_plan_semantics(plan):
     identity = plan["identity"]
     role = identity["role"]
@@ -581,7 +677,7 @@ def validate_plan_semantics(plan):
             "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/",
             "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/",
         ]
-        if role == "host-runtime":
+        if role in ("host-gcc-test", "host-runtime"):
             expected_repositories.append("powertools")
             expected_repository_urls.append(
                 "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/"
@@ -805,6 +901,8 @@ def validate_transaction_semantics(transaction):
     if parent is not None:
         if parent["manifests"]["result"] != transaction["manifests"]["base"]:
             raise ValidationError("delta base differs from parent result manifest")
+    if role == "host-gcc-test":
+        validate_locked_host_gcc_test_contract(transaction)
     if role == "host-runtime":
         validate_locked_host_runtime_contract(transaction)
     return plan
@@ -821,6 +919,7 @@ def validate_locked_transaction_semantics(transaction):
     elif role not in (
         "host-build-common",
         "host-gcc-build",
+        "host-gcc-test",
         "host-python-build",
         "host-runtime",
     ):
@@ -840,6 +939,8 @@ def validate_locked_transaction_semantics(transaction):
             transaction["manifests"][name],
             "locked transaction %s manifest" % name,
         )
+    if role == "host-gcc-test":
+        validate_locked_host_gcc_test_contract(transaction)
     if role == "host-runtime":
         validate_locked_host_runtime_contract(transaction)
 

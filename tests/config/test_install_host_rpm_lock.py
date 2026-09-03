@@ -18,6 +18,7 @@ class InstallHostRPMLockTests(unittest.TestCase):
             {
                 "host-build-common",
                 "host-gcc-build",
+                "host-gcc-test",
                 "host-python-build",
                 "host-runtime",
             },

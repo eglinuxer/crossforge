@@ -332,6 +332,12 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "116d37555c76dc252205f78ee4fbcd4e86e90c22fde8dfaeb4e0c21b00066989",
+      "component": "rpm/host-gcc-test",
+      "path": "config/generated/components/rpm/host-gcc-test.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "3a3c0c9e014032d1a38b20962133c83bcdb7a6f59914f1974832e6f0f18ef7a0",
       "component": "rpm/host-python-build",
       "path": "config/generated/components/rpm/host-python-build.json",
@@ -478,7 +484,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "ad8643b172405a07e4d81f103319a4ee3a65bbb207e1663652f82db7b22cd1ea",
+    "canonical_sha256": "b6d1e4b91dd99ccf228830482593d2e8d02d25a2fb4dd09a1727104e1f4758ba",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

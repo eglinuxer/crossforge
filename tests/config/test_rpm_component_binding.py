@@ -16,6 +16,7 @@ MATERIALIZER = runpy.run_path(str(REPOSITORY / "scripts/materialize-sysroot.py")
 CASES = {
     "rpm/host-build-common": "locks/host-build-common-el8-x86_64.json",
     "rpm/host-gcc-build": "locks/host-gcc-build-el8-x86_64.json",
+    "rpm/host-gcc-test": "locks/host-gcc-test-el8-x86_64.json",
     "rpm/host-python-build": "locks/host-python-build-el8-x86_64.json",
     "rpm/host-runtime": "locks/host-runtime-el8-x86_64.json",
     "rpm/sysroot-x86_64": "locks/sysroot-el8-x86_64.json",

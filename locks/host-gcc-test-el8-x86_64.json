@@ -1,0 +1,45 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-lock.schema.json",
+  "schema_version": 1,
+  "kind": "rpm-lock",
+  "transaction": {
+    "file": "locks/transactions/host-gcc-test-el8-x86_64.json",
+    "canonical_sha256": "1ae65ef8aae157b88a1c5a4bf99061ee1d2be6d30f6d2bec91599c31a541aff3"
+  },
+  "packages": [
+    {
+      "nevra": "dejagnu-1:1.6.1-2.el8.noarch",
+      "received_sha256": "ff6423f8cd3d3a447c074cd0dcaa4336c0bdb24ae774353b1af90e8b69d80312",
+      "header": {
+        "name": "dejagnu",
+        "epoch": 1,
+        "version": "1.6.1",
+        "release": "2.el8",
+        "arch": "noarch",
+        "nevra": "dejagnu-1:1.6.1-2.el8.noarch",
+        "source_rpm": "dejagnu-1.6.1-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "expect-0:5.45.4-5.el8.x86_64",
+      "received_sha256": "50544ca1d2c265952e5c44f5e30d4aedf180adb403dda3c23974547ddeecef52",
+      "header": {
+        "name": "expect",
+        "epoch": 0,
+        "version": "5.45.4",
+        "release": "5.el8",
+        "arch": "x86_64",
+        "nevra": "expect-0:5.45.4-5.el8.x86_64",
+        "source_rpm": "expect-5.45.4-5.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    }
+  ]
+}

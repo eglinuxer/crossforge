@@ -580,7 +580,7 @@ def validate_plan_semantics(plan):
                 "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/",
             ),
         ]
-        if role == "host-runtime":
+        if role in ("host-gcc-test", "host-runtime"):
             expected_repositories.append(
                 (
                     "powertools",

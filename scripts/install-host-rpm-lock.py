@@ -22,6 +22,7 @@ RPM_BINDING = runpy.run_path(
 ALLOWED_ROLES = {
     "host-build-common",
     "host-gcc-build",
+    "host-gcc-test",
     "host-python-build",
     "host-runtime",
 }

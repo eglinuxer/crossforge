@@ -150,6 +150,10 @@ Rocky 的 Meson 包强制依赖系统 Python development package；这是受审�
 祖先，再通过 COPY 汇入已资格化的 toolchain、sysroot 与 Python row；GCC/Python build
 transaction、源码和 staging 根不会进入产品闭包。
 
+GCC testsuite 的 host 依赖是独立的 test-only additive transaction：
+`expect` 来自 BaseOS，`dejagnu` 来自 PowerTools。PowerTools 在此闭包中只允许
+`dejagnu`，整个 transaction 与测试源码均不进入最终 SDK。
+
 ## 7. Python SDK
 
 每个 CPython minor 由同一份精确 patch source 构建一份 amd64 build Python 和两份 target Python：
