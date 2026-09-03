@@ -24,8 +24,9 @@ build-system-independent DEB/RPM packaging.
 > five-triplet gate from explicit asset closures. The crosspack Phase 14 gate
 > emits byte-reproducible split DEB/RPM packages for both targets and installs
 > them with pinned real `dpkg` and Rocky `rpm`. The single `crossforge`
-> launcher is installed and qualified. Debug-symbol splitting, full GCC/Qt
-> suites and release supply chain remain pending.
+> launcher and the complete Python/vcpkg/packaging SDK composition are
+> qualified. Debug-symbol splitting, full GCC/Qt suites and release supply
+> chain remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -525,7 +526,20 @@ container environment or infer a target from the project. Selecting vcpkg
 switches CMake to its toolchain and an explicit static/dynamic Crossforge
 triplet. The generated Meson cross-file path is exposed as `MESON_CROSS_FILE`.
 The Python selector is fail-closed until the final aggregate image adds the
-qualified Python rows to this packaging/vcpkg base.
+qualified Python rows to this packaging/vcpkg base. Phase 15 provides that
+aggregate as the cache-only, non-publishable `sdk-complete-dev` target.
+
+## Phase 15: complete SDK composition
+
+```console
+$ docker buildx bake sdk-complete-dev
+```
+
+The target starts from the packaging-qualified vcpkg SDK and copies only the
+six already-qualified Python rows and their final report. An offline gate then
+uses the installed launcher to check the native host environment plus all 24
+x86_64/aarch64 × Python 3.9–3.14 × static/dynamic vcpkg selections. The target
+remains `-dev`; it is not a release candidate or a user-facing tag.
 
 ## Product contract
 

@@ -629,6 +629,32 @@ def render_packaging_graph(
         },
         "output": ["type=cacheonly"],
     }
+    targets["sdk-complete-dev"] = {
+        "inherits": ["_packaging_common"],
+        "target": "sdk-complete-dev",
+        "args": {
+            "COMPLETE_SDK_POLICY_COMPONENT_SHA256": digest(
+                "implementation/complete-sdk-qualification"
+            ),
+            "CROSSFORGE_LAUNCHER_COMPONENT_SHA256": digest(
+                "implementation/launcher"
+            ),
+            "CROSSPACK_QUALIFICATION_COMPONENT_SHA256": digest(
+                "packaging/qualification"
+            ),
+            "PYTHON_QUALIFICATION_COMPONENT_SHA256": digest(
+                "python/qualification"
+            ),
+            "COMPLETE_SDK_QUALIFICATION_COMPONENT_SHA256": digest(
+                "product/sdk-qualification"
+            ),
+        },
+        "contexts": {
+            "crossforge_packaging_qualified": "target:packaging-qualified",
+            "crossforge_python_sdk": "target:python-dev",
+        },
+        "output": ["type=cacheonly"],
+    }
     return {
         "phase14-source": {
             "targets": ["host-runtime-qualified", "nfpm-tool"]
@@ -637,6 +663,7 @@ def render_packaging_graph(
             "targets": ["sdk-phase13-base", "nfpm-tool", "packaging-sdk-dev"]
         },
         "phase14": {"targets": ["packaging-qualified"]},
+        "phase15": {"targets": ["sdk-complete-dev"]},
     }
 
 

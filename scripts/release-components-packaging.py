@@ -62,6 +62,16 @@ CROSSFORGE_LAUNCHER_POLICY = {
     "vcpkg_linkage": ["static", "dynamic"],
     "package_backend": "internal-locked-nfpm",
 }
+COMPLETE_SDK_QUALIFICATION_POLICY = {
+    "schema_version": 1,
+    "host": "x86_64",
+    "targets": ["x86_64", "aarch64"],
+    "python_minors": ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"],
+    "vcpkg_linkage": ["static", "dynamic"],
+    "matrix_size": 24,
+    "composition": "qualified-artifacts-only",
+    "publishable": False,
+}
 
 
 def policy_materials(prefix, value):
@@ -111,6 +121,14 @@ def extend_component_graph(context):
         ),
     )
     add(
+        "implementation/complete-sdk-qualification",
+        "qualification",
+        explicit_materials=policy_materials(
+            "/@implementation/complete-sdk-qualification/",
+            COMPLETE_SDK_QUALIFICATION_POLICY,
+        ),
+    )
+    add(
         "packaging/sdk-build",
         "build",
         selector(("baseline",), ("platforms",)),
@@ -130,5 +148,16 @@ def extend_component_graph(context):
             "packaging/sdk-build",
             context["toolchain_qualifications"]["x86_64"],
             context["toolchain_qualifications"]["aarch64"],
+        ),
+    )
+    add(
+        "product/sdk-qualification",
+        "qualification",
+        selector(("baseline",), ("platforms",)),
+        (
+            "implementation/complete-sdk-qualification",
+            "implementation/launcher",
+            "packaging/qualification",
+            "python/qualification",
         ),
     )

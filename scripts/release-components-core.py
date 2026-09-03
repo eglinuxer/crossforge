@@ -724,20 +724,6 @@ def _render_expected_components(release, implemented_rows):
         "build",
         explicit_materials=zstd_policy_materials(),
     )
-    for extension in COMPONENT_EXTENSIONS:
-        require(callable(extension), "component extension must be callable")
-        extension(
-            {
-                "add": add,
-                "release": release,
-                "require": require,
-                "selector": selector,
-                "toolchain_builds": copy.deepcopy(toolchain_builds),
-                "toolchain_qualifications": copy.deepcopy(
-                    toolchain_qualifications
-                ),
-            }
-        )
     add(
         "zstd/host-build",
         "build",
@@ -864,6 +850,21 @@ def _render_expected_components(release, implemented_rows):
         selector(*qualification_material_prefixes),
         python_qualification_dependencies,
     )
+
+    for extension in COMPONENT_EXTENSIONS:
+        require(callable(extension), "component extension must be callable")
+        extension(
+            {
+                "add": add,
+                "release": release,
+                "require": require,
+                "selector": selector,
+                "toolchain_builds": copy.deepcopy(toolchain_builds),
+                "toolchain_qualifications": copy.deepcopy(
+                    toolchain_qualifications
+                ),
+            }
+        )
 
     add(
         "product/release",

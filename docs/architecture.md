@@ -326,8 +326,10 @@ manifest、staging root 与输出目录，nFPM 路径、版本和摘要从镜像
 取得；用户不能替换 backend。`run`/`shell` 复制当前环境再覆盖显式选择，提供完整
 compiler/binutils、sysroot、pkg-config、CMake toolchain 与 `MESON_CROSS_FILE`。启用
 vcpkg 时才设置明确 triplet 并把 CMake 切到 vcpkg toolchain；`--python` 必须同时
-选择 target，并隔离 build Python 与唯一 target sysconfigdata。当前 Phase 14 基础镜像
-尚未合并 Python rows，因此 Python 选择会 fail closed；完整产品聚合 stage 完成后开放。
+选择 target，并隔离 build Python 与唯一 target sysconfigdata。Phase 15 的
+`sdk-complete-dev` 从 packaging-qualified vcpkg SDK 出发，只复制已经资格化的六行
+Python 产物和 final report，再由 launcher 离线遍历 native host 以及 2 target × 6
+Python minor × 2 linkage 的 24 种选择。该目标仍为 cache-only `-dev`，不得发布。
 
 ## 11. 验收与发布门禁
 
@@ -400,4 +402,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports，以及双格式分包安装门禁已完成；后续补齐 debug symbol/ELF 深审计、单一 launcher、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、双格式分包门禁、单一 launcher 与完整 SDK 聚合已完成；后续补齐 debug symbol/ELF 深审计、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

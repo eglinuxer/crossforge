@@ -31,9 +31,11 @@ VCPKG_COMPONENTS = {
 PACKAGING_COMPONENTS = {
     "implementation/crosspack",
     "implementation/crosspack-qualification",
+    "implementation/complete-sdk-qualification",
     "implementation/launcher",
     "packaging/qualification",
     "packaging/sdk-build",
+    "product/sdk-qualification",
 }
 
 

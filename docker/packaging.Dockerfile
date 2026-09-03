@@ -198,3 +198,51 @@ RUN --network=none /usr/libexec/platform-python \
       --output /opt/crossforge/qualification/packaging/crosspack.json \
     && rm -rf /work /qualification /tmp/crosspack-install-*
 WORKDIR /workspace
+
+FROM crossforge_packaging_qualified AS sdk-complete-dev
+ARG COMPLETE_SDK_POLICY_COMPONENT_SHA256
+ARG CROSSFORGE_LAUNCHER_COMPONENT_SHA256
+ARG CROSSPACK_QUALIFICATION_COMPONENT_SHA256
+ARG PYTHON_QUALIFICATION_COMPONENT_SHA256
+ARG COMPLETE_SDK_QUALIFICATION_COMPONENT_SHA256
+COPY --from=crossforge_python_sdk /opt/crossforge/python/ \
+  /opt/crossforge/python/
+COPY --from=crossforge_python_sdk /opt/crossforge/qualification/python/ \
+  /opt/crossforge/qualification/python/
+COPY --from=crossforge_python_sdk \
+  /opt/crossforge/qualification/final-sdk.json \
+  /opt/crossforge/qualification/python-final-sdk.json
+COPY config/generated/components/implementation/complete-sdk-qualification.json \
+  /work/config/complete-sdk-policy.json
+COPY config/generated/components/implementation/launcher.json \
+  /work/config/crossforge-launcher.json
+COPY config/generated/components/packaging/qualification.json \
+  /work/config/crosspack-qualification.json
+COPY config/generated/components/python/qualification.json \
+  /work/config/python-qualification.json
+COPY config/generated/components/product/sdk-qualification.json \
+  /work/config/complete-sdk-qualification.json
+COPY --chmod=0755 scripts/release_component.py \
+  scripts/qualify-complete-sdk.py /work/scripts/
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/qualify-complete-sdk.py \
+      --policy-component /work/config/complete-sdk-policy.json \
+      --policy-component-sha256 "$COMPLETE_SDK_POLICY_COMPONENT_SHA256" \
+      --launcher-component /work/config/crossforge-launcher.json \
+      --launcher-component-sha256 "$CROSSFORGE_LAUNCHER_COMPONENT_SHA256" \
+      --packaging-component /work/config/crosspack-qualification.json \
+      --packaging-component-sha256 \
+        "$CROSSPACK_QUALIFICATION_COMPONENT_SHA256" \
+      --python-component /work/config/python-qualification.json \
+      --python-component-sha256 "$PYTHON_QUALIFICATION_COMPONENT_SHA256" \
+      --qualification-component /work/config/complete-sdk-qualification.json \
+      --qualification-component-sha256 \
+        "$COMPLETE_SDK_QUALIFICATION_COMPONENT_SHA256" \
+      --packaging-report \
+        /opt/crossforge/qualification/packaging/crosspack.json \
+      --python-report \
+        /opt/crossforge/qualification/python-final-sdk.json \
+      --crossforge /usr/local/bin/crossforge \
+      --output /opt/crossforge/qualification/complete-sdk.json \
+    && rm -rf /work
+WORKDIR /workspace

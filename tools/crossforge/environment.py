@@ -33,8 +33,12 @@ def rooted(root, absolute):
 
 
 def executable(path, label):
+    try:
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError) as error:
+        raise EnvironmentError("%s is unavailable: %s" % (label, path)) from error
     require(
-        path.is_file() and not path.is_symlink() and os.access(str(path), os.X_OK),
+        resolved.is_file() and os.access(str(resolved), os.X_OK),
         "%s is unavailable: %s" % (label, path),
     )
     return str(path)
@@ -142,10 +146,12 @@ def target_environment(root, arch):
 def host_environment(root):
     compiler_root = rooted(root, "/opt/rh/gcc-toolset-15/root/usr/bin")
     directory(compiler_root, "native GTS compiler root")
-    tools = {}
+    tools = {
+        "CC": executable(compiler_root / "gcc", "native GTS gcc"),
+        "CXX": executable(compiler_root / "g++", "native GTS g++"),
+    }
+    system_root = rooted(root, "/usr/bin")
     for variable, name in (
-        ("CC", "gcc"),
-        ("CXX", "g++"),
         ("AR", "ar"),
         ("AS", "as"),
         ("LD", "ld"),
@@ -157,7 +163,7 @@ def host_environment(root):
         ("STRIP", "strip"),
     ):
         tools[variable] = executable(
-            compiler_root / name, "native GTS %s" % name
+            system_root / name, "native host %s" % name
         )
     tools["CROSSFORGE_TARGET"] = "host"
     return tools

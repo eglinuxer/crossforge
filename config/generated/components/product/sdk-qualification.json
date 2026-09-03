@@ -1,0 +1,43 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "product/sdk-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "4d8d5ef5c62a6294a5ba97fde2ae5f56fc0d1a92a37919d83b26fcf9069ba4e8",
+      "component": "implementation/complete-sdk-qualification"
+    },
+    {
+      "canonical_sha256": "4fd6effbb6c261c8164eab5d0e9269e28aa297cc64a7d318a9eccbdc9771a145",
+      "component": "implementation/launcher"
+    },
+    {
+      "canonical_sha256": "0ca07e554cfadb63836a54a8af81762d45281802c3583e7f4eebf380f32d67ee",
+      "component": "packaging/qualification"
+    },
+    {
+      "canonical_sha256": "423e22d60fff79ffc18645065160e783faf7fdec1a1d6c7c7f65616762c2748d",
+      "component": "python/qualification"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/platforms/build",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/image",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/tool_host",
+      "value": "linux/amd64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

@@ -43,6 +43,7 @@ PHASE9_PYTHON_QUALIFICATION_DIGESTS = {
     "python/qualification": "7396e38468e853b3d62213907d30ce57d264326052c0ad99cf77c90847d6b587",
 }
 PACKAGING_CONSUMERS = {"packaging/sdk-build", "packaging/qualification"}
+COMPLETE_SDK_CONSUMER = {"product/sdk-qualification"}
 
 
 def component_documents(documents):
@@ -532,6 +533,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "python/cp312-x86_64-build",
                 "python/cp312-aarch64-build",
                 "python/qualification",
+                "product/sdk-qualification",
             },
         )
 
@@ -595,7 +597,10 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         release = copy.deepcopy(self.release)
         release["python"]["versions"][3]["support"] = "bugfix"
         support = RENDERER["render_component_documents"](release, self.rows)
-        self.assertEqual(changed(self.components, support), {"python/qualification"})
+        self.assertEqual(
+            changed(self.components, support),
+            {"python/qualification", "product/sdk-qualification"},
+        )
         release = copy.deepcopy(self.release)
         release["python"]["versions"][3]["source"]["sigstore"][
             "bundle_sha256"
@@ -603,7 +608,11 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         sigstore = RENDERER["render_component_documents"](release, self.rows)
         self.assertEqual(
             changed(self.components, sigstore),
-            {"python/qualification", "supply/evidence"},
+            {
+                "python/qualification",
+                "product/sdk-qualification",
+                "supply/evidence",
+            },
         )
         for documents in (support, sigstore):
             self.assertFalse(
@@ -631,6 +640,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                         "vcpkg/upstream-tier2-qualification",
                         "vcpkg/upstream-tier3-qualification",
                         "packaging/qualification",
+                        "product/sdk-qualification",
                     },
                 )
             )
@@ -669,7 +679,11 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             )
         )
         normalized = []
-        provider_impact = {"abi/python-providers", "python/qualification"}
+        provider_impact = {
+            "abi/python-providers",
+            "python/qualification",
+            "product/sdk-qualification",
+        }
         for case in cases:
             if len(case) == 3:
                 normalized.append(case)
@@ -707,6 +721,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "vcpkg/upstream-tier3-qualification",
         }
         expected.update(PACKAGING_CONSUMERS)
+        expected.update(COMPLETE_SDK_CONSUMER)
         expected.update(
             "python/%s-aarch64-build" % row for row in self.row_names
         )
@@ -731,6 +746,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "vcpkg/upstream-tier3-qualification",
         }
         expected.update(PACKAGING_CONSUMERS)
+        expected.update(COMPLETE_SDK_CONSUMER)
         expected.update(
             "python/%s-x86_64-build" % row for row in self.row_names
         )
@@ -750,6 +766,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier2-qualification",
                 "vcpkg/upstream-tier3-qualification",
                 "packaging/qualification",
+                "product/sdk-qualification",
             },
         )
 
@@ -768,6 +785,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                     "python/%s-aarch64-build" % row,
                 }
             )
+        expected.update(COMPLETE_SDK_CONSUMER)
         self.assertEqual(changed(self.components, after), expected)
 
     def test_host_runtime_lock_promotes_only_its_delivery_component(self):
@@ -796,6 +814,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier3-qualification",
                 "packaging/sdk-build",
                 "packaging/qualification",
+                "product/sdk-qualification",
             },
         )
 
@@ -830,6 +849,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier3-qualification",
                 "packaging/sdk-build",
                 "packaging/qualification",
+                "product/sdk-qualification",
             }
         )
         for row in self.row_names:
@@ -868,6 +888,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier3-qualification",
                 "packaging/sdk-build",
                 "packaging/qualification",
+                "product/sdk-qualification",
             },
         )
 
@@ -911,6 +932,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier3-qualification",
                 "packaging/sdk-build",
                 "packaging/qualification",
+                "product/sdk-qualification",
             },
         )
 
@@ -950,6 +972,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier3-qualification",
                 "packaging/sdk-build",
                 "packaging/qualification",
+                "product/sdk-qualification",
             },
         )
 
@@ -1046,6 +1069,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                     "python/cp314-x86_64-build",
                     "python/cp314-aarch64-build",
                     "python/qualification",
+                    "product/sdk-qualification",
                 },
             )
 
@@ -1090,6 +1114,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             {
                 "implementation/python-qualification-policy",
                 "python/qualification",
+                "product/sdk-qualification",
                 "supply/evidence",
             },
         )

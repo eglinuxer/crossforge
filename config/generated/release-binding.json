@@ -38,6 +38,12 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "4d8d5ef5c62a6294a5ba97fde2ae5f56fc0d1a92a37919d83b26fcf9069ba4e8",
+      "component": "implementation/complete-sdk-qualification",
+      "path": "config/generated/components/implementation/complete-sdk-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "f2a01266f9e8c3e5dfd36f292fd18f9fe51e816bc33264441367feaad39cabbc",
       "component": "implementation/crosspack",
       "path": "config/generated/components/implementation/crosspack.json",
@@ -156,6 +162,12 @@
       "component": "product/release",
       "path": "config/generated/components/product/release.json",
       "scope": "supply"
+    },
+    {
+      "canonical_sha256": "46d52577837038aed9e73e82476bfc24874f93558a402efc100160e8ceb3bb2c",
+      "component": "product/sdk-qualification",
+      "path": "config/generated/components/product/sdk-qualification.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "f2536351de8df0207af967bb4ad686613e5d2104f37bb40a1a907376e6ecb410",

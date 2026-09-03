@@ -13,6 +13,7 @@ VALIDATOR = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
 PREPARER_PATH = REPOSITORY / "scripts/prepare-nfpm-tool.py"
 BUILDER_PATH = REPOSITORY / "scripts/build-crosspack-qualification.py"
 FINALIZER_PATH = REPOSITORY / "scripts/finalize-crosspack-qualification.py"
+COMPLETE_QUALIFIER_PATH = REPOSITORY / "scripts/qualify-complete-sdk.py"
 PREPARER = runpy.run_path(str(PREPARER_PATH))
 BAKE = runpy.run_path(str(REPOSITORY / "scripts/render-bake.py"))
 
@@ -66,6 +67,17 @@ class CrosspackComponentTests(unittest.TestCase):
                 "vcpkg/sdk-build",
             },
         )
+        complete = self.components["product/sdk-qualification"]
+        self.assertEqual(complete["scope"], "qualification")
+        self.assertEqual(
+            {item["component"] for item in complete["dependencies"]},
+            {
+                "implementation/complete-sdk-qualification",
+                "implementation/launcher",
+                "packaging/qualification",
+                "python/qualification",
+            },
+        )
         qualification = self.components["packaging/qualification"]
         self.assertEqual(qualification["scope"], "qualification")
         self.assertEqual(
@@ -88,6 +100,7 @@ class CrosspackComponentTests(unittest.TestCase):
                 "sources/nfpm",
                 "packaging/sdk-build",
                 "packaging/qualification",
+                "product/sdk-qualification",
             },
         )
 
@@ -117,6 +130,9 @@ class CrosspackComponentTests(unittest.TestCase):
         self.assertEqual(
             launcher["target_selection"], "explicit-no-project-guessing"
         )
+        complete = RENDERER["COMPLETE_SDK_QUALIFICATION_POLICY"]
+        self.assertEqual(complete["matrix_size"], 24)
+        self.assertFalse(complete["publishable"])
 
     def test_nfpm_source_archive_and_component_relationships_are_exact(self):
         nfpm = self.release["nfpm"]
@@ -168,6 +184,17 @@ class CrosspackComponentTests(unittest.TestCase):
             rendered["group"]["phase14"]["targets"],
             ["packaging-qualified"],
         )
+        self.assertEqual(
+            targets["sdk-complete-dev"]["contexts"],
+            {
+                "crossforge_packaging_qualified": "target:packaging-qualified",
+                "crossforge_python_sdk": "target:python-dev",
+            },
+        )
+        self.assertEqual(
+            rendered["group"]["phase15"]["targets"],
+            ["sdk-complete-dev"],
+        )
 
     def test_docker_network_and_tool_boundaries_are_explicit(self):
         dockerfile = (
@@ -181,6 +208,7 @@ class CrosspackComponentTests(unittest.TestCase):
             "crosspack-deb-qualified",
             "crosspack-rpm-qualified",
             "packaging-qualified",
+            "sdk-complete-dev",
         ):
             block = dockerfile.split(" AS %s" % stage, 1)[1]
             block = block.split("\nFROM ", 1)[0]
@@ -216,7 +244,12 @@ class CrosspackComponentTests(unittest.TestCase):
         import ast
         import subprocess
 
-        for path in (PREPARER_PATH, BUILDER_PATH, FINALIZER_PATH):
+        for path in (
+            PREPARER_PATH,
+            BUILDER_PATH,
+            FINALIZER_PATH,
+            COMPLETE_QUALIFIER_PATH,
+        ):
             ast.parse(
                 path.read_text(encoding="utf-8"),
                 filename=str(path),

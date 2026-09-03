@@ -63,8 +63,10 @@ class CrossforgeCliTests(unittest.TestCase):
                 path = self.root / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("fixture\n", encoding="utf-8")
-        for suffix in suffixes:
+        for suffix in ("gcc", "g++"):
             self.executable("opt/rh/gcc-toolset-15/root/usr/bin/" + suffix)
+        for suffix in suffixes[2:]:
+            self.executable("usr/bin/" + suffix)
         self.executable("opt/crossforge/vcpkg/root/vcpkg")
         vcpkg_toolchain = self.root / "opt/crossforge/vcpkg/root/scripts/buildsystems/vcpkg.cmake"
         vcpkg_toolchain.parent.mkdir(parents=True)
@@ -122,12 +124,16 @@ class CrossforgeCliTests(unittest.TestCase):
             target="x86_64",
             base={"PATH": "/usr/bin"},
         )
+        host_ld = self.root / "usr/bin/ld"
+        host_ld.rename(self.root / "usr/bin/ld.bfd")
+        host_ld.symlink_to("ld.bfd")
         host = environment.build_environment(
             self.release, root=self.root, base={"PATH": "/usr/bin"}
         )
         self.assertIn("x86_64-unknown-linux-gnu.cmake", target["CMAKE_TOOLCHAIN_FILE"])
         self.assertEqual(target["CROSSFORGE_TARGET"], "x86_64")
         self.assertEqual(host["CROSSFORGE_TARGET"], "host")
+        self.assertTrue(host["LD"].endswith("/usr/bin/ld"))
         self.assertNotIn("CROSSFORGE_SYSROOT", host)
         with self.assertRaises(environment.EnvironmentError):
             environment.build_environment(

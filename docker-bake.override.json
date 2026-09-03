@@ -80,6 +80,11 @@
         "nfpm-tool"
       ]
     },
+    "phase15": {
+      "targets": [
+        "sdk-complete-dev"
+      ]
+    },
     "phase5": {
       "targets": [
         "validate",
@@ -2586,6 +2591,26 @@
         "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c"
       }
+    },
+    "sdk-complete-dev": {
+      "args": {
+        "COMPLETE_SDK_POLICY_COMPONENT_SHA256": "4d8d5ef5c62a6294a5ba97fde2ae5f56fc0d1a92a37919d83b26fcf9069ba4e8",
+        "COMPLETE_SDK_QUALIFICATION_COMPONENT_SHA256": "46d52577837038aed9e73e82476bfc24874f93558a402efc100160e8ceb3bb2c",
+        "CROSSFORGE_LAUNCHER_COMPONENT_SHA256": "4fd6effbb6c261c8164eab5d0e9269e28aa297cc64a7d318a9eccbdc9771a145",
+        "CROSSPACK_QUALIFICATION_COMPONENT_SHA256": "0ca07e554cfadb63836a54a8af81762d45281802c3583e7f4eebf380f32d67ee",
+        "PYTHON_QUALIFICATION_COMPONENT_SHA256": "423e22d60fff79ffc18645065160e783faf7fdec1a1d6c7c7f65616762c2748d"
+      },
+      "contexts": {
+        "crossforge_packaging_qualified": "target:packaging-qualified",
+        "crossforge_python_sdk": "target:python-dev"
+      },
+      "inherits": [
+        "_packaging_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "sdk-complete-dev"
     },
     "sdk-phase13-base": {
       "args": {
