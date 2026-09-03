@@ -947,7 +947,8 @@
         "repository",
         "tag",
         "tag_object",
-        "commit"
+        "commit",
+        "archive"
       ],
       "properties": {
         "status": {
@@ -967,6 +968,37 @@
         "commit": {
           "type": "string",
           "pattern": "^[0-9a-f]{40}$"
+        },
+        "archive": {
+          "$ref": "#/$defs/nfpm_source_archive"
+        }
+      }
+    },
+    "nfpm_source_archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sha256",
+        "sha512",
+        "size"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^https://github.com/goreleaser/nfpm/archive/refs/tags/"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sha512": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     },

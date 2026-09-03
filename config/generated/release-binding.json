@@ -44,6 +44,12 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "dbef1b33cd8d6ff1ca2542338c7624d0548685e852119a7fed4ff61429796d4a",
+      "component": "implementation/crosspack-qualification",
+      "path": "config/generated/components/implementation/crosspack-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "732447444d086b975a7ec6a13f463dd7ced4696a37ad7015e12d5e64d8bcd862",
       "component": "implementation/ninja-host-tool",
       "path": "config/generated/components/implementation/ninja-host-tool.json",
@@ -125,6 +131,18 @@
       "canonical_sha256": "be14b05aebc58eeb91642e1f3fb019cba033e4801fe489c727e88c7b6bfa1a93",
       "component": "implementation/zstd-build-policy",
       "path": "config/generated/components/implementation/zstd-build-policy.json",
+      "scope": "build"
+    },
+    {
+      "canonical_sha256": "978c1662832904a2443d9a49a5fddb2e56adee4130dbb0abf503cb299fa56491",
+      "component": "packaging/qualification",
+      "path": "config/generated/components/packaging/qualification.json",
+      "scope": "qualification"
+    },
+    {
+      "canonical_sha256": "8053b194011ee2567bf761856ab7920e041c12f3d35a6ea9d2bbd38c5817a583",
+      "component": "packaging/sdk-build",
+      "path": "config/generated/components/packaging/sdk-build.json",
       "scope": "build"
     },
     {
@@ -338,7 +356,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "eda9522d270ab7bbebfe292e8c37e340736e675d7fd5ec78f56edcfc92a8495e",
+      "canonical_sha256": "384ecd2e12cabedd35ff22c036a75cbd36fefd2499b56f91848a11db7cefeb1e",
       "component": "sources/nfpm",
       "path": "config/generated/components/sources/nfpm.json",
       "scope": "build"
@@ -442,7 +460,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "4d7588b092247e1ab0d116b1f63aaeea8a5a0c83b8bd29c7a92ec7872cf97e85",
+    "canonical_sha256": "ad8643b172405a07e4d81f103319a4ee3a65bbb207e1663652f82db7b22cd1ea",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

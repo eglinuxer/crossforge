@@ -36,6 +36,9 @@ for name in (
 ):
     globals()[name] = VCPKG_EXTENSION[name]
 globals()["CROSSPACK_POLICY"] = PACKAGING_EXTENSION["CROSSPACK_POLICY"]
+globals()["CROSSPACK_QUALIFICATION_POLICY"] = PACKAGING_EXTENSION[
+    "CROSSPACK_QUALIFICATION_POLICY"
+]
 
 
 if __name__ == "__main__":

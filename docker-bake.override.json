@@ -62,6 +62,24 @@
         "vcpkg-source"
       ]
     },
+    "phase14": {
+      "targets": [
+        "packaging-qualified"
+      ]
+    },
+    "phase14-sdk": {
+      "targets": [
+        "sdk-phase13-base",
+        "nfpm-tool",
+        "packaging-sdk-dev"
+      ]
+    },
+    "phase14-source": {
+      "targets": [
+        "host-runtime-qualified",
+        "nfpm-tool"
+      ]
+    },
     "phase5": {
       "targets": [
         "validate",
@@ -1881,6 +1899,25 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_RUNTIME_SHA256": "15bebccbafc2f5b849de9b0f36ec694fb0cc829aebada4d936c1c595ec1ef029"
       }
     },
+    "nfpm-tool": {
+      "args": {
+        "NFPM_BINARY_URL": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_Linux_x86_64.tar.gz",
+        "NFPM_CHECKSUMS_URL": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/checksums.txt",
+        "NFPM_SIGSTORE_URL": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/checksums.txt.sigstore.json",
+        "NFPM_SOURCE_COMPONENT_SHA256": "384ecd2e12cabedd35ff22c036a75cbd36fefd2499b56f91848a11db7cefeb1e",
+        "NFPM_SOURCE_URL": "https://github.com/goreleaser/nfpm/archive/refs/tags/v2.47.0.tar.gz"
+      },
+      "contexts": {
+        "crossforge_host_runtime": "target:host-runtime-qualified"
+      },
+      "inherits": [
+        "_packaging_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "nfpm-tool-export"
+    },
     "ninja-host-tool": {
       "args": {
         "NINJA_POLICY_COMPONENT_SHA256": "732447444d086b975a7ec6a13f463dd7ced4696a37ad7015e12d5e64d8bcd862",
@@ -1916,6 +1953,46 @@
         "type=cacheonly"
       ],
       "target": "ninja-source-export"
+    },
+    "packaging-qualified": {
+      "args": {
+        "CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256": "f2a01266f9e8c3e5dfd36f292fd18f9fe51e816bc33264441367feaad39cabbc",
+        "CROSSPACK_QUALIFICATION_COMPONENT_SHA256": "978c1662832904a2443d9a49a5fddb2e56adee4130dbb0abf503cb299fa56491",
+        "CROSSPACK_QUALIFICATION_POLICY_COMPONENT_SHA256": "dbef1b33cd8d6ff1ca2542338c7624d0548685e852119a7fed4ff61429796d4a",
+        "CROSSPACK_SDK_COMPONENT_SHA256": "8053b194011ee2567bf761856ab7920e041c12f3d35a6ea9d2bbd38c5817a583",
+        "NFPM_SOURCE_COMPONENT_SHA256": "384ecd2e12cabedd35ff22c036a75cbd36fefd2499b56f91848a11db7cefeb1e"
+      },
+      "contexts": {
+        "crossforge_debian": "docker-image://docker.io/library/debian:bookworm-slim@sha256:5ae3c39ebd15e229dcedd5cee596b2497182493d41ff162e824ba13fc1b2b867",
+        "crossforge_packaging_sdk": "target:packaging-sdk-dev"
+      },
+      "inherits": [
+        "_packaging_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "packaging-qualified"
+    },
+    "packaging-sdk-dev": {
+      "args": {
+        "CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256": "f2a01266f9e8c3e5dfd36f292fd18f9fe51e816bc33264441367feaad39cabbc",
+        "CROSSPACK_SDK_COMPONENT_SHA256": "8053b194011ee2567bf761856ab7920e041c12f3d35a6ea9d2bbd38c5817a583",
+        "NFPM_BINARY_SHA256": "17133a2467ffb7cec851c2d7bae0c6098d09d7ed7d3d101a9605f6a473323936",
+        "NFPM_SOURCE_COMPONENT_SHA256": "384ecd2e12cabedd35ff22c036a75cbd36fefd2499b56f91848a11db7cefeb1e",
+        "NFPM_VERSION": "2.47.0"
+      },
+      "contexts": {
+        "crossforge_nfpm_tool": "target:nfpm-tool",
+        "crossforge_sdk_base": "target:sdk-phase13-base"
+      },
+      "inherits": [
+        "_packaging_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "packaging-sdk"
     },
     "python-cp310-dev": {
       "args": {

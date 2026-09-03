@@ -20,9 +20,11 @@ build-system-independent DEB/RPM packaging.
 > registry/tool and five generated host/target triplets are installed and
 > qualified offline with locked CMake 4.4.0 and Ninja 1.13.2 host-tool overlays. A real
 > no-download overlay-port contract now covers every static/dynamic triplet;
-> curated zlib/fmt ports pass the same five-triplet gate from an explicit asset
-> closure. TLS, host-generator and large-graph port tiers, packaging, the full
-> GCC/Qt suites and release supply chain remain pending.
+> curated zlib/fmt, TLS, host-generator and large-graph port tiers pass the same
+> five-triplet gate from explicit asset closures. The crosspack Phase 14 gate
+> emits byte-reproducible split DEB/RPM packages for both targets and installs
+> them with pinned real `dpkg` and Rocky `rpm`. Debug-symbol splitting, the
+> single launcher, full GCC/Qt suites and release supply chain remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -485,6 +487,28 @@ executes that host tool, generates C++ from a bound `.proto`, then links and
 runs a Protobuf/Boost.JSON consumer for every triplet. The host install is
 copied only between isolated qualification roots to avoid rebuilding protoc;
 no binary cache or installed port enters the product image.
+
+## Phase 14: build-system-independent DEB/RPM packaging
+
+```console
+$ python3 -m unittest discover -s tests/packaging -p 'test_*.py'
+$ docker buildx bake nfpm-tool
+$ docker buildx bake packaging-sdk-dev
+$ docker buildx bake packaging-qualified
+```
+
+nFPM 2.47.0 is locked by release/tag/commit, binary and source archive hashes,
+the upstream checksum manifest, an archived Sigstore bundle, and the selected
+MIT license. Only the download stage has network access; offline preparation
+revalidates the complete closure and exports a minimal host-tool root.
+
+`crosspack` consumes a strict JSON manifest and a staged filesystem. It rejects
+unowned or multiply owned files, unsafe paths/modes/symlinks, destination-tree
+collisions, wrong-target ELF files, and undeclared component edges. Phase 14
+cross-builds x86_64 and aarch64 probe payloads, emits runtime/development/tools
+DEB and RPM sets twice, proves byte identity, installs all twelve packages into
+isolated roots using real package managers, and rehashes installed payloads.
+No package or installer root enters the SDK image.
 
 ## Product contract
 

@@ -541,6 +541,99 @@ def render_vcpkg_graph(
     }
 
 
+def render_packaging_graph(
+    config,
+    targets,
+    component_arguments,
+    qualification_policy,
+):
+    nfpm = config["nfpm"]
+
+    def digest(component):
+        argument = component_argument_name(component)
+        try:
+            return component_arguments[argument]
+        except KeyError as error:
+            raise ValueError(
+                "missing packaging component digest: %s" % component
+            ) from error
+
+    debian = qualification_policy["deb_test_image"]
+    debian_image = "%s:%s@%s" % (
+        debian["repository"],
+        debian["tag"],
+        debian["amd64_manifest"],
+    )
+    targets["nfpm-tool"] = {
+        "inherits": ["_packaging_common"],
+        "target": "nfpm-tool-export",
+        "args": {
+            "NFPM_BINARY_URL": nfpm["binary"]["url"],
+            "NFPM_SOURCE_URL": nfpm["source"]["archive"]["url"],
+            "NFPM_CHECKSUMS_URL": nfpm["checksums"]["url"],
+            "NFPM_SIGSTORE_URL": nfpm["sigstore"]["url"],
+            "NFPM_SOURCE_COMPONENT_SHA256": digest("sources/nfpm"),
+        },
+        "contexts": {
+            "crossforge_host_runtime": "target:host-runtime-qualified"
+        },
+        "output": ["type=cacheonly"],
+    }
+    targets["packaging-sdk-dev"] = {
+        "inherits": ["_packaging_common"],
+        "target": "packaging-sdk",
+        "args": {
+            "NFPM_VERSION": nfpm["version"],
+            "NFPM_BINARY_SHA256": nfpm["binary"]["extracted_sha256"],
+            "NFPM_SOURCE_COMPONENT_SHA256": digest("sources/nfpm"),
+            "CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256": digest(
+                "implementation/crosspack"
+            ),
+            "CROSSPACK_SDK_COMPONENT_SHA256": digest(
+                "packaging/sdk-build"
+            ),
+        },
+        "contexts": {
+            "crossforge_sdk_base": "target:sdk-phase13-base",
+            "crossforge_nfpm_tool": "target:nfpm-tool",
+        },
+        "output": ["type=cacheonly"],
+    }
+    targets["packaging-qualified"] = {
+        "inherits": ["_packaging_common"],
+        "target": "packaging-qualified",
+        "args": {
+            "NFPM_SOURCE_COMPONENT_SHA256": digest("sources/nfpm"),
+            "CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256": digest(
+                "implementation/crosspack"
+            ),
+            "CROSSPACK_SDK_COMPONENT_SHA256": digest(
+                "packaging/sdk-build"
+            ),
+            "CROSSPACK_QUALIFICATION_POLICY_COMPONENT_SHA256": digest(
+                "implementation/crosspack-qualification"
+            ),
+            "CROSSPACK_QUALIFICATION_COMPONENT_SHA256": digest(
+                "packaging/qualification"
+            ),
+        },
+        "contexts": {
+            "crossforge_packaging_sdk": "target:packaging-sdk-dev",
+            "crossforge_debian": "docker-image://%s" % debian_image,
+        },
+        "output": ["type=cacheonly"],
+    }
+    return {
+        "phase14-source": {
+            "targets": ["host-runtime-qualified", "nfpm-tool"]
+        },
+        "phase14-sdk": {
+            "targets": ["sdk-phase13-base", "nfpm-tool", "packaging-sdk-dev"]
+        },
+        "phase14": {"targets": ["packaging-qualified"]},
+    }
+
+
 def python_row(contract, entry):
     version = entry["version"]
     return {
@@ -1031,6 +1124,12 @@ def render(repository):
         component_arguments,
         component_renderer["VCPKG_CONTRACT_POLICY"],
     )
+    packaging_groups = render_packaging_graph(
+        config,
+        targets,
+        component_arguments,
+        component_renderer["CROSSPACK_QUALIFICATION_POLICY"],
+    )
     python_groups = render_python_graph(config, targets, component_arguments)
     for name, scoped_arguments in scoped_main_component_arguments(
         repository, component_arguments
@@ -1049,6 +1148,7 @@ def render(repository):
             "toolchain-plan": {"targets": plan_names},
             **ninja_groups,
             **vcpkg_groups,
+            **packaging_groups,
             **python_groups,
         },
         "target": targets,

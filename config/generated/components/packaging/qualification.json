@@ -1,0 +1,43 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "packaging/qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "dbef1b33cd8d6ff1ca2542338c7624d0548685e852119a7fed4ff61429796d4a",
+      "component": "implementation/crosspack-qualification"
+    },
+    {
+      "canonical_sha256": "8053b194011ee2567bf761856ab7920e041c12f3d35a6ea9d2bbd38c5817a583",
+      "component": "packaging/sdk-build"
+    },
+    {
+      "canonical_sha256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
+      "component": "toolchain/aarch64-qualification"
+    },
+    {
+      "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
+      "component": "toolchain/x86_64-qualification"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/platforms/build",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/image",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/tool_host",
+      "value": "linux/amd64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

@@ -42,6 +42,7 @@ PHASE9_PYTHON_QUALIFICATION_DIGESTS = {
     "implementation/python-qualification-policy": "72f505ebdc79810a7e74f6f61a85923e608b0abfb641014e4050ebfd6caeb2f0",
     "python/qualification": "7396e38468e853b3d62213907d30ce57d264326052c0ad99cf77c90847d6b587",
 }
+PACKAGING_CONSUMERS = {"packaging/sdk-build", "packaging/qualification"}
 
 
 def component_documents(documents):
@@ -629,6 +630,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                         "vcpkg/upstream-tier1-qualification",
                         "vcpkg/upstream-tier2-qualification",
                         "vcpkg/upstream-tier3-qualification",
+                        "packaging/qualification",
                     },
                 )
             )
@@ -704,6 +706,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "vcpkg/upstream-tier2-qualification",
             "vcpkg/upstream-tier3-qualification",
         }
+        expected.update(PACKAGING_CONSUMERS)
         expected.update(
             "python/%s-aarch64-build" % row for row in self.row_names
         )
@@ -727,6 +730,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "vcpkg/upstream-tier2-qualification",
             "vcpkg/upstream-tier3-qualification",
         }
+        expected.update(PACKAGING_CONSUMERS)
         expected.update(
             "python/%s-x86_64-build" % row for row in self.row_names
         )
@@ -745,6 +749,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
                 "vcpkg/upstream-tier3-qualification",
+                "packaging/qualification",
             },
         )
 
@@ -789,6 +794,8 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
                 "vcpkg/upstream-tier3-qualification",
+                "packaging/sdk-build",
+                "packaging/qualification",
             },
         )
 
@@ -821,6 +828,8 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
                 "vcpkg/upstream-tier3-qualification",
+                "packaging/sdk-build",
+                "packaging/qualification",
             }
         )
         for row in self.row_names:
@@ -857,6 +866,8 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
                 "vcpkg/upstream-tier3-qualification",
+                "packaging/sdk-build",
+                "packaging/qualification",
             },
         )
 
@@ -898,6 +909,8 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
                 "vcpkg/upstream-tier3-qualification",
+                "packaging/sdk-build",
+                "packaging/qualification",
             },
         )
 
@@ -935,6 +948,8 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
                 "vcpkg/upstream-tier3-qualification",
+                "packaging/sdk-build",
+                "packaging/qualification",
             },
         )
 

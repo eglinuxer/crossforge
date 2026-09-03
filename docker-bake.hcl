@@ -38,6 +38,12 @@ target "_host_tools_common" {
   platforms  = ["linux/amd64"]
 }
 
+target "_packaging_common" {
+  context    = "."
+  dockerfile = "docker/packaging.Dockerfile"
+  platforms  = ["linux/amd64"]
+}
+
 group "default" {
   targets = ["validate"]
 }

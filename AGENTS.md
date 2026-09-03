@@ -2,20 +2,21 @@
 
 ## Project Structure & Module Organization
 
-`docs/architecture.md` is canonical. Configuration lives under `config/`; `config/generated/` comes only from `render-release-components.py`. Compatibility policy is in `abi/el8/`, provenance in `evidence/`, third-party notices in `licenses/`, and DNF decisions in `locks/`. Dockerfiles own host tools, toolchains, private zstd, Python rows, and vcpkg. Tools are in `scripts/`, backports in `patches/`, and tests in `tests/`.
+`docs/architecture.md` is canonical. Configuration lives under `config/`; only `render-release-components.py` writes `config/generated/`. ABI policy is in `abi/el8/`, provenance in `evidence/`, licenses in `licenses/`, DNF decisions in `locks/`, scripts in `scripts/`, and tests in `tests/`.
 
 Rust prototype: tag `prototype-rust-2026-08-28`. Do not commit caches.
 
 ## Build, Test, and Development Commands
 
 - `./scripts/validate-release.py` validates release JSON.
-- `./scripts/validate-frozen-abi.py` checks both ABI baselines and evidence; `./scripts/validate-python-runtime-providers.py` checks Python's RPM-owned DSO policy.
+- `./scripts/validate-frozen-abi.py` checks ABI evidence; `./scripts/validate-python-runtime-providers.py` checks Python's RPM-owned DSO policy.
 - `./scripts/validate-rpm-lock.py <lock> --require-lock` validates a content lock.
 - `./scripts/render-release-components.py --check`, `./scripts/render-vcpkg-integration.py --check`, and `./scripts/render-bake.py --check` detect generated-file drift.
 - `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
 - `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked host-runtime-qualified` replays and qualifies all host closures offline.
 - `docker buildx bake cmake-host-tool ninja-host-tool` locks host tools; `docker buildx bake vcpkg-upstream-tier3-qualified` runs all three curated tiers across five triplets offline.
-- `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both real cross slices; aarch64 uses explicit pinned QEMU, never implicit binfmt.
+- `python3 -m unittest discover -s tests/packaging -p 'test_*.py'` checks crosspack; `docker buildx bake packaging-qualified` builds and installs split DEB/RPM sets for both targets.
+- `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both cross slices; aarch64 uses pinned QEMU, never implicit binfmt.
 - `docker buildx bake phase10` requalifies all Python 3.9–3.14 rows for both targets. `python-native-latest` and `python-matrix` select the same six-row contract. Graph existence or a build probe alone is not qualification evidence.
 
 Never publish `sdk-skeleton` or a `-dev` target; only a locked, qualified candidate may receive user-facing tags.

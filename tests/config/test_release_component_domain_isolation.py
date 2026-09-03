@@ -28,7 +28,12 @@ VCPKG_COMPONENTS = {
     "vcpkg/upstream-tier2-qualification",
     "vcpkg/upstream-tier3-qualification",
 }
-PACKAGING_COMPONENTS = {"implementation/crosspack"}
+PACKAGING_COMPONENTS = {
+    "implementation/crosspack",
+    "implementation/crosspack-qualification",
+    "packaging/qualification",
+    "packaging/sdk-build",
+}
 
 
 class ReleaseComponentDomainIsolationTests(unittest.TestCase):

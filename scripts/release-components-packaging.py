@@ -31,6 +31,26 @@ CROSSPACK_POLICY = {
         "elf": "64-bit-little-endian-exact-target",
     },
 }
+CROSSPACK_QUALIFICATION_POLICY = {
+    "schema_version": 1,
+    "targets": ["x86_64", "aarch64"],
+    "formats": ["deb", "rpm"],
+    "installers": {
+        "deb": "dpkg",
+        "rpm": "rpm",
+    },
+    "deb_test_image": {
+        "repository": "docker.io/library/debian",
+        "tag": "bookworm-slim",
+        "amd64_manifest": "sha256:5ae3c39ebd15e229dcedd5cee596b2497182493d41ff162e824ba13fc1b2b867",
+    },
+    "requirements": {
+        "byte_reproducible": True,
+        "exact_metadata": True,
+        "isolated_install_root": True,
+        "installed_payload_hashes": True,
+    },
+}
 
 
 def policy_materials(prefix, value):
@@ -56,10 +76,40 @@ def policy_materials(prefix, value):
 def extend_component_graph(context):
     """Add only the crosspack implementation identity to a prepared core graph."""
     add = context["add"]
+    selector = context["selector"]
     add(
         "implementation/crosspack",
         "build",
         explicit_materials=policy_materials(
             "/@implementation/crosspack/", CROSSPACK_POLICY
+        ),
+    )
+    add(
+        "implementation/crosspack-qualification",
+        "qualification",
+        explicit_materials=policy_materials(
+            "/@implementation/crosspack-qualification/",
+            CROSSPACK_QUALIFICATION_POLICY,
+        ),
+    )
+    add(
+        "packaging/sdk-build",
+        "build",
+        selector(("baseline",), ("platforms",)),
+        (
+            "implementation/crosspack",
+            "sources/nfpm",
+            "vcpkg/sdk-build",
+        ),
+    )
+    add(
+        "packaging/qualification",
+        "qualification",
+        selector(("baseline",), ("platforms",)),
+        (
+            "implementation/crosspack-qualification",
+            "packaging/sdk-build",
+            context["toolchain_qualifications"]["x86_64"],
+            context["toolchain_qualifications"]["aarch64"],
         ),
     )

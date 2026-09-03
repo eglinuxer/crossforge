@@ -1,0 +1,66 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/crosspack-qualification",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/crosspack-qualification/deb_test_image/amd64_manifest",
+      "value": "sha256:5ae3c39ebd15e229dcedd5cee596b2497182493d41ff162e824ba13fc1b2b867"
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/deb_test_image/repository",
+      "value": "docker.io/library/debian"
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/deb_test_image/tag",
+      "value": "bookworm-slim"
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/formats/0",
+      "value": "deb"
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/formats/1",
+      "value": "rpm"
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/installers/deb",
+      "value": "dpkg"
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/installers/rpm",
+      "value": "rpm"
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/requirements/byte_reproducible",
+      "value": true
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/requirements/exact_metadata",
+      "value": true
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/requirements/installed_payload_hashes",
+      "value": true
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/requirements/isolated_install_root",
+      "value": true
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/schema_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/targets/0",
+      "value": "x86_64"
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/targets/1",
+      "value": "aarch64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

@@ -85,6 +85,22 @@
       "value": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/checksums.txt.sigstore.json"
     },
     {
+      "path": "/nfpm/source/archive/sha256",
+      "value": "906b8dde0c5626376779f3ebddea3554b0eb6e1b8450a09bdc746cba92ef5dea"
+    },
+    {
+      "path": "/nfpm/source/archive/sha512",
+      "value": "d5938898d59c3b9907fadb82a43e5dbd0c0954b90a1f8cf216dc39aeab57d69b3880280b3cc3d6fcbc916a7da28576d8bce7813ca00fbf567fe35e84947e4ec0"
+    },
+    {
+      "path": "/nfpm/source/archive/size",
+      "value": 611939
+    },
+    {
+      "path": "/nfpm/source/archive/url",
+      "value": "https://github.com/goreleaser/nfpm/archive/refs/tags/v2.47.0.tar.gz"
+    },
+    {
       "path": "/nfpm/source/commit",
       "value": "40c7c8f7376400e9464d04a2a099045cf5598f8e"
     },

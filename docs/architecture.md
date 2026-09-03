@@ -296,6 +296,18 @@ tree 仅复制到隔离 target scratch root，不启用 binary cache，也不进
 
 固定版本的 nFPM 负责真正的 DEB/RPM 编码、metadata、压缩、scriptlets 和签名接口。Crossforge 不自研包格式，不猜测 SONAME 对应的发行版包名；RPM/DEB 外部依赖必须由下游分别声明。首发不负责 APT/YUM repository 发布。
 
+Phase 14 已固定 nFPM 2.47.0 的 tag/commit、Linux amd64 二进制与源码归档、上游
+checksum manifest、Sigstore bundle 和 MIT 许可。联网 stage 仅下载；禁网 stage 重算
+SHA256/SHA512/大小，验证 checksum 对二进制归档的绑定，并检查 bundle message digest
+及证书中归档的 workflow identity、OIDC issuer、commit 与 tag。该 bundle 仍明确标记
+为 `archived-unverified`，不声称完成 Fulcio/Rekor 信任链验证。
+
+`docker buildx bake packaging-qualified` 为 x86_64/aarch64 分别交叉构建真实 ELF，
+两次生成 runtime/development/tools 的 DEB/RPM 并要求逐字节一致；随后在固定 Debian
+amd64 manifest 中用 `dpkg --root`、在 Rocky 中用 `rpm --root`/`--ignorearch` 安装，
+复核精确版本/架构、symlink 与每个普通文件的 SHA256。packages、安装 root 和下载物
+均不进入 SDK。debug symbol 自动拆分和更深的动态 ELF/ABI 审计仍是本阶段下一切片。
+
 ## 10. 用户接口
 
 唯一 launcher 是一个无网络、无插件系统的轻量 Python CLI：
@@ -380,4 +392,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约与三层 curated ports 已完成；后续实现分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports，以及双格式分包安装门禁已完成；后续补齐 debug symbol/ELF 深审计、单一 launcher、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

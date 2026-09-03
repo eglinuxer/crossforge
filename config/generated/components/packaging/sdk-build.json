@@ -1,0 +1,39 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "packaging/sdk-build",
+  "dependencies": [
+    {
+      "canonical_sha256": "f2a01266f9e8c3e5dfd36f292fd18f9fe51e816bc33264441367feaad39cabbc",
+      "component": "implementation/crosspack"
+    },
+    {
+      "canonical_sha256": "384ecd2e12cabedd35ff22c036a75cbd36fefd2499b56f91848a11db7cefeb1e",
+      "component": "sources/nfpm"
+    },
+    {
+      "canonical_sha256": "d9a2454538d62570ca6b67a19c08452a521bd46f191043f415297df8f5f0011e",
+      "component": "vcpkg/sdk-build"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/platforms/build",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/image",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/tool_host",
+      "value": "linux/amd64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}
