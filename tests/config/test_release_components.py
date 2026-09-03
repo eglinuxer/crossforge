@@ -628,6 +628,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                         "vcpkg/contract-qualification",
                         "vcpkg/upstream-tier1-qualification",
                         "vcpkg/upstream-tier2-qualification",
+                        "vcpkg/upstream-tier3-qualification",
                     },
                 )
             )
@@ -701,6 +702,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "vcpkg/contract-qualification",
             "vcpkg/upstream-tier1-qualification",
             "vcpkg/upstream-tier2-qualification",
+            "vcpkg/upstream-tier3-qualification",
         }
         expected.update(
             "python/%s-aarch64-build" % row for row in self.row_names
@@ -723,6 +725,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "vcpkg/contract-qualification",
             "vcpkg/upstream-tier1-qualification",
             "vcpkg/upstream-tier2-qualification",
+            "vcpkg/upstream-tier3-qualification",
         }
         expected.update(
             "python/%s-x86_64-build" % row for row in self.row_names
@@ -741,6 +744,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
+                "vcpkg/upstream-tier3-qualification",
             },
         )
 
@@ -784,6 +788,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
+                "vcpkg/upstream-tier3-qualification",
                 "future/product",
             },
         )
@@ -816,6 +821,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
+                "vcpkg/upstream-tier3-qualification",
             }
         )
         for row in self.row_names:
@@ -851,6 +857,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
+                "vcpkg/upstream-tier3-qualification",
             },
         )
 
@@ -891,6 +898,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
+                "vcpkg/upstream-tier3-qualification",
             },
         )
 
@@ -927,6 +935,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
+                "vcpkg/upstream-tier3-qualification",
             },
         )
 

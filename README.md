@@ -435,7 +435,7 @@ $ docker buildx bake vcpkg-source
 $ ./scripts/render-vcpkg-integration.py --check
 $ docker buildx bake sdk-phase13-base
 $ docker buildx bake vcpkg-contract-qualified
-$ docker buildx bake vcpkg-upstream-tier2-qualified
+$ docker buildx bake vcpkg-upstream-tier3-qualified
 ```
 
 The host-tool target installs Ninja 1.13.2 at
@@ -478,7 +478,13 @@ consumer natively or through pinned QEMU. Tier 2 additionally builds
 `OpenSSL 3.6.3` and
 `curl 8.21.0#1` with the exact `curl[core,openssl]` feature set. It validates
 static and dynamic crypto/TLS libraries and executes a combined C consumer in
-all five triplets. Protobuf/Boost is the next tier.
+all five triplets. Tier 3 pins protobuf `6.33.4#2`, Boost `1.91.0` and the
+`boost-json` compiled module. Its 23 source/license assets are fetched and
+rehash-verified separately. The gate builds native `protoc 33.4`, audits and
+executes that host tool, generates C++ from a bound `.proto`, then links and
+runs a Protobuf/Boost.JSON consumer for every triplet. The host install is
+copied only between isolated qualification roots to avoid rebuilding protoc;
+no binary cache or installed port enters the product image.
 
 ## Product contract
 

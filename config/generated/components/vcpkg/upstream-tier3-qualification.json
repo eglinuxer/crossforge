@@ -1,0 +1,35 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "vcpkg/upstream-tier3-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "0a93b3ea8179e2b596e0e4eb5d55e0810269f8ac47c2b7322b6fe6451c8e7344",
+      "component": "implementation/vcpkg-upstream-tier3-qualification"
+    },
+    {
+      "canonical_sha256": "4dab9af44a82b75706b6b9ea07bc7e71beba4e187c56687a54fee175e3dfe3b1",
+      "component": "vcpkg/upstream-tier2-qualification"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/platforms/build",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/image",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/platforms/tool_host",
+      "value": "linux/amd64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

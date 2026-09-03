@@ -4,6 +4,27 @@
 import copy
 
 
+def locked_asset(filename, url, sha256, sha512, size):
+    return {
+        "filename": filename,
+        "url": url,
+        "sha256": sha256,
+        "sha512": sha512,
+        "size": size,
+    }
+
+
+def boost_191_asset(repository, sha256, sha512, size):
+    return locked_asset(
+        "boostorg-%s-boost-1.91.0.tar.gz" % repository,
+        "https://github.com/boostorg/%s/archive/boost-1.91.0.tar.gz"
+        % repository,
+        sha256,
+        sha512,
+        size,
+    )
+
+
 CMAKE_HOST_TOOL_POLICY = {
     "schema_version": 1,
     "install_prefix": "/opt/crossforge/host-tools/cmake",
@@ -261,6 +282,190 @@ VCPKG_UPSTREAM_TIER2_POLICY = {
         "crossforge-arm64-el8-dynamic",
     ],
 }
+VCPKG_UPSTREAM_TIER3_POLICY = {
+    "schema_version": 1,
+    "assets": [
+        locked_asset(
+            "abseil-abseil-cpp-20260107.1.tar.gz",
+            "https://github.com/abseil/abseil-cpp/archive/20260107.1.tar.gz",
+            "4314e2a7cbac89cac25a2f2322870f343d81579756ceff7f431803c2c9090195",
+            "f5012885d6b6844a9cf5ed92ad5468b8757db33dfe1364bfb232fff928e06c550c7eb4557f45186a8ac4d18b178df9be267681abab4a6de40823b574afbe9960",
+            2301097,
+        ),
+        locked_asset(
+            "boost-1.91.0-LICENSE_1_0.txt",
+            "https://raw.githubusercontent.com/boostorg/boost/refs/tags/boost-1.91.0/LICENSE_1_0.txt",
+            "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+            "d6078467835dba8932314c1c1e945569a64b065474d7aced27c9a7acc391d52e9f234138ed9f1aa9cd576f25f12f557e0b733c14891d42c16ecdc4a7bd4d60b8",
+            1338,
+        ),
+        boost_191_asset(
+            "assert",
+            "9145fba14048a46c0f65e5b28e68176d568148957ebf9bdf9e82bcc5d5a703a9",
+            "6938da97de7d223c1459c038824148b467a53ce385b29e7f56df7788b5af0bb504598a042f9662d8d4a8337eb71365d47062b078783570a089263ae4b9400c02",
+            21028,
+        ),
+        boost_191_asset(
+            "cmake",
+            "48ef2329ad3dbf720fc4d3b6d4b31f7d8dba49db65f4048889dd613fb8553f19",
+            "ad642f211916c51365fd2ca9bf6c40d940a57390b6da1eb3932cd945aeaa984a42e31a9297ecc0a302ed1c42a48945867ecd3f4a18a327dfe1e1765bfd7dbcb5",
+            41144,
+        ),
+        boost_191_asset(
+            "compat",
+            "df6cf47a7668ac7482c441441c19f70b4c1604b5607673d30eeee8bcd7471610",
+            "46d40355047afcc4f13792658e8804819e930e18bc0b5b1b8beb6ff7b430dc97ff6cfc77c5c46a22b6703da849f0be5e83258433acdc658be30450eacde88812",
+            49504,
+        ),
+        boost_191_asset(
+            "config",
+            "e69618fa862927db69b4dd8e6b070c647a799b892fd0ee141d28db0dab025531",
+            "e2f264e3986000656a1c46930e2ce6a83ab07d09a88c286ce0b2509e56760549a1dcffd6c0f81d2edb019fdb632b7ec0ccaa9948e29d8b4b6f67dfc18e804c11",
+            399041,
+        ),
+        boost_191_asset(
+            "container",
+            "fe5b36cf05b4e719c1b11eddd0d2f9eb06a0e86ae6b3cea4a818991fc7b28faf",
+            "b2979f63e3cb26e1c3b9b95a9ce7b505106ee76cff8af2fbe87df3a372a86215ba3c7bc25b9c885b4a5cf32605231408709a357102aa662522641e051392142c",
+            1456458,
+        ),
+        boost_191_asset(
+            "container_hash",
+            "5ec8bf37a75bef0bbac5f9e6e5f95d22a8e8a0034ce225d40ba701a483b34d27",
+            "abf57f8a1082bad85b5fc1f9afd82eb6bb628b27f6edc985d397222de846dff9876e01097646c6102553bdf3aded4d4c0bedcd84beda95895a506e88230a1bc3",
+            67307,
+        ),
+        boost_191_asset(
+            "core",
+            "fbc69a21a0b3c839a2657ed803f1e7c1e6426d3d6e7c8bddb6b7a498382b5cd1",
+            "30899f6cb4a9ee4de422f6f7308f6fb6f556e8ed512065734551dc46032ae2055a86f0d042c022a531bcd1b6eded7ce37ca29a76934d19bcf6cc5c7f4b4796a4",
+            177226,
+        ),
+        boost_191_asset(
+            "describe",
+            "755e216f0f36379dc87e32ff5ab16d87fa9df4276562f241669924298899fc2b",
+            "28c3be98401b5e4f55fc42485541a9a6abcee9c7eb285384a95cc161c0beef3b1d85945c163ef762bcd50da1a21bf05b3debb3364109c37226eba177f09b9f45",
+            43876,
+        ),
+        boost_191_asset(
+            "endian",
+            "ac00af6dd840cd078bff9c035a258c23931dab1e5e28d2578fec038c07674045",
+            "f9d8a447249c8a426b694798e00a01a79c4a9b9e99c826c2fa70fb92268f70fab71bd74a3a6dbd45230af9544d1ea6570e06a7e0474e29ad639739fa8c14aa57",
+            81922,
+        ),
+        boost_191_asset(
+            "headers",
+            "816820256339b2d789de6c37e5aca905ca1949b37ff7df168206a47fe3a90737",
+            "c5fa2cd72f6e6666b7963b97bc359c75284b8fb540c30f3629a028b85270c9bc66c8a051383964f2bd4c1e005a4691593d15696e7ef39ea87cf6cff9e5691fb2",
+            2023,
+        ),
+        boost_191_asset(
+            "intrusive",
+            "9709c94d0cb96d26c9cb325b842f300c1c067579907d34604d716f86556ae794",
+            "e0addaec63ab6e5712855a29fa77acba68cf4a99067ba3dc1a312788d6dd465adb7aefdb555c65611e970ccb1ef26937f7c0b1f647e139e20c86e0bb005850d5",
+            346472,
+        ),
+        boost_191_asset(
+            "json",
+            "ede116effcaa32e257fb7a34b3dff3127ef811901be20a628ae7e063a5d0dcb5",
+            "851d599532f8cdebec878806b5c2c542cc760f7d3ed221d5e93e82002d732e4c54278d5cd95ce15970b1bd23d13ed828327ad00ae089afba5fcf9b2110ee2d52",
+            4546109,
+        ),
+        boost_191_asset(
+            "move",
+            "9c0c45d240bcdebc0305e19c376746be082614401769366fa99de6968e2522ac",
+            "8d0db64e06529f32114aa6228089baa148e48d37c211334827b2c4d66d34ad839e1652f7b0a667db9885f66bcc739d039c670e3f061a37d8a65bc5dca554d495",
+            135657,
+        ),
+        boost_191_asset(
+            "mp11",
+            "6ab871e0ef397a2e7b0602f13a5f473a7381043c91b57fe907ca4925a6a1ee58",
+            "5951acc5ab2f5661d9ac84654b6ba2761455469c9e2b52236ad4bbd5f1feac7c136fd07144dbf6954143e80b0dc12da09165f31e42107eb682bca4e46bf93225",
+            130942,
+        ),
+        boost_191_asset(
+            "predef",
+            "8b2444f89b34a39745177f3eb6d3753bd4647dfffeb7aecfa32ee9cc1958bb33",
+            "af8636d463a7b63b7953f7874c2ab107e6a7224c285ca23a65ae71671e60f230a410763fbe5927dfe7c87de561387bfb3ffea6202f051ffc4f6a248f1dab0387",
+            109569,
+        ),
+        boost_191_asset(
+            "system",
+            "fa4a255820acad0964ac8f434e741e1970d1be9f819751db9a797a3226644089",
+            "fbaf8dd0fa84531a30d919dcb712b416ad905af366d62f94d2b0eb859a83822ba8e88d30ff3b28b0d87e6c4a7ce5eb5342b36927fc8522b82f5e2088ff045368",
+            104619,
+        ),
+        boost_191_asset(
+            "throw_exception",
+            "bba826d1380ccedbcf0468ae4b74012ac14c3830be30d9174fbaf8583b56ed67",
+            "176b334133df8bc914113eca31c0885a356bf891df9a825705a34b2c29be6a139b43f791d86c734856a6014ed85a723e6e35a24ebed4dfb2724b90e725566a0d",
+            20264,
+        ),
+        boost_191_asset(
+            "variant2",
+            "63a1f8031955871b4bca8f42e81adab5fbcee3fbf8b0ddfd0fb18ccf1cef6650",
+            "8b8348aa3616318afb3d819c839f573e9593e8fb26e8509a54b997c5ca684ed0f62f55baba6770e358c280cac5e565abbcc36fc006eafb518d119952bf8ea7ca",
+            57767,
+        ),
+        boost_191_asset(
+            "winapi",
+            "3a93594a0682e6b82735d0e1ff223320092465c66a11c92f634f7a15c0dfc480",
+            "7cafe517462c1b0018060a5b468917b31e8fccd2643c34ed0a76a4eb7a77ebc6653d325a818756a92d6005fa810dd8d2843014b9b47925948a49bc81258dcfeb",
+            133952,
+        ),
+        locked_asset(
+            "madler-zlib-v1.3.2.tar.gz",
+            "https://github.com/madler/zlib/archive/v1.3.2.tar.gz",
+            "b99a0b86c0ba9360ec7e78c4f1e43b1cbdf1e6936c8fa0f6835c0cd694a495a1",
+            "16fea4df307a68cf0035858abe2fd550250618a97590e202037acd18a666f57afc10f8836cbbd472d54a0e76539d0e558cb26f059d53de52ff90634bbf4f47d4",
+            1566911,
+        ),
+        locked_asset(
+            "protocolbuffers-protobuf-v33.4.tar.gz",
+            "https://github.com/protocolbuffers/protobuf/archive/v33.4.tar.gz",
+            "136a07aad488cc502b11c4416fe4a7df2dfdea1d0833a7a8211000bf952728ba",
+            "540059a93721447cf4723bcca06e91c43a4399cb366c05bf84e9d8e2c439f3107ba17803f9d912549b54c471f2dcc4c9fc834145ec441dff31ca24f9a3543aa9",
+            6889595,
+        ),
+    ],
+    "binary_sources": "clear",
+    "downloads": "forbidden",
+    "files": [
+        {
+            "path": "CMakeLists.txt",
+            "sha256": "2ec079bf6c0d003ec1a7d26a776c99c12dcdfebb8d7c4cf749a55e012fd1092d",
+        },
+        {
+            "path": "consumer.cpp",
+            "sha256": "952a9ae565d32a7c673ff67ab310530436ab79d996f2d1df443be1391b4277c0",
+        },
+        {
+            "path": "manifest/vcpkg.json",
+            "sha256": "8a3073d086e54a7fc80851acd4a3403bd9b7658ceb5545dc8214f187e7a6a5a6",
+        },
+        {
+            "path": "message.proto",
+            "sha256": "cd0dba53727b7cfabe7bd1591b6c45bcdb87dc33599ef064efbc34ddad857012",
+        },
+    ],
+    "ports": [
+        {"name": "boost-json", "port_version": 0, "version": "1.91.0"},
+        {"name": "protobuf", "port_version": 2, "version": "6.33.4"},
+        {"name": "zlib", "port_version": 1, "version": "1.3.2"},
+    ],
+    "required_features": {
+        "boost-json": ["core"],
+        "protobuf": ["core", "zlib"],
+        "zlib": ["core"],
+    },
+    "triplets": [
+        "crossforge-host-x64-el8",
+        "crossforge-x64-el8",
+        "crossforge-x64-el8-dynamic",
+        "crossforge-arm64-el8",
+        "crossforge-arm64-el8-dynamic",
+    ],
+}
 
 
 def leaf_items(value, path=()):
@@ -420,5 +625,22 @@ def extend_component_graph(context):
         (
             "implementation/vcpkg-upstream-tier2-qualification",
             "vcpkg/upstream-tier1-qualification",
+        ),
+    )
+    add(
+        "implementation/vcpkg-upstream-tier3-qualification",
+        "qualification",
+        explicit_materials=policy_materials(
+            "/@implementation/vcpkg-upstream-tier3/",
+            VCPKG_UPSTREAM_TIER3_POLICY,
+        ),
+    )
+    add(
+        "vcpkg/upstream-tier3-qualification",
+        "qualification",
+        selector(("baseline",), ("platforms",)),
+        (
+            "implementation/vcpkg-upstream-tier3-qualification",
+            "vcpkg/upstream-tier2-qualification",
         ),
     )

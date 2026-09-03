@@ -116,6 +116,12 @@
       "scope": "qualification"
     },
     {
+      "canonical_sha256": "0a93b3ea8179e2b596e0e4eb5d55e0810269f8ac47c2b7322b6fe6451c8e7344",
+      "component": "implementation/vcpkg-upstream-tier3-qualification",
+      "path": "config/generated/components/implementation/vcpkg-upstream-tier3-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "be14b05aebc58eeb91642e1f3fb019cba033e4801fe489c727e88c7b6bfa1a93",
       "component": "implementation/zstd-build-policy",
       "path": "config/generated/components/implementation/zstd-build-policy.json",
@@ -401,6 +407,12 @@
       "canonical_sha256": "4dab9af44a82b75706b6b9ea07bc7e71beba4e187c56687a54fee175e3dfe3b1",
       "component": "vcpkg/upstream-tier2-qualification",
       "path": "config/generated/components/vcpkg/upstream-tier2-qualification.json",
+      "scope": "qualification"
+    },
+    {
+      "canonical_sha256": "4a5fbda19924199b68eac20e96198ff07cb97997bf8e15bf2028ca055c3c764c",
+      "component": "vcpkg/upstream-tier3-qualification",
+      "path": "config/generated/components/vcpkg/upstream-tier3-qualification.json",
       "scope": "qualification"
     },
     {

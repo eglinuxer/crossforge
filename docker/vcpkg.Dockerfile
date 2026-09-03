@@ -148,6 +148,34 @@ RUN --network=none /usr/libexec/platform-python \
 FROM scratch AS vcpkg-upstream-tier2-assets-export
 COPY --from=vcpkg-upstream-tier2-assets /work/assets/ /
 
+FROM crossforge_host_runtime AS vcpkg-upstream-tier3-assets-fetch
+ARG VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256
+COPY config/generated/components/implementation/vcpkg-upstream-tier3-qualification.json \
+  /work/config/vcpkg-upstream-tier3-policy.json
+COPY --chmod=0755 scripts/release_component.py \
+  scripts/fetch-vcpkg-assets.py /work/scripts/
+RUN /usr/libexec/platform-python /work/scripts/fetch-vcpkg-assets.py fetch \
+      --component /work/config/vcpkg-upstream-tier3-policy.json \
+      --expected-component \
+        implementation/vcpkg-upstream-tier3-qualification \
+      --component-sha256 \
+        "$VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256" \
+      --output /work/assets
+
+FROM vcpkg-upstream-tier3-assets-fetch AS vcpkg-upstream-tier3-assets
+ARG VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/fetch-vcpkg-assets.py verify \
+      --component /work/config/vcpkg-upstream-tier3-policy.json \
+      --expected-component \
+        implementation/vcpkg-upstream-tier3-qualification \
+      --component-sha256 \
+        "$VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256" \
+      --output /work/assets
+
+FROM scratch AS vcpkg-upstream-tier3-assets-export
+COPY --from=vcpkg-upstream-tier3-assets /work/assets/ /
+
 # Phase 13 integrates only the authenticated registry/tool and generated
 # configuration. Port build trees and installed packages are qualification
 # artifacts and never enter this user-facing base.
@@ -354,6 +382,50 @@ RUN --network=none /usr/libexec/platform-python \
         "$VCPKG_UPSTREAM_TIER2_QUALIFICATION_COMPONENT_SHA256" \
       --output \
         /opt/crossforge/qualification/vcpkg/upstream-tier2.json \
+    && rm -rf /work \
+    && test ! -e /opt/crossforge/vcpkg/root/downloads \
+    && test ! -e /opt/crossforge/vcpkg/root/buildtrees \
+    && test ! -e /opt/crossforge/vcpkg/root/packages \
+    && test ! -e /opt/crossforge/vcpkg/root/installed \
+    && test ! -e /opt/crossforge/vcpkg/root/vcpkg_installed
+WORKDIR /workspace
+
+# Tier 3 exercises a generated-code dependency and a representative compiled
+# Boost library. protobuf must build and execute its host protoc while emitting
+# libraries for each independently selected target triplet.
+FROM crossforge_vcpkg_tier2 AS vcpkg-upstream-tier3-qualified
+ARG VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256
+ARG VCPKG_UPSTREAM_TIER3_QUALIFICATION_COMPONENT_SHA256
+COPY tests/vcpkg/upstream-tier3/ /work/upstream-tier3/
+COPY --from=crossforge_vcpkg_upstream_tier3_assets \
+  / /work/assets/
+COPY --from=crossforge_vcpkg_contract_assets \
+  /patchelf-0.19.0-x86_64.tar.gz /work/patchelf-0.19.0-x86_64.tar.gz
+COPY config/generated/components/implementation/vcpkg-upstream-tier3-qualification.json \
+  /work/config/vcpkg-upstream-tier3-policy.json
+COPY config/generated/components/vcpkg/upstream-tier3-qualification.json \
+  /work/config/vcpkg-upstream-tier3-qualification.json
+COPY --chmod=0755 scripts/release_component.py \
+  scripts/fetch-vcpkg-assets.py scripts/vcpkg_qualification.py \
+  scripts/qualify-vcpkg-upstream.py /work/scripts/
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/qualify-vcpkg-upstream.py \
+      --tier tier3 \
+      --release /opt/crossforge/release.json \
+      --vcpkg-root /opt/crossforge/vcpkg/root \
+      --fixture-root /work/upstream-tier3 \
+      --asset-root /work/assets \
+      --patchelf-archive /work/patchelf-0.19.0-x86_64.tar.gz \
+      --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
+      --policy-component /work/config/vcpkg-upstream-tier3-policy.json \
+      --policy-component-sha256 \
+        "$VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256" \
+      --qualification-component \
+        /work/config/vcpkg-upstream-tier3-qualification.json \
+      --qualification-component-sha256 \
+        "$VCPKG_UPSTREAM_TIER3_QUALIFICATION_COMPONENT_SHA256" \
+      --output \
+        /opt/crossforge/qualification/vcpkg/upstream-tier3.json \
     && rm -rf /work \
     && test ! -e /opt/crossforge/vcpkg/root/downloads \
     && test ! -e /opt/crossforge/vcpkg/root/buildtrees \

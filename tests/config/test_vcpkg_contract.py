@@ -158,7 +158,7 @@ class VcpkgContractTests(unittest.TestCase):
         workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("vcpkg-upstream-tier2-qualified", workflow)
+        self.assertIn("vcpkg-upstream-tier3-qualified", workflow)
         self.assertIn("phase13-contract", workflow)
 
     def test_qualifier_remains_python36_syntax_compatible(self):
@@ -193,6 +193,59 @@ class VcpkgContractTests(unittest.TestCase):
                     [command, "--x-buildtrees-root=" + str(buildtrees)]
                 )
             self.assertIn("important failure", str(context.exception))
+
+    def test_isolated_install_can_reuse_only_an_in_work_installed_seed(self):
+        function = COMMON["isolated_install"]
+        original_run = function.__globals__["run"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            work = root / "work"
+            seed = work / "seed"
+            (seed / "vcpkg").mkdir(parents=True)
+            (seed / "vcpkg/status").write_text("seed\n", encoding="utf-8")
+            manifest = root / "manifest"
+            manifest.mkdir()
+            vcpkg_root = root / "vcpkg"
+            vcpkg_root.mkdir()
+            (vcpkg_root / "vcpkg").write_text("", encoding="utf-8")
+            asset = root / "asset.tar.gz"
+            asset.write_bytes(b"asset")
+            calls = []
+
+            def fake_run(arguments, cwd=None, env=None):
+                calls.append(arguments)
+                return "", ""
+
+            function.__globals__["run"] = fake_run
+            try:
+                roots = function(
+                    vcpkg_root,
+                    manifest,
+                    "test-triplet",
+                    (asset,),
+                    work,
+                    seed_installed=seed,
+                )
+                outside = root / "outside"
+                outside.mkdir()
+                with self.assertRaises(COMMON["QualificationError"]):
+                    function(
+                        vcpkg_root,
+                        manifest,
+                        "unsafe-triplet",
+                        (asset,),
+                        work,
+                        seed_installed=outside,
+                    )
+            finally:
+                function.__globals__["run"] = original_run
+            self.assertEqual(
+                (roots["installed"] / "vcpkg/status").read_text(
+                    encoding="utf-8"
+                ),
+                "seed\n",
+            )
+            self.assertIn("--no-downloads", calls[0])
 
     def test_shared_library_accepts_only_the_relocatable_vcpkg_runpath(self):
         dynamic = (

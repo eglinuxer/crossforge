@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package crossforge.tier3;
+
+message Payload {
+  string text = 1;
+  uint32 value = 2;
+}

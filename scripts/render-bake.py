@@ -385,6 +385,19 @@ def render_vcpkg_graph(
         },
         "output": ["type=cacheonly"],
     }
+    targets["vcpkg-upstream-tier3-assets"] = {
+        "inherits": ["_vcpkg_common"],
+        "target": "vcpkg-upstream-tier3-assets-export",
+        "args": {
+            "VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256": digest(
+                "implementation/vcpkg-upstream-tier3-qualification"
+            ),
+        },
+        "contexts": {
+            "crossforge_host_runtime": "target:host-runtime-qualified"
+        },
+        "output": ["type=cacheonly"],
+    }
 
     targets["vcpkg-source"] = {
         "inherits": ["_vcpkg_common"],
@@ -483,6 +496,26 @@ def render_vcpkg_graph(
         },
         "output": ["type=cacheonly"],
     }
+    targets["vcpkg-upstream-tier3-qualified"] = {
+        "inherits": ["_vcpkg_common"],
+        "target": "vcpkg-upstream-tier3-qualified",
+        "args": {
+            "VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256": digest(
+                "implementation/vcpkg-upstream-tier3-qualification"
+            ),
+            "VCPKG_UPSTREAM_TIER3_QUALIFICATION_COMPONENT_SHA256": digest(
+                "vcpkg/upstream-tier3-qualification"
+            ),
+        },
+        "contexts": {
+            "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
+            "crossforge_vcpkg_tier2": "target:vcpkg-upstream-tier2-qualified",
+            "crossforge_vcpkg_upstream_tier3_assets": (
+                "target:vcpkg-upstream-tier3-assets"
+            ),
+        },
+        "output": ["type=cacheonly"],
+    }
     return {
         "phase13-source": {
             "targets": [
@@ -503,7 +536,7 @@ def render_vcpkg_graph(
             "targets": ["vcpkg-contract-qualified"]
         },
         "phase13-ports": {
-            "targets": ["vcpkg-upstream-tier2-qualified"]
+            "targets": ["vcpkg-upstream-tier3-qualified"]
         },
     }
 

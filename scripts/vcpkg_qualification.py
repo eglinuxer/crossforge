@@ -169,6 +169,7 @@ def isolated_install(
     asset_paths,
     work,
     overlay_ports=None,
+    seed_installed=None,
 ):
     triplet_work = Path(work) / triplet
     roots = {
@@ -181,8 +182,22 @@ def isolated_install(
             "cache",
         )
     }
-    for path in roots.values():
-        path.mkdir(parents=True, exist_ok=True)
+    for name, path in roots.items():
+        if name != "installed" or seed_installed is None:
+            path.mkdir(parents=True, exist_ok=True)
+    if seed_installed is not None:
+        seed_installed = Path(seed_installed)
+        require(
+            seed_installed.is_dir() and not seed_installed.is_symlink(),
+            "vcpkg installed seed is unsafe",
+        )
+        try:
+            seed_installed.resolve().relative_to(Path(work).resolve())
+        except ValueError:
+            raise QualificationError("vcpkg installed seed escapes qualification work")
+        shutil.copytree(
+            str(seed_installed), str(roots["installed"]), symlinks=True
+        )
     (roots["cache"] / "home").mkdir()
     (roots["cache"] / "xdg").mkdir()
     names = []

@@ -7,6 +7,7 @@ import json
 import os
 import re
 import runpy
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -40,6 +41,11 @@ TIER1_PORTS = (
 TIER2_PORTS = (
     {"name": "curl", "port_version": 1, "version": "8.21.0"},
     {"name": "openssl", "port_version": 0, "version": "3.6.3"},
+    {"name": "zlib", "port_version": 1, "version": "1.3.2"},
+)
+TIER3_PORTS = (
+    {"name": "boost-json", "port_version": 0, "version": "1.91.0"},
+    {"name": "protobuf", "port_version": 2, "version": "6.33.4"},
     {"name": "zlib", "port_version": 1, "version": "1.3.2"},
 )
 TIER_PROFILES = {
@@ -91,6 +97,27 @@ TIER_PROFILES = {
             "-pthread",
         ),
         "consumer_stdout": "crossforge-vcpkg-tier2:42\n",
+    },
+    "tier3": {
+        "policy_component": "implementation/vcpkg-upstream-tier3-qualification",
+        "qualification_component": "vcpkg/upstream-tier3-qualification",
+        "prerequisite_component": "vcpkg/upstream-tier2-qualification",
+        "prerequisite_report": (
+            "/opt/crossforge/qualification/vcpkg/upstream-tier2.json"
+        ),
+        "ports": TIER3_PORTS,
+        "required_features": {
+            "boost-json": ("core",),
+            "protobuf": ("core", "zlib"),
+            "zlib": ("core",),
+        },
+        "libraries": (
+            ("boost-json", "libboost_json"),
+            ("protobuf", "libprotobuf"),
+            ("zlib", "libz"),
+        ),
+        "consumer_language": "cmake",
+        "consumer_stdout": '{"text":"crossforge-vcpkg-tier3","value":42}\n',
     },
 }
 POLICY_COMPONENT = TIER_PROFILES["tier1"]["policy_component"]
@@ -271,10 +298,16 @@ def parse_status(path):
     records = []
     for paragraph in re.split(r"\n\s*\n", content.strip()):
         fields = {}
+        previous = None
         for line in paragraph.splitlines():
+            if line.startswith((" ", "\t")):
+                require(previous is not None, "orphan vcpkg status continuation")
+                fields[previous] += "\n" + line[1:]
+                continue
             name, separator, value = line.partition(": ")
             require(separator and name not in fields, "invalid vcpkg status record")
             fields[name] = value
+            previous = name
         if fields:
             records.append(fields)
     return records
@@ -404,6 +437,151 @@ def build_consumer(profile, gate, source, include, library, work, qemu, release)
     }
 
 
+def qualify_host_protoc(installed):
+    host_root = installed / HOST_TRIPLET
+    path = host_root / "tools/protobuf/protoc"
+    require(path.exists(), "host protoc is missing")
+    resolved = path.resolve()
+    try:
+        resolved.relative_to((host_root / "tools/protobuf").resolve())
+    except ValueError:
+        raise QualificationError("host protoc symlink escapes its tool root")
+    require(resolved.is_file(), "host protoc target is missing")
+    if path.is_symlink():
+        require(
+            not Path(os.readlink(str(path))).is_absolute(),
+            "host protoc uses an absolute symlink",
+        )
+    readelf = profile_tools(TRIPLETS[HOST_TRIPLET])[2]
+    verify_machine(readelf, resolved, TRIPLETS[HOST_TRIPLET]["machine"])
+    dynamic, _stderr = run([readelf, "-d", resolved])
+    tags = re.findall(
+        r"\((RPATH|RUNPATH)\).*Library (?:rpath|runpath): \[([^]]*)\]",
+        dynamic,
+    )
+    require(
+        "TEXTREL" not in dynamic
+        and tags
+        == [("RUNPATH", "$ORIGIN:$ORIGIN/../../lib:$ORIGIN/../lib")],
+        "host protoc dynamic policy differs: %r" % tags,
+    )
+    stdout, _stderr = run([path, "--version"])
+    require(stdout == "libprotoc 33.4\n", "host protoc version differs")
+    return {
+        "path": path.relative_to(host_root).as_posix(),
+        "sha256": sha256_file(resolved),
+        "stdout_sha256": hashlib.sha256(stdout.encode("utf-8")).hexdigest(),
+        "runpath": tags[0][1],
+    }
+
+
+def build_generated_consumer(
+    profile,
+    gate,
+    fixture_root,
+    installed,
+    triplet,
+    work,
+    qemu,
+    release,
+):
+    source = work / "source"
+    source.mkdir()
+    for name in ("CMakeLists.txt", "consumer.cpp", "message.proto"):
+        shutil.copy2(str(fixture_root / name), str(source / name))
+    generated = source / "generated"
+    generated.mkdir()
+    host_root = installed / HOST_TRIPLET
+    protoc = host_root / "tools/protobuf/protoc"
+    run(
+        [
+            protoc,
+            "--cpp_out=" + str(generated),
+            "--proto_path=" + str(source),
+            source / "message.proto",
+        ]
+    )
+    generated_files = {
+        name: sha256_file(generated / name)
+        for name in ("message.pb.cc", "message.pb.h")
+    }
+    build = work / "build"
+    cmake = Path("/opt/crossforge/host-tools/cmake/4.4.0/bin/cmake")
+    ninja = Path("/opt/crossforge/host-tools/ninja/1.13.2/bin/ninja")
+    if triplet == HOST_TRIPLET:
+        chainload = Path("/opt/crossforge/cmake/host-gts15.cmake")
+    else:
+        chainload = Path("/opt/crossforge/cmake") / (profile["triple"] + ".cmake")
+    run(
+        [
+            cmake,
+            "-S",
+            source,
+            "-B",
+            build,
+            "-G",
+            "Ninja",
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_SKIP_RPATH=ON",
+            "-DCMAKE_MAKE_PROGRAM=" + str(ninja),
+            "-DCMAKE_TOOLCHAIN_FILE=/opt/crossforge/vcpkg/root/scripts/buildsystems/vcpkg.cmake",
+            "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=" + str(chainload),
+            "-DVCPKG_TARGET_TRIPLET=" + triplet,
+            "-DVCPKG_HOST_TRIPLET=" + HOST_TRIPLET,
+            "-DVCPKG_INSTALLED_DIR=" + str(installed),
+            "-DVCPKG_MANIFEST_INSTALL=OFF",
+        ]
+    )
+    run([cmake, "--build", build, "--parallel", "4"])
+    executable = build / "crossforge-vcpkg-tier3"
+    _cc, _cxx, readelf, sysroot = profile_tools(profile)
+    verify_machine(readelf, executable, profile["machine"])
+    headers, _stderr = run([readelf, "-l", executable])
+    dynamic, _stderr = run([readelf, "-d", executable])
+    require(
+        "[Requesting program interpreter: %s]" % profile["interpreter"] in headers
+        and all(tag not in dynamic for tag in ("RPATH", "RUNPATH", "TEXTREL")),
+        "generated consumer ELF policy differs",
+    )
+    target_root = installed / triplet
+    environment = dict(os.environ)
+    if profile["linkage"] == "dynamic":
+        environment["LD_LIBRARY_PATH"] = str(target_root / "lib")
+    if profile["arch"] == "aarch64":
+        executor = release["qemu"]["executor"]
+        command = [
+            qemu,
+            "-cpu",
+            executor["cpu"],
+            "-r",
+            executor["uname_release"],
+            "-L",
+            sysroot,
+        ]
+        if profile["linkage"] == "dynamic":
+            command.extend(
+                ["-E", "LD_LIBRARY_PATH=" + str(target_root / "lib")]
+            )
+        command.append(executable)
+        stdout, _stderr = run(command)
+    else:
+        stdout, _stderr = run([executable], env=environment)
+    require(stdout == gate["consumer_stdout"], "generated consumer output differs")
+    cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
+    make_programs = re.findall(
+        r"^CMAKE_MAKE_PROGRAM:[^=]+=(.+)$", cache, re.MULTILINE
+    )
+    require(
+        make_programs == [str(ninja)],
+        "generated consumer did not use locked Ninja",
+    )
+    return {
+        "sha256": sha256_file(executable),
+        "stdout_sha256": hashlib.sha256(stdout.encode("utf-8")).hexdigest(),
+        "generated": generated_files,
+    }
+
+
 def qualify_triplet(
     vcpkg_root,
     fixture_root,
@@ -416,12 +594,16 @@ def qualify_triplet(
     release,
     work,
 ):
+    seed_installed = None
+    if gate["consumer_language"] == "cmake" and triplet != HOST_TRIPLET:
+        seed_installed = Path(work) / HOST_TRIPLET / "installed"
     roots = isolated_install(
         vcpkg_root,
         fixture_root / "manifest",
         triplet,
         tuple(asset_paths) + (patchelf_archive,),
         work,
+        seed_installed=seed_installed,
     )
     installed = roots["installed"]
     target_root = installed / triplet
@@ -454,17 +636,31 @@ def qualify_triplet(
         }
     consumer_work = Path(work) / triplet / "consumer"
     consumer_work.mkdir()
-    consumer = build_consumer(
-        profile,
-        gate,
-        fixture_root / gate["consumer_source"],
-        target_root / "include",
-        target_root / "lib",
-        consumer_work,
-        qemu,
-        release,
-    )
-    return {
+    host_tool = None
+    if gate["consumer_language"] == "cmake":
+        host_tool = qualify_host_protoc(installed)
+        consumer = build_generated_consumer(
+            profile,
+            gate,
+            fixture_root,
+            installed,
+            triplet,
+            consumer_work,
+            qemu,
+            release,
+        )
+    else:
+        consumer = build_consumer(
+            profile,
+            gate,
+            fixture_root / gate["consumer_source"],
+            target_root / "include",
+            target_root / "lib",
+            consumer_work,
+            qemu,
+            release,
+        )
+    result = {
         "triplet": triplet,
         "cross_compiling": profile["cross"],
         "linkage": profile["linkage"],
@@ -472,6 +668,9 @@ def qualify_triplet(
         "libraries": libraries,
         "consumer": consumer,
     }
+    if host_tool is not None:
+        result["host_tool"] = host_tool
+    return result
 
 
 def qualify(arguments):

@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约，以及 zlib/fmt Tier 1 与 OpenSSL/curl Tier 2 已完成，protobuf/Boost、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约，以及 zlib/fmt、OpenSSL/curl、protobuf/Boost.JSON 三层 curated-port 门禁已完成，分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -276,8 +276,11 @@ curated-port Tier 1 固定 `zlib 1.3.2#1` 与 `fmt 12.2.0#1`。网络 stage 只�
 install，验证版本、静态/动态布局、ELF machine 与精确 `$ORIGIN` RUNPATH，并原生或
 通过固定 QEMU 执行组合 consumer。Tier 2 固定 `OpenSSL 3.6.3`、`curl 8.21.0#1`
 与 `curl[core,openssl]` feature 集，使用同样的离线五 triplet 门禁验证 crypto/TLS
-静态与动态库并执行组合 C consumer。下一层为需要 host protoc 与大依赖图的
-protobuf/Boost。
+静态与动态库并执行组合 C consumer。Tier 3 固定 protobuf `6.33.4#2`、Boost
+`1.91.0` 与 compiled `boost-json`，其 23 个源码/许可证资产均绑定 URL、SHA256、
+SHA512 与大小。门禁先构建、审计并执行 amd64 `protoc 33.4`，再由它生成 C++，
+为全部 triplet 链接并执行 Protobuf/Boost.JSON consumer；同次运行的 host installed
+tree 仅复制到隔离 target scratch root，不启用 binary cache，也不进入产品镜像。
 
 ## 9. 构建系统无关的分包
 
@@ -377,4 +380,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、zlib/fmt Tier 1 与 OpenSSL/curl Tier 2 已完成；后续实现 protobuf/Boost、分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约与三层 curated ports 已完成；后续实现分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

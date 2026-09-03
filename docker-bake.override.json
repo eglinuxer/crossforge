@@ -52,7 +52,7 @@
     },
     "phase13-ports": {
       "targets": [
-        "vcpkg-upstream-tier2-qualified"
+        "vcpkg-upstream-tier3-qualified"
       ]
     },
     "phase13-source": {
@@ -2742,6 +2742,39 @@
         "type=cacheonly"
       ],
       "target": "vcpkg-upstream-tier2-qualified"
+    },
+    "vcpkg-upstream-tier3-assets": {
+      "args": {
+        "VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256": "0a93b3ea8179e2b596e0e4eb5d55e0810269f8ac47c2b7322b6fe6451c8e7344"
+      },
+      "contexts": {
+        "crossforge_host_runtime": "target:host-runtime-qualified"
+      },
+      "inherits": [
+        "_vcpkg_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "vcpkg-upstream-tier3-assets-export"
+    },
+    "vcpkg-upstream-tier3-qualified": {
+      "args": {
+        "VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256": "0a93b3ea8179e2b596e0e4eb5d55e0810269f8ac47c2b7322b6fe6451c8e7344",
+        "VCPKG_UPSTREAM_TIER3_QUALIFICATION_COMPONENT_SHA256": "4a5fbda19924199b68eac20e96198ff07cb97997bf8e15bf2028ca055c3c764c"
+      },
+      "contexts": {
+        "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
+        "crossforge_vcpkg_tier2": "target:vcpkg-upstream-tier2-qualified",
+        "crossforge_vcpkg_upstream_tier3_assets": "target:vcpkg-upstream-tier3-assets"
+      },
+      "inherits": [
+        "_vcpkg_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "vcpkg-upstream-tier3-qualified"
     },
     "zstd-aarch64-build": {
       "args": {

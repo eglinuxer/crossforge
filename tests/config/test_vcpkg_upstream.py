@@ -55,6 +55,20 @@ class VcpkgUpstreamTests(unittest.TestCase):
                 "upstream-tier2-qualification.json"
             ).read_text(encoding="utf-8")
         )
+        cls.tier3_policy = json.loads(
+            (
+                REPOSITORY
+                / "config/generated/components/implementation/"
+                "vcpkg-upstream-tier3-qualification.json"
+            ).read_text(encoding="utf-8")
+        )
+        cls.tier3_qualification = json.loads(
+            (
+                REPOSITORY
+                / "config/generated/components/vcpkg/"
+                "upstream-tier3-qualification.json"
+            ).read_text(encoding="utf-8")
+        )
 
     def test_policy_binds_exact_ports_assets_triplets_and_fixtures(self):
         context = QUALIFIER["policy_context"](self.policy, FIXTURE_ROOT)
@@ -170,6 +184,63 @@ class VcpkgUpstreamTests(unittest.TestCase):
             )
             self.assertEqual(versions, {"curl": "8.21.0#1"})
 
+    def test_status_parser_accepts_only_attached_control_file_continuations(self):
+        with tempfile.TemporaryDirectory() as directory:
+            status = Path(directory) / "status"
+            status.write_text(
+                "Package: boost-json\n"
+                "Description: first line\n"
+                " second line\n"
+                "Status: install ok installed\n",
+                encoding="utf-8",
+            )
+            records = QUALIFIER["parse_status"](status)
+            self.assertEqual(
+                records[0]["Description"], "first line\nsecond line"
+            )
+            status.write_text(" orphan\n", encoding="utf-8")
+            with self.assertRaises(QUALIFIER["QualificationError"]):
+                QUALIFIER["parse_status"](status)
+
+    def test_tier3_binds_generated_code_and_compiled_boost_contract(self):
+        context = QUALIFIER["policy_context"](
+            self.tier3_policy,
+            REPOSITORY / "tests/vcpkg/upstream-tier3",
+            "tier3",
+        )
+        self.assertEqual(tuple(context["ports"]), QUALIFIER["TIER3_PORTS"])
+        assets = [asset["filename"] for asset in context["assets"]]
+        self.assertEqual(len(assets), 23)
+        self.assertEqual(assets, sorted(assets))
+        self.assertEqual(assets[0], "abseil-abseil-cpp-20260107.1.tar.gz")
+        self.assertEqual(
+            assets[-1], "protocolbuffers-protobuf-v33.4.tar.gz"
+        )
+        self.assertEqual(
+            {record["path"] for record in context["files"]},
+            {
+                "CMakeLists.txt",
+                "consumer.cpp",
+                "manifest/vcpkg.json",
+                "message.proto",
+            },
+        )
+        self.assertEqual(
+            {
+                item["component"]
+                for item in self.tier3_qualification["dependencies"]
+            },
+            {
+                "implementation/vcpkg-upstream-tier3-qualification",
+                "vcpkg/upstream-tier2-qualification",
+            },
+        )
+        profile = QUALIFIER["TIER_PROFILES"]["tier3"]
+        self.assertEqual(profile["consumer_language"], "cmake")
+        self.assertEqual(
+            profile["required_features"]["protobuf"], ("core", "zlib")
+        )
+
     def test_installed_port_inventory_rejects_duplicate_features(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -220,7 +291,7 @@ class VcpkgUpstreamTests(unittest.TestCase):
         )
         self.assertEqual(
             rendered["group"]["phase13-ports"]["targets"],
-            ["vcpkg-upstream-tier2-qualified"],
+            ["vcpkg-upstream-tier3-qualified"],
         )
         tier2 = rendered["target"]["vcpkg-upstream-tier2-qualified"]
         self.assertEqual(
@@ -230,6 +301,17 @@ class VcpkgUpstreamTests(unittest.TestCase):
                 "crossforge_vcpkg_tier1": "target:vcpkg-upstream-tier1-qualified",
                 "crossforge_vcpkg_upstream_tier2_assets": (
                     "target:vcpkg-upstream-tier2-assets"
+                ),
+            },
+        )
+        tier3 = rendered["target"]["vcpkg-upstream-tier3-qualified"]
+        self.assertEqual(
+            tier3["contexts"],
+            {
+                "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
+                "crossforge_vcpkg_tier2": "target:vcpkg-upstream-tier2-qualified",
+                "crossforge_vcpkg_upstream_tier3_assets": (
+                    "target:vcpkg-upstream-tier3-assets"
                 ),
             },
         )
@@ -257,11 +339,12 @@ class VcpkgUpstreamTests(unittest.TestCase):
         self.assertIn("qualify-vcpkg-upstream.py", block)
         self.assertIn("--tier tier1", block)
         self.assertIn("--tier tier2", block)
+        self.assertIn("--tier tier3", block)
         self.assertIn("--expected-component", dockerfile)
         workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("vcpkg-upstream-tier2-qualified", workflow)
+        self.assertIn("vcpkg-upstream-tier3-qualified", workflow)
         self.assertIn("phase13-ports", workflow)
 
     def test_new_scripts_remain_python36_syntax_compatible(self):
