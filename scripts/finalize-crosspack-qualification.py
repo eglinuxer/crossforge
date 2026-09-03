@@ -69,6 +69,12 @@ def finalize(arguments):
         "build",
         arguments.implementation_component_sha256,
     )
+    launcher = load_component(
+        arguments.launcher_component,
+        "implementation/launcher",
+        "build",
+        arguments.launcher_component_sha256,
+    )
     sdk = load_component(
         arguments.sdk_component,
         "packaging/sdk-build",
@@ -90,9 +96,16 @@ def finalize(arguments):
     sdk_dependencies = dependency_map(sdk)
     require(
         set(sdk_dependencies)
-        == {"implementation/crosspack", "sources/nfpm", "vcpkg/sdk-build"}
+        == {
+            "implementation/crosspack",
+            "implementation/launcher",
+            "sources/nfpm",
+            "vcpkg/sdk-build",
+        }
         and sdk_dependencies["implementation/crosspack"]
         == arguments.implementation_component_sha256
+        and sdk_dependencies["implementation/launcher"]
+        == arguments.launcher_component_sha256
         and sdk_dependencies["sources/nfpm"]
         == arguments.source_component_sha256,
         "crosspack SDK dependency closure differs",
@@ -165,6 +178,7 @@ def finalize(arguments):
     for name, document in (
         ("source", source),
         ("implementation", implementation),
+        ("launcher", launcher),
         ("sdk", sdk),
         ("policy", policy),
         ("qualification", qualification),
@@ -188,6 +202,7 @@ def main():
     for role in (
         "source",
         "implementation",
+        "launcher",
         "sdk",
         "policy",
         "qualification",

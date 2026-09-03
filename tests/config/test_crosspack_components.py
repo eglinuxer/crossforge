@@ -35,6 +35,10 @@ class CrosspackComponentTests(unittest.TestCase):
         cls.components = RENDERER["render_component_documents"](
             cls.release
         )
+        cls.digests = {
+            name: RENDERER["canonical_sha256"](document)
+            for name, document in cls.components.items()
+        }
 
     def test_nfpm_and_crosspack_have_separate_build_identities(self):
         nfpm = self.components["sources/nfpm"]
@@ -57,6 +61,7 @@ class CrosspackComponentTests(unittest.TestCase):
             {item["component"] for item in sdk["dependencies"]},
             {
                 "implementation/crosspack",
+                "implementation/launcher",
                 "sources/nfpm",
                 "vcpkg/sdk-build",
             },
@@ -105,6 +110,13 @@ class CrosspackComponentTests(unittest.TestCase):
             qualification["deb_test_image"]["amd64_manifest"],
             "sha256:5ae3c39ebd15e229dcedd5cee596b2497182493d41ff162e824ba13fc1b2b867",
         )
+        launcher = RENDERER["CROSSFORGE_LAUNCHER_POLICY"]
+        self.assertEqual(
+            launcher["commands"], ["info", "package", "run", "shell"]
+        )
+        self.assertEqual(
+            launcher["target_selection"], "explicit-no-project-guessing"
+        )
 
     def test_nfpm_source_archive_and_component_relationships_are_exact(self):
         nfpm = self.release["nfpm"]
@@ -143,6 +155,12 @@ class CrosspackComponentTests(unittest.TestCase):
             },
         )
         self.assertEqual(
+            targets["packaging-sdk-dev"]["args"][
+                "CROSSFORGE_LAUNCHER_COMPONENT_SHA256"
+            ],
+            self.digests["implementation/launcher"],
+        )
+        self.assertEqual(
             targets["packaging-qualified"]["contexts"]["crossforge_debian"],
             "docker-image://docker.io/library/debian:bookworm-slim@sha256:5ae3c39ebd15e229dcedd5cee596b2497182493d41ff162e824ba13fc1b2b867",
         )
@@ -169,8 +187,30 @@ class CrosspackComponentTests(unittest.TestCase):
             self.assertIn("RUN --network=none", block)
             self.assertNotIn("curl ", block)
         self.assertIn("FROM scratch AS nfpm-tool-export", dockerfile)
+        self.assertIn(
+            "COPY --chmod=0755 tools/crossforge/launcher /usr/local/bin/crossforge",
+            dockerfile,
+        )
+        self.assertIn("crossforge info --json", dockerfile)
+        self.assertNotIn("PYTHONPATH=/opt/crossforge/lib", dockerfile)
         self.assertNotIn("dnf install", dockerfile)
         self.assertNotIn("apt-get", dockerfile)
+
+    def test_meson_cross_files_are_explicit_and_never_enable_execution(self):
+        for arch, triple in (
+            ("x86_64", "x86_64-unknown-linux-gnu"),
+            ("aarch64", "aarch64-unknown-linux-gnu"),
+        ):
+            content = (
+                REPOSITORY / "integration/meson" / (triple + ".ini")
+            ).read_text(encoding="utf-8")
+            with self.subTest(arch=arch):
+                self.assertIn("needs_exe_wrapper = true", content)
+                self.assertIn(
+                    "sys_root = '/opt/crossforge/sysroots/el8/%s'" % arch,
+                    content,
+                )
+                self.assertNotIn("exe_wrapper", content.split("[properties]", 1)[0])
 
     def test_packaging_scripts_remain_python36_and_posix_shell_compatible(self):
         import ast

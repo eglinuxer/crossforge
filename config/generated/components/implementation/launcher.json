@@ -1,0 +1,86 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/launcher",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/launcher/commands/0",
+      "value": "info"
+    },
+    {
+      "path": "/@implementation/launcher/commands/1",
+      "value": "package"
+    },
+    {
+      "path": "/@implementation/launcher/commands/2",
+      "value": "run"
+    },
+    {
+      "path": "/@implementation/launcher/commands/3",
+      "value": "shell"
+    },
+    {
+      "path": "/@implementation/launcher/default_environment",
+      "value": "native-gts15-host"
+    },
+    {
+      "path": "/@implementation/launcher/package_backend",
+      "value": "internal-locked-nfpm"
+    },
+    {
+      "path": "/@implementation/launcher/python_minors/0",
+      "value": "3.9"
+    },
+    {
+      "path": "/@implementation/launcher/python_minors/1",
+      "value": "3.10"
+    },
+    {
+      "path": "/@implementation/launcher/python_minors/2",
+      "value": "3.11"
+    },
+    {
+      "path": "/@implementation/launcher/python_minors/3",
+      "value": "3.12"
+    },
+    {
+      "path": "/@implementation/launcher/python_minors/4",
+      "value": "3.13"
+    },
+    {
+      "path": "/@implementation/launcher/python_minors/5",
+      "value": "3.14"
+    },
+    {
+      "path": "/@implementation/launcher/schema_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/launcher/subprocess_environment",
+      "value": "copy-and-overlay"
+    },
+    {
+      "path": "/@implementation/launcher/target_selection",
+      "value": "explicit-no-project-guessing"
+    },
+    {
+      "path": "/@implementation/launcher/targets/0",
+      "value": "x86_64"
+    },
+    {
+      "path": "/@implementation/launcher/targets/1",
+      "value": "aarch64"
+    },
+    {
+      "path": "/@implementation/launcher/vcpkg_linkage/0",
+      "value": "static"
+    },
+    {
+      "path": "/@implementation/launcher/vcpkg_linkage/1",
+      "value": "dynamic"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

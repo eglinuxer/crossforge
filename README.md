@@ -23,8 +23,9 @@ build-system-independent DEB/RPM packaging.
 > curated zlib/fmt, TLS, host-generator and large-graph port tiers pass the same
 > five-triplet gate from explicit asset closures. The crosspack Phase 14 gate
 > emits byte-reproducible split DEB/RPM packages for both targets and installs
-> them with pinned real `dpkg` and Rocky `rpm`. Debug-symbol splitting, the
-> single launcher, full GCC/Qt suites and release supply chain remain pending.
+> them with pinned real `dpkg` and Rocky `rpm`. The single `crossforge`
+> launcher is installed and qualified. Debug-symbol splitting, full GCC/Qt
+> suites and release supply chain remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -509,6 +510,22 @@ cross-builds x86_64 and aarch64 probe payloads, emits runtime/development/tools
 DEB and RPM sets twice, proves byte identity, installs all twelve packages into
 isolated roots using real package managers, and rehashes installed payloads.
 No package or installer root enters the SDK image.
+
+The SDK exposes one launcher. Backend paths and nFPM identities are internal:
+
+```console
+$ crossforge info --json
+$ crossforge run --target aarch64 --vcpkg --linkage dynamic -- cmake --build build
+$ crossforge shell --target x86_64
+$ crossforge package --config crosspack.json --staging-root stage --output-directory dist
+```
+
+`run` and `shell` build a copied child environment; they never mutate the
+container environment or infer a target from the project. Selecting vcpkg
+switches CMake to its toolchain and an explicit static/dynamic Crossforge
+triplet. The generated Meson cross-file path is exposed as `MESON_CROSS_FILE`.
+The Python selector is fail-closed until the final aggregate image adds the
+qualified Python rows to this packaging/vcpkg base.
 
 ## Product contract
 

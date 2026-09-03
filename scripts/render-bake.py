@@ -589,6 +589,9 @@ def render_packaging_graph(
             "CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256": digest(
                 "implementation/crosspack"
             ),
+            "CROSSFORGE_LAUNCHER_COMPONENT_SHA256": digest(
+                "implementation/launcher"
+            ),
             "CROSSPACK_SDK_COMPONENT_SHA256": digest(
                 "packaging/sdk-build"
             ),
@@ -606,6 +609,9 @@ def render_packaging_graph(
             "NFPM_SOURCE_COMPONENT_SHA256": digest("sources/nfpm"),
             "CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256": digest(
                 "implementation/crosspack"
+            ),
+            "CROSSFORGE_LAUNCHER_COMPONENT_SHA256": digest(
+                "implementation/launcher"
             ),
             "CROSSPACK_SDK_COMPONENT_SHA256": digest(
                 "packaging/sdk-build"

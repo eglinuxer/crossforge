@@ -43,6 +43,7 @@ ARG NFPM_VERSION
 ARG NFPM_BINARY_SHA256
 ARG NFPM_SOURCE_COMPONENT_SHA256
 ARG CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256
+ARG CROSSFORGE_LAUNCHER_COMPONENT_SHA256
 ARG CROSSPACK_SDK_COMPONENT_SHA256
 COPY --from=crossforge_nfpm_tool /root/ /
 COPY --from=crossforge_nfpm_tool /source.json \
@@ -51,11 +52,15 @@ COPY config/schemas/crosspack.schema.json \
   config/schemas/crosspack-plan.schema.json \
   config/schemas/crosspack-result.schema.json \
   /opt/crossforge/schemas/
+COPY integration/meson/ /opt/crossforge/meson/
 COPY tools/crossforge/ /opt/crossforge/lib/crossforge/
+COPY --chmod=0755 tools/crossforge/launcher /usr/local/bin/crossforge
 COPY config/generated/components/sources/nfpm.json \
   /work/config/sources-nfpm.json
 COPY config/generated/components/implementation/crosspack.json \
   /work/config/crosspack-implementation.json
+COPY config/generated/components/implementation/launcher.json \
+  /work/config/crossforge-launcher.json
 COPY config/generated/components/packaging/sdk-build.json \
   /work/config/crosspack-sdk.json
 COPY --chmod=0755 scripts/release_component.py /work/scripts/
@@ -71,6 +76,11 @@ RUN --network=none /usr/libexec/platform-python \
       --expected-scope build \
       --expected-sha256 "$CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256" \
     && /usr/libexec/platform-python /work/scripts/release_component.py validate \
+      /work/config/crossforge-launcher.json \
+      --expected-component implementation/launcher \
+      --expected-scope build \
+      --expected-sha256 "$CROSSFORGE_LAUNCHER_COMPONENT_SHA256" \
+    && /usr/libexec/platform-python /work/scripts/release_component.py validate \
       /work/config/crosspack-sdk.json \
       --expected-component packaging/sdk-build \
       --expected-scope build \
@@ -80,9 +90,10 @@ RUN --network=none /usr/libexec/platform-python \
       | sha256sum --check - \
     && "/opt/crossforge/host-tools/nfpm/$NFPM_VERSION/bin/nfpm" \
       --version | grep -F "GitVersion:    $NFPM_VERSION" \
+    && crossforge info --json \
+      | grep -F '"kind": "crossforge-info"' \
     && rm -rf /work
 ENV CROSSFORGE_NFPM=/opt/crossforge/host-tools/nfpm/${NFPM_VERSION}/bin/nfpm \
-    PYTHONPATH=/opt/crossforge/lib \
     PATH=/opt/crossforge/host-tools/nfpm/${NFPM_VERSION}/bin:${PATH}
 WORKDIR /workspace
 
@@ -105,6 +116,7 @@ RUN --network=none /usr/libexec/platform-python \
       --template /work/crosspack.json \
       --release /opt/crossforge/release.json \
       --crosspack /opt/crossforge/lib/crossforge/crosspack.py \
+      --crossforge /usr/local/bin/crossforge \
       --output-root /qualification/packages
 
 FROM crossforge_debian AS crosspack-deb-qualified
@@ -136,6 +148,7 @@ RUN --network=none qualify-crosspack-install rpm x86_64 \
 FROM crossforge_packaging_sdk AS packaging-qualified
 ARG NFPM_SOURCE_COMPONENT_SHA256
 ARG CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256
+ARG CROSSFORGE_LAUNCHER_COMPONENT_SHA256
 ARG CROSSPACK_SDK_COMPONENT_SHA256
 ARG CROSSPACK_QUALIFICATION_POLICY_COMPONENT_SHA256
 ARG CROSSPACK_QUALIFICATION_COMPONENT_SHA256
@@ -149,6 +162,8 @@ COPY config/generated/components/sources/nfpm.json \
   /work/config/sources-nfpm.json
 COPY config/generated/components/implementation/crosspack.json \
   /work/config/crosspack-implementation.json
+COPY config/generated/components/implementation/launcher.json \
+  /work/config/crossforge-launcher.json
 COPY config/generated/components/packaging/sdk-build.json \
   /work/config/crosspack-sdk.json
 COPY config/generated/components/implementation/crosspack-qualification.json \
@@ -165,6 +180,9 @@ RUN --network=none /usr/libexec/platform-python \
         /work/config/crosspack-implementation.json \
       --implementation-component-sha256 \
         "$CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256" \
+      --launcher-component /work/config/crossforge-launcher.json \
+      --launcher-component-sha256 \
+        "$CROSSFORGE_LAUNCHER_COMPONENT_SHA256" \
       --sdk-component /work/config/crosspack-sdk.json \
       --sdk-component-sha256 "$CROSSPACK_SDK_COMPONENT_SHA256" \
       --policy-component /work/config/crosspack-qualification-policy.json \

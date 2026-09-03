@@ -7,6 +7,10 @@
       "component": "implementation/crosspack"
     },
     {
+      "canonical_sha256": "4fd6effbb6c261c8164eab5d0e9269e28aa297cc64a7d318a9eccbdc9771a145",
+      "component": "implementation/launcher"
+    },
+    {
       "canonical_sha256": "384ecd2e12cabedd35ff22c036a75cbd36fefd2499b56f91848a11db7cefeb1e",
       "component": "sources/nfpm"
     },

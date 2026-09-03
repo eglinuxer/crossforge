@@ -51,6 +51,17 @@ CROSSPACK_QUALIFICATION_POLICY = {
         "installed_payload_hashes": True,
     },
 }
+CROSSFORGE_LAUNCHER_POLICY = {
+    "schema_version": 1,
+    "commands": ["info", "package", "run", "shell"],
+    "target_selection": "explicit-no-project-guessing",
+    "default_environment": "native-gts15-host",
+    "subprocess_environment": "copy-and-overlay",
+    "targets": ["x86_64", "aarch64"],
+    "python_minors": ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"],
+    "vcpkg_linkage": ["static", "dynamic"],
+    "package_backend": "internal-locked-nfpm",
+}
 
 
 def policy_materials(prefix, value):
@@ -93,11 +104,19 @@ def extend_component_graph(context):
         ),
     )
     add(
+        "implementation/launcher",
+        "build",
+        explicit_materials=policy_materials(
+            "/@implementation/launcher/", CROSSFORGE_LAUNCHER_POLICY
+        ),
+    )
+    add(
         "packaging/sdk-build",
         "build",
         selector(("baseline",), ("platforms",)),
         (
             "implementation/crosspack",
+            "implementation/launcher",
             "sources/nfpm",
             "vcpkg/sdk-build",
         ),

@@ -7,7 +7,7 @@
       "component": "implementation/crosspack-qualification"
     },
     {
-      "canonical_sha256": "8053b194011ee2567bf761856ab7920e041c12f3d35a6ea9d2bbd38c5817a583",
+      "canonical_sha256": "c13b8b5b0080502f9edd836edd478467e1e8ff5ff4f2acc91f68462fdfbf8a27",
       "component": "packaging/sdk-build"
     },
     {

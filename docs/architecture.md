@@ -321,6 +321,14 @@ crossforge package
 
 `run`/`shell` 显式选择 `--target x86_64|aarch64`，并可选择 `--python 3.14`、`--vcpkg` 与 `--linkage static|dynamic`。它只在子进程中设置 compiler、sysroot、CMake、Meson、pkg-config、Python 和 vcpkg 环境，不修改全局环境，也不根据宿主或项目内容猜测 target。未选择 target 时使用原生 GTS15 host 环境。
 
+该入口现已安装到 packaging SDK 的 `/usr/local/bin/crossforge`。`package` 只接收
+manifest、staging root 与输出目录，nFPM 路径、版本和摘要从镜像内固定 release 自动
+取得；用户不能替换 backend。`run`/`shell` 复制当前环境再覆盖显式选择，提供完整
+compiler/binutils、sysroot、pkg-config、CMake toolchain 与 `MESON_CROSS_FILE`。启用
+vcpkg 时才设置明确 triplet 并把 CMake 切到 vcpkg toolchain；`--python` 必须同时
+选择 target，并隔离 build Python 与唯一 target sysconfigdata。当前 Phase 14 基础镜像
+尚未合并 Python rows，因此 Python 选择会 fail closed；完整产品聚合 stage 完成后开放。
+
 ## 11. 验收与发布门禁
 
 构建流程必须是：

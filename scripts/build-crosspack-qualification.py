@@ -150,16 +150,17 @@ def write_install_contract(root, plan):
     write_json(root / "installed-directories.json", sorted(directories))
 
 
-def build(template_path, release_path, crosspack_path, output_root):
+def build(
+    template_path,
+    release_path,
+    crosspack_path,
+    crossforge_cli,
+    output_root,
+):
     crosspack = runpy.run_path(str(crosspack_path))
     template = crosspack["load_json"](template_path)
     release = crosspack["load_json"](release_path)
     nfpm = release["nfpm"]
-    nfpm_path = (
-        Path("/opt/crossforge/host-tools/nfpm")
-        / nfpm["version"]
-        / "bin/nfpm"
-    )
     output_root = Path(output_root)
     require(
         not output_root.exists() and not output_root.is_symlink(),
@@ -183,21 +184,24 @@ def build(template_path, release_path, crosspack_path, output_root):
                 write_json(config_path, config)
                 first = temporary / arch / "first"
                 second = temporary / arch / "second"
-                result = crosspack["package"](
-                    config_path,
-                    staging,
-                    first,
-                    nfpm_path,
-                    nfpm["version"],
-                    nfpm["binary"]["extracted_sha256"],
+                for output in (first, second):
+                    run(
+                        [
+                            crossforge_cli,
+                            "package",
+                            "--config",
+                            config_path,
+                            "--staging-root",
+                            staging,
+                            "--output-directory",
+                            output,
+                        ]
+                    )
+                result = crosspack["load_json"](
+                    first / "crosspack-result.json"
                 )
-                repeated = crosspack["package"](
-                    config_path,
-                    staging,
-                    second,
-                    nfpm_path,
-                    nfpm["version"],
-                    nfpm["binary"]["extracted_sha256"],
+                repeated = crosspack["load_json"](
+                    second / "crosspack-result.json"
                 )
                 require(result == repeated, "repeated crosspack result differs")
                 compare_outputs(first, second, result)
@@ -238,12 +242,14 @@ def main():
     parser.add_argument("--template", type=Path, required=True)
     parser.add_argument("--release", type=Path, required=True)
     parser.add_argument("--crosspack", type=Path, required=True)
+    parser.add_argument("--crossforge", type=Path, required=True)
     parser.add_argument("--output-root", type=Path, required=True)
     arguments = parser.parse_args()
     build(
         arguments.template,
         arguments.release,
         arguments.crosspack,
+        arguments.crossforge,
         arguments.output_root,
     )
     print("built crosspack qualification packages: %s" % arguments.output_root)

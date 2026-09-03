@@ -1,0 +1,10 @@
+#!/usr/libexec/platform-python
+import sys
+
+
+sys.path.insert(0, "/opt/crossforge/lib")
+
+from crossforge.cli import main
+
+
+sys.exit(main())
