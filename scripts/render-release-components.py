@@ -20,9 +20,11 @@ for name, value in CORE.items():
     if not name.startswith("__"):
         globals()[name] = value
 for name in (
+    "CMAKE_HOST_TOOL_POLICY",
     "NINJA_HOST_TOOL_POLICY",
     "VCPKG_CONTRACT_POLICY",
     "VCPKG_INTEGRATION_POLICY",
+    "VCPKG_UPSTREAM_TIER1_POLICY",
 ):
     globals()[name] = VCPKG_EXTENSION[name]
 

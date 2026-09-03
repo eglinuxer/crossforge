@@ -340,6 +340,7 @@ def qualify_integration(
     sdk_component,
     source_component_sha256,
     ninja_component_sha256,
+    cmake_component_sha256,
 ):
     manifest = load_json(manifest_path)
     integration_sha256 = COMPONENT_READER["canonical_sha256"](
@@ -380,6 +381,7 @@ def qualify_integration(
         == {
             "rpm/host-runtime",
             "host-tools/ninja",
+            "host-tools/cmake",
             "sources/vcpkg",
             "implementation/vcpkg-integration",
             "toolchain/x86_64-build",
@@ -387,6 +389,7 @@ def qualify_integration(
         }
         and dependencies["sources/vcpkg"] == source_component_sha256
         and dependencies["host-tools/ninja"] == ninja_component_sha256
+        and dependencies["host-tools/cmake"] == cmake_component_sha256
         and dependencies["implementation/vcpkg-integration"]
         == integration_sha256,
         "vcpkg SDK component dependency closure differs",
@@ -646,7 +649,6 @@ def qualify_ninja(root, release, component_path, component_sha256, report_path):
     )
     require(
         os.environ.get("NINJA_ROOT") == str(ninja_root)
-        and os.environ.get("PATH", "").split(":", 1)[0] == str(tool.parent)
         and shutil.which("ninja", path=os.environ["PATH"]) == str(tool),
         "Ninja host-tool PATH selection differs",
     )
@@ -680,6 +682,84 @@ def qualify_ninja(root, release, component_path, component_sha256, report_path):
     }
 
 
+def qualify_cmake(root, release, component_path, component_sha256, report_path):
+    component = load_component(
+        component_path, "host-tools/cmake", component_sha256
+    )
+    report = load_json(report_path)
+    release_cmake = release["host_tools"]["cmake"]
+    version = release_cmake["version"]
+    cmake_root = Path("/opt/crossforge/host-tools/cmake") / version
+    tool = cmake_root / "bin/cmake"
+    require(
+        report.get("schema_version") == 1
+        and report.get("kind") == "crossforge-cmake-host-tool-qualification"
+        and report.get("status") == "passed"
+        and report.get("components", {}).get("tool")
+        == {
+            "component": "host-tools/cmake",
+            "canonical_sha256": COMPONENT_READER["canonical_sha256"](
+                component
+            ),
+        }
+        and report.get("install_root") == str(cmake_root),
+        "CMake host-tool qualification report differs",
+    )
+    require(
+        os.environ.get("CROSSFORGE_CMAKE_ROOT") == str(cmake_root)
+        and os.environ.get("PATH", "").split(":", 1)[0] == str(tool.parent)
+        and shutil.which("cmake", path=os.environ["PATH"]) == str(tool),
+        "CMake host-tool PATH selection differs",
+    )
+    version_stdout, _stderr = run([tool, "--version"])
+    payload = next(
+        item for item in release_cmake["payloads"] if item["path"] == "bin/cmake"
+    )
+    tools = load_json(root / "scripts/vcpkg-tools.json")
+    selections = [
+        item
+        for item in tools.get("tools", [])
+        if item.get("name") == "cmake"
+        and item.get("os") == "linux"
+        and item.get("arch") == "amd64"
+    ]
+    require(
+        tool.is_file()
+        and not tool.is_symlink()
+        and sha256_file(tool) == payload["sha256"]
+        and version_stdout.splitlines()[0] == "cmake version " + version,
+        "installed CMake host-tool identity differs",
+    )
+    require(
+        len(selections) == 1
+        and selections[0].get("version") == version
+        and selections[0].get("url") == release_cmake["binary"]["url"]
+        and selections[0].get("sha512") == release_cmake["binary"]["sha512"]
+        and selections[0].get("archive")
+        == "cmake-4.4.0-linux-x86_64.tar.gz"
+        and selections[0].get("executable")
+        == "cmake-4.4.0-linux-x86_64/bin/cmake",
+        "vcpkg CMake tool selection differs from the release lock",
+    )
+    fetched, _stderr = run(
+        [root / "vcpkg", "fetch", "cmake", "--disable-metrics"], cwd=root
+    )
+    fetch_lines = [line.strip() for line in fetched.splitlines() if line.strip()]
+    require(
+        fetch_lines and fetch_lines[-1] == str(tool),
+        "vcpkg did not select the locked CMake host tool: %r" % fetch_lines,
+    )
+    return {
+        "component_sha256": COMPONENT_READER["canonical_sha256"](component),
+        "report_sha256": sha256_file(report_path),
+        "path": str(tool),
+        "sha256": sha256_file(tool),
+        "version": version,
+        "vcpkg_fetch": fetch_lines,
+        "vcpkg_tools_record": selections[0],
+    }
+
+
 def qualify(
     release_path,
     root,
@@ -689,6 +769,7 @@ def qualify(
     triplet_root,
     qemu,
     ninja_report_path,
+    cmake_report_path,
     component_paths,
     component_sha256,
 ):
@@ -726,6 +807,11 @@ def qualify(
         "host-tools/ninja",
         component_sha256["ninja"],
     )
+    cmake_component = load_component(
+        component_paths["cmake"],
+        "host-tools/cmake",
+        component_sha256["cmake"],
+    )
     require(
         COMPONENT_READER["canonical_sha256"](ninja_component)
         == component_sha256["ninja"],
@@ -738,6 +824,7 @@ def qualify(
         "VCPKG_DISABLE_METRICS": "1",
         "VCPKG_FORCE_SYSTEM_BINARIES": "1",
         "NINJA_ROOT": "/opt/crossforge/host-tools/ninja/1.13.2",
+        "CROSSFORGE_CMAKE_ROOT": "/opt/crossforge/host-tools/cmake/4.4.0",
     }
     require(
         all(os.environ.get(name) == value for name, value in expected_environment.items())
@@ -752,6 +839,13 @@ def qualify(
         component_sha256["ninja"],
         ninja_report_path,
     )
+    cmake_host_tool = qualify_cmake(
+        root,
+        release,
+        component_paths["cmake"],
+        component_sha256["cmake"],
+        cmake_report_path,
+    )
     source = qualify_source(root, source_manifest_path, source_component)
     integration = qualify_integration(
         cmake_root,
@@ -761,6 +855,7 @@ def qualify(
         sdk_component,
         component_sha256["source"],
         component_sha256["ninja"],
+        component_sha256["cmake"],
     )
     help_text, _stderr = run(
         [
@@ -801,6 +896,7 @@ def qualify(
         "environment": expected_environment,
         "source": source,
         "ninja": ninja,
+        "cmake_host_tool": cmake_host_tool,
         "integration": integration,
         "triplets": expected_triplets,
         "cmake": cmake,
@@ -817,7 +913,8 @@ def main():
     parser.add_argument("--triplet-root", type=Path, required=True)
     parser.add_argument("--qemu", type=Path, required=True)
     parser.add_argument("--ninja-report", type=Path, required=True)
-    for role in ("source", "integration", "sdk", "ninja"):
+    parser.add_argument("--cmake-report", type=Path, required=True)
+    for role in ("source", "integration", "sdk", "ninja", "cmake"):
         parser.add_argument("--%s-component" % role, type=Path, required=True)
         parser.add_argument("--%s-component-sha256" % role, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -831,17 +928,20 @@ def main():
         arguments.triplet_root,
         arguments.qemu,
         arguments.ninja_report,
+        arguments.cmake_report,
         {
             "source": arguments.source_component,
             "integration": arguments.integration_component,
             "sdk": arguments.sdk_component,
             "ninja": arguments.ninja_component,
+            "cmake": arguments.cmake_component,
         },
         {
             "source": arguments.source_component_sha256,
             "integration": arguments.integration_component_sha256,
             "sdk": arguments.sdk_component_sha256,
             "ninja": arguments.ninja_component_sha256,
+            "cmake": arguments.cmake_component_sha256,
         },
     )
     arguments.output.parent.mkdir(parents=True, exist_ok=True)

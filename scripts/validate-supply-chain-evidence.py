@@ -703,6 +703,33 @@ def validate_evidence(config, repository):
         "Ninja locked material identity mismatch",
     )
 
+    cmake = config["host_tools"]["cmake"]
+    cmake_binary = cmake["binary"]
+    require(
+        cmake["version"] == "4.4.0"
+        and cmake_binary
+        == {
+            "status": "locked",
+            "url": "https://github.com/Kitware/CMake/releases/download/"
+            "v4.4.0/cmake-4.4.0-linux-x86_64.tar.gz",
+            "sha256": "3864eb649b4466ae126a64bbde1657adad78efbbaa068bf38201de5cf1b5349f",
+            "sha512": "3df4aaa128a438ed48dcac7065fd355ff538eed8f394491298d0db63a891d671d"
+            "a247c8fa262e4fa6bf99429d630abab317d5a0248168fe203d1ca4978dab4da",
+            "size": 64838835,
+            "archive_root": "cmake-4.4.0-linux-x86_64",
+        }
+        and [item["path"] for item in cmake["payloads"]]
+        == ["bin/cmake", "bin/cpack", "bin/ctest"]
+        and cmake["license"]
+        == {
+            "expression": "BSD-3-Clause",
+            "path": "doc/cmake/LICENSE.rst",
+            "sha256": "4382e7c1879ac90e3f101a395d23846fa4dbcaa1eed7265b43681e348754825d",
+            "size": 1498,
+        },
+        "CMake locked material identity mismatch",
+    )
+
     python_signers = {
         "3.9": ("lukasz@langa.pl", "https://github.com/login/oauth"),
         "3.10": ("pablogsal@python.org", "https://accounts.google.com"),
@@ -934,6 +961,7 @@ def validate_evidence(config, repository):
         "vcpkg_tool_signature_sha256": vcpkg_signature["sha256"],
         "ninja_commit": ninja["commit"],
         "ninja_binary_sha256": ninja_binary["sha256"],
+        "cmake_binary_sha256": cmake_binary["sha256"],
     }
 
 
@@ -951,7 +979,8 @@ def main():
     result = validate_evidence(config, repository)
     print(
         "valid supply-chain evidence: Rocky %s; QEMU %s; source %s; "
-        "CPython Sigstore bundles %s; patches %d; zstd %s; vcpkg %s; Ninja %s"
+        "CPython Sigstore bundles %s; patches %d; zstd %s; vcpkg %s; "
+        "Ninja %s; CMake %s"
         % (
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
@@ -961,6 +990,7 @@ def main():
             result["zstd_commit"],
             result["vcpkg_commit"],
             result["ninja_commit"],
+            config["host_tools"]["cmake"]["version"],
         )
     )
     return 0

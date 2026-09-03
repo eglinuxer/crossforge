@@ -1460,11 +1460,136 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "cmake",
         "ninja"
       ],
       "properties": {
+        "cmake": {
+          "$ref": "#/$defs/cmake_tool"
+        },
         "ninja": {
           "$ref": "#/$defs/ninja_tool"
+        }
+      }
+    },
+    "cmake_tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "binary",
+        "payloads",
+        "license"
+      ],
+      "properties": {
+        "version": {
+          "const": "4.4.0"
+        },
+        "binary": {
+          "$ref": "#/$defs/cmake_binary"
+        },
+        "payloads": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/cmake_payload"
+          }
+        },
+        "license": {
+          "$ref": "#/$defs/cmake_license"
+        }
+      }
+    },
+    "cmake_binary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256",
+        "sha512",
+        "size",
+        "archive_root"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "url": {
+          "const": "https://github.com/Kitware/CMake/releases/download/v4.4.0/cmake-4.4.0-linux-x86_64.tar.gz"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sha512": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "archive_root": {
+          "const": "cmake-4.4.0-linux-x86_64"
+        }
+      }
+    },
+    "cmake_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "sha512",
+        "size"
+      ],
+      "properties": {
+        "path": {
+          "enum": [
+            "bin/cmake",
+            "bin/cpack",
+            "bin/ctest"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sha512": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "cmake_license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "path",
+        "sha256",
+        "size"
+      ],
+      "properties": {
+        "expression": {
+          "const": "BSD-3-Clause"
+        },
+        "path": {
+          "const": "doc/cmake/LICENSE.rst"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     },

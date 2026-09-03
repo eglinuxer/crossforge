@@ -1,0 +1,54 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/cmake-host-tool",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/host-tools/cmake/binary_relative_paths/0",
+      "value": "bin/cmake"
+    },
+    {
+      "path": "/@implementation/host-tools/cmake/binary_relative_paths/1",
+      "value": "bin/cpack"
+    },
+    {
+      "path": "/@implementation/host-tools/cmake/binary_relative_paths/2",
+      "value": "bin/ctest"
+    },
+    {
+      "path": "/@implementation/host-tools/cmake/consumers/0",
+      "value": "cmake"
+    },
+    {
+      "path": "/@implementation/host-tools/cmake/consumers/1",
+      "value": "ctest"
+    },
+    {
+      "path": "/@implementation/host-tools/cmake/consumers/2",
+      "value": "cpack"
+    },
+    {
+      "path": "/@implementation/host-tools/cmake/consumers/3",
+      "value": "vcpkg"
+    },
+    {
+      "path": "/@implementation/host-tools/cmake/install_prefix",
+      "value": "/opt/crossforge/host-tools/cmake"
+    },
+    {
+      "path": "/@implementation/host-tools/cmake/path_precedence",
+      "value": "before-system"
+    },
+    {
+      "path": "/@implementation/host-tools/cmake/schema_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/host-tools/cmake/system_binary",
+      "value": "/usr/bin/cmake"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

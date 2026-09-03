@@ -38,7 +38,8 @@
         "validate",
         "host-runtime-qualified",
         "ninja-source",
-        "ninja-host-tool"
+        "ninja-host-tool",
+        "cmake-host-tool"
       ]
     },
     "phase13-integration": {
@@ -47,6 +48,11 @@
         "vcpkg-source",
         "python-phase10-dev",
         "sdk-phase13-base"
+      ]
+    },
+    "phase13-ports": {
+      "targets": [
+        "vcpkg-upstream-tier1-qualified"
       ]
     },
     "phase13-source": {
@@ -285,7 +291,9 @@
         "CROSSFORGE_COMPONENT_ABI_PYTHON_PROVIDERS_SHA256": "b2fdf9b5876da30249a4431fb9dcb54a4d509d38ebf82882b6df3fa1a4116b42",
         "CROSSFORGE_COMPONENT_ABI_X86_64_BASELINE_SHA256": "aba3e03137d08c97d9db5e1723b109657e3b87b9164c99f2ed5d90edaaef6878",
         "CROSSFORGE_COMPONENT_FUTURE_PRODUCT_SHA256": "172c8380ac13c0f9ba21f48bb78e7adce5574c86189d8299c31d1255a609d415",
+        "CROSSFORGE_COMPONENT_HOST_TOOLS_CMAKE_SHA256": "75c332279418aba43f0f3ec8242f8a77878052faad43764feeb38dd4f7ba0a53",
         "CROSSFORGE_COMPONENT_HOST_TOOLS_NINJA_SHA256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
+        "CROSSFORGE_COMPONENT_IMPLEMENTATION_CMAKE_HOST_TOOL_SHA256": "c7fe36f8a0e743c8179db499f84ba0bae8d1e11c806ea42e121cacb811d01f60",
         "CROSSFORGE_COMPONENT_IMPLEMENTATION_NINJA_HOST_TOOL_SHA256": "732447444d086b975a7ec6a13f463dd7ced4696a37ad7015e12d5e64d8bcd862",
         "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_CP310_BUILD_POLICY_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
         "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_CP311_BUILD_POLICY_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
@@ -296,6 +304,7 @@
         "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
         "CROSSFORGE_COMPONENT_IMPLEMENTATION_VCPKG_CONTRACT_QUALIFICATION_SHA256": "822fe461d134b6f2c5841d9658763d4880640111019da485dd4b9c9beecb1961",
         "CROSSFORGE_COMPONENT_IMPLEMENTATION_VCPKG_INTEGRATION_SHA256": "38a352f70de4a7c247d27c7c52ed55c0226a596c6c9f849f79027328355e31b0",
+        "CROSSFORGE_COMPONENT_IMPLEMENTATION_VCPKG_UPSTREAM_TIER1_QUALIFICATION_SHA256": "462a4eca540daf5109c75c79321e8fae5609ee2430c754368d357ccda8e03251",
         "CROSSFORGE_COMPONENT_IMPLEMENTATION_ZSTD_BUILD_POLICY_SHA256": "be14b05aebc58eeb91642e1f3fb019cba033e4801fe489c727e88c7b6bfa1a93",
         "CROSSFORGE_COMPONENT_PRODUCT_RELEASE_SHA256": "eaddaf36ddc024a20971db3aacda6d1fd3705ba572225bd9c57bba15078f954d",
         "CROSSFORGE_COMPONENT_PYTHON_CP310_AARCH64_BUILD_SHA256": "f2536351de8df0207af967bb4ad686613e5d2104f37bb40a1a907376e6ecb410",
@@ -330,6 +339,7 @@
         "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
         "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
         "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
+        "CROSSFORGE_COMPONENT_SOURCES_CMAKE_SHA256": "3cd71ce835ac42fcdc86570d5557491e372de9e1e13e4c3970ab86c35990591e",
         "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_SOURCES_NINJA_SHA256": "2a98362c763cfe71b4d604cb2ccf563b7bb54cfde1b8ba7331ee1b9ef0d4cc38",
         "CROSSFORGE_COMPONENT_SOURCES_VCPKG_SHA256": "32decc4331f2b02cb83fc96a08b622d7302c346eac55ff74e3cb3345c2fc36da",
@@ -339,8 +349,9 @@
         "CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_BUILD_SHA256": "639bdd7c9185ba832790744b2323f95bc4854d2da1aa7c7931ed8f9f0b0ae2a1",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
-        "CROSSFORGE_COMPONENT_VCPKG_CONTRACT_QUALIFICATION_SHA256": "eecd46311857bf968b19ad0892daa3bde46a686ef8c235f33d58eb92e9e2da45",
-        "CROSSFORGE_COMPONENT_VCPKG_SDK_BUILD_SHA256": "f7d1512861d2fe1d998a2b6095a1c6835d41ab104d24cfcbe09310c654ad0ed1",
+        "CROSSFORGE_COMPONENT_VCPKG_CONTRACT_QUALIFICATION_SHA256": "9ff556b2c027516ef017f13c3eb18afc949eb383dd10f9c4d97146cfa9c3291c",
+        "CROSSFORGE_COMPONENT_VCPKG_SDK_BUILD_SHA256": "3ba5101626317b1d964205f50f567acc331b4f1cb95b57b32eef452aa277d320",
+        "CROSSFORGE_COMPONENT_VCPKG_UPSTREAM_TIER1_QUALIFICATION_SHA256": "84b013da64215a510cd248bd19db2ffb85884d980d27206ed615e02edf08cb91",
         "CROSSFORGE_COMPONENT_ZSTD_AARCH64_BUILD_SHA256": "3768be8994a6a59fed6048706d77003eac38481c458fbbc0630b9b151ccb77ad",
         "CROSSFORGE_COMPONENT_ZSTD_HOST_BUILD_SHA256": "a8fb4881342c630e2e9a11c4b018185dacd43f8fab25f29b46ed7014a791084b",
         "CROSSFORGE_COMPONENT_ZSTD_X86_64_BUILD_SHA256": "1b27e662224c9d8e0dd66352c02e133b95f866ad99dc9bf114107e072ae2654e",
@@ -368,6 +379,26 @@
       "platforms": [
         "linux/amd64"
       ]
+    },
+    "cmake-host-tool": {
+      "args": {
+        "CMAKE_BINARY_URL": "https://github.com/Kitware/CMake/releases/download/v4.4.0/cmake-4.4.0-linux-x86_64.tar.gz",
+        "CMAKE_POLICY_COMPONENT_SHA256": "c7fe36f8a0e743c8179db499f84ba0bae8d1e11c806ea42e121cacb811d01f60",
+        "CMAKE_SOURCE_COMPONENT_SHA256": "3cd71ce835ac42fcdc86570d5557491e372de9e1e13e4c3970ab86c35990591e",
+        "CMAKE_TOOL_COMPONENT_SHA256": "75c332279418aba43f0f3ec8242f8a77878052faad43764feeb38dd4f7ba0a53",
+        "CMAKE_VERSION": "4.4.0"
+      },
+      "contexts": {
+        "crossforge_host_runtime": "target:host-runtime-qualified",
+        "crossforge_ninja_host_tool": "target:ninja-host-tool"
+      },
+      "inherits": [
+        "_host_tools_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cmake-host-tool-export"
     },
     "cpython-build-cp310": {
       "args": {
@@ -2425,12 +2456,14 @@
     },
     "sdk-phase13-base": {
       "args": {
+        "CMAKE_TOOL_COMPONENT_SHA256": "75c332279418aba43f0f3ec8242f8a77878052faad43764feeb38dd4f7ba0a53",
         "NINJA_TOOL_COMPONENT_SHA256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
         "VCPKG_INTEGRATION_COMPONENT_SHA256": "38a352f70de4a7c247d27c7c52ed55c0226a596c6c9f849f79027328355e31b0",
-        "VCPKG_SDK_COMPONENT_SHA256": "f7d1512861d2fe1d998a2b6095a1c6835d41ab104d24cfcbe09310c654ad0ed1",
+        "VCPKG_SDK_COMPONENT_SHA256": "3ba5101626317b1d964205f50f567acc331b4f1cb95b57b32eef452aa277d320",
         "VCPKG_SOURCE_COMPONENT_SHA256": "32decc4331f2b02cb83fc96a08b622d7302c346eac55ff74e3cb3345c2fc36da"
       },
       "contexts": {
+        "crossforge_cmake_host_tool": "target:cmake-host-tool",
         "crossforge_ninja_host_tool": "target:ninja-host-tool",
         "crossforge_sdk_base": "target:python-phase10-dev",
         "crossforge_vcpkg_source": "target:vcpkg-source"
@@ -2508,7 +2541,7 @@
     "vcpkg-contract-qualified": {
       "args": {
         "VCPKG_CONTRACT_POLICY_COMPONENT_SHA256": "822fe461d134b6f2c5841d9658763d4880640111019da485dd4b9c9beecb1961",
-        "VCPKG_CONTRACT_QUALIFICATION_COMPONENT_SHA256": "eecd46311857bf968b19ad0892daa3bde46a686ef8c235f33d58eb92e9e2da45"
+        "VCPKG_CONTRACT_QUALIFICATION_COMPONENT_SHA256": "9ff556b2c027516ef017f13c3eb18afc949eb383dd10f9c4d97146cfa9c3291c"
       },
       "contexts": {
         "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
@@ -2542,6 +2575,39 @@
         "type=cacheonly"
       ],
       "target": "vcpkg-source-export"
+    },
+    "vcpkg-upstream-tier1-assets": {
+      "args": {
+        "VCPKG_UPSTREAM_TIER1_POLICY_COMPONENT_SHA256": "462a4eca540daf5109c75c79321e8fae5609ee2430c754368d357ccda8e03251"
+      },
+      "contexts": {
+        "crossforge_host_runtime": "target:host-runtime-qualified"
+      },
+      "inherits": [
+        "_vcpkg_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "vcpkg-upstream-tier1-assets-export"
+    },
+    "vcpkg-upstream-tier1-qualified": {
+      "args": {
+        "VCPKG_UPSTREAM_TIER1_POLICY_COMPONENT_SHA256": "462a4eca540daf5109c75c79321e8fae5609ee2430c754368d357ccda8e03251",
+        "VCPKG_UPSTREAM_TIER1_QUALIFICATION_COMPONENT_SHA256": "84b013da64215a510cd248bd19db2ffb85884d980d27206ed615e02edf08cb91"
+      },
+      "contexts": {
+        "crossforge_vcpkg_contract": "target:vcpkg-contract-qualified",
+        "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
+        "crossforge_vcpkg_upstream_tier1_assets": "target:vcpkg-upstream-tier1-assets"
+      },
+      "inherits": [
+        "_vcpkg_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "vcpkg-upstream-tier1-qualified"
     },
     "zstd-aarch64-build": {
       "args": {

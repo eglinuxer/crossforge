@@ -7,8 +7,6 @@ import json
 import os
 import re
 import runpy
-import shutil
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -18,8 +16,19 @@ SCRIPT_DIRECTORY = Path(__file__).resolve().parent
 COMPONENT_READER = runpy.run_path(
     str(SCRIPT_DIRECTORY / "release_component.py")
 )
+COMMON = runpy.run_path(
+    str(SCRIPT_DIRECTORY / "vcpkg_qualification.py")
+)
 ComponentError = COMPONENT_READER["ComponentError"]
-HOST_TRIPLET = "crossforge-host-x64-el8"
+QualificationError = COMMON["QualificationError"]
+require = COMMON["require"]
+run = COMMON["run"]
+profile_tools = COMMON["profile_tools"]
+verify_machine = COMMON["verify_machine"]
+validate_shared_library_dynamic = COMMON["validate_shared_library_dynamic"]
+isolated_install = COMMON["isolated_install"]
+HOST_TRIPLET = COMMON["HOST_TRIPLET"]
+TRIPLETS = COMMON["TRIPLETS"]
 PATCHELF_ASSET = {
     "filename": "patchelf-0.19.0-x86_64.tar.gz",
     "url": "https://github.com/NixOS/patchelf/releases/download/0.19.0/patchelf-0.19.0-x86_64.tar.gz",
@@ -27,59 +36,6 @@ PATCHELF_ASSET = {
     "sha512": "2a65c9cbdddcc7952cdbd6e98a2cf3da01386cf0f0b927a6bbcfe8131ecf0bfb17c534246635b5e6a090652ee54c903f9f9c4f3f1d2412dba59f287ae2ae8070",
     "size": 569003,
 }
-TRIPLETS = {
-    HOST_TRIPLET: {
-        "arch": "x86_64",
-        "cross": False,
-        "linkage": "static",
-        "triple": None,
-        "machine": "Advanced Micro Devices X86-64",
-        "interpreter": "/lib64/ld-linux-x86-64.so.2",
-    },
-    "crossforge-x64-el8": {
-        "arch": "x86_64",
-        "cross": True,
-        "linkage": "static",
-        "triple": "x86_64-unknown-linux-gnu",
-        "machine": "Advanced Micro Devices X86-64",
-        "interpreter": "/lib64/ld-linux-x86-64.so.2",
-    },
-    "crossforge-x64-el8-dynamic": {
-        "arch": "x86_64",
-        "cross": True,
-        "linkage": "dynamic",
-        "triple": "x86_64-unknown-linux-gnu",
-        "machine": "Advanced Micro Devices X86-64",
-        "interpreter": "/lib64/ld-linux-x86-64.so.2",
-    },
-    "crossforge-arm64-el8": {
-        "arch": "aarch64",
-        "cross": True,
-        "linkage": "static",
-        "triple": "aarch64-unknown-linux-gnu",
-        "machine": "AArch64",
-        "interpreter": "/lib/ld-linux-aarch64.so.1",
-    },
-    "crossforge-arm64-el8-dynamic": {
-        "arch": "aarch64",
-        "cross": True,
-        "linkage": "dynamic",
-        "triple": "aarch64-unknown-linux-gnu",
-        "machine": "AArch64",
-        "interpreter": "/lib/ld-linux-aarch64.so.1",
-    },
-}
-
-
-class QualificationError(RuntimeError):
-    pass
-
-
-def require(condition, message):
-    if not condition:
-        raise QualificationError(message)
-
-
 def reject_duplicate_keys(pairs):
     result = {}
     for key, value in pairs:
@@ -127,48 +83,6 @@ def file_identity(path):
         "sha512": sha512.hexdigest(),
         "size": size,
     }
-
-
-def run(arguments, cwd=None, env=None):
-    process = subprocess.run(
-        [str(argument) for argument in arguments],
-        cwd=str(cwd) if cwd else None,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-    )
-    if process.returncode != 0:
-        details = process.stdout + process.stderr
-        buildtrees = next(
-            (
-                Path(str(argument).split("=", 1)[1])
-                for argument in arguments
-                if str(argument).startswith("--x-buildtrees-root=")
-            ),
-            None,
-        )
-        if buildtrees is not None and buildtrees.is_dir():
-            logs = sorted(
-                buildtrees.rglob("*.log"),
-                key=lambda path: (
-                    "/crossforge-host-probe/" not in path.as_posix()
-                    and "/crossforge-target-probe/" not in path.as_posix(),
-                    "err.log" not in path.name,
-                    path.as_posix(),
-                ),
-            )
-            for path in logs[:20]:
-                try:
-                    content = path.read_text(encoding="utf-8", errors="replace")
-                except OSError:
-                    continue
-                details += "\n--- %s ---\n%s" % (path, content[-12000:])
-        raise QualificationError(
-            "command failed (%s):\n%s"
-            % (" ".join(str(argument) for argument in arguments), details)
-        )
-    return process.stdout, process.stderr
 
 
 def load_component(path, name, scope, digest):
@@ -313,44 +227,8 @@ def cmake_bool(value):
     raise QualificationError("invalid CMake boolean: %r" % value)
 
 
-def profile_tools(profile):
-    triple = profile["triple"]
-    if triple is None:
-        root = Path("/opt/rh/gcc-toolset-15/root/usr/bin")
-        return root / "gcc", root / "readelf", None
-    root = Path("/opt/crossforge/targets") / triple / "bin"
-    sysroot = Path("/opt/crossforge/sysroots/el8") / profile["arch"]
-    return root / (triple + "-gcc"), root / (triple + "-readelf"), sysroot
-
-
-def verify_machine(readelf, path, expected):
-    header, _stderr = run([readelf, "-h", path])
-    require(
-        re.search(
-            r"^\s*Machine:\s+%s\s*$" % re.escape(expected),
-            header,
-            re.MULTILINE,
-        )
-        is not None,
-        "ELF machine differs for %s" % path,
-    )
-
-
-def validate_shared_library_dynamic(dynamic, triplet):
-    require("TEXTREL" not in dynamic, "%s shared library contains TEXTREL" % triplet)
-    tags = re.findall(
-        r"\((RPATH|RUNPATH)\).*Library (?:rpath|runpath): \[([^]]*)\]",
-        dynamic,
-    )
-    require(
-        tags == [("RUNPATH", "$ORIGIN")],
-        "%s shared library runpath differs: %r" % (triplet, tags),
-    )
-    return tags[0][1]
-
-
 def build_consumer(profile, include, library, work, qemu, release):
-    compiler, readelf, sysroot = profile_tools(profile)
+    compiler, _cxx, readelf, sysroot = profile_tools(profile)
     source = work / "consumer.c"
     executable = work / "consumer"
     source.write_text(
@@ -420,43 +298,18 @@ def qualify_triplet(
     release,
     work,
 ):
+    roots = isolated_install(
+        vcpkg_root,
+        fixture_root / "manifest",
+        triplet,
+        (patchelf_archive,),
+        work,
+        overlay_ports=fixture_root / "ports",
+    )
     triplet_work = work / triplet
-    downloads = triplet_work / "downloads"
-    buildtrees = triplet_work / "buildtrees"
-    packages = triplet_work / "packages"
-    installed = triplet_work / "installed"
-    cache = triplet_work / "cache"
-    for path in (downloads, buildtrees, packages, installed, cache):
-        path.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(
-        str(patchelf_archive),
-        str(downloads / PATCHELF_ASSET["filename"]),
-    )
-    environment = dict(os.environ)
-    environment.update(
-        {
-            "HOME": str(cache / "home"),
-            "XDG_CACHE_HOME": str(cache / "xdg"),
-            "VCPKG_BINARY_SOURCES": "clear",
-            "X_VCPKG_ASSET_SOURCES": "clear;x-block-origin",
-        }
-    )
-    command = [
-        vcpkg_root / "vcpkg",
-        "install",
-        "--x-manifest-root=" + str(fixture_root / "manifest"),
-        "--x-install-root=" + str(installed),
-        "--overlay-ports=" + str(fixture_root / "ports"),
-        "--triplet=" + triplet,
-        "--host-triplet=" + HOST_TRIPLET,
-        "--downloads-root=" + str(downloads),
-        "--x-buildtrees-root=" + str(buildtrees),
-        "--x-packages-root=" + str(packages),
-        "--binarysource=clear",
-        "--no-downloads",
-        "--disable-metrics",
-    ]
-    stdout, stderr = run(command, cwd=fixture_root / "manifest", env=environment)
+    installed = roots["installed"]
+    stdout = roots["stdout"]
+    stderr = roots["stderr"]
     host_root = installed / HOST_TRIPLET
     target_root = installed / triplet
     host_tool = host_root / "tools/crossforge-host-probe/crossforge-host-probe"
@@ -490,7 +343,7 @@ def qualify_triplet(
             "sysroot",
         ),
     )
-    compiler, readelf, sysroot = profile_tools(profile)
+    compiler, _cxx, readelf, sysroot = profile_tools(profile)
     require(
         cmake_bool(target_metadata["cross"]) is profile["cross"]
         and cmake_bool(target_metadata["linkage"])

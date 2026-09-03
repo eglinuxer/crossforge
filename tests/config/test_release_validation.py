@@ -305,6 +305,38 @@ class ReleaseValidationTests(unittest.TestCase):
                     config, self.schema, self.schema, "$"
                 )
 
+    def test_cmake_host_tool_lock_and_supply_evidence_are_exact(self):
+        cmake = self.config["host_tools"]["cmake"]
+        self.assertEqual(cmake["version"], "4.4.0")
+        self.assertEqual(cmake["binary"]["size"], 64838835)
+        self.assertEqual(
+            [item["path"] for item in cmake["payloads"]],
+            ["bin/cmake", "bin/cpack", "bin/ctest"],
+        )
+        evidence = EVIDENCE_VALIDATOR["validate_evidence"](
+            self.config, REPOSITORY
+        )
+        self.assertEqual(
+            evidence["cmake_binary_sha256"], cmake["binary"]["sha256"]
+        )
+
+    def test_cmake_schema_rejects_incomplete_or_unlocked_inputs(self):
+        for mutate in (
+            lambda value: value["host_tools"]["cmake"]["binary"].pop(
+                "sha512"
+            ),
+            lambda value: value["host_tools"]["cmake"]["binary"].__setitem__(
+                "status", "pending"
+            ),
+            lambda value: value["host_tools"]["cmake"]["payloads"].pop(),
+        ):
+            config = copy.deepcopy(self.config)
+            mutate(config)
+            with self.assertRaises(VALIDATOR["ValidationError"]):
+                VALIDATOR["validate"](
+                    config, self.schema, self.schema, "$"
+                )
+
     def test_rocky_trust_root_matches_key_file(self):
         trust = self.config["trust"]["rocky_rpm_key"]
         digest = hashlib.sha256((REPOSITORY / trust["file"]).read_bytes()).hexdigest()

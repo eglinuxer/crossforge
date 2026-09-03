@@ -1,0 +1,142 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/vcpkg-upstream-tier1-qualification",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/0/filename",
+      "value": "fmt-backport-4813.patch"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/0/sha256",
+      "value": "699f3188774bc40f040715a5ae33e21e052c7b104fb997dff3ccf6f758ede02c"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/0/sha512",
+      "value": "afda8fdfcdcb4b0dd5df4d4dae96a57a85fb9c4b65d0b49d51258f0913d4aed93ed146ebf96ed7b277490b1dde6c7117f43332013071441a96c3147520de8368"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/0/size",
+      "value": 1390
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/0/url",
+      "value": "https://github.com/fmtlib/fmt/commit/588b3a0f8f6a8bcf2a959cae882d5b2703e86737.patch?full_index=1"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/1/filename",
+      "value": "fmtlib-fmt-12.2.0.tar.gz"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/1/sha256",
+      "value": "8b852bb5aa6e7d8564f9e81394055395dd1d1936d38dfd3a17792a02bebd7af0"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/1/sha512",
+      "value": "5ac2ba0f54a484999ed5407d82b77aad170cea49a267decd2c0eedadf3b14413e2a83fcc8e9ca9c16640595e019b8636e160f72314d8be50653324e82ac745eb"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/1/size",
+      "value": 738355
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/1/url",
+      "value": "https://github.com/fmtlib/fmt/archive/12.2.0.tar.gz"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/2/filename",
+      "value": "madler-zlib-v1.3.2.tar.gz"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/2/sha256",
+      "value": "b99a0b86c0ba9360ec7e78c4f1e43b1cbdf1e6936c8fa0f6835c0cd694a495a1"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/2/sha512",
+      "value": "16fea4df307a68cf0035858abe2fd550250618a97590e202037acd18a666f57afc10f8836cbbd472d54a0e76539d0e558cb26f059d53de52ff90634bbf4f47d4"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/2/size",
+      "value": 1566911
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/assets/2/url",
+      "value": "https://github.com/madler/zlib/archive/v1.3.2.tar.gz"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/binary_sources",
+      "value": "clear"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/downloads",
+      "value": "forbidden"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/files/0/path",
+      "value": "consumer.cpp"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/files/0/sha256",
+      "value": "d8639cf6844700b4d643bc28292969ff6234d321272471b8683aaed50df3394c"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/files/1/path",
+      "value": "manifest/vcpkg.json"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/files/1/sha256",
+      "value": "802a548ec91dd852acc01c2b7faa590836e18cb2d1bb66da61b6aec86ed69376"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/ports/0/name",
+      "value": "fmt"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/ports/0/port_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/ports/0/version",
+      "value": "12.2.0"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/ports/1/name",
+      "value": "zlib"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/ports/1/port_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/ports/1/version",
+      "value": "1.3.2"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/schema_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/triplets/0",
+      "value": "crossforge-host-x64-el8"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/triplets/1",
+      "value": "crossforge-x64-el8"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/triplets/2",
+      "value": "crossforge-x64-el8-dynamic"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/triplets/3",
+      "value": "crossforge-arm64-el8"
+    },
+    {
+      "path": "/@implementation/vcpkg-upstream-tier1/triplets/4",
+      "value": "crossforge-arm64-el8-dynamic"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

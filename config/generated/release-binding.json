@@ -26,9 +26,21 @@
       "scope": "future"
     },
     {
+      "canonical_sha256": "75c332279418aba43f0f3ec8242f8a77878052faad43764feeb38dd4f7ba0a53",
+      "component": "host-tools/cmake",
+      "path": "config/generated/components/host-tools/cmake.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "f602d821511df1536870694387ee8f595e8ff01dd7908b8935b3a4a0663ea50c",
       "component": "host-tools/ninja",
       "path": "config/generated/components/host-tools/ninja.json",
+      "scope": "build"
+    },
+    {
+      "canonical_sha256": "c7fe36f8a0e743c8179db499f84ba0bae8d1e11c806ea42e121cacb811d01f60",
+      "component": "implementation/cmake-host-tool",
+      "path": "config/generated/components/implementation/cmake-host-tool.json",
       "scope": "build"
     },
     {
@@ -90,6 +102,12 @@
       "component": "implementation/vcpkg-integration",
       "path": "config/generated/components/implementation/vcpkg-integration.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "462a4eca540daf5109c75c79321e8fae5609ee2430c754368d357ccda8e03251",
+      "component": "implementation/vcpkg-upstream-tier1-qualification",
+      "path": "config/generated/components/implementation/vcpkg-upstream-tier1-qualification.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "be14b05aebc58eeb91642e1f3fb019cba033e4801fe489c727e88c7b6bfa1a93",
@@ -296,6 +314,12 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "3cd71ce835ac42fcdc86570d5557491e372de9e1e13e4c3970ab86c35990591e",
+      "component": "sources/cmake",
+      "path": "config/generated/components/sources/cmake.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
       "component": "sources/gcc",
       "path": "config/generated/components/sources/gcc.json",
@@ -350,16 +374,22 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "eecd46311857bf968b19ad0892daa3bde46a686ef8c235f33d58eb92e9e2da45",
+      "canonical_sha256": "9ff556b2c027516ef017f13c3eb18afc949eb383dd10f9c4d97146cfa9c3291c",
       "component": "vcpkg/contract-qualification",
       "path": "config/generated/components/vcpkg/contract-qualification.json",
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "f7d1512861d2fe1d998a2b6095a1c6835d41ab104d24cfcbe09310c654ad0ed1",
+      "canonical_sha256": "3ba5101626317b1d964205f50f567acc331b4f1cb95b57b32eef452aa277d320",
       "component": "vcpkg/sdk-build",
       "path": "config/generated/components/vcpkg/sdk-build.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "84b013da64215a510cd248bd19db2ffb85884d980d27206ed615e02edf08cb91",
+      "component": "vcpkg/upstream-tier1-qualification",
+      "path": "config/generated/components/vcpkg/upstream-tier1-qualification.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "3768be8994a6a59fed6048706d77003eac38481c458fbbc0630b9b151ccb77ad",
@@ -382,7 +412,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "b328139dc84b0561cdbc2d7cf5d4a209d1c3a867e52a6a0f3d0cedbdbeb9aa87",
+    "canonical_sha256": "27ef3d57bb32a5e1ff7b7ab4953f151756a127f4fae9785ec74f5eeacfda4992",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

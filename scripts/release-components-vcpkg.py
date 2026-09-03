@@ -4,6 +4,14 @@
 import copy
 
 
+CMAKE_HOST_TOOL_POLICY = {
+    "schema_version": 1,
+    "install_prefix": "/opt/crossforge/host-tools/cmake",
+    "binary_relative_paths": ["bin/cmake", "bin/cpack", "bin/ctest"],
+    "path_precedence": "before-system",
+    "system_binary": "/usr/bin/cmake",
+    "consumers": ["cmake", "ctest", "cpack", "vcpkg"],
+}
 NINJA_HOST_TOOL_POLICY = {
     "schema_version": 1,
     "install_prefix": "/opt/crossforge/host-tools/ninja",
@@ -136,6 +144,63 @@ VCPKG_CONTRACT_POLICY = {
         },
     ],
 }
+VCPKG_UPSTREAM_TIER1_POLICY = {
+    "schema_version": 1,
+    "assets": [
+        {
+            "filename": "fmt-backport-4813.patch",
+            "url": "https://github.com/fmtlib/fmt/commit/588b3a0f8f6a8bcf2a959cae882d5b2703e86737.patch?full_index=1",
+            "sha256": "699f3188774bc40f040715a5ae33e21e052c7b104fb997dff3ccf6f758ede02c",
+            "sha512": "afda8fdfcdcb4b0dd5df4d4dae96a57a85fb9c4b65d0b49d51258f0913d4aed93ed146ebf96ed7b277490b1dde6c7117f43332013071441a96c3147520de8368",
+            "size": 1390,
+        },
+        {
+            "filename": "fmtlib-fmt-12.2.0.tar.gz",
+            "url": "https://github.com/fmtlib/fmt/archive/12.2.0.tar.gz",
+            "sha256": "8b852bb5aa6e7d8564f9e81394055395dd1d1936d38dfd3a17792a02bebd7af0",
+            "sha512": "5ac2ba0f54a484999ed5407d82b77aad170cea49a267decd2c0eedadf3b14413e2a83fcc8e9ca9c16640595e019b8636e160f72314d8be50653324e82ac745eb",
+            "size": 738355,
+        },
+        {
+            "filename": "madler-zlib-v1.3.2.tar.gz",
+            "url": "https://github.com/madler/zlib/archive/v1.3.2.tar.gz",
+            "sha256": "b99a0b86c0ba9360ec7e78c4f1e43b1cbdf1e6936c8fa0f6835c0cd694a495a1",
+            "sha512": "16fea4df307a68cf0035858abe2fd550250618a97590e202037acd18a666f57afc10f8836cbbd472d54a0e76539d0e558cb26f059d53de52ff90634bbf4f47d4",
+            "size": 1566911,
+        },
+    ],
+    "binary_sources": "clear",
+    "downloads": "forbidden",
+    "files": [
+        {
+            "path": "consumer.cpp",
+            "sha256": "d8639cf6844700b4d643bc28292969ff6234d321272471b8683aaed50df3394c",
+        },
+        {
+            "path": "manifest/vcpkg.json",
+            "sha256": "802a548ec91dd852acc01c2b7faa590836e18cb2d1bb66da61b6aec86ed69376",
+        },
+    ],
+    "ports": [
+        {
+            "name": "fmt",
+            "port_version": 1,
+            "version": "12.2.0",
+        },
+        {
+            "name": "zlib",
+            "port_version": 1,
+            "version": "1.3.2",
+        },
+    ],
+    "triplets": [
+        "crossforge-host-x64-el8",
+        "crossforge-x64-el8",
+        "crossforge-x64-el8-dynamic",
+        "crossforge-arm64-el8",
+        "crossforge-arm64-el8-dynamic",
+    ],
+}
 
 
 def leaf_items(value, path=()):
@@ -168,6 +233,7 @@ def policy_materials(prefix, policy):
 def vcpkg_sdk_scope(release, require):
     statuses = (
         release["host_locks"]["host-runtime"]["status"],
+        release["host_tools"]["cmake"]["binary"]["status"],
         release["host_tools"]["ninja"]["binary"]["status"],
         release["host_tools"]["ninja"]["source"]["status"],
         release["vcpkg"]["release"]["status"],
@@ -188,6 +254,13 @@ def extend_component_graph(context):
     selector = context["selector"]
     toolchain_builds = context["toolchain_builds"]
     toolchain_qualifications = context["toolchain_qualifications"]
+    add(
+        "implementation/cmake-host-tool",
+        "build",
+        explicit_materials=policy_materials(
+            "/@implementation/host-tools/cmake/", CMAKE_HOST_TOOL_POLICY
+        ),
+    )
     add(
         "implementation/vcpkg-integration",
         "build",
@@ -220,6 +293,17 @@ def extend_component_graph(context):
         ),
     )
     add(
+        "host-tools/cmake",
+        "build",
+        selector(("baseline",), ("platforms",)),
+        (
+            "host-tools/ninja",
+            "rpm/host-runtime",
+            "sources/cmake",
+            "implementation/cmake-host-tool",
+        ),
+    )
+    add(
         "vcpkg/sdk-build",
         vcpkg_sdk_scope(release, require),
         selector(("baseline",), ("platforms",)),
@@ -227,6 +311,7 @@ def extend_component_graph(context):
             "rpm/host-runtime",
             "sources/vcpkg",
             "host-tools/ninja",
+            "host-tools/cmake",
             "implementation/vcpkg-integration",
             toolchain_builds["x86_64"],
             toolchain_builds["aarch64"],
@@ -241,5 +326,22 @@ def extend_component_graph(context):
             "implementation/vcpkg-contract-qualification",
             toolchain_qualifications["x86_64"],
             toolchain_qualifications["aarch64"],
+        ),
+    )
+    add(
+        "implementation/vcpkg-upstream-tier1-qualification",
+        "qualification",
+        explicit_materials=policy_materials(
+            "/@implementation/vcpkg-upstream-tier1/",
+            VCPKG_UPSTREAM_TIER1_POLICY,
+        ),
+    )
+    add(
+        "vcpkg/upstream-tier1-qualification",
+        "qualification",
+        selector(("baseline",), ("platforms",)),
+        (
+            "implementation/vcpkg-upstream-tier1-qualification",
+            "vcpkg/contract-qualification",
         ),
     )

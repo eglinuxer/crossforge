@@ -141,6 +141,9 @@ class VcpkgContractTests(unittest.TestCase):
         self.assertIn("qualify-vcpkg-contract.py", block)
         self.assertIn("--patchelf-archive", block)
         source = QUALIFIER_PATH.read_text(encoding="utf-8")
+        source += (REPOSITORY / "scripts/vcpkg_qualification.py").read_text(
+            encoding="utf-8"
+        )
         for required in (
             '"--no-downloads"',
             '"--binarysource=clear"',
@@ -152,7 +155,7 @@ class VcpkgContractTests(unittest.TestCase):
         workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("vcpkg-contract-qualified", workflow)
+        self.assertIn("vcpkg-upstream-tier1-qualified", workflow)
         self.assertIn("phase13-contract", workflow)
 
     def test_qualifier_remains_python36_syntax_compatible(self):

@@ -83,7 +83,15 @@ class DockerComponentWiringTests(unittest.TestCase):
         self.assert_no_full_release(block)
 
     def test_config_validation_copies_locked_keys_and_notices(self):
+        release = self.stages["release-validate"]
+        self.assertEqual(self.parents["release-validate"], "rocky-base")
+        self.assertIn("COPY config/release.json", release)
+        self.assertIn("validate-release.py", release)
+        self.assertNotIn("COPY config/ ./config/", release)
+        self.assertNotIn("config/generated", release)
         block = self.stages["config-validate"]
+        self.assertEqual(self.parents["config-validate"], "release-validate")
+        self.assertIn("COPY config/ ./config/", block)
         self.assertIn(
             "COPY keys/ZSTD-RELEASE-KEY.asc ./keys/ZSTD-RELEASE-KEY.asc",
             block,
@@ -239,24 +247,25 @@ class DockerComponentWiringTests(unittest.TestCase):
         ):
             block = self.stages[stage]
             self.assertIn(
-                "COPY --from=config-validate /src/config/release.json", block
+                "COPY --from=release-validate /src/config/release.json", block
             )
             self.assertIn(
-                "COPY --from=config-validate /src/config/schemas/release.schema.json",
+                "COPY --from=release-validate /src/config/schemas/release.schema.json",
                 block,
             )
             self.assertIn(
-                "COPY --from=config-validate /src/config/schemas/rpm-plan.schema.json",
+                "COPY --from=release-validate /src/config/schemas/rpm-plan.schema.json",
                 block,
             )
             self.assertIn(
-                "COPY --from=config-validate /src/config/rpm/sysroot-el8-",
+                "COPY --from=release-validate /src/config/rpm/sysroot-el8-",
                 block,
             )
         self.assertIn(
-            "COPY --from=config-validate /src/config/release.json",
+            "COPY --from=release-validate /src/config/release.json",
             self.stages["runtime-smoke-aarch64"],
         )
+        self.assertEqual(self.parents["runtime-smoke-x86_64"], "rocky-base")
 
     def test_install_outputs_keep_component_binding_evidence_visible(self):
         for stage in (

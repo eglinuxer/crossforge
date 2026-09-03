@@ -1,0 +1,102 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "sources/cmake",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/host_tools/cmake/binary/archive_root",
+      "value": "cmake-4.4.0-linux-x86_64"
+    },
+    {
+      "path": "/host_tools/cmake/binary/sha256",
+      "value": "3864eb649b4466ae126a64bbde1657adad78efbbaa068bf38201de5cf1b5349f"
+    },
+    {
+      "path": "/host_tools/cmake/binary/sha512",
+      "value": "3df4aaa128a438ed48dcac7065fd355ff538eed8f394491298d0db63a891d671da247c8fa262e4fa6bf99429d630abab317d5a0248168fe203d1ca4978dab4da"
+    },
+    {
+      "path": "/host_tools/cmake/binary/size",
+      "value": 64838835
+    },
+    {
+      "path": "/host_tools/cmake/binary/status",
+      "value": "locked"
+    },
+    {
+      "path": "/host_tools/cmake/binary/url",
+      "value": "https://github.com/Kitware/CMake/releases/download/v4.4.0/cmake-4.4.0-linux-x86_64.tar.gz"
+    },
+    {
+      "path": "/host_tools/cmake/license/expression",
+      "value": "BSD-3-Clause"
+    },
+    {
+      "path": "/host_tools/cmake/license/path",
+      "value": "doc/cmake/LICENSE.rst"
+    },
+    {
+      "path": "/host_tools/cmake/license/sha256",
+      "value": "4382e7c1879ac90e3f101a395d23846fa4dbcaa1eed7265b43681e348754825d"
+    },
+    {
+      "path": "/host_tools/cmake/license/size",
+      "value": 1498
+    },
+    {
+      "path": "/host_tools/cmake/payloads/0/path",
+      "value": "bin/cmake"
+    },
+    {
+      "path": "/host_tools/cmake/payloads/0/sha256",
+      "value": "f6e51adea43aa4d780a586d2da9d1dd1a4f6205b540443558683523e032e89e2"
+    },
+    {
+      "path": "/host_tools/cmake/payloads/0/sha512",
+      "value": "29949b3d638195cd74a2eaa17d2a37454cd5781a8bc83e0803c5fc77a58d4a614a91c025f447090ca4a499be5d588cfb0cac27a1eda0428a5718c59c4b1362a0"
+    },
+    {
+      "path": "/host_tools/cmake/payloads/0/size",
+      "value": 21465408
+    },
+    {
+      "path": "/host_tools/cmake/payloads/1/path",
+      "value": "bin/cpack"
+    },
+    {
+      "path": "/host_tools/cmake/payloads/1/sha256",
+      "value": "b5736af2c18d5eafaa3fea61e50ca2ee5d45de918e3512290fbe21ebfec091fb"
+    },
+    {
+      "path": "/host_tools/cmake/payloads/1/sha512",
+      "value": "80c9abd65c8016c8d4e94340cbaf09161d9ff9381e80760caf43f838f7d79cfdfccde63a16a6d96310308825f5d737bf8970c954e4b8dcbcd9ffc70f9cc23250"
+    },
+    {
+      "path": "/host_tools/cmake/payloads/1/size",
+      "value": 21821824
+    },
+    {
+      "path": "/host_tools/cmake/payloads/2/path",
+      "value": "bin/ctest"
+    },
+    {
+      "path": "/host_tools/cmake/payloads/2/sha256",
+      "value": "86ed3311d08d8d2bcd253cc5d6dadab6c9b1831399a3e6c4681ba3bc88022c3c"
+    },
+    {
+      "path": "/host_tools/cmake/payloads/2/sha512",
+      "value": "14e1812b3430f5f4d56af46cd05e5e3f99ecffd560fb6907f9e4514ccb7194da4d109fbabd2b230e17700808160d1f367ffd8a707bcea88c1d7e1cccda0f8a32"
+    },
+    {
+      "path": "/host_tools/cmake/payloads/2/size",
+      "value": 22892448
+    },
+    {
+      "path": "/host_tools/cmake/version",
+      "value": "4.4.0"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

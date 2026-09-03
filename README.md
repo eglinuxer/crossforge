@@ -18,10 +18,11 @@ build-system-independent DEB/RPM packaging.
 > now rebases those qualified artifacts onto its independently locked host
 > runtime and passes the complete offline integration gate. The pinned vcpkg
 > registry/tool and five generated host/target triplets are installed and
-> qualified offline with a locked Ninja 1.13.2 host-tool overlay. A real
+> qualified offline with locked CMake 4.4.0 and Ninja 1.13.2 host-tool overlays. A real
 > no-download overlay-port contract now covers every static/dynamic triplet;
-> representative upstream ports, packaging, the full GCC/Qt suites and release
-> supply chain remain pending.
+> curated zlib/fmt ports pass the same five-triplet gate from an explicit asset
+> closure. TLS, host-generator and large-graph port tiers, packaging, the full
+> GCC/Qt suites and release supply chain remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -429,10 +430,12 @@ Microsoft's detached PGP signature and exact LICENSE/NOTICE files:
 ```console
 $ ./scripts/validate-supply-chain-evidence.py
 $ docker buildx bake ninja-host-tool
+$ docker buildx bake cmake-host-tool
 $ docker buildx bake vcpkg-source
 $ ./scripts/render-vcpkg-integration.py --check
 $ docker buildx bake sdk-phase13-base
 $ docker buildx bake vcpkg-contract-qualified
+$ docker buildx bake vcpkg-upstream-tier1-qualified
 ```
 
 The host-tool target installs Ninja 1.13.2 at
@@ -441,6 +444,10 @@ The host-tool target installs Ninja 1.13.2 at
 release response, binary ZIP, vcpkg SHA512, extracted ELF and Apache-2.0
 license are independently bound. The offline gate verifies the loader and
 dependencies, then runs direct Ninja, CMake/Ninja and Meson/Ninja builds.
+CMake 4.4.0 is the exact Linux tool selected by the pinned vcpkg tool database;
+its archive, `cmake`/`ctest`/`cpack` ELF payloads and license are independently
+bound. Its offline gate enforces a glibc 2.17 ceiling and runs CMake/Ninja,
+CTest and CPack without replacing the RPM-owned CMake.
 
 The source target clones the complete commit history and fetches the 22 fixed
 port trees referenced by the version database but not reachable from the tag.
@@ -460,7 +467,13 @@ builds both library linkages, checks the exact `$ORIGIN` shared-library
 RUNPATH, and executes both target consumers. The only preseeded vcpkg helper
 asset is an exact hash/size-bound patchelf archive; neither it nor downloads,
 build trees, packages, or installed ports enter the product root.
-Representative upstream-port qualification is the next slice.
+Tier 1 already builds the curated `zlib 1.3.2#1` and `fmt 12.2.0#1` ports in
+all five triplets. Three URL/SHA256/SHA512/size-bound source assets are fetched
+in a network stage, revalidated offline, and seeded into isolated downloads
+roots. The gate validates installed versions, linkage, target ELF machines,
+`$ORIGIN` shared-library RUNPATHs, then executes a combined zlib/fmt C++
+consumer natively or through pinned QEMU. OpenSSL/curl and protobuf/Boost are
+the next two tiers.
 
 ## Product contract
 

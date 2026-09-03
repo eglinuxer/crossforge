@@ -3,6 +3,65 @@
 # Network access is confined to fetching the two content-addressed upstream
 # archives. Evidence, archive structure, payloads, license, ELF behavior, and
 # consumer builds are all validated in later networkless stages.
+FROM crossforge_host_runtime AS cmake-fetch
+ARG CMAKE_BINARY_URL
+ARG CMAKE_SOURCE_COMPONENT_SHA256
+WORKDIR /work
+RUN test -n "$CMAKE_BINARY_URL" \
+    && test -n "$CMAKE_SOURCE_COMPONENT_SHA256" \
+    && curl --fail --location --retry 3 "$CMAKE_BINARY_URL" \
+      --output /work/cmake-linux-x86_64.tar.gz
+
+FROM crossforge_host_runtime AS cmake-host-tool
+ARG CMAKE_VERSION
+ARG CMAKE_SOURCE_COMPONENT_SHA256
+ARG CMAKE_POLICY_COMPONENT_SHA256
+ARG CMAKE_TOOL_COMPONENT_SHA256
+COPY --from=cmake-fetch \
+  /work/cmake-linux-x86_64.tar.gz /work/cmake-linux-x86_64.tar.gz
+COPY --from=crossforge_ninja_host_tool \
+  /opt/crossforge/host-tools/ninja/ /opt/crossforge/host-tools/ninja/
+COPY --from=crossforge_ninja_host_tool \
+  /opt/crossforge/qualification/host-tools/ninja.json \
+  /opt/crossforge/qualification/host-tools/ninja.json
+COPY config/generated/components/sources/cmake.json \
+  /work/config/sources-cmake.json
+COPY config/generated/components/implementation/cmake-host-tool.json \
+  /work/config/cmake-host-tool-policy.json
+COPY config/generated/components/host-tools/cmake.json \
+  /work/config/cmake-host-tool.json
+COPY --chmod=0755 scripts/release_component.py \
+  scripts/install-qualify-cmake-tool.py /work/scripts/
+ENV CROSSFORGE_CMAKE_ROOT=/opt/crossforge/host-tools/cmake/${CMAKE_VERSION} \
+    NINJA_ROOT=/opt/crossforge/host-tools/ninja/1.13.2 \
+    PATH=/opt/crossforge/host-tools/cmake/${CMAKE_VERSION}/bin:/opt/crossforge/host-tools/ninja/1.13.2/bin:${PATH}
+RUN --network=none test "$CMAKE_VERSION" = 4.4.0 \
+    && /usr/libexec/platform-python \
+      /work/scripts/install-qualify-cmake-tool.py \
+      --archive /work/cmake-linux-x86_64.tar.gz \
+      --source-component /work/config/sources-cmake.json \
+      --source-component-sha256 "$CMAKE_SOURCE_COMPONENT_SHA256" \
+      --policy-component /work/config/cmake-host-tool-policy.json \
+      --policy-component-sha256 "$CMAKE_POLICY_COMPONENT_SHA256" \
+      --tool-component /work/config/cmake-host-tool.json \
+      --tool-component-sha256 "$CMAKE_TOOL_COMPONENT_SHA256" \
+      --destination-root "$CROSSFORGE_CMAKE_ROOT" \
+      --ninja "$NINJA_ROOT/bin/ninja" \
+      --output /opt/crossforge/qualification/host-tools/cmake.json \
+    && test "$(command -v cmake)" = "$CROSSFORGE_CMAKE_ROOT/bin/cmake" \
+    && test "$(cmake --version | head -n 1)" = "cmake version 4.4.0" \
+    && rm -rf /work
+WORKDIR /workspace
+
+FROM scratch AS cmake-host-tool-export
+ARG CMAKE_VERSION
+COPY --from=cmake-host-tool \
+  /opt/crossforge/host-tools/cmake/${CMAKE_VERSION}/ \
+  /opt/crossforge/host-tools/cmake/${CMAKE_VERSION}/
+COPY --from=cmake-host-tool \
+  /opt/crossforge/qualification/host-tools/cmake.json \
+  /opt/crossforge/qualification/host-tools/cmake.json
+
 FROM crossforge_host_runtime AS ninja-fetch
 ARG NINJA_BINARY_URL
 ARG NINJA_SOURCE_URL

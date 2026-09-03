@@ -78,14 +78,14 @@ jobs:
           docker buildx bake --check phase4 host-runtime-qualified
           docker buildx bake --print phase5 phase6 phase7 phase8 phase9 phase10 \
             phase13-source phase13-host-tools phase13-integration \
-            phase13-contract >/dev/null
+            phase13-contract phase13-ports >/dev/null
       - name: Locked latest inputs and native build Pythons
         run: |
           docker buildx bake validate platform-python-check \
             host-build-common-locked host-gcc-build-locked \
             host-python-build-locked qemu-aarch64-validated \
             host-runtime-qualified \
-            ninja-host-tool \
+            ninja-host-tool cmake-host-tool \
             vcpkg-source \
             sysroot-x86_64 sysroot-aarch64 python-native-latest \
             python-runtime-clean-x86_64 python-runtime-clean-aarch64 \
@@ -93,5 +93,5 @@ jobs:
       - name: Run the full Python and vcpkg SDK qualification gates
         if: github.event_name != 'pull_request'
         run: |
-          docker buildx bake python-matrix vcpkg-contract-qualified \
+          docker buildx bake python-matrix vcpkg-upstream-tier1-qualified \
             --progress=plain

@@ -23,19 +23,29 @@ FROM crossforge_qemu AS qemu-executor-source
 # content lock; no repository is consulted during qualification.
 FROM crossforge_rocky_amd64 AS rocky-runtime-x86_64-source
 
-FROM rocky-base AS config-validate
+FROM rocky-base AS release-validate
+COPY config/release.json ./config/release.json
+COPY config/schemas/release.schema.json ./config/schemas/release.schema.json
+COPY config/schemas/rpm-plan.schema.json ./config/schemas/rpm-plan.schema.json
+COPY config/rpm/sysroot-el8-x86_64.plan.json \
+  config/rpm/sysroot-el8-aarch64.plan.json ./config/rpm/
+COPY scripts/validate-release.py ./scripts/validate-release.py
+RUN /usr/libexec/platform-python ./scripts/validate-release.py \
+      ./config/release.json \
+      --schema ./config/schemas/release.schema.json
+
+# Full configuration/provenance validation is a CI gate, not an ancestor of
+# domain builds. Adding an unrelated generated component must not perturb the
+# stable release input passed to toolchain and Python qualification.
+FROM release-validate AS config-validate
 COPY config/ ./config/
 COPY evidence/ ./evidence/
 COPY keys/ZSTD-RELEASE-KEY.asc ./keys/ZSTD-RELEASE-KEY.asc
 COPY keys/MICROSOFT-RELEASE-KEY.asc ./keys/MICROSOFT-RELEASE-KEY.asc
 COPY licenses/ ./licenses/
 COPY patches/ ./patches/
-COPY scripts/validate-release.py ./scripts/validate-release.py
 COPY scripts/validate-supply-chain-evidence.py \
   ./scripts/validate-supply-chain-evidence.py
-RUN /usr/libexec/platform-python ./scripts/validate-release.py \
-      ./config/release.json \
-      --schema ./config/schemas/release.schema.json
 RUN /usr/libexec/platform-python ./scripts/validate-supply-chain-evidence.py \
       ./config/release.json
 
@@ -48,7 +58,7 @@ RUN /usr/libexec/platform-python ./scripts/render-release-components.py --check
 # Matrix-shaped placeholder used only to verify that Bake expands the two
 # compiler targets correctly. It writes an explicit NOT-BUILT marker instead of
 # producing fake toolchain files.
-FROM config-validate AS toolchain-plan
+FROM release-validate AS toolchain-plan
 ARG CROSSFORGE_TARGET_ARCH
 RUN case "${CROSSFORGE_TARGET_ARCH}" in \
       x86_64|aarch64) ;; \
@@ -60,7 +70,7 @@ RUN case "${CROSSFORGE_TARGET_ARCH}" in \
 
 # Inspectable layout prototype. This target is cache/local-output only in the
 # Bake file and must never be published under a user-facing SDK tag.
-FROM config-validate AS sdk-skeleton
+FROM release-validate AS sdk-skeleton
 RUN mkdir -p \
       /opt/crossforge/targets/x86_64-unknown-linux-gnu \
       /opt/crossforge/targets/aarch64-unknown-linux-gnu \
@@ -397,10 +407,10 @@ RUN --network=none \
 # re-verified before those RPMs are selected.
 FROM host-build-common-locked AS python-runtime-clean-x86_64
 ARG ROCKY_AMD64_MANIFEST_DIGEST
-COPY --from=config-validate /src/config/release.json /src/config/release.json
-COPY --from=config-validate /src/config/schemas/release.schema.json /src/config/schemas/release.schema.json
-COPY --from=config-validate /src/config/schemas/rpm-plan.schema.json /src/config/schemas/rpm-plan.schema.json
-COPY --from=config-validate /src/config/rpm/sysroot-el8-x86_64.plan.json /src/config/rpm/sysroot-el8-x86_64.plan.json
+COPY --from=release-validate /src/config/release.json /src/config/release.json
+COPY --from=release-validate /src/config/schemas/release.schema.json /src/config/schemas/release.schema.json
+COPY --from=release-validate /src/config/schemas/rpm-plan.schema.json /src/config/schemas/rpm-plan.schema.json
+COPY --from=release-validate /src/config/rpm/sysroot-el8-x86_64.plan.json /src/config/rpm/sysroot-el8-x86_64.plan.json
 COPY --from=rocky-runtime-x86_64-source / /runtime-root/
 COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
 COPY locks/transactions/sysroot-el8-x86_64.json ./locks/transactions/sysroot-el8-x86_64.json
@@ -418,10 +428,10 @@ RUN --network=none \
 
 FROM host-build-common-locked AS python-runtime-clean-aarch64
 ARG ROCKY_ARM64_MANIFEST_DIGEST
-COPY --from=config-validate /src/config/release.json /src/config/release.json
-COPY --from=config-validate /src/config/schemas/release.schema.json /src/config/schemas/release.schema.json
-COPY --from=config-validate /src/config/schemas/rpm-plan.schema.json /src/config/schemas/rpm-plan.schema.json
-COPY --from=config-validate /src/config/rpm/sysroot-el8-aarch64.plan.json /src/config/rpm/sysroot-el8-aarch64.plan.json
+COPY --from=release-validate /src/config/release.json /src/config/release.json
+COPY --from=release-validate /src/config/schemas/release.schema.json /src/config/schemas/release.schema.json
+COPY --from=release-validate /src/config/schemas/rpm-plan.schema.json /src/config/schemas/rpm-plan.schema.json
+COPY --from=release-validate /src/config/rpm/sysroot-el8-aarch64.plan.json /src/config/rpm/sysroot-el8-aarch64.plan.json
 COPY --from=rocky-runtime-aarch64-source / /runtime-root/
 COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
 COPY locks/transactions/sysroot-el8-aarch64.json ./locks/transactions/sysroot-el8-aarch64.json
@@ -769,7 +779,7 @@ COPY --from=gcc-aarch64 /work/gcc-stage/opt/ /opt/
 # ABI sets, full tests and the release supply chain exist.
 FROM host-build-common-locked AS toolchain-x86_64-qualify-build
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256
-COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY --from=release-validate /src/config/release.json /src/config/release.json
 COPY abi/el8/x86_64.json /src/abi/el8/x86_64.json
 COPY --from=sysroot-x86_64 \
   /opt/crossforge/sysroots/el8/x86_64/ \
@@ -795,7 +805,7 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
 
 FROM host-build-common-locked AS toolchain-aarch64-qualify-build
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256
-COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY --from=release-validate /src/config/release.json /src/config/release.json
 COPY abi/el8/aarch64.json /src/abi/el8/aarch64.json
 COPY --from=sysroot-aarch64 \
   /opt/crossforge/sysroots/el8/aarch64/ \
@@ -826,7 +836,7 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
 FROM host-build-common-locked AS runtime-smoke-aarch64
 ARG QEMU_EXECUTOR_CPU
 ARG QEMU_EXECUTOR_UNAME_RELEASE
-COPY --from=config-validate /src/config/release.json /src/config/release.json
+COPY --from=release-validate /src/config/release.json /src/config/release.json
 COPY --from=rocky-runtime-aarch64-source / /runtime-root/
 COPY --from=sysroot-aarch64 \
   /opt/crossforge/sysroots/el8/aarch64/ /sysroot/
@@ -884,7 +894,7 @@ RUN --network=none \
 # Re-run every linked executable in a clean pinned Rocky base. Only test
 # artifacts cross this boundary, so host build packages cannot mask runtime
 # dependencies or accidentally satisfy a RUNPATH.
-FROM config-validate AS runtime-smoke-x86_64
+FROM rocky-base AS runtime-smoke-x86_64
 COPY --from=toolchain-x86_64-qualify-build \
   /work/qualification/x86_64/ /work/qualification/x86_64/
 COPY --from=toolchain-x86_64-qualify-build \

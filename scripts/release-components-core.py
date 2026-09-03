@@ -658,7 +658,12 @@ def _render_expected_components(release, implemented_rows):
     )
     add("sources/zstd", "build", selector(("python", "zstd")))
     add("sources/vcpkg", "build", selector(("vcpkg",)))
-    add("sources/ninja", "build", selector(("host_tools", "ninja")))
+    for tool in sorted(release["host_tools"]):
+        add(
+            "sources/%s" % tool,
+            "build",
+            selector(("host_tools", tool)),
+        )
 
     toolchain_builds = {}
     toolchain_qualifications = {}

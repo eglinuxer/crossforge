@@ -5,7 +5,7 @@
       "component": "implementation/vcpkg-integration"
     },
     "sdk": {
-      "canonical_sha256": "f7d1512861d2fe1d998a2b6095a1c6835d41ab104d24cfcbe09310c654ad0ed1",
+      "canonical_sha256": "3ba5101626317b1d964205f50f567acc331b4f1cb95b57b32eef452aa277d320",
       "component": "vcpkg/sdk-build"
     }
   },
@@ -24,23 +24,23 @@
     },
     {
       "path": "triplets/crossforge-arm64-el8-dynamic.cmake",
-      "sha256": "57ccf6523cf9c9f12f4d6f1055a5da1f2cdc6bfdc01ecb175656c02458380627"
+      "sha256": "7ade7012a9dc90048fedbba74b3927ae653482ff4f159b880681d10aeac9b371"
     },
     {
       "path": "triplets/crossforge-arm64-el8.cmake",
-      "sha256": "093cc245c74c6d90a1a72c8c6ffd6ebfe0f31f255f1be301d8d85ebd21f99190"
+      "sha256": "1b4d3f6b767e0ed2f8bb7eadc795288734be1ac87cee70069f034b713f0b4c39"
     },
     {
       "path": "triplets/crossforge-host-x64-el8.cmake",
-      "sha256": "d6989186a4865b779e58905a8c477ec3253782f455a1ce4f4b11e5ae7d55b0b1"
+      "sha256": "a50d4494dc71df1911312e4b372dd796b34d96b17e8282ae89a34809188352f8"
     },
     {
       "path": "triplets/crossforge-x64-el8-dynamic.cmake",
-      "sha256": "9f9c240da6d1f446b876c4fff0692fa17332c7252632a732762209e049f317e6"
+      "sha256": "1b7b4d465ed25638a8a38b8fc134232b1e6ed8957c66aa002adb7986d5f3999d"
     },
     {
       "path": "triplets/crossforge-x64-el8.cmake",
-      "sha256": "41c6554a99051974f344988b81c4ee0b0e8f334c32e3e0707bcb1432a2f422be"
+      "sha256": "4a442dc65c42f9444e4cd89c12ddf553095a61be41d447e0f28661a3ab5f18f1"
     }
   ],
   "kind": "crossforge-vcpkg-integration",

@@ -626,6 +626,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                         "toolchain/%s-qualification" % arch,
                         "python/qualification",
                         "vcpkg/contract-qualification",
+                        "vcpkg/upstream-tier1-qualification",
                     },
                 )
             )
@@ -697,6 +698,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "zstd/aarch64-build",
             "vcpkg/sdk-build",
             "vcpkg/contract-qualification",
+            "vcpkg/upstream-tier1-qualification",
         }
         expected.update(
             "python/%s-aarch64-build" % row for row in self.row_names
@@ -717,6 +719,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "zstd/x86_64-build",
             "vcpkg/sdk-build",
             "vcpkg/contract-qualification",
+            "vcpkg/upstream-tier1-qualification",
         }
         expected.update(
             "python/%s-x86_64-build" % row for row in self.row_names
@@ -733,6 +736,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "toolchain/aarch64-qualification",
                 "python/qualification",
                 "vcpkg/contract-qualification",
+                "vcpkg/upstream-tier1-qualification",
             },
         )
 
@@ -771,8 +775,10 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             {
                 "rpm/host-runtime",
                 "host-tools/ninja",
+                "host-tools/cmake",
                 "vcpkg/sdk-build",
                 "vcpkg/contract-qualification",
+                "vcpkg/upstream-tier1-qualification",
                 "future/product",
             },
         )
@@ -800,8 +806,10 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "zstd/x86_64-build",
                 "zstd/aarch64-build",
                 "host-tools/ninja",
+                "host-tools/cmake",
                 "vcpkg/sdk-build",
                 "vcpkg/contract-qualification",
+                "vcpkg/upstream-tier1-qualification",
             }
         )
         for row in self.row_names:
@@ -835,6 +843,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "sources/vcpkg",
                 "vcpkg/sdk-build",
                 "vcpkg/contract-qualification",
+                "vcpkg/upstream-tier1-qualification",
             },
         )
 
@@ -870,8 +879,45 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             {
                 "sources/ninja",
                 "host-tools/ninja",
+                "host-tools/cmake",
                 "vcpkg/sdk-build",
                 "vcpkg/contract-qualification",
+                "vcpkg/upstream-tier1-qualification",
+            },
+        )
+
+    def test_cmake_host_tool_has_exact_vcpkg_only_impact(self):
+        source = self.components["sources/cmake"]
+        self.assertEqual(source["scope"], "build")
+        self.assertTrue(
+            all(
+                material["path"].startswith("/host_tools/cmake/")
+                for material in source["materials"]
+            )
+        )
+        tool = self.components["host-tools/cmake"]
+        self.assertEqual(
+            {item["component"] for item in tool["dependencies"]},
+            {
+                "host-tools/ninja",
+                "implementation/cmake-host-tool",
+                "rpm/host-runtime",
+                "sources/cmake",
+            },
+        )
+        after = self.render_mutation(
+            lambda release: release["host_tools"]["cmake"]["binary"].__setitem__(
+                "sha256", "0" * 64
+            )
+        )
+        self.assertEqual(
+            changed(self.components, after),
+            {
+                "sources/cmake",
+                "host-tools/cmake",
+                "vcpkg/sdk-build",
+                "vcpkg/contract-qualification",
+                "vcpkg/upstream-tier1-qualification",
             },
         )
 

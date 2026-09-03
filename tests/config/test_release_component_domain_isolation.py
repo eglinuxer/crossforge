@@ -13,12 +13,16 @@ CORE = runpy.run_path(
     str(REPOSITORY / "scripts/release-components-core.py")
 )
 VCPKG_COMPONENTS = {
+    "host-tools/cmake",
     "host-tools/ninja",
+    "implementation/cmake-host-tool",
     "implementation/ninja-host-tool",
     "implementation/vcpkg-contract-qualification",
     "implementation/vcpkg-integration",
+    "implementation/vcpkg-upstream-tier1-qualification",
     "vcpkg/contract-qualification",
     "vcpkg/sdk-build",
+    "vcpkg/upstream-tier1-qualification",
 }
 
 
@@ -87,6 +91,7 @@ class ReleaseComponentDomainIsolationTests(unittest.TestCase):
             {
                 "implementation/vcpkg-contract-qualification",
                 "vcpkg/contract-qualification",
+                "vcpkg/upstream-tier1-qualification",
             },
         )
 

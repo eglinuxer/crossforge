@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；Ninja 1.13.2 host-tool overlay、vcpkg registry/host tool 供应链、五套 triplet/chainload toolchain SDK 集成与真实无下载 overlay-port 契约已完成，代表性上游 port、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约及 zlib/fmt curated-port Tier 1 已完成，OpenSSL/curl、protobuf/Boost、分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -47,6 +47,7 @@ ghcr.io/eglinuxer/crossforge:gts15-el8
 ├── sysroots/el8/{x86_64,aarch64}/
 ├── python/cp{39,310,311,312,313,314}/
 ├── host-tools/ninja/1.13.2/
+├── host-tools/cmake/4.4.0/
 ├── cmake/
 ├── meson/
 ├── vcpkg/triplets/
@@ -54,7 +55,7 @@ ghcr.io/eglinuxer/crossforge:gts15-el8
 └── release.json
 ```
 
-镜像还包含原生 GTS15 C/C++ 编译器、CMake、Meson、固定 Ninja 1.13.2 overlay、Make、Autoconf、Automake、Libtool、pkg-config、Git、bison、flex、常用归档/文本工具、QEMU、固定版本的 vcpkg 和 nFPM。RPM 所有的旧 Ninja 保留但不处于 PATH 首位。RPM 构建工具、DejaGNU、Qt 源码、gperf 及 WebEngine 专用工具只存在于内部构建/测试 stage。Rust、Conan、auditwheel、cibuildwheel 不进入产品镜像。
+镜像还包含原生 GTS15 C/C++ 编译器、Meson、固定 CMake 4.4.0/Ninja 1.13.2 overlay、Make、Autoconf、Automake、Libtool、pkg-config、Git、bison、flex、常用归档/文本工具、QEMU、固定版本的 vcpkg 和 nFPM。RPM 所有的旧 CMake/Ninja 保留但不处于 PATH 首位。RPM 构建工具、DejaGNU、Qt 源码、gperf 及 WebEngine 专用工具只存在于内部构建/测试 stage。Rust、Conan、auditwheel、cibuildwheel 不进入产品镜像。
 
 ## 4. 构建架构
 
@@ -215,14 +216,20 @@ Python 契约是“支持交叉编译扩展”，不是 PEP 517/wheel 编排器�
 
 ## 8. vcpkg 集成
 
-vcpkg 固定版本要求现代 Ninja，而 EL8 RPM 只提供旧版本。Crossforge 因此将 vcpkg
-选定的 Ninja 1.13.2 官方 Linux 资产安装到独立
+vcpkg 固定版本要求现代 CMake/Ninja，而 EL8 RPM 只提供旧版本。Crossforge 因此将
+vcpkg tool database 选定的 CMake 4.4.0 与 Ninja 1.13.2 官方 Linux 资产安装到独立
+`/opt/crossforge/host-tools/cmake/4.4.0` 和
 `/opt/crossforge/host-tools/ninja/1.13.2`，保持
-`VCPKG_FORCE_SYSTEM_BINARIES=1`，并把 overlay 置于 PATH 首位。该资产以完整 commit、
+`VCPKG_FORCE_SYSTEM_BINARIES=1`，并把 overlay 置于 PATH 首位。Ninja 资产以完整 commit、
 GitHub tag-ref/release 原始证据、GitHub SHA256、vcpkg SHA512、解包后 ELF 摘要及
 源码 `COPYING` 共同绑定；不因 lightweight tag 或 `immutable:false` release
 声称上游签名信任。资格化必须证明 Ninja、CMake、Meson 与 vcpkg 均选择该绝对路径，
 且不得覆盖 `/usr/bin/ninja`。
+
+CMake 资产绑定 vcpkg SHA512、独立 SHA256/大小、`cmake`/`ctest`/`cpack` 三个 ELF
+摘要及 BSD-3-Clause 许可。离线资格化要求其最高 GLIBC 版本不超过 2.17，无
+RPATH/TEXTREL、动态依赖闭合，并实际运行 CMake/Ninja、CTest 与 CPack；
+`/usr/bin/cmake` 不得被覆盖。SDK 还要求 `vcpkg fetch cmake` 返回该绝对路径。
 
 供应链基础固定 vcpkg `2026.07.29` / commit
 `9e593bb18ea69cc5095e012465dcd675a822ed0d`，并保留非 shallow 的完整 commit
@@ -262,6 +269,12 @@ ELF machine 均由实际产物复核；共享库只允许 vcpkg 修复后的精�
 执行。vcpkg 需要的 patchelf 0.19.0 归档按 URL、SHA256、SHA512 与大小预取，在离线
 门禁中再次核验，只进入临时 downloads root。downloads、buildtrees、packages、
 installed tree 和该 helper 资产均不进入产品根目录。
+
+curated-port Tier 1 固定 `zlib 1.3.2#1` 与 `fmt 12.2.0#1`。网络 stage 只获取三份
+显式 URL/SHA256/SHA512/大小资产，离线 stage 在五套 triplet 中分别执行 manifest
+install，验证版本、静态/动态布局、ELF machine 与精确 `$ORIGIN` RUNPATH，并原生或
+通过固定 QEMU 执行组合 consumer。下一层为 OpenSSL/curl，之后为需要 host protoc
+与大依赖图的 protobuf/Boost。
 
 ## 9. 构建系统无关的分包
 
@@ -317,7 +330,7 @@ Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单�
 
 `release.json` 是唯一人工维护的版本源。`config/generated/` 将它投影为 build、qualification、supply 与 future 四类组件身份，并用单向 `release-binding.json` 绑定完整 release digest；共享 Python 实现策略另有显式投影。生成器要求每个 release 叶字段有明确分类，并保证版本行、架构及 host closure 的无关变化不会污染其他 build identity。ABI 输入只生成 `abi/{x86_64,aarch64}-baseline` 与 `abi/python-providers` 三个 qualification component：对应 toolchain qualification 依赖各自 baseline，Python aggregate 直接依赖三者。ABI pin 更新因此不会改变 GCC、Python row 或 zstd 的任何 build component。维护与资格化边界继续显式读取完整 release identity，因此无关 future 元数据只会触发重验，不会重编 GCC/binutils。
 
-组件实现也遵循同一边界：`release-components-core.py` 只包含 toolchain、ABI、Python 等稳定核心，`release-components-vcpkg.py` 是 Ninja/vcpkg 扩展，`render-release-components.py` 仅组合两者并写入完整 63-component graph。Python 和 toolchain 的 Docker 资格 stage 只复制核心文件；vcpkg policy 或 fixture 变化因此只能改变 vcpkg 组件身份与门禁层，不再因共享渲染脚本的字节变化重跑 12 套 Python target 资格化。回归测试同时锁定共享组件摘要不变性和 Docker COPY 边界。
+组件实现也遵循同一边界：`release-components-core.py` 只包含 toolchain、ABI、Python 等稳定核心，`release-components-vcpkg.py` 是 CMake/Ninja/vcpkg 扩展，`render-release-components.py` 仅组合两者并写入完整 component graph。Python 和 toolchain 的 Docker 资格 stage 只复制核心文件；vcpkg policy 或 fixture 变化因此只能改变 vcpkg 组件身份与门禁层，不再因共享渲染脚本的字节变化重跑 12 套 Python target 资格化。回归测试同时锁定共享组件摘要不变性和 Docker COPY 边界。
 
 Rocky OCI index、QEMU index/manifest/attestation/SLSA predicate、QEMU Git tag/commit，以及 Ninja GitHub tag-ref/release 与 commit 原始字节以 base64 envelope 签入 `evidence/`。离线 validator 必须重算 OCI/GitHub evidence digest 与 Git object ID，并验证 platform child manifest、attestation subject、provenance builder/build arguments 和源码 tag→commit 关系。当前只归档 QEMU annotated tag 内的 OpenPGP 签名，不宣称已建立 QEMU maintainer keyring 信任；Ninja lightweight tag 也无独立签名，因此依赖完整 commit 与多重内容摘要。正式发布前需补齐相应信任根或保留明确的 hash-pinned 风险边界。
 
@@ -361,4 +374,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成与真实无下载 port 契约已完成；后续实现代表性上游 vcpkg ports、分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约与 zlib/fmt Tier 1 已完成；后续实现 OpenSSL/curl、protobuf/Boost、分包、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

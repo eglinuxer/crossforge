@@ -161,6 +161,7 @@ def render_zstd_graph(config, targets, component_arguments, rocky_amd64_image):
 
 def render_ninja_graph(config, targets, component_arguments):
     ninja = config["host_tools"]["ninja"]
+    cmake = config["host_tools"]["cmake"]
 
     def digest(component):
         argument = component_argument_name(component)
@@ -168,7 +169,7 @@ def render_ninja_graph(config, targets, component_arguments):
             return component_arguments[argument]
         except KeyError as error:
             raise ValueError(
-                "missing Ninja component digest: %s" % component
+                "missing host-tool component digest: %s" % component
             ) from error
 
     targets["ninja-source"] = {
@@ -201,6 +202,24 @@ def render_ninja_graph(config, targets, component_arguments):
         },
         "output": ["type=cacheonly"],
     }
+    targets["cmake-host-tool"] = {
+        "inherits": ["_host_tools_common"],
+        "target": "cmake-host-tool-export",
+        "args": {
+            "CMAKE_VERSION": cmake["version"],
+            "CMAKE_BINARY_URL": cmake["binary"]["url"],
+            "CMAKE_SOURCE_COMPONENT_SHA256": digest("sources/cmake"),
+            "CMAKE_POLICY_COMPONENT_SHA256": digest(
+                "implementation/cmake-host-tool"
+            ),
+            "CMAKE_TOOL_COMPONENT_SHA256": digest("host-tools/cmake"),
+        },
+        "contexts": {
+            "crossforge_host_runtime": "target:host-runtime-qualified",
+            "crossforge_ninja_host_tool": "target:ninja-host-tool",
+        },
+        "output": ["type=cacheonly"],
+    }
     return {
         "phase13-host-tools": {
             "targets": [
@@ -208,13 +227,17 @@ def render_ninja_graph(config, targets, component_arguments):
                 "host-runtime-qualified",
                 "ninja-source",
                 "ninja-host-tool",
+                "cmake-host-tool",
             ]
         }
     }
 
 
 def render_vcpkg_graph(
-    config, targets, component_arguments, contract_policy
+    config,
+    targets,
+    component_arguments,
+    contract_policy,
 ):
     vcpkg = config["vcpkg"]
     source_argument = component_argument_name("sources/vcpkg")
@@ -243,6 +266,19 @@ def render_vcpkg_graph(
             "VCPKG_PATCHELF_SHA256": patchelf["sha256"],
             "VCPKG_PATCHELF_SHA512": patchelf["sha512"],
             "VCPKG_PATCHELF_SIZE": str(patchelf["size"]),
+        },
+        "contexts": {
+            "crossforge_host_runtime": "target:host-runtime-qualified"
+        },
+        "output": ["type=cacheonly"],
+    }
+    targets["vcpkg-upstream-tier1-assets"] = {
+        "inherits": ["_vcpkg_common"],
+        "target": "vcpkg-upstream-tier1-assets-export",
+        "args": {
+            "VCPKG_UPSTREAM_TIER1_POLICY_COMPONENT_SHA256": digest(
+                "implementation/vcpkg-upstream-tier1-qualification"
+            ),
         },
         "contexts": {
             "crossforge_host_runtime": "target:host-runtime-qualified"
@@ -279,9 +315,11 @@ def render_vcpkg_graph(
             ),
             "VCPKG_SDK_COMPONENT_SHA256": digest("vcpkg/sdk-build"),
             "NINJA_TOOL_COMPONENT_SHA256": digest("host-tools/ninja"),
+            "CMAKE_TOOL_COMPONENT_SHA256": digest("host-tools/cmake"),
         },
         "contexts": {
             "crossforge_sdk_base": "target:python-phase10-dev",
+            "crossforge_cmake_host_tool": "target:cmake-host-tool",
             "crossforge_ninja_host_tool": "target:ninja-host-tool",
             "crossforge_vcpkg_source": "target:vcpkg-source",
         },
@@ -304,6 +342,26 @@ def render_vcpkg_graph(
         },
         "output": ["type=cacheonly"],
     }
+    targets["vcpkg-upstream-tier1-qualified"] = {
+        "inherits": ["_vcpkg_common"],
+        "target": "vcpkg-upstream-tier1-qualified",
+        "args": {
+            "VCPKG_UPSTREAM_TIER1_POLICY_COMPONENT_SHA256": digest(
+                "implementation/vcpkg-upstream-tier1-qualification"
+            ),
+            "VCPKG_UPSTREAM_TIER1_QUALIFICATION_COMPONENT_SHA256": digest(
+                "vcpkg/upstream-tier1-qualification"
+            ),
+        },
+        "contexts": {
+            "crossforge_vcpkg_contract": "target:vcpkg-contract-qualified",
+            "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
+            "crossforge_vcpkg_upstream_tier1_assets": (
+                "target:vcpkg-upstream-tier1-assets"
+            ),
+        },
+        "output": ["type=cacheonly"],
+    }
     return {
         "phase13-source": {
             "targets": [
@@ -322,6 +380,9 @@ def render_vcpkg_graph(
         },
         "phase13-contract": {
             "targets": ["vcpkg-contract-qualified"]
+        },
+        "phase13-ports": {
+            "targets": ["vcpkg-upstream-tier1-qualified"]
         },
     }
 

@@ -73,6 +73,7 @@ class VcpkgIntegrationTests(unittest.TestCase):
             {
                 "rpm/host-runtime",
                 "sources/vcpkg",
+                "host-tools/cmake",
                 "host-tools/ninja",
                 "implementation/vcpkg-integration",
                 "toolchain/x86_64-build",
@@ -179,6 +180,7 @@ class VcpkgIntegrationTests(unittest.TestCase):
         self.assertEqual(
             target["contexts"],
             {
+                "crossforge_cmake_host_tool": "target:cmake-host-tool",
                 "crossforge_ninja_host_tool": "target:ninja-host-tool",
                 "crossforge_sdk_base": "target:python-phase10-dev",
                 "crossforge_vcpkg_source": "target:vcpkg-source",
