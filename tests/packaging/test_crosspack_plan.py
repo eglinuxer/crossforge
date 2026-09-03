@@ -58,6 +58,27 @@ class CrosspackPlanTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
+    def debug_config(self):
+        config = copy.deepcopy(self.config)
+        config["debug_symbols"] = {"component": "debug"}
+        config["components"].append(
+            {
+                "name": "debug",
+                "package_names": {
+                    "deb": "crossforge-demo-dbgsym",
+                    "rpm": "crossforge-demo-debuginfo",
+                },
+                "description": "Detached debug symbols",
+                "files": [],
+                "dependencies": {
+                    "components": ["runtime"],
+                    "deb": [],
+                    "rpm": [],
+                },
+            }
+        )
+        return config
+
     def test_manifest_and_generated_plan_validate_against_strict_schemas(self):
         config_schema = VALIDATOR["load_json"](CONFIG_SCHEMA)
         plan_schema = VALIDATOR["load_json"](PLAN_SCHEMA)
@@ -105,7 +126,12 @@ class CrosspackPlanTests(unittest.TestCase):
         library = next(item for item in contents if item.get("elf"))
         self.assertEqual(
             library["elf"],
-            {"class": 64, "endianness": "little", "machine": "x86_64"},
+            {
+                "class": 64,
+                "endianness": "little",
+                "machine": "x86_64",
+                "type": "dynamic",
+            },
         )
 
     def test_plan_identity_ignores_mtime_and_absolute_staging_path(self):
@@ -113,6 +139,8 @@ class CrosspackPlanTests(unittest.TestCase):
         os.utime(str(self.root / "usr/bin/crossforge-demo"), (1, 1))
         second = CROSSPACK["build_plan"](self.config, self.root)
         self.assertEqual(first, second)
+        plan_schema = VALIDATOR["load_json"](PLAN_SCHEMA)
+        VALIDATOR["validate"](first, plan_schema, plan_schema, "$")
         self.assertNotIn(str(self.root), json.dumps(first, sort_keys=True))
 
     def test_nfpm_configs_are_explicit_format_specific_and_non_globbing(self):
@@ -167,6 +195,220 @@ class CrosspackPlanTests(unittest.TestCase):
         write_elf(self.root / "usr/lib64/libcrossforge-demo.so.1", 62)
         with self.assertRaises(CROSSPACK["CrosspackError"]):
             CROSSPACK["build_plan"](self.config, self.root)
+
+    def test_target_readelf_audits_needed_runpath_and_exports(self):
+        readelf = shutil.which("readelf")
+        if readelf is None or not Path("/bin/true").is_file():
+            self.skipTest("host ELF audit fixture is unavailable")
+        shutil.copy2(
+            "/bin/true", self.root / "usr/lib64/libcrossforge-demo.so.1"
+        )
+        plan = CROSSPACK["build_plan"](
+            self.config, self.root, readelf, Path("/")
+        )
+        self.assertEqual(plan["elf_audit"]["elf_count"], 1)
+        self.assertGreater(plan["elf_audit"]["providers_count"], 0)
+        runtime = next(
+            content
+            for package in plan["packages"]
+            for content in package["contents"]
+            if content["destination"]
+            == "/usr/lib64/libcrossforge-demo.so.1"
+        )
+        self.assertEqual(runtime["elf"]["machine"], "x86_64")
+        self.assertEqual(runtime["elf"]["runpath"], [])
+        self.assertRegex(runtime["elf"]["exports_sha256"], r"^[0-9a-f]{64}$")
+        self.assertGreaterEqual(runtime["elf"]["exports_count"], 0)
+        with self.assertRaises(CROSSPACK["CrosspackError"]):
+            CROSSPACK["build_plan"](
+                self.config, self.root, "/bin/true", Path("/")
+            )
+        with self.assertRaises(CROSSPACK["ElfError"]):
+            CROSSPACK["ELF"]["dynamic_identity"](
+                "0x (RPATH) Library rpath: [/tmp/host]\n"
+            )
+        with self.assertRaises(CROSSPACK["ElfError"]):
+            CROSSPACK["ELF"]["dynamic_identity"](
+                "0x (RUNPATH) Library runpath: [$ORIGIN/../lib]\n"
+            )
+        compiler = shutil.which("gcc")
+        if compiler is not None:
+            missing_source = Path(self.temporary.name) / "missing.c"
+            consumer_source = Path(self.temporary.name) / "consumer.c"
+            missing_library = Path(self.temporary.name) / "libmissing-crossforge.so.1"
+            missing_source.write_text(
+                "int missing_crossforge(void) { return 1; }\n",
+                encoding="utf-8",
+            )
+            consumer_source.write_text(
+                "extern int missing_crossforge(void);\n"
+                "int consumer(void) { return missing_crossforge(); }\n",
+                encoding="utf-8",
+            )
+            for command in (
+                [
+                    compiler,
+                    "-shared",
+                    "-fPIC",
+                    "-Wl,-soname,libmissing-crossforge.so.1",
+                    "-o",
+                    str(missing_library),
+                    str(missing_source),
+                ],
+                [
+                    compiler,
+                    "-shared",
+                    "-fPIC",
+                    "-Wl,-soname,libcrossforge-demo.so.1",
+                    "-o",
+                    str(self.root / "usr/lib64/libcrossforge-demo.so.1"),
+                    str(consumer_source),
+                    "-L" + self.temporary.name,
+                    "-Wl,--no-as-needed",
+                    "-l:libmissing-crossforge.so.1",
+                ],
+            ):
+                process = subprocess.run(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    universal_newlines=True,
+                )
+                self.assertEqual(process.returncode, 0, process.stderr)
+            (self.root / "usr/share/crossforge/libmissing-crossforge.so.1").write_text(
+                "not an ELF provider\n", encoding="utf-8"
+            )
+            with self.assertRaisesRegex(
+                CROSSPACK["CrosspackError"], "unresolved DT_NEEDED"
+            ):
+                CROSSPACK["build_plan"](
+                    self.config, self.root, readelf, Path("/")
+                )
+
+    def test_elf_audit_allows_a_pure_script_package(self):
+        readelf = shutil.which("readelf")
+        if readelf is None:
+            self.skipTest("host readelf is unavailable")
+        root = Path(self.temporary.name) / "script-staging"
+        (root / "usr/bin").mkdir(parents=True)
+        script = root / "usr/bin/crossforge-script"
+        script.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        script.chmod(0o755)
+        config = {
+            "$schema": self.config["$schema"],
+            "schema_version": 1,
+            "project": copy.deepcopy(self.config["project"]),
+            "target": "x86_64",
+            "debug_symbols": None,
+            "components": [
+                {
+                    "name": "tools",
+                    "package_names": {
+                        "deb": "crossforge-script",
+                        "rpm": "crossforge-script",
+                    },
+                    "description": "Pure script package",
+                    "files": [
+                        {"source": "usr/bin", "destination": "/usr/bin"}
+                    ],
+                    "dependencies": {"components": [], "deb": [], "rpm": []},
+                }
+            ],
+        }
+        plan = CROSSPACK["build_plan"](config, root, readelf, Path("/"))
+        self.assertEqual(plan["elf_audit"]["elf_count"], 0)
+
+    def test_debug_symbols_are_split_with_target_objcopy_reproducibly(self):
+        compiler = shutil.which("gcc")
+        readelf = shutil.which("readelf")
+        objcopy = shutil.which("objcopy")
+        if None in (compiler, readelf, objcopy):
+            self.skipTest("host ELF build tools are unavailable")
+        source = Path(self.temporary.name) / "debug-probe.c"
+        source.write_text(
+            "int crossforge_debug_probe(void) { return 42; }\n",
+            encoding="utf-8",
+        )
+        library = self.root / "usr/lib64/libcrossforge-demo.so.1"
+        process = subprocess.run(
+            [
+                compiler,
+                "-shared",
+                "-fPIC",
+                "-g",
+                "-Wl,-soname,libcrossforge-demo.so.1",
+                "-o",
+                str(library),
+                str(source),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        self.assertEqual(process.returncode, 0, process.stderr)
+        original_sha256 = CROSSPACK["sha256_file"](library)
+        config = self.debug_config()
+        config_path = Path(self.temporary.name) / "debug-crosspack.json"
+        config_path.write_text(
+            json.dumps(config, sort_keys=True), encoding="utf-8"
+        )
+        first = CROSSPACK["plan"](
+            config_path, self.root, readelf, Path("/"), objcopy
+        )
+        second = CROSSPACK["plan"](
+            config_path, self.root, readelf, Path("/"), objcopy
+        )
+        self.assertEqual(first, second)
+        plan_schema = VALIDATOR["load_json"](PLAN_SCHEMA)
+        VALIDATOR["validate"](first, plan_schema, plan_schema, "$")
+        with tempfile.TemporaryDirectory() as prepared_text:
+            _effective, prepared, _debug = CROSSPACK[
+                "prepare_debug_staging"
+            ](config, self.root, objcopy, Path(prepared_text))
+            stripped = prepared / "usr/lib64/libcrossforge-demo.so.1"
+            detached = (
+                prepared
+                / ".crossforge-debug-symbols/usr/lib/debug/usr/lib64"
+                / "libcrossforge-demo.so.1.debug"
+            )
+            stripped_sections = subprocess.check_output(
+                [readelf, "--sections", str(stripped)],
+                universal_newlines=True,
+            )
+            debug_sections = subprocess.check_output(
+                [readelf, "--sections", str(detached)],
+                universal_newlines=True,
+            )
+            debuglink = subprocess.check_output(
+                [readelf, "--string-dump=.gnu_debuglink", str(stripped)]
+            )
+            self.assertNotIn(".debug_info", stripped_sections)
+            self.assertIn(".gnu_debuglink", stripped_sections)
+            self.assertIn(".debug_info", debug_sections)
+            self.assertIn(b"libcrossforge-demo.so.1.debug", debuglink)
+        self.assertEqual(CROSSPACK["sha256_file"](library), original_sha256)
+        self.assertEqual(first["debug_symbols"]["generated_count"], 1)
+        record = first["debug_symbols"]["files"][0]
+        self.assertEqual(
+            record["debug_destination"],
+            "/usr/lib/debug/usr/lib64/libcrossforge-demo.so.1.debug",
+        )
+        self.assertNotEqual(record["runtime_sha256"], original_sha256)
+        packages = {item["component"]: item for item in first["packages"]}
+        self.assertEqual(
+            packages["debug"]["dependencies"]["components"], ["runtime"]
+        )
+        self.assertEqual(len(packages["debug"]["contents"]), 1)
+        self.assertEqual(first["elf_audit"]["elf_count"], 2)
+
+        invalid = self.debug_config()
+        invalid["components"][-1]["dependencies"]["components"] = []
+        invalid_path = Path(self.temporary.name) / "invalid-debug.json"
+        invalid_path.write_text(json.dumps(invalid), encoding="utf-8")
+        with self.assertRaises(CROSSPACK["CrosspackError"]):
+            CROSSPACK["plan"](
+                invalid_path, self.root, readelf, Path("/"), objcopy
+            )
 
     def test_unassigned_overlap_and_destination_collisions_fail_closed(self):
         (self.root / "unassigned").write_text("x", encoding="utf-8")
@@ -292,6 +534,13 @@ class CrosspackPlanTests(unittest.TestCase):
             CROSSPACK["build_plan"](config, self.root)
 
     def test_cli_writes_the_same_canonical_plan(self):
+        readelf = shutil.which("readelf")
+        objcopy = shutil.which("objcopy")
+        if readelf is None or objcopy is None or not Path("/bin/true").is_file():
+            self.skipTest("host ELF tool fixture is unavailable")
+        shutil.copy2(
+            "/bin/true", self.root / "usr/lib64/libcrossforge-demo.so.1"
+        )
         output = Path(self.temporary.name) / "plan.json"
         process = subprocess.run(
             [
@@ -302,6 +551,12 @@ class CrosspackPlanTests(unittest.TestCase):
                 str(FIXTURE),
                 "--staging-root",
                 str(self.root),
+                "--readelf",
+                readelf,
+                "--sysroot",
+                "/",
+                "--objcopy",
+                objcopy,
                 "--output",
                 str(output),
             ],
@@ -312,7 +567,9 @@ class CrosspackPlanTests(unittest.TestCase):
         self.assertEqual(process.returncode, 0, process.stderr)
         self.assertEqual(
             json.loads(output.read_text(encoding="utf-8")),
-            CROSSPACK["build_plan"](self.config, self.root),
+            CROSSPACK["build_plan"](
+                self.config, self.root, readelf, Path("/")
+            ),
         )
 
     @unittest.skipUnless(
@@ -322,14 +579,37 @@ class CrosspackPlanTests(unittest.TestCase):
     )
     def test_real_nfpm_build_is_atomic_and_reproducible(self):
         nfpm = os.environ.get("CROSSFORGE_NFPM") or shutil.which("nfpm")
+        readelf = shutil.which("readelf")
+        objcopy = shutil.which("objcopy")
+        if readelf is None or objcopy is None or not Path("/bin/true").is_file():
+            self.skipTest("host ELF tool fixture is unavailable")
+        shutil.copy2(
+            "/bin/true", self.root / "usr/lib64/libcrossforge-demo.so.1"
+        )
         nfpm_sha256 = CROSSPACK["sha256_file"](nfpm)
         output_one = Path(self.temporary.name) / "packages-one"
         output_two = Path(self.temporary.name) / "packages-two"
         result_one = CROSSPACK["package"](
-            FIXTURE, self.root, output_one, nfpm, "2.47.0", nfpm_sha256
+            FIXTURE,
+            self.root,
+            output_one,
+            nfpm,
+            "2.47.0",
+            nfpm_sha256,
+            readelf,
+            Path("/"),
+            objcopy,
         )
         result_two = CROSSPACK["package"](
-            FIXTURE, self.root, output_two, nfpm, "2.47.0", nfpm_sha256
+            FIXTURE,
+            self.root,
+            output_two,
+            nfpm,
+            "2.47.0",
+            nfpm_sha256,
+            readelf,
+            Path("/"),
+            objcopy,
         )
         result_schema = VALIDATOR["load_json"](
             REPOSITORY / "config/schemas/crosspack-result.schema.json"
@@ -352,6 +632,9 @@ class CrosspackPlanTests(unittest.TestCase):
                 nfpm,
                 "2.47.0",
                 "0" * 64,
+                readelf,
+                Path("/"),
+                objcopy,
             )
         artifacts = {
             (item["component"], item["format"]): output_one / item["path"]
@@ -398,11 +681,12 @@ class CrosspackPlanTests(unittest.TestCase):
         self.assertFalse((output_one / "configs").exists())
 
     def test_crosspack_source_is_python36_syntax_compatible(self):
-        ast.parse(
-            CROSSPACK_PATH.read_text(encoding="utf-8"),
-            filename=str(CROSSPACK_PATH),
-            feature_version=(3, 6),
-        )
+        for path in (CROSSPACK_PATH, REPOSITORY / "tools/crossforge/elf.py"):
+            ast.parse(
+                path.read_text(encoding="utf-8"),
+                filename=str(path),
+                feature_version=(3, 6),
+            )
 
 
 if __name__ == "__main__":

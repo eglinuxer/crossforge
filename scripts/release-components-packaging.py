@@ -18,6 +18,7 @@ CROSSPACK_POLICY = {
     "paths": "canonical-no-escape-no-overlap",
     "external_dependencies": "explicit-per-format",
     "internal_dependencies": "exact-version-release",
+    "debug_symbols": "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
     "reproducibility": {
         "identity": "canonical-json-sha256",
         "timestamp": "source-date-epoch",
@@ -28,7 +29,14 @@ CROSSPACK_POLICY = {
         "setuid_setgid": "forbidden",
         "world_writable": "forbidden",
         "symlink_target": "owned-with-declared-component-edge",
-        "elf": "64-bit-little-endian-exact-target",
+        "elf": {
+            "identity": "64-bit-little-endian-exact-target",
+            "needed": "package-or-target-sysroot-provider",
+            "rpath": "forbidden",
+            "runpath": "origin-only-no-parent-traversal",
+            "text_relocations": "forbidden",
+            "exports": "canonical-sha256",
+        },
     },
 }
 CROSSPACK_QUALIFICATION_POLICY = {
@@ -49,6 +57,8 @@ CROSSPACK_QUALIFICATION_POLICY = {
         "exact_metadata": True,
         "isolated_install_root": True,
         "installed_payload_hashes": True,
+        "detached_debug_symbols": True,
+        "dynamic_elf_audit": True,
     },
 }
 CROSSFORGE_LAUNCHER_POLICY = {

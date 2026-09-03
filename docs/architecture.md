@@ -303,10 +303,16 @@ SHA256/SHA512/大小，验证 checksum 对二进制归档的绑定，并检查 b
 为 `archived-unverified`，不声称完成 Fulcio/Rekor 信任链验证。
 
 `docker buildx bake packaging-qualified` 为 x86_64/aarch64 分别交叉构建真实 ELF，
-两次生成 runtime/development/tools 的 DEB/RPM 并要求逐字节一致；随后在固定 Debian
+两次生成 runtime/development/tools/debug 的 DEB/RPM 并要求逐字节一致；随后在固定 Debian
 amd64 manifest 中用 `dpkg --root`、在 Rocky 中用 `rpm --root`/`--ignorearch` 安装，
 复核精确版本/架构、symlink 与每个普通文件的 SHA256。packages、安装 root 和下载物
-均不进入 SDK。debug symbol 自动拆分和更深的动态 ELF/ABI 审计仍是本阶段下一切片。
+均不进入 SDK。启用 `debug_symbols` 时，debug component 必须没有人工 files，且其
+component dependency 必须精确覆盖所有 ELF owner；crosspack 在私有 staging 副本中用
+对应 target `objcopy --only-keep-debug/--strip-debug/--add-gnu-debuglink` 生成 detached
+symbols，原 staging 不变。随后 target `readelf` 拒绝 `DT_RPATH`、TEXTREL、包含空项、
+绝对路径或 `..` 的 RUNPATH，以及不能由同一 package set 或固定 target sysroot 解析的
+`DT_NEEDED`；SONAME、NEEDED、RUNPATH、导出符号摘要、readelf 摘要和 sysroot provider
+inventory 摘要进入 canonical plan。Phase 14 已实际安装并复核双架构共 16 个包。
 
 ## 10. 用户接口
 
@@ -402,4 +408,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、双格式分包门禁、单一 launcher 与完整 SDK 聚合已完成；后续补齐 debug symbol/ELF 深审计、完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、带 debug/ELF 深审计的双格式分包门禁、单一 launcher 与完整 SDK 聚合已完成；后续推进完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

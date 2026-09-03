@@ -37,6 +37,14 @@
       "value": true
     },
     {
+      "path": "/@implementation/crosspack-qualification/requirements/detached_debug_symbols",
+      "value": true
+    },
+    {
+      "path": "/@implementation/crosspack-qualification/requirements/dynamic_elf_audit",
+      "value": true
+    },
+    {
       "path": "/@implementation/crosspack-qualification/requirements/exact_metadata",
       "value": true
     },

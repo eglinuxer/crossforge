@@ -2,12 +2,14 @@
 """Plan strict, build-system-independent split DEB/RPM packages."""
 
 import argparse
+import copy
 import datetime
 import hashlib
 import json
 import os
 import posixpath
 import re
+import runpy
 import shutil
 import stat
 import subprocess
@@ -32,6 +34,8 @@ ARCHITECTURES = {
     "x86_64": {"deb": "amd64", "rpm": "x86_64", "elf_machine": 62},
     "aarch64": {"deb": "arm64", "rpm": "aarch64", "elf_machine": 183},
 }
+ELF = runpy.run_path(str(Path(__file__).with_name("elf.py")))
+ElfError = ELF["ElfError"]
 
 
 class CrosspackError(ValueError):
@@ -148,12 +152,23 @@ def validate_dependency_list(value, label):
 def validate_config(config):
     exact_keys(
         config,
-        {"$schema", "schema_version", "project", "target", "components"},
+        {
+            "$schema",
+            "schema_version",
+            "project",
+            "target",
+            "debug_symbols",
+            "components",
+        },
         "crosspack",
     )
     require(config["$schema"] == CONFIG_SCHEMA, "crosspack schema differs")
     require(config["schema_version"] == 1, "unsupported crosspack schema version")
     require(config["target"] in ARCHITECTURES, "unsupported crosspack target")
+    debug_symbols = config["debug_symbols"]
+    if debug_symbols is not None:
+        exact_keys(debug_symbols, {"component"}, "debug_symbols")
+        name(debug_symbols["component"], "debug_symbols.component")
 
     project_keys = {
         "name",
@@ -222,7 +237,7 @@ def validate_config(config):
             package_names[packager].add(package_name)
 
         mappings = component["files"]
-        require(isinstance(mappings, list) and mappings, label + ".files must be non-empty")
+        require(isinstance(mappings, list), label + ".files must be an array")
         observed_mappings = set()
         for mapping_index, mapping in enumerate(mappings):
             mapping_label = "%s.files[%d]" % (label, mapping_index)
@@ -254,6 +269,38 @@ def validate_config(config):
         validate_dependency_list(dependencies["rpm"], label + ".dependencies.rpm")
 
     component_map = {item["name"]: item for item in components}
+    if debug_symbols is None:
+        require(
+            all(item["files"] for item in components),
+            "component files must be non-empty when debug splitting is disabled",
+        )
+    else:
+        debug_component = debug_symbols["component"]
+        require(
+            debug_component in component_map,
+            "debug_symbols references an unknown component",
+        )
+        require(
+            component_map[debug_component]["files"] == [],
+            "debug component files must be generated, not declared",
+        )
+        require(
+            all(
+                item["files"]
+                for item in components
+                if item["name"] != debug_component
+            ),
+            "non-debug component files must be non-empty",
+        )
+        require(
+            all(
+                debug_component
+                not in item["dependencies"]["components"]
+                for item in components
+                if item["name"] != debug_component
+            ),
+            "a runtime component cannot depend on generated debug symbols",
+        )
     for component in components:
         dependencies = component["dependencies"]["components"]
         require(component["name"] not in dependencies, "component cannot depend on itself")
@@ -292,19 +339,9 @@ def file_mode(path):
 
 def elf_identity(path, target):
     try:
-        with path.open("rb") as stream:
-            header = stream.read(20)
-    except OSError as error:
-        raise CrosspackError("cannot inspect ELF %s: %s" % (path, error)) from error
-    if not header.startswith(b"\x7fELF"):
-        return None
-    require(len(header) >= 20, "truncated ELF file: %s" % path)
-    require(header[4] == 2, "ELF is not 64-bit: %s" % path)
-    require(header[5] == 1, "ELF is not little-endian: %s" % path)
-    machine = int.from_bytes(header[18:20], byteorder="little")
-    expected = ARCHITECTURES[target]["elf_machine"]
-    require(machine == expected, "ELF target differs for %s" % path)
-    return {"class": 64, "endianness": "little", "machine": target}
+        return ELF["header_identity"](path, target)
+    except ElfError as error:
+        raise CrosspackError(str(error)) from error
 
 
 def inventory_entry(root, path, target, kind=None):
@@ -525,10 +562,184 @@ def package_dependencies(config, component, packager):
     return sorted(component["dependencies"][packager]) + internal
 
 
-def build_plan(config, staging_root):
+def objcopy_identity(objcopy):
+    objcopy = Path(objcopy)
+    try:
+        resolved = objcopy.resolve(strict=True)
+    except (OSError, RuntimeError) as error:
+        raise CrosspackError("target objcopy is unavailable: %s" % objcopy) from error
+    require(
+        resolved.is_file() and os.access(str(resolved), os.X_OK),
+        "target objcopy is unavailable: %s" % objcopy,
+    )
+    stdout, stderr = run_command([objcopy, "--version"])
+    first = stdout.splitlines()[0] if stdout.splitlines() else ""
+    require("GNU objcopy" in first, "target objcopy identity differs")
+    return {
+        "path": objcopy,
+        "sha256": sha256_file(resolved),
+        "version_output_sha256": hashlib.sha256(
+            (stdout + stderr).encode("utf-8")
+        ).hexdigest(),
+    }
+
+
+def prepare_debug_staging(config, staging_root, objcopy, workspace):
     validate_config(config)
+    if config["debug_symbols"] is None:
+        return config, Path(staging_root), None
+    tool = objcopy_identity(objcopy)
+    staging_root = Path(staging_root)
+    inventory = inventory_staging(staging_root, config["target"])
+    reserved = ".crossforge-debug-symbols"
+    require(
+        all(
+            item["source"] != reserved
+            and not item["source"].startswith(reserved + "/")
+            for item in inventory
+        ),
+        "staging tree uses the reserved debug-symbol path",
+    )
+    debug_name = config["debug_symbols"]["component"]
+    debug_component = next(
+        item for item in config["components"] if item["name"] == debug_name
+    )
+    require(
+        debug_component["dependencies"]["deb"] == []
+        and debug_component["dependencies"]["rpm"] == [],
+        "debug component cannot declare external dependencies",
+    )
+    base_config = copy.deepcopy(config)
+    base_config["debug_symbols"] = None
+    base_config["components"] = [
+        item for item in base_config["components"] if item["name"] != debug_name
+    ]
+    base_inventory = inventory_staging(staging_root, config["target"])
+    base_packages = expand_mappings(base_config, staging_root, base_inventory)
+    candidates = []
+    owners = set()
+    for component in sorted(base_packages):
+        for content in base_packages[component]:
+            if content.get("elf", {}).get("type") not in (
+                "dynamic",
+                "executable",
+            ):
+                continue
+            candidates.append((component, content))
+            owners.add(component)
+    require(candidates, "debug splitting found no loadable target ELF files")
+    require(
+        set(debug_component["dependencies"]["components"]) == owners,
+        "debug component dependencies must exactly name ELF-owning components",
+    )
+
+    prepared = Path(workspace) / "prepared-staging"
+    require(not prepared.exists(), "prepared staging path already exists")
+    shutil.copytree(str(staging_root), str(prepared), symlinks=True)
+    require(
+        canonical_sha256(inventory_staging(staging_root, config["target"]))
+        == canonical_sha256(inventory),
+        "staging tree changed while preparing debug symbols",
+    )
+    mappings = []
+    records = []
+    debug_root = prepared / reserved
+    debug_root.mkdir()
+    for index, (component, content) in enumerate(
+        sorted(candidates, key=lambda item: item[1]["destination"])
+    ):
+        runtime = prepared / content["source"]
+        debug_destination = "/usr/lib/debug%s.debug" % content["destination"]
+        debug_source = reserved + debug_destination
+        debug_file = prepared / debug_source
+        debug_file.parent.mkdir(parents=True, exist_ok=True)
+        run_command([tool["path"], "--only-keep-debug", runtime, debug_file])
+        run_command([tool["path"], "--strip-debug", runtime])
+        run_command(
+            [tool["path"], "--add-gnu-debuglink=" + str(debug_file), runtime]
+        )
+        debuglink = Path(workspace) / ("debuglink-%06d" % index)
+        debug_info = Path(workspace) / ("debug-info-%06d" % index)
+        run_command(
+            [
+                tool["path"],
+                "--dump-section",
+                ".gnu_debuglink=" + str(debuglink),
+                runtime,
+            ]
+        )
+        run_command(
+            [
+                tool["path"],
+                "--dump-section",
+                ".debug_info=" + str(debug_info),
+                debug_file,
+            ]
+        )
+        require(
+            debug_file.is_file()
+            and debug_file.stat().st_size > 0
+            and debuglink.is_file()
+            and debuglink.stat().st_size > 0
+            and debug_info.is_file()
+            and debug_info.stat().st_size > 0,
+            "target objcopy did not emit debug artifacts",
+        )
+        os.chmod(str(debug_file), 0o644)
+        mappings.append(
+            {"source": debug_source, "destination": debug_destination}
+        )
+        records.append(
+            {
+                "component": component,
+                "runtime_destination": content["destination"],
+                "runtime_sha256": sha256_file(runtime),
+                "debug_destination": debug_destination,
+                "debug_sha256": sha256_file(debug_file),
+            }
+        )
+    effective = copy.deepcopy(config)
+    effective["debug_symbols"] = None
+    selected = next(
+        item for item in effective["components"] if item["name"] == debug_name
+    )
+    selected["files"] = mappings
+    return effective, prepared, {
+        "component": debug_name,
+        "objcopy_sha256": tool["sha256"],
+        "objcopy_version_output_sha256": tool["version_output_sha256"],
+        "generated_count": len(records),
+        "files": records,
+    }
+
+
+def build_plan(
+    config,
+    staging_root,
+    readelf=None,
+    sysroot=None,
+    config_sha256=None,
+    debug_symbols=None,
+):
+    validate_config(config)
+    require(
+        (readelf is None) == (sysroot is None),
+        "target readelf and sysroot must be provided together",
+    )
     inventory = inventory_staging(staging_root, config["target"])
     expanded = expand_mappings(config, staging_root, inventory)
+    elf_audit = None
+    if readelf is not None:
+        try:
+            elf_audit = ELF["audit_packages"](
+                expanded,
+                staging_root,
+                config["target"],
+                readelf,
+                sysroot,
+            )
+        except ElfError as error:
+            raise CrosspackError(str(error)) from error
     packages = []
     for component in sorted(config["components"], key=lambda item: item["name"]):
         packages.append(
@@ -548,13 +759,15 @@ def build_plan(config, staging_root):
         "$schema": PLAN_SCHEMA,
         "schema_version": 1,
         "kind": "crossforge-crosspack-plan",
-        "config_sha256": canonical_sha256(config),
+        "config_sha256": config_sha256 or canonical_sha256(config),
         "staging_sha256": canonical_sha256(inventory),
         "target": config["target"],
         "architectures": {
             "deb": ARCHITECTURES[config["target"]]["deb"],
             "rpm": ARCHITECTURES[config["target"]]["rpm"],
         },
+        "elf_audit": elf_audit,
+        "debug_symbols": debug_symbols,
         "project": dict(config["project"]),
         "packages": packages,
     }
@@ -702,9 +915,12 @@ def package(
     nfpm_path,
     nfpm_version,
     nfpm_sha256,
+    readelf,
+    sysroot,
+    objcopy,
 ):
     config = load_json(config_path)
-    plan_document = build_plan(config, staging_root)
+    validate_config(config)
     output_directory = Path(output_directory)
     require(not output_directory.exists(), "output directory already exists")
     output_directory.parent.mkdir(parents=True, exist_ok=True)
@@ -714,17 +930,30 @@ def package(
         "output parent must be a real directory",
     )
     identity = nfpm_identity(nfpm_path, nfpm_version, nfpm_sha256)
-    rendered = render_nfpm_configs(plan_document, staging_root)
-    artifacts = []
     with tempfile.TemporaryDirectory(
         prefix=".crosspack-", dir=str(output_directory.parent)
     ) as temporary:
-        temporary_root = Path(temporary)
-        config_root = temporary_root / "configs"
-        package_root = temporary_root / "packages"
+        workspace = Path(temporary)
+        effective_config, package_staging, debug_symbols = prepare_debug_staging(
+            config, staging_root, objcopy, workspace
+        )
+        plan_document = build_plan(
+            effective_config,
+            package_staging,
+            readelf,
+            sysroot,
+            canonical_sha256(config),
+            debug_symbols,
+        )
+        rendered = render_nfpm_configs(plan_document, package_staging)
+        artifacts = []
+        result_root = workspace / "result"
+        config_root = workspace / "configs"
+        package_root = result_root / "packages"
+        result_root.mkdir()
         config_root.mkdir()
-        package_root.mkdir()
-        write_json(plan_document, str(temporary_root / "crosspack-plan.json"))
+        package_root.mkdir(parents=True)
+        write_json(plan_document, str(result_root / "crosspack-plan.json"))
         environment = dict(os.environ)
         environment.update(
             {
@@ -739,7 +968,7 @@ def package(
         for packager in ("deb", "rpm"):
             for component in sorted(packages):
                 current_inventory = inventory_staging(
-                    staging_root, plan_document["target"]
+                    package_staging, plan_document["target"]
                 )
                 require(
                     canonical_sha256(current_inventory)
@@ -787,14 +1016,27 @@ def package(
             "nfpm": identity,
             "artifacts": artifacts,
         }
-        write_json(result, str(temporary_root / "crosspack-result.json"))
+        write_json(result, str(result_root / "crosspack-result.json"))
         shutil.rmtree(str(config_root))
-        temporary_root.replace(output_directory)
+        result_root.replace(output_directory)
     return result
 
 
-def plan(config_path, staging_root):
-    return build_plan(load_json(config_path), Path(staging_root))
+def plan(config_path, staging_root, readelf=None, sysroot=None, objcopy=None):
+    config = load_json(config_path)
+    validate_config(config)
+    with tempfile.TemporaryDirectory(prefix="crosspack-plan-") as temporary:
+        effective, prepared, debug_symbols = prepare_debug_staging(
+            config, staging_root, objcopy, Path(temporary)
+        )
+        return build_plan(
+            effective,
+            prepared,
+            readelf,
+            sysroot,
+            canonical_sha256(config),
+            debug_symbols,
+        )
 
 
 def write_json(document, output):
@@ -826,6 +1068,9 @@ def main(argv=None):
     plan_parser = subparsers.add_parser("plan", allow_abbrev=False)
     plan_parser.add_argument("--config", type=Path, required=True)
     plan_parser.add_argument("--staging-root", type=Path, required=True)
+    plan_parser.add_argument("--readelf", type=Path, required=True)
+    plan_parser.add_argument("--sysroot", type=Path, required=True)
+    plan_parser.add_argument("--objcopy", type=Path, required=True)
     plan_parser.add_argument("--output", default="-")
     package_parser = subparsers.add_parser("package", allow_abbrev=False)
     package_parser.add_argument("--config", type=Path, required=True)
@@ -834,11 +1079,20 @@ def main(argv=None):
     package_parser.add_argument("--nfpm", type=Path, required=True)
     package_parser.add_argument("--nfpm-version", required=True)
     package_parser.add_argument("--nfpm-sha256", required=True)
+    package_parser.add_argument("--readelf", type=Path, required=True)
+    package_parser.add_argument("--sysroot", type=Path, required=True)
+    package_parser.add_argument("--objcopy", type=Path, required=True)
     arguments = parser.parse_args(argv)
     try:
         require(arguments.command in ("plan", "package"), "a crosspack command is required")
         if arguments.command == "plan":
-            report = plan(arguments.config, arguments.staging_root)
+            report = plan(
+                arguments.config,
+                arguments.staging_root,
+                arguments.readelf,
+                arguments.sysroot,
+                arguments.objcopy,
+            )
             write_json(report, arguments.output)
         else:
             package(
@@ -848,6 +1102,9 @@ def main(argv=None):
                 arguments.nfpm,
                 arguments.nfpm_version,
                 arguments.nfpm_sha256,
+                arguments.readelf,
+                arguments.sysroot,
+                arguments.objcopy,
             )
     except CrosspackError as error:
         print("error: %s" % error, file=sys.stderr)

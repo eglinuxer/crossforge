@@ -74,7 +74,8 @@ def populate_staging(root, arch):
     (root / "usr/share/crossforge").mkdir(parents=True)
     source = root / "probe.c"
     source.write_text(
-        "int crossforge_package_probe(void) { return 42; }\n",
+        "#include <stdio.h>\n"
+        "int crossforge_package_probe(void) { return puts(\"crossforge\"); }\n",
         encoding="utf-8",
     )
     library = root / "usr/lib64/libcrossforge-demo.so.1"
@@ -84,6 +85,10 @@ def populate_staging(root, arch):
             "--sysroot=" + str(sysroot),
             "-shared",
             "-fPIC",
+            "-g",
+            "-O2",
+            "-ffile-prefix-map=%s=/usr/src/debug/crossforge-demo" % root.parent,
+            "-fdebug-prefix-map=%s=/usr/src/debug/crossforge-demo" % root.parent,
             "-Wl,-soname,libcrossforge-demo.so.1",
             "-o",
             library,
@@ -111,6 +116,23 @@ def package_config(template, arch):
     for component in config["components"]:
         component["dependencies"]["deb"] = []
         component["dependencies"]["rpm"] = []
+    config["debug_symbols"] = {"component": "debug"}
+    config["components"].append(
+        {
+            "name": "debug",
+            "package_names": {
+                "deb": "crossforge-demo-dbgsym",
+                "rpm": "crossforge-demo-debuginfo",
+            },
+            "description": "Crosspack detached debug symbols",
+            "files": [],
+            "dependencies": {
+                "components": ["runtime"],
+                "deb": [],
+                "rpm": [],
+            },
+        }
+    )
     return config
 
 
@@ -148,6 +170,44 @@ def write_install_contract(root, plan):
     )
     write_json(root / "installed-links.json", sorted(symlinks, key=lambda item: item["path"]))
     write_json(root / "installed-directories.json", sorted(directories))
+
+
+def validate_plan(plan, arch):
+    require(plan.get("target") == arch, "crosspack plan target differs")
+    audit = plan.get("elf_audit")
+    require(
+        isinstance(audit, dict)
+        and audit.get("elf_count") == 2
+        and audit.get("providers_count", 0) > 0,
+        "crosspack ELF audit coverage differs",
+    )
+    debug = plan.get("debug_symbols")
+    require(
+        isinstance(debug, dict)
+        and debug.get("component") == "debug"
+        and debug.get("generated_count") == 1
+        and len(debug.get("files", [])) == 1,
+        "crosspack debug-symbol report differs",
+    )
+    packages = {item["component"]: item for item in plan.get("packages", [])}
+    require(
+        set(packages) == {"runtime", "development", "tools", "debug"}
+        and packages["debug"]["dependencies"]["components"] == ["runtime"],
+        "crosspack split-package set differs",
+    )
+    runtime = next(
+        content
+        for content in packages["runtime"]["contents"]
+        if content["destination"] == "/usr/lib64/libcrossforge-demo.so.1"
+    )
+    require(
+        runtime["elf"]["machine"] == arch
+        and runtime["elf"]["soname"] == "libcrossforge-demo.so.1"
+        and runtime["elf"]["needed"] == ["libc.so.6"]
+        and runtime["elf"]["runpath"] == []
+        and runtime["elf"]["exports_count"] >= 1,
+        "crosspack runtime ELF audit differs",
+    )
 
 
 def build(
@@ -205,19 +265,18 @@ def build(
                 )
                 require(result == repeated, "repeated crosspack result differs")
                 compare_outputs(first, second, result)
+                plan = crosspack["load_json"](first / "crosspack-plan.json")
+                validate_plan(plan, arch)
                 destination = temporary_output / arch
                 shutil.copytree(str(first), str(destination))
-                write_install_contract(
-                    destination,
-                    json.loads(
-                        (first / "crosspack-plan.json").read_text(encoding="utf-8")
-                    ),
-                )
+                write_install_contract(destination, plan)
                 reports[arch] = {
                     "target": arch,
                     "config_sha256": canonical_sha256(config),
                     "plan_sha256": result["plan_sha256"],
                     "artifacts": result["artifacts"],
+                    "elf_audit": plan["elf_audit"],
+                    "debug_symbols": plan["debug_symbols"],
                 }
         report = {
             "schema_version": 1,

@@ -125,12 +125,17 @@ def package_command(release, arguments):
     config = crosspack.load_json(arguments.config)
     crosspack.validate_config(config)
     target = config["target"]
+    triple = TARGETS[target]["triple"]
     nfpm = release["nfpm"]
     nfpm_path = (
         Path("/opt/crossforge/host-tools/nfpm")
         / nfpm["version"]
         / "bin/nfpm"
     )
+    tool_root = Path("/opt/crossforge/targets") / triple / "bin"
+    readelf = tool_root / (triple + "-readelf")
+    objcopy = tool_root / (triple + "-objcopy")
+    sysroot = Path("/opt/crossforge/sysroots/el8") / target
     crosspack.package(
         arguments.config,
         arguments.staging_root,
@@ -138,6 +143,9 @@ def package_command(release, arguments):
         nfpm_path,
         nfpm["version"],
         nfpm["binary"]["extracted_sha256"],
+        readelf,
+        sysroot,
+        objcopy,
     )
     print("packaged %s staged tree: %s" % (target, arguments.output_directory))
     return 0

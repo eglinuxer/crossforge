@@ -15,7 +15,7 @@ Rust prototype: tag `prototype-rust-2026-08-28`. Do not commit caches.
 - `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
 - `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked host-runtime-qualified` replays and qualifies all host closures offline.
 - `docker buildx bake cmake-host-tool ninja-host-tool` locks host tools; `docker buildx bake vcpkg-upstream-tier3-qualified` runs all three curated tiers across five triplets offline.
-- Packaging tests live in `tests/packaging`; `docker buildx bake packaging-qualified sdk-complete-dev` qualifies packages and the composed SDK.
+- Packaging tests live in `tests/packaging`; `docker buildx bake packaging-qualified sdk-complete-dev` qualifies split/debug packages, ELF audits, and the composed SDK.
 - `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both cross slices; aarch64 uses pinned QEMU, never implicit binfmt.
 - `docker buildx bake phase10` requalifies all Python 3.9–3.14 rows for both targets. `python-native-latest` and `python-matrix` select the same six-row contract. Graph existence or a build probe alone is not qualification evidence.
 

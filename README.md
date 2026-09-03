@@ -24,9 +24,9 @@ build-system-independent DEB/RPM packaging.
 > five-triplet gate from explicit asset closures. The crosspack Phase 14 gate
 > emits byte-reproducible split DEB/RPM packages for both targets and installs
 > them with pinned real `dpkg` and Rocky `rpm`. The single `crossforge`
-> launcher and the complete Python/vcpkg/packaging SDK composition are
-> qualified. Debug-symbol splitting, full GCC/Qt suites and release supply
-> chain remain pending.
+> launcher, detached debug packages, dynamic ELF audit, and the complete
+> Python/vcpkg/packaging SDK composition are qualified. Full GCC/Qt suites and
+> the release supply chain remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -507,10 +507,16 @@ revalidates the complete closure and exports a minimal host-tool root.
 `crosspack` consumes a strict JSON manifest and a staged filesystem. It rejects
 unowned or multiply owned files, unsafe paths/modes/symlinks, destination-tree
 collisions, wrong-target ELF files, and undeclared component edges. Phase 14
-cross-builds x86_64 and aarch64 probe payloads, emits runtime/development/tools
-DEB and RPM sets twice, proves byte identity, installs all twelve packages into
+cross-builds x86_64 and aarch64 probe payloads, emits runtime/development/tools/debug
+DEB and RPM sets twice, proves byte identity, installs all sixteen packages into
 isolated roots using real package managers, and rehashes installed payloads.
 No package or installer root enters the SDK image.
+
+When `debug_symbols` names an otherwise empty debug component, crosspack uses
+the selected target `objcopy` on a private staging copy and adds a matching GNU
+debuglink. Target `readelf` then records SONAME, `DT_NEEDED`, safe origin-only
+RUNPATH and an export digest; RPATH, TEXTREL, parent traversal and providers not
+present in the package set or locked sysroot fail the build.
 
 The SDK exposes one launcher. Backend paths and nFPM identities are internal:
 

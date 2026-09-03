@@ -9,6 +9,10 @@
       "value": "https://crossforge.dev/schemas/crosspack.schema.json"
     },
     {
+      "path": "/@implementation/crosspack/debug_symbols",
+      "value": "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink"
+    },
+    {
       "path": "/@implementation/crosspack/external_dependencies",
       "value": "explicit-per-format"
     },
@@ -57,8 +61,28 @@
       "value": 1
     },
     {
-      "path": "/@implementation/crosspack/security/elf",
+      "path": "/@implementation/crosspack/security/elf/exports",
+      "value": "canonical-sha256"
+    },
+    {
+      "path": "/@implementation/crosspack/security/elf/identity",
       "value": "64-bit-little-endian-exact-target"
+    },
+    {
+      "path": "/@implementation/crosspack/security/elf/needed",
+      "value": "package-or-target-sysroot-provider"
+    },
+    {
+      "path": "/@implementation/crosspack/security/elf/rpath",
+      "value": "forbidden"
+    },
+    {
+      "path": "/@implementation/crosspack/security/elf/runpath",
+      "value": "origin-only-no-parent-traversal"
+    },
+    {
+      "path": "/@implementation/crosspack/security/elf/text_relocations",
+      "value": "forbidden"
     },
     {
       "path": "/@implementation/crosspack/security/setuid_setgid",

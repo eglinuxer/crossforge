@@ -149,12 +149,12 @@ def finalize(arguments):
     for arch in ("x86_64", "aarch64"):
         artifacts = package_report["targets"][arch].get("artifacts", [])
         require(
-            len(artifacts) == 6
+            len(artifacts) == 8
             and {(item.get("format"), item.get("component")) for item in artifacts}
             == {
                 (format_name, component)
                 for format_name in ("deb", "rpm")
-                for component in ("runtime", "development", "tools")
+                for component in ("runtime", "development", "tools", "debug")
             },
             "crosspack artifact matrix differs for %s" % arch,
         )

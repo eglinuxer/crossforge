@@ -44,11 +44,18 @@ case "$format" in
 esac
 
 count=$(printf '%s\n' "$metadata" | sed '/^$/d' | wc -l)
-test "$count" -eq 3
+test "$count" -eq 4
 printf '%s\n' "$metadata" | grep -F "crossforge-demo 1.2.3-4 $expected_arch"
 printf '%s\n' "$metadata" | grep -F "crossforge-demo-dev 1.2.3-4 $expected_arch" \
   || printf '%s\n' "$metadata" | grep -F "crossforge-demo-devel 1.2.3-4 $expected_arch"
 printf '%s\n' "$metadata" | grep -F "crossforge-demo-tools 1.2.3-4 $expected_arch"
+if [ "$format" = deb ]; then
+  printf '%s\n' "$metadata" | grep -F \
+    "crossforge-demo-dbgsym 1.2.3-4 $expected_arch"
+else
+  printf '%s\n' "$metadata" | grep -F \
+    "crossforge-demo-debuginfo 1.2.3-4 $expected_arch"
+fi
 
 (
   cd "$install_root"
@@ -59,6 +66,8 @@ test "$(readlink "$install_root/usr/lib64/libcrossforge-demo.so")" \
 test -x "$install_root/usr/bin/crossforge-demo"
 test -f "$install_root/usr/include/crossforge/demo.h"
 test -f "$install_root/usr/share/crossforge/README"
+test -f \
+  "$install_root/usr/lib/debug/usr/lib64/libcrossforge-demo.so.1.debug"
 
 mkdir -p "$(dirname "$output")"
 printf 'crosspack-install-v1 %s %s passed\n' "$format" "$arch" >"$output"

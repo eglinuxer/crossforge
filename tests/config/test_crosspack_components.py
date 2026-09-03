@@ -117,8 +117,22 @@ class CrosspackComponentTests(unittest.TestCase):
         self.assertEqual(
             policy["external_dependencies"], "explicit-per-format"
         )
+        self.assertEqual(
+            policy["debug_symbols"],
+            "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
+        )
+        self.assertEqual(
+            policy["security"]["elf"]["needed"],
+            "package-or-target-sysroot-provider",
+        )
         qualification = RENDERER["CROSSPACK_QUALIFICATION_POLICY"]
         self.assertEqual(qualification["installers"], {"deb": "dpkg", "rpm": "rpm"})
+        self.assertTrue(
+            qualification["requirements"]["detached_debug_symbols"]
+        )
+        self.assertTrue(
+            qualification["requirements"]["dynamic_elf_audit"]
+        )
         self.assertEqual(
             qualification["deb_test_image"]["amd64_manifest"],
             "sha256:5ae3c39ebd15e229dcedd5cee596b2497182493d41ff162e824ba13fc1b2b867",

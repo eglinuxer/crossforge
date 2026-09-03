@@ -185,6 +185,9 @@ class CrossforgeCliTests(unittest.TestCase):
             / "bin/nfpm",
             nfpm["version"],
             nfpm["binary"]["extracted_sha256"],
+            Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-readelf"),
+            Path("/opt/crossforge/sysroots/el8/x86_64"),
+            Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-objcopy"),
         )
 
     def test_launcher_sources_remain_python36_compatible(self):
