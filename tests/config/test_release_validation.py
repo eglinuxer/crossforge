@@ -103,8 +103,8 @@ class ReleaseValidationTests(unittest.TestCase):
                 {"type": "object", "dependentRequired": {}}
             )
 
-    def test_pending_sources_are_explicit(self):
-        self.assertTrue(VALIDATOR["find_pending"](self.config))
+    def test_release_has_no_pending_source_pins(self):
+        self.assertEqual(VALIDATOR["find_pending"](self.config), [])
 
     def test_locked_sysroot_digests_match_files(self):
         locked = 0

@@ -487,9 +487,39 @@
   "nfpm": {
     "version": "2.47.0",
     "source": {
-      "status": "pending",
-      "url": null,
-      "sha256": null
+      "status": "locked",
+      "repository": "https://github.com/goreleaser/nfpm.git",
+      "tag": "v2.47.0",
+      "tag_object": "989b8a193ce1325b33bfec4ef27a30477603e623",
+      "commit": "40c7c8f7376400e9464d04a2a099045cf5598f8e"
+    },
+    "binary": {
+      "status": "locked",
+      "url": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_Linux_x86_64.tar.gz",
+      "sha256": "0660ca602b2d2d2ae4781a06c692b3eeb9d437ffea05b831d76e41f4a3188783",
+      "sha512": "434e6e07e1355db89b9ce7de7dfc7d865e10890dbd5a591b74fdc9237dbb32007e4a95aa1b3210bb4568a5b5e1932785530d0344306aab963e29c898914762a1",
+      "size": 6612023,
+      "extracted_sha256": "17133a2467ffb7cec851c2d7bae0c6098d09d7ed7d3d101a9605f6a473323936",
+      "extracted_size": 16572578
+    },
+    "checksums": {
+      "url": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/checksums.txt",
+      "sha256": "57145efa88e31a9b471755dad60b4d58a607ea4ef869a33fae902dceaf30b98b",
+      "size": 2810
+    },
+    "sigstore": {
+      "url": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/checksums.txt.sigstore.json",
+      "sha256": "7fff418acc721398fbfed10ba1c70f2a6a9dfedc506208181d4589c59e7ddbdb",
+      "size": 10087,
+      "status": "archived-unverified",
+      "signed_asset_sha256": "57145efa88e31a9b471755dad60b4d58a607ea4ef869a33fae902dceaf30b98b",
+      "expected_identity": "https://github.com/goreleaser/nfpm/.github/workflows/release.yml@refs/tags/v2.47.0",
+      "expected_issuer": "https://token.actions.githubusercontent.com"
+    },
+    "license": {
+      "expression": "MIT",
+      "file": "licenses/nfpm/LICENSE.md",
+      "sha256": "27dcc764e1349b48340f9554e09cb5df85f8f07b63b4ed736cb56c2203395baa"
     }
   }
 }

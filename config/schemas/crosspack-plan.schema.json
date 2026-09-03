@@ -1,0 +1,361 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/crosspack-plan.schema.json",
+  "title": "Crosspack canonical package plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "config_sha256",
+    "staging_sha256",
+    "target",
+    "architectures",
+    "project",
+    "packages"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/crosspack-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-crosspack-plan"
+    },
+    "config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "staging_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "target": {
+      "enum": [
+        "x86_64",
+        "aarch64"
+      ]
+    },
+    "architectures": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "enum": [
+            "amd64",
+            "arm64"
+          ]
+        },
+        "rpm": {
+          "enum": [
+            "x86_64",
+            "aarch64"
+          ]
+        }
+      }
+    },
+    "project": {
+      "$ref": "#/$defs/project"
+    },
+    "packages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/package"
+      }
+    }
+  },
+  "$defs": {
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "package_names",
+        "description",
+        "dependencies",
+        "contents"
+      ],
+      "properties": {
+        "component": {
+          "type": "string",
+          "minLength": 1
+        },
+        "package_names": {
+          "$ref": "#/$defs/package_names"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "components",
+            "deb",
+            "rpm"
+          ],
+          "properties": {
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "deb": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "rpm": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "contents": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/file_content"
+              },
+              {
+                "$ref": "#/$defs/symlink_content"
+              },
+              {
+                "$ref": "#/$defs/directory_content"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "release",
+        "vendor",
+        "homepage",
+        "maintainer",
+        "license",
+        "section",
+        "priority",
+        "source_date_epoch"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "version": {
+          "$ref": "#/$defs/version"
+        },
+        "release": {
+          "$ref": "#/$defs/version"
+        },
+        "vendor": {
+          "$ref": "#/$defs/text"
+        },
+        "homepage": {
+          "type": "string",
+          "pattern": "^https?://\\S+$"
+        },
+        "maintainer": {
+          "$ref": "#/$defs/text"
+        },
+        "license": {
+          "$ref": "#/$defs/text"
+        },
+        "section": {
+          "$ref": "#/$defs/name"
+        },
+        "priority": {
+          "enum": [
+            "required",
+            "important",
+            "standard",
+            "optional",
+            "extra"
+          ]
+        },
+        "source_date_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 253402300799
+        }
+      }
+    },
+    "package_names": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9+.-]*$"
+        },
+        "rpm": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9+._-]*$"
+        }
+      }
+    },
+    "file_content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "destination",
+        "type",
+        "mode",
+        "size",
+        "sha256"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "destination": {
+          "$ref": "#/$defs/destination"
+        },
+        "type": {
+          "const": "file"
+        },
+        "mode": {
+          "$ref": "#/$defs/mode"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "elf": {
+          "$ref": "#/$defs/elf"
+        }
+      }
+    },
+    "symlink_content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "destination",
+        "type",
+        "mode",
+        "link_target"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "destination": {
+          "$ref": "#/$defs/destination"
+        },
+        "type": {
+          "const": "symlink"
+        },
+        "mode": {
+          "$ref": "#/$defs/mode"
+        },
+        "link_target": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "directory_content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "destination",
+        "type",
+        "mode"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "destination": {
+          "$ref": "#/$defs/destination"
+        },
+        "type": {
+          "const": "directory"
+        },
+        "mode": {
+          "$ref": "#/$defs/mode"
+        }
+      }
+    },
+    "source": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*$"
+    },
+    "destination": {
+      "type": "string",
+      "pattern": "^/(?:[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*)?$"
+    },
+    "mode": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4095
+    },
+    "elf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class",
+        "endianness",
+        "machine"
+      ],
+      "properties": {
+        "class": {
+          "const": 64
+        },
+        "endianness": {
+          "const": "little"
+        },
+        "machine": {
+          "enum": [
+            "x86_64",
+            "aarch64"
+          ]
+        }
+      }
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9+._-]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9.+_~:-]*$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\r\\n]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

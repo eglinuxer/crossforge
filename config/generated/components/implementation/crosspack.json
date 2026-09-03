@@ -1,0 +1,106 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/crosspack",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/crosspack/config_schema",
+      "value": "https://crossforge.dev/schemas/crosspack.schema.json"
+    },
+    {
+      "path": "/@implementation/crosspack/external_dependencies",
+      "value": "explicit-per-format"
+    },
+    {
+      "path": "/@implementation/crosspack/formats/0",
+      "value": "deb"
+    },
+    {
+      "path": "/@implementation/crosspack/formats/1",
+      "value": "rpm"
+    },
+    {
+      "path": "/@implementation/crosspack/internal_dependencies",
+      "value": "exact-version-release"
+    },
+    {
+      "path": "/@implementation/crosspack/ownership",
+      "value": "complete-exclusive-staged-tree"
+    },
+    {
+      "path": "/@implementation/crosspack/paths",
+      "value": "canonical-no-escape-no-overlap"
+    },
+    {
+      "path": "/@implementation/crosspack/plan_schema",
+      "value": "https://crossforge.dev/schemas/crosspack-plan.schema.json"
+    },
+    {
+      "path": "/@implementation/crosspack/reproducibility/compression",
+      "value": "gzip"
+    },
+    {
+      "path": "/@implementation/crosspack/reproducibility/identity",
+      "value": "canonical-json-sha256"
+    },
+    {
+      "path": "/@implementation/crosspack/reproducibility/timestamp",
+      "value": "source-date-epoch"
+    },
+    {
+      "path": "/@implementation/crosspack/result_schema",
+      "value": "https://crossforge.dev/schemas/crosspack-result.schema.json"
+    },
+    {
+      "path": "/@implementation/crosspack/schema_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/crosspack/security/elf",
+      "value": "64-bit-little-endian-exact-target"
+    },
+    {
+      "path": "/@implementation/crosspack/security/setuid_setgid",
+      "value": "forbidden"
+    },
+    {
+      "path": "/@implementation/crosspack/security/special_files",
+      "value": "forbidden"
+    },
+    {
+      "path": "/@implementation/crosspack/security/symlink_target",
+      "value": "owned-with-declared-component-edge"
+    },
+    {
+      "path": "/@implementation/crosspack/security/world_writable",
+      "value": "forbidden"
+    },
+    {
+      "path": "/@implementation/crosspack/targets/aarch64/deb",
+      "value": "arm64"
+    },
+    {
+      "path": "/@implementation/crosspack/targets/aarch64/elf_machine",
+      "value": 183
+    },
+    {
+      "path": "/@implementation/crosspack/targets/aarch64/rpm",
+      "value": "aarch64"
+    },
+    {
+      "path": "/@implementation/crosspack/targets/x86_64/deb",
+      "value": "amd64"
+    },
+    {
+      "path": "/@implementation/crosspack/targets/x86_64/elf_machine",
+      "value": 62
+    },
+    {
+      "path": "/@implementation/crosspack/targets/x86_64/rpm",
+      "value": "x86_64"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

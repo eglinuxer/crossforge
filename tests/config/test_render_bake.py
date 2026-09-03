@@ -62,7 +62,7 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_component_arguments_cover_the_complete_release_binding(self):
         records = self.binding["components"]
-        self.assertEqual(len(records), 72)
+        self.assertEqual(len(records), 73)
         expected = {
             RENDERER["component_argument_name"](record["component"]): record[
                 "canonical_sha256"
@@ -169,18 +169,13 @@ class RenderBakeTests(unittest.TestCase):
                         copy.deepcopy(self.release), {}, arguments
                     )
 
-    def test_future_components_are_bound_without_a_global_release_argument(self):
+    def test_locked_release_has_no_future_components_or_global_argument(self):
         future = {
             record["component"]
             for record in self.binding["components"]
             if record["scope"] == "future"
         }
-        self.assertTrue(future)
-        for component in future:
-            self.assertIn(
-                RENDERER["component_argument_name"](component),
-                self.component_arguments,
-            )
+        self.assertEqual(future, set())
         self.assertNotIn(
             "CROSSFORGE_RELEASE_SHA256",
             self.targets["_common"]["args"],

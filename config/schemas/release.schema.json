@@ -659,21 +659,7 @@
       "$ref": "#/$defs/host_tools"
     },
     "nfpm": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "version",
-        "source"
-      ],
-      "properties": {
-        "version": {
-          "type": "string",
-          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-        },
-        "source": {
-          "$ref": "#/$defs/artifact_source"
-        }
-      }
+      "$ref": "#/$defs/nfpm"
     }
   },
   "$defs": {
@@ -919,6 +905,197 @@
           "$ref": "#/$defs/locked_artifact_source"
         }
       ]
+    },
+    "nfpm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "source",
+        "binary",
+        "checksums",
+        "sigstore",
+        "license"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "source": {
+          "$ref": "#/$defs/nfpm_source"
+        },
+        "binary": {
+          "$ref": "#/$defs/nfpm_binary"
+        },
+        "checksums": {
+          "$ref": "#/$defs/nfpm_asset"
+        },
+        "sigstore": {
+          "$ref": "#/$defs/nfpm_sigstore"
+        },
+        "license": {
+          "$ref": "#/$defs/nfpm_license"
+        }
+      }
+    },
+    "nfpm_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "repository",
+        "tag",
+        "tag_object",
+        "commit"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "repository": {
+          "const": "https://github.com/goreleaser/nfpm.git"
+        },
+        "tag": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "tag_object": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "nfpm_binary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256",
+        "sha512",
+        "size",
+        "extracted_sha256",
+        "extracted_size"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://github.com/goreleaser/nfpm/releases/download/"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sha512": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "extracted_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "extracted_size": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "nfpm_asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sha256",
+        "size"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^https://github.com/goreleaser/nfpm/releases/download/"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "nfpm_sigstore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sha256",
+        "size",
+        "status",
+        "signed_asset_sha256",
+        "expected_identity",
+        "expected_issuer"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^https://github.com/goreleaser/nfpm/releases/download/"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "const": "archived-unverified"
+        },
+        "signed_asset_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "expected_identity": {
+          "type": "string",
+          "pattern": "^https://github.com/goreleaser/nfpm/"
+        },
+        "expected_issuer": {
+          "const": "https://token.actions.githubusercontent.com"
+        }
+      }
+    },
+    "nfpm_license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "expression": {
+          "const": "MIT"
+        },
+        "file": {
+          "const": "licenses/nfpm/LICENSE.md"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
     },
     "pending_python_source": {
       "type": "object",

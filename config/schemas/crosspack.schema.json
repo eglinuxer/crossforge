@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/crosspack.schema.json",
+  "title": "Crosspack split-package manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "project",
+    "target",
+    "components"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/crosspack.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "project": {
+      "$ref": "#/$defs/project"
+    },
+    "target": {
+      "enum": [
+        "x86_64",
+        "aarch64"
+      ]
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/component"
+      }
+    }
+  },
+  "$defs": {
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "release",
+        "vendor",
+        "homepage",
+        "maintainer",
+        "license",
+        "section",
+        "priority",
+        "source_date_epoch"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "version": {
+          "$ref": "#/$defs/version"
+        },
+        "release": {
+          "$ref": "#/$defs/version"
+        },
+        "vendor": {
+          "$ref": "#/$defs/text"
+        },
+        "homepage": {
+          "type": "string",
+          "pattern": "^https?://\\S+$"
+        },
+        "maintainer": {
+          "$ref": "#/$defs/text"
+        },
+        "license": {
+          "$ref": "#/$defs/text"
+        },
+        "section": {
+          "$ref": "#/$defs/name"
+        },
+        "priority": {
+          "enum": [
+            "required",
+            "important",
+            "standard",
+            "optional",
+            "extra"
+          ]
+        },
+        "source_date_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 253402300799
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "package_names",
+        "description",
+        "files",
+        "dependencies"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "package_names": {
+          "$ref": "#/$defs/package_names"
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/file_mapping"
+          }
+        },
+        "dependencies": {
+          "$ref": "#/$defs/dependencies"
+        }
+      }
+    },
+    "package_names": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "$ref": "#/$defs/deb_package_name"
+        },
+        "rpm": {
+          "$ref": "#/$defs/rpm_package_name"
+        }
+      }
+    },
+    "file_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "destination"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "pattern": "^(\\.|[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*)$"
+        },
+        "destination": {
+          "type": "string",
+          "pattern": "^/(?:[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*)?$"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "components",
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "components": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/name"
+          }
+        },
+        "deb": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "rpm": {
+          "$ref": "#/$defs/dependency_list"
+        }
+      }
+    },
+    "dependency_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/text"
+      }
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9+._-]*$"
+    },
+    "deb_package_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9+.-]*$"
+    },
+    "rpm_package_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9+._-]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9.+_~:-]*$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\r\\n]+$"
+    }
+  }
+}

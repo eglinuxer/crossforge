@@ -1,0 +1,114 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "sources/nfpm",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/nfpm/binary/extracted_sha256",
+      "value": "17133a2467ffb7cec851c2d7bae0c6098d09d7ed7d3d101a9605f6a473323936"
+    },
+    {
+      "path": "/nfpm/binary/extracted_size",
+      "value": 16572578
+    },
+    {
+      "path": "/nfpm/binary/sha256",
+      "value": "0660ca602b2d2d2ae4781a06c692b3eeb9d437ffea05b831d76e41f4a3188783"
+    },
+    {
+      "path": "/nfpm/binary/sha512",
+      "value": "434e6e07e1355db89b9ce7de7dfc7d865e10890dbd5a591b74fdc9237dbb32007e4a95aa1b3210bb4568a5b5e1932785530d0344306aab963e29c898914762a1"
+    },
+    {
+      "path": "/nfpm/binary/size",
+      "value": 6612023
+    },
+    {
+      "path": "/nfpm/binary/status",
+      "value": "locked"
+    },
+    {
+      "path": "/nfpm/binary/url",
+      "value": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_Linux_x86_64.tar.gz"
+    },
+    {
+      "path": "/nfpm/checksums/sha256",
+      "value": "57145efa88e31a9b471755dad60b4d58a607ea4ef869a33fae902dceaf30b98b"
+    },
+    {
+      "path": "/nfpm/checksums/size",
+      "value": 2810
+    },
+    {
+      "path": "/nfpm/checksums/url",
+      "value": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/checksums.txt"
+    },
+    {
+      "path": "/nfpm/license/expression",
+      "value": "MIT"
+    },
+    {
+      "path": "/nfpm/license/file",
+      "value": "licenses/nfpm/LICENSE.md"
+    },
+    {
+      "path": "/nfpm/license/sha256",
+      "value": "27dcc764e1349b48340f9554e09cb5df85f8f07b63b4ed736cb56c2203395baa"
+    },
+    {
+      "path": "/nfpm/sigstore/expected_identity",
+      "value": "https://github.com/goreleaser/nfpm/.github/workflows/release.yml@refs/tags/v2.47.0"
+    },
+    {
+      "path": "/nfpm/sigstore/expected_issuer",
+      "value": "https://token.actions.githubusercontent.com"
+    },
+    {
+      "path": "/nfpm/sigstore/sha256",
+      "value": "7fff418acc721398fbfed10ba1c70f2a6a9dfedc506208181d4589c59e7ddbdb"
+    },
+    {
+      "path": "/nfpm/sigstore/signed_asset_sha256",
+      "value": "57145efa88e31a9b471755dad60b4d58a607ea4ef869a33fae902dceaf30b98b"
+    },
+    {
+      "path": "/nfpm/sigstore/size",
+      "value": 10087
+    },
+    {
+      "path": "/nfpm/sigstore/status",
+      "value": "archived-unverified"
+    },
+    {
+      "path": "/nfpm/sigstore/url",
+      "value": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/checksums.txt.sigstore.json"
+    },
+    {
+      "path": "/nfpm/source/commit",
+      "value": "40c7c8f7376400e9464d04a2a099045cf5598f8e"
+    },
+    {
+      "path": "/nfpm/source/repository",
+      "value": "https://github.com/goreleaser/nfpm.git"
+    },
+    {
+      "path": "/nfpm/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/nfpm/source/tag",
+      "value": "v2.47.0"
+    },
+    {
+      "path": "/nfpm/source/tag_object",
+      "value": "989b8a193ce1325b33bfec4ef27a30477603e623"
+    },
+    {
+      "path": "/nfpm/version",
+      "value": "2.47.0"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

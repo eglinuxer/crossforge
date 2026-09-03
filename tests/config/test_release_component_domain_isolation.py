@@ -28,6 +28,7 @@ VCPKG_COMPONENTS = {
     "vcpkg/upstream-tier2-qualification",
     "vcpkg/upstream-tier3-qualification",
 }
+PACKAGING_COMPONENTS = {"implementation/crosspack"}
 
 
 class ReleaseComponentDomainIsolationTests(unittest.TestCase):
@@ -43,10 +44,13 @@ class ReleaseComponentDomainIsolationTests(unittest.TestCase):
             for name, document in documents.items()
         }
 
-    def test_complete_renderer_is_core_plus_the_vcpkg_extension(self):
+    def test_complete_renderer_is_core_plus_domain_extensions(self):
         core = CORE["render_component_documents"](self.release)
         complete = COMPLETE["render_component_documents"](self.release)
-        self.assertEqual(set(complete) - set(core), VCPKG_COMPONENTS)
+        self.assertEqual(
+            set(complete) - set(core),
+            VCPKG_COMPONENTS | PACKAGING_COMPONENTS,
+        )
         self.assertEqual(
             self.digests(core),
             {
@@ -108,6 +112,9 @@ class ReleaseComponentDomainIsolationTests(unittest.TestCase):
         self.assertIn("scripts/release-components-core.py", python_dockerfile)
         self.assertNotIn("scripts/render-release-components.py", python_dockerfile)
         self.assertNotIn("scripts/release-components-vcpkg.py", python_dockerfile)
+        self.assertNotIn(
+            "scripts/release-components-packaging.py", python_dockerfile
+        )
 
         toolchain_dockerfile = (REPOSITORY / "docker/Dockerfile").read_text(
             encoding="utf-8"
@@ -124,6 +131,9 @@ class ReleaseComponentDomainIsolationTests(unittest.TestCase):
                 self.assertIn("scripts/release-components-core.py", block)
                 self.assertNotIn("scripts/render-release-components.py", block)
                 self.assertNotIn("scripts/release-components-vcpkg.py", block)
+                self.assertNotIn(
+                    "scripts/release-components-packaging.py", block
+                )
 
 
 if __name__ == "__main__":

@@ -789,7 +789,6 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier1-qualification",
                 "vcpkg/upstream-tier2-qualification",
                 "vcpkg/upstream-tier3-qualification",
-                "future/product",
             },
         )
 

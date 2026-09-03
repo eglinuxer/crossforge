@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the complete release graph from the stable core and vcpkg extension."""
+"""Render the complete release graph from the stable core and extensions."""
 
 import runpy
 from pathlib import Path
@@ -9,10 +9,16 @@ SCRIPT_DIRECTORY = Path(__file__).resolve().parent
 VCPKG_EXTENSION = runpy.run_path(
     str(SCRIPT_DIRECTORY / "release-components-vcpkg.py")
 )
+PACKAGING_EXTENSION = runpy.run_path(
+    str(SCRIPT_DIRECTORY / "release-components-packaging.py")
+)
 CORE = runpy.run_path(
     str(SCRIPT_DIRECTORY / "release-components-core.py"),
     init_globals={
-        "COMPONENT_EXTENSIONS": (VCPKG_EXTENSION["extend_component_graph"],)
+        "COMPONENT_EXTENSIONS": (
+            VCPKG_EXTENSION["extend_component_graph"],
+            PACKAGING_EXTENSION["extend_component_graph"],
+        )
     },
 )
 
@@ -29,6 +35,7 @@ for name in (
     "VCPKG_UPSTREAM_TIER3_POLICY",
 ):
     globals()[name] = VCPKG_EXTENSION[name]
+globals()["CROSSPACK_POLICY"] = PACKAGING_EXTENSION["CROSSPACK_POLICY"]
 
 
 if __name__ == "__main__":

@@ -504,13 +504,12 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             category = "build"
         elif len(path) >= 2 and path[0] in {"host_tools", "vcpkg"}:
             category = "build"
-        elif path in {
-            ("nfpm", "version"),
-            ("nfpm", "source", "status"),
-            ("nfpm", "source", "url"),
-            ("nfpm", "source", "sha256"),
-        }:
-            category = "future"
+        elif len(path) >= 2 and path[0] == "nfpm":
+            # The locked binary, its checksum manifest, archived Sigstore
+            # bundle and selected license are all revalidated together before
+            # nFPM enters the SDK.  Treat the complete identity as one build
+            # input so no authentication-policy change can reuse that layer.
+            category = "build"
 
         require(
             category is not None,
@@ -658,6 +657,7 @@ def _render_expected_components(release, implemented_rows):
     )
     add("sources/zstd", "build", selector(("python", "zstd")))
     add("sources/vcpkg", "build", selector(("vcpkg",)))
+    add("sources/nfpm", "build", selector(("nfpm",)))
     for tool in sorted(release["host_tools"]):
         add(
             "sources/%s" % tool,
@@ -885,13 +885,11 @@ def _render_expected_components(release, implemented_rows):
         ),
     )
 
-    add(
-        "future/product",
-        "future",
-        classification_selector(
-            classifications, "future", (("python", "versions"),)
-        ),
+    future_selector = classification_selector(
+        classifications, "future", (("python", "versions"),)
     )
+    if any(future_selector(path) for path, _value in leaves):
+        add("future/product", "future", future_selector)
 
     return documents
 

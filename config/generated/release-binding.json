@@ -20,12 +20,6 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "172c8380ac13c0f9ba21f48bb78e7adce5574c86189d8299c31d1255a609d415",
-      "component": "future/product",
-      "path": "config/generated/components/future/product.json",
-      "scope": "future"
-    },
-    {
       "canonical_sha256": "f14d24f806b4d270d2455ade0ec8a0e3b7c7904188e5b93f900f41ad44a652a4",
       "component": "host-tools/cmake",
       "path": "config/generated/components/host-tools/cmake.json",
@@ -41,6 +35,12 @@
       "canonical_sha256": "c7fe36f8a0e743c8179db499f84ba0bae8d1e11c806ea42e121cacb811d01f60",
       "component": "implementation/cmake-host-tool",
       "path": "config/generated/components/implementation/cmake-host-tool.json",
+      "scope": "build"
+    },
+    {
+      "canonical_sha256": "f2a01266f9e8c3e5dfd36f292fd18f9fe51e816bc33264441367feaad39cabbc",
+      "component": "implementation/crosspack",
+      "path": "config/generated/components/implementation/crosspack.json",
       "scope": "build"
     },
     {
@@ -338,6 +338,12 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "eda9522d270ab7bbebfe292e8c37e340736e675d7fd5ec78f56edcfc92a8495e",
+      "component": "sources/nfpm",
+      "path": "config/generated/components/sources/nfpm.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "2a98362c763cfe71b4d604cb2ccf563b7bb54cfde1b8ba7331ee1b9ef0d4cc38",
       "component": "sources/ninja",
       "path": "config/generated/components/sources/ninja.json",
@@ -436,7 +442,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "e88c408ea70aeadf7e67440dc0a051663e281f290c30cd84565c85bb56671d1d",
+    "canonical_sha256": "4d7588b092247e1ab0d116b1f63aaeea8a5a0c83b8bd29c7a92ec7872cf97e85",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

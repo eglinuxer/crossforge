@@ -44,6 +44,7 @@ SCHEMA_KEYWORDS = {
     "items",
     "minLength",
     "minimum",
+    "maximum",
     "pattern",
 }
 
@@ -189,6 +190,8 @@ def validate(value, schema, root, path):
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         if "minimum" in schema and value < schema["minimum"]:
             raise ValidationError(f"{path}: must be at least {schema['minimum']!r}")
+        if "maximum" in schema and value > schema["maximum"]:
+            raise ValidationError(f"{path}: must be at most {schema['maximum']!r}")
 
 
 def find_pending(value, path="$"):

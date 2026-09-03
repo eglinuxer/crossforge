@@ -60,10 +60,13 @@ jobs:
           ./scripts/validate-rpm-lock.py locks/host-runtime-el8-x86_64.json --require-lock
       - name: Configuration tests
         run: python3 -m unittest discover -s tests/config -p 'test_*.py'
+      - name: Packaging planner tests
+        run: python3 -m unittest discover -s tests/packaging -p 'test_*.py'
       - name: Script syntax
         run: |
           python3 -m py_compile scripts/*.py
           python3 -m py_compile docker/*.py
+          python3 -m py_compile tools/crossforge/*.py
           bash -n scripts/*.sh
           bash -n docker/*.sh
           gcc -fsyntax-only -fPIC -Wall -Wextra -Werror scripts/deny-target-exec.c
@@ -71,6 +74,7 @@ jobs:
           gcc -fsyntax-only -Wall -Wextra -Werror scripts/target-artifact-canary.c
       - name: Generated Bake definition
         run: |
+          ./scripts/render-release-components.py --check
           ./scripts/render-vcpkg-integration.py --check
           ./scripts/render-bake.py --check
       - name: Docker/Bake static checks

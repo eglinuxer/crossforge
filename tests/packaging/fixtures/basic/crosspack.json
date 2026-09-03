@@ -1,0 +1,90 @@
+{
+  "$schema": "https://crossforge.dev/schemas/crosspack.schema.json",
+  "schema_version": 1,
+  "project": {
+    "name": "crossforge-demo",
+    "version": "1.2.3",
+    "release": "4",
+    "vendor": "Crossforge",
+    "homepage": "https://crossforge.dev",
+    "maintainer": "Crossforge Maintainers <maintainers@crossforge.dev>",
+    "license": "MIT OR Apache-2.0",
+    "section": "devel",
+    "priority": "optional",
+    "source_date_epoch": 1700000000
+  },
+  "target": "x86_64",
+  "components": [
+    {
+      "name": "runtime",
+      "package_names": {
+        "deb": "crossforge-demo",
+        "rpm": "crossforge-demo"
+      },
+      "description": "Crosspack runtime fixture",
+      "files": [
+        {
+          "source": "usr/bin",
+          "destination": "/usr/bin"
+        },
+        {
+          "source": "usr/lib64/libcrossforge-demo.so.1",
+          "destination": "/usr/lib64/libcrossforge-demo.so.1"
+        }
+      ],
+      "dependencies": {
+        "components": [],
+        "deb": [
+          "libc6 (>= 2.28)"
+        ],
+        "rpm": [
+          "glibc >= 2.28"
+        ]
+      }
+    },
+    {
+      "name": "development",
+      "package_names": {
+        "deb": "crossforge-demo-dev",
+        "rpm": "crossforge-demo-devel"
+      },
+      "description": "Crosspack development fixture",
+      "files": [
+        {
+          "source": "usr/include",
+          "destination": "/usr/include"
+        },
+        {
+          "source": "usr/lib64/libcrossforge-demo.so",
+          "destination": "/usr/lib64/libcrossforge-demo.so"
+        }
+      ],
+      "dependencies": {
+        "components": [
+          "runtime"
+        ],
+        "deb": [],
+        "rpm": []
+      }
+    },
+    {
+      "name": "tools",
+      "package_names": {
+        "deb": "crossforge-demo-tools",
+        "rpm": "crossforge-demo-tools"
+      },
+      "description": "Crosspack data fixture",
+      "files": [
+        {
+          "source": "usr/share/crossforge",
+          "destination": "/usr/share/crossforge"
+        }
+      ],
+      "dependencies": {
+        "components": [],
+        "deb": [],
+        "rpm": []
+      }
+    }
+  ]
+}
