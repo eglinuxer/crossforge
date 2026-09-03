@@ -142,6 +142,7 @@ class VcpkgUpstreamTests(unittest.TestCase):
         )[1]
         self.assertIn("RUN --network=none", block)
         self.assertIn("qualify-vcpkg-upstream.py", block)
+        self.assertIn("--expected-component", dockerfile)
         workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )

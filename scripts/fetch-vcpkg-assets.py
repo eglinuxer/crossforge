@@ -16,7 +16,6 @@ COMPONENT_READER = runpy.run_path(
     str(SCRIPT_DIRECTORY / "release_component.py")
 )
 ComponentError = COMPONENT_READER["ComponentError"]
-ASSET_PREFIX = "/@implementation/vcpkg-upstream-tier1/assets/"
 ASSET_FIELDS = {"filename", "sha256", "sha512", "size", "url"}
 FILENAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]*\Z")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}\Z")
@@ -36,12 +35,22 @@ def material_map(component):
     return {item["path"]: item["value"] for item in component["materials"]}
 
 
+def asset_prefix(component):
+    name = component.get("component", "")
+    match = re.fullmatch(
+        r"implementation/(vcpkg-upstream-tier[0-9]+)-qualification", name
+    )
+    require(match is not None, "unsupported vcpkg asset policy component")
+    return "/@implementation/%s/assets/" % match.group(1)
+
+
 def policy_assets(component):
+    prefix = asset_prefix(component)
     records = {}
     for path, value in material_map(component).items():
         match = re.match(
             r"^%s([0-9]+)/(filename|sha256|sha512|size|url)$"
-            % re.escape(ASSET_PREFIX),
+            % re.escape(prefix),
             path,
         )
         if match:
@@ -169,11 +178,11 @@ def fetch_assets(root, assets):
     return verify_asset_root(root, assets)
 
 
-def load_policy(path, digest):
+def load_policy(path, name, digest):
     try:
         component = COMPONENT_READER["load_component"](
             path,
-            "implementation/vcpkg-upstream-tier1-qualification",
+            name,
             "qualification",
             digest,
         )
@@ -186,10 +195,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("mode", choices=("fetch", "verify"))
     parser.add_argument("--component", type=Path, required=True)
+    parser.add_argument("--expected-component", required=True)
     parser.add_argument("--component-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
     arguments = parser.parse_args()
-    assets = load_policy(arguments.component, arguments.component_sha256)
+    assets = load_policy(
+        arguments.component,
+        arguments.expected_component,
+        arguments.component_sha256,
+    )
     if arguments.mode == "fetch":
         fetch_assets(arguments.output, assets)
     else:

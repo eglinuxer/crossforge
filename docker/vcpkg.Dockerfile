@@ -100,6 +100,8 @@ COPY --chmod=0755 scripts/release_component.py \
   scripts/fetch-vcpkg-assets.py /work/scripts/
 RUN /usr/libexec/platform-python /work/scripts/fetch-vcpkg-assets.py fetch \
       --component /work/config/vcpkg-upstream-tier1-policy.json \
+      --expected-component \
+        implementation/vcpkg-upstream-tier1-qualification \
       --component-sha256 \
         "$VCPKG_UPSTREAM_TIER1_POLICY_COMPONENT_SHA256" \
       --output /work/assets
@@ -109,6 +111,8 @@ ARG VCPKG_UPSTREAM_TIER1_POLICY_COMPONENT_SHA256
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/fetch-vcpkg-assets.py verify \
       --component /work/config/vcpkg-upstream-tier1-policy.json \
+      --expected-component \
+        implementation/vcpkg-upstream-tier1-qualification \
       --component-sha256 \
         "$VCPKG_UPSTREAM_TIER1_POLICY_COMPONENT_SHA256" \
       --output /work/assets
