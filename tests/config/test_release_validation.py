@@ -59,6 +59,10 @@ class ReleaseValidationTests(unittest.TestCase):
             self.config["qemu"]["executor"]["manifest_digest"],
         )
         self.assertEqual(result["python_patches"], 4)
+        self.assertEqual(
+            result["qt_source_sha256"],
+            self.config["qt"]["source"]["sha256"],
+        )
 
     def test_supply_chain_identity_tampering_is_rejected(self):
         mutations = (
@@ -84,6 +88,7 @@ class ReleaseValidationTests(unittest.TestCase):
             (("python", "versions", 1, "patches", 0, "sha256"), "0" * 64),
             (("python", "versions", 2, "patches", 0, "sha256"), "0" * 64),
             (("python", "versions", 3, "patches", 0, "sha256"), "0" * 64),
+            (("qt", "source", "checksum", "sha256"), "0" * 64),
         )
         for path, value in mutations:
             with self.subTest(path=path):

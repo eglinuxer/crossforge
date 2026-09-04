@@ -305,6 +305,11 @@
         "cpython-build-cp310"
       ]
     },
+    "qt-source-qualified": {
+      "targets": [
+        "qt-source"
+      ]
+    },
     "toolchain-plan": {
       "targets": [
         "toolchain-plan-x86_64",
@@ -2652,6 +2657,23 @@
       "contexts": {
         "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
       }
+    },
+    "qt-source": {
+      "args": {
+        "CROSSFORGE_COMPONENT_SOURCES_QT_SHA256": "540c01aacded48198436157ab351090990ed06772f82f203563c32422b37a502",
+        "QT_SOURCE_URL": "https://download.qt.io/archive/qt/6.8/6.8.4/single/qt-everywhere-opensource-src-6.8.4.tar.xz",
+        "QT_VERSION": "6.8.4"
+      },
+      "contexts": {
+        "crossforge_rocky_amd64": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-source-export"
     },
     "rpm-lock-host-gcc-build": {
       "args": {

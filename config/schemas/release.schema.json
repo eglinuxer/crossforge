@@ -18,6 +18,7 @@
     "gcc_testsuite",
     "binutils",
     "qemu",
+    "qt",
     "targets",
     "python",
     "host_tools",
@@ -500,6 +501,9 @@
         }
       }
     },
+    "qt": {
+      "$ref": "#/$defs/qt"
+    },
     "targets": {
       "type": "array",
       "minItems": 2,
@@ -810,6 +814,126 @@
     }
   },
   "$defs": {
+    "qt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "source"
+      ],
+      "properties": {
+        "version": {
+          "const": "6.8.4"
+        },
+        "source": {
+          "$ref": "#/$defs/qt_source"
+        }
+      }
+    },
+    "qt_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256",
+        "size",
+        "checksum",
+        "layout"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "url": {
+          "const": "https://download.qt.io/archive/qt/6.8/6.8.4/single/qt-everywhere-opensource-src-6.8.4.tar.xz"
+        },
+        "sha256": {
+          "const": "1da37a32a583e7856d6fc13357c8ff6ad3ef7b877b8d276713b85026426d5246"
+        },
+        "size": {
+          "const": 994798840
+        },
+        "checksum": {
+          "$ref": "#/$defs/qt_checksum"
+        },
+        "layout": {
+          "$ref": "#/$defs/qt_layout"
+        }
+      }
+    },
+    "qt_checksum": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sha256",
+        "size",
+        "evidence",
+        "authentication"
+      ],
+      "properties": {
+        "url": {
+          "const": "https://download.qt.io/archive/qt/6.8/6.8.4/single/qt-everywhere-opensource-src-6.8.4.tar.xz.sha256"
+        },
+        "sha256": {
+          "const": "f208721e3239cba3d21312295e7d991f378e83e79e51e55fe2ffb6c05726bb0a"
+        },
+        "size": {
+          "const": 108
+        },
+        "evidence": {
+          "const": "evidence/checksums/qt-everywhere-opensource-src-6.8.4.tar.xz.sha256.b64"
+        },
+        "authentication": {
+          "const": "hash-pinned-https-sidecar-no-signature"
+        }
+      }
+    },
+    "qt_layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "top_directory",
+        "member_count",
+        "files"
+      ],
+      "properties": {
+        "top_directory": {
+          "const": "qt-everywhere-src-6.8.4"
+        },
+        "member_count": {
+          "const": 399185
+        },
+        "files": {
+          "type": "array",
+          "minItems": 16,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/qt_file_identity"
+          }
+        }
+      }
+    },
+    "qt_file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^(?:LICENSES/[A-Za-z0-9+_.-]+\\.txt|configure|qt(?:base|declarative|multimedia|quick3d|shadertools|tools|wayland|webengine)/CMakeLists\\.txt)$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
     "canonical_json_identity": {
       "type": "object",
       "additionalProperties": false,

@@ -497,6 +497,8 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             category = (
                 "supply" if path[3].endswith("_evidence") else "qualification"
             )
+        elif path and path[0] == "qt":
+            category = "build"
         elif (
             len(path) in (3, 4)
             and path[0] == "targets"
@@ -707,6 +709,7 @@ def _render_expected_components(release, implemented_rows):
         "sources/binutils", "build", selector(("binutils",), ("trust",))
     )
     add("sources/zstd", "build", selector(("python", "zstd")))
+    add("sources/qt", "build", selector(("qt",)))
     add("sources/vcpkg", "build", selector(("vcpkg",)))
     add("sources/nfpm", "build", selector(("nfpm",)))
     for tool in sorted(release["host_tools"]):

@@ -943,6 +943,28 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             },
         )
 
+    def test_qt_source_pin_is_isolated_until_qualification_exists(self):
+        source = self.components["sources/qt"]
+        self.assertEqual(source["scope"], "build")
+        self.assertEqual(source["dependencies"], [])
+        self.assertTrue(
+            all(
+                material["path"].startswith("/qt/")
+                for material in source["materials"]
+            )
+        )
+        self.assertEqual(
+            changed(
+                self.components,
+                self.render_mutation(
+                    lambda release: release["qt"]["source"]["checksum"].__setitem__(
+                        "sha256", "0" * 64
+                    )
+                ),
+            ),
+            {"sources/qt"},
+        )
+
     def test_ninja_host_tool_has_isolated_source_policy_and_consumers(self):
         source = self.components["sources/ninja"]
         self.assertEqual(source["scope"], "build")

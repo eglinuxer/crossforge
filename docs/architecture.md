@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约、三层 curated-port 门禁、生产分包门禁、x86_64 四套完整 GCC qualification 及原生 ARM release 工作流已完成。原生 ARM 首次候选实证、Qt 验收及其余发布供应链尚未完成，当前稳定产物仍未发布。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约、三层 curated-port 门禁、生产分包门禁、x86_64 四套完整 GCC qualification、原生 ARM release 工作流及 Qt 6.8.4 source acceptance 已完成。原生 ARM 首次候选实证、Qt host/双 target 构建验收及其余发布供应链尚未完成，当前稳定产物仍未发布。
 
 ## 1. 产品契约
 
@@ -387,6 +387,8 @@ x86_64 在锁定的 EL8 test host 中直接执行；aarch64 日常使用固定 Q
 
 Qt 验收固定 Qt 6.8.4 `qt-everywhere` 官方源码和 SHA256，构建完整开源 Linux desktop 模块集合，至少包括 qtbase、qtdeclarative、qtshadertools、qttools、qtwayland、qtmultimedia、qtquick3d 和 qtwebengine；不构建 examples/tests/docs。host tools 与 target 使用同版本并通过 `QT_HOST_PATH` 连接，required module/feature 被静默跳过即失败。Qt 产物只作为测试 artifact，不进入 SDK 镜像。
 
+Qt source boundary 同时固定 994,798,840 字节归档、官方 108 字节 SHA256 sidecar 及其离线 base64 envelope。上游未提供独立签名，因此真实性边界明确标为 `hash-pinned-https-sidecar-no-signature`，不得包装成签名验证。离线 source acceptance 扫描全部 399,185 个 tar member，要求唯一 `qt-everywhere-src-6.8.4` 顶层、无绝对/逃逸路径、无 device/FIFO，并逐字节验证八个 required module 的 `CMakeLists.txt`、根 `configure` 与七份顶层许可证；输出仅为 cache-only source artifact，不进入任何 SDK/candidate ancestry。
+
 ## 12. 发布、供应链与许可边界
 
 Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单一供应链。所有源码、RPM、工具和基础镜像均固定 hash 或 digest；禁止 `curl | sh`。BuildKit cache 只用于加速，不构成发布身份或测试证据。
@@ -708,4 +710,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、带 debug/ELF 深审计的双格式分包门禁、单一 launcher、完整 SDK 聚合、x86_64 GCC full qualification 及 digest-bound 原生 ARM release 工作流已完成；后续取得首份原生 ARM 候选实证并推进 Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、带 debug/ELF 深审计的双格式分包门禁、单一 launcher、完整 SDK 聚合、x86_64 GCC full qualification、digest-bound 原生 ARM release 工作流及 Qt source acceptance 已完成；后续取得首份原生 ARM 候选实证并推进 Qt host/双 target 构建、验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

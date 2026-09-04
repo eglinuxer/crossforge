@@ -1070,6 +1070,28 @@ def render_python_graph(config, targets, component_arguments):
     return groups
 
 
+def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
+    component_argument = component_argument_name("sources/qt")
+    try:
+        component_sha256 = component_arguments[component_argument]
+    except KeyError as error:
+        raise ValueError("missing Qt source component digest") from error
+    targets["qt-source"] = {
+        "inherits": ["_qt_common"],
+        "target": "qt-source-export",
+        "args": {
+            "QT_VERSION": config["qt"]["version"],
+            "QT_SOURCE_URL": config["qt"]["source"]["url"],
+            component_argument: component_sha256,
+        },
+        "contexts": {
+            "crossforge_rocky_amd64": "docker-image://%s" % rocky_amd64_image,
+        },
+        "output": ["type=cacheonly"],
+    }
+    return {"qt-source-qualified": {"targets": ["qt-source"]}}
+
+
 def render(repository):
     validator = runpy.run_path(str(repository / "scripts/validate-release.py"))
     load_json = validator["load_json"]
@@ -1167,6 +1189,9 @@ def render(repository):
             "contexts": {"crossforge_qemu": "docker-image://%s" % qemu_image}
         }
     render_zstd_graph(config, targets, component_arguments, rocky_amd64_image)
+    qt_groups = render_qt_graph(
+        config, targets, component_arguments, rocky_amd64_image
+    )
     ninja_groups = render_ninja_graph(config, targets, component_arguments)
     component_renderer = runpy.run_path(
         str(repository / "scripts/render-release-components.py")
@@ -1199,6 +1224,7 @@ def render(repository):
     document = {
         "group": {
             "toolchain-plan": {"targets": plan_names},
+            **qt_groups,
             **ninja_groups,
             **vcpkg_groups,
             **packaging_groups,

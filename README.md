@@ -140,6 +140,17 @@ The compiler and dual-target Python gates remain heavy candidate checks.
 Regular PR CI validates their graph, locked inputs, clean runtime overlays and
 native build Python without rebuilding both GCC toolchains from scratch.
 
+The first Qt qualification boundary authenticates and inspects the complete
+Qt 6.8.4 supermodule archive without installing it into the SDK:
+
+```console
+$ docker buildx bake qt-source-qualified
+```
+
+This target binds the official archive and SHA256 sidecar, rejects unsafe tar
+members, and verifies the eight required module roots plus all seven top-level
+license texts before exporting a cache-only source artifact.
+
 ## Phase 3: reproducible RPM foundation
 
 Host preparation is split deliberately: common tools contain the exact

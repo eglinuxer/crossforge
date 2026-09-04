@@ -404,6 +404,12 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "540c01aacded48198436157ab351090990ed06772f82f203563c32422b37a502",
+      "component": "sources/qt",
+      "path": "config/generated/components/sources/qt.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "32decc4331f2b02cb83fc96a08b622d7302c346eac55ff74e3cb3345c2fc36da",
       "component": "sources/vcpkg",
       "path": "config/generated/components/sources/vcpkg.json",
@@ -502,7 +508,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "c5830f759cea5c15681687ecd30b7f833f85580cbad9db913907a8cdac7b1056",
+    "canonical_sha256": "29ab018cc94d852ff4d969f109dce80630caf3f7c3e6d612fda9b8d63c551f7c",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

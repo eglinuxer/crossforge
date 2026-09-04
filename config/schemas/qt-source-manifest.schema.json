@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/qt-source-manifest.schema.json",
+  "title": "Crossforge authenticated Qt source manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "version",
+    "source_component",
+    "archive",
+    "checksum",
+    "top_directory",
+    "member_count",
+    "files"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/qt-source-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-qt-source"
+    },
+    "version": {
+      "const": "6.8.4"
+    },
+    "source_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "const": "sources/qt"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "archive": {
+      "$ref": "#/$defs/file_identity"
+    },
+    "checksum": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "size",
+        "authentication",
+        "evidence",
+        "evidence_sha256"
+      ],
+      "properties": {
+        "file": {
+          "const": "qt-everywhere-opensource-src-6.8.4.tar.xz.sha256"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "const": 108
+        },
+        "authentication": {
+          "const": "hash-pinned-https-sidecar-no-signature"
+        },
+        "evidence": {
+          "const": "evidence/checksums/qt-everywhere-opensource-src-6.8.4.tar.xz.sha256.b64"
+        },
+        "evidence_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "top_directory": {
+      "const": "qt-everywhere-src-6.8.4"
+    },
+    "member_count": {
+      "const": 399185
+    },
+    "files": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "sha256",
+          "size",
+          "mode"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9+_.-]+(?:/[A-Za-z0-9+_.-]+)*$"
+          },
+          "sha256": {
+            "$ref": "#/$defs/sha256"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16777216
+          },
+          "mode": {
+            "enum": [
+              "0664",
+              "0775"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "size"
+      ],
+      "properties": {
+        "file": {
+          "const": "qt-everywhere-opensource-src-6.8.4.tar.xz"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "const": 994798840
+        }
+      }
+    }
+  }
+}

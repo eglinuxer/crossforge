@@ -44,6 +44,12 @@ target "_packaging_common" {
   platforms  = ["linux/amd64"]
 }
 
+target "_qt_common" {
+  context    = "."
+  dockerfile = "docker/qt.Dockerfile"
+  platforms  = ["linux/amd64"]
+}
+
 group "default" {
   targets = ["validate"]
 }

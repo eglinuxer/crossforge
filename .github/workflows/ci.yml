@@ -66,7 +66,7 @@ jobs:
           docker buildx bake --print phase5 phase6 phase7 phase8 phase9 phase10 \
             phase13-source phase13-host-tools phase13-integration \
             phase13-contract phase13-ports phase14 phase15 phase16 \
-            candidate >/dev/null
+            qt-source-qualified candidate >/dev/null
       - name: Locked latest inputs and native build Pythons
         run: |
           docker buildx bake validate platform-python-check \

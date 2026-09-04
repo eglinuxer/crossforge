@@ -62,7 +62,7 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_component_arguments_cover_the_complete_release_binding(self):
         records = self.binding["components"]
-        self.assertEqual(len(records), 83)
+        self.assertEqual(len(records), 84)
         expected = {
             RENDERER["component_argument_name"](record["component"]): record[
                 "canonical_sha256"

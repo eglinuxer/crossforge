@@ -480,6 +480,55 @@ def validate_evidence(config, repository):
         "zstd selected license identity mismatch",
     )
 
+    qt = config["qt"]
+    qt_source = qt["source"]
+    qt_checksum = qt_source["checksum"]
+    expected_qt_url = (
+        "https://download.qt.io/archive/qt/6.8/6.8.4/single/"
+        "qt-everywhere-opensource-src-6.8.4.tar.xz"
+    )
+    require(
+        qt["version"] == "6.8.4"
+        and qt_source["status"] == "locked"
+        and qt_source["url"] == expected_qt_url
+        and qt_source["sha256"]
+        == "1da37a32a583e7856d6fc13357c8ff6ad3ef7b877b8d276713b85026426d5246"
+        and qt_source["size"] == 994798840
+        and qt_checksum["url"] == expected_qt_url + ".sha256"
+        and qt_checksum["sha256"]
+        == "f208721e3239cba3d21312295e7d991f378e83e79e51e55fe2ffb6c05726bb0a"
+        and qt_checksum["size"] == 108
+        and qt_checksum["authentication"]
+        == "hash-pinned-https-sidecar-no-signature",
+        "Qt source or checksum identity mismatch",
+    )
+    qt_evidence_envelope = load_locked_file(
+        repository, qt_checksum["evidence"], "Qt checksum evidence"
+    )
+    require(
+        qt_evidence_envelope
+        and qt_evidence_envelope == qt_evidence_envelope.strip() + b"\n"
+        and len(qt_evidence_envelope.splitlines()) == 1,
+        "Qt checksum evidence envelope is not canonical",
+    )
+    try:
+        qt_checksum_payload = base64.b64decode(
+            qt_evidence_envelope.strip(), validate=True
+        )
+    except (ValueError, binascii.Error) as error:
+        raise EvidenceError("invalid Qt checksum evidence") from error
+    require(
+        len(qt_checksum_payload) == qt_checksum["size"]
+        and hashlib.sha256(qt_checksum_payload).hexdigest()
+        == qt_checksum["sha256"]
+        and qt_checksum_payload
+        == (
+            "%s  qt-everywhere-opensource-src-6.8.4.tar.xz\n"
+            % qt_source["sha256"]
+        ).encode("ascii"),
+        "Qt checksum evidence differs from the source identity",
+    )
+
     vcpkg = config["vcpkg"]
     vcpkg_release = vcpkg["release"]
     vcpkg_tool = vcpkg["tool"]
@@ -955,6 +1004,8 @@ def validate_evidence(config, repository):
         "zstd_tag_object": zstd_git["tag_object"],
         "zstd_commit": zstd_git["commit"],
         "zstd_signature_sha256": zstd_signature["sha256"],
+        "qt_source_sha256": qt_source["sha256"],
+        "qt_checksum_sha256": qt_checksum["sha256"],
         "vcpkg_tag_object": vcpkg_release["tag_object"],
         "vcpkg_commit": vcpkg_release["commit"],
         "vcpkg_tool_commit": vcpkg_tool["commit"],
@@ -980,7 +1031,7 @@ def main():
     print(
         "valid supply-chain evidence: Rocky %s; QEMU %s; source %s; "
         "CPython Sigstore bundles %s; patches %d; zstd %s; vcpkg %s; "
-        "Ninja %s; CMake %s"
+        "Qt %s; Ninja %s; CMake %s"
         % (
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
@@ -989,6 +1040,7 @@ def main():
             result["python_patches"],
             result["zstd_commit"],
             result["vcpkg_commit"],
+            config["qt"]["version"],
             result["ninja_commit"],
             config["host_tools"]["cmake"]["version"],
         )

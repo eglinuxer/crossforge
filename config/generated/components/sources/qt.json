@@ -1,0 +1,186 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "sources/qt",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/qt/source/checksum/authentication",
+      "value": "hash-pinned-https-sidecar-no-signature"
+    },
+    {
+      "path": "/qt/source/checksum/evidence",
+      "value": "evidence/checksums/qt-everywhere-opensource-src-6.8.4.tar.xz.sha256.b64"
+    },
+    {
+      "path": "/qt/source/checksum/sha256",
+      "value": "f208721e3239cba3d21312295e7d991f378e83e79e51e55fe2ffb6c05726bb0a"
+    },
+    {
+      "path": "/qt/source/checksum/size",
+      "value": 108
+    },
+    {
+      "path": "/qt/source/checksum/url",
+      "value": "https://download.qt.io/archive/qt/6.8/6.8.4/single/qt-everywhere-opensource-src-6.8.4.tar.xz.sha256"
+    },
+    {
+      "path": "/qt/source/layout/files/0/file",
+      "value": "LICENSES/BSD-3-Clause.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/0/sha256",
+      "value": "9f0490f18656c6f2435bd14f603ef0c96434d1825615363dce43abb42ed1dcce"
+    },
+    {
+      "path": "/qt/source/layout/files/1/file",
+      "value": "LICENSES/GFDL-1.3-no-invariants-only.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/1/sha256",
+      "value": "110535522396708cea37c72a802c5e7e81391139f5f7985631c93ef242b206a4"
+    },
+    {
+      "path": "/qt/source/layout/files/10/file",
+      "value": "qtmultimedia/CMakeLists.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/10/sha256",
+      "value": "7dbb87132dbd6382e8fa4e69e68e233c0471702f7e0047b67571138450d1327e"
+    },
+    {
+      "path": "/qt/source/layout/files/11/file",
+      "value": "qtquick3d/CMakeLists.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/11/sha256",
+      "value": "edb71892cc59f06c8476fe7a6527b9f69387823ec2e87586e1a16270140eccb5"
+    },
+    {
+      "path": "/qt/source/layout/files/12/file",
+      "value": "qtshadertools/CMakeLists.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/12/sha256",
+      "value": "402c56f7fc0c6bb017e655351d29065c2ed5b01533116c4ed6249b5f97a19cea"
+    },
+    {
+      "path": "/qt/source/layout/files/13/file",
+      "value": "qttools/CMakeLists.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/13/sha256",
+      "value": "301a658d84d523cf198c1ee79f9936d7384d74d87a9e6e9f7f71f6bda3becd1a"
+    },
+    {
+      "path": "/qt/source/layout/files/14/file",
+      "value": "qtwayland/CMakeLists.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/14/sha256",
+      "value": "02f621745820c3054b5660962c9958c385c56c8018a425cb85caa4f5d612e0e9"
+    },
+    {
+      "path": "/qt/source/layout/files/15/file",
+      "value": "qtwebengine/CMakeLists.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/15/sha256",
+      "value": "7a51b75bb81e72a862fc3a7a4be0e45fa29fb2787d95f399b00cb2ef31ce2698"
+    },
+    {
+      "path": "/qt/source/layout/files/2/file",
+      "value": "LICENSES/GPL-2.0-only.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/2/sha256",
+      "value": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "/qt/source/layout/files/3/file",
+      "value": "LICENSES/GPL-3.0-only.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/3/sha256",
+      "value": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "/qt/source/layout/files/4/file",
+      "value": "LICENSES/LGPL-3.0-only.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/4/sha256",
+      "value": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+    },
+    {
+      "path": "/qt/source/layout/files/5/file",
+      "value": "LICENSES/LicenseRef-Qt-Commercial.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/5/sha256",
+      "value": "9b1f50aae6267f9d5e0ceb6775ee86450262c25ec7c0573e151fe5d3f18a4700"
+    },
+    {
+      "path": "/qt/source/layout/files/6/file",
+      "value": "LICENSES/Qt-GPL-exception-1.0.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/6/sha256",
+      "value": "40678d338ce53cd93f8b22b281a2ecbcaa3ee65ce60b25ffb0c462b0530846b2"
+    },
+    {
+      "path": "/qt/source/layout/files/7/file",
+      "value": "configure"
+    },
+    {
+      "path": "/qt/source/layout/files/7/sha256",
+      "value": "84319fca3a713bf0b94c775f3be261af396c2d41d540e436300b75ebd4557ed5"
+    },
+    {
+      "path": "/qt/source/layout/files/8/file",
+      "value": "qtbase/CMakeLists.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/8/sha256",
+      "value": "19284751242b33ff39b86d0b75afd587aae465cbca5d8347f1fe71d1bd9113d2"
+    },
+    {
+      "path": "/qt/source/layout/files/9/file",
+      "value": "qtdeclarative/CMakeLists.txt"
+    },
+    {
+      "path": "/qt/source/layout/files/9/sha256",
+      "value": "2aefe12b66047de82c299d8ee35322d844965e360d755d2679219a6dbae1f372"
+    },
+    {
+      "path": "/qt/source/layout/member_count",
+      "value": 399185
+    },
+    {
+      "path": "/qt/source/layout/top_directory",
+      "value": "qt-everywhere-src-6.8.4"
+    },
+    {
+      "path": "/qt/source/sha256",
+      "value": "1da37a32a583e7856d6fc13357c8ff6ad3ef7b877b8d276713b85026426d5246"
+    },
+    {
+      "path": "/qt/source/size",
+      "value": 994798840
+    },
+    {
+      "path": "/qt/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/qt/source/url",
+      "value": "https://download.qt.io/archive/qt/6.8/6.8.4/single/qt-everywhere-opensource-src-6.8.4.tar.xz"
+    },
+    {
+      "path": "/qt/version",
+      "value": "6.8.4"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}
