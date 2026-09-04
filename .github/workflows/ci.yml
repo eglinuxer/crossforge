@@ -82,5 +82,11 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           docker buildx bake python-matrix vcpkg-upstream-tier3-qualified \
-            sdk-complete-dev gcc-testsuite-smoke \
+            sdk-complete-dev \
+            --progress=plain
+          # QEMU execution is deliberately isolated from the peak Python/vcpkg
+          # build fan-out. Running it in the same Bake solve can exhaust the
+          # hosted runner and turn every optimization of a trivial target
+          # program into an infrastructure-shaped DejaGNU FAIL.
+          docker buildx bake gcc-testsuite-smoke \
             --progress=plain

@@ -275,6 +275,20 @@ class GccTestsuiteContractTests(unittest.TestCase):
         self.assertIn('str(tool_prefix) + ":" + suite_environment["PATH"]', runner)
         self.assertIn('Path(resolved_gxx).resolve() != gxx.resolve()', runner)
 
+    def test_ci_isolates_qemu_smoke_from_peak_build_fanout(self):
+        workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("sdk-complete-dev gcc-testsuite-smoke", workflow)
+        self.assertEqual(
+            workflow.count("docker buildx bake gcc-testsuite-smoke"), 1
+        )
+        complete = workflow.index(
+            "docker buildx bake python-matrix vcpkg-upstream-tier3-qualified"
+        )
+        smoke = workflow.index("docker buildx bake gcc-testsuite-smoke")
+        self.assertLess(complete, smoke)
+
     def test_progress_watchdog_stops_idle_workers_without_masking_the_error(self):
         class IdleProcess:
             def __init__(self):
