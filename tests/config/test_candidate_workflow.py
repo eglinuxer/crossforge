@@ -82,6 +82,13 @@ class CandidateWorkflowTests(unittest.TestCase):
             self.setup,
         )
 
+    def test_main_qualification_is_not_cancelled_by_a_later_push(self):
+        self.assertIn(
+            "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
+            self.ci,
+        )
+        self.assertIn("cancel-in-progress: true", self.workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
