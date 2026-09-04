@@ -24,6 +24,7 @@ CROSSPACK_POLICY = {
     "external_dependencies": "explicit-per-format",
     "internal_dependencies": "exact-epoch-version-release",
     "versioning": "shared-version-format-specific-epoch-release",
+    "descriptions": "single-line-summary-canonical-multi-paragraph-body",
     "relations": {
         "deb": [
             "depends",
@@ -96,6 +97,7 @@ CROSSPACK_QUALIFICATION_POLICY = {
         "lifecycle_scripts_execute_on_install_upgrade_remove": True,
         "independent_components_match_across_targets": True,
         "selective_format_encoding_matches_full_build": True,
+        "summary_description_and_license_metadata": True,
         "isolated_install_root": True,
         "installed_payload_hashes": True,
         "detached_debug_symbols": True,

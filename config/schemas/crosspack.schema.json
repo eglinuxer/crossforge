@@ -114,6 +114,7 @@
       "required": [
         "name",
         "package_names",
+        "summary",
         "description",
         "files",
         "relations"
@@ -125,8 +126,11 @@
         "package_names": {
           "$ref": "#/$defs/package_names"
         },
-        "description": {
+        "summary": {
           "$ref": "#/$defs/text"
+        },
+        "description": {
+          "$ref": "#/$defs/description"
         },
         "architecture": {
           "enum": [
@@ -436,6 +440,10 @@
       "type": "string",
       "minLength": 1,
       "pattern": "^[^\\r\\n]+$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
     },
     "owner": {
       "type": "string",

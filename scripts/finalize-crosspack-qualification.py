@@ -157,6 +157,7 @@ def finalize(arguments):
             "lifecycle_scripts": "passed",
             "verified_independent_components": "passed",
             "selective_format_encoding": "passed",
+            "package_metadata": "passed",
         }
         and package_report.get("nfpm", {}).get("sha256")
         == source_report.get("binary", {}).get("sha256")

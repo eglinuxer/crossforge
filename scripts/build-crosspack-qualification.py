@@ -130,6 +130,7 @@ def package_config(template, arch, crosspack):
                 "deb": "crossforge-demo-dbgsym",
                 "rpm": "crossforge-demo-debuginfo",
             },
+            "summary": "Crosspack detached debug symbols",
             "description": "Crosspack detached debug symbols",
             "files": [],
             "relations": {
@@ -225,6 +226,11 @@ def validate_plan(plan, arch):
         set(packages) == {"runtime", "development", "tools", "debug"}
         and packages["debug"]["relations"]["components"] == ["runtime"],
         "crosspack split-package set differs",
+    )
+    require(
+        packages["runtime"]["summary"] == "Crosspack runtime fixture"
+        and "\n\nIncludes a shared library" in packages["runtime"]["description"],
+        "crosspack package description differs",
     )
     require(
         packages["tools"]["architecture"] == "independent"
@@ -492,6 +498,7 @@ def build(
                 "lifecycle_scripts": "passed",
                 "verified_independent_components": "passed",
                 "selective_format_encoding": "passed",
+                "package_metadata": "passed",
             },
             "nfpm": {
                 "version": nfpm["version"],

@@ -85,6 +85,10 @@
       "value": true
     },
     {
+      "path": "/@implementation/crosspack-qualification/requirements/summary_description_and_license_metadata",
+      "value": true
+    },
+    {
       "path": "/@implementation/crosspack-qualification/schema_version",
       "value": 1
     },

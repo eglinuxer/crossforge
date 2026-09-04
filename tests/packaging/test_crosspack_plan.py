@@ -82,6 +82,7 @@ class CrosspackPlanTests(unittest.TestCase):
                     "deb": "crossforge-demo-dbgsym",
                     "rpm": "crossforge-demo-debuginfo",
                 },
+                "summary": "Detached debug symbols",
                 "description": "Detached debug symbols",
                 "files": [],
                 "relations": empty_relations(["runtime"]),
@@ -114,6 +115,10 @@ class CrosspackPlanTests(unittest.TestCase):
         )
         packages = {item["component"]: item for item in plan["packages"]}
         self.assertEqual(packages["runtime"]["architecture"], "target")
+        self.assertEqual(
+            packages["runtime"]["summary"], "Crosspack runtime fixture"
+        )
+        self.assertIn("\n\nIncludes a shared library", packages["runtime"]["description"])
         self.assertEqual(
             packages["runtime"]["architecture_qualification"],
             "target-specific",
@@ -268,6 +273,7 @@ class CrosspackPlanTests(unittest.TestCase):
                 "buildhost": "crossforge.invalid",
                 "compression": "gzip",
                 "packager": self.config["project"]["maintainer"],
+                "summary": "Crosspack runtime fixture",
             },
         )
         self.assertEqual((tools_deb["arch"], tools_deb["deb"]["arch"]), ("all", "all"))
@@ -289,6 +295,12 @@ class CrosspackPlanTests(unittest.TestCase):
                         content["file_info"]["mtime"], "2023-11-14T22:13:20Z"
                     )
         runtime_deb = rendered["deb"]["runtime"]
+        self.assertEqual(
+            runtime_deb["description"],
+            self.config["components"][0]["summary"]
+            + "\n"
+            + self.config["components"][0]["description"],
+        )
         runtime_config = next(
             item
             for item in runtime_deb["contents"]
@@ -727,6 +739,7 @@ class CrosspackPlanTests(unittest.TestCase):
                         "deb": "crossforge-script",
                         "rpm": "crossforge-script",
                     },
+                    "summary": "Pure script package",
                     "description": "Pure script package",
                     "files": [
                         {"source": "usr/bin", "destination": "/usr/bin"}
@@ -963,6 +976,23 @@ class CrosspackPlanTests(unittest.TestCase):
         ] = []
         with self.assertRaises(CROSSPACK["CrosspackError"]):
             CROSSPACK["validate_config"](malformed_relations)
+        for description in (
+            "",
+            " leading",
+            "trailing ",
+            "paragraph\n\n\nparagraph",
+            "tab\tcharacter",
+            "x" * 16385,
+        ):
+            candidate = copy.deepcopy(self.config)
+            candidate["components"][0]["description"] = description
+            with self.subTest(description=description[:20]):
+                with self.assertRaises(CROSSPACK["CrosspackError"]):
+                    CROSSPACK["validate_config"](candidate)
+        long_summary = copy.deepcopy(self.config)
+        long_summary["components"][0]["summary"] = "x" * 257
+        with self.assertRaises(CROSSPACK["CrosspackError"]):
+            CROSSPACK["validate_config"](long_summary)
 
     def test_duplicate_json_keys_are_rejected(self):
         path = Path(self.temporary.name) / "duplicate.json"
@@ -1024,6 +1054,7 @@ class CrosspackPlanTests(unittest.TestCase):
             {
                 "name": "runtime",
                 "package_names": {"deb": "empty", "rpm": "empty"},
+                "summary": "Empty directory fixture",
                 "description": "Empty directory fixture",
                 "files": [{"source": "var/lib/empty", "destination": "/var/lib/empty"}],
                 "relations": empty_relations(),

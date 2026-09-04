@@ -425,6 +425,7 @@ epoch/release，并按最终 destination/RUNPATH 唯一解析 `DT_NEEDED` provid
 显式 independent component 已映射为 DEB `all`/RPM `noarch`，并以双 target 完整
 component plan 和两代 package 字节一致性取得 `verified-independent` 证据。
 `package plan/build` 也已支持选择 DEB、RPM 或两者，并把选择绑定进 canonical plan。
+component 的单行 summary 与规范多段 description 已拆分，并经过真实包 metadata 查询。
 DEB/RPM 各自的 libdir 和 sealed staging/variant provenance 仍须在首次公开发布前完成。
 现有安装门禁也不构成目标发行版运行资格化。
 不能先发布一个功能不足的 schema v1，再立即用 schema v2 修正基本生产语义。

@@ -147,6 +147,26 @@ def text(value, label):
     )
 
 
+def package_description(value, label):
+    require(
+        isinstance(value, str)
+        and 0 < len(value) <= 16384
+        and "\x00" not in value
+        and "\r" not in value
+        and "\t" not in value
+        and all(character == "\n" or ord(character) >= 32 for character in value),
+        "%s must be canonical UTF-8 paragraph text" % label,
+    )
+    lines = value.split("\n")
+    require(
+        lines[0]
+        and lines[-1]
+        and all(line == "" or line == line.strip() for line in lines)
+        and all(lines[index] or lines[index - 1] for index in range(1, len(lines))),
+        "%s must use single blank lines between paragraphs" % label,
+    )
+
+
 def name(value, label):
     require(
         isinstance(value, str) and NAME_RE.match(value) is not None,
@@ -359,6 +379,7 @@ def validate_config(config):
         component_keys = {
             "name",
             "package_names",
+            "summary",
             "description",
             "files",
             "relations",
@@ -372,6 +393,11 @@ def validate_config(config):
             % (label, ", ".join(sorted(component_keys))),
         )
         name(component["name"], label + ".name")
+        text(component["summary"], label + ".summary")
+        require(
+            len(component["summary"]) <= 256,
+            label + ".summary is too long",
+        )
         require(
             component.get("architecture", "target")
             in ("target", "independent"),
@@ -379,7 +405,7 @@ def validate_config(config):
         )
         require(component["name"] not in logical_names, "component name is duplicated")
         logical_names.add(component["name"])
-        text(component["description"], label + ".description")
+        package_description(component["description"], label + ".description")
 
         exact_keys(component["package_names"], {"deb", "rpm"}, label + ".package_names")
         for packager in ("deb", "rpm"):
@@ -1161,6 +1187,7 @@ def build_plan(
                 "architectures": package_architectures(
                     component, config["target"]
                 ),
+                "summary": component["summary"],
                 "description": component["description"],
                 "relations": {
                     "components": sorted(component["relations"]["components"]),
@@ -1258,7 +1285,7 @@ def nfpm_config(plan_document, package, packager, staging_root, script_root=None
         "section": project["section"],
         "priority": project["priority"],
         "maintainer": project["maintainer"],
-        "description": package["description"],
+        "description": package["summary"] + "\n" + package["description"],
         "vendor": project["vendor"],
         "homepage": project["homepage"],
         "license": project["license"],
@@ -1296,6 +1323,7 @@ def nfpm_config(plan_document, package, packager, staging_root, script_root=None
             "buildhost": "crossforge.invalid",
             "compression": "gzip",
             "packager": project["maintainer"],
+            "summary": package["summary"],
         }
     return result
 

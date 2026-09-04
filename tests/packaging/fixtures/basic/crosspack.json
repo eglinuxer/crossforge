@@ -29,7 +29,8 @@
         "deb": "crossforge-demo",
         "rpm": "crossforge-demo"
       },
-      "description": "Crosspack runtime fixture",
+      "summary": "Crosspack runtime fixture",
+      "description": "Runtime files used to qualify Crosspack packages.\n\nIncludes a shared library, command, configuration, and state directory.",
       "files": [
         {
           "source": "usr/bin",
@@ -82,7 +83,8 @@
         "deb": "crossforge-demo-dev",
         "rpm": "crossforge-demo-devel"
       },
-      "description": "Crosspack development fixture",
+      "summary": "Crosspack development fixture",
+      "description": "Headers and linker metadata used to develop against the runtime fixture.",
       "files": [
         {
           "source": "usr/include",
@@ -124,7 +126,8 @@
         "deb": "crossforge-demo-tools",
         "rpm": "crossforge-demo-tools"
       },
-      "description": "Crosspack data fixture",
+      "summary": "Crosspack data fixture",
+      "description": "Architecture-independent documentation for the package fixture.",
       "files": [
         {
           "source": "usr/share/crossforge",

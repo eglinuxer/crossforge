@@ -45,6 +45,10 @@ case "$format" in
     config_metadata=$(dpkg-query \
       --admindir="$install_root/var/lib/dpkg" \
       --show --showformat='${Conffiles}\n' crossforge-demo)
+    description_metadata=$(dpkg-query \
+      --admindir="$install_root/var/lib/dpkg" \
+      --show --showformat='${Description}\n' crossforge-demo)
+    summary_metadata=$(printf '%s\n' "$description_metadata" | sed -n '1p')
     ;;
   rpm)
     expected_arch=$arch
@@ -58,6 +62,13 @@ case "$format" in
       --provides crossforge-demo)
     config_metadata=$(rpm --root "$install_root" --query \
       --configfiles crossforge-demo)
+    summary_metadata=$(rpm --root "$install_root" --query \
+      --queryformat '%{SUMMARY}\n' crossforge-demo)
+    description_metadata=$(rpm --root "$install_root" --query \
+      --queryformat '%{DESCRIPTION}\n' crossforge-demo)
+    license_metadata=$(rpm --root "$install_root" --query \
+      --queryformat '%{LICENSE}\n' crossforge-demo)
+    test "$license_metadata" = 'MIT OR Apache-2.0'
     ;;
   *)
     echo "unsupported package format: $format" >&2
@@ -67,6 +78,11 @@ esac
 
 printf '%s\n' "$relation_metadata" | grep -F crossforge-demo-virtual
 printf '%s\n' "$config_metadata" | grep -F /etc/crossforge-demo.conf
+test "$summary_metadata" = 'Crosspack runtime fixture'
+printf '%s\n' "$description_metadata" | grep -F \
+  'Runtime files used to qualify Crosspack packages.'
+printf '%s\n' "$description_metadata" | grep -F \
+  'Includes a shared library, command, configuration, and state directory.'
 
 count=$(printf '%s\n' "$metadata" | sed '/^$/d' | wc -l)
 test "$count" -eq 4

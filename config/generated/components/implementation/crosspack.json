@@ -33,6 +33,10 @@
       "value": "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink"
     },
     {
+      "path": "/@implementation/crosspack/descriptions",
+      "value": "single-line-summary-canonical-multi-paragraph-body"
+    },
+    {
       "path": "/@implementation/crosspack/external_dependencies",
       "value": "explicit-per-format"
     },

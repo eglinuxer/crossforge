@@ -556,6 +556,10 @@ target-generated artifact classes, and is recorded as declared-independent in
 its plan. Crossforge's dual-target qualification upgrades that claim to
 verified-independent only after the complete component plan and both base and
 upgrade package bytes match exactly between x86_64 and aarch64.
+Each component has a bounded single-line summary and a canonical long
+description with optional paragraphs. Crosspack constructs the DEB synopsis/body
+and explicitly maps RPM Summary/Description, while real package queries verify
+the summary, long description, and RPM license metadata.
 
 When `debug_symbols` names an otherwise empty debug component, crosspack uses
 the selected target `objcopy` on a private staging copy and adds a matching GNU

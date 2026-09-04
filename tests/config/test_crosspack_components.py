@@ -163,6 +163,10 @@ class CrosspackComponentTests(unittest.TestCase):
             "deb-rpm-or-both-recorded-in-plan",
         )
         self.assertEqual(
+            policy["descriptions"],
+            "single-line-summary-canonical-multi-paragraph-body",
+        )
+        self.assertEqual(
             policy["debug_symbols"],
             "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
         )

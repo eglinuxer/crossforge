@@ -115,6 +115,7 @@
         "architecture",
         "architecture_qualification",
         "architectures",
+        "summary",
         "description",
         "relations",
         "scripts",
@@ -143,9 +144,11 @@
         "architectures": {
           "$ref": "#/$defs/package_architectures"
         },
+        "summary": {
+          "$ref": "#/$defs/text"
+        },
         "description": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/description"
         },
         "relations": {
           "type": "object",
@@ -861,6 +864,10 @@
       "type": "string",
       "minLength": 1,
       "pattern": "^[^\\r\\n]+$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
     },
     "sha256": {
       "type": "string",
