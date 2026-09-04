@@ -48,6 +48,10 @@
             "group": "root",
             "config": "noreplace"
           }
+        },
+        {
+          "source": "var/lib/crossforge-demo",
+          "destination": "/var/lib/crossforge-demo"
         }
       ],
       "relations": {

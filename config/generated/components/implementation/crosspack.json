@@ -41,6 +41,38 @@
       "value": "exact-epoch-version-release"
     },
     {
+      "path": "/@implementation/crosspack/lifecycle_scripts/formats/0",
+      "value": "deb"
+    },
+    {
+      "path": "/@implementation/crosspack/lifecycle_scripts/formats/1",
+      "value": "rpm"
+    },
+    {
+      "path": "/@implementation/crosspack/lifecycle_scripts/hooks/0",
+      "value": "pre-install"
+    },
+    {
+      "path": "/@implementation/crosspack/lifecycle_scripts/hooks/1",
+      "value": "post-install"
+    },
+    {
+      "path": "/@implementation/crosspack/lifecycle_scripts/hooks/2",
+      "value": "pre-remove"
+    },
+    {
+      "path": "/@implementation/crosspack/lifecycle_scripts/hooks/3",
+      "value": "post-remove"
+    },
+    {
+      "path": "/@implementation/crosspack/lifecycle_scripts/identity",
+      "value": "source-sha256-size-interpreter"
+    },
+    {
+      "path": "/@implementation/crosspack/lifecycle_scripts/interpreter",
+      "value": "/bin/sh"
+    },
+    {
       "path": "/@implementation/crosspack/ownership",
       "value": "complete-exclusive-staged-tree"
     },

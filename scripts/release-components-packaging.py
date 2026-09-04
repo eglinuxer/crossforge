@@ -41,6 +41,12 @@ CROSSPACK_POLICY = {
     },
     "file_attributes": "single-entry-mode-owner-group",
     "configuration_files": ["config", "noreplace"],
+    "lifecycle_scripts": {
+        "formats": ["deb", "rpm"],
+        "hooks": ["pre-install", "post-install", "pre-remove", "post-remove"],
+        "interpreter": "/bin/sh",
+        "identity": "source-sha256-size-interpreter",
+    },
     "debug_symbols": "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
     "reproducibility": {
         "identity": "canonical-json-sha256",
@@ -82,6 +88,7 @@ CROSSPACK_QUALIFICATION_POLICY = {
         "configuration_file_semantics": True,
         "configuration_upgrade_preserves_user_changes": True,
         "installed_file_attributes": True,
+        "lifecycle_scripts_execute_on_install_upgrade_remove": True,
         "isolated_install_root": True,
         "installed_payload_hashes": True,
         "detached_debug_symbols": True,

@@ -18,6 +18,16 @@ test -f "$package_root/installed.sha256"
 test ! -e "$install_root"
 mkdir -p "$install_root"
 
+mkdir -p "$install_root/bin"
+cp -L /bin/sh "$install_root/bin/sh"
+ldd /bin/sh | awk '{
+  for (field = 1; field <= NF; field++) {
+    if ($field ~ /^\//) print $field
+  }
+}' | sort -u | while IFS= read -r dependency; do
+  cp --parents "$dependency" "$install_root"
+done
+
 case "$format" in
   deb)
     expected_arch=amd64
@@ -83,6 +93,9 @@ test -f "$install_root/usr/include/crossforge/demo.h"
 test -f "$install_root/usr/share/crossforge/README"
 test -f \
   "$install_root/usr/lib/debug/usr/lib64/libcrossforge-demo.so.1.debug"
+script_log="$install_root/crossforge-scriptlets.log"
+test "$(sed -n '1p' "$script_log")" = "crossforge-$format-pre-install"
+test "$(sed -n '2p' "$script_log")" = "crossforge-$format-post-install"
 
 printf '%s\n' 'mode=user' > "$install_root/etc/crossforge-demo.conf"
 case "$format" in
@@ -105,6 +118,20 @@ printf '%s\n' "$upgraded" | grep -F \
   "crossforge-demo 1.2.3-5 $expected_arch"
 grep -Fx 'mode=user' "$install_root/etc/crossforge-demo.conf"
 grep -Fx 'mode=upgrade-default' "$alternate"
+for lifecycle in pre-install post-install pre-remove post-remove; do
+  grep -Fx "crossforge-$format-$lifecycle" "$script_log"
+done
+
+case "$format" in
+  deb)
+    dpkg --root="$install_root" --force-depends --remove crossforge-demo
+    ;;
+  rpm)
+    rpm --root "$install_root" --nodeps --erase crossforge-demo
+    ;;
+esac
+test "$(grep -Fxc "crossforge-$format-pre-remove" "$script_log")" -ge 2
+test "$(grep -Fxc "crossforge-$format-post-remove" "$script_log")" -ge 2
 
 mkdir -p "$(dirname "$output")"
-printf 'crosspack-install-v1 %s %s passed\n' "$format" "$arch" >"$output"
+printf 'crosspack-install-v2 %s %s passed\n' "$format" "$arch" >"$output"

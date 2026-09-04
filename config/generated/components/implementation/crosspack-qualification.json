@@ -73,6 +73,10 @@
       "value": true
     },
     {
+      "path": "/@implementation/crosspack-qualification/requirements/lifecycle_scripts_execute_on_install_upgrade_remove",
+      "value": true
+    },
+    {
       "path": "/@implementation/crosspack-qualification/schema_version",
       "value": 1
     },

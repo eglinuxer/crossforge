@@ -50,6 +50,20 @@ RPM_RELATION_FIELDS = (
     "provides",
     "obsoletes",
 )
+SCRIPT_FIELDS = (
+    "pre_install",
+    "post_install",
+    "pre_remove",
+    "post_remove",
+)
+NFPM_SCRIPT_FIELDS = {
+    "pre_install": "preinstall",
+    "post_install": "postinstall",
+    "pre_remove": "preremove",
+    "post_remove": "postremove",
+}
+SCRIPT_INTERPRETER = "/bin/sh"
+SCRIPT_MAX_SIZE = 1024 * 1024
 ARCHITECTURES = {
     "x86_64": {"deb": "amd64", "rpm": "x86_64", "elf_machine": 62},
     "aarch64": {"deb": "arm64", "rpm": "aarch64", "elf_machine": 183},
@@ -216,6 +230,36 @@ def validate_relations(value, label):
             )
 
 
+def validate_scripts(value, label):
+    require(
+        isinstance(value, dict)
+        and value
+        and set(value) <= {"deb", "rpm"},
+        "%s must be a non-empty DEB/RPM object" % label,
+    )
+    for packager in sorted(value):
+        scripts = value[packager]
+        require(
+            isinstance(scripts, dict)
+            and scripts
+            and set(scripts) <= set(SCRIPT_FIELDS),
+            "%s.%s must contain known lifecycle hooks" % (label, packager),
+        )
+        for field, source in scripts.items():
+            source_path(source, "%s.%s.%s" % (label, packager, field))
+
+
+def normalized_scripts(component):
+    configured = component.get("scripts", {})
+    return {
+        packager: {
+            field: configured.get(packager, {}).get(field)
+            for field in SCRIPT_FIELDS
+        }
+        for packager in ("deb", "rpm")
+    }
+
+
 def validate_config(config):
     exact_keys(
         config,
@@ -287,10 +331,19 @@ def validate_config(config):
     package_names = {"deb": set(), "rpm": set()}
     for component_index, component in enumerate(components):
         label = "components[%d]" % component_index
-        exact_keys(
-            component,
-            {"name", "package_names", "description", "files", "relations"},
-            label,
+        component_keys = {
+            "name",
+            "package_names",
+            "description",
+            "files",
+            "relations",
+        }
+        require(
+            isinstance(component, dict)
+            and component_keys <= set(component)
+            and set(component) <= component_keys | {"scripts"},
+            "%s keys differ: expected %s with optional scripts"
+            % (label, ", ".join(sorted(component_keys))),
         )
         name(component["name"], label + ".name")
         require(component["name"] not in logical_names, "component name is duplicated")
@@ -340,6 +393,8 @@ def validate_config(config):
                 )
 
         validate_relations(component["relations"], label + ".relations")
+        if "scripts" in component:
+            validate_scripts(component["scripts"], label + ".scripts")
 
     component_map = {item["name"]: item for item in components}
     if debug_symbols is None:
@@ -840,6 +895,121 @@ def prepare_debug_staging(config, staging_root, objcopy, workspace):
     }
 
 
+def script_output_path(root, component, packager, field):
+    return Path(root) / component / packager / field
+
+
+def read_script(source, config_root, label):
+    root = Path(config_root)
+    try:
+        root = root.resolve(strict=True)
+    except OSError as error:
+        raise CrosspackError(
+            "cannot resolve script root %s: %s" % (root, error)
+        ) from error
+    require(root.is_dir(), "script root must be a directory")
+    path = root / source
+    try:
+        resolved = path.resolve(strict=True)
+    except OSError as error:
+        raise CrosspackError("cannot resolve %s: %s" % (label, error)) from error
+    require(resolved == path, "%s must not traverse a symlink" % label)
+    flags = (
+        os.O_RDONLY
+        | getattr(os, "O_NONBLOCK", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+    )
+    try:
+        descriptor = os.open(str(path), flags)
+    except OSError as error:
+        raise CrosspackError("cannot open %s: %s" % (label, error)) from error
+    try:
+        metadata = os.fstat(descriptor)
+        require(stat.S_ISREG(metadata.st_mode), "%s must be a regular file" % label)
+        require(
+            0 < metadata.st_size <= SCRIPT_MAX_SIZE,
+            "%s must be between 1 byte and %d bytes" % (label, SCRIPT_MAX_SIZE),
+        )
+        with os.fdopen(descriptor, "rb", closefd=False) as stream:
+            payload = stream.read(SCRIPT_MAX_SIZE + 1)
+    finally:
+        os.close(descriptor)
+    require(
+        len(payload) == metadata.st_size and len(payload) <= SCRIPT_MAX_SIZE,
+        "%s changed while it was read" % label,
+    )
+    try:
+        decoded = payload.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise CrosspackError("%s must be UTF-8: %s" % (label, error)) from error
+    require(
+        "\x00" not in decoded and "\r" not in decoded,
+        "%s contains unsafe bytes" % label,
+    )
+    require(
+        payload.split(b"\n", 1)[0] == b"#!" + SCRIPT_INTERPRETER.encode("ascii"),
+        "%s must start with #!%s" % (label, SCRIPT_INTERPRETER),
+    )
+    return payload
+
+
+def prepare_scripts(config, config_root=None, output_root=None):
+    configured = {
+        component["name"]: normalized_scripts(component)
+        for component in config["components"]
+    }
+    active = any(
+        source is not None
+        for scripts in configured.values()
+        for packager in ("deb", "rpm")
+        for source in scripts[packager].values()
+    )
+    if active:
+        require(
+            config_root is not None,
+            "script root is required by configured scripts",
+        )
+    prepared_root = None
+    if output_root is not None:
+        prepared_root = Path(output_root)
+        require(
+            not prepared_root.exists() and not prepared_root.is_symlink(),
+            "prepared script root already exists",
+        )
+        prepared_root.mkdir(parents=True)
+    result = {}
+    for component in config["components"]:
+        component_name = component["name"]
+        result[component_name] = {"deb": {}, "rpm": {}}
+        for packager in ("deb", "rpm"):
+            for field in SCRIPT_FIELDS:
+                source = configured[component_name][packager][field]
+                if source is None:
+                    result[component_name][packager][field] = None
+                    continue
+                label = "components.%s.scripts.%s.%s" % (
+                    component_name,
+                    packager,
+                    field,
+                )
+                payload = read_script(source, config_root, label)
+                record = {
+                    "source": source,
+                    "interpreter": SCRIPT_INTERPRETER,
+                    "size": len(payload),
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                }
+                result[component_name][packager][field] = record
+                if prepared_root is not None:
+                    destination = script_output_path(
+                        prepared_root, component_name, packager, field
+                    )
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    destination.write_bytes(payload)
+                    destination.chmod(0o700)
+    return result
+
+
 def build_plan(
     config,
     staging_root,
@@ -847,6 +1017,8 @@ def build_plan(
     sysroot=None,
     config_sha256=None,
     debug_symbols=None,
+    config_root=None,
+    script_root=None,
 ):
     validate_config(config)
     require(
@@ -855,6 +1027,7 @@ def build_plan(
     )
     inventory = inventory_staging(staging_root, config["target"])
     expanded = expand_mappings(config, staging_root, inventory)
+    scripts = prepare_scripts(config, config_root, script_root)
     elf_audit = None
     if readelf is not None:
         try:
@@ -884,6 +1057,7 @@ def build_plan(
                     "deb": package_relations(config, component, "deb"),
                     "rpm": package_relations(config, component, "rpm"),
                 },
+                "scripts": scripts[component["name"]],
                 "contents": expanded[component["name"]],
             }
         )
@@ -935,7 +1109,29 @@ def nfpm_content(content, staging_root, timestamp):
     return result
 
 
-def nfpm_config(plan_document, package, packager, staging_root):
+def prepared_scripts(package, packager, script_root):
+    result = {}
+    for field in SCRIPT_FIELDS:
+        record = package["scripts"][packager][field]
+        if record is None:
+            continue
+        require(script_root is not None, "prepared script root is required")
+        path = script_output_path(
+            script_root, package["component"], packager, field
+        )
+        require(
+            path.is_file()
+            and not path.is_symlink()
+            and path.stat().st_size == record["size"]
+            and sha256_file(path) == record["sha256"],
+            "prepared script differs: %s/%s/%s"
+            % (package["component"], packager, field),
+        )
+        result[NFPM_SCRIPT_FIELDS[field]] = str(path.resolve())
+    return result
+
+
+def nfpm_config(plan_document, package, packager, staging_root, script_root=None):
     require(packager in ("deb", "rpm"), "unsupported package format")
     project = plan_document["project"]
     timestamp = source_date_time(project)
@@ -974,6 +1170,9 @@ def nfpm_config(plan_document, package, packager, staging_root):
             for content in package["contents"]
         ],
     }
+    scripts = prepared_scripts(package, packager, script_root)
+    if scripts:
+        result["scripts"] = scripts
     if packager == "deb":
         result["deb"] = {
             "arch": plan_document["architectures"]["deb"],
@@ -991,13 +1190,13 @@ def nfpm_config(plan_document, package, packager, staging_root):
     return result
 
 
-def render_nfpm_configs(plan_document, staging_root):
+def render_nfpm_configs(plan_document, staging_root, script_root=None):
     result = {"deb": {}, "rpm": {}}
     for package in plan_document["packages"]:
         component = package["component"]
         for packager in ("deb", "rpm"):
             result[packager][component] = nfpm_config(
-                plan_document, package, packager, staging_root
+                plan_document, package, packager, staging_root, script_root
             )
     return result
 
@@ -1093,8 +1292,12 @@ def package(
             sysroot,
             canonical_sha256(config),
             debug_symbols,
+            Path(config_path).resolve().parent,
+            workspace / "scripts",
         )
-        rendered = render_nfpm_configs(plan_document, package_staging)
+        rendered = render_nfpm_configs(
+            plan_document, package_staging, workspace / "scripts"
+        )
         artifacts = []
         result_root = workspace / "result"
         config_root = workspace / "configs"
@@ -1185,6 +1388,8 @@ def plan(config_path, staging_root, readelf=None, sysroot=None, objcopy=None):
             sysroot,
             canonical_sha256(config),
             debug_symbols,
+            Path(config_path).resolve().parent,
+            Path(temporary) / "scripts",
         )
 
 

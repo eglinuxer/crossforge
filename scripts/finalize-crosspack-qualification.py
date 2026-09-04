@@ -146,6 +146,7 @@ def finalize(arguments):
             "configuration_file_semantics": "passed",
             "configuration_upgrade_preserves_user_changes": "passed",
             "installed_file_attributes": "passed",
+            "lifecycle_scripts": "passed",
         }
         and package_report.get("nfpm", {}).get("sha256")
         == source_report.get("binary", {}).get("sha256")
@@ -187,7 +188,7 @@ def finalize(arguments):
             marker = arguments.marker_root / (
                 "%s-%s.ok" % (format_name, arch)
             )
-            expected = "crosspack-install-v1 %s %s passed\n" % (
+            expected = "crosspack-install-v2 %s %s passed\n" % (
                 format_name,
                 arch,
             )

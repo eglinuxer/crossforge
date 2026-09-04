@@ -101,6 +101,7 @@
         "package_names",
         "description",
         "relations",
+        "scripts",
         "contents"
       ],
       "properties": {
@@ -139,6 +140,9 @@
             }
           }
         },
+        "scripts": {
+          "$ref": "#/$defs/format_scripts"
+        },
         "contents": {
           "type": "array",
           "minItems": 1,
@@ -155,6 +159,82 @@
               }
             ]
           }
+        }
+      }
+    },
+    "format_scripts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "$ref": "#/$defs/scripts"
+        },
+        "rpm": {
+          "$ref": "#/$defs/scripts"
+        }
+      }
+    },
+    "scripts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pre_install",
+        "post_install",
+        "pre_remove",
+        "post_remove"
+      ],
+      "properties": {
+        "pre_install": {
+          "$ref": "#/$defs/optional_script"
+        },
+        "post_install": {
+          "$ref": "#/$defs/optional_script"
+        },
+        "pre_remove": {
+          "$ref": "#/$defs/optional_script"
+        },
+        "post_remove": {
+          "$ref": "#/$defs/optional_script"
+        }
+      }
+    },
+    "optional_script": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/script"
+        }
+      ]
+    },
+    "script": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "interpreter",
+        "size",
+        "sha256"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "interpreter": {
+          "const": "/bin/sh"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
         }
       }
     },

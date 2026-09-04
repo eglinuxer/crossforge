@@ -138,6 +138,20 @@ class CrosspackComponentTests(unittest.TestCase):
             "shared-version-format-specific-epoch-release",
         )
         self.assertEqual(
+            policy["lifecycle_scripts"],
+            {
+                "formats": ["deb", "rpm"],
+                "hooks": [
+                    "pre-install",
+                    "post-install",
+                    "pre-remove",
+                    "post-remove",
+                ],
+                "interpreter": "/bin/sh",
+                "identity": "source-sha256-size-interpreter",
+            },
+        )
+        self.assertEqual(
             policy["debug_symbols"],
             "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
         )

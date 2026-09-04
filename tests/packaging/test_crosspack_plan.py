@@ -50,6 +50,7 @@ class CrosspackPlanTests(unittest.TestCase):
         (self.root / "usr/include/crossforge").mkdir(parents=True)
         (self.root / "usr/lib64").mkdir(parents=True)
         (self.root / "usr/share/crossforge").mkdir(parents=True)
+        (self.root / "var/lib/crossforge-demo").mkdir(parents=True)
         executable = self.root / "usr/bin/crossforge-demo"
         executable.write_text("#!/bin/sh\necho crossforge\n", encoding="utf-8")
         executable.chmod(0o755)
@@ -131,9 +132,9 @@ class CrosspackPlanTests(unittest.TestCase):
             for package in plan["packages"]
             for item in package["contents"]
         ]
-        self.assertEqual(len(contents), 6)
-        self.assertEqual(len({item["source"] for item in contents}), 6)
-        self.assertEqual(len({item["destination"] for item in contents}), 6)
+        self.assertEqual(len(contents), 7)
+        self.assertEqual(len({item["source"] for item in contents}), 7)
+        self.assertEqual(len({item["destination"] for item in contents}), 7)
         config = next(
             item
             for item in contents
@@ -222,6 +223,116 @@ class CrosspackPlanTests(unittest.TestCase):
             CROSSPACK["package_filename"](plan, packages["runtime"], "rpm"),
             "crossforge-demo-1.2.3-4.x86_64.rpm",
         )
+
+    def test_lifecycle_scripts_are_sealed_bound_and_mapped_per_format(self):
+        config = copy.deepcopy(self.config)
+        config_root = Path(self.temporary.name) / "config"
+        script = config_root / "scripts/post-install.sh"
+        script.parent.mkdir(parents=True)
+        script.write_text(
+            "#!/bin/sh\nprintf '%s\\n' installed\n", encoding="utf-8"
+        )
+        runtime = next(
+            component for component in config["components"]
+            if component["name"] == "runtime"
+        )
+        runtime["scripts"] = {
+            "deb": {"post_install": "scripts/post-install.sh"}
+        }
+        config_schema = VALIDATOR["load_json"](CONFIG_SCHEMA)
+        VALIDATOR["validate"](config, config_schema, config_schema, "$")
+        first_root = Path(self.temporary.name) / "prepared-first"
+        first = CROSSPACK["build_plan"](
+            config,
+            self.root,
+            config_root=config_root,
+            script_root=first_root,
+        )
+        package = next(
+            item for item in first["packages"] if item["component"] == "runtime"
+        )
+        record = package["scripts"]["deb"]["post_install"]
+        self.assertEqual(record["source"], "scripts/post-install.sh")
+        self.assertEqual(record["interpreter"], "/bin/sh")
+        self.assertEqual(record["size"], script.stat().st_size)
+        self.assertEqual(record["sha256"], CROSSPACK["sha256_file"](script))
+        prepared = first_root / "runtime/deb/post_install"
+        self.assertEqual(prepared.read_bytes(), script.read_bytes())
+        self.assertEqual(stat.S_IMODE(prepared.stat().st_mode), 0o700)
+        nfpm = CROSSPACK["nfpm_config"](
+            first, package, "deb", self.root, first_root
+        )
+        self.assertEqual(nfpm["scripts"], {"postinstall": str(prepared)})
+        plan_schema = VALIDATOR["load_json"](PLAN_SCHEMA)
+        VALIDATOR["validate"](first, plan_schema, plan_schema, "$")
+
+        prepared.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "prepared script differs"
+        ):
+            CROSSPACK["nfpm_config"](
+                first, package, "deb", self.root, first_root
+            )
+
+        script.write_text(
+            "#!/bin/sh\nprintf '%s\\n' upgraded\n", encoding="utf-8"
+        )
+        second = CROSSPACK["build_plan"](
+            config,
+            self.root,
+            config_root=config_root,
+            script_root=Path(self.temporary.name) / "prepared-second",
+        )
+        self.assertNotEqual(first, second)
+
+    def test_lifecycle_scripts_reject_unsafe_sources_and_content(self):
+        config = copy.deepcopy(self.config)
+        runtime = next(
+            component for component in config["components"]
+            if component["name"] == "runtime"
+        )
+        for empty in ({}, {"deb": {}}):
+            with self.subTest(empty_scripts=empty):
+                runtime["scripts"] = empty
+                with self.assertRaises(CROSSPACK["CrosspackError"]):
+                    CROSSPACK["validate_config"](config)
+        runtime["scripts"] = {"deb": {"pre_install": "../escape.sh"}}
+        with self.assertRaises(CROSSPACK["CrosspackError"]):
+            CROSSPACK["validate_config"](config)
+
+        config_root = Path(self.temporary.name) / "script-config"
+        config_root.mkdir()
+        runtime["scripts"]["deb"]["pre_install"] = "invalid.sh"
+        invalid = config_root / "invalid.sh"
+        invalid.write_text("echo missing-shebang\n", encoding="utf-8")
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "must start with"
+        ):
+            CROSSPACK["build_plan"](
+                config, self.root, config_root=config_root
+            )
+
+        valid = config_root / "valid.sh"
+        valid.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        link = config_root / "linked.sh"
+        link.symlink_to("valid.sh")
+        runtime["scripts"]["deb"]["pre_install"] = "linked.sh"
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "must not traverse a symlink"
+        ):
+            CROSSPACK["build_plan"](
+                config, self.root, config_root=config_root
+            )
+
+        fifo = config_root / "fifo.sh"
+        os.mkfifo(str(fifo))
+        runtime["scripts"]["deb"]["pre_install"] = "fifo.sh"
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "must be a regular file"
+        ):
+            CROSSPACK["build_plan"](
+                config, self.root, config_root=config_root
+            )
 
     def test_all_format_specific_relations_map_to_nfpm(self):
         plan = CROSSPACK["build_plan"](self.config, self.root)

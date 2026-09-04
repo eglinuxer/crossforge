@@ -540,6 +540,16 @@ relation fields fail closed.
 The project version is shared, while DEB and RPM carry independent numeric
 epochs and release strings; generated component dependencies bind the exact
 format-specific epoch-version-release.
+Each component can independently assign DEB and RPM `pre_install`,
+`post_install`, `pre_remove`, and `post_remove` scripts. Paths are resolved
+relative to the manifest, and only small, regular, non-symlink UTF-8 files with
+an exact `#!/bin/sh` interpreter are accepted. Crosspack seals their bytes,
+records source, interpreter, size, and SHA-256 in the canonical plan, and gives
+nFPM only the sealed copy. Components without scripts omit the field; components
+with scripts declare only the formats and hooks they use, while the plan expands
+the complete matrix. Qualification executes every hook during real
+install, upgrade, and removal transactions for both package formats and target
+architectures.
 
 When `debug_symbols` names an otherwise empty debug component, crosspack uses
 the selected target `objcopy` on a private staging copy and adds a matching GNU

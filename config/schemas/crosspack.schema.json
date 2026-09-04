@@ -137,6 +137,9 @@
         },
         "relations": {
           "$ref": "#/$defs/relations"
+        },
+        "scripts": {
+          "$ref": "#/$defs/format_scripts"
         }
       }
     },
@@ -235,6 +238,62 @@
           "$ref": "#/$defs/rpm_relations"
         }
       }
+    },
+    "format_scripts": {
+      "type": "object",
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": ["deb"]
+        },
+        {
+          "required": ["rpm"]
+        }
+      ],
+      "properties": {
+        "deb": {
+          "$ref": "#/$defs/scripts"
+        },
+        "rpm": {
+          "$ref": "#/$defs/scripts"
+        }
+      }
+    },
+    "scripts": {
+      "type": "object",
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": ["pre_install"]
+        },
+        {
+          "required": ["post_install"]
+        },
+        {
+          "required": ["pre_remove"]
+        },
+        {
+          "required": ["post_remove"]
+        }
+      ],
+      "properties": {
+        "pre_install": {
+          "$ref": "#/$defs/script_source"
+        },
+        "post_install": {
+          "$ref": "#/$defs/script_source"
+        },
+        "pre_remove": {
+          "$ref": "#/$defs/script_source"
+        },
+        "post_remove": {
+          "$ref": "#/$defs/script_source"
+        }
+      }
+    },
+    "script_source": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*$"
     },
     "deb_relations": {
       "type": "object",

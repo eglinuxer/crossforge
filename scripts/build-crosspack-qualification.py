@@ -18,6 +18,7 @@ TARGETS = {
     "x86_64": "x86_64-unknown-linux-gnu",
     "aarch64": "aarch64-unknown-linux-gnu",
 }
+SCRIPT_FIELDS = ("pre_install", "post_install", "pre_remove", "post_remove")
 
 
 class QualificationError(RuntimeError):
@@ -73,6 +74,7 @@ def populate_staging(root, arch):
     (root / "usr/include/crossforge").mkdir(parents=True)
     (root / "usr/lib64").mkdir(parents=True)
     (root / "usr/share/crossforge").mkdir(parents=True)
+    (root / "var/lib/crossforge-demo").mkdir(parents=True)
     source = root / "probe.c"
     source.write_text(
         "#include <stdio.h>\n"
@@ -144,6 +146,27 @@ def package_config(template, arch, crosspack):
     return config
 
 
+def write_scriptlets(root, config):
+    runtime = next(
+        component
+        for component in config["components"]
+        if component["name"] == "runtime"
+    )
+    runtime["scripts"] = {"deb": {}, "rpm": {}}
+    for packager in ("deb", "rpm"):
+        for field in SCRIPT_FIELDS:
+            relative = Path("scripts") / packager / (field + ".sh")
+            path = root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                "#!/bin/sh\n"
+                "printf '%%s\\n' 'crossforge-%s-%s' >> /crossforge-scriptlets.log\n"
+                % (packager, field.replace("_", "-")),
+                encoding="utf-8",
+            )
+            runtime["scripts"][packager][field] = relative.as_posix()
+
+
 def compare_outputs(first, second, result):
     for artifact in result["artifacts"]:
         relative = Path(artifact["path"])
@@ -203,6 +226,17 @@ def validate_plan(plan, arch):
         and packages["debug"]["relations"]["components"] == ["runtime"],
         "crosspack split-package set differs",
     )
+    runtime_scripts = packages["runtime"]["scripts"]
+    require(
+        all(
+            runtime_scripts[packager][field].get("interpreter") == "/bin/sh"
+            and len(runtime_scripts[packager][field].get("sha256", "")) == 64
+            for packager in ("deb", "rpm")
+            for field in SCRIPT_FIELDS
+        )
+        and runtime_scripts["deb"] != runtime_scripts["rpm"],
+        "crosspack lifecycle-script plan differs",
+    )
     runtime = next(
         content
         for content in packages["runtime"]["contents"]
@@ -252,6 +286,7 @@ def build(
                 staging = temporary / arch / "staging"
                 populate_staging(staging, arch)
                 config = package_config(template, arch, crosspack)
+                write_scriptlets(temporary / arch, config)
                 config_path = temporary / arch / "crosspack.json"
                 write_json(config_path, config)
                 first = temporary / arch / "first"
@@ -335,6 +370,7 @@ def build(
                 "configuration_file_semantics": "passed",
                 "configuration_upgrade_preserves_user_changes": "passed",
                 "installed_file_attributes": "passed",
+                "lifecycle_scripts": "passed",
             },
             "nfpm": {
                 "version": nfpm["version"],
