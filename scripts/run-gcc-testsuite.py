@@ -172,7 +172,11 @@ def prepare_gcc_site(build, compiler, gxx, tool_prefix):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    parser.add_argument(
+        "--mode", choices=("qualification", "observation"), default="qualification"
+    )
     parser.add_argument("--release", type=Path, required=True)
+    parser.add_argument("--plan", type=Path)
     parser.add_argument("--build", type=Path, required=True)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--prefix", type=Path, required=True)
@@ -181,29 +185,63 @@ def main():
     parser.add_argument("--runtime-tier", required=True)
     parser.add_argument("--site", type=Path, required=True)
     parser.add_argument("--host-marker", type=Path, required=True)
-    parser.add_argument("--qualification-component", type=Path, required=True)
-    parser.add_argument("--qualification-component-sha256", required=True)
+    parser.add_argument("--qualification-component", type=Path)
+    parser.add_argument("--qualification-component-sha256")
     parser.add_argument("--qemu", type=Path)
     parser.add_argument("--runtime-root", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--candidate-baseline", type=Path)
     arguments = parser.parse_args()
     try:
-        contract = CONTRACT["validate_release_contract"](arguments.release)
-        plan = contract["plan"]
+        release_contract = CONTRACT["validate_release_contract"](arguments.release)
+        release = release_contract["release"]
+        if arguments.mode == "qualification":
+            if arguments.plan is not None or arguments.candidate_baseline is not None:
+                raise ValidationError(
+                    "qualification mode does not accept an external plan or candidate baseline"
+                )
+            if (
+                arguments.qualification_component is None
+                or arguments.qualification_component_sha256 is None
+            ):
+                raise ValidationError(
+                    "qualification mode requires its release component identity"
+                )
+            plan = release_contract["plan"]
+        else:
+            if arguments.plan is None or arguments.candidate_baseline is None:
+                raise ValidationError(
+                    "observation mode requires --plan and --candidate-baseline"
+                )
+            if (
+                arguments.qualification_component is not None
+                or arguments.qualification_component_sha256 is not None
+            ):
+                raise ValidationError(
+                    "observation mode must not claim a qualification component"
+                )
+            plan = CONTRACT["validate_plan"](
+                CONTRACT["load_json"](arguments.plan)
+            )
+            if plan["gcc_version"] != release["gts"]["gcc_version"]:
+                raise ValidationError(
+                    "GCC testsuite compiler version differs from release"
+                )
         target, tier = selected_target(
             plan, arguments.target, arguments.runtime_tier
         )
-        baseline_record = contract["baselines"][(
-            arguments.target, arguments.runtime_tier
-        )]
-        baseline = baseline_record["document"]
-        component = COMPONENT["load_component"](
-            arguments.qualification_component,
-            "toolchain/gcc-testsuite-qualification",
-            "qualification",
-            arguments.qualification_component_sha256,
-        )
+        if arguments.mode == "qualification":
+            baseline_record = release_contract["baselines"][(
+                arguments.target, arguments.runtime_tier
+            )]
+            baseline = baseline_record["document"]
+            component = COMPONENT["load_component"](
+                arguments.qualification_component,
+                "toolchain/gcc-testsuite-qualification",
+                "qualification",
+                arguments.qualification_component_sha256,
+            )
         compiler = require_file(
             arguments.prefix / "bin" / (arguments.target + "-gcc"),
             "final GCC",
@@ -237,7 +275,7 @@ def main():
                     "aarch64 GCC testsuite requires QEMU and a runtime root"
                 )
             qemu = require_file(arguments.qemu, "aarch64 QEMU executor")
-            if file_sha256(qemu) != contract["release"]["qemu"]["executor"][
+            if file_sha256(qemu) != release["qemu"]["executor"][
                 "binary_sha256"
             ]:
                 raise ValidationError("aarch64 QEMU digest differs from release")
@@ -304,7 +342,11 @@ def main():
         summaries = {}
         make_results = []
         for suite in plan["suites"]:
-            source_sum = arguments.build / suite["sum_file"]
+            source_sum = arguments.build / Path(
+                *CONTRACT["resolve_summary_path"](
+                    suite["sum_file"], arguments.target
+                ).parts
+            )
             source_log = source_sum.with_suffix(".log")
             for stale in (source_sum, source_log):
                 if stale.exists() or stale.is_symlink():
@@ -358,7 +400,7 @@ def main():
                     "log_sha256": file_sha256(make_log),
                 }
             )
-            if process.returncode != 0:
+            if process.returncode != 0 and arguments.mode == "qualification":
                 raise ValidationError(
                     "GCC testsuite make target failed: %s" % suite["make_target"]
                 )
@@ -379,30 +421,48 @@ def main():
                 "name": tier["board"]["name"],
                 "sha256": file_sha256(board),
             },
-            "qualification_component": {
-                "component": component["component"],
-                "canonical_sha256": arguments.qualification_component_sha256,
-            },
             "make": make_results,
         }
+        if arguments.mode == "qualification":
+            materials["qualification_component"] = {
+                "component": component["component"],
+                "canonical_sha256": arguments.qualification_component_sha256,
+            }
+        else:
+            materials["observation_plan"] = {
+                "file": str(arguments.plan),
+                "canonical_sha256": CONTRACT["canonical_sha256"](plan),
+            }
         if target["arch"] == "aarch64":
             materials["runtime"] = runtime_material
         try:
-            report = CONTRACT["normalize_summaries"](
-                plan, baseline, summaries, materials
-            )
+            if arguments.mode == "qualification":
+                report = CONTRACT["normalize_summaries"](
+                    plan, baseline, summaries, materials
+                )
+            else:
+                report, candidate = CONTRACT["observe_summaries"](
+                    plan,
+                    arguments.target,
+                    arguments.runtime_tier,
+                    summaries,
+                    materials,
+                )
         except ValidationError:
             for suite in plan["suites"]:
                 print_log_diagnostics(arguments.output / (suite["id"] + ".log"))
                 print_log_tail(arguments.output / (suite["id"] + ".make.log"))
             raise
         write_json(arguments.report, report)
+        if arguments.mode == "observation":
+            write_json(arguments.candidate_baseline, candidate)
     except (KeyError, OSError, UnicodeError, ValidationError, COMPONENT["ComponentError"]) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1
+    verb = "qualified" if arguments.mode == "qualification" else "observed"
     print(
-        "qualified GCC testsuite: %s (%s, %s)"
-        % (arguments.target, arguments.runtime_tier, plan["profile"])
+        "%s GCC testsuite: %s (%s, %s)"
+        % (verb, arguments.target, arguments.runtime_tier, plan["profile"])
     )
     return 0
 

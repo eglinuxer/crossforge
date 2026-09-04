@@ -82,6 +82,50 @@ TARGET_CONTRACT = [
         ],
     },
 ]
+SMOKE_SUITE_CONTRACT = [
+    {
+        "id": "gcc.execute",
+        "make_target": "check-gcc",
+        "sum_file": "gcc/testsuite/gcc/gcc.sum",
+        "runtestflags": ["execute.exp=20000112-1.c"],
+    }
+]
+FULL_SUITE_CONTRACT = [
+    {
+        "id": "g++.full",
+        "make_target": "check-g++",
+        "sum_file": "gcc/testsuite/g++/g++.sum",
+        "runtestflags": [],
+    },
+    {
+        "id": "gcc.full",
+        "make_target": "check-gcc",
+        "sum_file": "gcc/testsuite/gcc/gcc.sum",
+        "runtestflags": [],
+    },
+    {
+        "id": "libgcc.full",
+        "make_target": "check-target-libgcc",
+        "sum_file": "{target}/libgcc/testsuite/libgcc.sum",
+        "runtestflags": [],
+    },
+    {
+        "id": "libgomp.full",
+        "make_target": "check-target-libgomp",
+        "sum_file": "{target}/libgomp/testsuite/libgomp.sum",
+        "runtestflags": [],
+    },
+    {
+        "id": "libstdc++.full",
+        "make_target": "check-target-libstdc++-v3",
+        "sum_file": "{target}/libstdc++-v3/testsuite/libstdc++.sum",
+        "runtestflags": [],
+    },
+]
+SUITE_CONTRACTS = {
+    "full": FULL_SUITE_CONTRACT,
+    "smoke": SMOKE_SUITE_CONTRACT,
+}
 
 
 def canonical_sha256(value):
@@ -125,12 +169,16 @@ def result_key(record):
 
 def validate_plan(plan):
     validate_schema(plan, PLAN_SCHEMA)
-    if plan["profile"] != "smoke":
-        raise ValidationError("only the smoke GCC testsuite profile is implemented")
+    if plan["profile"] not in SUITE_CONTRACTS:
+        raise ValidationError("unknown GCC testsuite profile")
     if plan["unexpected_statuses"] != EXPECTED_UNEXPECTED:
         raise ValidationError("GCC testsuite unexpected status policy differs")
     if plan["targets"] != TARGET_CONTRACT:
         raise ValidationError("GCC testsuite target/runtime matrix differs")
+    if plan["suites"] != SUITE_CONTRACTS[plan["profile"]]:
+        raise ValidationError(
+            "GCC testsuite %s suite contract differs" % plan["profile"]
+        )
     site_path = repository_file(plan["site"]["file"], "GCC testsuite site file")
     if file_sha256(site_path) != plan["site"]["sha256"]:
         raise ValidationError("GCC testsuite site file digest differs")
@@ -145,13 +193,29 @@ def validate_plan(plan):
         raise ValidationError("GCC testsuite suite ids must be sorted and unique")
     sum_files = []
     for suite in plan["suites"]:
-        relative = PurePosixPath(suite["sum_file"])
-        if relative.is_absolute() or ".." in relative.parts:
-            raise ValidationError("GCC testsuite summary path is unsafe")
+        for target in plan["targets"]:
+            resolve_summary_path(suite["sum_file"], target["triple"])
         sum_files.append(suite["sum_file"])
     if len(sum_files) != len(set(sum_files)):
         raise ValidationError("GCC testsuite summary paths must be unique")
     return plan
+
+
+def resolve_summary_path(template, target):
+    if template.count("{target}") > 1 or (
+        "{" in template.replace("{target}", "")
+        or "}" in template.replace("{target}", "")
+    ):
+        raise ValidationError("GCC testsuite summary path has an unknown template")
+    value = template.replace("{target}", target)
+    relative = PurePosixPath(value)
+    if (
+        relative.is_absolute()
+        or ".." in relative.parts
+        or str(relative) != value
+    ):
+        raise ValidationError("GCC testsuite summary path is unsafe")
+    return relative
 
 
 def validate_baseline(baseline, plan, target, runtime_tier):
@@ -315,12 +379,76 @@ def normalize_summaries(plan, baseline, summaries, materials):
     }
 
 
+def observe_summaries(plan, target, runtime_tier, summaries, materials):
+    all_records = []
+    unexpected = []
+    raw = []
+    expected_suites = [suite["id"] for suite in plan["suites"]]
+    if sorted(summaries) != sorted(expected_suites):
+        raise ValidationError("GCC testsuite summary set differs from the plan")
+    for suite in expected_suites:
+        path = Path(summaries[suite])
+        records, failures = parse_summary(
+            suite, path, set(plan["unexpected_statuses"])
+        )
+        all_records.extend(records)
+        unexpected.extend(failures)
+        raw.append(
+            {
+                "suite": suite,
+                "sha256": file_sha256(path),
+                "size": path.stat().st_size,
+            }
+        )
+    all_records.sort(key=result_key)
+    unexpected.sort(key=result_key)
+    if not any(record["status"] == "PASS" for record in all_records):
+        raise ValidationError("GCC testsuite observation produced no passing test")
+    status_counts = Counter()
+    for record in all_records:
+        status_counts[record["status"]] += record["count"]
+    plan_sha256 = canonical_sha256(plan)
+    candidate = {
+        "$schema": "https://crossforge.dev/schemas/gcc-testsuite-baseline.schema.json",
+        "schema_version": 1,
+        "kind": "gcc-testsuite-baseline",
+        "profile": plan["profile"],
+        "plan_sha256": plan_sha256,
+        "target": target,
+        "runtime_tier": runtime_tier,
+        "unexpected": unexpected,
+    }
+    validate_baseline(candidate, plan, target, runtime_tier)
+    return (
+        {
+            "schema_version": 1,
+            "kind": "gcc-testsuite-observation",
+            "status": "observed",
+            "profile": plan["profile"],
+            "target": target,
+            "runtime_tier": runtime_tier,
+            "plan_sha256": plan_sha256,
+            "candidate_baseline_sha256": canonical_sha256(candidate),
+            "status_counts": {
+                status: status_counts[status] for status in sorted(status_counts)
+            },
+            "results": all_records,
+            "unexpected": unexpected,
+            "summaries": raw,
+            "materials": materials,
+        },
+        candidate,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--release", type=Path, default=REPOSITORY / "config/release.json")
+    parser.add_argument("--plan", type=Path, action="append", default=[])
     arguments = parser.parse_args()
     try:
         contract = validate_release_contract(arguments.release)
+        plans = [validate_plan(load_json(path)) for path in arguments.plan]
     except (OSError, UnicodeError, ValidationError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1
@@ -328,6 +456,11 @@ def main():
         "valid GCC testsuite %s contract: %s (3 runtime baselines)"
         % (contract["plan"]["profile"], contract["plan_sha256"])
     )
+    for plan in plans:
+        print(
+            "valid GCC testsuite %s plan: %s"
+            % (plan["profile"], canonical_sha256(plan))
+        )
     return 0
 
 

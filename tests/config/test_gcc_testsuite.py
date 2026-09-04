@@ -18,6 +18,11 @@ class GccTestsuiteContractTests(unittest.TestCase):
             REPOSITORY / "config/release.json"
         )
         cls.plan = cls.contract["plan"]
+        cls.full_plan = CONTRACT["validate_plan"](
+            CONTRACT["load_json"](
+                REPOSITORY / "config/gcc-testsuite-full.json"
+            )
+        )
 
     def write_summary(self, directory, text):
         path = Path(directory) / "gcc.sum"
@@ -29,6 +34,76 @@ class GccTestsuiteContractTests(unittest.TestCase):
         self.assertEqual(
             self.plan["targets"], CONTRACT["TARGET_CONTRACT"]
         )
+
+    def test_full_plan_has_exactly_the_five_required_make_targets(self):
+        self.assertEqual(self.full_plan["profile"], "full")
+        self.assertEqual(
+            self.full_plan["suites"], CONTRACT["FULL_SUITE_CONTRACT"]
+        )
+        self.assertEqual(
+            [suite["make_target"] for suite in self.full_plan["suites"]],
+            [
+                "check-g++",
+                "check-gcc",
+                "check-target-libgcc",
+                "check-target-libgomp",
+                "check-target-libstdc++-v3",
+            ],
+        )
+
+    def test_target_summary_templates_are_expanded_and_fail_closed(self):
+        path = CONTRACT["resolve_summary_path"](
+            "{target}/libgomp/testsuite/libgomp.sum",
+            "aarch64-unknown-linux-gnu",
+        )
+        self.assertEqual(
+            str(path),
+            "aarch64-unknown-linux-gnu/libgomp/testsuite/libgomp.sum",
+        )
+        for value in ("../gcc.sum", "{unknown}/gcc.sum", "{target}/{target}/gcc.sum"):
+            with self.assertRaises(CONTRACT["ValidationError"]):
+                CONTRACT["resolve_summary_path"](
+                    value, "x86_64-unknown-linux-gnu"
+                )
+
+    def test_observation_emits_a_non_qualifying_candidate_baseline(self):
+        with tempfile.TemporaryDirectory() as directory:
+            summaries = {}
+            for index, suite in enumerate(self.full_plan["suites"]):
+                path = Path(directory) / (suite["id"] + ".sum")
+                status = "FAIL" if index == 0 else "PASS"
+                path.write_text(
+                    "%s: exact %s result\n" % (status, suite["id"]),
+                    encoding="utf-8",
+                )
+                summaries[suite["id"]] = path
+            report, candidate = CONTRACT["observe_summaries"](
+                self.full_plan,
+                "x86_64-unknown-linux-gnu",
+                "host-direct",
+                summaries,
+                {"test": "material"},
+            )
+        self.assertEqual(report["kind"], "gcc-testsuite-observation")
+        self.assertEqual(report["status"], "observed")
+        self.assertNotIn("baseline_sha256", report)
+        self.assertEqual(candidate["kind"], "gcc-testsuite-baseline")
+        self.assertEqual(candidate["unexpected"], report["unexpected"])
+        self.assertEqual(
+            report["candidate_baseline_sha256"],
+            CONTRACT["canonical_sha256"](candidate),
+        )
+
+    def test_full_plan_rejects_partial_or_reordered_suite_sets(self):
+        partial = copy.deepcopy(self.full_plan)
+        partial["suites"].pop()
+        reordered = copy.deepcopy(self.full_plan)
+        reordered["suites"].reverse()
+        for candidate in (partial, reordered):
+            with self.assertRaisesRegex(
+                CONTRACT["ValidationError"], "full suite contract differs"
+            ):
+                CONTRACT["validate_plan"](candidate)
         self.assertEqual(
             set(self.contract["baselines"]),
             {
@@ -146,6 +221,11 @@ class GccTestsuiteContractTests(unittest.TestCase):
         self.assertIn('set GXX_UNDER_TEST "%s -B%s/"', runner)
         self.assertIn("catch {unset TEST_GCC_EXEC_PREFIX}", runner)
         self.assertIn('if "/gcc/xgcc" in test_log', runner)
+        self.assertIn('choices=("qualification", "observation")', runner)
+        self.assertIn(
+            '"observation mode must not claim a qualification component"',
+            runner,
+        )
 
     def test_custom_qemu_boards_preserve_dynamic_el8_execution(self):
         boards = REPOSITORY / "tests/gcc/boards"

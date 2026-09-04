@@ -26,8 +26,10 @@
       "const": "gcc-testsuite-plan"
     },
     "profile": {
-      "type": "string",
-      "pattern": "^[a-z0-9][a-z0-9-]*$"
+      "enum": [
+        "smoke",
+        "full"
+      ]
     },
     "gcc_version": {
       "type": "string",
@@ -113,7 +115,7 @@
         },
         "sum_file": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9+_.-]+(?:/[A-Za-z0-9+_.-]+)+\\.sum$"
+          "pattern": "^(?:\\{target\\}/)?[A-Za-z0-9+_.-]+(?:/[A-Za-z0-9+_.-]+)+\\.sum$"
         },
         "runtestflags": {
           "type": "array",

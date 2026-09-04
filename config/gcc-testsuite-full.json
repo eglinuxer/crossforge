@@ -1,0 +1,90 @@
+{
+  "$schema": "https://crossforge.dev/schemas/gcc-testsuite-plan.schema.json",
+  "schema_version": 1,
+  "kind": "gcc-testsuite-plan",
+  "profile": "full",
+  "gcc_version": "15.2.1",
+  "unexpected_statuses": [
+    "ERROR",
+    "FAIL",
+    "KFAIL",
+    "KPASS",
+    "UNRESOLVED",
+    "WARNING",
+    "XPASS"
+  ],
+  "site": {
+    "file": "tests/gcc/site.exp",
+    "sha256": "36999b634467c638dee5782149e3692fc3c00b472036ea0228600a7bbc0768f2"
+  },
+  "suites": [
+    {
+      "id": "g++.full",
+      "make_target": "check-g++",
+      "sum_file": "gcc/testsuite/g++/g++.sum",
+      "runtestflags": []
+    },
+    {
+      "id": "gcc.full",
+      "make_target": "check-gcc",
+      "sum_file": "gcc/testsuite/gcc/gcc.sum",
+      "runtestflags": []
+    },
+    {
+      "id": "libgcc.full",
+      "make_target": "check-target-libgcc",
+      "sum_file": "{target}/libgcc/testsuite/libgcc.sum",
+      "runtestflags": []
+    },
+    {
+      "id": "libgomp.full",
+      "make_target": "check-target-libgomp",
+      "sum_file": "{target}/libgomp/testsuite/libgomp.sum",
+      "runtestflags": []
+    },
+    {
+      "id": "libstdc++.full",
+      "make_target": "check-target-libstdc++-v3",
+      "sum_file": "{target}/libstdc++-v3/testsuite/libstdc++.sum",
+      "runtestflags": []
+    }
+  ],
+  "targets": [
+    {
+      "arch": "x86_64",
+      "triple": "x86_64-unknown-linux-gnu",
+      "runtime_tiers": [
+        {
+          "name": "host-direct",
+          "board": {
+            "name": "crossforge-x86_64",
+            "file": "tests/gcc/boards/crossforge-x86_64.exp",
+            "sha256": "e58d22f29110d15e91d89443ee16bde73d871543d3c5e294a2d6126f584e5c05"
+          }
+        }
+      ]
+    },
+    {
+      "arch": "aarch64",
+      "triple": "aarch64-unknown-linux-gnu",
+      "runtime_tiers": [
+        {
+          "name": "locked-sysroot",
+          "board": {
+            "name": "crossforge-aarch64-locked",
+            "file": "tests/gcc/boards/crossforge-aarch64-locked.exp",
+            "sha256": "d48843e17cfa0ad8ae5f8a4190df0b3d5c68a3a31bc74f9dc9e2e9a81c36ff21"
+          }
+        },
+        {
+          "name": "clean-rocky",
+          "board": {
+            "name": "crossforge-aarch64-clean",
+            "file": "tests/gcc/boards/crossforge-aarch64-clean.exp",
+            "sha256": "81dda3ea4668a5a273bace5a5b3204450f7e9300f45de8cd8f634cc53d59c7ae"
+          }
+        }
+      ]
+    }
+  ]
+}
