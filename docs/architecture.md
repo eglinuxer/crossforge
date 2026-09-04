@@ -398,7 +398,268 @@ CPython 的上游 Sigstore bundle 同样以原始 base64 envelope 归档，并�
 
 稳定标签只允许指向通过完整资格化的最新 release。
 
-## 14. 目标仓库结构
+## 14. 依赖变体与生产分包契约
+
+Phase 14 已证明现有 `crosspack` 能从显式 staging tree 生成字节可复现的双架构
+DEB/RPM，拆分 debug symbols，审计动态 ELF，并用真实 `dpkg`/`rpm` 复核安装
+payload。该实现仍是首次公开发布前的内部 schema：当前 component 只有基础
+metadata、files 与 dependencies，ELF provider 只按 SONAME basename 判断存在性，
+DEB/RPM 共享一个 destination，安装门禁也不构成目标发行版运行资格化。公开 v0.1
+前必须按本节补齐依赖变体、来源、loader 解析、升级和包格式边界；不能先发布一个
+功能不足的 schema v1，再立即用 schema v2 修正基本生产语义。
+
+### 14.1 职责边界
+
+依赖和分包链固定为：
+
+```text
+variant spec
+  → vcpkg resolution lock
+  → sealed asset bundle
+  → variant-isolated build/link evidence
+  → sealed staging
+  → crosspack plan
+  → reproducible unsigned DEB/RPM
+  → external signature/attestation
+```
+
+vcpkg 负责 port 版本、features、host/target dependency graph 与构建；triplet 表达
+target、linkage 及全图 ABI 策略。`crosspack` 只消费最终 staging 和显式 provenance，
+负责 component、文件/ELF/loader 审计、包 metadata 与格式编码编排。它不把整个
+`vcpkg_installed` 直接转换成发行版包，不根据 SONAME 猜 DEB/RPM 包名，也不成为
+CMake、Meson、Autotools 或其他项目构建系统的总编排器。
+
+项目正常执行 build-system install 到干净 staging；私有携带的 vcpkg runtime DSO
+再通过受控、可追溯的复制步骤加入。host tools、downloads、buildtrees、packages、
+debug installed tree 和未选择的 variant 永远不能因便利而进入 staging。
+
+### 14.2 两层变体身份
+
+构建前生成严格、canonical 的 `variant-spec.json`。其摘要是公开 `variant_id`，并
+至少绑定：
+
+- target arch/triple、build configuration 与 static/dynamic linkage；
+- Crossforge release、compiler、sysroot lock 与 CMake toolchain component 摘要；
+- vcpkg commit、target/host triplet 名称及文件摘要；
+- project manifest、`vcpkg-configuration.json`、builtin baseline、overrides 与显式
+  selected features；
+- overlay port/triplet 的完整树摘要；
+- 会改变代码或 ABI 的 C/C++/link flags。
+
+overlay 树摘要覆盖规范相对路径、文件类型、mode、普通文件摘要和 symlink target，
+不包含物理 workspace 绝对路径。`CFLAGS`、`CXXFLAGS`、`CPPFLAGS`、`LDFLAGS`、
+overlay、feature 与 toolchain override 等 ambient input 必须写入 spec 或被 launcher
+拒绝；proxy、CA、cache 路径、并行度和 credential 不进入变体身份，且秘密不得进入
+任何报告。
+
+依赖解析后生成 `vcpkg-resolution.json`，记录全部 target/host ports 的精确 version、
+port-version、features、triplet、vcpkg ABI、source/patch/license identity 与实际
+runtime DSO。相同 `variant_id` 得到不同 resolution digest 时构建失败。vcpkg 内部
+ABI hash 只作为 resolution/cache 证据，不能替代 Crossforge 的公开变体身份。
+
+每个 variant 使用独立 build、installed、link-audit、staging 与 package root；target、
+linkage、feature、baseline 或 toolchain identity 变化后不得复用旧 CMake build tree。
+最终包名默认不包含 `variant_id`；完整 ID 写入 plan/result、SBOM、provenance 和包内
+build-info。需要同时安装的 ABI 冲突变体必须使用不同 package name 或 SONAME，不能
+依靠同名不同字节区分。
+
+### 14.3 资格化维度与自定义 triplet
+
+“支持”拆为三个独立状态：
+
+- platform：`qualified`、`compatible-unqualified` 或 `external`；
+- dependency graph：`contract-qualified`、`curated-tier1/2/3` 或
+  `resolved-unqualified`；
+- package：`crosspack-verified` 或未验证。
+
+`qualified` platform 要求内置 triplet 的名称和摘要、Crossforge toolchain/sysroot、
+CRT/linkage policy 与 release 完全相同。`crossforge-*` triplet namespace 由产品保留，
+用户 overlay 不得用同名文件遮蔽官方 triplet。仍 chainload 官方 toolchain/sysroot、
+保持 EL8 ABI/ISA 和动态 core runtime 的自定义 triplet 可标记为
+`compatible-unqualified`；替换 compiler/sysroot/triple、提高 ISA/ABI 或静态替换 core
+runtime 的变体是 `external`。
+
+依赖图资格按精确 graph 而不是 port 名称判断。只有 port version、port-version、
+features、target/host triplet、传递依赖、source/overlay 摘要与 vcpkg commit 全部匹配
+时，才获得相应 curated profile。官方 triplet 上的其他 port、不同 feature、override
+或 baseline 仍是 `resolved-unqualified`。这类 graph 可以被 Crosspack 结构化验证和
+打包，但不得描述为 Crossforge 已资格化依赖图。公开接口提供机器可读的 reason code，
+并允许组织策略要求特定 platform/dependency qualification；不存在把用户输入强制
+标成 qualified 的 override。
+
+### 14.4 Source asset 与 binary cache
+
+registry/baseline 只锁依赖定义和内容期望，不保证上游 URL 长期可用。每个 resolution
+必须产生 `vcpkg-assets.json`，记录所有 source archive、Git content、patch、license、
+helper tool 和 host-generator asset 的清理后 URL、size、SHA256/SHA512、所属 port 与
+portfile identity。实际资产组成 content-addressed、sealed dependency bundle；bundle
+可存于本地或用户选择的私有/公开 OCI，不因使用 Crossforge 而自动公开可能受限的用户
+源码。
+
+网络只允许出现在 resolve/fetch 边界。正式重放从空 build/cache 开始，在
+`--network=none` 下仅消费 sealed bundle；portfile 自行联网、无 hash 下载或缺少传递
+asset 均失败。上游 URL 消失时，已封存 bundle 仍必须能重建。
+
+binary cache 只是加速器。cache hit 后仍重验 variant、port/version/features、vcpkg
+ABI、compiler/sysroot、archive 与 installed-tree 摘要、target ELF 和 license/SBOM。
+不受信 PR 只能读 trusted cache 并写隔离的临时 namespace，不能污染 release cache；
+trusted entry 绑定 builder、source closure、variant 与安装树 provenance。资格化至少
+比较两个不同绝对 workspace 的空-cache离线构建和一个 trusted-cache命中构建；最终
+installed tree、staging 与 packages 必须一致，物理路径不得泄漏。
+
+### 14.5 Sealed staging 与同架构 host 泄漏
+
+staging 经 `created → populating → sealed → packaged` 状态流转。通用 install wrapper
+只做执行前后 inventory 与 provenance 捕获，不解释项目构建系统。sealed manifest
+绑定 variant、resolution、规范路径、类型、mode、owner/group、symlink、文件摘要与
+origin；`package plan` 和实际编码前都重新读取文件系统验证，seal 后任何变化都要求
+重新 plan。debug 拆分继续在私有 staging 副本完成，原 staging 不变。
+
+aarch64 包中的 amd64 ELF 可直接按 machine 拒绝；x86_64 target 与 amd64 host 同架构，
+不能只靠 ELF header。每个 target ELF 必须一一关联到 target compiler 的 link evidence、
+target vcpkg installed record，或显式签名的 external-prebuilt provenance。link evidence
+证明使用 canonical cross compiler/sysroot，且没有 host include/library、host triplet 或
+另一个 variant 输入。合法的 host-generated data 可以进入包，生成它的 host executable
+不能因此进入 target component。
+
+`.a`、linker script、`.pc` 与 CMake config 也属于审计对象：archive member 必须是
+正确 target object/LTO input；linker script、pkg-config 与 imported target 不得引用
+workspace、buildtrees、host prefix 或 Crossforge 内部 sysroot。release component 禁止
+复制 vcpkg `debug/bin`、`debug/lib`；debug package 必须从实际发布 ELF 生成并绑定其
+build-id/debuglink。
+
+### 14.6 Dynamic deployment 与 loader closure
+
+动态依赖有两个显式模型。普通应用默认 `application-private`：真实 executable 与
+vcpkg DSO 位于 root-owned、非用户可写的 `/opt/<vendor>/<product>/{bin,lib}`，可由
+`/usr/bin` symlink/wrapper 提供入口，并由同一 runtime package 原子升级。公共共享库
+必须显式选择 `system-library`，使用发行版 libdir、SONAME/runtime package、development
+symlink/header/pkg-config/CMake metadata 和 ABI 升级契约。
+
+application-private 允许经语义验证的 `$ORIGIN/../lib`。Crosspack 不再以字符串出现
+`..` 一概拒绝，而是从 ELF 最终 destination 规范化展开 RUNPATH，要求解析结果仍在同一
+root-owned package prefix 内。绝对路径、空项、未规范路径、逃逸到 prefix/包集合外、
+用户可写目录或未声明 component 仍失败。
+
+loader closure 不能只检查某个 SONAME basename 是否在任意 package 路径出现。审计器
+从每个 ELF 的 destination、RUNPATH、允许的系统搜索路径、package component edge 和
+runtime provider catalog 实际解析每个 `DT_NEEDED`，要求 provider 唯一，并记录目标
+destination 与字节摘要；同名多 provider、存在但不可达或跨未声明 component 都失败。
+
+应用私有目录永远禁止携带 loader、glibc core、`libgcc_s.so.1` 与
+`libstdc++.so.6` 等冻结 EL8 core provider，防止 RUNPATH 覆盖产品动态 runtime
+契约。其他 vcpkg DSO 可在完整 provenance、SBOM、license 与递归 closure 下私有携带。
+真正公开系统库才安装到 system libdir，并承担 SONAME、ldconfig、Provides/Conflicts/
+Obsoletes/Replaces 与并行 major 安装语义。
+
+### 14.7 Static/header 依赖与 SBOM
+
+最终 ELF 无法在 LTO、inline、archive member selection、dead-code elimination 与 strip
+之后可靠反推出所有 static/header dependency。package SBOM 因此保守包含 resolution
+中的完整 target closure；host dependency 另标为 build-tool-only，不能混入 target
+runtime。
+
+compiler/link wrapper 可在不改变 ELF 字节的审计模式下记录 link map、archive member、
+LTO input、shared input、输出 build-id 与规范路径；compiler depfile 可把观察到的 header
+映射回 vcpkg port。Crosspack 将 resolution、link/header evidence 与最终 loader audit
+合并，把关系标为 observed 或 conservative。更精细的证据只能提升置信度，不能因缺少
+观察记录而从保守 package SBOM 静默删除依赖。
+
+包内 component SBOM/build-info 记录 variant、resolution、source/license 与 static、
+header、vendored-dynamic、external-system、build-tool 关系，但不自引用最终包摘要；包
+编码完成后的外部 attestation 再绑定 DEB/RPM SHA256、component SBOM、Crosspack
+plan/result 和 Crossforge SDK digest。CVE 影响反向索引从 port/version/source identity
+映射到 variant、package 与 ELF：static、conservative static/header 和私有 dynamic
+默认要求重建；只有审查后的 VEX 才能缩小影响。
+
+### 14.8 公开 Crosspack schema v1
+
+首次公开前 schema v1 至少支持：
+
+- 格式特定 DEB `depends`、`pre-depends`、`recommends`、`suggests`、`conflicts`、
+  `provides`、`replaces`、`breaks` 与 RPM `requires`、`recommends`、`suggests`、
+  `conflicts`、`provides`、`obsoletes`；
+- component 依赖的格式正确、精确 epoch/version/release 约束；
+- `config`/`noreplace`、doc/license、空目录，以及显式 mode/owner/group；
+- 格式特定 pre/post install 与 pre/post remove scriptlets；脚本来自独立普通文件，
+  其摘要/interpreter 进入 plan；
+- `target` 与显式 `independent` architecture；
+- DEB/RPM 各自 epoch/release、system libdir 与 debug destination；
+- 单行 summary、规范多段 description 与 SPDX/`LicenseRef-*`；
+- `package plan` 与实际 build 分离，并可选择 `deb`、`rpm` 或两者。
+
+setuid/setgid、device、file capability 默认拒绝；systemd user/service、alternatives、
+SELinux policy、APT/YUM repository 与任意发行版 dependency inference 不属于 v0.1
+公共抽象。nFPM 仍是固定、不可由用户替换的编码 backend；Crosspack 不接受任意 nFPM
+passthrough 配置来绕过 schema 和审计。
+
+unsigned package 是可复现主体。签名在独立阶段消费其摘要，私钥/token/password 不得
+进入 manifest、BuildKit layer 或日志；signed result 记录 unsigned/signed SHA256 与
+签名者身份。RPM 可接外部 key/agent；DEB 首发依赖 detached attestation，APT repository
+签名仍不属于产品范围。签名后字节不要求与 unsigned package 相同，但同一 package
+version/release 永远不得重新上传不同 unsigned 内容。
+
+### 14.9 Component、变体共存与升级
+
+普通 application-private 包默认选择一个正式 linkage，主程序与私有 DSO 同 runtime
+component 原子升级。若确实同时发布 static/dynamic 应用变体，使用不同 package name
+并声明冲突，不能让同名同 version/release 表示不同内容。公共 library 的动态 runtime、
+development、static archive 与 debug component 可分别共存；DEB/RPM 可使用各自惯用
+包名。只有影响公共 ABI、文件路径或必须并行安装的 feature 才进入 package name；内部
+feature 只进入 variant/SBOM。
+
+同一 package name 表示可原地升级。dependency-only 更新通常保持 project version、
+增加格式特定 package release；static 与私有 dynamic 依赖变化要求消费者原子重建。
+公共 DSO 升级须用未 strip DWARF、export/version、SONAME、public header、CMake/pkg-config
+和旧消费者运行测试判断 ABI；无法证明兼容时状态为 unknown 并阻止自动晋级。ABI
+breaking 必须改变 SONAME major 或 package name，老 runtime major 可并行保留。回退
+依赖优先发布更高 release 的 revert，不能覆盖旧 package 字节。
+
+每次 baseline、feature、triplet、source 或 toolchain 更新产生结构化 variant diff，
+覆盖 graph、assets、license、staging、ELF、package 与 SBOM，并分类为 metadata-only、
+rebuild-compatible、runtime-compatible、abi-breaking 或 unknown。自动化只能开 PR 和
+生成证据，不能自行批准 ABI/baseline、合并或移动稳定标签。
+
+### 14.10 Independent component
+
+`independent` 映射为 DEB `all` 与 RPM `noarch`，必须显式声明，不能按“不是 ELF”自动
+猜测。官方 `verified-independent` 要求 x86_64/aarch64 独立构建后的路径、普通文件
+字节、mode、owner/group、symlink 与 origin 完全相同；不允许归一化差异后放行。只构建
+一个 target 时最多标为 `declared-independent`。
+
+independent 默认禁止 ELF/object/archive、linker script、debug symbol、native Python
+extension、`_sysconfigdata`、`.pyc`、QML cache/预编译 shader、target symlink 和含
+sysroot/build path 的配置。普通 development component 保持 target-specific；只有纯
+data/script/license 或经双 target 验证的 header-only payload 才进入 all/noarch。
+common component 使用独立 identity，不嵌入单个 target `variant_id`；同一 noarch/all
+artifact 分别与两套 target package set 做安装、升级和卸载验证。
+
+### 14.11 Package format 与 runtime qualification
+
+包格式可编码/安装不等于目标发行版运行兼容。qualification report 分别记录 format 与
+runtime 状态。v0.1 正式边界为：
+
+| 格式/target | format | Crossforge runtime |
+|---|---|---|
+| RPM/x86_64 | qualified | Rocky Linux 8.10 |
+| RPM/aarch64 | qualified | Rocky Linux 8.10；release 需原生 ARM |
+| DEB/x86_64（`amd64`） | qualified | unqualified |
+| DEB/aarch64（`arm64`） | qualified | unqualified |
+
+现有 `dpkg --force-architecture` 与 `rpm --ignorearch --nodeps` 门禁只算 format/结构
+证据。RPM runtime qualification 还必须在干净 Rocky root 中安装精确依赖、不以
+`--nodeps` 掩盖 closure，并执行 install→run→upgrade→run→remove；aarch64 同时覆盖
+QEMU clean-Rocky 与原生 ARM。Bookworm 只是 pinned `dpkg` 测试宿主，不能据此声明
+Debian/Ubuntu 运行支持。
+
+application-private 的 `/opt` destination 可跨格式共用；system-library 必须由受控
+逻辑 destination 映射到 RPM `/usr/lib64` 和 Debian multiarch libdir，并使用各自 debug
+布局。DEB 外部 dependency 由用户按目标发行版声明，不能从 Rocky RPM owner 自动翻译。
+v0.1 不实现用户自定义 runtime profile：用户测试结果可以外部保存，但不能进入
+Crossforge 官方 qualification；增加 Debian/Ubuntu 或其他发行版 provider catalog、
+双架构执行与生命周期维护属于后续 minor 产品扩展。
+
+## 15. 目标仓库结构
 
 ```text
 config/                  release.json 与 JSON Schema
