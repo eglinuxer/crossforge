@@ -38,7 +38,10 @@
         },
         {
           "source": "usr/lib64/libcrossforge-demo.so.1",
-          "destination": "/usr/lib64/libcrossforge-demo.so.1"
+          "destination": {
+            "deb": "/usr/lib/x86_64-linux-gnu/libcrossforge-demo.so.1",
+            "rpm": "/usr/lib64/libcrossforge-demo.so.1"
+          }
         },
         {
           "source": "etc/crossforge-demo.conf",
@@ -92,7 +95,10 @@
         },
         {
           "source": "usr/lib64/libcrossforge-demo.so",
-          "destination": "/usr/lib64/libcrossforge-demo.so"
+          "destination": {
+            "deb": "/usr/lib/x86_64-linux-gnu/libcrossforge-demo.so",
+            "rpm": "/usr/lib64/libcrossforge-demo.so"
+          }
         }
       ],
       "relations": {

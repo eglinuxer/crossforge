@@ -167,6 +167,10 @@ class CrosspackComponentTests(unittest.TestCase):
             "single-line-summary-canonical-multi-paragraph-body",
         )
         self.assertEqual(
+            policy["format_layout"],
+            "shared-or-explicit-deb-rpm-destinations",
+        )
+        self.assertEqual(
             policy["debug_symbols"],
             "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
         )

@@ -119,10 +119,29 @@ def populate_staging(root, arch):
 def package_config(template, arch, crosspack):
     config = copy.deepcopy(template)
     config["target"] = arch
+    deb_libdir = (
+        "/usr/lib/x86_64-linux-gnu"
+        if arch == "x86_64"
+        else "/usr/lib/aarch64-linux-gnu"
+    )
     for component in config["components"]:
         component["relations"]["deb"]["depends"] = []
         component["relations"]["rpm"]["requires"] = []
-    config["debug_symbols"] = {"component": "debug"}
+        for mapping in component["files"]:
+            destination = mapping["destination"]
+            if isinstance(destination, dict) and mapping["source"].startswith(
+                "usr/lib64/"
+            ):
+                destination["deb"] = deb_libdir + "/" + Path(
+                    destination["deb"]
+                ).name
+    config["debug_symbols"] = {
+        "component": "debug",
+        "destination_prefixes": {
+            "deb": "/usr/lib/debug",
+            "rpm": "/usr/lib/debug",
+        },
+    }
     config["components"].append(
         {
             "name": "debug",
@@ -178,30 +197,38 @@ def compare_outputs(first, second, result):
 
 
 def write_install_contract(root, plan):
-    hashes = []
-    symlinks = []
-    directories = []
-    for package in plan["packages"]:
-        for content in package["contents"]:
-            if content["type"] == "file":
-                hashes.append(
-                    "%s  .%s" % (content["sha256"], content["destination"])
-                )
-            elif content["type"] == "symlink":
-                symlinks.append(
-                    {
-                        "path": content["destination"],
-                        "target": content["link_target"],
-                    }
-                )
-            else:
-                directories.append(content["destination"])
-    hashes.sort()
-    (root / "installed.sha256").write_text(
-        "\n".join(hashes) + "\n", encoding="utf-8"
-    )
-    write_json(root / "installed-links.json", sorted(symlinks, key=lambda item: item["path"]))
-    write_json(root / "installed-directories.json", sorted(directories))
+    for packager in ("deb", "rpm"):
+        hashes = []
+        symlinks = []
+        directories = []
+        for package in plan["packages"]:
+            for content in package["contents"][packager]:
+                if content["type"] == "file":
+                    hashes.append(
+                        "%s  .%s"
+                        % (content["sha256"], content["destination"])
+                    )
+                elif content["type"] == "symlink":
+                    symlinks.append(
+                        {
+                            "path": content["destination"],
+                            "target": content["link_target"],
+                        }
+                    )
+                else:
+                    directories.append(content["destination"])
+        hashes.sort()
+        (root / ("installed-%s.sha256" % packager)).write_text(
+            "\n".join(hashes) + "\n", encoding="utf-8"
+        )
+        write_json(
+            root / ("installed-%s-links.json" % packager),
+            sorted(symlinks, key=lambda item: item["path"]),
+        )
+        write_json(
+            root / ("installed-%s-directories.json" % packager),
+            sorted(directories),
+        )
 
 
 def validate_plan(plan, arch):
@@ -209,8 +236,11 @@ def validate_plan(plan, arch):
     audit = plan.get("elf_audit")
     require(
         isinstance(audit, dict)
-        and audit.get("elf_count") == 2
-        and audit.get("providers_count", 0) > 0,
+        and all(
+            audit.get(packager, {}).get("elf_count") == 2
+            and audit[packager].get("providers_count", 0) > 0
+            for packager in ("deb", "rpm")
+        ),
         "crosspack ELF audit coverage differs",
     )
     debug = plan.get("debug_symbols")
@@ -240,7 +270,8 @@ def validate_plan(plan, arch):
         == {"deb": "all", "rpm": "noarch"}
         and all(
             item.get("elf") is None
-            for item in packages["tools"]["contents"]
+            for packager in ("deb", "rpm")
+            for item in packages["tools"]["contents"][packager]
         ),
         "crosspack independent package differs",
     )
@@ -255,22 +286,42 @@ def validate_plan(plan, arch):
         and runtime_scripts["deb"] != runtime_scripts["rpm"],
         "crosspack lifecycle-script plan differs",
     )
-    runtime = next(
-        content
-        for content in packages["runtime"]["contents"]
-        if content["destination"] == "/usr/lib64/libcrossforge-demo.so.1"
+    deb_libdir = (
+        "/usr/lib/x86_64-linux-gnu"
+        if arch == "x86_64"
+        else "/usr/lib/aarch64-linux-gnu"
     )
+    expected_destinations = {
+        "deb": deb_libdir + "/libcrossforge-demo.so.1",
+        "rpm": "/usr/lib64/libcrossforge-demo.so.1",
+    }
+    for packager in ("deb", "rpm"):
+        runtime = next(
+            content
+            for content in packages["runtime"]["contents"][packager]
+            if content["destination"] == expected_destinations[packager]
+        )
+        require(
+            runtime["elf"]["machine"] == arch
+            and runtime["elf"]["soname"] == "libcrossforge-demo.so.1"
+            and runtime["elf"]["needed"] == ["libc.so.6"]
+            and runtime["elf"]["runpath"] == []
+            and runtime["elf"]["runpath_resolution"] == []
+            and len(runtime["elf"]["needed_providers"]) == 1
+            and runtime["elf"]["needed_providers"][0]["soname"] == "libc.so.6"
+            and runtime["elf"]["needed_providers"][0]["kind"] == "sysroot"
+            and runtime["elf"]["exports_count"] >= 1,
+            "%s crosspack runtime ELF audit differs" % packager,
+        )
+    debug_file = debug["files"][0]
     require(
-        runtime["elf"]["machine"] == arch
-        and runtime["elf"]["soname"] == "libcrossforge-demo.so.1"
-        and runtime["elf"]["needed"] == ["libc.so.6"]
-        and runtime["elf"]["runpath"] == []
-        and runtime["elf"]["runpath_resolution"] == []
-        and len(runtime["elf"]["needed_providers"]) == 1
-        and runtime["elf"]["needed_providers"][0]["soname"] == "libc.so.6"
-        and runtime["elf"]["needed_providers"][0]["kind"] == "sysroot"
-        and runtime["elf"]["exports_count"] >= 1,
-        "crosspack runtime ELF audit differs",
+        debug_file["runtime_destinations"] == expected_destinations
+        and debug_file["debug_destinations"]
+        == {
+            packager: "/usr/lib/debug%s.debug" % destination
+            for packager, destination in expected_destinations.items()
+        },
+        "crosspack debug destinations differ",
     )
 
 
@@ -499,6 +550,7 @@ def build(
                 "verified_independent_components": "passed",
                 "selective_format_encoding": "passed",
                 "package_metadata": "passed",
+                "format_specific_layout": "passed",
             },
             "nfpm": {
                 "version": nfpm["version"],

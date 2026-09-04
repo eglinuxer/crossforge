@@ -45,6 +45,10 @@
       "value": "single-entry-mode-owner-group"
     },
     {
+      "path": "/@implementation/crosspack/format_layout",
+      "value": "shared-or-explicit-deb-rpm-destinations"
+    },
+    {
       "path": "/@implementation/crosspack/format_selection",
       "value": "deb-rpm-or-both-recorded-in-plan"
     },
@@ -98,7 +102,7 @@
     },
     {
       "path": "/@implementation/crosspack/paths",
-      "value": "canonical-no-escape-no-overlap"
+      "value": "canonical-format-specific-no-escape-no-overlap"
     },
     {
       "path": "/@implementation/crosspack/plan_schema",

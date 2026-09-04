@@ -3,11 +3,11 @@
   "component": "packaging/qualification",
   "dependencies": [
     {
-      "canonical_sha256": "40cb7a9a5c5b05082d77c708ad534a145e85a763b88eb28a3c8f9e966018135c",
+      "canonical_sha256": "83b0407e76a35c2ce4353ef0ca2cf93673122e8e7081d37161c25249cf787692",
       "component": "implementation/crosspack-qualification"
     },
     {
-      "canonical_sha256": "678f26f258f1ccb42be2591157e7b6e2c78db901a5c350386a5a12240e9a1107",
+      "canonical_sha256": "ae5d28ef3cade7c95e1bf9a3889aeb6ae20a683d3a4bc2764ec0ab9c7b2fc2b5",
       "component": "packaging/sdk-build"
     },
     {

@@ -560,6 +560,13 @@ Each component has a bounded single-line summary and a canonical long
 description with optional paragraphs. Crosspack constructs the DEB synopsis/body
 and explicitly maps RPM Summary/Description, while real package queries verify
 the summary, long description, and RPM license metadata.
+File mappings keep a single destination string when both formats use the same
+path, or provide explicit `deb` and `rpm` destinations when their filesystem
+conventions differ. The canonical plan expands both layouts and performs ELF,
+RUNPATH, provider, collision, symlink, debug-file, install, and payload-hash
+checks independently. Qualification installs shared libraries below Debian's
+target multiarch libdir and RPM's `/usr/lib64`, with matching format-specific
+debug paths.
 
 When `debug_symbols` names an otherwise empty debug component, crosspack uses
 the selected target `objcopy` on a private staging copy and adds a matching GNU

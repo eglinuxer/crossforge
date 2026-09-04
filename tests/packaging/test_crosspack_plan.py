@@ -74,7 +74,13 @@ class CrosspackPlanTests(unittest.TestCase):
 
     def debug_config(self):
         config = copy.deepcopy(self.config)
-        config["debug_symbols"] = {"component": "debug"}
+        config["debug_symbols"] = {
+            "component": "debug",
+            "destination_prefixes": {
+                "deb": "/usr/lib/debug",
+                "rpm": "/usr/lib/debug",
+            },
+        }
         config["components"].append(
             {
                 "name": "debug",
@@ -151,14 +157,37 @@ class CrosspackPlanTests(unittest.TestCase):
             packages["runtime"]["relations"]["deb"]["depends"],
             ["libc6 (>= 2.28)"],
         )
-        contents = [
+        contents_by_format = {
+            packager: [
+                item
+                for package in plan["packages"]
+                for item in package["contents"][packager]
+            ]
+            for packager in ("deb", "rpm")
+        }
+        for contents in contents_by_format.values():
+            self.assertEqual(len(contents), 7)
+            self.assertEqual(len({item["source"] for item in contents}), 7)
+            self.assertEqual(len({item["destination"] for item in contents}), 7)
+        contents = contents_by_format["rpm"]
+        deb_library = next(
             item
-            for package in plan["packages"]
-            for item in package["contents"]
-        ]
-        self.assertEqual(len(contents), 7)
-        self.assertEqual(len({item["source"] for item in contents}), 7)
-        self.assertEqual(len({item["destination"] for item in contents}), 7)
+            for item in contents_by_format["deb"]
+            if item["source"] == "usr/lib64/libcrossforge-demo.so.1"
+        )
+        rpm_library = next(
+            item
+            for item in contents_by_format["rpm"]
+            if item["source"] == "usr/lib64/libcrossforge-demo.so.1"
+        )
+        self.assertEqual(
+            deb_library["destination"],
+            "/usr/lib/x86_64-linux-gnu/libcrossforge-demo.so.1",
+        )
+        self.assertEqual(
+            rpm_library["destination"],
+            "/usr/lib64/libcrossforge-demo.so.1",
+        )
         config = next(
             item
             for item in contents
@@ -285,7 +314,10 @@ class CrosspackPlanTests(unittest.TestCase):
             item for item in development["contents"] if item.get("type") == "symlink"
         )
         self.assertEqual(link["src"], "libcrossforge-demo.so.1")
-        self.assertEqual(link["dst"], "/usr/lib64/libcrossforge-demo.so")
+        self.assertEqual(
+            link["dst"],
+            "/usr/lib/x86_64-linux-gnu/libcrossforge-demo.so",
+        )
         for packager in rendered.values():
             for package in packager.values():
                 for content in package["contents"]:
@@ -510,12 +542,13 @@ class CrosspackPlanTests(unittest.TestCase):
         plan = CROSSPACK["build_plan"](
             self.config, self.root, readelf, Path("/")
         )
-        self.assertEqual(plan["elf_audit"]["elf_count"], 1)
-        self.assertGreater(plan["elf_audit"]["providers_count"], 0)
+        self.assertEqual(plan["elf_audit"]["deb"]["elf_count"], 1)
+        self.assertEqual(plan["elf_audit"]["rpm"]["elf_count"], 1)
+        self.assertGreater(plan["elf_audit"]["rpm"]["providers_count"], 0)
         runtime = next(
             content
             for package in plan["packages"]
-            for content in package["contents"]
+            for content in package["contents"]["rpm"]
             if content["destination"]
             == "/usr/lib64/libcrossforge-demo.so.1"
         )
@@ -716,6 +749,28 @@ class CrosspackPlanTests(unittest.TestCase):
                 self.root,
             )
 
+        multiarch_provider = {
+            "type": "file",
+            "destination": "/usr/lib/x86_64-linux-gnu/libprivate.so.1",
+            "sha256": "4" * 64,
+            "elf": {
+                "type": "dynamic",
+                "soname": "libprivate.so.1",
+            },
+        }
+        multiarch = {"app": [], "runtime": [multiarch_provider]}
+        resolved = CROSSPACK["ELF"]["resolve_needed_provider"](
+            "app",
+            "/usr/bin/app",
+            "libprivate.so.1",
+            [],
+            CROSSPACK["ELF"]["destination_index"](multiarch),
+            {"app": ["runtime"]},
+            self.root,
+            ("/usr/lib/x86_64-linux-gnu",),
+        )
+        self.assertEqual(resolved["destination"], multiarch_provider["destination"])
+
     def test_elf_audit_allows_a_pure_script_package(self):
         readelf = shutil.which("readelf")
         if readelf is None:
@@ -749,7 +804,8 @@ class CrosspackPlanTests(unittest.TestCase):
             ],
         }
         plan = CROSSPACK["build_plan"](config, root, readelf, Path("/"))
-        self.assertEqual(plan["elf_audit"]["elf_count"], 0)
+        self.assertEqual(plan["elf_audit"]["deb"]["elf_count"], 0)
+        self.assertEqual(plan["elf_audit"]["rpm"]["elf_count"], 0)
         self.assertEqual(
             plan["packages"][0]["architectures"],
             {"deb": "all", "rpm": "noarch"},
@@ -819,15 +875,15 @@ class CrosspackPlanTests(unittest.TestCase):
         plan_schema = VALIDATOR["load_json"](PLAN_SCHEMA)
         VALIDATOR["validate"](first, plan_schema, plan_schema, "$")
         with tempfile.TemporaryDirectory() as prepared_text:
-            _effective, prepared, _debug = CROSSPACK[
+            effective, prepared, _debug = CROSSPACK[
                 "prepare_debug_staging"
             ](config, self.root, objcopy, Path(prepared_text))
             stripped = prepared / "usr/lib64/libcrossforge-demo.so.1"
-            detached = (
-                prepared
-                / ".crossforge-debug-symbols/usr/lib/debug/usr/lib64"
-                / "libcrossforge-demo.so.1.debug"
+            debug_component = next(
+                component for component in effective["components"]
+                if component["name"] == "debug"
             )
+            detached = prepared / debug_component["files"][0]["source"]
             stripped_sections = subprocess.check_output(
                 [readelf, "--sections", str(stripped)],
                 universal_newlines=True,
@@ -847,16 +903,21 @@ class CrosspackPlanTests(unittest.TestCase):
         self.assertEqual(first["debug_symbols"]["generated_count"], 1)
         record = first["debug_symbols"]["files"][0]
         self.assertEqual(
-            record["debug_destination"],
-            "/usr/lib/debug/usr/lib64/libcrossforge-demo.so.1.debug",
+            record["debug_destinations"],
+            {
+                "deb": "/usr/lib/debug/usr/lib/x86_64-linux-gnu/libcrossforge-demo.so.1.debug",
+                "rpm": "/usr/lib/debug/usr/lib64/libcrossforge-demo.so.1.debug",
+            },
         )
         self.assertNotEqual(record["runtime_sha256"], original_sha256)
         packages = {item["component"]: item for item in first["packages"]}
         self.assertEqual(
             packages["debug"]["relations"]["components"], ["runtime"]
         )
-        self.assertEqual(len(packages["debug"]["contents"]), 1)
-        self.assertEqual(first["elf_audit"]["elf_count"], 2)
+        self.assertEqual(len(packages["debug"]["contents"]["deb"]), 1)
+        self.assertEqual(len(packages["debug"]["contents"]["rpm"]), 1)
+        self.assertEqual(first["elf_audit"]["deb"]["elf_count"], 2)
+        self.assertEqual(first["elf_audit"]["rpm"]["elf_count"], 2)
 
         invalid = self.debug_config()
         invalid["components"][-1]["relations"]["components"] = []
@@ -926,6 +987,12 @@ class CrosspackPlanTests(unittest.TestCase):
             with self.subTest(field=field, value=value):
                 with self.assertRaises(CROSSPACK["CrosspackError"]):
                     CROSSPACK["validate_config"](candidate)
+        incomplete_destination = copy.deepcopy(self.config)
+        incomplete_destination["components"][0]["files"][1]["destination"] = {
+            "deb": "/usr/lib/x86_64-linux-gnu/libcrossforge-demo.so.1"
+        }
+        with self.assertRaises(CROSSPACK["CrosspackError"]):
+            CROSSPACK["validate_config"](incomplete_destination)
         unknown = copy.deepcopy(self.config)
         unknown["project"]["unknown"] = True
         with self.assertRaises(CROSSPACK["CrosspackError"]):
@@ -1064,7 +1131,8 @@ class CrosspackPlanTests(unittest.TestCase):
         (empty_root / "var/lib/empty").mkdir(parents=True)
         plan = CROSSPACK["build_plan"](config, empty_root)
         self.assertEqual(
-            plan["packages"][0]["contents"][0]["type"], "directory"
+            plan["packages"][0]["contents"]["rpm"][0]["type"],
+            "directory",
         )
         nfpm = CROSSPACK["render_nfpm_configs"](plan, empty_root)
         directory = nfpm["rpm"]["runtime"]["contents"][0]

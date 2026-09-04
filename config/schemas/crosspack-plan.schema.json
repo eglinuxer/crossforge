@@ -78,14 +78,7 @@
       "$ref": "#/$defs/project"
     },
     "elf_audit": {
-      "oneOf": [
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/elf_audit"
-        }
-      ]
+      "$ref": "#/$defs/format_elf_audits"
     },
     "debug_symbols": {
       "oneOf": [
@@ -178,22 +171,41 @@
           "$ref": "#/$defs/format_scripts"
         },
         "contents": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "oneOf": [
-              {
-                "$ref": "#/$defs/file_content"
-              },
-              {
-                "$ref": "#/$defs/symlink_content"
-              },
-              {
-                "$ref": "#/$defs/directory_content"
-              }
-            ]
-          }
+          "$ref": "#/$defs/format_contents"
         }
+      }
+    },
+    "format_contents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "$ref": "#/$defs/contents"
+        },
+        "rpm": {
+          "$ref": "#/$defs/contents"
+        }
+      }
+    },
+    "contents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/file_content"
+          },
+          {
+            "$ref": "#/$defs/symlink_content"
+          },
+          {
+            "$ref": "#/$defs/directory_content"
+          }
+        ]
       }
     },
     "format_scripts": {
@@ -791,11 +803,38 @@
         }
       }
     },
+    "format_elf_audits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "$ref": "#/$defs/optional_elf_audit"
+        },
+        "rpm": {
+          "$ref": "#/$defs/optional_elf_audit"
+        }
+      }
+    },
+    "optional_elf_audit": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/elf_audit"
+        }
+      ]
+    },
     "debug_symbols": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "component",
+        "destination_prefixes",
         "objcopy_sha256",
         "objcopy_version_output_sha256",
         "generated_count",
@@ -804,6 +843,9 @@
       "properties": {
         "component": {
           "$ref": "#/$defs/name"
+        },
+        "destination_prefixes": {
+          "$ref": "#/$defs/format_destinations"
         },
         "objcopy_sha256": {
           "$ref": "#/$defs/sha256"
@@ -829,23 +871,23 @@
       "additionalProperties": false,
       "required": [
         "component",
-        "runtime_destination",
+        "runtime_destinations",
         "runtime_sha256",
-        "debug_destination",
+        "debug_destinations",
         "debug_sha256"
       ],
       "properties": {
         "component": {
           "$ref": "#/$defs/name"
         },
-        "runtime_destination": {
-          "$ref": "#/$defs/destination"
+        "runtime_destinations": {
+          "$ref": "#/$defs/format_destinations"
         },
         "runtime_sha256": {
           "$ref": "#/$defs/sha256"
         },
-        "debug_destination": {
-          "$ref": "#/$defs/destination"
+        "debug_destinations": {
+          "$ref": "#/$defs/format_destinations"
         },
         "debug_sha256": {
           "$ref": "#/$defs/sha256"
@@ -855,6 +897,22 @@
     "name": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9+._-]*$"
+    },
+    "format_destinations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "$ref": "#/$defs/destination"
+        },
+        "rpm": {
+          "$ref": "#/$defs/destination"
+        }
+      }
     },
     "version": {
       "type": "string",

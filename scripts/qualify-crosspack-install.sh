@@ -14,7 +14,7 @@ install_root="/tmp/crosspack-install-$format-$arch"
 
 test "$arch" = x86_64 || test "$arch" = aarch64
 test -d "$package_root/packages"
-test -f "$package_root/installed.sha256"
+test -f "$package_root/installed-$format.sha256"
 test ! -e "$install_root"
 mkdir -p "$install_root"
 
@@ -32,8 +32,10 @@ case "$format" in
   deb)
     expected_arch=amd64
     expected_independent_arch=all
+    library_dir=/usr/lib/x86_64-linux-gnu
     if [ "$arch" = aarch64 ]; then
       expected_arch=arm64
+      library_dir=/usr/lib/aarch64-linux-gnu
     fi
     dpkg --root="$install_root" --force-architecture \
       --install "$package_root"/packages/*.deb
@@ -53,6 +55,7 @@ case "$format" in
   rpm)
     expected_arch=$arch
     expected_independent_arch=noarch
+    library_dir=/usr/lib64
     rpm --root "$install_root" --initdb
     rpm --root "$install_root" --ignorearch --nodeps \
       --install "$package_root"/packages/*.rpm
@@ -101,9 +104,9 @@ fi
 
 (
   cd "$install_root"
-  sha256sum --check "$package_root/installed.sha256"
+  sha256sum --check "$package_root/installed-$format.sha256"
 )
-test "$(readlink "$install_root/usr/lib64/libcrossforge-demo.so")" \
+test "$(readlink "$install_root$library_dir/libcrossforge-demo.so")" \
   = libcrossforge-demo.so.1
 test -x "$install_root/usr/bin/crossforge-demo"
 test "$(stat -c '%a %U %G' "$install_root/etc/crossforge-demo.conf")" \
@@ -111,7 +114,7 @@ test "$(stat -c '%a %U %G' "$install_root/etc/crossforge-demo.conf")" \
 test -f "$install_root/usr/include/crossforge/demo.h"
 test -f "$install_root/usr/share/crossforge/README"
 test -f \
-  "$install_root/usr/lib/debug/usr/lib64/libcrossforge-demo.so.1.debug"
+  "$install_root/usr/lib/debug$library_dir/libcrossforge-demo.so.1.debug"
 script_log="$install_root/crossforge-scriptlets.log"
 test "$(sed -n '1p' "$script_log")" = "crossforge-$format-pre-install"
 test "$(sed -n '2p' "$script_log")" = "crossforge-$format-post-install"

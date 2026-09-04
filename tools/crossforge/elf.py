@@ -357,8 +357,10 @@ def resolve_needed_provider(
     index,
     component_dependencies,
     sysroot,
+    package_library_directories=(),
 ):
     search = [item["directory"] for item in resolve_runpath(consumer_destination, runpath)]
+    search.extend(package_library_directories)
     search.extend(SYSTEM_LIBRARY_DIRECTORIES)
     candidates = []
     for directory in search:
@@ -417,6 +419,7 @@ def audit_packages(
     readelf,
     sysroot,
     component_dependencies=None,
+    package_library_directories=(),
 ):
     readelf = executable(readelf, "target readelf")
     version_output_sha256 = validate_readelf(readelf)
@@ -461,6 +464,7 @@ def audit_packages(
                     index,
                     component_dependencies,
                     sysroot,
+                    package_library_directories,
                 )
                 for soname in content["elf"]["needed"]
             ]

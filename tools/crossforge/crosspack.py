@@ -78,6 +78,16 @@ ARCHITECTURES = {
     "x86_64": {"deb": "amd64", "rpm": "x86_64", "elf_machine": 62},
     "aarch64": {"deb": "arm64", "rpm": "aarch64", "elf_machine": 183},
 }
+DEB_MULTIARCH_LIBRARIES = {
+    "x86_64": (
+        "/lib/x86_64-linux-gnu",
+        "/usr/lib/x86_64-linux-gnu",
+    ),
+    "aarch64": (
+        "/lib/aarch64-linux-gnu",
+        "/usr/lib/aarch64-linux-gnu",
+    ),
+}
 ELF = runpy.run_path(str(Path(__file__).with_name("elf.py")))
 ElfError = ELF["ElfError"]
 
@@ -221,6 +231,19 @@ def destination_path(value, label):
     return value
 
 
+def destination_values(value, label):
+    if isinstance(value, str):
+        destination = destination_path(value, label)
+        return {packager: destination for packager in PACKAGE_FORMATS}
+    exact_keys(value, PACKAGE_FORMATS, label)
+    return {
+        packager: destination_path(
+            value[packager], "%s.%s" % (label, packager)
+        )
+        for packager in PACKAGE_FORMATS
+    }
+
+
 def validate_dependency_list(value, label):
     require(isinstance(value, list), "%s must be an array" % label)
     require(len(value) == len(set(value)), "%s contains duplicates" % label)
@@ -323,8 +346,20 @@ def validate_config(config):
     require(config["target"] in ARCHITECTURES, "unsupported crosspack target")
     debug_symbols = config["debug_symbols"]
     if debug_symbols is not None:
-        exact_keys(debug_symbols, {"component"}, "debug_symbols")
+        exact_keys(
+            debug_symbols,
+            {"component", "destination_prefixes"},
+            "debug_symbols",
+        )
         name(debug_symbols["component"], "debug_symbols.component")
+        prefixes = destination_values(
+            debug_symbols["destination_prefixes"],
+            "debug_symbols.destination_prefixes",
+        )
+        require(
+            all(prefix != "/" for prefix in prefixes.values()),
+            "debug destination prefix cannot be the package root",
+        )
 
     project_keys = {
         "name",
@@ -436,14 +471,17 @@ def validate_config(config):
                 mapping_label + " fields differ",
             )
             source = source_path(mapping["source"], mapping_label + ".source")
-            destination = destination_path(
+            destinations = destination_values(
                 mapping["destination"], mapping_label + ".destination"
             )
             require(
-                (source, destination) not in observed_mappings,
+                (source, tuple(sorted(destinations.items())))
+                not in observed_mappings,
                 "file mapping is duplicated",
             )
-            observed_mappings.add((source, destination))
+            observed_mappings.add(
+                (source, tuple(sorted(destinations.items())))
+            )
             if "attributes" in mapping:
                 validate_file_attributes(
                     mapping["attributes"], mapping_label + ".attributes"
@@ -683,18 +721,23 @@ def apply_mapping_attributes(mapping, item, match_count, source_kind):
 def expand_mappings(config, staging_root, inventory):
     by_source = {item["source"]: item for item in inventory}
     assigned_sources = {}
-    destination_owners = {}
+    destination_owners = {packager: {} for packager in PACKAGE_FORMATS}
     packages = {}
     for component in config["components"]:
         component_name = component["name"]
-        contents = []
+        contents = {packager: [] for packager in PACKAGE_FORMATS}
         for mapping in component["files"]:
             source = mapping["source"]
-            _path, kind = source_node(staging_root, source)
-            require(
-                kind == "directory" or mapping["destination"] != "/",
-                "a file or symlink cannot replace the package root",
+            destinations = destination_values(
+                mapping["destination"], "mapping destination"
             )
+            _path, kind = source_node(staging_root, source)
+            for packager in PACKAGE_FORMATS:
+                require(
+                    kind == "directory" or destinations[packager] != "/",
+                    "%s file or symlink cannot replace the package root"
+                    % packager,
+                )
             if kind == "directory":
                 prefix = "" if source == "." else source + "/"
                 matches = [
@@ -712,38 +755,57 @@ def expand_mappings(config, staging_root, inventory):
                     item_source not in assigned_sources,
                     "staged entry is assigned more than once: %s" % item_source,
                 )
-                destination = mapped_destination(
-                    mapping["destination"], source, item_source
-                )
-                require(
-                    destination not in destination_owners,
-                    "package destination overlaps: %s" % destination,
-                )
                 assigned_sources[item_source] = component_name
-                destination_owners[destination] = component_name
-                content = apply_mapping_attributes(
+                base_content = apply_mapping_attributes(
                     mapping, item, len(matches), kind
                 )
-                content["destination"] = destination
-                contents.append(content)
-        require(contents, "component has no expanded contents: %s" % component_name)
-        contents.sort(key=lambda item: item["destination"])
+                for packager in PACKAGE_FORMATS:
+                    destination = mapped_destination(
+                        destinations[packager], source, item_source
+                    )
+                    require(
+                        destination not in destination_owners[packager],
+                        "%s package destination overlaps: %s"
+                        % (packager, destination),
+                    )
+                    destination_owners[packager][destination] = component_name
+                    content = dict(base_content)
+                    content["destination"] = destination
+                    contents[packager].append(content)
+        require(
+            all(contents.values()),
+            "component has no expanded contents: %s" % component_name,
+        )
+        for packager in PACKAGE_FORMATS:
+            contents[packager].sort(key=lambda item: item["destination"])
         packages[component_name] = contents
     missing = sorted(set(by_source) - set(assigned_sources))
     require(not missing, "staged entries are unassigned: %s" % ", ".join(missing))
-    ordered_destinations = sorted(destination_owners)
-    for index, destination in enumerate(ordered_destinations):
-        descendants = [
-            item
-            for item in ordered_destinations[index + 1 :]
-            if item.startswith(destination + "/")
-        ]
-        require(
-            not descendants,
-            "package destination tree overlaps: %s and %s"
-            % (destination, descendants[0] if descendants else ""),
+    for packager in PACKAGE_FORMATS:
+        ordered_destinations = sorted(destination_owners[packager])
+        for index, destination in enumerate(ordered_destinations):
+            descendants = [
+                item
+                for item in ordered_destinations[index + 1 :]
+                if item.startswith(destination + "/")
+            ]
+            require(
+                not descendants,
+                "%s package destination tree overlaps: %s and %s"
+                % (
+                    packager,
+                    destination,
+                    descendants[0] if descendants else "",
+                ),
+            )
+        validate_symlinks(
+            config,
+            {
+                component: contents[packager]
+                for component, contents in packages.items()
+            },
+            destination_owners[packager],
         )
-    validate_symlinks(config, packages, destination_owners)
     return packages
 
 
@@ -760,54 +822,61 @@ def validate_independent_components(config, packages, staging_root):
     for component in config["components"]:
         if component.get("architecture", "target") != "independent":
             continue
-        for content in packages[component["name"]]:
-            destination = content["destination"]
-            lower = destination.lower()
-            basename = posixpath.basename(lower)
-            require(
-                content.get("elf") is None,
-                "independent component contains ELF: %s" % destination,
-            )
-            require(
-                not lower.startswith("/usr/lib/debug/")
-                and not basename.startswith("_sysconfigdata_")
-                and not lower.endswith(INDEPENDENT_FORBIDDEN_SUFFIXES)
-                and re.search(r"\.so(?:\.[0-9]+)*$", lower) is None,
-                "independent component contains target artifact: %s"
-                % destination,
-            )
-            if content["type"] == "file":
-                try:
-                    source = Path(staging_root) / content["source"]
-                    with source.open("rb") as stream:
-                        prefix = stream.read(8)
-                except OSError as error:
-                    raise CrosspackError(
-                        "cannot inspect independent file %s: %s"
-                        % (destination, error)
-                    ) from error
+        observed_sources = set()
+        for packager in PACKAGE_FORMATS:
+            for content in packages[component["name"]][packager]:
+                destination = content["destination"]
+                lower = destination.lower()
+                basename = posixpath.basename(lower)
                 require(
-                    prefix not in (b"!<arch>\n", b"!<thin>\n")
-                    and not prefix.startswith(b"BC\xc0\xde")
-                    and not prefix.startswith(b"\xde\xc0\x17\x0b"),
-                    "independent component contains target binary: %s"
-                    % destination,
+                    content.get("elf") is None,
+                    "%s independent component contains ELF: %s"
+                    % (packager, destination),
                 )
-            if content["type"] == "symlink":
-                target = content["link_target"].lower()
                 require(
-                    not any(
-                        marker in target
-                        for marker in (
-                            "x86_64",
-                            "aarch64",
-                            "x86_64-unknown-linux-gnu",
-                            "aarch64-unknown-linux-gnu",
-                        )
-                    ),
-                    "independent component contains target symlink: %s"
-                    % destination,
+                    not lower.startswith("/usr/lib/debug/")
+                    and not basename.startswith("_sysconfigdata_")
+                    and not lower.endswith(INDEPENDENT_FORBIDDEN_SUFFIXES)
+                    and re.search(r"\.so(?:\.[0-9]+)*$", lower) is None,
+                    "%s independent component contains target artifact: %s"
+                    % (packager, destination),
                 )
+                if (
+                    content["type"] == "file"
+                    and content["source"] not in observed_sources
+                ):
+                    observed_sources.add(content["source"])
+                    try:
+                        source = Path(staging_root) / content["source"]
+                        with source.open("rb") as stream:
+                            prefix = stream.read(8)
+                    except OSError as error:
+                        raise CrosspackError(
+                            "cannot inspect independent file %s: %s"
+                            % (destination, error)
+                        ) from error
+                    require(
+                        prefix not in (b"!<arch>\n", b"!<thin>\n")
+                        and not prefix.startswith(b"BC\xc0\xde")
+                        and not prefix.startswith(b"\xde\xc0\x17\x0b"),
+                        "independent component contains target binary: %s"
+                        % destination,
+                    )
+                if content["type"] == "symlink":
+                    target = content["link_target"].lower()
+                    require(
+                        not any(
+                            marker in target
+                            for marker in (
+                                "x86_64",
+                                "aarch64",
+                                "x86_64-unknown-linux-gnu",
+                                "aarch64-unknown-linux-gnu",
+                            )
+                        ),
+                        "%s independent component contains target symlink: %s"
+                        % (packager, destination),
+                    )
 
 
 def validate_symlinks(config, packages, destination_owners):
@@ -926,13 +995,26 @@ def prepare_debug_staging(config, staging_root, objcopy, workspace):
     candidates = []
     owners = set()
     for component in sorted(base_packages):
-        for content in base_packages[component]:
+        rpm_by_source = {
+            content["source"]: content
+            for content in base_packages[component]["rpm"]
+        }
+        for content in base_packages[component]["deb"]:
             if content.get("elf", {}).get("type") not in (
                 "dynamic",
                 "executable",
             ):
                 continue
-            candidates.append((component, content))
+            candidates.append(
+                (
+                    component,
+                    content,
+                    {
+                        "deb": content["destination"],
+                        "rpm": rpm_by_source[content["source"]]["destination"],
+                    },
+                )
+            )
             owners.add(component)
     require(candidates, "debug splitting found no loadable target ELF files")
     require(
@@ -950,14 +1032,30 @@ def prepare_debug_staging(config, staging_root, objcopy, workspace):
     )
     mappings = []
     records = []
+    destination_prefixes = destination_values(
+        config["debug_symbols"]["destination_prefixes"],
+        "debug_symbols.destination_prefixes",
+    )
     debug_root = prepared / reserved
     debug_root.mkdir()
-    for index, (component, content) in enumerate(
-        sorted(candidates, key=lambda item: item[1]["destination"])
+    for index, (component, content, runtime_destinations) in enumerate(
+        sorted(candidates, key=lambda item: item[1]["source"])
     ):
         runtime = prepared / content["source"]
-        debug_destination = "/usr/lib/debug%s.debug" % content["destination"]
-        debug_source = reserved + debug_destination
+        debug_destinations = {
+            packager: destination_path(
+                destination_prefixes[packager].rstrip("/")
+                + runtime_destinations[packager]
+                + ".debug",
+                "%s debug destination" % packager,
+            )
+            for packager in PACKAGE_FORMATS
+        }
+        debug_source = "%s/%06d/%s.debug" % (
+            reserved,
+            index,
+            runtime.name,
+        )
         debug_file = prepared / debug_source
         debug_file.parent.mkdir(parents=True, exist_ok=True)
         run_command([tool["path"], "--only-keep-debug", runtime, debug_file])
@@ -994,14 +1092,14 @@ def prepare_debug_staging(config, staging_root, objcopy, workspace):
         )
         os.chmod(str(debug_file), 0o644)
         mappings.append(
-            {"source": debug_source, "destination": debug_destination}
+            {"source": debug_source, "destination": debug_destinations}
         )
         records.append(
             {
                 "component": component,
-                "runtime_destination": content["destination"],
+                "runtime_destinations": runtime_destinations,
                 "runtime_sha256": sha256_file(runtime),
-                "debug_destination": debug_destination,
+                "debug_destinations": debug_destinations,
                 "debug_sha256": sha256_file(debug_file),
             }
         )
@@ -1013,6 +1111,7 @@ def prepare_debug_staging(config, staging_root, objcopy, workspace):
     selected["files"] = mappings
     return effective, prepared, {
         "component": debug_name,
+        "destination_prefixes": destination_prefixes,
         "objcopy_sha256": tool["sha256"],
         "objcopy_version_output_sha256": tool["version_output_sha256"],
         "generated_count": len(records),
@@ -1155,21 +1254,30 @@ def build_plan(
     expanded = expand_mappings(config, staging_root, inventory)
     validate_independent_components(config, expanded, staging_root)
     scripts = prepare_scripts(config, config_root, script_root)
-    elf_audit = None
+    elf_audit = {packager: None for packager in PACKAGE_FORMATS}
     if readelf is not None:
         try:
             component_dependencies = {
                 component["name"]: component["relations"]["components"]
                 for component in config["components"]
             }
-            elf_audit = ELF["audit_packages"](
-                expanded,
-                staging_root,
-                config["target"],
-                readelf,
-                sysroot,
-                component_dependencies,
-            )
+            for packager in PACKAGE_FORMATS:
+                elf_audit[packager] = ELF["audit_packages"](
+                    {
+                        component: contents[packager]
+                        for component, contents in expanded.items()
+                    },
+                    staging_root,
+                    config["target"],
+                    readelf,
+                    sysroot,
+                    component_dependencies,
+                    (
+                        DEB_MULTIARCH_LIBRARIES[config["target"]]
+                        if packager == "deb"
+                        else ()
+                    ),
+                )
         except ElfError as error:
             raise CrosspackError(str(error)) from error
     packages = []
@@ -1304,7 +1412,7 @@ def nfpm_config(plan_document, package, packager, staging_root, script_root=None
         ),
         "contents": [
             nfpm_content(content, staging_root, timestamp)
-            for content in package["contents"]
+            for content in package["contents"][packager]
         ],
     }
     scripts = prepared_scripts(package, packager, script_root)

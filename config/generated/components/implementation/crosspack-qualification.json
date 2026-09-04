@@ -57,6 +57,10 @@
       "value": true
     },
     {
+      "path": "/@implementation/crosspack-qualification/requirements/format_specific_library_and_debug_destinations",
+      "value": true
+    },
+    {
       "path": "/@implementation/crosspack-qualification/requirements/format_specific_relations",
       "value": true
     },

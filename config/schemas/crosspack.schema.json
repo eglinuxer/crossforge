@@ -173,11 +173,15 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "component"
+        "component",
+        "destination_prefixes"
       ],
       "properties": {
         "component": {
           "$ref": "#/$defs/name"
+        },
+        "destination_prefixes": {
+          "$ref": "#/$defs/format_destinations"
         }
       }
     },
@@ -194,8 +198,14 @@
           "pattern": "^(\\.|[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*)$"
         },
         "destination": {
-          "type": "string",
-          "pattern": "^/(?:[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*)?$"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/destination_path"
+            },
+            {
+              "$ref": "#/$defs/format_destinations"
+            }
+          ]
         },
         "attributes": {
           "$ref": "#/$defs/file_attributes"
@@ -224,6 +234,26 @@
           ]
         }
       }
+    },
+    "format_destinations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "$ref": "#/$defs/destination_path"
+        },
+        "rpm": {
+          "$ref": "#/$defs/destination_path"
+        }
+      }
+    },
+    "destination_path": {
+      "type": "string",
+      "pattern": "^/(?:[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*)?$"
     },
     "relations": {
       "type": "object",
