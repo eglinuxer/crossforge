@@ -120,6 +120,29 @@ class CandidateManifestTests(unittest.TestCase):
         self.assertEqual(
             release_dependencies, {"implementation/candidate-manifest"}
         )
+        native = COMPONENTS["CANDIDATE_MANIFEST_POLICY"][
+            "native_aarch64_release"
+        ]
+        self.assertEqual(native["runner_label"], "ubuntu-24.04-arm")
+        self.assertEqual(native["runner_arch"], "ARM64")
+        self.assertEqual(native["execution"], "native-no-qemu")
+        self.assertEqual(
+            COMPONENTS["CANDIDATE_MANIFEST_POLICY"]["visibility"],
+            "anonymous-public-before-native-qualification",
+        )
+        self.assertEqual(
+            native["artifacts"],
+            [
+                "catch",
+                "hello",
+                "libgcc-helper",
+                "libstdc++-nonshared-audit.so",
+                "libthrow.so",
+                "lto",
+                "lto-archive",
+                "modern",
+            ],
+        )
 
     def test_unknown_and_malformed_fields_are_rejected(self):
         unknown = self.document()

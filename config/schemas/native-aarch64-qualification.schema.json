@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/native-aarch64-qualification.schema.json",
+  "title": "Crossforge native AArch64 release qualification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "status",
+    "executor",
+    "target",
+    "candidate",
+    "release_sha256",
+    "qualification_component",
+    "candidate_policy_component",
+    "bundle_sha256",
+    "compile_report_sha256",
+    "artifacts",
+    "host",
+    "runtime",
+    "loader_dependencies",
+    "executions"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/native-aarch64-qualification.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-native-aarch64-release-qualification"
+    },
+    "status": {
+      "const": "passed"
+    },
+    "executor": {
+      "const": "native"
+    },
+    "target": {
+      "const": "aarch64-unknown-linux-gnu"
+    },
+    "candidate": {
+      "$ref": "#/$defs/candidate_identity"
+    },
+    "release_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "qualification_component": {
+      "$ref": "#/$defs/component"
+    },
+    "candidate_policy_component": {
+      "$ref": "#/$defs/component"
+    },
+    "bundle_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "compile_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runner_label",
+        "runner_arch",
+        "host_machine",
+        "container_machine",
+        "kernel_release"
+      ],
+      "properties": {
+        "runner_label": {
+          "const": "ubuntu-24.04-arm"
+        },
+        "runner_arch": {
+          "const": "ARM64"
+        },
+        "host_machine": {
+          "const": "aarch64"
+        },
+        "container_machine": {
+          "const": "aarch64"
+        },
+        "kernel_release": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\r\\n]+$"
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference",
+        "index_digest",
+        "manifest_digest",
+        "os_release_sha256",
+        "loader_sha256"
+      ],
+      "properties": {
+        "reference": {
+          "type": "string",
+          "pattern": "^[a-z0-9./_-]+:[A-Za-z0-9_.-]+@sha256:[0-9a-f]{64}$"
+        },
+        "index_digest": {
+          "$ref": "#/$defs/oci_digest"
+        },
+        "manifest_digest": {
+          "$ref": "#/$defs/oci_digest"
+        },
+        "os_release_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "loader_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "loader_dependencies": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\r\\n]+$"
+      }
+    },
+    "executions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catch",
+        "hello",
+        "libgcc-helper",
+        "lto",
+        "lto-archive",
+        "modern"
+      ],
+      "properties": {
+        "catch": {
+          "$ref": "#/$defs/execution"
+        },
+        "hello": {
+          "$ref": "#/$defs/execution"
+        },
+        "libgcc-helper": {
+          "$ref": "#/$defs/execution"
+        },
+        "lto": {
+          "$ref": "#/$defs/execution"
+        },
+        "lto-archive": {
+          "$ref": "#/$defs/execution"
+        },
+        "modern": {
+          "$ref": "#/$defs/execution"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "oci_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "candidate_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_sha256",
+        "digest",
+        "platform_manifest_digest",
+        "source_commit"
+      ],
+      "properties": {
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "digest": {
+          "$ref": "#/$defs/oci_digest"
+        },
+        "platform_manifest_digest": {
+          "$ref": "#/$defs/oci_digest"
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "sha256",
+        "size",
+        "mode"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 67108864
+        },
+        "mode": {
+          "const": "0755"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "stdout_sha256"
+      ],
+      "properties": {
+        "status": {
+          "const": "passed"
+        },
+        "stdout_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

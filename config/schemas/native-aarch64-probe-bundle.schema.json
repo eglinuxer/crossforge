@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/native-aarch64-probe-bundle.schema.json",
+  "title": "Crossforge native AArch64 release probe bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "target",
+    "candidate",
+    "release_sha256",
+    "qualification_component",
+    "candidate_policy_component",
+    "compile_report",
+    "artifacts"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/native-aarch64-probe-bundle.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-native-aarch64-probe-bundle"
+    },
+    "target": {
+      "const": "aarch64-unknown-linux-gnu"
+    },
+    "candidate": {
+      "$ref": "#/$defs/candidate_identity"
+    },
+    "release_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "qualification_component": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/component"
+        },
+        {
+          "properties": {
+            "component": {
+              "const": "toolchain/aarch64-qualification"
+            }
+          }
+        }
+      ]
+    },
+    "candidate_policy_component": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/component"
+        },
+        {
+          "properties": {
+            "component": {
+              "const": "implementation/candidate-manifest"
+            }
+          }
+        }
+      ]
+    },
+    "compile_report": {
+      "$ref": "#/$defs/file_identity"
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "sha256",
+          "size",
+          "mode"
+        ],
+        "properties": {
+          "name": {
+            "enum": [
+              "catch",
+              "hello",
+              "libgcc-helper",
+              "libstdc++-nonshared-audit.so",
+              "libthrow.so",
+              "lto",
+              "lto-archive",
+              "modern"
+            ]
+          },
+          "sha256": {
+            "$ref": "#/$defs/sha256"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 67108864
+          },
+          "mode": {
+            "const": "0755"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "oci_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "candidate_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_sha256",
+        "digest",
+        "platform_manifest_digest",
+        "source_commit"
+      ],
+      "properties": {
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "digest": {
+          "$ref": "#/$defs/oci_digest"
+        },
+        "platform_manifest_digest": {
+          "$ref": "#/$defs/oci_digest"
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "size"
+      ],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 67108864
+        }
+      }
+    }
+  }
+}

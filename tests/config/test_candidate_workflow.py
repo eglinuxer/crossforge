@@ -64,6 +64,37 @@ class CandidateWorkflowTests(unittest.TestCase):
             "! grep -F '/opt/crossforge/vcpkg/root/downloads'", self.workflow
         )
 
+    def test_native_arm_gate_consumes_the_exact_candidate_and_pinned_runtime(self):
+        self.assertIn("runs-on: ubuntu-24.04-arm", self.workflow)
+        self.assertIn('test "$RUNNER_ARCH" = ARM64', self.workflow)
+        self.assertIn('test "$host_machine" = aarch64', self.workflow)
+        self.assertIn(
+            "CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}",
+            self.workflow,
+        )
+        self.assertIn(
+            "EXPECTED_BUNDLE_SHA256: ${{ needs.publish.outputs.probe_bundle_sha256 }}",
+            self.workflow,
+        )
+        self.assertIn("qualify-toolchain.py", self.workflow)
+        self.assertIn("--skip-sysroot-execution", self.workflow)
+        self.assertIn(
+            "docker run --rm --pull=always --network none --read-only",
+            self.workflow,
+        )
+        self.assertIn('sudo chown 1000:1000 "$probe_root"', self.workflow)
+        self.assertNotIn('install -d -m 0777 "$probe_root"', self.workflow)
+        self.assertIn("native-aarch64-release.py bundle", self.workflow)
+        self.assertIn("native-aarch64-release.py execute", self.workflow)
+        self.assertIn("native-aarch64-release.py validate", self.workflow)
+        self.assertIn("docker pull --platform linux/arm64", self.workflow)
+        self.assertIn("--pull=never --platform linux/arm64", self.workflow)
+        self.assertIn("--network none --read-only", self.workflow)
+        self.assertIn(
+            "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+            self.workflow,
+        )
+
     def test_ci_and_candidate_share_one_locked_buildx_setup(self):
         local_action = "uses: ./.github/actions/setup-locked-buildx"
         self.assertEqual(self.ci.count(local_action), 1)

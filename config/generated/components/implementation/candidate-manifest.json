@@ -17,6 +17,74 @@
       "value": "crossforge-candidate"
     },
     {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/artifacts/0",
+      "value": "catch"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/artifacts/1",
+      "value": "hello"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/artifacts/2",
+      "value": "libgcc-helper"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/artifacts/3",
+      "value": "libstdc++-nonshared-audit.so"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/artifacts/4",
+      "value": "libthrow.so"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/artifacts/5",
+      "value": "lto"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/artifacts/6",
+      "value": "lto-archive"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/artifacts/7",
+      "value": "modern"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/candidate_input",
+      "value": "exact-public-oci-digest"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/compiler_input",
+      "value": "candidate-contained-aarch64-cross-toolchain"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/execution",
+      "value": "native-no-qemu"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/probe_bundle_schema",
+      "value": "https://crossforge.dev/schemas/native-aarch64-probe-bundle.schema.json"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/qualification_schema",
+      "value": "https://crossforge.dev/schemas/native-aarch64-qualification.schema.json"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/runner_arch",
+      "value": "ARM64"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/runner_label",
+      "value": "ubuntu-24.04-arm"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/runtime",
+      "value": "pinned-rocky-8.10-arm64-manifest"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/native_aarch64_release/transfer",
+      "value": "deterministic-tar-sha256"
+    },
+    {
       "path": "/@implementation/candidate-manifest/platform",
       "value": "linux/amd64"
     },
@@ -47,6 +115,10 @@
     {
       "path": "/@implementation/candidate-manifest/tag_trust",
       "value": "none-digest-only"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/visibility",
+      "value": "anonymous-public-before-native-qualification"
     },
     {
       "path": "/@implementation/candidate-manifest/writable_roots/0",

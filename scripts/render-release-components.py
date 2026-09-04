@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Render the complete release graph from the stable core and extensions."""
 
+import copy
 import runpy
 from pathlib import Path
 
 
 SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+SUPPLY_EXTENSION = runpy.run_path(
+    str(SCRIPT_DIRECTORY / "release-components-supply.py")
+)
 VCPKG_EXTENSION = runpy.run_path(
     str(SCRIPT_DIRECTORY / "release-components-vcpkg.py")
 )
@@ -20,6 +24,14 @@ CORE = runpy.run_path(
             PACKAGING_EXTENSION["extend_component_graph"],
         )
     },
+)
+# Supply policy is deliberately overlaid after loading the immutable core.
+# Toolchain and Python containers copy only release-components-core.py, so a
+# candidate workflow change cannot invalidate their build or qualification
+# layers merely because the shared script bytes changed.
+CORE["CANDIDATE_MANIFEST_POLICY"].clear()
+CORE["CANDIDATE_MANIFEST_POLICY"].update(
+    copy.deepcopy(SUPPLY_EXTENSION["CANDIDATE_MANIFEST_POLICY"])
 )
 
 for name, value in CORE.items():

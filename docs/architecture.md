@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约、三层 curated-port 门禁、生产分包门禁及 x86_64 四套完整 GCC qualification 已完成。release 原生 ARM 证据、Qt 验收及发布供应链尚未实现，当前稳定产物仍未发布。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约、三层 curated-port 门禁、生产分包门禁、x86_64 四套完整 GCC qualification 及原生 ARM release 工作流已完成。原生 ARM 首次候选实证、Qt 验收及其余发布供应链尚未完成，当前稳定产物仍未发布。
 
 ## 1. 产品契约
 
@@ -375,6 +375,8 @@ source commit → build once → candidate digest → 原物验收 → registry-
 - nightly/full：双 target 的 `gcc/` 下 `check-gcc` 与 `check-g++`、针对最终 compiler/runtime 的 installed `runtest --tool libstdc++`、`check-target-libgomp`，完整 Python 矩阵，以及 Qt 6.8.4 双 target；语言测试必须直接从 `gcc/` 子目录启动，使 GNU Make 的 jobserver 分片真正分配给对应 DejaGNU worker，禁止从顶层 `check-gcc` 间接重跑全部语言；GCC 15 的顶层 `check-target-libgcc` 是无测试、无 summary 的空目标，不能作为资格化证据；libgcc 由 compiler testsuite 与最终 hybrid runtime 门禁覆盖；
 - release：同一 digest 的原生 aarch64 终检和资格化证明检查。
 
+原生 aarch64 release gate 分为两个互不混淆的执行域。`linux/amd64` publish job 先从匿名可拉取的完整 candidate digest 运行镜像内交叉工具链，重新生成 C、C++20、LTO、LTO archive、libgcc wide-division 和跨 DSO exception 探针；compile report、八个 artifact、candidate identity、AArch64 qualification component 与 candidate policy component 被封装为固定顺序、固定 owner/mode/mtime 的 USTAR，并对整包计算 SHA256。随后 `ubuntu-24.04-arm` runner 只下载这份不可变 bundle，在固定 Rocky Linux 8.10 arm64 child manifest 中以 `--platform linux/arm64 --network none --read-only` 原生执行，要求 `RUNNER_ARCH=ARM64`、host/container `uname -m=aarch64`，且不得携带 QEMU。最终 JSON 重新绑定 bundle、candidate OCI index/platform digest、release、runtime manifest、loader/DSO 解析和每个执行结果；任一身份不一致都使整个 public-candidate workflow 失败。该工作流未实际产生首份公开候选证据前，状态仍是 implemented/unproven，不能宣称 release-qualified。
+
 GCC testsuite 必须指向镜像内最终安装的 compiler，并使用 EL8 shared runtime + Crossforge nonshared/libgcc 的最终 hybrid 组合。GTS 的 Graphite 补丁在运行时加载 `libisl.so.23`，因此工具链在 compiler-private 目录携带由同一锁定 SRPM 构建且校验 SONAME 的 ISL；hybrid `libgcc_s.so` 在 EL8 shared DSO 后以 `libgcc.a` 和 `libgcc_eh.a` 补充 GCC 15 新符号，并以 heap-trampoline 实际运行门禁验证。`libgomp` 只留在 build tree 中供测试。
 
 installed libstdc++ 测试从独立 workdir 运行，`LD_LIBRARY_PATH` 只把锁定 runtime DSO 置于首位，并拒绝任何 build-tree library 路径。四个 DejaGNU worker 复用上游 `GCC_RUNTEST_PARALLELIZE_DIR` 原子分片协议，按分钟报告进度；连续 600 秒无日志增长或总时长超过 7200 秒即失败。当前 GTS 快照缺少 `GCOV_UNDER_TEST` 与 cross `gcc-ar` testsuite 修复，两项按上游补丁精确回移。EL8 shared libstdc++ 保留 PR93672 的无限循环缺陷，因此该单例以 pinned test-only patch 明确标为 UNSUPPORTED；其他 runtime 差异仍进入精确候选，不得隐式跳过。
@@ -706,4 +708,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、带 debug/ELF 深审计的双格式分包门禁、单一 launcher、完整 SDK 聚合及 x86_64 GCC full observation 已完成；后续审查 GCC 候选并推进双 target 资格化、Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、带 debug/ELF 深审计的双格式分包门禁、单一 launcher、完整 SDK 聚合、x86_64 GCC full qualification 及 digest-bound 原生 ARM release 工作流已完成；后续取得首份原生 ARM 候选实证并推进 Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

@@ -10,7 +10,9 @@ DejaGNU's unix board supports an `exec_shell`. Crossforge will use that supporte
 
 Required work: build libgomp; add a test-only DejaGNU/Expect RPM lock; preserve GCC source/object trees only in qualification stages; normalize exact test identities; and reject every unbaselined `FAIL`, `ERROR`, or `UNRESOLVED` result. Rocky 8.10 publishes `expect` in BaseOS and `dejagnu` in PowerTools, so the test-only lock must admit exactly that additional PowerTools package. [Rocky BaseOS packages](https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/e/), [Rocky PowerTools packages](https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/Packages/d/)
 
-Phase 16 now proves the installed-compiler path with 16 PASS records and no unexpected records in each of x86_64 host-direct, aarch64 locked-sysroot, and aarch64 clean-Rocky execution. The five-suite nightly profile remains the next GCC qualification increment.
+Phase 16 proves the installed-compiler path with 16 PASS records and no unexpected records in each of x86_64 host-direct, aarch64 locked-sysroot, and aarch64 clean-Rocky execution. The four-suite x86_64 full profile is now release-bound and independently reproduced; AArch64 full-suite baselining remains separate from the native candidate smoke gate.
+
+GitHub's standard public-repository runner matrix now exposes the 4-core `ubuntu-24.04-arm` ARM64 label. Crossforge uses that host only as native execution infrastructure: the runtime under test remains the release-pinned Rocky Linux 8.10 arm64 child manifest, while probes come from the exact anonymously readable candidate digest. [GitHub-hosted runners reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
 
 ## Qt 6.8.4
 

@@ -18,6 +18,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    outputs:
+      candidate_digest: ${{ steps.digest.outputs.digest }}
+      platform_digest: ${{ steps.digest.outputs.platform_digest }}
+      probe_bundle_sha256: ${{ steps.native_probe.outputs.bundle_sha256 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
@@ -134,11 +138,60 @@ jobs:
             "$RUNNER_TEMP/candidate-environment.json"
           ! grep -F '/opt/crossforge/vcpkg/root/downloads' \
             "$RUNNER_TEMP/candidate-environment.json"
+      - name: Build native AArch64 probes from the immutable candidate
+        id: native_probe
+        env:
+          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+        run: |
+          set -Eeuo pipefail
+          image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
+          probe_root="$RUNNER_TEMP/native-aarch64-probes"
+          install -d -m 0755 "$probe_root"
+          sudo chown 1000:1000 "$probe_root"
+          qualification_component_sha256=$(jq -r \
+            '.components[] | select(.component == "toolchain/aarch64-qualification") | .canonical_sha256' \
+            config/generated/release-binding.json)
+          test "${#qualification_component_sha256}" -eq 64
+          docker run --rm --pull=always --network none --read-only \
+            --tmpfs /tmp:rw,uid=1000,gid=1000,mode=1777 \
+            --tmpfs /home/crossforge:rw,uid=1000,gid=1000,mode=0700 \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/src,readonly" \
+            --mount "type=bind,src=$probe_root,dst=/output" \
+            "$image" \
+            /usr/libexec/platform-python /src/scripts/qualify-toolchain.py \
+              --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu \
+              --sysroot /opt/crossforge/sysroots/el8/aarch64 \
+              --target aarch64-unknown-linux-gnu \
+              --work /output/artifacts \
+              --report /output/compile-report.json \
+              --release /opt/crossforge/release.json \
+              --abi-baseline /src/abi/el8/aarch64.json \
+              --qualification-component-sha256 \
+                "$qualification_component_sha256" \
+              --skip-sysroot-execution
+          ./scripts/native-aarch64-release.py bundle \
+            --candidate "$RUNNER_TEMP/candidate.json" \
+            --compile-report "$probe_root/compile-report.json" \
+            --artifacts "$probe_root/artifacts" \
+            --output "$RUNNER_TEMP/native-aarch64-probes.tar"
+          bundle_sha256=$(sha256sum \
+            "$RUNNER_TEMP/native-aarch64-probes.tar" | awk '{print $1}')
+          test "${#bundle_sha256}" -eq 64
+          printf 'bundle_sha256=%s\n' "$bundle_sha256" >> "$GITHUB_OUTPUT"
       - name: Upload immutable candidate identity
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: candidate-identity-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/candidate.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload native AArch64 probe bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: native-aarch64-probes-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/candidate.json
+            ${{ runner.temp }}/native-aarch64-probes.tar
           if-no-files-found: error
           retention-days: 90
       - name: Report public candidate
@@ -155,4 +208,82 @@ jobs:
             echo "- OCI index: \`$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST\`"
             echo "- linux/amd64 manifest: \`$PLATFORM_DIGEST\`"
             echo '- Status: public candidate; no stable or SemVer tag was created'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  native-aarch64:
+    needs: publish
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Download immutable native probe bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: native-aarch64-probes-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/native-aarch64-input
+      - name: Execute probes in pinned native Rocky AArch64
+        env:
+          CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
+          EXPECTED_BUNDLE_SHA256: ${{ needs.publish.outputs.probe_bundle_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          test "$RUNNER_ARCH" = ARM64
+          host_machine=$(uname -m)
+          test "$host_machine" = aarch64
+          candidate="$RUNNER_TEMP/native-aarch64-input/candidate.json"
+          bundle="$RUNNER_TEMP/native-aarch64-input/native-aarch64-probes.tar"
+          test "$(jq -r .digest "$candidate")" = "$CANDIDATE_DIGEST"
+          ./scripts/candidate_manifest.py validate "$candidate" \
+            --expected-source-commit "$GITHUB_SHA"
+          runtime_repository=$(jq -r .base_image.repository config/release.json)
+          runtime_tag=$(jq -r .base_image.tag config/release.json)
+          runtime_manifest=$(jq -r \
+            .base_image.manifests.arm64 config/release.json)
+          runtime_reference="$runtime_repository:$runtime_tag@$runtime_manifest"
+          install -d "$RUNNER_TEMP/native-aarch64-output"
+          docker pull --platform linux/arm64 "$runtime_reference"
+          docker run --rm --pull=never --platform linux/arm64 \
+            --network none --read-only \
+            --tmpfs /tmp:rw,mode=1777 \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/src,readonly" \
+            --mount "type=bind,src=$RUNNER_TEMP/native-aarch64-input,dst=/input,readonly" \
+            --mount "type=bind,src=$RUNNER_TEMP/native-aarch64-output,dst=/output" \
+            "$runtime_reference" \
+            /usr/libexec/platform-python \
+              /src/scripts/native-aarch64-release.py execute \
+              --candidate /input/candidate.json \
+              --bundle /input/native-aarch64-probes.tar \
+              --expected-bundle-sha256 "$EXPECTED_BUNDLE_SHA256" \
+              --runner-label ubuntu-24.04-arm \
+              --runner-arch "$RUNNER_ARCH" \
+              --host-machine "$host_machine" \
+              --runtime-reference "$runtime_reference" \
+              --output /output/native-aarch64.json
+          ./scripts/native-aarch64-release.py validate \
+            --candidate "$candidate" \
+            --bundle "$bundle" \
+            --expected-bundle-sha256 "$EXPECTED_BUNDLE_SHA256" \
+            --report "$RUNNER_TEMP/native-aarch64-output/native-aarch64.json"
+      - name: Upload native AArch64 release evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: native-aarch64-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/native-aarch64-output/native-aarch64.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Report native AArch64 qualification
+        env:
+          CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
+        run: |
+          set -Eeuo pipefail
+          {
+            echo '### Native AArch64 release qualification'
+            echo
+            echo "- Candidate: \`$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST\`"
+            echo '- Runner: `ubuntu-24.04-arm` (`ARM64`)'
+            echo '- Runtime: pinned Rocky Linux 8.10 arm64 manifest'
+            echo '- Status: native C/C++20/LTO/archive/libgcc/cross-DSO probes passed'
           } >> "$GITHUB_STEP_SUMMARY"

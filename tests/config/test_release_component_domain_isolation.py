@@ -37,6 +37,10 @@ PACKAGING_COMPONENTS = {
     "packaging/sdk-build",
     "product/sdk-qualification",
 }
+SUPPLY_COMPONENTS = {
+    "implementation/candidate-manifest",
+    "product/release",
+}
 
 
 class ReleaseComponentDomainIsolationTests(unittest.TestCase):
@@ -60,12 +64,45 @@ class ReleaseComponentDomainIsolationTests(unittest.TestCase):
             VCPKG_COMPONENTS | PACKAGING_COMPONENTS,
         )
         self.assertEqual(
-            self.digests(core),
+            {
+                name: digest
+                for name, digest in self.digests(core).items()
+                if name not in SUPPLY_COMPONENTS
+            },
             {
                 name: digest
                 for name, digest in self.digests(complete).items()
-                if name in core
+                if name in core and name not in SUPPLY_COMPONENTS
             },
+        )
+
+    def test_supply_policy_change_does_not_rebind_core_qualification(self):
+        policy = COMPLETE["CANDIDATE_MANIFEST_POLICY"]
+        original = policy["native_aarch64_release"]["runner_label"]
+        before_core = self.digests(
+            CORE["render_component_documents"](self.release)
+        )
+        before_complete = self.digests(
+            COMPLETE["render_component_documents"](self.release)
+        )
+        try:
+            policy["native_aarch64_release"]["runner_label"] = "test-arm"
+            after_core = self.digests(
+                CORE["render_component_documents"](self.release)
+            )
+            after_complete = self.digests(
+                COMPLETE["render_component_documents"](self.release)
+            )
+        finally:
+            policy["native_aarch64_release"]["runner_label"] = original
+        self.assertEqual(after_core, before_core)
+        self.assertEqual(
+            {
+                name
+                for name in before_complete
+                if before_complete[name] != after_complete[name]
+            },
+            SUPPLY_COMPONENTS,
         )
 
     def test_core_cannot_write_a_partial_generated_graph(self):
@@ -120,6 +157,7 @@ class ReleaseComponentDomainIsolationTests(unittest.TestCase):
         self.assertIn("scripts/release-components-core.py", python_dockerfile)
         self.assertNotIn("scripts/render-release-components.py", python_dockerfile)
         self.assertNotIn("scripts/release-components-vcpkg.py", python_dockerfile)
+        self.assertNotIn("scripts/release-components-supply.py", python_dockerfile)
         self.assertNotIn(
             "scripts/release-components-packaging.py", python_dockerfile
         )
@@ -139,6 +177,7 @@ class ReleaseComponentDomainIsolationTests(unittest.TestCase):
                 self.assertIn("scripts/release-components-core.py", block)
                 self.assertNotIn("scripts/render-release-components.py", block)
                 self.assertNotIn("scripts/release-components-vcpkg.py", block)
+                self.assertNotIn("scripts/release-components-supply.py", block)
                 self.assertNotIn(
                     "scripts/release-components-packaging.py", block
                 )

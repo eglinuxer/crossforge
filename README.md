@@ -27,9 +27,11 @@ build-system-independent DEB/RPM packaging.
 > launcher, detached debug packages, dynamic ELF audit, and the complete
 > Python/vcpkg/packaging SDK composition are qualified. The four-suite x86_64
 > GCC full gate now qualifies 453,334 PASS records against an exact reviewed
-> baseline; native ARM release evidence, Qt acceptance, and the release supply
-> chain remain pending.
-> Every implemented target is cache-only; no user-facing image is emitted.
+> baseline. The native ARM release workflow is implemented but still requires
+> its first public-candidate execution; Qt acceptance and the remaining release
+> supply chain are pending.
+> Checked-in Bake outputs remain cache-only; only the manually dispatched
+> public-candidate workflow may emit a user-facing image.
 
 The accepted implementation contract is in
 [`docs/architecture.md`](docs/architecture.md). The original Rust prototype is
@@ -126,9 +128,9 @@ This applies the complete Rocky GCC/binutils SRPM patch sets, builds binutils
 2.44 and GCC 15.2.1 for `x86_64-unknown-linux-gnu`, installs the EL8 shared
 runtime plus RH `libstdc++_nonshared80`, then exercises C, C++20, LTO,
 cross-DSO exceptions, link traces and the frozen ABI contract. The `-dev`
-suffix is intentional: native ARM release evidence, Qt qualification, and the
-complete release supply chain are not implemented yet. The x86_64 full GCC gate
-is available separately:
+suffix is intentional: native ARM evidence must still pass for a public
+candidate, while Qt qualification and the complete release supply chain remain
+unfinished. The x86_64 full GCC gate is available separately:
 
 ```console
 $ docker buildx bake gcc-testsuite-full-qualified
@@ -640,7 +642,11 @@ accidentally. The manually dispatched `public candidate` workflow supplies a
 unique `candidate-v<version>-g<commit>-r<run>-a<attempt>` tag, pushes with max
 provenance and SBOM attestations, reconstructs `candidate.json` from the raw
 OCI index, then logs out of GHCR and proves the digest is anonymously readable.
-It never creates a SemVer or stable-channel tag.
+It then uses that exact public digest to cross-compile a deterministic,
+SHA256-bound AArch64 probe tar. A separate `ubuntu-24.04-arm` job executes the
+probes without QEMU inside the pinned Rocky Linux 8.10 arm64 manifest and
+uploads the strict native qualification report. It never creates a SemVer or
+stable-channel tag.
 
 The public candidate runs as `crossforge` UID/GID 1000 by default. `/opt/crossforge`
 remains root-owned; only the workspace, home, cache and temporary directories are
