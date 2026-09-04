@@ -141,7 +141,9 @@
         "qt_host_path",
         "cmake_version",
         "ninja_version",
-        "required_tools"
+        "module_streams",
+        "required_tools",
+        "python_module_bridge"
       ],
       "properties": {
         "platform": {
@@ -159,8 +161,58 @@
         "ninja_version": {
           "const": "1.13.2"
         },
+        "module_streams": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "nodejs:20",
+              "python38:3.8"
+            ]
+          }
+        },
         "required_tools": {
           "$ref": "#/$defs/string_set"
+        },
+        "python_module_bridge": {
+          "$ref": "#/$defs/python_module_bridge"
+        }
+      }
+    },
+    "python_module_bridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "interpreter",
+        "pythonpath",
+        "providers",
+        "qualification"
+      ],
+      "properties": {
+        "interpreter": {
+          "const": "/usr/bin/python3.8"
+        },
+        "pythonpath": {
+          "const": "/usr/lib/python3.6/site-packages"
+        },
+        "providers": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "prefixItems": [
+            {
+              "const": "python38"
+            },
+            {
+              "const": "python3-html5lib"
+            }
+          ]
+        },
+        "qualification": {
+          "const": "import-html5lib-six-webencodings"
         }
       }
     },

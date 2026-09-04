@@ -20,7 +20,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "99275ee345060908b32074705e69e968924fcc805eed6ce8f3c2eed801a6d2e9",
+      "canonical_sha256": "193fc1baf719da94c8d80616c335a913bb12f53ff6ea315174bf5818cb77726f",
       "component": "future/qt-qualification",
       "path": "config/generated/components/future/qt-qualification.json",
       "scope": "future"
@@ -514,7 +514,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "f263dbc1522ac011eb0be9dc6401f4e2e8b2fb035b93f6b4eb51dd1a43accc54",
+    "canonical_sha256": "80b64834f305be58e6ad4108f31643c29b17e2d350561bba5118c0d06b0df37e",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

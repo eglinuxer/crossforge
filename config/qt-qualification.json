@@ -15,6 +15,10 @@
     "qt_host_path": "/opt/crossforge/qualification/qt/6.8.4/host",
     "cmake_version": "4.4.0",
     "ninja_version": "1.13.2",
+    "module_streams": [
+      "nodejs:20",
+      "python38:3.8"
+    ],
     "required_tools": [
       "bison",
       "flex",
@@ -23,7 +27,16 @@
       "perl",
       "pkg-config",
       "python>=3.8+html5lib"
-    ]
+    ],
+    "python_module_bridge": {
+      "interpreter": "/usr/bin/python3.8",
+      "pythonpath": "/usr/lib/python3.6/site-packages",
+      "providers": [
+        "python38",
+        "python3-html5lib"
+      ],
+      "qualification": "import-html5lib-six-webencodings"
+    }
   },
   "locks": [
     {
@@ -75,14 +88,24 @@
       "c++20",
       "cross_compile",
       "dbus",
+      "egl",
+      "fontconfig",
+      "freetype",
       "gui",
       "network",
+      "opengl",
+      "opengl-desktop",
       "openssl",
       "openssl-linked",
       "opensslv11",
       "pkg-config",
       "thread",
+      "wayland",
       "widgets",
+      "xcb",
+      "xcb-xlib",
+      "xkbcommon",
+      "xkbcommon-x11",
       "xml"
     ],
     "qtwebengine": [

@@ -290,7 +290,7 @@
       "status": "planned",
       "plan": {
         "file": "config/qt-qualification.json",
-        "canonical_sha256": "289faf4b6fd94fc0fce4a240206c93e7933a018db373b1e59bece8811a8fc074"
+        "canonical_sha256": "0cbc2e57f6c312bcd9be47685c2497a7d2d2d1ec5f710a364078d8ec508289ec"
       }
     }
   },
