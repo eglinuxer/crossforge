@@ -661,6 +661,14 @@ def render_packaging_graph(
         "args": {
             "CROSSFORGE_PRODUCT_VERSION": config["product"]["version"],
             "CROSSFORGE_PRODUCT_IDENTITY_SHA256": digest("product/identity"),
+            "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": (
+                digest("toolchain/gcc-testsuite-qualification")
+            ),
+        },
+        "contexts": {
+            "crossforge_gcc_testsuite_full_qualified": (
+                "target:gcc-testsuite-full-qualification-evidence"
+            ),
         },
         "output": ["type=cacheonly"],
     }

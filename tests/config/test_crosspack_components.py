@@ -284,6 +284,17 @@ class CrosspackComponentTests(unittest.TestCase):
                 "CROSSFORGE_PRODUCT_IDENTITY_SHA256": self.digests[
                     "product/identity"
                 ],
+                "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": (
+                    self.digests["toolchain/gcc-testsuite-qualification"]
+                ),
+            },
+        )
+        self.assertEqual(
+            targets["sdk-candidate"]["contexts"],
+            {
+                "crossforge_gcc_testsuite_full_qualified": (
+                    "target:gcc-testsuite-full-qualification-evidence"
+                )
             },
         )
         self.assertEqual(
@@ -325,6 +336,22 @@ class CrosspackComponentTests(unittest.TestCase):
         candidate = dockerfile.split(" AS sdk-candidate", 1)[1]
         self.assertIn(
             "--expected-component product/identity", candidate
+        )
+        self.assertIn(
+            "from=crossforge_gcc_testsuite_full_qualified", candidate
+        )
+        self.assertIn(
+            "target=/tmp/crossforge-gcc-testsuite-full.json", candidate
+        )
+        self.assertNotIn("target=/work/gcc-testsuite-full.json", candidate)
+        self.assertIn("verify-gcc-testsuite-report.py", candidate)
+        self.assertIn("config/gcc-testsuite-full.json", candidate)
+        self.assertIn(
+            "--plan /work/config/gcc-testsuite-full-plan.json", candidate
+        )
+        self.assertIn(
+            "--expected-component toolchain/gcc-testsuite-qualification",
+            candidate,
         )
         self.assertIn('test "${#CROSSFORGE_SOURCE_COMMIT}" -eq 40', candidate)
         self.assertIn("org.opencontainers.image.revision", candidate)

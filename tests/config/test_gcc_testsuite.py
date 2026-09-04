@@ -11,6 +11,9 @@ CONTRACT = runpy.run_path(
     str(REPOSITORY / "scripts/validate-gcc-testsuite.py")
 )
 RUNNER = runpy.run_path(str(REPOSITORY / "scripts/run-gcc-testsuite.py"))
+VERIFIER = runpy.run_path(
+    str(REPOSITORY / "scripts/verify-gcc-testsuite-report.py")
+)
 
 
 class GccTestsuiteContractTests(unittest.TestCase):
@@ -20,6 +23,7 @@ class GccTestsuiteContractTests(unittest.TestCase):
             REPOSITORY / "config/release.json"
         )
         cls.plan = cls.contract["plan"]
+        cls.full_contract = cls.contract["profiles"]["full"]
         cls.full_plan = CONTRACT["validate_plan"](
             CONTRACT["load_json"](
                 REPOSITORY / "config/gcc-testsuite-full.json"
@@ -75,6 +79,30 @@ class GccTestsuiteContractTests(unittest.TestCase):
                 "runtestflags": [],
             },
         )
+        self.assertEqual(
+            self.full_contract["plan_sha256"],
+            CONTRACT["canonical_sha256"](self.full_plan),
+        )
+        self.assertEqual(
+            set(self.full_contract["baselines"]),
+            {("x86_64-unknown-linux-gnu", "host-direct")},
+        )
+        full_baseline = self.full_contract["baselines"][(
+            "x86_64-unknown-linux-gnu",
+            "host-direct",
+        )]["document"]
+        self.assertEqual(len(full_baseline["unexpected"]), 87)
+        self.assertEqual(
+            {
+                suite: sum(
+                    record["count"]
+                    for record in full_baseline["unexpected"]
+                    if record["suite"] == suite
+                )
+                for suite in ("gcc.full", "libstdc++.full")
+            },
+            {"gcc.full": 21, "libstdc++.full": 66},
+        )
 
     def test_target_summary_templates_are_expanded_and_fail_closed(self):
         path = CONTRACT["resolve_summary_path"](
@@ -118,6 +146,92 @@ class GccTestsuiteContractTests(unittest.TestCase):
             report["candidate_baseline_sha256"],
             CONTRACT["canonical_sha256"](candidate),
         )
+
+    def test_candidate_verifier_rederives_full_report_evidence(self):
+        baseline_record = self.full_contract["baselines"][(
+            "x86_64-unknown-linux-gnu",
+            "host-direct",
+        )]
+        baseline = copy.deepcopy(baseline_record["document"])
+        results = copy.deepcopy(baseline["unexpected"])
+        results.append(
+            {
+                "suite": "gcc.full",
+                "status": "PASS",
+                "test": "qualified probe",
+                "count": 1,
+            }
+        )
+        results.sort(key=CONTRACT["result_key"])
+        counts = {}
+        for record in results:
+            counts[record["status"]] = (
+                counts.get(record["status"], 0) + record["count"]
+            )
+        component_sha256 = "3" * 64
+        report = {
+            "schema_version": 1,
+            "kind": "gcc-testsuite-report",
+            "status": "passed",
+            "profile": "full",
+            "target": "x86_64-unknown-linux-gnu",
+            "runtime_tier": "host-direct",
+            "plan_sha256": self.full_contract["plan_sha256"],
+            "baseline_sha256": baseline_record["canonical_sha256"],
+            "status_counts": {
+                status: counts[status] for status in sorted(counts)
+            },
+            "results": results,
+            "unexpected": copy.deepcopy(baseline["unexpected"]),
+            "summaries": [
+                {"suite": suite, "sha256": str(index) * 64, "size": index}
+                for index, suite in enumerate(
+                    ("g++.full", "gcc.full", "libgomp.full", "libstdc++.full"),
+                    start=1,
+                )
+            ],
+            "materials": {
+                "qualification_component": {
+                    "component": "toolchain/gcc-testsuite-qualification",
+                    "canonical_sha256": component_sha256,
+                }
+            },
+        }
+        result = VERIFIER["verify_documents"](
+            report,
+            self.contract["release"],
+            self.full_plan,
+            baseline,
+            component_sha256,
+        )
+        self.assertEqual(result["unexpected"], 87)
+        for mutation in (
+            "unexpected",
+            "status_counts",
+            "plan_sha256",
+            "result_status",
+        ):
+            invalid = copy.deepcopy(report)
+            if mutation == "unexpected":
+                invalid[mutation].pop()
+            elif mutation == "status_counts":
+                invalid[mutation]["FAIL"] -= 1
+            elif mutation == "result_status":
+                invalid["results"][0]["status"] = "PASS"
+                invalid["results"].sort(key=CONTRACT["result_key"])
+                invalid["status_counts"]["FAIL"] -= 1
+                invalid["status_counts"]["PASS"] += 1
+            else:
+                invalid[mutation] = "0" * 64
+            with self.subTest(mutation=mutation):
+                with self.assertRaises(VERIFIER["VerificationError"]):
+                    VERIFIER["verify_documents"](
+                        invalid,
+                        self.contract["release"],
+                        self.full_plan,
+                        baseline,
+                        component_sha256,
+                    )
 
     def test_full_plan_rejects_partial_or_reordered_suite_sets(self):
         partial = copy.deepcopy(self.full_plan)
@@ -249,6 +363,7 @@ class GccTestsuiteContractTests(unittest.TestCase):
         self.assertIn("catch {unset TEST_GCC_EXEC_PREFIX}", runner)
         self.assertIn('if "/gcc/xgcc" in test_log', runner)
         self.assertIn('choices=("qualification", "observation")', runner)
+        self.assertIn('choices=("smoke", "full")', runner)
         self.assertIn(
             '"observation mode must not claim a qualification component"',
             runner,
@@ -287,7 +402,11 @@ class GccTestsuiteContractTests(unittest.TestCase):
             "docker buildx bake python-matrix vcpkg-upstream-tier3-qualified"
         )
         smoke = workflow.index("docker buildx bake gcc-testsuite-smoke")
+        full = workflow.index(
+            "docker buildx bake gcc-testsuite-full-qualified"
+        )
         self.assertLess(complete, smoke)
+        self.assertLess(smoke, full)
 
     def test_progress_watchdog_stops_idle_workers_without_masking_the_error(self):
         class IdleProcess:

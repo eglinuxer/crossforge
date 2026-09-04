@@ -395,6 +395,24 @@ class DockerComponentWiringTests(unittest.TestCase):
             self.assertIn("%s.full.log" % suite, evidence)
             self.assertIn("%s.full.make.log" % suite, evidence)
         self.assertIn("x86_64-host-direct.candidate.json", evidence)
+        qualified = self.stages["gcc-testsuite-x86_64-full-qualified"]
+        self.assertEqual(
+            self.parents["gcc-testsuite-x86_64-full-qualified"],
+            "gcc-testsuite-x86_64-base",
+        )
+        self.assertIn("--profile full", qualified)
+        self.assertIn("--qualification-component", qualified)
+        self.assertNotIn("--mode observation", qualified)
+        self.assertNotIn("--candidate-baseline", qualified)
+        self.assertNotIn("full-observe", qualified)
+        full_evidence = self.stages[
+            "gcc-testsuite-full-qualification-evidence"
+        ]
+        self.assertEqual(
+            self.parents["gcc-testsuite-full-qualification-evidence"],
+            "scratch",
+        )
+        self.assertIn("x86_64-host-direct-full.json", full_evidence)
 
 
 if __name__ == "__main__":

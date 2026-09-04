@@ -25,8 +25,10 @@ build-system-independent DEB/RPM packaging.
 > emits byte-reproducible split DEB/RPM packages for both targets and installs
 > them with pinned real `dpkg` and Rocky `rpm`. The single `crossforge`
 > launcher, detached debug packages, dynamic ELF audit, and the complete
-> Python/vcpkg/packaging SDK composition are qualified. Full GCC/Qt suites and
-> the release supply chain remain pending.
+> Python/vcpkg/packaging SDK composition are qualified. The four-suite x86_64
+> GCC full gate now qualifies 453,334 PASS records against an exact reviewed
+> baseline; native ARM release evidence, Qt acceptance, and the release supply
+> chain remain pending.
 > Every implemented target is cache-only; no user-facing image is emitted.
 
 The accepted implementation contract is in
@@ -124,8 +126,13 @@ This applies the complete Rocky GCC/binutils SRPM patch sets, builds binutils
 2.44 and GCC 15.2.1 for `x86_64-unknown-linux-gnu`, installs the EL8 shared
 runtime plus RH `libstdc++_nonshared80`, then exercises C, C++20, LTO,
 cross-DSO exceptions, link traces and the frozen ABI contract. The `-dev`
-suffix is intentional: full GCC/Qt qualification and the complete release
-supply chain are not implemented yet.
+suffix is intentional: native ARM release evidence, Qt qualification, and the
+complete release supply chain are not implemented yet. The x86_64 full GCC gate
+is available separately:
+
+```console
+$ docker buildx bake gcc-testsuite-full-qualified
+```
 
 The compiler and dual-target Python gates remain heavy candidate checks.
 Regular PR CI validates their graph, locked inputs, clean runtime overlays and

@@ -255,15 +255,38 @@ FROM sdk-complete-dev AS sdk-candidate
 ARG CROSSFORGE_PRODUCT_VERSION
 ARG CROSSFORGE_PRODUCT_IDENTITY_SHA256
 ARG CROSSFORGE_SOURCE_COMMIT
+ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
 COPY config/generated/components/product/identity.json \
   /work/config/product-identity.json
-COPY --chmod=0755 scripts/release_component.py /work/scripts/
+COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
+  /work/config/gcc-testsuite-qualification.json
+COPY config/gcc-testsuite-full.json \
+  /work/config/gcc-testsuite-full-plan.json
+COPY tests/gcc/baselines/full/x86_64-host-direct.json \
+  /work/config/gcc-testsuite-full-baseline.json
+COPY --chmod=0755 scripts/release_component.py \
+  scripts/verify-gcc-testsuite-report.py /work/scripts/
 RUN --network=none \
+    --mount=type=bind,from=crossforge_gcc_testsuite_full_qualified,source=/qualification/gcc-testsuite/x86_64-host-direct-full.json,target=/tmp/crossforge-gcc-testsuite-full.json,ro \
       /usr/libexec/platform-python /work/scripts/release_component.py validate \
         /work/config/product-identity.json \
         --expected-component product/identity \
         --expected-scope qualification \
         --expected-sha256 "$CROSSFORGE_PRODUCT_IDENTITY_SHA256" \
+    && /usr/libexec/platform-python /work/scripts/release_component.py validate \
+        /work/config/gcc-testsuite-qualification.json \
+        --expected-component toolchain/gcc-testsuite-qualification \
+        --expected-scope qualification \
+        --expected-sha256 \
+          "$CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256" \
+    && /usr/libexec/platform-python \
+        /work/scripts/verify-gcc-testsuite-report.py \
+        --report /tmp/crossforge-gcc-testsuite-full.json \
+        --release /opt/crossforge/release.json \
+        --plan /work/config/gcc-testsuite-full-plan.json \
+        --baseline /work/config/gcc-testsuite-full-baseline.json \
+        --component-sha256 \
+          "$CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256" \
     && test -n "$CROSSFORGE_PRODUCT_VERSION" \
     && test "$(/usr/libexec/platform-python \
           /work/scripts/release_component.py get \

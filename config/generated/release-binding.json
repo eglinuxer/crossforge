@@ -434,7 +434,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "4da2443d7417cf9dcb82da7c7becc3b82233bc0528e81ba49d334bae3c05a054",
+      "canonical_sha256": "399ab534d139e6575b691e3bf4de1345a99a61559112cdfc3c7de2900502970f",
       "component": "toolchain/gcc-testsuite-qualification",
       "path": "config/generated/components/toolchain/gcc-testsuite-qualification.json",
       "scope": "qualification"
@@ -502,7 +502,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "d19d9fab2cdc257adfbe964dd41364d1531876163e2b8976131b7877c83c6a93",
+    "canonical_sha256": "c5830f759cea5c15681687ecd30b7f833f85580cbad9db913907a8cdac7b1056",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

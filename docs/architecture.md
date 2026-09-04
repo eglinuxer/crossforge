@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约、三层 curated-port 门禁、分包门禁及 x86_64 完整 GCC observation 框架已完成。完整 GCC 基线/双 target 资格化、Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约、三层 curated-port 门禁、生产分包门禁及 x86_64 四套完整 GCC qualification 已完成。release 原生 ARM 证据、Qt 验收及发布供应链尚未实现，当前稳定产物仍未发布。
 
 ## 1. 产品契约
 
@@ -379,7 +379,9 @@ GCC testsuite 必须指向镜像内最终安装的 compiler，并使用 EL8 shar
 
 installed libstdc++ 测试从独立 workdir 运行，`LD_LIBRARY_PATH` 只把锁定 runtime DSO 置于首位，并拒绝任何 build-tree library 路径。四个 DejaGNU worker 复用上游 `GCC_RUNTEST_PARALLELIZE_DIR` 原子分片协议，按分钟报告进度；连续 600 秒无日志增长或总时长超过 7200 秒即失败。当前 GTS 快照缺少 `GCOV_UNDER_TEST` 与 cross `gcc-ar` testsuite 修复，两项按上游补丁精确回移。EL8 shared libstdc++ 保留 PR93672 的无限循环缺陷，因此该单例以 pinned test-only patch 明确标为 UNSUPPORTED；其他 runtime 差异仍进入精确候选，不得隐式跳过。
 
-x86_64 在锁定的 EL8 test host 中直接执行；aarch64 日常使用固定 QEMU，分别在锁定 sysroot 与干净 Rocky arm64 根执行并生成结构化证据，release 使用原生 ARM。已知失败按 status + suite + test identity + occurrence 维护精确基线；新增或已消失的 FAIL/XPASS/ERROR/UNRESOLVED/KFAIL/KPASS/WARNING 均使基线差异失败，不允许用失败数量阈值掩盖回归。Phase 16 用 `execute.exp` 单例证明三个 board 与基线链路；Phase 17 先以隔离、不可发布的 x86_64 observation 生成候选，逐项审查后才能形成 qualification baseline。
+x86_64 在锁定的 EL8 test host 中直接执行；aarch64 日常使用固定 QEMU，分别在锁定 sysroot 与干净 Rocky arm64 根执行并生成结构化证据，release 使用原生 ARM。已知失败按 status + suite + test identity + occurrence 维护精确基线；新增或已消失的 FAIL/XPASS/ERROR/UNRESOLVED/KFAIL/KPASS/WARNING 均使基线差异失败，不允许用失败数量阈值掩盖回归。Phase 16 用 `execute.exp` 单例证明三个 board 与基线链路；Phase 17 先以隔离、不可发布的 x86_64 observation 生成候选，逐项审查并用第二次完整运行精确复现后才能形成 qualification baseline。
+
+当前 x86_64 full baseline 包含 87 条精确 FAIL：21 条来自最终安装 `cc1` 加载 diagnostic text-art testsuite plugin 时缺少内部 `text_art::table::set_cell_span` 符号，66 条来自目标程序显式运行在冻结 EL8 `libstdc++.so.6.0.25`/libgcc_s 上的行为差异。它们仍完整保留在 qualification report 中，不是跳过项；任一记录新增、消失或 occurrence 改变都会使候选失败。候选阶段还会根据 release-bound full plan 从全部结果重新推导异常集合，并与 baseline 逐项比较。
 
 Qt 验收固定 Qt 6.8.4 `qt-everywhere` 官方源码和 SHA256，构建完整开源 Linux desktop 模块集合，至少包括 qtbase、qtdeclarative、qtshadertools、qttools、qtwayland、qtmultimedia、qtquick3d 和 qtwebengine；不构建 examples/tests/docs。host tools 与 target 使用同版本并通过 `QT_HOST_PATH` 连接，required module/feature 被静默跳过即失败。Qt 产物只作为测试 artifact，不进入 SDK 镜像。
 

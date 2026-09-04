@@ -986,6 +986,8 @@ COPY config/schemas/gcc-testsuite-plan.schema.json \
   /work/config/schemas/gcc-testsuite-plan.schema.json
 COPY config/schemas/gcc-testsuite-baseline.schema.json \
   /work/config/schemas/gcc-testsuite-baseline.schema.json
+COPY config/gcc-testsuite-smoke.json config/gcc-testsuite-full.json \
+  /work/config/
 COPY tests/gcc/ /work/tests/gcc/
 COPY scripts/validate-release.py scripts/release_component.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
@@ -1008,7 +1010,6 @@ FROM gcc-testsuite-x86_64-base AS gcc-testsuite-x86_64-smoke
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
 COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
   /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
-COPY config/gcc-testsuite-smoke.json /work/config/gcc-testsuite-smoke.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
       --release /work/config/release.json \
@@ -1029,7 +1030,6 @@ RUN --network=none /usr/libexec/platform-python \
         /work/qualification/gcc-testsuite/x86_64-host-direct.json
 
 FROM gcc-testsuite-x86_64-base AS gcc-testsuite-x86_64-full-libstdcxx-observe
-COPY config/gcc-testsuite-full.json /work/config/gcc-testsuite-full.json
 COPY patches/gcc/ /work/patches/gcc/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
@@ -1050,6 +1050,34 @@ RUN --network=none /usr/libexec/platform-python \
       --report /work/observation/gcc-testsuite/x86_64-host-direct.json \
       --candidate-baseline \
         /work/observation/gcc-testsuite/x86_64-host-direct.candidate.json
+
+# Full qualification is a fresh branch from the common installed-compiler
+# assembly. It consumes only the reviewed release-bound baseline and never the
+# observation layer that produced the candidate.
+FROM gcc-testsuite-x86_64-base AS gcc-testsuite-x86_64-full-qualified
+ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
+COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
+  /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
+COPY patches/gcc/ /work/patches/gcc/
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/run-gcc-testsuite.py \
+      --profile full \
+      --release /work/config/release.json \
+      --build /work/build/gcc-x86_64/gcc-build \
+      --source /work/prepared/gcc \
+      --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/x86_64 \
+      --target x86_64-unknown-linux-gnu \
+      --runtime-tier host-direct \
+      --site /work/tests/gcc/full-site.exp \
+      --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json \
+      --qualification-component \
+        /work/config/generated/components/toolchain/gcc-testsuite-qualification.json \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256" \
+      --output /work/qualification/gcc-testsuite/x86_64-host-direct-full \
+      --report \
+        /work/qualification/gcc-testsuite/x86_64-host-direct-full.json
 
 FROM gcc-testsuite-x86_64-full-libstdcxx-observe AS gcc-testsuite-x86_64-full-libgomp-observe
 RUN --network=none /usr/libexec/platform-python \
@@ -1131,6 +1159,8 @@ COPY config/schemas/gcc-testsuite-plan.schema.json \
   /work/config/schemas/gcc-testsuite-plan.schema.json
 COPY config/schemas/gcc-testsuite-baseline.schema.json \
   /work/config/schemas/gcc-testsuite-baseline.schema.json
+COPY config/gcc-testsuite-smoke.json config/gcc-testsuite-full.json \
+  /work/config/
 COPY tests/gcc/ /work/tests/gcc/
 COPY scripts/validate-release.py scripts/release_component.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
@@ -1153,7 +1183,6 @@ FROM gcc-testsuite-aarch64-base AS gcc-testsuite-aarch64-smoke
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
 COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
   /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
-COPY config/gcc-testsuite-smoke.json /work/config/gcc-testsuite-smoke.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
       --release /work/config/release.json \
@@ -1213,6 +1242,11 @@ COPY --from=gcc-testsuite-x86_64-full-observe \
   /work/observation/gcc-testsuite/x86_64-host-direct/libstdc++.full.log \
   /work/observation/gcc-testsuite/x86_64-host-direct/libstdc++.full.make.log \
   /observation/gcc-testsuite/x86_64-host-direct/
+
+FROM scratch AS gcc-testsuite-full-qualification-evidence
+COPY --from=gcc-testsuite-x86_64-full-qualified \
+  /work/qualification/gcc-testsuite/x86_64-host-direct-full.json \
+  /qualification/gcc-testsuite/x86_64-host-direct-full.json
 
 FROM scratch AS gcc-testsuite-smoke-evidence
 COPY --from=gcc-testsuite-x86_64-smoke \

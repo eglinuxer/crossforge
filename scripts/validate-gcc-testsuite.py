@@ -337,12 +337,7 @@ def validate_baseline(baseline, plan, target, runtime_tier):
     return baseline
 
 
-def validate_release_contract(release_path):
-    release = load_json(release_path)
-    release_schema = load_json(REPOSITORY / "config/schemas/release.schema.json")
-    STRICT["validate_schema_subset"](release_schema)
-    STRICT["validate"](release, release_schema, release_schema, "$")
-    contract = release["gcc_testsuite"]
+def validate_profile_contract(release, contract, expected_pairs):
     plan_path = repository_file(contract["plan"]["file"], "GCC testsuite plan")
     plan = validate_plan(load_json(plan_path))
     plan_sha256 = canonical_sha256(plan)
@@ -352,11 +347,6 @@ def validate_release_contract(release_path):
         raise ValidationError("release GCC testsuite profile differs")
     if plan["gcc_version"] != release["gts"]["gcc_version"]:
         raise ValidationError("GCC testsuite compiler version differs from release")
-    expected_pairs = [
-        (target["triple"], tier["name"])
-        for target in plan["targets"]
-        for tier in target["runtime_tiers"]
-    ]
     records = contract["baselines"]
     pairs = [(record["target"], record["runtime_tier"]) for record in records]
     if pairs != expected_pairs:
@@ -375,11 +365,41 @@ def validate_release_contract(release_path):
             "canonical_sha256": record["canonical_sha256"],
         }
     return {
-        "release": release,
         "plan": plan,
         "plan_path": plan_path,
         "plan_sha256": plan_sha256,
         "baselines": baselines,
+    }
+
+
+def validate_release_contract(release_path):
+    release = load_json(release_path)
+    release_schema = load_json(REPOSITORY / "config/schemas/release.schema.json")
+    STRICT["validate_schema_subset"](release_schema)
+    STRICT["validate"](release, release_schema, release_schema, "$")
+    smoke_contract = release["gcc_testsuite"]
+    smoke_pairs = [
+        (target["triple"], tier["name"])
+        for target in TARGET_CONTRACT
+        for tier in target["runtime_tiers"]
+    ]
+    profiles = {
+        "smoke": validate_profile_contract(
+            release, smoke_contract, smoke_pairs
+        ),
+        "full": validate_profile_contract(
+            release,
+            smoke_contract["full"],
+            [("x86_64-unknown-linux-gnu", "host-direct")],
+        ),
+    }
+    return {
+        "release": release,
+        "profiles": profiles,
+        "plan": profiles["smoke"]["plan"],
+        "plan_path": profiles["smoke"]["plan_path"],
+        "plan_sha256": profiles["smoke"]["plan_sha256"],
+        "baselines": profiles["smoke"]["baselines"],
     }
 
 
@@ -549,10 +569,16 @@ def main():
     except (OSError, UnicodeError, ValidationError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1
-    print(
-        "valid GCC testsuite %s contract: %s (3 runtime baselines)"
-        % (contract["plan"]["profile"], contract["plan_sha256"])
-    )
+    for profile in ("smoke", "full"):
+        selected = contract["profiles"][profile]
+        print(
+            "valid GCC testsuite %s contract: %s (%d runtime baseline(s))"
+            % (
+                profile,
+                selected["plan_sha256"],
+                len(selected["baselines"]),
+            )
+        )
     for plan in plans:
         print(
             "valid GCC testsuite %s plan: %s"

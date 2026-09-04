@@ -435,6 +435,9 @@ def main():
     parser.add_argument(
         "--mode", choices=("qualification", "observation"), default="qualification"
     )
+    parser.add_argument(
+        "--profile", choices=("smoke", "full"), default="smoke"
+    )
     parser.add_argument("--release", type=Path, required=True)
     parser.add_argument("--plan", type=Path)
     parser.add_argument("--suite")
@@ -477,8 +480,13 @@ def main():
                 arguments.release
             )
             release = release_contract["release"]
-            plan = release_contract["plan"]
+            profile_contract = release_contract["profiles"][arguments.profile]
+            plan = profile_contract["plan"]
         else:
+            if arguments.profile != "smoke":
+                raise ValidationError(
+                    "observation mode reads its profile from the external plan"
+                )
             if arguments.plan is None or arguments.candidate_baseline is None:
                 raise ValidationError(
                     "observation mode requires --plan and --candidate-baseline"
@@ -517,7 +525,7 @@ def main():
             if len(selected_suites) != 1:
                 raise ValidationError("GCC testsuite suite is not in the plan")
         if arguments.mode == "qualification":
-            baseline_record = release_contract["baselines"][(
+            baseline_record = profile_contract["baselines"][(
                 arguments.target, arguments.runtime_tier
             )]
             baseline = baseline_record["document"]

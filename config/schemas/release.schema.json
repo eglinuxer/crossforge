@@ -212,7 +212,8 @@
       "required": [
         "profile",
         "plan",
-        "baselines"
+        "baselines",
+        "full"
       ],
       "properties": {
         "profile": {
@@ -270,6 +271,68 @@
               "canonical_sha256": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        },
+        "full": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "profile",
+            "plan",
+            "baselines"
+          ],
+          "properties": {
+            "profile": {
+              "const": "full"
+            },
+            "plan": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "file",
+                "canonical_sha256"
+              ],
+              "properties": {
+                "file": {
+                  "const": "config/gcc-testsuite-full.json"
+                },
+                "canonical_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            },
+            "baselines": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "target",
+                  "runtime_tier",
+                  "file",
+                  "canonical_sha256"
+                ],
+                "properties": {
+                  "target": {
+                    "const": "x86_64-unknown-linux-gnu"
+                  },
+                  "runtime_tier": {
+                    "const": "host-direct"
+                  },
+                  "file": {
+                    "const": "tests/gcc/baselines/full/x86_64-host-direct.json"
+                  },
+                  "canonical_sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                }
               }
             }
           }

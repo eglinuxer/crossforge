@@ -320,8 +320,24 @@ target "gcc-testsuite-full-observation-evidence" {
   output   = ["type=cacheonly"]
 }
 
+target "gcc-testsuite-x86_64-full-qualified" {
+  inherits = ["_common"]
+  target   = "gcc-testsuite-x86_64-full-qualified"
+  output   = ["type=cacheonly"]
+}
+
+target "gcc-testsuite-full-qualification-evidence" {
+  inherits = ["_common"]
+  target   = "gcc-testsuite-full-qualification-evidence"
+  output   = ["type=cacheonly"]
+}
+
 group "gcc-testsuite-full-observe" {
   targets = ["gcc-testsuite-full-observation-evidence"]
+}
+
+group "gcc-testsuite-full-qualified" {
+  targets = ["gcc-testsuite-full-qualification-evidence"]
 }
 
 group "gcc-testsuite-smoke" {

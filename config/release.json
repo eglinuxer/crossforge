@@ -139,7 +139,22 @@
         "file": "tests/gcc/baselines/smoke/aarch64-clean-rocky.json",
         "canonical_sha256": "c599df1fc98dd0492e83fae7efa34b1b26044a06319c84f1651e5770172f55c7"
       }
-    ]
+    ],
+    "full": {
+      "profile": "full",
+      "plan": {
+        "file": "config/gcc-testsuite-full.json",
+        "canonical_sha256": "d6ad733311c9b541b436e54792d3d85a2ef0dd567d914d14db829708d3c4fc20"
+      },
+      "baselines": [
+        {
+          "target": "x86_64-unknown-linux-gnu",
+          "runtime_tier": "host-direct",
+          "file": "tests/gcc/baselines/full/x86_64-host-direct.json",
+          "canonical_sha256": "b8c5108590d76e77dfc5030df5a765da39d0a584679d6756ef141ea89f6d0bb4"
+        }
+      ]
+    }
   },
   "binutils": {
     "version": "2.44",

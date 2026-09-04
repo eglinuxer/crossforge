@@ -90,3 +90,5 @@ jobs:
           # program into an infrastructure-shaped DejaGNU FAIL.
           docker buildx bake gcc-testsuite-smoke \
             --progress=plain
+          docker buildx bake gcc-testsuite-full-qualified \
+            --progress=plain

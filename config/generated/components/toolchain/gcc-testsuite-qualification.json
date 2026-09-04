@@ -70,6 +70,34 @@
       "value": "aarch64-unknown-linux-gnu"
     },
     {
+      "path": "/gcc_testsuite/full/baselines/0/canonical_sha256",
+      "value": "b8c5108590d76e77dfc5030df5a765da39d0a584679d6756ef141ea89f6d0bb4"
+    },
+    {
+      "path": "/gcc_testsuite/full/baselines/0/file",
+      "value": "tests/gcc/baselines/full/x86_64-host-direct.json"
+    },
+    {
+      "path": "/gcc_testsuite/full/baselines/0/runtime_tier",
+      "value": "host-direct"
+    },
+    {
+      "path": "/gcc_testsuite/full/baselines/0/target",
+      "value": "x86_64-unknown-linux-gnu"
+    },
+    {
+      "path": "/gcc_testsuite/full/plan/canonical_sha256",
+      "value": "d6ad733311c9b541b436e54792d3d85a2ef0dd567d914d14db829708d3c4fc20"
+    },
+    {
+      "path": "/gcc_testsuite/full/plan/file",
+      "value": "config/gcc-testsuite-full.json"
+    },
+    {
+      "path": "/gcc_testsuite/full/profile",
+      "value": "full"
+    },
+    {
       "path": "/gcc_testsuite/plan/canonical_sha256",
       "value": "c6eab2a821dee2f052c4d5523073f2d4f2f5ab6ea6023a3d2302f24d0ba50ebf"
     },
