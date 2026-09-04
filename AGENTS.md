@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-`docs/architecture.md` is canonical. Configuration lives under `config/`; only `render-release-components.py` writes `config/generated/`. ABI policy is in `abi/el8/`, provenance in `evidence/`, licenses in `licenses/`, DNF decisions in `locks/`, scripts in `scripts/`, and tests in `tests/`.
+`docs/architecture.md` is canonical. Configuration is under `config/`; only `render-release-components.py` writes `config/generated/`. ABI policy is in `abi/el8/`, provenance in `evidence/`, DNF locks in `locks/`, scripts in `scripts/`, and tests in `tests/`.
 
 Rust prototype: tag `prototype-rust-2026-08-28`. Do not commit caches.
 
@@ -13,13 +13,14 @@ Rust prototype: tag `prototype-rust-2026-08-28`. Do not commit caches.
 - `./scripts/validate-rpm-lock.py <lock> --require-lock` validates a content lock.
 - `./scripts/render-release-components.py --check`, `./scripts/render-vcpkg-integration.py --check`, and `./scripts/render-bake.py --check` detect generated-file drift.
 - `docker buildx bake sysroot-x86_64 sysroot-aarch64` assembles both signed EL8 sysroots offline.
-- `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked host-runtime-qualified` replays and qualifies all host closures offline.
+- `docker buildx bake host-build-common-locked host-gcc-build-locked host-python-build-locked host-runtime-qualified` verifies host closures offline.
 - `docker buildx bake cmake-host-tool ninja-host-tool` locks host tools; `docker buildx bake vcpkg-upstream-tier3-qualified` runs all three curated tiers across five triplets offline.
 - Packaging tests live in `tests/packaging`; `docker buildx bake packaging-qualified sdk-complete-dev` qualifies split/debug packages, ELF audits, and the composed SDK.
 - `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both cross slices; aarch64 uses pinned QEMU, never implicit binfmt.
+- `docker buildx bake gcc-testsuite-smoke` runs the GCC execute slice on x86_64 and both aarch64 runtime tiers, then emits reviewable evidence.
 - `docker buildx bake phase10` requalifies all Python 3.9–3.14 rows for both targets. `python-native-latest` and `python-matrix` select the same six-row contract. Graph existence or a build probe alone is not qualification evidence.
 
-Never publish `sdk-skeleton` or a `-dev` target; only a locked, qualified candidate may receive user-facing tags.
+Never publish `sdk-skeleton` or `-dev` targets; tag only locked, qualified candidates.
 
 ## Coding Style & Naming Conventions
 
@@ -27,7 +28,7 @@ Use strict JSON plus JSON Schema; reject duplicate keys, unknown fields, and sch
 
 ## Testing Guidelines
 
-Add a regression test for every defect. Build changes must name the image digest, target, sysroot/config digest, and validation tier. x86_64 and aarch64 remain distinct targets although the image runs on amd64. Target execution belongs only in qualification stages; cross stages must not set `HOSTRUNNER` or QEMU and must preserve target-artifact guard evidence. Pending pins may exist only in non-candidate planning/dev targets; candidates require `--require-locked`.
+Add a regression test for every defect. Build evidence must name the image, target, sysroot/config digest, and tier. x86_64 and aarch64 remain distinct targets. Execute target code only in qualification stages; cross stages must not set `HOSTRUNNER` or QEMU. GCC baselines compare exact status, suite, test identity, and occurrence; added or resolved unexpected records fail. Candidates require `--require-locked`.
 
 ## Commit & Pull Request Guidelines
 

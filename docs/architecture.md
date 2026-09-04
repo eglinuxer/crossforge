@@ -358,7 +358,7 @@ source commit → build once → candidate digest → 原物验收 → registry-
 - nightly/full：双 target 的 `check-gcc`、`check-g++`、`check-target-libgcc`、`check-target-libstdc++-v3`、`check-target-libgomp`，完整 Python 矩阵，以及 Qt 6.8.4 双 target；
 - release：同一 digest 的原生 aarch64 终检和资格化证明检查。
 
-GCC testsuite 必须指向镜像内最终安装的 compiler，并使用 EL8 shared runtime + Crossforge nonshared/libgcc 的最终 hybrid 组合。x86_64 直接执行；aarch64 日常使用固定 QEMU，分别在锁定 sysroot 与干净 Rocky arm64 根执行并生成结构化证据，release 使用原生 ARM。已知失败按 test identity 维护精确基线；新增 FAIL/ERROR/UNRESOLVED 直接失败，不允许用失败数量阈值掩盖回归。
+GCC testsuite 必须指向镜像内最终安装的 compiler，并使用 EL8 shared runtime + Crossforge nonshared/libgcc 的最终 hybrid 组合。x86_64 在锁定的 EL8 test host 中直接执行；aarch64 日常使用固定 QEMU，分别在锁定 sysroot 与干净 Rocky arm64 根执行并生成结构化证据，release 使用原生 ARM。已知失败按 status + suite + test identity + occurrence 维护精确基线；新增或已消失的 FAIL/XPASS/ERROR/UNRESOLVED/KFAIL/KPASS/WARNING 均使基线差异失败，不允许用失败数量阈值掩盖回归。Phase 16 先用 GCC 自带 `execute.exp` 单例证明三个 board 与精确基线链路；`libgomp` 仅在 build tree 中为后续 `check-target-libgomp` 构建，不进入 SDK。
 
 Qt 验收固定 Qt 6.8.4 `qt-everywhere` 官方源码和 SHA256，构建完整开源 Linux desktop 模块集合，至少包括 qtbase、qtdeclarative、qtshadertools、qttools、qtwayland、qtmultimedia、qtquick3d 和 qtwebengine；不构建 examples/tests/docs。host tools 与 target 使用同版本并通过 `QT_HOST_PATH` 连接，required module/feature 被静默跳过即失败。Qt 产物只作为测试 artifact，不进入 SDK 镜像。
 

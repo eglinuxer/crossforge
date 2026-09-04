@@ -416,6 +416,8 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             and path[2] in source_fields
         ):
             category = "build"
+        elif path and path[0] == "gcc_testsuite":
+            category = "qualification"
         elif path == ("binutils", "version"):
             category = "build"
         elif (
@@ -701,6 +703,18 @@ def _render_expected_components(release, implemented_rows):
             selector(*qualification_prefixes),
             (build_component, abi_baseline_components[arch]),
         )
+
+    add(
+        "toolchain/gcc-testsuite-qualification",
+        "qualification",
+        selector(("gcc_testsuite",)),
+        (
+            "rpm/host-gcc-test",
+            "sources/gcc",
+            toolchain_qualifications["x86_64"],
+            toolchain_qualifications["aarch64"],
+        ),
+    )
 
     build_policy_components = []
     for record in implemented_rows:

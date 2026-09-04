@@ -290,6 +290,35 @@ target "runtime-smoke-aarch64" {
   output   = ["type=cacheonly"]
 }
 
+target "gcc-testsuite-x86_64-smoke" {
+  inherits = ["_common"]
+  target   = "gcc-testsuite-x86_64-smoke"
+  output   = ["type=cacheonly"]
+}
+
+target "gcc-testsuite-aarch64-smoke" {
+  inherits = ["_common"]
+  target   = "gcc-testsuite-aarch64-smoke"
+  output   = ["type=cacheonly"]
+}
+
+target "gcc-testsuite-smoke-evidence" {
+  inherits = ["_common"]
+  target   = "gcc-testsuite-smoke-evidence"
+  output   = ["type=cacheonly"]
+}
+
+group "gcc-testsuite-smoke" {
+  targets = ["gcc-testsuite-smoke-evidence"]
+}
+
+group "phase16" {
+  targets = [
+    "validate",
+    "gcc-testsuite-smoke-evidence"
+  ]
+}
+
 group "phase1" {
   targets = ["validate", "toolchain-plan", "sdk-skeleton"]
 }

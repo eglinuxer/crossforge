@@ -1,0 +1,10 @@
+{
+  "$schema": "https://crossforge.dev/schemas/gcc-testsuite-baseline.schema.json",
+  "schema_version": 1,
+  "kind": "gcc-testsuite-baseline",
+  "profile": "smoke",
+  "plan_sha256": "c6eab2a821dee2f052c4d5523073f2d4f2f5ab6ea6023a3d2302f24d0ba50ebf",
+  "target": "aarch64-unknown-linux-gnu",
+  "runtime_tier": "clean-rocky",
+  "unexpected": []
+}

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "toolchain/gcc-testsuite-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "116d37555c76dc252205f78ee4fbcd4e86e90c22fde8dfaeb4e0c21b00066989",
+      "component": "rpm/host-gcc-test"
+    },
+    {
+      "canonical_sha256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
+      "component": "sources/gcc"
+    },
+    {
+      "canonical_sha256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
+      "component": "toolchain/aarch64-qualification"
+    },
+    {
+      "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
+      "component": "toolchain/x86_64-qualification"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/gcc_testsuite/baselines/0/canonical_sha256",
+      "value": "8a16a5acf98e1de5281b50f867505a171fca9114c6289a4bdff857a380d7fa68"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/0/file",
+      "value": "tests/gcc/baselines/smoke/x86_64-host-direct.json"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/0/runtime_tier",
+      "value": "host-direct"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/0/target",
+      "value": "x86_64-unknown-linux-gnu"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/1/canonical_sha256",
+      "value": "d17cc2560c9c4b8b9ba22cc041d044cf55b6f50e7eca9193a38d5eae4d5bf8b5"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/1/file",
+      "value": "tests/gcc/baselines/smoke/aarch64-locked-sysroot.json"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/1/runtime_tier",
+      "value": "locked-sysroot"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/1/target",
+      "value": "aarch64-unknown-linux-gnu"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/2/canonical_sha256",
+      "value": "c599df1fc98dd0492e83fae7efa34b1b26044a06319c84f1651e5770172f55c7"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/2/file",
+      "value": "tests/gcc/baselines/smoke/aarch64-clean-rocky.json"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/2/runtime_tier",
+      "value": "clean-rocky"
+    },
+    {
+      "path": "/gcc_testsuite/baselines/2/target",
+      "value": "aarch64-unknown-linux-gnu"
+    },
+    {
+      "path": "/gcc_testsuite/plan/canonical_sha256",
+      "value": "c6eab2a821dee2f052c4d5523073f2d4f2f5ab6ea6023a3d2302f24d0ba50ebf"
+    },
+    {
+      "path": "/gcc_testsuite/plan/file",
+      "value": "config/gcc-testsuite-smoke.json"
+    },
+    {
+      "path": "/gcc_testsuite/profile",
+      "value": "smoke"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

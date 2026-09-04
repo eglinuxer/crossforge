@@ -1,0 +1,7 @@
+load_generic_config "unix"
+process_multilib_options ""
+set_board_info bmk,use_alarm 1
+unset_board_info isremote
+set_board_info isremote 0
+setenv QEMU_LD_PREFIX "/opt/crossforge/sysroots/el8/aarch64"
+set_board_info exec_shell "/usr/local/libexec/crossforge/qemu-aarch64 -L /opt/crossforge/sysroots/el8/aarch64 -cpu cortex-a53 -r 4.18.0"

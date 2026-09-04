@@ -62,7 +62,7 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_component_arguments_cover_the_complete_release_binding(self):
         records = self.binding["components"]
-        self.assertEqual(len(records), 80)
+        self.assertEqual(len(records), 81)
         expected = {
             RENDERER["component_argument_name"](record["component"]): record[
                 "canonical_sha256"
@@ -497,6 +497,8 @@ class RenderBakeTests(unittest.TestCase):
                 "qemu-aarch64-validated",
                 "runtime-smoke-aarch64",
                 "toolchain-aarch64-dev",
+                "gcc-testsuite-aarch64-smoke",
+                "gcc-testsuite-smoke-evidence",
             },
         )
         consumers = []

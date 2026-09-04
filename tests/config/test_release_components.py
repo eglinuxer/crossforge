@@ -44,6 +44,7 @@ PHASE9_PYTHON_QUALIFICATION_DIGESTS = {
 }
 PACKAGING_CONSUMERS = {"packaging/sdk-build", "packaging/qualification"}
 COMPLETE_SDK_CONSUMER = {"product/sdk-qualification"}
+GCC_TESTSUITE_CONSUMER = {"toolchain/gcc-testsuite-qualification"}
 
 
 def component_documents(documents):
@@ -634,6 +635,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                     {
                         "abi/%s-baseline" % arch,
                         "toolchain/%s-qualification" % arch,
+                        "toolchain/gcc-testsuite-qualification",
                         "python/qualification",
                         "vcpkg/contract-qualification",
                         "vcpkg/upstream-tier1-qualification",
@@ -722,6 +724,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         }
         expected.update(PACKAGING_CONSUMERS)
         expected.update(COMPLETE_SDK_CONSUMER)
+        expected.update(GCC_TESTSUITE_CONSUMER)
         expected.update(
             "python/%s-aarch64-build" % row for row in self.row_names
         )
@@ -747,6 +750,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         }
         expected.update(PACKAGING_CONSUMERS)
         expected.update(COMPLETE_SDK_CONSUMER)
+        expected.update(GCC_TESTSUITE_CONSUMER)
         expected.update(
             "python/%s-x86_64-build" % row for row in self.row_names
         )
@@ -760,6 +764,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             changed(self.components, after),
             {
                 "toolchain/aarch64-qualification",
+                "toolchain/gcc-testsuite-qualification",
                 "python/qualification",
                 "vcpkg/contract-qualification",
                 "vcpkg/upstream-tier1-qualification",
@@ -787,6 +792,32 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             )
         expected.update(COMPLETE_SDK_CONSUMER)
         self.assertEqual(changed(self.components, after), expected)
+
+    def test_gcc_testsuite_policy_has_one_isolated_qualification_owner(self):
+        name = "toolchain/gcc-testsuite-qualification"
+        component = self.components[name]
+        self.assertEqual(component["scope"], "qualification")
+        self.assertTrue(
+            all(
+                material["path"].startswith("/gcc_testsuite/")
+                for material in component["materials"]
+            )
+        )
+        self.assertEqual(
+            {dependency["component"] for dependency in component["dependencies"]},
+            {
+                "rpm/host-gcc-test",
+                "sources/gcc",
+                "toolchain/x86_64-qualification",
+                "toolchain/aarch64-qualification",
+            },
+        )
+        after = self.render_mutation(
+            lambda release: release["gcc_testsuite"]["plan"].__setitem__(
+                "canonical_sha256", "0" * 64
+            )
+        )
+        self.assertEqual(changed(self.components, after), {name})
 
     def test_host_runtime_lock_promotes_only_its_delivery_component(self):
         runtime = self.components["rpm/host-runtime"]
@@ -836,6 +867,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "toolchain/aarch64-build",
                 "toolchain/x86_64-qualification",
                 "toolchain/aarch64-qualification",
+                "toolchain/gcc-testsuite-qualification",
                 "python/qualification",
                 "zstd/host-build",
                 "zstd/x86_64-build",

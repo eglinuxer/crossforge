@@ -112,6 +112,33 @@
       "spec_sha256": "ef976467ff1a7946136121d6213caa5688b08ad64e6b4033b60866881972bb84"
     }
   },
+  "gcc_testsuite": {
+    "profile": "smoke",
+    "plan": {
+      "file": "config/gcc-testsuite-smoke.json",
+      "canonical_sha256": "c6eab2a821dee2f052c4d5523073f2d4f2f5ab6ea6023a3d2302f24d0ba50ebf"
+    },
+    "baselines": [
+      {
+        "target": "x86_64-unknown-linux-gnu",
+        "runtime_tier": "host-direct",
+        "file": "tests/gcc/baselines/smoke/x86_64-host-direct.json",
+        "canonical_sha256": "8a16a5acf98e1de5281b50f867505a171fca9114c6289a4bdff857a380d7fa68"
+      },
+      {
+        "target": "aarch64-unknown-linux-gnu",
+        "runtime_tier": "locked-sysroot",
+        "file": "tests/gcc/baselines/smoke/aarch64-locked-sysroot.json",
+        "canonical_sha256": "d17cc2560c9c4b8b9ba22cc041d044cf55b6f50e7eca9193a38d5eae4d5bf8b5"
+      },
+      {
+        "target": "aarch64-unknown-linux-gnu",
+        "runtime_tier": "clean-rocky",
+        "file": "tests/gcc/baselines/smoke/aarch64-clean-rocky.json",
+        "canonical_sha256": "c599df1fc98dd0492e83fae7efa34b1b26044a06319c84f1651e5770172f55c7"
+      }
+    ]
+  },
   "binutils": {
     "version": "2.44",
     "source": {

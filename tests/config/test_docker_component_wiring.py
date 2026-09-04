@@ -310,6 +310,40 @@ class DockerComponentWiringTests(unittest.TestCase):
         self.assertNotIn("host-build-common", block)
         self.assertNotIn("host-python-build", block)
 
+    def test_gcc_testsuite_stages_are_qualification_only_and_use_final_gcc(self):
+        component = "toolchain/gcc-testsuite-qualification"
+        argument = digest_arg(component)
+        for arch in ("x86_64", "aarch64"):
+            stage = "gcc-testsuite-%s-smoke" % arch
+            block = self.stages[stage]
+            self.assertEqual(self.parents[stage], "host-gcc-test-locked")
+            self.assertIn("ARG %s" % argument, block)
+            self.assertIn(
+                "COPY config/generated/components/%s.json" % component,
+                block,
+            )
+            self.assertIn("run-gcc-testsuite.py", block)
+            self.assertIn("--network=none", block)
+            self.assertIn("--prefix /opt/crossforge/targets/", block)
+            self.assertIn("--host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json", block)
+            self.assertNotIn("xgcc", block)
+            self.assertNotIn(stage, self.reachable_stages("toolchain-%s-dev" % arch))
+        aarch64 = self.stages["gcc-testsuite-aarch64-smoke"]
+        self.assertIn("qemu-aarch64-validated", self.dependencies["gcc-testsuite-aarch64-smoke"])
+        self.assertIn("--runtime-tier locked-sysroot", aarch64)
+        self.assertIn("--runtime-tier clean-rocky", aarch64)
+        evidence = self.stages["gcc-testsuite-smoke-evidence"]
+        self.assertEqual(self.parents["gcc-testsuite-smoke-evidence"], "scratch")
+        self.assertIn("x86_64-host-direct.json", evidence)
+        self.assertIn("aarch64-locked-sysroot.json", evidence)
+        self.assertIn("aarch64-clean-rocky.json", evidence)
+        self.assertNotIn("tool-bin", evidence)
+
+    def test_libgomp_is_built_for_tests_but_not_installed_into_sdk(self):
+        build = (REPOSITORY / "scripts/build-gcc.sh").read_text(encoding="utf-8")
+        self.assertIn("all-target-libgomp", build)
+        self.assertNotIn("install-target-libgomp", build)
+
 
 if __name__ == "__main__":
     unittest.main()

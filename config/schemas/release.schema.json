@@ -15,6 +15,7 @@
     "platforms",
     "host_locks",
     "gts",
+    "gcc_testsuite",
     "binutils",
     "qemu",
     "targets",
@@ -193,6 +194,76 @@
         },
         "source": {
           "$ref": "#/$defs/rpm_source"
+        }
+      }
+    },
+    "gcc_testsuite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "plan",
+        "baselines"
+      ],
+      "properties": {
+        "profile": {
+          "const": "smoke"
+        },
+        "plan": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "file": {
+              "const": "config/gcc-testsuite-smoke.json"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "baselines": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "target",
+              "runtime_tier",
+              "file",
+              "canonical_sha256"
+            ],
+            "properties": {
+              "target": {
+                "enum": [
+                  "x86_64-unknown-linux-gnu",
+                  "aarch64-unknown-linux-gnu"
+                ]
+              },
+              "runtime_tier": {
+                "enum": [
+                  "host-direct",
+                  "locked-sysroot",
+                  "clean-rocky"
+                ]
+              },
+              "file": {
+                "type": "string",
+                "pattern": "^tests/gcc/baselines/smoke/(?:x86_64|aarch64)-(?:host-direct|locked-sysroot|clean-rocky)\\.json$"
+              },
+              "canonical_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
         }
       }
     },

@@ -120,7 +120,8 @@ export LDFLAGS_FOR_TARGET='-Wl,-z,relro,-z,now'
   --disable-libquadmath \
   "${target_options[@]}"
 
-make -j"$jobs" all-gcc all-target-libgcc all-target-libstdc++-v3
+make -j"$jobs" \
+  all-gcc all-target-libgcc all-target-libstdc++-v3 all-target-libgomp
 make DESTDIR="$destdir" \
   install-gcc install-target-libgcc install-target-libstdc++-v3
 
@@ -130,6 +131,10 @@ make DESTDIR="$destdir" \
 }
 [[ -f "$build_directory/gcc-build/$target/libstdc++-v3/src/.libs/libstdc++_nonshared80.a" ]] || {
   echo "error: vendor libstdc++_nonshared80.a was not built" >&2
+  exit 1
+}
+[[ -f "$build_directory/gcc-build/$target/libgomp/.libs/libgomp.so" ]] || {
+  echo "error: GCC testsuite libgomp runtime was not built" >&2
   exit 1
 }
 

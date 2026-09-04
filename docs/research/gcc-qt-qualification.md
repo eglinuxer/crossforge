@@ -10,6 +10,8 @@ DejaGNU's unix board supports an `exec_shell`. Crossforge will use that supporte
 
 Required work: build libgomp; add a test-only DejaGNU/Expect RPM lock; preserve GCC source/object trees only in qualification stages; normalize exact test identities; and reject every unbaselined `FAIL`, `ERROR`, or `UNRESOLVED` result. Rocky 8.10 publishes `expect` in BaseOS and `dejagnu` in PowerTools, so the test-only lock must admit exactly that additional PowerTools package. [Rocky BaseOS packages](https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/e/), [Rocky PowerTools packages](https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/Packages/d/)
 
+Phase 16 now proves the installed-compiler path with 16 PASS records and no unexpected records in each of x86_64 host-direct, aarch64 locked-sysroot, and aarch64 clean-Rocky execution. The five-suite nightly profile remains the next GCC qualification increment.
+
 ## Qt 6.8.4
 
 The official archive identifies `qt-everywhere-opensource-src-6.8.4.tar.xz` as 994,798,840 bytes with SHA256 `1da37a32a583e7856d6fc13357c8ff6ad3ef7b877b8d276713b85026426d5246`. Its 108-byte SHA256 sidecar hashes to `f208721e3239cba3d21312295e7d991f378e83e79e51e55fe2ffb6c05726bb0a`. [Qt 6.8.4 source index](https://download.qt.io/archive/qt/6.8/6.8.4/single/)

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/gcc-testsuite-baseline.schema.json",
+  "title": "Crossforge GCC testsuite unexpected-result baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "profile",
+    "plan_sha256",
+    "target",
+    "runtime_tier",
+    "unexpected"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/gcc-testsuite-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "gcc-testsuite-baseline"
+    },
+    "profile": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "plan_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "target": {
+      "enum": [
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ]
+    },
+    "runtime_tier": {
+      "enum": [
+        "host-direct",
+        "locked-sysroot",
+        "clean-rocky"
+      ]
+    },
+    "unexpected": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/result"
+      }
+    }
+  },
+  "$defs": {
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suite",
+        "status",
+        "test",
+        "count"
+      ],
+      "properties": {
+        "suite": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9+._-]*$"
+        },
+        "status": {
+          "enum": [
+            "ERROR",
+            "FAIL",
+            "KFAIL",
+            "KPASS",
+            "UNRESOLVED",
+            "WARNING",
+            "XPASS"
+          ]
+        },
+        "test": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\r\\n]+$"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

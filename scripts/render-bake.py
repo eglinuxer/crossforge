@@ -1142,6 +1142,8 @@ def render(repository):
         "qemu-aarch64-validated",
         "runtime-smoke-aarch64",
         "toolchain-aarch64-dev",
+        "gcc-testsuite-aarch64-smoke",
+        "gcc-testsuite-smoke-evidence",
     ):
         targets[name] = {
             "contexts": {"crossforge_qemu": "docker-image://%s" % qemu_image}

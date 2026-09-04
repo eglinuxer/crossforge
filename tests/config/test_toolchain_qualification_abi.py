@@ -163,7 +163,7 @@ class ToolchainQualificationAbiTests(unittest.TestCase):
                 dockerfile,
             )
         self.assertEqual(
-            dockerfile.count("--qualification-component-sha256"), 2
+            dockerfile.count("--abi-baseline /src/abi/el8/"), 2
         )
         self.assertEqual(
             dockerfile.count(

@@ -1,0 +1,5 @@
+load_generic_config "unix"
+process_multilib_options ""
+set_board_info bmk,use_alarm 1
+unset_board_info isremote
+set_board_info isremote 0

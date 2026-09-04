@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/gcc-testsuite-plan.schema.json",
+  "title": "Crossforge GCC testsuite plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "profile",
+    "gcc_version",
+    "unexpected_statuses",
+    "site",
+    "suites",
+    "targets"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/gcc-testsuite-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "gcc-testsuite-plan"
+    },
+    "profile": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "gcc_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "unexpected_statuses": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "ERROR",
+          "FAIL",
+          "KFAIL",
+          "KPASS",
+          "UNRESOLVED",
+          "WARNING",
+          "XPASS"
+        ]
+      }
+    },
+    "site": {
+      "$ref": "#/$defs/file_identity"
+    },
+    "suites": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/suite"
+      }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/target"
+      }
+    }
+  },
+  "$defs": {
+    "file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^tests/gcc/[A-Za-z0-9/_.-]+\\.exp$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "suite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "make_target",
+        "sum_file",
+        "runtestflags"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9+._-]*$"
+        },
+        "make_target": {
+          "enum": [
+            "check-gcc",
+            "check-g++",
+            "check-target-libgcc",
+            "check-target-libstdc++-v3",
+            "check-target-libgomp"
+          ]
+        },
+        "sum_file": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9+_.-]+(?:/[A-Za-z0-9+_.-]+)+\\.sum$"
+        },
+        "runtestflags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^\\r\\n]+$"
+          }
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arch",
+        "triple",
+        "runtime_tiers"
+      ],
+      "properties": {
+        "arch": {
+          "enum": [
+            "x86_64",
+            "aarch64"
+          ]
+        },
+        "triple": {
+          "enum": [
+            "x86_64-unknown-linux-gnu",
+            "aarch64-unknown-linux-gnu"
+          ]
+        },
+        "runtime_tiers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/runtime_tier"
+          }
+        }
+      }
+    },
+    "runtime_tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "board"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "host-direct",
+            "locked-sysroot",
+            "clean-rocky"
+          ]
+        },
+        "board": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "file",
+            "sha256"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^crossforge-[a-z0-9_-]+$"
+            },
+            "file": {
+              "type": "string",
+              "pattern": "^tests/gcc/boards/crossforge-[a-z0-9_-]+\\.exp$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

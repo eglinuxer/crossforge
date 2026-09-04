@@ -969,6 +969,140 @@ RUN --network=none /work/qualification/x86_64/hello \
     && /work/qualification/x86_64/catch \
     && printf '%s\n' 'passed' > /work/qualification/clean-rocky.ok
 
+# The DejaGNU smoke profile runs the GCC source tests against the final
+# installed hybrid compiler, never build-tree xgcc. Test sources and host tools
+# remain confined to these qualification-only stages.
+FROM host-gcc-test-locked AS gcc-testsuite-x86_64-smoke
+ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
+COPY --from=gcc-x86_64-built /work/prepared/gcc/ /work/prepared/gcc/
+COPY --from=gcc-x86_64-built /work/build/gcc-x86_64/ /work/build/gcc-x86_64/
+COPY --from=sysroot-x86_64 \
+  /opt/crossforge/sysroots/el8/x86_64/ \
+  /opt/crossforge/sysroots/el8/x86_64/
+COPY --from=binutils-x86_64 /work/binutils-stage/ /
+COPY --from=gcc-x86_64 /work/gcc-stage/ /
+COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
+  /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
+COPY config/release.json /work/config/release.json
+COPY config/gcc-testsuite-smoke.json /work/config/gcc-testsuite-smoke.json
+COPY config/schemas/release.schema.json /work/config/schemas/release.schema.json
+COPY config/schemas/gcc-testsuite-plan.schema.json \
+  /work/config/schemas/gcc-testsuite-plan.schema.json
+COPY config/schemas/gcc-testsuite-baseline.schema.json \
+  /work/config/schemas/gcc-testsuite-baseline.schema.json
+COPY tests/gcc/ /work/tests/gcc/
+COPY scripts/validate-release.py scripts/release_component.py \
+  scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/run-gcc-testsuite.py \
+      --release /work/config/release.json \
+      --build /work/build/gcc-x86_64/gcc-build \
+      --source /work/prepared/gcc \
+      --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/x86_64 \
+      --target x86_64-unknown-linux-gnu \
+      --runtime-tier host-direct \
+      --site /work/tests/gcc/site.exp \
+      --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json \
+      --qualification-component \
+        /work/config/generated/components/toolchain/gcc-testsuite-qualification.json \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256" \
+      --output /work/qualification/gcc-testsuite/x86_64-host-direct \
+      --report \
+        /work/qualification/gcc-testsuite/x86_64-host-direct.json
+
+FROM host-gcc-test-locked AS gcc-testsuite-aarch64-smoke
+ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
+COPY --from=gcc-aarch64-built /work/prepared/gcc/ /work/prepared/gcc/
+COPY --from=gcc-aarch64-built /work/build/gcc-aarch64/ /work/build/gcc-aarch64/
+COPY --from=sysroot-aarch64 \
+  /opt/crossforge/sysroots/el8/aarch64/ \
+  /opt/crossforge/sysroots/el8/aarch64/
+COPY --from=binutils-aarch64 /work/binutils-stage/ /
+COPY --from=gcc-aarch64 /work/gcc-stage/ /
+COPY --from=rocky-runtime-aarch64-source / /runtime-root/
+COPY --from=qemu-aarch64-validated \
+  /usr/local/libexec/crossforge/qemu-aarch64 \
+  /usr/local/libexec/crossforge/qemu-aarch64
+COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
+  /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
+COPY config/release.json /work/config/release.json
+COPY config/gcc-testsuite-smoke.json /work/config/gcc-testsuite-smoke.json
+COPY config/schemas/release.schema.json /work/config/schemas/release.schema.json
+COPY config/schemas/gcc-testsuite-plan.schema.json \
+  /work/config/schemas/gcc-testsuite-plan.schema.json
+COPY config/schemas/gcc-testsuite-baseline.schema.json \
+  /work/config/schemas/gcc-testsuite-baseline.schema.json
+COPY tests/gcc/ /work/tests/gcc/
+COPY scripts/validate-release.py scripts/release_component.py \
+  scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/run-gcc-testsuite.py \
+      --release /work/config/release.json \
+      --build /work/build/gcc-aarch64/gcc-build \
+      --source /work/prepared/gcc \
+      --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/aarch64 \
+      --target aarch64-unknown-linux-gnu \
+      --runtime-tier locked-sysroot \
+      --site /work/tests/gcc/site.exp \
+      --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json \
+      --qualification-component \
+        /work/config/generated/components/toolchain/gcc-testsuite-qualification.json \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256" \
+      --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
+      --runtime-root /opt/crossforge/sysroots/el8/aarch64 \
+      --output /work/qualification/gcc-testsuite/aarch64-locked-sysroot \
+      --report \
+        /work/qualification/gcc-testsuite/aarch64-locked-sysroot.json
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/run-gcc-testsuite.py \
+      --release /work/config/release.json \
+      --build /work/build/gcc-aarch64/gcc-build \
+      --source /work/prepared/gcc \
+      --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/aarch64 \
+      --target aarch64-unknown-linux-gnu \
+      --runtime-tier clean-rocky \
+      --site /work/tests/gcc/site.exp \
+      --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json \
+      --qualification-component \
+        /work/config/generated/components/toolchain/gcc-testsuite-qualification.json \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256" \
+      --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
+      --runtime-root /runtime-root \
+      --output /work/qualification/gcc-testsuite/aarch64-clean-rocky \
+      --report /work/qualification/gcc-testsuite/aarch64-clean-rocky.json
+
+FROM scratch AS gcc-testsuite-smoke-evidence
+COPY --from=gcc-testsuite-x86_64-smoke \
+  /work/qualification/gcc-testsuite/x86_64-host-direct.json \
+  /qualification/gcc-testsuite/x86_64-host-direct.json
+COPY --from=gcc-testsuite-x86_64-smoke \
+  /work/qualification/gcc-testsuite/x86_64-host-direct/gcc.execute.sum \
+  /work/qualification/gcc-testsuite/x86_64-host-direct/gcc.execute.log \
+  /work/qualification/gcc-testsuite/x86_64-host-direct/gcc.execute.make.log \
+  /qualification/gcc-testsuite/x86_64-host-direct/
+COPY --from=gcc-testsuite-aarch64-smoke \
+  /work/qualification/gcc-testsuite/aarch64-locked-sysroot.json \
+  /qualification/gcc-testsuite/aarch64-locked-sysroot.json
+COPY --from=gcc-testsuite-aarch64-smoke \
+  /work/qualification/gcc-testsuite/aarch64-locked-sysroot/gcc.execute.sum \
+  /work/qualification/gcc-testsuite/aarch64-locked-sysroot/gcc.execute.log \
+  /work/qualification/gcc-testsuite/aarch64-locked-sysroot/gcc.execute.make.log \
+  /qualification/gcc-testsuite/aarch64-locked-sysroot/
+COPY --from=gcc-testsuite-aarch64-smoke \
+  /work/qualification/gcc-testsuite/aarch64-clean-rocky.json \
+  /qualification/gcc-testsuite/aarch64-clean-rocky.json
+COPY --from=gcc-testsuite-aarch64-smoke \
+  /work/qualification/gcc-testsuite/aarch64-clean-rocky/gcc.execute.sum \
+  /work/qualification/gcc-testsuite/aarch64-clean-rocky/gcc.execute.log \
+  /work/qualification/gcc-testsuite/aarch64-clean-rocky/gcc.execute.make.log \
+  /qualification/gcc-testsuite/aarch64-clean-rocky/
+
 # Inspectable dev toolchain that depends on both the exact-sysroot qualification
 # and the clean-Rocky portability gate. It remains cache-only and unpublished.
 FROM host-build-common-locked AS toolchain-x86_64-dev
