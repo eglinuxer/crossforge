@@ -37,6 +37,14 @@
       "value": "internal-locked-nfpm"
     },
     {
+      "path": "/@implementation/launcher/package_commands/0",
+      "value": "plan"
+    },
+    {
+      "path": "/@implementation/launcher/package_commands/1",
+      "value": "build"
+    },
+    {
       "path": "/@implementation/launcher/python_minors/0",
       "value": "3.9"
     },

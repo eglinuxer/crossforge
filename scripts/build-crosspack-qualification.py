@@ -253,6 +253,7 @@ def build(
                         [
                             crossforge_cli,
                             "package",
+                            "build",
                             "--config",
                             config_path,
                             "--staging-root",

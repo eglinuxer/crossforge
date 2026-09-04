@@ -332,7 +332,8 @@ crossforge info
 crossforge env
 crossforge shell
 crossforge run
-crossforge package
+crossforge package plan
+crossforge package build
 ```
 
 `run`/`shell` 显式选择 `--target x86_64|aarch64`，并可选择 `--python 3.14`、`--vcpkg` 与 `--linkage static|dynamic`。它只在子进程中设置 compiler、sysroot、CMake、Meson、pkg-config、Python 和 vcpkg 环境，不修改全局环境，也不根据宿主或项目内容猜测 target。未选择 target 时使用原生 GTS15 host 环境。
@@ -343,9 +344,10 @@ crossforge package
 `CROSSFORGE_CACHE_ROOT`，不得写入 root-owned `/opt/crossforge/vcpkg/root`；target
 选择清除 inherited `PKG_CONFIG_PATH`，Python 选择清除 inherited `PYTHONPATH`。
 
-该入口现已安装到 packaging SDK 的 `/usr/local/bin/crossforge`。`package` 只接收
-manifest、staging root 与输出目录，nFPM 路径、版本和摘要从镜像内固定 release 自动
-取得；用户不能替换 backend。`run`/`shell` 复制当前环境再覆盖显式选择，提供完整
+该入口现已安装到 packaging SDK 的 `/usr/local/bin/crossforge`。`package plan` 在不
+调用 nFPM 的情况下生成完整 canonical plan，`package build` 才消费同一 manifest、
+staging root 与输出目录执行编码；nFPM 路径、版本和摘要从镜像内固定 release 自动
+取得，用户不能替换 backend。`run`/`shell` 复制当前环境再覆盖显式选择，提供完整
 compiler/binutils、sysroot、pkg-config、CMake toolchain 与 `MESON_CROSS_FILE`。启用
 vcpkg 时才设置明确 triplet 并把 CMake 切到 vcpkg toolchain；`--python` 必须同时
 选择 target，并隔离 build Python 与唯一 target sysconfigdata。Phase 15 的

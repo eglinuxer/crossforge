@@ -145,6 +145,7 @@ class CrosspackComponentTests(unittest.TestCase):
         self.assertEqual(
             launcher["commands"], ["env", "info", "package", "run", "shell"]
         )
+        self.assertEqual(launcher["package_commands"], ["plan", "build"])
         self.assertEqual(
             launcher["target_selection"], "explicit-no-project-guessing"
         )

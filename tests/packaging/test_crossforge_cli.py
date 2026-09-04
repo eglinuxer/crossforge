@@ -220,6 +220,7 @@ class CrossforgeCliTests(unittest.TestCase):
         arguments = parser.parse_args(
             [
                 "package",
+                "build",
                 "--config",
                 str(REPOSITORY / "tests/packaging/fixtures/basic/crosspack.json"),
                 "--staging-root",
@@ -246,6 +247,36 @@ class CrossforgeCliTests(unittest.TestCase):
             Path("/opt/crossforge/sysroots/el8/x86_64"),
             Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-objcopy"),
         )
+
+    def test_package_plan_does_not_invoke_nfpm(self):
+        arguments = cli.parser().parse_args(
+            [
+                "package",
+                "plan",
+                "--config",
+                str(REPOSITORY / "tests/packaging/fixtures/basic/crosspack.json"),
+                "--staging-root",
+                "/staging",
+                "--output",
+                "/output/plan.json",
+            ]
+        )
+        planned = {"schema_version": 1, "kind": "test-plan"}
+        with mock.patch.object(
+            cli.crosspack, "plan", return_value=planned
+        ) as plan, mock.patch.object(cli.crosspack, "write_json") as write, mock.patch.object(
+            cli.crosspack, "package"
+        ) as package:
+            self.assertEqual(cli.package_command(self.release, arguments), 0)
+        plan.assert_called_once_with(
+            arguments.config,
+            arguments.staging_root,
+            Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-readelf"),
+            Path("/opt/crossforge/sysroots/el8/x86_64"),
+            Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-objcopy"),
+        )
+        write.assert_called_once_with(planned, arguments.output)
+        package.assert_not_called()
 
     def test_env_json_is_versioned_and_never_discloses_inherited_secrets(self):
         arguments = cli.parser().parse_args(

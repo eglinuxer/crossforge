@@ -73,6 +73,7 @@ CROSSFORGE_LAUNCHER_POLICY = {
     "python_minors": ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"],
     "vcpkg_linkage": ["static", "dynamic"],
     "package_backend": "internal-locked-nfpm",
+    "package_commands": ["plan", "build"],
 }
 COMPLETE_SDK_QUALIFICATION_POLICY = {
     "schema_version": 1,

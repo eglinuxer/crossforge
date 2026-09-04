@@ -549,7 +549,8 @@ $ crossforge info --json
 $ crossforge env --target aarch64 --python 3.14 --vcpkg --json
 $ crossforge run --target aarch64 --vcpkg --linkage dynamic -- cmake --build build
 $ crossforge shell --target x86_64
-$ crossforge package --config crosspack.json --staging-root stage --output-directory dist
+$ crossforge package plan --config crosspack.json --staging-root stage --output plan.json
+$ crossforge package build --config crosspack.json --staging-root stage --output-directory dist
 ```
 
 `env` prints only Crossforge-managed variables and never dumps arbitrary

@@ -199,33 +199,59 @@ def shell_command(release, arguments):
     os.execvpe(shell, [shell], selected_environment(release, arguments))
 
 
-def package_command(release, arguments):
-    config = crosspack.load_json(arguments.config)
-    crosspack.validate_config(config)
+def package_tools(release, config):
     target = config["target"]
     triple = TARGETS[target]["triple"]
     nfpm = release["nfpm"]
-    nfpm_path = (
-        Path("/opt/crossforge/host-tools/nfpm")
-        / nfpm["version"]
-        / "bin/nfpm"
-    )
     tool_root = Path("/opt/crossforge/targets") / triple / "bin"
-    readelf = tool_root / (triple + "-readelf")
-    objcopy = tool_root / (triple + "-objcopy")
-    sysroot = Path("/opt/crossforge/sysroots/el8") / target
+    return {
+        "target": target,
+        "nfpm": (
+            Path("/opt/crossforge/host-tools/nfpm")
+            / nfpm["version"]
+            / "bin/nfpm"
+        ),
+        "nfpm_version": nfpm["version"],
+        "nfpm_sha256": nfpm["binary"]["extracted_sha256"],
+        "readelf": tool_root / (triple + "-readelf"),
+        "objcopy": tool_root / (triple + "-objcopy"),
+        "sysroot": Path("/opt/crossforge/sysroots/el8") / target,
+    }
+
+
+def package_command(release, arguments):
+    require(
+        arguments.package_command in ("plan", "build"),
+        "a package command is required",
+    )
+    config = crosspack.load_json(arguments.config)
+    crosspack.validate_config(config)
+    tools = package_tools(release, config)
+    if arguments.package_command == "plan":
+        plan = crosspack.plan(
+            arguments.config,
+            arguments.staging_root,
+            tools["readelf"],
+            tools["sysroot"],
+            tools["objcopy"],
+        )
+        crosspack.write_json(plan, arguments.output)
+        return 0
     crosspack.package(
         arguments.config,
         arguments.staging_root,
         arguments.output_directory,
-        nfpm_path,
-        nfpm["version"],
-        nfpm["binary"]["extracted_sha256"],
-        readelf,
-        sysroot,
-        objcopy,
+        tools["nfpm"],
+        tools["nfpm_version"],
+        tools["nfpm_sha256"],
+        tools["readelf"],
+        tools["sysroot"],
+        tools["objcopy"],
     )
-    print("packaged %s staged tree: %s" % (target, arguments.output_directory))
+    print(
+        "packaged %s staged tree: %s"
+        % (tools["target"], arguments.output_directory)
+    )
     return 0
 
 
@@ -246,9 +272,15 @@ def parser():
     environment.add_argument("--format", choices=("shell", "json"), default="shell")
     environment.add_argument("--json", action="store_true")
     package = subparsers.add_parser("package", allow_abbrev=False)
-    package.add_argument("--config", type=Path, required=True)
-    package.add_argument("--staging-root", type=Path, required=True)
-    package.add_argument("--output-directory", type=Path, required=True)
+    package_subparsers = package.add_subparsers(dest="package_command")
+    package_plan = package_subparsers.add_parser("plan", allow_abbrev=False)
+    package_plan.add_argument("--config", type=Path, required=True)
+    package_plan.add_argument("--staging-root", type=Path, required=True)
+    package_plan.add_argument("--output", default="-")
+    package_build = package_subparsers.add_parser("build", allow_abbrev=False)
+    package_build.add_argument("--config", type=Path, required=True)
+    package_build.add_argument("--staging-root", type=Path, required=True)
+    package_build.add_argument("--output-directory", type=Path, required=True)
     return result
 
 

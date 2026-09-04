@@ -7,11 +7,11 @@
       "component": "implementation/complete-sdk-qualification"
     },
     {
-      "canonical_sha256": "4ca291acf98f54f287a2d52fe7a24d3d92c2485405a9caa011f98405f86345e3",
+      "canonical_sha256": "4e28532a5a0d0942c1657f73c106aafd25ed1a56d2eadfcf6347d518288af564",
       "component": "implementation/launcher"
     },
     {
-      "canonical_sha256": "699defed056edc0f1291cee12fb3206ef5e244c532f3f481ea625f2b7c2f6eba",
+      "canonical_sha256": "25e71b6450184f8ba32fb78e6e768645fabb37f09e5b281086053262b60e05df",
       "component": "packaging/qualification"
     },
     {
