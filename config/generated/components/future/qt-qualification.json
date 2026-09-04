@@ -5,13 +5,17 @@
     {
       "canonical_sha256": "540c01aacded48198436157ab351090990ed06772f82f203563c32422b37a502",
       "component": "sources/qt"
+    },
+    {
+      "canonical_sha256": "68084bc48751b6ea2f1d1778411231852ff22797d58e72b259f353c67ab85680",
+      "component": "sources/xcb-util-cursor"
     }
   ],
   "kind": "crossforge-release-component",
   "materials": [
     {
       "path": "/qt/qualification/plan/canonical_sha256",
-      "value": "0cbc2e57f6c312bcd9be47685c2497a7d2d2d1ec5f710a364078d8ec508289ec"
+      "value": "83e19dfcd08a637b4f2bb4b4ff067966bb2a89571a5cf5c8ad1860a442b2bb1e"
     },
     {
       "path": "/qt/qualification/plan/file",

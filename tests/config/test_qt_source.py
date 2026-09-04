@@ -35,8 +35,32 @@ class QtSourceGraphTests(unittest.TestCase):
         )
         self.assertEqual(
             self.bake["group"]["qt-source-qualified"]["targets"],
-            ["qt-source"],
+            ["qt-source", "xcb-util-cursor-source"],
         )
+
+    def test_xcb_cursor_source_is_signed_offline_and_cache_only(self):
+        target = self.bake["target"]["xcb-util-cursor-source"]
+        self.assertEqual(target["inherits"], ["_qt_common"])
+        self.assertEqual(target["target"], "xcb-util-cursor-source-export")
+        self.assertEqual(target["output"], ["type=cacheonly"])
+        self.assertEqual(target["args"]["XCB_UTIL_CURSOR_VERSION"], "0.1.6")
+        self.assertRegex(
+            target["args"][
+                "CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256"
+            ],
+            r"^[0-9a-f]{64}$",
+        )
+        fetch = self.dockerfile.split(" AS xcb-util-cursor-fetch", 1)[1].split(
+            "\nFROM ", 1
+        )[0]
+        source = self.dockerfile.split(" AS xcb-util-cursor-source", 1)[1].split(
+            "\nFROM ", 1
+        )[0]
+        self.assertIn("curl --fail --location --retry 3", fetch)
+        self.assertIn("RUN --network=none", source)
+        self.assertIn("prepare-xcb-util-cursor-source.py", source)
+        self.assertIn("XCB-UTIL-CURSOR-RELEASE-KEY.asc", source)
+        self.assertIn("FROM scratch AS xcb-util-cursor-source-export", self.dockerfile)
 
     def test_fetch_is_networked_but_all_source_acceptance_is_offline(self):
         fetch = self.dockerfile.split(" AS qt-fetch", 1)[1].split(
@@ -72,6 +96,12 @@ class QtSourceGraphTests(unittest.TestCase):
         candidate = self.bake["target"]["sdk-candidate"]
         self.assertFalse(
             any("qt-source" in value for value in candidate["contexts"].values())
+        )
+        self.assertFalse(
+            any(
+                "xcb-util-cursor" in value
+                for value in candidate["contexts"].values()
+            )
         )
 
 

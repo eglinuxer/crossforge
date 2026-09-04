@@ -22,6 +22,13 @@ class QtQualificationPlanTests(unittest.TestCase):
         self.assertEqual(plan["status"], "planned")
         self.assertEqual(plan["modules"], VALIDATOR["MODULES"])
         self.assertEqual(plan["host"], VALIDATOR["HOST"])
+        self.assertEqual(
+            [
+                {key: record[key] for key in ("name", "component", "usage")}
+                for record in plan["source_dependencies"]
+            ],
+            VALIDATOR["SOURCE_DEPENDENCIES"],
+        )
         self.assertEqual(plan["targets"], VALIDATOR["TARGETS"])
         self.assertEqual(plan["required_features"], VALIDATOR["FEATURES"])
         self.assertEqual(
@@ -34,6 +41,10 @@ class QtQualificationPlanTests(unittest.TestCase):
         )
         self.assertEqual(
             self.contract["qualification_component"]["scope"], "future"
+        )
+        self.assertEqual(
+            [record["component"] for record in self.contract["source_dependencies"]],
+            ["sources/xcb-util-cursor"],
         )
 
     def test_locked_qualification_cannot_be_claimed_with_pending_inputs(self):

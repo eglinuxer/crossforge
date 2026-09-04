@@ -1072,10 +1072,16 @@ def render_python_graph(config, targets, component_arguments):
 
 def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
     component_argument = component_argument_name("sources/qt")
+    xcb_cursor_component_argument = component_argument_name(
+        "sources/xcb-util-cursor"
+    )
     try:
         component_sha256 = component_arguments[component_argument]
+        xcb_cursor_component_sha256 = component_arguments[
+            xcb_cursor_component_argument
+        ]
     except KeyError as error:
-        raise ValueError("missing Qt source component digest") from error
+        raise ValueError("missing Qt source dependency component digest") from error
     targets["qt-source"] = {
         "inherits": ["_qt_common"],
         "target": "qt-source-export",
@@ -1089,7 +1095,25 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
         },
         "output": ["type=cacheonly"],
     }
-    return {"qt-source-qualified": {"targets": ["qt-source"]}}
+    xcb_cursor = config["qt"]["dependencies"]["xcb_util_cursor"]
+    targets["xcb-util-cursor-source"] = {
+        "inherits": ["_qt_common"],
+        "target": "xcb-util-cursor-source-export",
+        "args": {
+            "XCB_UTIL_CURSOR_VERSION": xcb_cursor["version"],
+            "XCB_UTIL_CURSOR_SOURCE_URL": xcb_cursor["source"]["url"],
+            xcb_cursor_component_argument: xcb_cursor_component_sha256,
+        },
+        "contexts": {
+            "crossforge_rocky_amd64": "docker-image://%s" % rocky_amd64_image,
+        },
+        "output": ["type=cacheonly"],
+    }
+    return {
+        "qt-source-qualified": {
+            "targets": ["qt-source", "xcb-util-cursor-source"]
+        }
+    }
 
 
 def render(repository):

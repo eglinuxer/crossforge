@@ -820,6 +820,7 @@
       "required": [
         "version",
         "source",
+        "dependencies",
         "qualification"
       ],
       "properties": {
@@ -829,8 +830,195 @@
         "source": {
           "$ref": "#/$defs/qt_source"
         },
+        "dependencies": {
+          "$ref": "#/$defs/qt_dependencies"
+        },
         "qualification": {
           "$ref": "#/$defs/qt_qualification"
+        }
+      }
+    },
+    "qt_dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "xcb_util_cursor"
+      ],
+      "properties": {
+        "xcb_util_cursor": {
+          "$ref": "#/$defs/xcb_util_cursor"
+        }
+      }
+    },
+    "xcb_util_cursor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "source",
+        "license",
+        "layout"
+      ],
+      "properties": {
+        "version": {
+          "const": "0.1.6"
+        },
+        "source": {
+          "$ref": "#/$defs/xcb_util_cursor_source"
+        },
+        "license": {
+          "$ref": "#/$defs/xcb_util_cursor_license"
+        },
+        "layout": {
+          "$ref": "#/$defs/xcb_util_cursor_layout"
+        }
+      }
+    },
+    "xcb_util_cursor_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256",
+        "size",
+        "signature"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "url": {
+          "const": "https://xorg.freedesktop.org/archive/individual/lib/xcb-util-cursor-0.1.6.tar.xz"
+        },
+        "sha256": {
+          "const": "fdeb8bd127873519be5cc70dcd0d3b5d33b667877200f9925a59fdcad8f7a933"
+        },
+        "size": {
+          "const": 273084
+        },
+        "signature": {
+          "$ref": "#/$defs/xcb_util_cursor_signature"
+        }
+      }
+    },
+    "xcb_util_cursor_signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sha256",
+        "size",
+        "evidence",
+        "key"
+      ],
+      "properties": {
+        "url": {
+          "const": "https://xorg.freedesktop.org/archive/individual/lib/xcb-util-cursor-0.1.6.tar.xz.sig"
+        },
+        "sha256": {
+          "const": "6e1fd66c2182647c988f5c4b3a71615c7a62e1d6aef02928f807cdca39c2677a"
+        },
+        "size": {
+          "const": 566
+        },
+        "evidence": {
+          "const": "evidence/gpg/xcb-util-cursor-0.1.6.tar.xz.sig.b64"
+        },
+        "key": {
+          "$ref": "#/$defs/xcb_util_cursor_key"
+        }
+      }
+    },
+    "xcb_util_cursor_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "retrieval_url",
+        "sha256",
+        "fingerprint"
+      ],
+      "properties": {
+        "file": {
+          "const": "keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc"
+        },
+        "retrieval_url": {
+          "const": "https://gitlab.archlinux.org/archlinux/packaging/packages/xcb-util-cursor/-/raw/main/keys/pgp/3AB285232C46AE43D8E192F4DAB0F78EA6E7E2D2.asc"
+        },
+        "sha256": {
+          "const": "5ec5e03a686fc6abfd6c0d6993e345692fb7be41d79ab257ad2bc7b2d2c817c7"
+        },
+        "fingerprint": {
+          "const": "3ab285232c46ae43d8e192f4dab0f78ea6e7e2d2"
+        }
+      }
+    },
+    "xcb_util_cursor_license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "expression": {
+          "const": "MIT"
+        },
+        "file": {
+          "const": "COPYING"
+        },
+        "sha256": {
+          "const": "0dde91ae1d443105dc9e13cbaed6674c36683b7095836ad9ddfce26be270aad5"
+        }
+      }
+    },
+    "xcb_util_cursor_layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "top_directory",
+        "member_count",
+        "files"
+      ],
+      "properties": {
+        "top_directory": {
+          "const": "xcb-util-cursor-0.1.6"
+        },
+        "member_count": {
+          "const": 40
+        },
+        "files": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/xcb_util_cursor_file_identity"
+          }
+        }
+      }
+    },
+    "xcb_util_cursor_file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "file": {
+          "enum": [
+            "COPYING",
+            "configure",
+            "cursor/Makefile.in",
+            "cursor/xcb-cursor.pc.in"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
         }
       }
     },

@@ -1,0 +1,114 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "sources/xcb-util-cursor",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/layout/files/0/file",
+      "value": "COPYING"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/layout/files/0/sha256",
+      "value": "0dde91ae1d443105dc9e13cbaed6674c36683b7095836ad9ddfce26be270aad5"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/layout/files/1/file",
+      "value": "configure"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/layout/files/1/sha256",
+      "value": "c894e83b88d111cba0e59afccf380d481120a484d572bbe7f56f4278507e088b"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/layout/files/2/file",
+      "value": "cursor/Makefile.in"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/layout/files/2/sha256",
+      "value": "7a656bb23b4177e833a8990d9d140abba02283240b394a1f13c4baf881f279c7"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/layout/files/3/file",
+      "value": "cursor/xcb-cursor.pc.in"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/layout/files/3/sha256",
+      "value": "8962f7ce570b2de7b3bf4015172fbd7152113cb073c4a1b5e13b85991431a9f7"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/layout/member_count",
+      "value": 40
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/layout/top_directory",
+      "value": "xcb-util-cursor-0.1.6"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/license/expression",
+      "value": "MIT"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/license/file",
+      "value": "COPYING"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/license/sha256",
+      "value": "0dde91ae1d443105dc9e13cbaed6674c36683b7095836ad9ddfce26be270aad5"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/sha256",
+      "value": "fdeb8bd127873519be5cc70dcd0d3b5d33b667877200f9925a59fdcad8f7a933"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/signature/evidence",
+      "value": "evidence/gpg/xcb-util-cursor-0.1.6.tar.xz.sig.b64"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/signature/key/file",
+      "value": "keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/signature/key/fingerprint",
+      "value": "3ab285232c46ae43d8e192f4dab0f78ea6e7e2d2"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/signature/key/retrieval_url",
+      "value": "https://gitlab.archlinux.org/archlinux/packaging/packages/xcb-util-cursor/-/raw/main/keys/pgp/3AB285232C46AE43D8E192F4DAB0F78EA6E7E2D2.asc"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/signature/key/sha256",
+      "value": "5ec5e03a686fc6abfd6c0d6993e345692fb7be41d79ab257ad2bc7b2d2c817c7"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/signature/sha256",
+      "value": "6e1fd66c2182647c988f5c4b3a71615c7a62e1d6aef02928f807cdca39c2677a"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/signature/size",
+      "value": 566
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/signature/url",
+      "value": "https://xorg.freedesktop.org/archive/individual/lib/xcb-util-cursor-0.1.6.tar.xz.sig"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/size",
+      "value": 273084
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/source/url",
+      "value": "https://xorg.freedesktop.org/archive/individual/lib/xcb-util-cursor-0.1.6.tar.xz"
+    },
+    {
+      "path": "/qt/dependencies/xcb_util_cursor/version",
+      "value": "0.1.6"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "build"
+}

@@ -391,6 +391,8 @@ Qt source boundary 同时固定 994,798,840 字节归档、官方 108 字节 SHA
 
 `config/qt-qualification.json` 是后续构建的严格 planned contract：固定八模块依赖顺序、same-version host Qt、CMake/Ninja 版本、WebEngine 的 Node/Python/html5lib/Bison/Flex/GPerf/pkg-config 与 Linux support checks、两套 target/runtime 及禁止 target execution 的 cross 边界。Rocky 8.10 host 固定 `nodejs:20` 与 `python38:3.8` module streams；由于仓库只提供 Python 3.6 路径下的纯 Python `python3-html5lib`，资格阶段必须显式设置 `/usr/lib/python3.6/site-packages`，并用 Python 3.8 实际导入 html5lib、six、webencodings，不能依赖偶然的全局 `PYTHONPATH`。`host-qt-build`、`qt-target-x86_64`、`qt-target-aarch64` 三项 lock 未生成时必须保持 `pending`/null，并只投影为 `future/qt-qualification`；此时 `--require-locked` 必须失败，且不得影响 `sources/qt`、SDK 或 candidate identity。
 
+Rocky 8.10 的 BaseOS/AppStream/PowerTools 不提供 Qt xcb platform plugin 所需的 `xcb-util-cursor-devel`，因此不得通过未锁定的 EPEL 暗中补齐。Crossforge 把上游 `xcb-util-cursor 0.1.6` 建模为独立的 `sources/xcb-util-cursor`：源码与 detached signature 固定到 X.Org 官方归档，发布公钥从 Arch Linux 官方打包仓库的全指纹路径独立取得，并在离线 source acceptance 中核对 archive/signature/key digest、主密钥完整指纹、GPG `VALIDSIG`、唯一顶层、40 个 member、MIT `COPYING` 与构建入口。该组件只依赖于未来 Qt qualification，host 与两个 target 后续都从同一已验签源码构建；在 Qt 真正资格化前，它同样不能进入 SDK 或 candidate ancestry。
+
 ## 12. 发布、供应链与许可边界
 
 Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单一供应链。所有源码、RPM、工具和基础镜像均固定 hash 或 digest；禁止 `curl | sh`。BuildKit cache 只用于加速，不构成发布身份或测试证据。

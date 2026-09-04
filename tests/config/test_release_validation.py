@@ -63,6 +63,12 @@ class ReleaseValidationTests(unittest.TestCase):
             result["qt_source_sha256"],
             self.config["qt"]["source"]["sha256"],
         )
+        self.assertEqual(
+            result["xcb_util_cursor_source_sha256"],
+            self.config["qt"]["dependencies"]["xcb_util_cursor"]["source"][
+                "sha256"
+            ],
+        )
 
     def test_supply_chain_identity_tampering_is_rejected(self):
         mutations = (
@@ -89,6 +95,18 @@ class ReleaseValidationTests(unittest.TestCase):
             (("python", "versions", 2, "patches", 0, "sha256"), "0" * 64),
             (("python", "versions", 3, "patches", 0, "sha256"), "0" * 64),
             (("qt", "source", "checksum", "sha256"), "0" * 64),
+            (
+                (
+                    "qt",
+                    "dependencies",
+                    "xcb_util_cursor",
+                    "source",
+                    "signature",
+                    "key",
+                    "fingerprint",
+                ),
+                "0" * 40,
+            ),
         )
         for path, value in mutations:
             with self.subTest(path=path):

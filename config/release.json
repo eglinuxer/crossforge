@@ -286,11 +286,61 @@
         ]
       }
     },
+    "dependencies": {
+      "xcb_util_cursor": {
+        "version": "0.1.6",
+        "source": {
+          "status": "locked",
+          "url": "https://xorg.freedesktop.org/archive/individual/lib/xcb-util-cursor-0.1.6.tar.xz",
+          "sha256": "fdeb8bd127873519be5cc70dcd0d3b5d33b667877200f9925a59fdcad8f7a933",
+          "size": 273084,
+          "signature": {
+            "url": "https://xorg.freedesktop.org/archive/individual/lib/xcb-util-cursor-0.1.6.tar.xz.sig",
+            "sha256": "6e1fd66c2182647c988f5c4b3a71615c7a62e1d6aef02928f807cdca39c2677a",
+            "size": 566,
+            "evidence": "evidence/gpg/xcb-util-cursor-0.1.6.tar.xz.sig.b64",
+            "key": {
+              "file": "keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc",
+              "retrieval_url": "https://gitlab.archlinux.org/archlinux/packaging/packages/xcb-util-cursor/-/raw/main/keys/pgp/3AB285232C46AE43D8E192F4DAB0F78EA6E7E2D2.asc",
+              "sha256": "5ec5e03a686fc6abfd6c0d6993e345692fb7be41d79ab257ad2bc7b2d2c817c7",
+              "fingerprint": "3ab285232c46ae43d8e192f4dab0f78ea6e7e2d2"
+            }
+          }
+        },
+        "license": {
+          "expression": "MIT",
+          "file": "COPYING",
+          "sha256": "0dde91ae1d443105dc9e13cbaed6674c36683b7095836ad9ddfce26be270aad5"
+        },
+        "layout": {
+          "top_directory": "xcb-util-cursor-0.1.6",
+          "member_count": 40,
+          "files": [
+            {
+              "file": "COPYING",
+              "sha256": "0dde91ae1d443105dc9e13cbaed6674c36683b7095836ad9ddfce26be270aad5"
+            },
+            {
+              "file": "configure",
+              "sha256": "c894e83b88d111cba0e59afccf380d481120a484d572bbe7f56f4278507e088b"
+            },
+            {
+              "file": "cursor/Makefile.in",
+              "sha256": "7a656bb23b4177e833a8990d9d140abba02283240b394a1f13c4baf881f279c7"
+            },
+            {
+              "file": "cursor/xcb-cursor.pc.in",
+              "sha256": "8962f7ce570b2de7b3bf4015172fbd7152113cb073c4a1b5e13b85991431a9f7"
+            }
+          ]
+        }
+      }
+    },
     "qualification": {
       "status": "planned",
       "plan": {
         "file": "config/qt-qualification.json",
-        "canonical_sha256": "0cbc2e57f6c312bcd9be47685c2497a7d2d2d1ec5f710a364078d8ec508289ec"
+        "canonical_sha256": "83e19dfcd08a637b4f2bb4b4ff067966bb2a89571a5cf5c8ad1860a442b2bb1e"
       }
     }
   },

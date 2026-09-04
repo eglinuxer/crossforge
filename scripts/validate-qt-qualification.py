@@ -47,6 +47,13 @@ HOST = {
         "qualification": "import-html5lib-six-webencodings",
     },
 }
+SOURCE_DEPENDENCIES = [
+    {
+        "name": "xcb-util-cursor",
+        "component": "sources/xcb-util-cursor",
+        "usage": "host-and-target-xcb-platform-plugin-build",
+    }
+]
 LOCKS = [
     ("host-qt-build", "config/rpm/host-qt-build-el8-x86_64.plan.json"),
     ("qt-target-x86_64", "config/rpm/qt-target-el8-x86_64.plan.json"),
@@ -168,6 +175,14 @@ def load_and_validate(path, schema_path):
 def validate_plan(plan, require_locked=False):
     require(plan["profile"] == "linux-desktop-full", "Qt profile differs")
     require(plan["qt_version"] == "6.8.4", "Qt plan version differs")
+    require(
+        [
+            {key: record[key] for key in ("name", "component", "usage")}
+            for record in plan["source_dependencies"]
+        ]
+        == SOURCE_DEPENDENCIES,
+        "Qt source dependency contract differs",
+    )
     require(plan["host"] == HOST, "Qt host contract differs")
     require(plan["modules"] == MODULES, "Qt module order or set differs")
     require(plan["build"] == BUILD, "Qt build contract differs")
@@ -246,6 +261,19 @@ def validate_release_contract(release_path, require_locked=False):
         },
         "Qt plan source component differs from release binding",
     )
+    source_dependencies = [
+        binding_component(binding, record["component"])
+        for record in plan["source_dependencies"]
+    ]
+    require(
+        all(
+            record["canonical_sha256"] == component["canonical_sha256"]
+            for record, component in zip(
+                plan["source_dependencies"], source_dependencies
+            )
+        ),
+        "Qt plan source dependency differs from release binding",
+    )
     future = binding_component(binding, "future/qt-qualification")
     require(future["scope"] == "future", "Qt planned component is not future")
     if require_locked:
@@ -255,6 +283,7 @@ def validate_release_contract(release_path, require_locked=False):
         "plan": plan,
         "plan_sha256": plan_sha256,
         "source_component_sha256": source["canonical_sha256"],
+        "source_dependencies": source_dependencies,
         "qualification_component": future,
     }
 

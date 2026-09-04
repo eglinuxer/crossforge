@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/xcb-util-cursor-source-manifest.schema.json",
+  "title": "Crossforge authenticated xcb-util-cursor source manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "version",
+    "source_component",
+    "archive",
+    "signature",
+    "license",
+    "top_directory",
+    "member_count",
+    "files"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/xcb-util-cursor-source-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-xcb-util-cursor-source"
+    },
+    "version": {
+      "const": "0.1.6"
+    },
+    "source_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "const": "sources/xcb-util-cursor"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "size"
+      ],
+      "properties": {
+        "file": {
+          "const": "xcb-util-cursor-0.1.6.tar.xz"
+        },
+        "sha256": {
+          "const": "fdeb8bd127873519be5cc70dcd0d3b5d33b667877200f9925a59fdcad8f7a933"
+        },
+        "size": {
+          "const": 273084
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "size",
+        "evidence",
+        "evidence_sha256",
+        "key"
+      ],
+      "properties": {
+        "file": {
+          "const": "xcb-util-cursor-0.1.6.tar.xz.sig"
+        },
+        "sha256": {
+          "const": "6e1fd66c2182647c988f5c4b3a71615c7a62e1d6aef02928f807cdca39c2677a"
+        },
+        "size": {
+          "const": 566
+        },
+        "evidence": {
+          "const": "evidence/gpg/xcb-util-cursor-0.1.6.tar.xz.sig.b64"
+        },
+        "evidence_sha256": {
+          "const": "6f8208ce445a0227658aaa73509b3669fc2f8b3a0b7a7c9d9798c39ca2f95372"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "expression": {
+          "const": "MIT"
+        },
+        "file": {
+          "const": "COPYING"
+        },
+        "sha256": {
+          "const": "0dde91ae1d443105dc9e13cbaed6674c36683b7095836ad9ddfce26be270aad5"
+        }
+      }
+    },
+    "top_directory": {
+      "const": "xcb-util-cursor-0.1.6"
+    },
+    "member_count": {
+      "const": 40
+    },
+    "files": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/copying_file"
+        },
+        {
+          "$ref": "#/$defs/configure_file"
+        },
+        {
+          "$ref": "#/$defs/makefile_file"
+        },
+        {
+          "$ref": "#/$defs/pkgconfig_file"
+        }
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "fingerprint",
+        "retrieval_url"
+      ],
+      "properties": {
+        "file": {
+          "const": "keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc"
+        },
+        "sha256": {
+          "const": "5ec5e03a686fc6abfd6c0d6993e345692fb7be41d79ab257ad2bc7b2d2c817c7"
+        },
+        "fingerprint": {
+          "const": "3ab285232c46ae43d8e192f4dab0f78ea6e7e2d2"
+        },
+        "retrieval_url": {
+          "const": "https://gitlab.archlinux.org/archlinux/packaging/packages/xcb-util-cursor/-/raw/main/keys/pgp/3AB285232C46AE43D8E192F4DAB0F78EA6E7E2D2.asc"
+        }
+      }
+    },
+    "copying_file": {
+      "$ref": "#/$defs/regular_file",
+      "properties": {
+        "file": {
+          "const": "COPYING"
+        },
+        "sha256": {
+          "const": "0dde91ae1d443105dc9e13cbaed6674c36683b7095836ad9ddfce26be270aad5"
+        },
+        "size": {
+          "const": 1284
+        },
+        "mode": {
+          "const": "0644"
+        }
+      }
+    },
+    "configure_file": {
+      "$ref": "#/$defs/regular_file",
+      "properties": {
+        "file": {
+          "const": "configure"
+        },
+        "sha256": {
+          "const": "c894e83b88d111cba0e59afccf380d481120a484d572bbe7f56f4278507e088b"
+        },
+        "size": {
+          "const": 685003
+        },
+        "mode": {
+          "const": "0755"
+        }
+      }
+    },
+    "makefile_file": {
+      "$ref": "#/$defs/regular_file",
+      "properties": {
+        "file": {
+          "const": "cursor/Makefile.in"
+        },
+        "sha256": {
+          "const": "7a656bb23b4177e833a8990d9d140abba02283240b394a1f13c4baf881f279c7"
+        },
+        "size": {
+          "const": 30898
+        },
+        "mode": {
+          "const": "0644"
+        }
+      }
+    },
+    "pkgconfig_file": {
+      "$ref": "#/$defs/regular_file",
+      "properties": {
+        "file": {
+          "const": "cursor/xcb-cursor.pc.in"
+        },
+        "sha256": {
+          "const": "8962f7ce570b2de7b3bf4015172fbd7152113cb073c4a1b5e13b85991431a9f7"
+        },
+        "size": {
+          "const": 305
+        },
+        "mode": {
+          "const": "0644"
+        }
+      }
+    },
+    "regular_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "size",
+        "mode"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mode": {
+          "enum": [
+            "0644",
+            "0755"
+          ]
+        }
+      }
+    }
+  }
+}

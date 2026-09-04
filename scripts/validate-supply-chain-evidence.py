@@ -529,6 +529,88 @@ def validate_evidence(config, repository):
         "Qt checksum evidence differs from the source identity",
     )
 
+    xcb_cursor = qt["dependencies"]["xcb_util_cursor"]
+    xcb_source = xcb_cursor["source"]
+    xcb_signature = xcb_source["signature"]
+    xcb_key = xcb_signature["key"]
+    expected_xcb_url = (
+        "https://xorg.freedesktop.org/archive/individual/lib/"
+        "xcb-util-cursor-0.1.6.tar.xz"
+    )
+    require(
+        xcb_cursor["version"] == "0.1.6"
+        and xcb_source["status"] == "locked"
+        and xcb_source["url"] == expected_xcb_url
+        and xcb_source["sha256"]
+        == "fdeb8bd127873519be5cc70dcd0d3b5d33b667877200f9925a59fdcad8f7a933"
+        and xcb_source["size"] == 273084
+        and xcb_signature["url"] == expected_xcb_url + ".sig"
+        and xcb_signature["sha256"]
+        == "6e1fd66c2182647c988f5c4b3a71615c7a62e1d6aef02928f807cdca39c2677a"
+        and xcb_signature["size"] == 566,
+        "xcb-util-cursor source or signature identity mismatch",
+    )
+    xcb_signature_payload = load_evidence(
+        repository, xcb_signature["evidence"]
+    )
+    require(
+        len(xcb_signature_payload) == xcb_signature["size"]
+        and hashlib.sha256(xcb_signature_payload).hexdigest()
+        == xcb_signature["sha256"],
+        "xcb-util-cursor detached signature evidence mismatch",
+    )
+    xcb_key_payload = load_locked_file(
+        repository, xcb_key["file"], "xcb-util-cursor release key"
+    )
+    require(
+        xcb_key["retrieval_url"]
+        == "https://gitlab.archlinux.org/archlinux/packaging/packages/"
+        "xcb-util-cursor/-/raw/main/keys/pgp/"
+        "3AB285232C46AE43D8E192F4DAB0F78EA6E7E2D2.asc"
+        and hashlib.sha256(xcb_key_payload).hexdigest()
+        == xcb_key["sha256"]
+        == "5ec5e03a686fc6abfd6c0d6993e345692fb7be41d79ab257ad2bc7b2d2c817c7"
+        and xcb_key["fingerprint"]
+        == "3ab285232c46ae43d8e192f4dab0f78ea6e7e2d2"
+        and xcb_key_payload.startswith(b"-----BEGIN PGP PUBLIC KEY BLOCK-----\n")
+        and xcb_key_payload.rstrip().endswith(
+            b"-----END PGP PUBLIC KEY BLOCK-----"
+        ),
+        "xcb-util-cursor release key identity mismatch",
+    )
+    require(
+        xcb_cursor["license"]
+        == {
+            "expression": "MIT",
+            "file": "COPYING",
+            "sha256": "0dde91ae1d443105dc9e13cbaed6674c36683b7095836ad9ddfce26be270aad5",
+        }
+        and xcb_cursor["layout"]
+        == {
+            "top_directory": "xcb-util-cursor-0.1.6",
+            "member_count": 40,
+            "files": [
+                {
+                    "file": "COPYING",
+                    "sha256": "0dde91ae1d443105dc9e13cbaed6674c36683b7095836ad9ddfce26be270aad5",
+                },
+                {
+                    "file": "configure",
+                    "sha256": "c894e83b88d111cba0e59afccf380d481120a484d572bbe7f56f4278507e088b",
+                },
+                {
+                    "file": "cursor/Makefile.in",
+                    "sha256": "7a656bb23b4177e833a8990d9d140abba02283240b394a1f13c4baf881f279c7",
+                },
+                {
+                    "file": "cursor/xcb-cursor.pc.in",
+                    "sha256": "8962f7ce570b2de7b3bf4015172fbd7152113cb073c4a1b5e13b85991431a9f7",
+                },
+            ],
+        },
+        "xcb-util-cursor license or archive layout identity mismatch",
+    )
+
     vcpkg = config["vcpkg"]
     vcpkg_release = vcpkg["release"]
     vcpkg_tool = vcpkg["tool"]
@@ -1006,6 +1088,8 @@ def validate_evidence(config, repository):
         "zstd_signature_sha256": zstd_signature["sha256"],
         "qt_source_sha256": qt_source["sha256"],
         "qt_checksum_sha256": qt_checksum["sha256"],
+        "xcb_util_cursor_source_sha256": xcb_source["sha256"],
+        "xcb_util_cursor_signature_sha256": xcb_signature["sha256"],
         "vcpkg_tag_object": vcpkg_release["tag_object"],
         "vcpkg_commit": vcpkg_release["commit"],
         "vcpkg_tool_commit": vcpkg_tool["commit"],
@@ -1031,7 +1115,7 @@ def main():
     print(
         "valid supply-chain evidence: Rocky %s; QEMU %s; source %s; "
         "CPython Sigstore bundles %s; patches %d; zstd %s; vcpkg %s; "
-        "Qt %s; Ninja %s; CMake %s"
+        "Qt %s + xcb-util-cursor %s; Ninja %s; CMake %s"
         % (
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
@@ -1041,6 +1125,7 @@ def main():
             result["zstd_commit"],
             result["vcpkg_commit"],
             config["qt"]["version"],
+            config["qt"]["dependencies"]["xcb_util_cursor"]["version"],
             result["ninja_commit"],
             config["host_tools"]["cmake"]["version"],
         )

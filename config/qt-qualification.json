@@ -9,6 +9,14 @@
     "component": "sources/qt",
     "canonical_sha256": "540c01aacded48198436157ab351090990ed06772f82f203563c32422b37a502"
   },
+  "source_dependencies": [
+    {
+      "name": "xcb-util-cursor",
+      "component": "sources/xcb-util-cursor",
+      "canonical_sha256": "68084bc48751b6ea2f1d1778411231852ff22797d58e72b259f353c67ab85680",
+      "usage": "host-and-target-xcb-platform-plugin-build"
+    }
+  ],
   "host": {
     "platform": "linux/amd64",
     "compiler": "native-gts15",

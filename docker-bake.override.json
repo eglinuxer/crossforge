@@ -307,7 +307,8 @@
     },
     "qt-source-qualified": {
       "targets": [
-        "qt-source"
+        "qt-source",
+        "xcb-util-cursor-source"
       ]
     },
     "toolchain-plan": {
@@ -3018,6 +3019,23 @@
         "type=cacheonly"
       ],
       "target": "vcpkg-upstream-tier3-qualified"
+    },
+    "xcb-util-cursor-source": {
+      "args": {
+        "CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256": "68084bc48751b6ea2f1d1778411231852ff22797d58e72b259f353c67ab85680",
+        "XCB_UTIL_CURSOR_SOURCE_URL": "https://xorg.freedesktop.org/archive/individual/lib/xcb-util-cursor-0.1.6.tar.xz",
+        "XCB_UTIL_CURSOR_VERSION": "0.1.6"
+      },
+      "contexts": {
+        "crossforge_rocky_amd64": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "xcb-util-cursor-source-export"
     },
     "zstd-aarch64-build": {
       "args": {

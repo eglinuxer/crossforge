@@ -717,10 +717,15 @@ def _render_expected_components(release, implemented_rows):
         selector(("qt", "version"), ("qt", "source")),
     )
     add(
+        "sources/xcb-util-cursor",
+        "build",
+        selector(("qt", "dependencies", "xcb_util_cursor")),
+    )
+    add(
         "future/qt-qualification",
         "future",
         selector(("qt", "qualification")),
-        ("sources/qt",),
+        ("sources/qt", "sources/xcb-util-cursor"),
     )
     add("sources/vcpkg", "build", selector(("vcpkg",)))
     add("sources/nfpm", "build", selector(("nfpm",)))
