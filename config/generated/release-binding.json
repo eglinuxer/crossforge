@@ -32,7 +32,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "e34b92d1f9bcff9e9bb44bbe52523a41c48eee0c4714bf63cd20764c258d24d0",
+      "canonical_sha256": "8e5f12a80b45e905889055f7c97e15e74f82ec3b7187b447db81b129f66e3730",
       "component": "implementation/candidate-manifest",
       "path": "config/generated/components/implementation/candidate-manifest.json",
       "scope": "supply"
@@ -170,7 +170,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "665e98b1be56d344603e4ea793948d2923e423041bd4a5b68de77a237172f93d",
+      "canonical_sha256": "72b43789c85ed269d5ef52fff60cb4917dcdd88b2887bc2fb2dc4aae4e1de1e2",
       "component": "product/release",
       "path": "config/generated/components/product/release.json",
       "scope": "supply"

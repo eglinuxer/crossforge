@@ -21,6 +21,10 @@
       "value": "linux/amd64"
     },
     {
+      "path": "/@implementation/candidate-manifest/registry_resolution",
+      "value": "rehash-index-exact-one-linux-amd64-manifest"
+    },
+    {
       "path": "/@implementation/candidate-manifest/schema",
       "value": "https://crossforge.dev/schemas/candidate.schema.json"
     },

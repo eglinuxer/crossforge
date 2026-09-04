@@ -58,6 +58,50 @@ class CandidateManifestTests(unittest.TestCase):
         )
         self.assertNotIn("tag", document)
 
+    def test_candidate_tag_is_unique_and_not_an_identity(self):
+        self.assertEqual(
+            CANDIDATE["candidate_tag"](
+                self.release, self.source_commit, "123456", "2"
+            ),
+            "candidate-v0.1.0-g111111111111-r123456-a2",
+        )
+        for commit, run_id, run_attempt in (
+            ("1" * 39, "123", "1"),
+            ("G" * 40, "123", "1"),
+            ("1" * 40, "0", "1"),
+            ("1" * 40, "01", "1"),
+            ("1" * 40, "123", "0"),
+        ):
+            with self.subTest(
+                commit=commit, run_id=run_id, run_attempt=run_attempt
+            ):
+                with self.assertRaises(CANDIDATE["CandidateError"]):
+                    CANDIDATE["candidate_tag"](
+                        self.release, commit, run_id, run_attempt
+                    )
+
+    def test_candidate_tag_cli_prints_only_the_tag(self):
+        result = subprocess.run(
+            [
+                str(SCRIPT),
+                "tag",
+                "--source-commit",
+                self.source_commit,
+                "--run-id",
+                "123456",
+                "--run-attempt",
+                "2",
+            ],
+            cwd=str(REPOSITORY),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            result.stdout, "candidate-v0.1.0-g111111111111-r123456-a2\n"
+        )
+
     def test_candidate_policy_is_bound_to_product_release(self):
         components = COMPONENTS["render_component_documents"](self.release)
         policy = components["implementation/candidate-manifest"]

@@ -17,27 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Install content-locked Docker Buildx
-        run: |
-          mkdir -p "$HOME/.docker/cli-plugins"
-          curl --fail --location --retry 3 \
-            https://github.com/docker/buildx/releases/download/v0.36.1/buildx-v0.36.1.linux-amd64 \
-            --output "$RUNNER_TEMP/docker-buildx"
-          printf '%s  %s\n' \
-            48af8a397ebd60178778bf63611dbcebe5f5e7a9be90eb9147b24b9587455778 \
-            "$RUNNER_TEMP/docker-buildx" | sha256sum -c -
-          install -m 0755 "$RUNNER_TEMP/docker-buildx" \
-            "$HOME/.docker/cli-plugins/docker-buildx"
-          docker buildx version | grep -F 'v0.36.1'
-      - name: Set up pinned Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
-        with:
-          cache-binary: false
-          # GitHub-hosted runners are ephemeral; removing the large builder
-          # state volume in the post step has previously timed out.
-          cleanup: false
-          driver-opts: |
-            image=moby/buildkit:v0.32.2@sha256:28a898719c18a33f4e8000685287fa36fd0dd9560c6440227d3a732d79bb41d8
+      - uses: ./.github/actions/setup-locked-buildx
       - name: Release configuration
         run: |
           ./scripts/validate-release.py
@@ -85,7 +65,8 @@ jobs:
           docker buildx bake --check phase4 host-runtime-qualified
           docker buildx bake --print phase5 phase6 phase7 phase8 phase9 phase10 \
             phase13-source phase13-host-tools phase13-integration \
-            phase13-contract phase13-ports phase14 phase15 phase16 >/dev/null
+            phase13-contract phase13-ports phase14 phase15 phase16 \
+            candidate >/dev/null
       - name: Locked latest inputs and native build Pythons
         run: |
           docker buildx bake validate platform-python-check \

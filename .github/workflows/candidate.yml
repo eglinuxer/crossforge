@@ -1,0 +1,137 @@
+name: public candidate
+
+concurrency:
+  group: candidate-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  CANDIDATE_REPOSITORY: ghcr.io/eglinuxer/crossforge
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Validate candidate inputs
+        run: |
+          set -Eeuo pipefail
+          test "$GITHUB_REF" = refs/heads/main
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          ./scripts/validate-release.py --require-locked
+          ./scripts/validate-supply-chain-evidence.py
+          ./scripts/validate-frozen-abi.py
+          ./scripts/validate-python-runtime-providers.py
+          ./scripts/render-release-components.py --check
+          ./scripts/render-vcpkg-integration.py --check
+          ./scripts/render-bake.py --check
+      - name: Resolve unique public candidate tag
+        id: identity
+        run: |
+          set -Eeuo pipefail
+          tag=$(./scripts/candidate_manifest.py tag \
+            --source-commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT")
+          reference="$CANDIDATE_REPOSITORY:$tag"
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          printf 'reference=%s\n' "$reference" >> "$GITHUB_OUTPUT"
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$GHCR_TOKEN" \
+            | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Reject an existing candidate tag
+        env:
+          CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
+        run: |
+          set -Eeuo pipefail
+          if docker buildx imagetools inspect "$CANDIDATE_REFERENCE" >/dev/null 2>&1; then
+            echo "candidate tag already exists: $CANDIDATE_REFERENCE" >&2
+            exit 1
+          fi
+      - name: Build once and push the candidate
+        env:
+          CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
+        run: |
+          set -Eeuo pipefail
+          docker buildx bake sdk-candidate \
+            --set "sdk-candidate.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
+            --set "sdk-candidate.tags=$CANDIDATE_REFERENCE" \
+            --set "sdk-candidate.output=type=image,push=true" \
+            --provenance=mode=max \
+            --sbom=true \
+            --metadata-file "$RUNNER_TEMP/build-metadata.json" \
+            --progress=plain
+      - name: Bind the pushed OCI index and platform manifest
+        id: digest
+        env:
+          CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
+        run: |
+          set -Eeuo pipefail
+          candidate_digest=$(./scripts/resolve_candidate_image.py buildx-digest \
+            --metadata "$RUNNER_TEMP/build-metadata.json")
+          docker buildx imagetools inspect \
+            "$CANDIDATE_REPOSITORY@$candidate_digest" --raw \
+            > "$RUNNER_TEMP/candidate-index.json"
+          platform_digest=$(./scripts/resolve_candidate_image.py platform-digest \
+            --index "$RUNNER_TEMP/candidate-index.json" \
+            --expected-digest "$candidate_digest")
+          ./scripts/candidate_manifest.py create \
+            --source-commit "$GITHUB_SHA" \
+            --digest "$candidate_digest" \
+            --platform-manifest-digest "$platform_digest" \
+            --output "$RUNNER_TEMP/candidate.json"
+          ./scripts/candidate_manifest.py validate \
+            "$RUNNER_TEMP/candidate.json" \
+            --expected-source-commit "$GITHUB_SHA"
+          printf 'digest=%s\n' "$candidate_digest" >> "$GITHUB_OUTPUT"
+          printf 'platform_digest=%s\n' "$platform_digest" >> "$GITHUB_OUTPUT"
+          test "$CANDIDATE_REFERENCE" = \
+            "$CANDIDATE_REPOSITORY:${{ steps.identity.outputs.tag }}"
+      - name: Prove anonymous public availability
+        env:
+          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+        run: |
+          set -Eeuo pipefail
+          docker logout ghcr.io
+          docker buildx imagetools inspect \
+            "$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST" --raw \
+            > "$RUNNER_TEMP/anonymous-candidate-index.json"
+          anonymous_platform=$(./scripts/resolve_candidate_image.py platform-digest \
+            --index "$RUNNER_TEMP/anonymous-candidate-index.json" \
+            --expected-digest "$CANDIDATE_DIGEST")
+          test "$anonymous_platform" = \
+            "${{ steps.digest.outputs.platform_digest }}"
+      - name: Upload immutable candidate identity
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/candidate.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Report public candidate
+        env:
+          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+          CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
+          PLATFORM_DIGEST: ${{ steps.digest.outputs.platform_digest }}
+        run: |
+          set -Eeuo pipefail
+          {
+            echo '### Public Crossforge candidate'
+            echo
+            echo "- Tag: \`$CANDIDATE_REFERENCE\`"
+            echo "- OCI index: \`$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST\`"
+            echo "- linux/amd64 manifest: \`$PLATFORM_DIGEST\`"
+            echo '- Status: public candidate; no stable or SemVer tag was created'
+          } >> "$GITHUB_STEP_SUMMARY"

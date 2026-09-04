@@ -1,5 +1,10 @@
 {
   "group": {
+    "candidate": {
+      "targets": [
+        "sdk-candidate"
+      ]
+    },
     "phase10": {
       "targets": [
         "validate",
@@ -2664,6 +2669,19 @@
         "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c"
       }
+    },
+    "sdk-candidate": {
+      "args": {
+        "CROSSFORGE_PRODUCT_IDENTITY_SHA256": "0187896b566f3b5141dc2a2528ad896a188c9f55f4c4d05dec28068633105e0a",
+        "CROSSFORGE_PRODUCT_VERSION": "0.1.0"
+      },
+      "inherits": [
+        "sdk-complete-dev"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "sdk-candidate"
     },
     "sdk-complete-dev": {
       "args": {

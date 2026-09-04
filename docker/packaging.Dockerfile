@@ -246,3 +246,43 @@ RUN --network=none /usr/libexec/platform-python \
       --output /opt/crossforge/qualification/complete-sdk.json \
     && rm -rf /work
 WORKDIR /workspace
+
+# Public-candidate boundary. The default Bake output remains cache-only; the
+# release workflow may opt in to a registry output only for this target and
+# must provide the exact source commit used for the build context.
+FROM sdk-complete-dev AS sdk-candidate
+ARG CROSSFORGE_PRODUCT_VERSION
+ARG CROSSFORGE_PRODUCT_IDENTITY_SHA256
+ARG CROSSFORGE_SOURCE_COMMIT
+COPY config/generated/components/product/identity.json \
+  /work/config/product-identity.json
+COPY --chmod=0755 scripts/release_component.py /work/scripts/
+RUN --network=none \
+      /usr/libexec/platform-python /work/scripts/release_component.py validate \
+        /work/config/product-identity.json \
+        --expected-component product/identity \
+        --expected-scope qualification \
+        --expected-sha256 "$CROSSFORGE_PRODUCT_IDENTITY_SHA256" \
+    && test -n "$CROSSFORGE_PRODUCT_VERSION" \
+    && test "$(/usr/libexec/platform-python \
+          /work/scripts/release_component.py get \
+          /work/config/product-identity.json \
+          --expected-component product/identity \
+          --expected-scope qualification \
+          --expected-sha256 "$CROSSFORGE_PRODUCT_IDENTITY_SHA256" \
+          --path /product/version --type string)" \
+        = "\"$CROSSFORGE_PRODUCT_VERSION\"" \
+    && test "${#CROSSFORGE_SOURCE_COMMIT}" -eq 40 \
+    && case "$CROSSFORGE_SOURCE_COMMIT" in \
+         *[!0-9a-f]*) exit 1 ;; \
+         *) ;; \
+       esac \
+    && crossforge info --json \
+      | grep -F "\"version\": \"$CROSSFORGE_PRODUCT_VERSION\"" \
+    && rm -rf /work
+LABEL org.opencontainers.image.title="Crossforge" \
+      org.opencontainers.image.description="GTS-derived cross SDK for EL8 targets" \
+      org.opencontainers.image.source="https://github.com/eglinuxer/crossforge" \
+      org.opencontainers.image.version="${CROSSFORGE_PRODUCT_VERSION}" \
+      org.opencontainers.image.revision="${CROSSFORGE_SOURCE_COMMIT}"
+WORKDIR /workspace

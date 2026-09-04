@@ -209,6 +209,26 @@ class CrosspackComponentTests(unittest.TestCase):
             rendered["group"]["phase15"]["targets"],
             ["sdk-complete-dev"],
         )
+        self.assertEqual(
+            targets["sdk-candidate"]["inherits"], ["sdk-complete-dev"]
+        )
+        self.assertEqual(targets["sdk-candidate"]["target"], "sdk-candidate")
+        self.assertEqual(
+            targets["sdk-candidate"]["args"],
+            {
+                "CROSSFORGE_PRODUCT_VERSION": self.release["product"]["version"],
+                "CROSSFORGE_PRODUCT_IDENTITY_SHA256": self.digests[
+                    "product/identity"
+                ],
+            },
+        )
+        self.assertEqual(
+            targets["sdk-candidate"]["output"], ["type=cacheonly"]
+        )
+        self.assertNotIn("tags", targets["sdk-candidate"])
+        self.assertEqual(
+            rendered["group"]["candidate"]["targets"], ["sdk-candidate"]
+        )
 
     def test_docker_network_and_tool_boundaries_are_explicit(self):
         dockerfile = (
@@ -223,6 +243,7 @@ class CrosspackComponentTests(unittest.TestCase):
             "crosspack-rpm-qualified",
             "packaging-qualified",
             "sdk-complete-dev",
+            "sdk-candidate",
         ):
             block = dockerfile.split(" AS %s" % stage, 1)[1]
             block = block.split("\nFROM ", 1)[0]
@@ -237,6 +258,12 @@ class CrosspackComponentTests(unittest.TestCase):
         self.assertNotIn("PYTHONPATH=/opt/crossforge/lib", dockerfile)
         self.assertNotIn("dnf install", dockerfile)
         self.assertNotIn("apt-get", dockerfile)
+        candidate = dockerfile.split(" AS sdk-candidate", 1)[1]
+        self.assertIn(
+            "--expected-component product/identity", candidate
+        )
+        self.assertIn('test "${#CROSSFORGE_SOURCE_COMMIT}" -eq 40', candidate)
+        self.assertIn("org.opencontainers.image.revision", candidate)
 
     def test_meson_cross_files_are_explicit_and_never_enable_execution(self):
         for arch, triple in (

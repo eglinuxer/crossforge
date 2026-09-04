@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import runpy
 import sys
 import tempfile
@@ -13,6 +14,9 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 SCHEMA_ID = "https://crossforge.dev/schemas/candidate.schema.json"
+GIT_SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
+RUN_ID_RE = re.compile(r"^[1-9][0-9]*$")
+OCI_TAG_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$")
 STRICT = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
 ReleaseValidationError = STRICT["ValidationError"]
 
@@ -71,6 +75,24 @@ def candidate_document(
         "platform": release["platforms"]["image"],
         "platform_manifest_digest": platform_manifest_digest,
     }
+
+
+def candidate_tag(release, source_commit, run_id, run_attempt):
+    require(GIT_SHA1_RE.match(source_commit or ""), "source commit is not a full Git SHA-1")
+    require(RUN_ID_RE.match(run_id or ""), "run ID must be a positive decimal integer")
+    require(
+        RUN_ID_RE.match(run_attempt or ""),
+        "run attempt must be a positive decimal integer",
+    )
+    tag_version = release["product"]["version"].replace("+", "_")
+    tag = "candidate-v%s-g%s-r%s-a%s" % (
+        tag_version,
+        source_commit[:12],
+        run_id,
+        run_attempt,
+    )
+    require(OCI_TAG_RE.match(tag), "candidate tag is not a valid OCI tag")
+    return tag
 
 
 def validate_candidate(
@@ -139,7 +161,7 @@ def write_json_once(path, document):
     return True
 
 
-def add_common_arguments(parser):
+def add_release_arguments(parser):
     parser.add_argument(
         "--release", type=Path, default=REPOSITORY / "config/release.json"
     )
@@ -148,6 +170,10 @@ def add_common_arguments(parser):
         type=Path,
         default=REPOSITORY / "config/schemas/release.schema.json",
     )
+
+
+def add_common_arguments(parser):
+    add_release_arguments(parser)
     parser.add_argument(
         "--schema",
         type=Path,
@@ -168,14 +194,32 @@ def parser():
     add_common_arguments(validate)
     validate.add_argument("candidate", type=Path)
     validate.add_argument("--expected-source-commit")
+    tag = subparsers.add_parser("tag", allow_abbrev=False)
+    add_release_arguments(tag)
+    tag.add_argument("--source-commit", required=True)
+    tag.add_argument("--run-id", required=True)
+    tag.add_argument("--run-attempt", required=True)
     return result
 
 
 def main(argv=None):
     arguments = parser().parse_args(argv)
     try:
-        require(arguments.command in ("create", "validate"), "a command is required")
+        require(
+            arguments.command in ("create", "validate", "tag"),
+            "a command is required",
+        )
         release = load_release(arguments.release, arguments.release_schema)
+        if arguments.command == "tag":
+            print(
+                candidate_tag(
+                    release,
+                    arguments.source_commit,
+                    arguments.run_id,
+                    arguments.run_attempt,
+                )
+            )
+            return 0
         schema = load_candidate_schema(arguments.schema)
         if arguments.command == "create":
             document = candidate_document(

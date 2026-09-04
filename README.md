@@ -566,6 +566,16 @@ uses the installed launcher to check the native host environment plus all 24
 x86_64/aarch64 × Python 3.9–3.14 × static/dynamic vcpkg selections. The target
 remains `-dev`; it is not a release candidate or a user-facing tag.
 
+The separate `sdk-candidate` target is the only registry-export boundary. It
+inherits the complete SDK, revalidates the product identity, requires the full
+source commit, and adds OCI version/revision annotations. Its checked-in Bake
+output is still cache-only and has no tag, so local commands cannot publish it
+accidentally. The manually dispatched `public candidate` workflow supplies a
+unique `candidate-v<version>-g<commit>-r<run>-a<attempt>` tag, pushes with max
+provenance and SBOM attestations, reconstructs `candidate.json` from the raw
+OCI index, then logs out of GHCR and proves the digest is anonymously readable.
+It never creates a SemVer or stable-channel tag.
+
 ## Product contract
 
 - Build platform and tool host: `linux/amd64`.

@@ -655,6 +655,15 @@ def render_packaging_graph(
         },
         "output": ["type=cacheonly"],
     }
+    targets["sdk-candidate"] = {
+        "inherits": ["sdk-complete-dev"],
+        "target": "sdk-candidate",
+        "args": {
+            "CROSSFORGE_PRODUCT_VERSION": config["product"]["version"],
+            "CROSSFORGE_PRODUCT_IDENTITY_SHA256": digest("product/identity"),
+        },
+        "output": ["type=cacheonly"],
+    }
     return {
         "phase14-source": {
             "targets": ["host-runtime-qualified", "nfpm-tool"]
@@ -664,6 +673,7 @@ def render_packaging_graph(
         },
         "phase14": {"targets": ["packaging-qualified"]},
         "phase15": {"targets": ["sdk-complete-dev"]},
+        "candidate": {"targets": ["sdk-candidate"]},
     }
 
 

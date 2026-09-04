@@ -84,6 +84,7 @@ CANDIDATE_MANIFEST_POLICY = {
     "image_identity": "oci-index-and-platform-manifest-digests",
     "tag_trust": "none-digest-only",
     "platform": "linux/amd64",
+    "registry_resolution": "rehash-index-exact-one-linux-amd64-manifest",
 }
 if "COMPONENT_EXTENSIONS" not in globals():
     COMPONENT_EXTENSIONS = ()
