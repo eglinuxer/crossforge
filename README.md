@@ -166,6 +166,15 @@ common package EVRs must match exactly, with only the reviewed x86_64 PCI
 dependency trio allowed to differ. Locked dependencies do not yet mean Qt
 itself is qualified or part of the SDK.
 
+The missing Rocky `xcb-util-cursor-devel` input is built from its separately
+signed upstream source for the host and both targets. This gate records the
+builder, exact component/lock identities, ELF machine, SONAME and dependencies;
+only the host runs a `dlopen` probe:
+
+```console
+$ docker buildx bake xcb-util-cursor-qualified
+```
+
 ## Phase 3: reproducible RPM foundation
 
 Host preparation is split deliberately: common tools contain the exact

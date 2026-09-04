@@ -82,6 +82,7 @@ jobs:
             qt-rpm-locked \
             host-runtime-qualified \
             ninja-host-tool cmake-host-tool \
+            xcb-util-cursor-qualified \
             vcpkg-source \
             sysroot-x86_64 sysroot-aarch64 python-native-latest \
             python-runtime-clean-x86_64 python-runtime-clean-aarch64 \

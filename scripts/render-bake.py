@@ -1080,6 +1080,12 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
         xcb_cursor_component_sha256 = component_arguments[
             xcb_cursor_component_argument
         ]
+        qualification_component_argument = component_argument_name(
+            "future/qt-qualification"
+        )
+        qualification_component_sha256 = component_arguments[
+            qualification_component_argument
+        ]
     except KeyError as error:
         raise ValueError("missing Qt source dependency component digest") from error
     targets["qt-source"] = {
@@ -1109,10 +1115,57 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
         },
         "output": ["type=cacheonly"],
     }
+    xcb_build_arguments = {
+        xcb_cursor_component_argument: xcb_cursor_component_sha256,
+        qualification_component_argument: qualification_component_sha256,
+    }
+    targets["xcb-util-cursor-host-build"] = {
+        "inherits": ["_qt_common"],
+        "target": "xcb-util-cursor-host-build",
+        "args": xcb_build_arguments,
+        "contexts": {
+            "crossforge_host_qt": "target:host-qt-build-locked",
+            "crossforge_xcb_util_cursor_source": (
+                "target:xcb-util-cursor-source"
+            ),
+        },
+        "output": ["type=cacheonly"],
+    }
+    xcb_builds = ["xcb-util-cursor-host-build"]
+    for target in config["targets"]:
+        arch = target["arch"]
+        triple = target["triple"]
+        name = "xcb-util-cursor-%s-build" % arch
+        targets[name] = {
+            "inherits": ["_qt_common"],
+            "target": "xcb-util-cursor-target-build",
+            "args": dict(
+                xcb_build_arguments,
+                XCB_UTIL_CURSOR_TARGET_ARCH=arch,
+                XCB_UTIL_CURSOR_TARGET_TRIPLE=triple,
+                XCB_UTIL_CURSOR_RPM_LOCK=(
+                    "locks/qt-target-el8-%s.json" % arch
+                ),
+                XCB_UTIL_CURSOR_RPM_TRANSACTION=(
+                    "locks/transactions/qt-target-el8-%s.json" % arch
+                ),
+            ),
+            "contexts": {
+                "crossforge_host_qt": "target:host-qt-build-locked",
+                "crossforge_qt_target": "target:qt-target-%s-locked" % arch,
+                "crossforge_toolchain": "target:toolchain-%s-dev" % arch,
+                "crossforge_xcb_util_cursor_source": (
+                    "target:xcb-util-cursor-source"
+                ),
+            },
+            "output": ["type=cacheonly"],
+        }
+        xcb_builds.append(name)
     return {
         "qt-source-qualified": {
             "targets": ["qt-source", "xcb-util-cursor-source"]
-        }
+        },
+        "xcb-util-cursor-qualified": {"targets": xcb_builds},
     }
 
 

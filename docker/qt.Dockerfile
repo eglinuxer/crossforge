@@ -93,3 +93,112 @@ RUN --network=none test "$XCB_UTIL_CURSOR_VERSION" = 0.1.6 \
 
 FROM scratch AS xcb-util-cursor-source-export
 COPY --from=xcb-util-cursor-source /out/ /
+
+FROM crossforge_host_qt AS xcb-util-cursor-host-build
+ARG CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+ARG CROSSFORGE_JOBS=4
+COPY --from=crossforge_xcb_util_cursor_source / \
+  /work/prepared/xcb-util-cursor/
+COPY config/generated/components/sources/xcb-util-cursor.json \
+  /work/config/sources-xcb-util-cursor.json
+COPY config/generated/components/future/qt-qualification.json \
+  /work/config/qt-qualification-component.json
+COPY config/qt-qualification.json /work/config/qt-qualification.json
+COPY config/schemas/qt-qualification-plan.schema.json \
+  config/schemas/rpm-lock.schema.json \
+  config/schemas/rpm-transaction.schema.json \
+  config/schemas/xcb-util-cursor-build.schema.json \
+  config/schemas/xcb-util-cursor-source-manifest.schema.json \
+  /work/config/schemas/
+COPY locks/host-qt-build-el8-x86_64.json \
+  /work/locks/host-qt-build-el8-x86_64.json
+COPY locks/transactions/host-qt-build-el8-x86_64.json \
+  /work/locks/transactions/host-qt-build-el8-x86_64.json
+COPY --chmod=0755 scripts/release_component.py scripts/validate-release.py \
+  scripts/build-xcb-util-cursor.py /work/scripts/
+RUN --network=none /work/scripts/build-xcb-util-cursor.py \
+      --identity host \
+      --source-archive \
+        /work/prepared/xcb-util-cursor/materials/xcb-util-cursor-0.1.6.tar.xz \
+      --source-manifest \
+        /work/prepared/xcb-util-cursor/source-manifest.json \
+      --source-component /work/config/sources-xcb-util-cursor.json \
+      --source-component-sha256 \
+        "$CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256" \
+      --qualification-component \
+        /work/config/qt-qualification-component.json \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256" \
+      --plan /work/config/qt-qualification.json \
+      --rpm-lock /work/locks/host-qt-build-el8-x86_64.json \
+      --rpm-transaction \
+        /work/locks/transactions/host-qt-build-el8-x86_64.json \
+      --toolchain /opt/rh/gcc-toolset-15/root/usr/bin \
+      --prefix \
+        /opt/crossforge/qualification/qt/6.8.4/deps/host/xcb-util-cursor \
+      --build-root /work/build/xcb-util-cursor-host \
+      --jobs "$CROSSFORGE_JOBS" \
+      --output \
+        /opt/crossforge/qualification/qt/6.8.4/deps/host/xcb-util-cursor-build.json
+
+FROM crossforge_host_qt AS xcb-util-cursor-target-build
+ARG XCB_UTIL_CURSOR_TARGET_ARCH
+ARG XCB_UTIL_CURSOR_TARGET_TRIPLE
+ARG XCB_UTIL_CURSOR_RPM_LOCK
+ARG XCB_UTIL_CURSOR_RPM_TRANSACTION
+ARG CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+ARG CROSSFORGE_JOBS=4
+COPY --from=crossforge_xcb_util_cursor_source / \
+  /work/prepared/xcb-util-cursor/
+COPY --from=crossforge_toolchain \
+  /opt/crossforge/targets/${XCB_UTIL_CURSOR_TARGET_TRIPLE}/ \
+  /opt/crossforge/targets/${XCB_UTIL_CURSOR_TARGET_TRIPLE}/
+COPY --from=crossforge_qt_target \
+  /opt/crossforge/sysroots/el8/${XCB_UTIL_CURSOR_TARGET_ARCH}/ \
+  /opt/crossforge/sysroots/el8/${XCB_UTIL_CURSOR_TARGET_ARCH}/
+COPY config/generated/components/sources/xcb-util-cursor.json \
+  /work/config/sources-xcb-util-cursor.json
+COPY config/generated/components/future/qt-qualification.json \
+  /work/config/qt-qualification-component.json
+COPY config/qt-qualification.json /work/config/qt-qualification.json
+COPY config/schemas/qt-qualification-plan.schema.json \
+  config/schemas/rpm-lock.schema.json \
+  config/schemas/rpm-transaction.schema.json \
+  config/schemas/xcb-util-cursor-build.schema.json \
+  config/schemas/xcb-util-cursor-source-manifest.schema.json \
+  /work/config/schemas/
+COPY --from=crossforge_qt_target /src/locks/ /work/locks/
+COPY --chmod=0755 scripts/release_component.py scripts/validate-release.py \
+  scripts/build-xcb-util-cursor.py /work/scripts/
+RUN --network=none case \
+      "$XCB_UTIL_CURSOR_TARGET_ARCH:$XCB_UTIL_CURSOR_TARGET_TRIPLE:$XCB_UTIL_CURSOR_RPM_LOCK:$XCB_UTIL_CURSOR_RPM_TRANSACTION" in \
+      x86_64:x86_64-unknown-linux-gnu:locks/qt-target-el8-x86_64.json:locks/transactions/qt-target-el8-x86_64.json|aarch64:aarch64-unknown-linux-gnu:locks/qt-target-el8-aarch64.json:locks/transactions/qt-target-el8-aarch64.json) ;; \
+      *) echo 'error: invalid xcb-util-cursor target identity' >&2; exit 1 ;; \
+    esac \
+    && /work/scripts/build-xcb-util-cursor.py \
+      --identity "$XCB_UTIL_CURSOR_TARGET_TRIPLE" \
+      --source-archive \
+        /work/prepared/xcb-util-cursor/materials/xcb-util-cursor-0.1.6.tar.xz \
+      --source-manifest \
+        /work/prepared/xcb-util-cursor/source-manifest.json \
+      --source-component /work/config/sources-xcb-util-cursor.json \
+      --source-component-sha256 \
+        "$CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256" \
+      --qualification-component \
+        /work/config/qt-qualification-component.json \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256" \
+      --plan /work/config/qt-qualification.json \
+      --rpm-lock "/work/$XCB_UTIL_CURSOR_RPM_LOCK" \
+      --rpm-transaction "/work/$XCB_UTIL_CURSOR_RPM_TRANSACTION" \
+      --toolchain \
+        "/opt/crossforge/targets/$XCB_UTIL_CURSOR_TARGET_TRIPLE/bin" \
+      --sysroot "/opt/crossforge/sysroots/el8/$XCB_UTIL_CURSOR_TARGET_ARCH" \
+      --prefix /usr \
+      --build-root \
+        "/work/build/xcb-util-cursor-$XCB_UTIL_CURSOR_TARGET_ARCH" \
+      --jobs "$CROSSFORGE_JOBS" \
+      --output \
+        "/opt/crossforge/qualification/qt/6.8.4/deps/$XCB_UTIL_CURSOR_TARGET_TRIPLE/xcb-util-cursor-build.json"

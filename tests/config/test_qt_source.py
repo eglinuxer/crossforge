@@ -62,6 +62,36 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertIn("XCB-UTIL-CURSOR-RELEASE-KEY.asc", source)
         self.assertIn("FROM scratch AS xcb-util-cursor-source-export", self.dockerfile)
 
+    def test_xcb_cursor_builds_cover_host_and_both_targets(self):
+        self.assertEqual(
+            self.bake["group"]["xcb-util-cursor-qualified"]["targets"],
+            [
+                "xcb-util-cursor-host-build",
+                "xcb-util-cursor-x86_64-build",
+                "xcb-util-cursor-aarch64-build",
+            ],
+        )
+        host = self.bake["target"]["xcb-util-cursor-host-build"]
+        self.assertEqual(host["contexts"]["crossforge_host_qt"], "target:host-qt-build-locked")
+        for arch, triple in (
+            ("x86_64", "x86_64-unknown-linux-gnu"),
+            ("aarch64", "aarch64-unknown-linux-gnu"),
+        ):
+            target = self.bake["target"]["xcb-util-cursor-%s-build" % arch]
+            self.assertEqual(target["args"]["XCB_UTIL_CURSOR_TARGET_TRIPLE"], triple)
+            self.assertEqual(
+                target["contexts"]["crossforge_qt_target"],
+                "target:qt-target-%s-locked" % arch,
+            )
+            self.assertEqual(
+                target["contexts"]["crossforge_toolchain"],
+                "target:toolchain-%s-dev" % arch,
+            )
+        build = self.dockerfile.split(" AS xcb-util-cursor-target-build", 1)[1]
+        self.assertIn("RUN --network=none", build)
+        self.assertNotIn("HOSTRUNNER", build)
+        self.assertNotIn("qemu", build.lower())
+
     def test_fetch_is_networked_but_all_source_acceptance_is_offline(self):
         fetch = self.dockerfile.split(" AS qt-fetch", 1)[1].split(
             "\nFROM ", 1

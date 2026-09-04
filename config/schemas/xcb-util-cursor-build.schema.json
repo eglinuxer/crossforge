@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/xcb-util-cursor-build.schema.json",
+  "title": "Crossforge xcb-util-cursor build evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "version",
+    "identity",
+    "prefix",
+    "compiler_dumpmachine",
+    "build_environment",
+    "builder",
+    "source_component",
+    "qualification_component",
+    "rpm_input",
+    "artifact",
+    "header",
+    "pkgconfig",
+    "license",
+    "checks"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/xcb-util-cursor-build.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-xcb-util-cursor-build"
+    },
+    "version": {
+      "const": "0.1.6"
+    },
+    "identity": {
+      "enum": [
+        "host",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ]
+    },
+    "prefix": {
+      "type": "string",
+      "pattern": "^/(?:usr|opt/crossforge/qualification/qt/6\\.8\\.4/deps/host/xcb-util-cursor)$"
+    },
+    "compiler_dumpmachine": {
+      "type": "string",
+      "minLength": 1
+    },
+    "build_environment": {
+      "$ref": "#/$defs/build_environment"
+    },
+    "builder": {
+      "$ref": "#/$defs/builder"
+    },
+    "source_component": {
+      "$ref": "#/$defs/source_component"
+    },
+    "qualification_component": {
+      "$ref": "#/$defs/qualification_component"
+    },
+    "rpm_input": {
+      "$ref": "#/$defs/rpm_input"
+    },
+    "artifact": {
+      "$ref": "#/$defs/artifact"
+    },
+    "header": {
+      "$ref": "#/$defs/header"
+    },
+    "pkgconfig": {
+      "$ref": "#/$defs/pkgconfig"
+    },
+    "license": {
+      "$ref": "#/$defs/license"
+    },
+    "checks": {
+      "$ref": "#/$defs/checks"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "const": "sources/xcb-util-cursor"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "qualification_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "const": "future/qt-qualification"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "rpm_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lock_file",
+        "lock_sha256",
+        "transaction_sha256",
+        "parent_lock_sha256"
+      ],
+      "properties": {
+        "lock_file": {
+          "type": "string",
+          "pattern": "^locks/(?:host-qt-build-el8-x86_64|qt-target-el8-(?:x86_64|aarch64))\\.json$"
+        },
+        "lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "transaction_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "parent_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "build_environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image",
+        "target",
+        "tier"
+      ],
+      "properties": {
+        "image": {
+          "enum": [
+            "host-qt-build-locked",
+            "qt-target-x86_64-locked",
+            "qt-target-aarch64-locked"
+          ]
+        },
+        "target": {
+          "enum": [
+            "host",
+            "x86_64-unknown-linux-gnu",
+            "aarch64-unknown-linux-gnu"
+          ]
+        },
+        "tier": {
+          "enum": [
+            "host-direct",
+            "cross-no-exec"
+          ]
+        }
+      }
+    },
+    "builder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "file": {
+          "const": "scripts/build-xcb-util-cursor.py"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "size",
+        "machine",
+        "soname",
+        "needed"
+      ],
+      "properties": {
+        "path": {
+          "const": "lib64/libxcb-cursor.so.0.0.0"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "machine": {
+          "enum": [
+            "Advanced Micro Devices X86-64",
+            "AArch64"
+          ]
+        },
+        "soname": {
+          "const": "libxcb-cursor.so.0"
+        },
+        "needed": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9+_.-]+\\.so(?:\\.[0-9]+)*$"
+          }
+        }
+      }
+    },
+    "header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "const": "include/xcb/xcb_cursor.h"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "pkgconfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "const": "lib64/pkgconfig/xcb-cursor.pc"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "const": "share/licenses/xcb-util-cursor/COPYING"
+        },
+        "sha256": {
+          "const": "0dde91ae1d443105dc9e13cbaed6674c36683b7095836ad9ddfce26be270aad5"
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "no_rpath",
+        "no_textrel",
+        "target_execution",
+        "host_probe_passed"
+      ],
+      "properties": {
+        "no_rpath": {
+          "const": true
+        },
+        "no_textrel": {
+          "const": true
+        },
+        "target_execution": {
+          "enum": [
+            "host-dlopen-probe",
+            "forbidden"
+          ]
+        },
+        "host_probe_passed": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
