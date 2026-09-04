@@ -537,6 +537,9 @@ mode, owner and group, and can mark configuration files as `config` or
 `noreplace`; these values are recorded in the canonical plan and verified from
 the installed packages. Recursive attribute overrides, unsafe modes and unknown
 relation fields fail closed.
+The project version is shared, while DEB and RPM carry independent numeric
+epochs and release strings; generated component dependencies bind the exact
+format-specific epoch-version-release.
 
 When `debug_symbols` names an otherwise empty debug component, crosspack uses
 the selected target `objcopy` on a private staging copy and adds a matching GNU

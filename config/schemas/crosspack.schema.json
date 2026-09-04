@@ -53,6 +53,7 @@
       "required": [
         "name",
         "version",
+        "epoch",
         "release",
         "vendor",
         "homepage",
@@ -69,8 +70,11 @@
         "version": {
           "$ref": "#/$defs/version"
         },
+        "epoch": {
+          "$ref": "#/$defs/format_epoch"
+        },
         "release": {
-          "$ref": "#/$defs/version"
+          "$ref": "#/$defs/format_release"
         },
         "vendor": {
           "$ref": "#/$defs/text"
@@ -326,6 +330,42 @@
     "version": {
       "type": "string",
       "pattern": "^[A-Za-z0-9][A-Za-z0-9.+_~:-]*$"
+    },
+    "format_epoch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "rpm": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      }
+    },
+    "format_release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "$ref": "#/$defs/version"
+        },
+        "rpm": {
+          "$ref": "#/$defs/version"
+        }
+      }
     },
     "text": {
       "type": "string",

@@ -17,7 +17,8 @@ CROSSPACK_POLICY = {
     "ownership": "complete-exclusive-staged-tree",
     "paths": "canonical-no-escape-no-overlap",
     "external_dependencies": "explicit-per-format",
-    "internal_dependencies": "exact-version-release",
+    "internal_dependencies": "exact-epoch-version-release",
+    "versioning": "shared-version-format-specific-epoch-release",
     "relations": {
         "deb": [
             "depends",

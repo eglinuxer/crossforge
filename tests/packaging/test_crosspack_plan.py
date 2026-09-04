@@ -681,6 +681,12 @@ class CrosspackPlanTests(unittest.TestCase):
         invalid_epoch["project"]["source_date_epoch"] = True
         with self.assertRaises(CROSSPACK["CrosspackError"]):
             CROSSPACK["validate_config"](invalid_epoch)
+        for epoch in (-1, True, 2147483648):
+            with self.subTest(package_epoch=epoch):
+                invalid_package_epoch = copy.deepcopy(self.config)
+                invalid_package_epoch["project"]["epoch"]["deb"] = epoch
+                with self.assertRaises(CROSSPACK["CrosspackError"]):
+                    CROSSPACK["validate_config"](invalid_package_epoch)
 
         for attributes in (
             {},
@@ -721,6 +727,38 @@ class CrosspackPlanTests(unittest.TestCase):
         )
         with self.assertRaises(CROSSPACK["CrosspackError"]):
             CROSSPACK["load_json"](path)
+
+    def test_format_specific_epoch_and_release_drive_relations_and_metadata(self):
+        config = copy.deepcopy(self.config)
+        config["project"]["epoch"] = {"deb": 2, "rpm": 3}
+        config["project"]["release"] = {"deb": "4deb", "rpm": "4.el8"}
+        plan = CROSSPACK["build_plan"](config, self.root)
+        packages = {item["component"]: item for item in plan["packages"]}
+        development = packages["development"]
+        self.assertEqual(
+            development["relations"]["deb"]["depends"],
+            ["crossforge-demo (= 2:1.2.3-4deb)"],
+        )
+        self.assertEqual(
+            development["relations"]["rpm"]["requires"],
+            ["crossforge-demo = 3:1.2.3-4.el8"],
+        )
+        deb = CROSSPACK["nfpm_config"](
+            plan, packages["runtime"], "deb", self.root
+        )
+        rpm = CROSSPACK["nfpm_config"](
+            plan, packages["runtime"], "rpm", self.root
+        )
+        self.assertEqual((deb["epoch"], deb["release"]), ("2", "4deb"))
+        self.assertEqual((rpm["epoch"], rpm["release"]), ("3", "4.el8"))
+        self.assertEqual(
+            CROSSPACK["package_filename"](plan, packages["runtime"], "deb"),
+            "crossforge-demo_1.2.3-4deb_amd64.deb",
+        )
+        self.assertEqual(
+            CROSSPACK["package_filename"](plan, packages["runtime"], "rpm"),
+            "crossforge-demo-1.2.3-4.el8.x86_64.rpm",
+        )
 
     def test_special_privileged_and_world_writable_files_are_rejected(self):
         fifo = self.root / "usr/share/crossforge/fifo"

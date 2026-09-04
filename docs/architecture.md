@@ -419,11 +419,11 @@ CPython 的上游 Sigstore bundle 同样以原始 base64 envelope 归档，并�
 Phase 14 已证明现有 `crosspack` 能从显式 staging tree 生成字节可复现的双架构
 DEB/RPM，拆分 debug symbols，审计动态 ELF，并用真实 `dpkg`/`rpm` 复核安装
 payload。当前内部 schema 已提供格式特定 relations、精确 component edge、显式
-mode/owner/group、`config`/`noreplace`，并按最终 destination/RUNPATH 唯一解析
-`DT_NEEDED` provider；DEB/RPM 各自的 version/libdir、scriptlets、independent component
-和 sealed staging/variant provenance 仍须在首次公开发布前完成。现有安装门禁也不构成
-目标发行版运行资格化。不能先发布一个功能不足的 schema v1，再立即用 schema v2
-修正基本生产语义。
+mode/owner/group、`config`/`noreplace`、共享 project version 下格式特定的
+epoch/release，并按最终 destination/RUNPATH 唯一解析 `DT_NEEDED` provider；
+DEB/RPM 各自的 libdir、scriptlets、independent component 和 sealed staging/variant
+provenance 仍须在首次公开发布前完成。现有安装门禁也不构成目标发行版运行资格化。
+不能先发布一个功能不足的 schema v1，再立即用 schema v2 修正基本生产语义。
 
 ### 14.1 职责边界
 

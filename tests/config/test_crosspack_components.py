@@ -134,6 +134,10 @@ class CrosspackComponentTests(unittest.TestCase):
             policy["configuration_files"], ["config", "noreplace"]
         )
         self.assertEqual(
+            policy["versioning"],
+            "shared-version-format-specific-epoch-release",
+        )
+        self.assertEqual(
             policy["debug_symbols"],
             "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
         )

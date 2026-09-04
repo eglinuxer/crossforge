@@ -286,7 +286,10 @@ def build(
                     "mode=upgrade-default\n", encoding="utf-8"
                 )
                 upgrade_config = copy.deepcopy(config)
-                upgrade_config["project"]["release"] = "5"
+                upgrade_config["project"]["release"] = {
+                    "deb": "5",
+                    "rpm": "5",
+                }
                 upgrade_config_path = temporary / arch / "crosspack-upgrade.json"
                 write_json(upgrade_config_path, upgrade_config)
                 upgrade = temporary / arch / "upgrade"

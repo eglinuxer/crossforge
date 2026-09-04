@@ -50,7 +50,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "f13ada025f2608bef5eb7948eb4243df26e2cab71fa25b0b845fd4dea2721f7c",
+      "canonical_sha256": "a2c5cb21aca38dcf948b90becdd983b6e997e45fc30f34c7fef8bfc8389a8e6d",
       "component": "implementation/crosspack",
       "path": "config/generated/components/implementation/crosspack.json",
       "scope": "build"
@@ -152,13 +152,13 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "1137028ee30edb17ef5927cfd06964c428fe5058da3d403d22ee62cc433cc6ce",
+      "canonical_sha256": "75b51617e04e997ba6d4dc63b1d74987c10d919088699c795958067eb7c8c47c",
       "component": "packaging/qualification",
       "path": "config/generated/components/packaging/qualification.json",
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "60a6307849e36b79602043f3353fcf57e9170b26579705d1f0940bdf1506e180",
+      "canonical_sha256": "657f4878516450a11b5d0b1ba9af1b80c1295f51d2b9fba1e1b86b4eee85df6f",
       "component": "packaging/sdk-build",
       "path": "config/generated/components/packaging/sdk-build.json",
       "scope": "build"
@@ -176,7 +176,7 @@
       "scope": "supply"
     },
     {
-      "canonical_sha256": "ba1acfcd6d78fc48c288d75981cfa9535451aa7864658f1cd8d744b9364aacd3",
+      "canonical_sha256": "6ca02aa5d1d2762b3a383e24980f169ff7164701b94feb5e207c1d7abce21c0b",
       "component": "product/sdk-qualification",
       "path": "config/generated/components/product/sdk-qualification.json",
       "scope": "qualification"

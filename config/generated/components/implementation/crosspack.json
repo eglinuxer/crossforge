@@ -38,7 +38,7 @@
     },
     {
       "path": "/@implementation/crosspack/internal_dependencies",
-      "value": "exact-version-release"
+      "value": "exact-epoch-version-release"
     },
     {
       "path": "/@implementation/crosspack/ownership",
@@ -191,6 +191,10 @@
     {
       "path": "/@implementation/crosspack/targets/x86_64/rpm",
       "value": "x86_64"
+    },
+    {
+      "path": "/@implementation/crosspack/versioning",
+      "value": "shared-version-format-specific-epoch-release"
     }
   ],
   "schema_version": 1,

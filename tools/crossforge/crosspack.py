@@ -240,6 +240,7 @@ def validate_config(config):
     project_keys = {
         "name",
         "version",
+        "epoch",
         "release",
         "vendor",
         "homepage",
@@ -253,7 +254,17 @@ def validate_config(config):
     exact_keys(project, project_keys, "project")
     name(project["name"], "project.name")
     version(project["version"], "project.version")
-    version(project["release"], "project.release")
+    exact_keys(project["epoch"], {"deb", "rpm"}, "project.epoch")
+    exact_keys(project["release"], {"deb", "rpm"}, "project.release")
+    for packager in ("deb", "rpm"):
+        epoch = project["epoch"][packager]
+        require(
+            isinstance(epoch, int)
+            and not isinstance(epoch, bool)
+            and 0 <= epoch <= 2147483647,
+            "project.epoch.%s must be a non-negative integer" % packager,
+        )
+        version(project["release"][packager], "project.release.%s" % packager)
     for field in ("vendor", "maintainer", "license"):
         text(project[field], "project.%s" % field)
     require(
@@ -649,17 +660,23 @@ def validate_symlinks(config, packages, destination_owners):
             )
 
 
+def version_release(project, packager, include_epoch=True):
+    value = "%s-%s" % (project["version"], project["release"][packager])
+    epoch = project["epoch"][packager]
+    return "%d:%s" % (epoch, value) if include_epoch and epoch else value
+
+
 def package_relations(config, component, packager):
     project = config["project"]
-    version_release = "%s-%s" % (project["version"], project["release"])
+    exact_version = version_release(project, packager)
     components = {item["name"]: item for item in config["components"]}
     internal = []
     for logical_name in sorted(component["relations"]["components"]):
         package_name = components[logical_name]["package_names"][packager]
         if packager == "deb":
-            internal.append("%s (= %s)" % (package_name, version_release))
+            internal.append("%s (= %s)" % (package_name, exact_version))
         else:
-            internal.append("%s = %s" % (package_name, version_release))
+            internal.append("%s = %s" % (package_name, exact_version))
     relations = {
         key: sorted(value)
         for key, value in component["relations"][packager].items()
@@ -930,7 +947,8 @@ def nfpm_config(plan_document, package, packager, staging_root):
         "platform": "linux",
         "version": project["version"],
         "version_schema": "none",
-        "release": project["release"],
+        "epoch": str(project["epoch"][packager]),
+        "release": project["release"][packager],
         "section": project["section"],
         "priority": project["priority"],
         "maintainer": project["maintainer"],
@@ -987,11 +1005,11 @@ def render_nfpm_configs(plan_document, staging_root):
 def package_filename(plan_document, package, packager):
     project = plan_document["project"]
     package_name = package["package_names"][packager]
-    version_release = "%s-%s" % (project["version"], project["release"])
+    package_version = version_release(project, packager, include_epoch=False)
     architecture = plan_document["architectures"][packager]
     if packager == "deb":
-        return "%s_%s_%s.deb" % (package_name, version_release, architecture)
-    return "%s-%s.%s.rpm" % (package_name, version_release, architecture)
+        return "%s_%s_%s.deb" % (package_name, package_version, architecture)
+    return "%s-%s.%s.rpm" % (package_name, package_version, architecture)
 
 
 def run_command(arguments, environment=None):

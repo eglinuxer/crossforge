@@ -4,7 +4,14 @@
   "project": {
     "name": "crossforge-demo",
     "version": "1.2.3",
-    "release": "4",
+    "epoch": {
+      "deb": 0,
+      "rpm": 0
+    },
+    "release": {
+      "deb": "4",
+      "rpm": "4"
+    },
     "vendor": "Crossforge",
     "homepage": "https://crossforge.dev",
     "maintainer": "Crossforge Maintainers <maintainers@crossforge.dev>",
