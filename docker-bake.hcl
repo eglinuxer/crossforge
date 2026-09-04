@@ -308,6 +308,22 @@ target "gcc-testsuite-smoke-evidence" {
   output   = ["type=cacheonly"]
 }
 
+target "gcc-testsuite-x86_64-full-observe" {
+  inherits = ["_common"]
+  target   = "gcc-testsuite-x86_64-full-observe"
+  output   = ["type=cacheonly"]
+}
+
+target "gcc-testsuite-full-observation-evidence" {
+  inherits = ["_common"]
+  target   = "gcc-testsuite-full-observation-evidence"
+  output   = ["type=cacheonly"]
+}
+
+group "gcc-testsuite-full-observe" {
+  targets = ["gcc-testsuite-full-observation-evidence"]
+}
+
 group "gcc-testsuite-smoke" {
   targets = ["gcc-testsuite-smoke-evidence"]
 }

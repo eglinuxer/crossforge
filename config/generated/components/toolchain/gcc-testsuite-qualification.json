@@ -3,7 +3,7 @@
   "component": "toolchain/gcc-testsuite-qualification",
   "dependencies": [
     {
-      "canonical_sha256": "116d37555c76dc252205f78ee4fbcd4e86e90c22fde8dfaeb4e0c21b00066989",
+      "canonical_sha256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
       "component": "rpm/host-gcc-test"
     },
     {

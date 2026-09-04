@@ -87,7 +87,17 @@ HOST_COMMON_ROOTS = {
     "zlib-devel",
 }
 HOST_GCC_ROOTS = {"bison", "flex", "libzstd-devel"}
-HOST_GCC_TEST_ROOTS = {"dejagnu", "expect"}
+HOST_GCC_TEST_ROOTS = {"dejagnu", "expect", "gcc"}
+HOST_GCC_TEST_FORWARD = {
+    "annobin",
+    "cpp",
+    "dejagnu",
+    "expect",
+    "gcc",
+    "gcc-plugin-annobin",
+    "isl",
+    "libgcc",
+}
 HOST_GCC_TEST_REPOSITORIES = {
     "baseos": (
         "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/"
@@ -609,23 +619,49 @@ def validate_locked_host_gcc_test_contract(transaction):
     requests = transaction["requests"]
     if [request["name"] for request in requests] != sorted(HOST_GCC_TEST_ROOTS):
         raise ValidationError("locked GCC test host roots differ")
-    expected_origins = {"dejagnu": "powertools", "expect": "baseos"}
+    expected_origins = {
+        "annobin": "appstream",
+        "cpp": "appstream",
+        "dejagnu": "powertools",
+        "expect": "baseos",
+        "gcc": "appstream",
+        "gcc-plugin-annobin": "appstream",
+        "isl": "appstream",
+        "libgcc": "baseos",
+    }
+    expected_reasons = {
+        "annobin": "dependency",
+        "cpp": "dependency",
+        "dejagnu": "user",
+        "expect": "user",
+        "gcc": "user",
+        "gcc-plugin-annobin": "dependency",
+        "isl": "dependency",
+        "libgcc": "unknown",
+    }
+    expected_actions = {
+        name: ("upgrade" if name == "libgcc" else "install")
+        for name in HOST_GCC_TEST_FORWARD
+    }
     forward = [
         item
         for item in transaction["items"]
         if item["action"] in ("install", "upgrade")
     ]
-    if any(item["action"] == "remove" for item in transaction["items"]):
-        raise ValidationError("GCC test host transaction may not remove packages")
-    if {item["name"] for item in forward} != HOST_GCC_TEST_ROOTS:
+    if {item["name"] for item in forward} != HOST_GCC_TEST_FORWARD:
         raise ValidationError("GCC test host delta differs")
     for item in forward:
         if (
-            item["action"] != "install"
-            or item["reason"] != "user"
+            item["action"] != expected_actions[item["name"]]
+            or item["reason"] != expected_reasons[item["name"]]
             or item["repo_id"] != expected_origins[item["name"]]
         ):
             raise ValidationError("GCC test host package origin differs")
+    removed = [item for item in transaction["items"] if item["action"] == "remove"]
+    if len(removed) != 1 or (
+        removed[0]["name"], removed[0]["reason"], removed[0]["repo_id"]
+    ) != ("libgcc", "unknown", "@System"):
+        raise ValidationError("GCC test host replacement set differs")
     forward_nevras = {item["nevra"] for item in forward}
     for request in requests:
         resolved_name, resolved_arch = nevra_name_arch(request["resolved_nevra"])
@@ -644,10 +680,10 @@ def validate_locked_host_gcc_test_contract(transaction):
     result = set(validate_manifest(
         transaction["manifests"]["result"], "GCC test host result manifest"
     ))
-    remove = validate_manifest(
+    remove = set(validate_manifest(
         transaction["manifests"]["remove"], "GCC test host remove manifest"
-    )
-    if remove or result != base | forward_nevras:
+    ))
+    if remove != {removed[0]["nevra"]} or result != (base - remove) | forward_nevras:
         raise ValidationError("GCC test host transaction algebra differs")
 
 

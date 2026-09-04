@@ -1,0 +1,17 @@
+lappend boards_dir "/work/tests/gcc/boards"
+
+foreach variable {
+    GCC_UNDER_TEST GXX_UNDER_TEST GCC_AR_UNDER_TEST GCOV_UNDER_TEST
+    CROSSFORGE_GCC_TOOL_PREFIX
+} {
+    if {![info exists ::env($variable)] || $::env($variable) eq ""} {
+        error "missing Crossforge testsuite environment: $variable"
+    }
+}
+
+set GCC_UNDER_TEST \
+    "$::env(GCC_UNDER_TEST) -B$::env(CROSSFORGE_GCC_TOOL_PREFIX)/"
+set GXX_UNDER_TEST \
+    "$::env(GXX_UNDER_TEST) -B$::env(CROSSFORGE_GCC_TOOL_PREFIX)/"
+set GCC_AR_UNDER_TEST $::env(GCC_AR_UNDER_TEST)
+set GCOV_UNDER_TEST $::env(GCOV_UNDER_TEST)

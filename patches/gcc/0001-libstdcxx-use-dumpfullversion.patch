@@ -1,0 +1,11 @@
+--- a/libstdc++-v3/testsuite/lib/dts.exp
++++ b/libstdc++-v3/testsuite/lib/dts.exp
+@@ -8,7 +8,7 @@ proc get_dts_base_major_version { } {
+ 
+     # Invoke /usr/bin/gcc to get at the underlying GCC version
+     # in dotted form (e.g. "4.8.5").
+-    set dotted_version [exec /usr/bin/gcc -dumpversion]
++    set dotted_version [exec /usr/bin/gcc -dumpfullversion]
+     verbose "dotted_version: '$dotted_version'" 2
+ 
+     # Extract major, minor, patchlevel

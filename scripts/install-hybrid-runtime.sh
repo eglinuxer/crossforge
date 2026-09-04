@@ -46,10 +46,18 @@ esac
 
 gcc_lib=$destdir$prefix/lib/gcc/$target/$gcc_major
 nonshared=$gcc_build/$target/libstdc++-v3/src/.libs/libstdc++_nonshared80.a
-[[ -d "$gcc_lib" && -s "$nonshared" ]] || {
+libgcc_eh=$gcc_lib/libgcc_eh.a
+[[ -d "$gcc_lib" && -s "$nonshared" && -s "$libgcc_eh" ]] || {
   echo "error: incomplete GCC install or missing vendor nonshared archive" >&2
   exit 1
 }
+for symbol in __gcc_nested_func_ptr_created __gcc_nested_func_ptr_deleted; do
+  nm -g --defined-only "$libgcc_eh" \
+    | grep -E "[[:space:]][TW] $symbol$" >/dev/null || {
+    echo "error: cross-built libgcc_eh.a lacks $symbol" >&2
+    exit 1
+  }
+done
 [[ -e "$sysroot/usr/lib64/libstdc++.so.6" ]] || {
   echo "error: EL8 libstdc++ runtime is missing" >&2
   exit 1
@@ -85,7 +93,7 @@ printf '%s\n' \
   ')' >"$gcc_lib/libstdc++.so"
 printf '%s\n' \
   "OUTPUT_FORMAT($output_format)" \
-  'GROUP ( =/lib64/libgcc_s.so.1 libgcc.a )' \
+  'GROUP ( =/lib64/libgcc_s.so.1 libgcc.a libgcc_eh.a )' \
   >"$gcc_lib/libgcc_s.so"
 
 remaining=$(find "$destdir$prefix" \( -type f -o -type l \) \

@@ -56,6 +56,11 @@
       "name": "expect",
       "arch": "any",
       "purpose": "gcc-testsuite"
+    },
+    {
+      "name": "gcc",
+      "arch": "any",
+      "purpose": "gcc-testsuite"
     }
   ]
 }

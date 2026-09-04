@@ -17,7 +17,7 @@ Rust prototype: tag `prototype-rust-2026-08-28`. Do not commit caches.
 - `docker buildx bake cmake-host-tool ninja-host-tool` locks host tools; `docker buildx bake vcpkg-upstream-tier3-qualified` runs all three curated tiers across five triplets offline.
 - Packaging tests live in `tests/packaging`; `docker buildx bake packaging-qualified sdk-complete-dev` qualifies split/debug packages, ELF audits, and the composed SDK.
 - `docker buildx bake toolchain-x86_64-dev toolchain-aarch64-dev` builds both cross slices; aarch64 uses pinned QEMU, never implicit binfmt.
-- `docker buildx bake gcc-testsuite-smoke` runs the GCC execute slice on x86_64 and both aarch64 runtime tiers, then emits reviewable evidence.
+- `docker buildx bake gcc-testsuite-smoke` qualifies the execute slice; `docker buildx bake gcc-testsuite-full-observe` captures x86_64 full-suite candidates without qualifying them.
 - `docker buildx bake phase10` requalifies all Python 3.9–3.14 rows for both targets. `python-native-latest` and `python-matrix` select the same six-row contract. Graph existence or a build probe alone is not qualification evidence.
 
 Never publish `sdk-skeleton` or `-dev` targets; tag only locked, qualified candidates.

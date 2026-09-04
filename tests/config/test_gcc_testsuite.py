@@ -3,12 +3,14 @@ import runpy
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 CONTRACT = runpy.run_path(
     str(REPOSITORY / "scripts/validate-gcc-testsuite.py")
 )
+RUNNER = runpy.run_path(str(REPOSITORY / "scripts/run-gcc-testsuite.py"))
 
 
 class GccTestsuiteContractTests(unittest.TestCase):
@@ -35,20 +37,43 @@ class GccTestsuiteContractTests(unittest.TestCase):
             self.plan["targets"], CONTRACT["TARGET_CONTRACT"]
         )
 
-    def test_full_plan_has_exactly_the_five_required_make_targets(self):
+    def test_full_plan_has_exactly_the_four_real_upstream_testsuites(self):
         self.assertEqual(self.full_plan["profile"], "full")
+        self.assertEqual(self.full_plan["host_gcc_major"], "8")
+        self.assertEqual(self.full_plan["jobs"], 4)
         self.assertEqual(
             self.full_plan["suites"], CONTRACT["FULL_SUITE_CONTRACT"]
         )
         self.assertEqual(
-            [suite["make_target"] for suite in self.full_plan["suites"]],
+            [
+                suite["make_target"]
+                for suite in self.full_plan["suites"]
+                if "make_target" in suite
+            ],
             [
                 "check-g++",
                 "check-gcc",
-                "check-target-libgcc",
                 "check-target-libgomp",
-                "check-target-libstdc++-v3",
             ],
+        )
+        self.assertEqual(
+            [
+                suite.get("make_directory")
+                for suite in self.full_plan["suites"]
+                if suite["id"] in ("g++.full", "gcc.full")
+            ],
+            ["gcc", "gcc"],
+        )
+        self.assertEqual(
+            self.full_plan["suites"][-1],
+            {
+                "id": "libstdc++.full",
+                "driver": "runtest-installed",
+                "tool": "libstdc++",
+                "timeout_seconds": 7200,
+                "sum_file": "libstdc++.sum",
+                "runtestflags": [],
+            },
         )
 
     def test_target_summary_templates_are_expanded_and_fail_closed(self):
@@ -207,7 +232,9 @@ class GccTestsuiteContractTests(unittest.TestCase):
         wrong_board["targets"][1]["runtime_tiers"][0]["board"][
             "sha256"
         ] = "0" * 64
-        for candidate in (wrong_site, wrong_board):
+        wrong_patch = copy.deepcopy(self.full_plan)
+        wrong_patch["source_patches"][0]["sha256"] = "0" * 64
+        for candidate in (wrong_site, wrong_board, wrong_patch):
             with self.assertRaises(CONTRACT["ValidationError"]):
                 CONTRACT["validate_plan"](candidate)
 
@@ -226,6 +253,52 @@ class GccTestsuiteContractTests(unittest.TestCase):
             '"observation mode must not claim a qualification component"',
             runner,
         )
+        self.assertIn("print_log_tail(make_log)", runner)
+        self.assertGreaterEqual(runner.count("print_log_diagnostics(source_log)"), 2)
+        self.assertIn('"--fuzz=0"', runner)
+        self.assertIn('target_record["before_sha256"]', runner)
+        self.assertIn('target_record["after_sha256"]', runner)
+        self.assertIn('driver == "runtest-installed"', runner)
+        self.assertIn('"--tool"', runner)
+        self.assertIn("prepare_runtime_links", runner)
+        self.assertIn("GCC_RUNTEST_PARALLELIZE_DIR", runner)
+        self.assertIn("GCC testsuite progress", runner)
+        self.assertIn("made no observable progress for 600 seconds", runner)
+        self.assertIn("dg-extract-results.sh", runner)
+        self.assertIn('driver != "runtest-installed"', runner)
+        self.assertIn("installed libstdc++ tests used a build-tree library", runner)
+        self.assertIn('"g++": gxx', runner)
+        self.assertIn('"gcc-ar": gcc_ar', runner)
+        self.assertIn('"gcov": gcov', runner)
+        self.assertIn('"GCC_AR_UNDER_TEST": str(gcc_ar)', runner)
+        self.assertIn('"GCOV_UNDER_TEST": str(gcov)', runner)
+        self.assertIn('str(tool_prefix) + ":" + suite_environment["PATH"]', runner)
+        self.assertIn('Path(resolved_gxx).resolve() != gxx.resolve()', runner)
+
+    def test_progress_watchdog_stops_idle_workers_without_masking_the_error(self):
+        class IdleProcess:
+            def __init__(self):
+                self.running = True
+
+            def poll(self):
+                return None if self.running else -15
+
+            def terminate(self):
+                self.running = False
+
+        process = IdleProcess()
+        with mock.patch.object(
+            RUNNER["time"], "monotonic", side_effect=(0, 601)
+        ), mock.patch.object(RUNNER["time"], "sleep"), mock.patch(
+            "builtins.print"
+        ):
+            with self.assertRaisesRegex(
+                RUNNER["ValidationError"], "no observable progress"
+            ):
+                RUNNER["wait_with_progress"](
+                    "libstdc++.full", [process], [], 7200
+                )
+        self.assertFalse(process.running)
 
     def test_custom_qemu_boards_preserve_dynamic_el8_execution(self):
         boards = REPOSITORY / "tests/gcc/boards"
@@ -251,6 +324,28 @@ class GccTestsuiteContractTests(unittest.TestCase):
             self.assertIn("qemu-aarch64 -L %s" % root, text)
             self.assertIn("-cpu cortex-a53 -r 4.18.0", text)
             self.assertNotIn("-static", text)
+
+    def test_full_site_bridges_final_compilers_into_runtime_suites(self):
+        site = (REPOSITORY / "tests/gcc/full-site.exp").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("GCC_UNDER_TEST GXX_UNDER_TEST", site)
+        self.assertIn("GCC_AR_UNDER_TEST", site)
+        self.assertIn("GCOV_UNDER_TEST", site)
+        self.assertIn("CROSSFORGE_GCC_TOOL_PREFIX", site)
+        self.assertIn("set GCC_UNDER_TEST", site)
+        self.assertIn("set GXX_UNDER_TEST", site)
+        self.assertEqual(
+            CONTRACT["file_sha256"](REPOSITORY / "tests/gcc/full-site.exp"),
+            self.full_plan["site"]["sha256"],
+        )
+        self.assertEqual(len(self.full_plan["source_patches"]), 5)
+        for patch in self.full_plan["source_patches"]:
+            self.assertEqual(
+                CONTRACT["file_sha256"](REPOSITORY / patch["file"]),
+                patch["sha256"],
+            )
+            self.assertGreaterEqual(len(patch["targets"]), 1)
 
 
 if __name__ == "__main__":

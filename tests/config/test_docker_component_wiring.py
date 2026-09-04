@@ -315,21 +315,29 @@ class DockerComponentWiringTests(unittest.TestCase):
         argument = digest_arg(component)
         for arch in ("x86_64", "aarch64"):
             stage = "gcc-testsuite-%s-smoke" % arch
-            block = self.stages[stage]
-            self.assertEqual(self.parents[stage], "host-gcc-test-locked")
+            base = "gcc-testsuite-%s-base" % arch
+            block = self.stages[base] + self.stages[stage]
+            self.assertEqual(self.parents[base], "host-gcc-test-locked")
+            self.assertEqual(self.parents[stage], base)
             self.assertIn("ARG %s" % argument, block)
             self.assertIn(
                 "COPY config/generated/components/%s.json" % component,
                 block,
             )
             self.assertIn("run-gcc-testsuite.py", block)
+            self.assertIn("-fgraphite-identity", block)
+            self.assertIn("-ftrampoline-impl=heap", block)
+            self.assertIn("-gcov", block)
             self.assertIn("--network=none", block)
             self.assertIn("--prefix /opt/crossforge/targets/", block)
             self.assertIn("--host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json", block)
             self.assertNotIn("xgcc", block)
             self.assertNotIn(stage, self.reachable_stages("toolchain-%s-dev" % arch))
         aarch64 = self.stages["gcc-testsuite-aarch64-smoke"]
-        self.assertIn("qemu-aarch64-validated", self.dependencies["gcc-testsuite-aarch64-smoke"])
+        self.assertIn(
+            "qemu-aarch64-validated",
+            self.dependencies["gcc-testsuite-aarch64-base"],
+        )
         self.assertIn("--runtime-tier locked-sysroot", aarch64)
         self.assertIn("--runtime-tier clean-rocky", aarch64)
         evidence = self.stages["gcc-testsuite-smoke-evidence"]
@@ -343,6 +351,50 @@ class DockerComponentWiringTests(unittest.TestCase):
         build = (REPOSITORY / "scripts/build-gcc.sh").read_text(encoding="utf-8")
         self.assertIn("all-target-libgomp", build)
         self.assertNotIn("install-target-libgomp", build)
+        self.assertIn("--enable-shared", build)
+        self.assertIn('readlink -e "$isl_soname"', build)
+        self.assertIn("[libisl.so.23]", build)
+        hybrid = (
+            REPOSITORY / "scripts/install-hybrid-runtime.sh"
+        ).read_text(encoding="utf-8")
+        self.assertIn("libgcc.a libgcc_eh.a", hybrid)
+        self.assertIn("__gcc_nested_func_ptr_created", hybrid)
+        self.assertIn("__gcc_nested_func_ptr_deleted", hybrid)
+
+    def test_full_gcc_observation_is_isolated_from_qualification(self):
+        stages = [
+            "gcc-testsuite-x86_64-full-libstdcxx-observe",
+            "gcc-testsuite-x86_64-full-libgomp-observe",
+            "gcc-testsuite-x86_64-full-gxx-observe",
+            "gcc-testsuite-x86_64-full-observe",
+        ]
+        self.assertEqual(
+            self.parents[stages[0]], "gcc-testsuite-x86_64-base"
+        )
+        for parent, child in zip(stages, stages[1:]):
+            self.assertEqual(self.parents[child], parent)
+        block = "".join(self.stages[stage] for stage in stages)
+        self.assertEqual(block.count("--mode observation"), 4)
+        self.assertIn("config/gcc-testsuite-full.json", block)
+        self.assertIn("--candidate-baseline", block)
+        self.assertIn("COPY patches/gcc/ /work/patches/gcc/", block)
+        self.assertIn("--network=none", block)
+        self.assertNotIn("qualification-component", block)
+        for suite in ("g++.full", "gcc.full", "libgomp.full", "libstdc++.full"):
+            self.assertIn("--suite %s" % suite, block)
+        self.assertEqual(block.count("--defer-observation"), 3)
+        self.assertNotIn(
+            stages[-1], self.reachable_stages("toolchain-x86_64-dev")
+        )
+        evidence = self.stages["gcc-testsuite-full-observation-evidence"]
+        self.assertEqual(
+            self.parents["gcc-testsuite-full-observation-evidence"], "scratch"
+        )
+        for suite in ("g++", "gcc", "libgomp", "libstdc++"):
+            self.assertIn("%s.full.sum" % suite, evidence)
+            self.assertIn("%s.full.log" % suite, evidence)
+            self.assertIn("%s.full.make.log" % suite, evidence)
+        self.assertIn("x86_64-host-direct.candidate.json", evidence)
 
 
 if __name__ == "__main__":

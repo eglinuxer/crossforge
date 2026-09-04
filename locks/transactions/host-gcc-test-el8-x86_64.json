@@ -13,7 +13,7 @@
   },
   "plan": {
     "file": "config/rpm/host-gcc-test-el8-x86_64.plan.json",
-    "canonical_sha256": "0824a26effad27d575eb0af48c6495e187478c350873b015615f8cf3d866b09d"
+    "canonical_sha256": "0c1d2db4b19c4cd762160cba53ae268a68edbe8d3c348104adbb6c80e8194210"
   },
   "resolver": {
     "implementation": "python3-dnf",
@@ -560,9 +560,56 @@
       "purpose": "gcc-testsuite",
       "resolved_nevra": "expect-0:5.45.4-5.el8.x86_64",
       "disposition": "transaction"
+    },
+    {
+      "name": "gcc",
+      "arch": "any",
+      "purpose": "gcc-testsuite",
+      "resolved_nevra": "gcc-0:8.5.0-28.el8_10.x86_64",
+      "disposition": "transaction"
     }
   ],
   "items": [
+    {
+      "name": "annobin",
+      "epoch": 0,
+      "version": "11.13",
+      "release": "2.el8",
+      "arch": "x86_64",
+      "nevra": "annobin-0:11.13-2.el8.x86_64",
+      "repo_id": "appstream",
+      "location": "Packages/a/annobin-11.13-2.el8.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/a/annobin-11.13-2.el8.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "c6ca19e39d9b535b2bed43ef537452ec36b61b4f8c9d8af32af270a44747f8ff"
+      },
+      "size": 994508,
+      "install_size": 1005406,
+      "source_rpm": "annobin-11.13-2.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "cpp",
+      "epoch": 0,
+      "version": "8.5.0",
+      "release": "28.el8_10",
+      "arch": "x86_64",
+      "nevra": "cpp-0:8.5.0-28.el8_10.x86_64",
+      "repo_id": "appstream",
+      "location": "Packages/c/cpp-8.5.0-28.el8_10.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/c/cpp-8.5.0-28.el8_10.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "f871fae8f0ea77711e07d02813f800ee9d2869634a859effdf98da0a1dda13f8"
+      },
+      "size": 10930968,
+      "install_size": 29665478,
+      "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
     {
       "name": "dejagnu",
       "epoch": 1,
@@ -602,6 +649,103 @@
       "source_rpm": "expect-5.45.4-5.el8.src.rpm",
       "action": "install",
       "reason": "user"
+    },
+    {
+      "name": "gcc",
+      "epoch": 0,
+      "version": "8.5.0",
+      "release": "28.el8_10",
+      "arch": "x86_64",
+      "nevra": "gcc-0:8.5.0-28.el8_10.x86_64",
+      "repo_id": "appstream",
+      "location": "Packages/g/gcc-8.5.0-28.el8_10.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/g/gcc-8.5.0-28.el8_10.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "1001f6b4f57720b49bd0fcc64d2b5e29020fd74750611f53f4e815ab79d0939e"
+      },
+      "size": 24577352,
+      "install_size": 61713280,
+      "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "gcc-plugin-annobin",
+      "epoch": 0,
+      "version": "8.5.0",
+      "release": "28.el8_10",
+      "arch": "x86_64",
+      "nevra": "gcc-plugin-annobin-0:8.5.0-28.el8_10.x86_64",
+      "repo_id": "appstream",
+      "location": "Packages/g/gcc-plugin-annobin-8.5.0-28.el8_10.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/g/gcc-plugin-annobin-8.5.0-28.el8_10.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "7729e1e69e44cec771d98f5f9685dd324504fae40fdef43cba63bfc07083f568"
+      },
+      "size": 36368,
+      "install_size": 49384,
+      "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "isl",
+      "epoch": 0,
+      "version": "0.16.1",
+      "release": "6.el8",
+      "arch": "x86_64",
+      "nevra": "isl-0:0.16.1-6.el8.x86_64",
+      "repo_id": "appstream",
+      "location": "Packages/i/isl-0.16.1-6.el8.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/i/isl-0.16.1-6.el8.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "0ddba368d2ac203a49a0778b4d9b4017807ef22928b5313070cc1df35f77824b"
+      },
+      "size": 854328,
+      "install_size": 3207961,
+      "source_rpm": "isl-0.16.1-6.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "libgcc",
+      "epoch": 0,
+      "version": "8.5.0",
+      "release": "22.el8_10",
+      "arch": "x86_64",
+      "nevra": "libgcc-0:8.5.0-22.el8_10.x86_64",
+      "repo_id": "@System",
+      "action": "remove",
+      "reason": "unknown",
+      "location": null,
+      "url": null,
+      "repository_checksum": null,
+      "size": null,
+      "install_size": null,
+      "source_rpm": null
+    },
+    {
+      "name": "libgcc",
+      "epoch": 0,
+      "version": "8.5.0",
+      "release": "28.el8_10",
+      "arch": "x86_64",
+      "nevra": "libgcc-0:8.5.0-28.el8_10.x86_64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libgcc-8.5.0-28.el8_10.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/l/libgcc-8.5.0-28.el8_10.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "89f98cff56955f9dc4965dede3749c3b9cecd2d626b493112776c416c865c072"
+      },
+      "size": 83236,
+      "install_size": 190224,
+      "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm",
+      "action": "upgrade",
+      "reason": "unknown"
     }
   ],
   "manifests": {
@@ -882,12 +1026,15 @@
       "canonical_sha256": "fa48363024428aba74c74dabbb5bebe1c8c52342d3389cfefe56041bb26a7796"
     },
     "remove": {
-      "packages": [],
-      "canonical_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      "packages": [
+        "libgcc-0:8.5.0-22.el8_10.x86_64"
+      ],
+      "canonical_sha256": "6470bb7b3a7b8ffb6769e6fb60583d5f9ec2369862cde182d09d264a638ae22b"
     },
     "result": {
       "packages": [
         "acl-0:2.2.53-3.el8.x86_64",
+        "annobin-0:11.13-2.el8.x86_64",
         "audit-libs-0:3.1.2-1.el8.x86_64",
         "basesystem-0:11-5.el8.noarch",
         "bash-0:4.4.20-5.el8.x86_64",
@@ -900,6 +1047,7 @@
         "chkconfig-0:1.19.2-1.el8.x86_64",
         "coreutils-single-0:8.30-15.el8.x86_64",
         "cpio-0:2.12-11.el8.x86_64",
+        "cpp-0:8.5.0-28.el8_10.x86_64",
         "cracklib-0:2.9.6-15.el8.x86_64",
         "cracklib-dicts-0:2.9.6-15.el8.x86_64",
         "crypto-policies-0:20230731-1.git3177e06.el8.noarch",
@@ -934,6 +1082,8 @@
         "flex-0:2.6.1-9.el8.x86_64",
         "gawk-0:4.2.1-4.el8.x86_64",
         "gc-0:7.6.4-3.el8.x86_64",
+        "gcc-0:8.5.0-28.el8_10.x86_64",
+        "gcc-plugin-annobin-0:8.5.0-28.el8_10.x86_64",
         "gcc-toolset-15-binutils-0:2.44-3.el8.x86_64",
         "gcc-toolset-15-gcc-0:15.2.1-7.1.el8_10.x86_64",
         "gcc-toolset-15-gcc-c++-0:15.2.1-7.1.el8_10.x86_64",
@@ -965,6 +1115,7 @@
         "ima-evm-utils-0:1.3.2-12.el8.x86_64",
         "info-0:6.5-7.el8.x86_64",
         "iputils-0:20180629-11.el8.x86_64",
+        "isl-0:0.16.1-6.el8.x86_64",
         "iso-codes-0:3.79-2.el8.noarch",
         "jansson-0:2.14-1.el8.x86_64",
         "json-c-0:0.13.1-3.el8.x86_64",
@@ -991,7 +1142,7 @@
         "libdnf-0:0.63.0-19.el8.x86_64",
         "libfdisk-0:2.32.1-46.el8.x86_64",
         "libffi-0:3.1-24.el8.x86_64",
-        "libgcc-0:8.5.0-22.el8_10.x86_64",
+        "libgcc-0:8.5.0-28.el8_10.x86_64",
         "libgcrypt-0:1.8.5-7.el8_6.x86_64",
         "libgomp-0:8.5.0-28.el8_10.x86_64",
         "libgpg-error-0:1.31-1.el8.x86_64",
@@ -1161,7 +1312,7 @@
         "zlib-devel-0:1.2.11-26.el8.x86_64",
         "zstd-0:1.4.4-1.el8.x86_64"
       ],
-      "canonical_sha256": "b12b56c90d831028d6be29d74cb8347e5cbc4a8e2f52f814ad69302a50b0ea41"
+      "canonical_sha256": "99214f08ae601f0f3f2ee6f88d1724fa83e6470ffbde48a464f5d7462638217f"
     }
   }
 }

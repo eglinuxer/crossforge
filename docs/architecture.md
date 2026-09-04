@@ -3,7 +3,7 @@
 > 状态：已接受的实施基线（2026-08-28）
 > 本文是当前实现的架构契约。旧 Rust 原型及其设计记录只保留在 tag `prototype-rust-2026-08-28`。
 >
-> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约，以及 zlib/fmt、OpenSSL/curl、protobuf/Boost.JSON 三层 curated-port 门禁已完成，分包、完整 GCC/Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
+> 实施进度：canonical DNF resolver、双架构 sysroot、三层 host build locks、独立 host runtime、两套 GTS15 C/C++/LTO cross slice、冻结 EL8 ABI 集，以及 CPython 3.9–3.14 的 build/x86_64/aarch64 行与完整 ELF ownership gate 已完成；3.14 包含私有静态 zstd 1.5.7。最终 SDK 已重基于独立 host runtime 并通过离线集成资格化；CMake 4.4.0/Ninja 1.13.2 host-tool overlay、vcpkg 供应链、五套 triplet/chainload toolchain、真实无下载 overlay-port 契约、三层 curated-port 门禁、分包门禁及 x86_64 完整 GCC observation 框架已完成。完整 GCC 基线/双 target 资格化、Qt 验收及发布供应链尚未实现，当前产物仍为非发布 `-dev` target。
 
 ## 1. 产品契约
 
@@ -87,7 +87,7 @@ INPUT (
   -lstdc++_nonshared
   AS_NEEDED ( =/usr/lib64/libstdc++.so.6 )
 )
-GROUP ( =/lib64/libgcc_s.so.1 libgcc.a )
+GROUP ( =/lib64/libgcc_s.so.1 libgcc.a libgcc_eh.a )
 ```
 
 系统 unwinder 保持共享，以保证跨 DSO exception 正确。
@@ -151,8 +151,9 @@ Rocky 的 Meson 包强制依赖系统 Python development package；这是受审�
 transaction、源码和 staging 根不会进入产品闭包。
 
 GCC testsuite 的 host 依赖是独立的 test-only additive transaction：
-`expect` 来自 BaseOS，`dejagnu` 来自 PowerTools。PowerTools 在此闭包中只允许
-`dejagnu`，整个 transaction 与测试源码均不进入最终 SDK。
+`expect` 来自 BaseOS，`dejagnu` 来自 PowerTools，EL8 GCC 8 及其依赖来自
+AppStream/BaseOS。GCC 8 只用于 GTS libstdc++ DTS harness 的宿主版本探测；
+PowerTools 在此闭包中只允许 `dejagnu`，整个 transaction 与测试源码均不进入最终 SDK。
 
 ## 7. Python SDK
 
@@ -355,10 +356,14 @@ source commit → build once → candidate digest → 原物验收 → registry-
 
 - PR：JSON/Schema、Bash/Python syntax、Python 单测、Docker/Bake 静态检查和相关轻量 smoke；crosspack 实现后加入同层；
 - candidate：双 target C/C++/ABI、代表 Python、vcpkg ports、DEB/RPM 安装测试；
-- nightly/full：双 target 的 `check-gcc`、`check-g++`、`check-target-libgcc`、`check-target-libstdc++-v3`、`check-target-libgomp`，完整 Python 矩阵，以及 Qt 6.8.4 双 target；
+- nightly/full：双 target 的 `gcc/` 下 `check-gcc` 与 `check-g++`、针对最终 compiler/runtime 的 installed `runtest --tool libstdc++`、`check-target-libgomp`，完整 Python 矩阵，以及 Qt 6.8.4 双 target；语言测试必须直接从 `gcc/` 子目录启动，使 GNU Make 的 jobserver 分片真正分配给对应 DejaGNU worker，禁止从顶层 `check-gcc` 间接重跑全部语言；GCC 15 的顶层 `check-target-libgcc` 是无测试、无 summary 的空目标，不能作为资格化证据；libgcc 由 compiler testsuite 与最终 hybrid runtime 门禁覆盖；
 - release：同一 digest 的原生 aarch64 终检和资格化证明检查。
 
-GCC testsuite 必须指向镜像内最终安装的 compiler，并使用 EL8 shared runtime + Crossforge nonshared/libgcc 的最终 hybrid 组合。x86_64 在锁定的 EL8 test host 中直接执行；aarch64 日常使用固定 QEMU，分别在锁定 sysroot 与干净 Rocky arm64 根执行并生成结构化证据，release 使用原生 ARM。已知失败按 status + suite + test identity + occurrence 维护精确基线；新增或已消失的 FAIL/XPASS/ERROR/UNRESOLVED/KFAIL/KPASS/WARNING 均使基线差异失败，不允许用失败数量阈值掩盖回归。Phase 16 先用 GCC 自带 `execute.exp` 单例证明三个 board 与精确基线链路；`libgomp` 仅在 build tree 中为后续 `check-target-libgomp` 构建，不进入 SDK。
+GCC testsuite 必须指向镜像内最终安装的 compiler，并使用 EL8 shared runtime + Crossforge nonshared/libgcc 的最终 hybrid 组合。GTS 的 Graphite 补丁在运行时加载 `libisl.so.23`，因此工具链在 compiler-private 目录携带由同一锁定 SRPM 构建且校验 SONAME 的 ISL；hybrid `libgcc_s.so` 在 EL8 shared DSO 后以 `libgcc.a` 和 `libgcc_eh.a` 补充 GCC 15 新符号，并以 heap-trampoline 实际运行门禁验证。`libgomp` 只留在 build tree 中供测试。
+
+installed libstdc++ 测试从独立 workdir 运行，`LD_LIBRARY_PATH` 只把锁定 runtime DSO 置于首位，并拒绝任何 build-tree library 路径。四个 DejaGNU worker 复用上游 `GCC_RUNTEST_PARALLELIZE_DIR` 原子分片协议，按分钟报告进度；连续 600 秒无日志增长或总时长超过 7200 秒即失败。当前 GTS 快照缺少 `GCOV_UNDER_TEST` 与 cross `gcc-ar` testsuite 修复，两项按上游补丁精确回移。EL8 shared libstdc++ 保留 PR93672 的无限循环缺陷，因此该单例以 pinned test-only patch 明确标为 UNSUPPORTED；其他 runtime 差异仍进入精确候选，不得隐式跳过。
+
+x86_64 在锁定的 EL8 test host 中直接执行；aarch64 日常使用固定 QEMU，分别在锁定 sysroot 与干净 Rocky arm64 根执行并生成结构化证据，release 使用原生 ARM。已知失败按 status + suite + test identity + occurrence 维护精确基线；新增或已消失的 FAIL/XPASS/ERROR/UNRESOLVED/KFAIL/KPASS/WARNING 均使基线差异失败，不允许用失败数量阈值掩盖回归。Phase 16 用 `execute.exp` 单例证明三个 board 与基线链路；Phase 17 先以隔离、不可发布的 x86_64 observation 生成候选，逐项审查后才能形成 qualification baseline。
 
 Qt 验收固定 Qt 6.8.4 `qt-everywhere` 官方源码和 SHA256，构建完整开源 Linux desktop 模块集合，至少包括 qtbase、qtdeclarative、qtshadertools、qttools、qtwayland、qtmultimedia、qtquick3d 和 qtwebengine；不构建 examples/tests/docs。host tools 与 target 使用同版本并通过 `QT_HOST_PATH` 连接，required module/feature 被静默跳过即失败。Qt 产物只作为测试 artifact，不进入 SDK 镜像。
 
@@ -412,4 +417,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、带 debug/ELF 深审计的双格式分包门禁、单一 launcher 与完整 SDK 聚合已完成；后续推进完整 GCC/Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、带 debug/ELF 深审计的双格式分包门禁、单一 launcher、完整 SDK 聚合及 x86_64 GCC full observation 已完成；后续审查 GCC 候选并推进双 target 资格化、Qt 验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

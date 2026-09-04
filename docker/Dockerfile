@@ -969,11 +969,10 @@ RUN --network=none /work/qualification/x86_64/hello \
     && /work/qualification/x86_64/catch \
     && printf '%s\n' 'passed' > /work/qualification/clean-rocky.ok
 
-# The DejaGNU smoke profile runs the GCC source tests against the final
-# installed hybrid compiler, never build-tree xgcc. Test sources and host tools
-# remain confined to these qualification-only stages.
-FROM host-gcc-test-locked AS gcc-testsuite-x86_64-smoke
-ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
+# GCC test bases contain the source/build trees and test-only host closure, but
+# remain outside every SDK ancestry. Qualification and observation branch from
+# the same assembly so an observation can never inherit a passing smoke result.
+FROM host-gcc-test-locked AS gcc-testsuite-x86_64-base
 COPY --from=gcc-x86_64-built /work/prepared/gcc/ /work/prepared/gcc/
 COPY --from=gcc-x86_64-built /work/build/gcc-x86_64/ /work/build/gcc-x86_64/
 COPY --from=sysroot-x86_64 \
@@ -981,10 +980,7 @@ COPY --from=sysroot-x86_64 \
   /opt/crossforge/sysroots/el8/x86_64/
 COPY --from=binutils-x86_64 /work/binutils-stage/ /
 COPY --from=gcc-x86_64 /work/gcc-stage/ /
-COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
-  /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
 COPY config/release.json /work/config/release.json
-COPY config/gcc-testsuite-smoke.json /work/config/gcc-testsuite-smoke.json
 COPY config/schemas/release.schema.json /work/config/schemas/release.schema.json
 COPY config/schemas/gcc-testsuite-plan.schema.json \
   /work/config/schemas/gcc-testsuite-plan.schema.json
@@ -993,6 +989,26 @@ COPY config/schemas/gcc-testsuite-baseline.schema.json \
 COPY tests/gcc/ /work/tests/gcc/
 COPY scripts/validate-release.py scripts/release_component.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
+RUN --network=none \
+    /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc \
+      -O2 -fgraphite-identity \
+      /work/prepared/gcc/gcc/testsuite/gcc.dg/graphite/id-1.c \
+      -S -o /work/gcc-graphite-probe.s \
+    && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc \
+      -O2 -ftrampoline-impl=heap \
+      /work/prepared/gcc/gcc/testsuite/gcc.dg/heap-trampoline-1.c \
+      -o /work/gcc-heap-trampoline-probe \
+    && /work/gcc-heap-trampoline-probe \
+    && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcov \
+      --version
+
+# The DejaGNU smoke profile runs against the final installed hybrid compiler,
+# never a build-tree compiler, and remains the only locked qualification profile.
+FROM gcc-testsuite-x86_64-base AS gcc-testsuite-x86_64-smoke
+ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
+COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
+  /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
+COPY config/gcc-testsuite-smoke.json /work/config/gcc-testsuite-smoke.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
       --release /work/config/release.json \
@@ -1012,8 +1028,92 @@ RUN --network=none /usr/libexec/platform-python \
       --report \
         /work/qualification/gcc-testsuite/x86_64-host-direct.json
 
-FROM host-gcc-test-locked AS gcc-testsuite-aarch64-smoke
-ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
+FROM gcc-testsuite-x86_64-base AS gcc-testsuite-x86_64-full-libstdcxx-observe
+COPY config/gcc-testsuite-full.json /work/config/gcc-testsuite-full.json
+COPY patches/gcc/ /work/patches/gcc/
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/run-gcc-testsuite.py \
+      --mode observation \
+      --suite libstdc++.full \
+      --defer-observation \
+      --release /work/config/release.json \
+      --plan /work/config/gcc-testsuite-full.json \
+      --build /work/build/gcc-x86_64/gcc-build \
+      --source /work/prepared/gcc \
+      --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/x86_64 \
+      --target x86_64-unknown-linux-gnu \
+      --runtime-tier host-direct \
+      --site /work/tests/gcc/full-site.exp \
+      --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json \
+      --output /work/observation/gcc-testsuite/x86_64-host-direct \
+      --report /work/observation/gcc-testsuite/x86_64-host-direct.json \
+      --candidate-baseline \
+        /work/observation/gcc-testsuite/x86_64-host-direct.candidate.json
+
+FROM gcc-testsuite-x86_64-full-libstdcxx-observe AS gcc-testsuite-x86_64-full-libgomp-observe
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/run-gcc-testsuite.py \
+      --mode observation \
+      --suite libgomp.full \
+      --defer-observation \
+      --release /work/config/release.json \
+      --plan /work/config/gcc-testsuite-full.json \
+      --build /work/build/gcc-x86_64/gcc-build \
+      --source /work/prepared/gcc \
+      --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/x86_64 \
+      --target x86_64-unknown-linux-gnu \
+      --runtime-tier host-direct \
+      --site /work/tests/gcc/full-site.exp \
+      --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json \
+      --output /work/observation/gcc-testsuite/x86_64-host-direct \
+      --report /work/observation/gcc-testsuite/x86_64-host-direct.json \
+      --candidate-baseline \
+        /work/observation/gcc-testsuite/x86_64-host-direct.candidate.json
+
+FROM gcc-testsuite-x86_64-full-libgomp-observe AS gcc-testsuite-x86_64-full-gxx-observe
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/run-gcc-testsuite.py \
+      --mode observation \
+      --suite g++.full \
+      --defer-observation \
+      --release /work/config/release.json \
+      --plan /work/config/gcc-testsuite-full.json \
+      --build /work/build/gcc-x86_64/gcc-build \
+      --source /work/prepared/gcc \
+      --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/x86_64 \
+      --target x86_64-unknown-linux-gnu \
+      --runtime-tier host-direct \
+      --site /work/tests/gcc/full-site.exp \
+      --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json \
+      --output /work/observation/gcc-testsuite/x86_64-host-direct \
+      --report /work/observation/gcc-testsuite/x86_64-host-direct.json \
+      --candidate-baseline \
+        /work/observation/gcc-testsuite/x86_64-host-direct.candidate.json
+
+FROM gcc-testsuite-x86_64-full-gxx-observe AS gcc-testsuite-x86_64-full-observe
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/run-gcc-testsuite.py \
+      --mode observation \
+      --suite gcc.full \
+      --release /work/config/release.json \
+      --plan /work/config/gcc-testsuite-full.json \
+      --build /work/build/gcc-x86_64/gcc-build \
+      --source /work/prepared/gcc \
+      --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
+      --sysroot /opt/crossforge/sysroots/el8/x86_64 \
+      --target x86_64-unknown-linux-gnu \
+      --runtime-tier host-direct \
+      --site /work/tests/gcc/full-site.exp \
+      --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json \
+      --output /work/observation/gcc-testsuite/x86_64-host-direct \
+      --report /work/observation/gcc-testsuite/x86_64-host-direct.json \
+      --candidate-baseline \
+        /work/observation/gcc-testsuite/x86_64-host-direct.candidate.json
+
+FROM host-gcc-test-locked AS gcc-testsuite-aarch64-base
 COPY --from=gcc-aarch64-built /work/prepared/gcc/ /work/prepared/gcc/
 COPY --from=gcc-aarch64-built /work/build/gcc-aarch64/ /work/build/gcc-aarch64/
 COPY --from=sysroot-aarch64 \
@@ -1025,10 +1125,7 @@ COPY --from=rocky-runtime-aarch64-source / /runtime-root/
 COPY --from=qemu-aarch64-validated \
   /usr/local/libexec/crossforge/qemu-aarch64 \
   /usr/local/libexec/crossforge/qemu-aarch64
-COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
-  /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
 COPY config/release.json /work/config/release.json
-COPY config/gcc-testsuite-smoke.json /work/config/gcc-testsuite-smoke.json
 COPY config/schemas/release.schema.json /work/config/schemas/release.schema.json
 COPY config/schemas/gcc-testsuite-plan.schema.json \
   /work/config/schemas/gcc-testsuite-plan.schema.json
@@ -1037,6 +1134,26 @@ COPY config/schemas/gcc-testsuite-baseline.schema.json \
 COPY tests/gcc/ /work/tests/gcc/
 COPY scripts/validate-release.py scripts/release_component.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
+RUN --network=none \
+    /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc \
+      -O2 -fgraphite-identity \
+      /work/prepared/gcc/gcc/testsuite/gcc.dg/graphite/id-1.c \
+      -S -o /work/gcc-graphite-probe.s \
+    && /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc \
+      -O2 -ftrampoline-impl=heap \
+      /work/prepared/gcc/gcc/testsuite/gcc.dg/heap-trampoline-1.c \
+      -o /work/gcc-heap-trampoline-probe \
+    && /usr/local/libexec/crossforge/qemu-aarch64 \
+      -L /opt/crossforge/sysroots/el8/aarch64 \
+      /work/gcc-heap-trampoline-probe \
+    && /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcov \
+      --version
+
+FROM gcc-testsuite-aarch64-base AS gcc-testsuite-aarch64-smoke
+ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
+COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
+  /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
+COPY config/gcc-testsuite-smoke.json /work/config/gcc-testsuite-smoke.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
       --release /work/config/release.json \
@@ -1076,6 +1193,26 @@ RUN --network=none /usr/libexec/platform-python \
       --runtime-root /runtime-root \
       --output /work/qualification/gcc-testsuite/aarch64-clean-rocky \
       --report /work/qualification/gcc-testsuite/aarch64-clean-rocky.json
+
+FROM scratch AS gcc-testsuite-full-observation-evidence
+COPY --from=gcc-testsuite-x86_64-full-observe \
+  /work/observation/gcc-testsuite/x86_64-host-direct.json \
+  /work/observation/gcc-testsuite/x86_64-host-direct.candidate.json \
+  /observation/gcc-testsuite/
+COPY --from=gcc-testsuite-x86_64-full-observe \
+  /work/observation/gcc-testsuite/x86_64-host-direct/g++.full.sum \
+  /work/observation/gcc-testsuite/x86_64-host-direct/g++.full.log \
+  /work/observation/gcc-testsuite/x86_64-host-direct/g++.full.make.log \
+  /work/observation/gcc-testsuite/x86_64-host-direct/gcc.full.sum \
+  /work/observation/gcc-testsuite/x86_64-host-direct/gcc.full.log \
+  /work/observation/gcc-testsuite/x86_64-host-direct/gcc.full.make.log \
+  /work/observation/gcc-testsuite/x86_64-host-direct/libgomp.full.sum \
+  /work/observation/gcc-testsuite/x86_64-host-direct/libgomp.full.log \
+  /work/observation/gcc-testsuite/x86_64-host-direct/libgomp.full.make.log \
+  /work/observation/gcc-testsuite/x86_64-host-direct/libstdc++.full.sum \
+  /work/observation/gcc-testsuite/x86_64-host-direct/libstdc++.full.log \
+  /work/observation/gcc-testsuite/x86_64-host-direct/libstdc++.full.make.log \
+  /observation/gcc-testsuite/x86_64-host-direct/
 
 FROM scratch AS gcc-testsuite-smoke-evidence
 COPY --from=gcc-testsuite-x86_64-smoke \

@@ -70,12 +70,14 @@ build=$($source_directory/config.guess)
 isl_prefix=$build_directory/isl-install
 mkdir -p "$build_directory/isl-build" "$isl_prefix" "$destdir"
 
-if [[ ! -f "$isl_prefix/lib/libisl.a" ]]; then
+if [[ ! -f "$isl_prefix/lib/libisl.a" || ! -e "$isl_prefix/lib/libisl.so.23" ]]; then
+  rm -rf "$build_directory/isl-build" "$isl_prefix"
+  mkdir -p "$build_directory/isl-build" "$isl_prefix"
   (
     cd "$build_directory/isl-build"
     "$source_directory/isl-0.24/configure" \
       --prefix="$isl_prefix" \
-      --disable-shared \
+      --enable-shared \
       --enable-static
     make -j"$jobs"
     make install
@@ -124,6 +126,27 @@ make -j"$jobs" \
   all-gcc all-target-libgcc all-target-libstdc++-v3 all-target-libgomp
 make DESTDIR="$destdir" \
   install-gcc install-target-libgcc install-target-libstdc++-v3
+
+compiler_libdir=$destdir$prefix/lib/gcc/$target/15
+isl_soname=$isl_prefix/lib/libisl.so.23
+[[ -L "$isl_soname" ]] || {
+  echo "error: private ISL shared runtime was not built" >&2
+  exit 1
+}
+isl_runtime=$(readlink -e "$isl_soname")
+[[ -f "$isl_runtime" \
+  && "$isl_runtime" =~ ^$isl_prefix/lib/libisl\.so\.23\.[0-9]+\.[0-9]+$ ]] || {
+  echo "error: private ISL runtime path differs" >&2
+  exit 1
+}
+mkdir -p "$compiler_libdir"
+cp -a "$isl_runtime" "$compiler_libdir/"
+ln -s "${isl_runtime##*/}" "$compiler_libdir/libisl.so.23"
+readelf -d "$compiler_libdir/${isl_runtime##*/}" \
+  | grep -F '(SONAME)' | grep -F '[libisl.so.23]' >/dev/null || {
+  echo "error: private ISL SONAME differs" >&2
+  exit 1
+}
 
 [[ -x "$destdir$prefix/bin/$target-gcc" ]] || {
   echo "error: GCC install did not produce $target-gcc" >&2

@@ -332,7 +332,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "116d37555c76dc252205f78ee4fbcd4e86e90c22fde8dfaeb4e0c21b00066989",
+      "canonical_sha256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
       "component": "rpm/host-gcc-test",
       "path": "config/generated/components/rpm/host-gcc-test.json",
       "scope": "build"
@@ -422,7 +422,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "da3451a59461a5e54c0d4317ee4200df5bc2a6857488132da1b71981f3748417",
+      "canonical_sha256": "4da2443d7417cf9dcb82da7c7becc3b82233bc0528e81ba49d334bae3c05a054",
       "component": "toolchain/gcc-testsuite-qualification",
       "path": "config/generated/components/toolchain/gcc-testsuite-qualification.json",
       "scope": "qualification"
@@ -490,7 +490,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "4f4ee68a6dd4970602e2f841e7a3302b87ac4f85408e2be874ddb26c363200b9",
+    "canonical_sha256": "ffef9229e6965ceba2ddb9ec1a55ce27d0a9bfc544090e28f8a55d5578915d8e",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

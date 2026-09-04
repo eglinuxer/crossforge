@@ -94,19 +94,15 @@ FULL_SUITE_CONTRACT = [
     {
         "id": "g++.full",
         "make_target": "check-g++",
+        "make_directory": "gcc",
         "sum_file": "gcc/testsuite/g++/g++.sum",
         "runtestflags": [],
     },
     {
         "id": "gcc.full",
         "make_target": "check-gcc",
+        "make_directory": "gcc",
         "sum_file": "gcc/testsuite/gcc/gcc.sum",
-        "runtestflags": [],
-    },
-    {
-        "id": "libgcc.full",
-        "make_target": "check-target-libgcc",
-        "sum_file": "{target}/libgcc/testsuite/libgcc.sum",
         "runtestflags": [],
     },
     {
@@ -117,8 +113,10 @@ FULL_SUITE_CONTRACT = [
     },
     {
         "id": "libstdc++.full",
-        "make_target": "check-target-libstdc++-v3",
-        "sum_file": "{target}/libstdc++-v3/testsuite/libstdc++.sum",
+        "driver": "runtest-installed",
+        "tool": "libstdc++",
+        "timeout_seconds": 7200,
+        "sum_file": "libstdc++.sum",
         "runtestflags": [],
     },
 ]
@@ -126,6 +124,86 @@ SUITE_CONTRACTS = {
     "full": FULL_SUITE_CONTRACT,
     "smoke": SMOKE_SUITE_CONTRACT,
 }
+PROFILE_JOBS = {
+    "full": 4,
+    "smoke": 1,
+}
+PROFILE_HOST_GCC_MAJOR = {
+    "full": "8",
+    "smoke": None,
+}
+FULL_SOURCE_PATCH_CONTRACT = [
+    {
+        "id": "libstdcxx-dumpfullversion",
+        "suite": "libstdc++.full",
+        "file": "patches/gcc/0001-libstdcxx-use-dumpfullversion.patch",
+        "sha256": "2b4494622a40ccbe7ae450bab6993482677bde81cccb3ad4ef940060372dbf1d",
+        "strip": 1,
+        "targets": [
+            {
+                "file": "libstdc++-v3/testsuite/lib/dts.exp",
+                "before_sha256": "882fda388274fe4576d0fd7438e05cf0d9a58521fde0f362391b48a8a36aa8b9",
+                "after_sha256": "3862b02f6b329f6be7fe31cef254c7680c60e3b72c52faacd9b0eae483a3b593",
+            }
+        ],
+    },
+    {
+        "id": "libstdcxx-el8-pr93672-hang",
+        "suite": "libstdc++.full",
+        "file": "patches/gcc/0004-libstdcxx-skip-el8-pr93672-hang.patch",
+        "sha256": "55ebd4164f14710bd662305ed806499c620a73e065505aa091e5908eb8022625",
+        "strip": 1,
+        "targets": [
+            {
+                "file": "libstdc++-v3/testsuite/27_io/basic_istream/ignore/char/93672.cc",
+                "before_sha256": "42570e6e201b64830d44e3c0c993408f6e9966b5091f1d3f00567bfa38e78020",
+                "after_sha256": "6e2d606511f1c00eb69e00778275953ec7d82293c33a637a906006a1b7ea3ae6",
+            }
+        ],
+    },
+    {
+        "id": "testsuite-gcov-under-test",
+        "suite": "g++.full",
+        "file": "patches/gcc/0002-testsuite-honor-gcov-under-test.patch",
+        "sha256": "302280973e6e9c5b47219da36e1b90d2a06ba4a1b250313ab340799364dd335e",
+        "strip": 1,
+        "targets": [
+            {
+                "file": "gcc/testsuite/g++.dg/gcov/gcov.exp",
+                "before_sha256": "f0656bfcddeae61ef20dd25aa599d2fa6fe284e058d9ed350b3803eb578db8b5",
+                "after_sha256": "7b394237a6bee05dac22ed20325473c7d1f507bc4b453bb658660d2700a42d32",
+            }
+        ],
+    },
+    {
+        "id": "gcc-testsuite-gcov-under-test",
+        "suite": "gcc.full",
+        "file": "patches/gcc/0005-gcc-testsuite-honor-gcov-under-test.patch",
+        "sha256": "dadb6bcd96c250d1b7d381c05f4efec48fb60fe09db147a8cf0bcfff99f9bac6",
+        "strip": 1,
+        "targets": [
+            {
+                "file": "gcc/testsuite/gcc.misc-tests/gcov.exp",
+                "before_sha256": "d66fad345baa8fb4134af67e9172c2562c2a73865af00ea458a0b57da2204200",
+                "after_sha256": "b604c19b36e99601a7b16f9d99557d65ec48669f5968162b5befeadb18c7aca8",
+            },
+        ],
+    },
+    {
+        "id": "testsuite-cross-gcc-ar",
+        "suite": "gcc.full",
+        "file": "patches/gcc/0003-testsuite-honor-cross-gcc-ar.patch",
+        "sha256": "38a9f473bcb11ba773e7ba78f13ed5dd8332c50aa9533e47ad3b5fd4a27fdb46",
+        "strip": 1,
+        "targets": [
+            {
+                "file": "gcc/testsuite/lib/lto.exp",
+                "before_sha256": "a8c523bad8d33994d41354d021b6bd248a2f785c217b9a5e01a05203cb3b9a03",
+                "after_sha256": "e95feeaf2771859c3f5bb1cea791b2337b0845e48ec1ad453f6d8da68d8234ef",
+            }
+        ],
+    },
+]
 
 
 def canonical_sha256(value):
@@ -179,6 +257,25 @@ def validate_plan(plan):
         raise ValidationError(
             "GCC testsuite %s suite contract differs" % plan["profile"]
         )
+    if plan.get("jobs", 1) != PROFILE_JOBS[plan["profile"]]:
+        raise ValidationError(
+            "GCC testsuite %s parallelism differs" % plan["profile"]
+        )
+    if plan.get("host_gcc_major") != PROFILE_HOST_GCC_MAJOR[plan["profile"]]:
+        raise ValidationError(
+            "GCC testsuite %s host compiler policy differs" % plan["profile"]
+        )
+    expected_patches = (
+        FULL_SOURCE_PATCH_CONTRACT if plan["profile"] == "full" else None
+    )
+    if plan.get("source_patches") != expected_patches:
+        raise ValidationError(
+            "GCC testsuite %s source patch contract differs" % plan["profile"]
+        )
+    for patch in plan.get("source_patches", []):
+        patch_path = repository_file(patch["file"], "GCC testsuite source patch")
+        if file_sha256(patch_path) != patch["sha256"]:
+            raise ValidationError("GCC testsuite source patch digest differs")
     site_path = repository_file(plan["site"]["file"], "GCC testsuite site file")
     if file_sha256(site_path) != plan["site"]["sha256"]:
         raise ValidationError("GCC testsuite site file digest differs")

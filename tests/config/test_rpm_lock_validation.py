@@ -124,17 +124,30 @@ class RpmLockValidationTests(unittest.TestCase):
         )
         self.assertEqual(
             {request["name"] for request in transaction["requests"]},
-            {"dejagnu", "expect"},
+            {"dejagnu", "expect", "gcc"},
         )
         self.assertEqual(
             {
-                item["name"]: item["repo_id"]
+                (item["name"], item["action"], item["reason"], item["repo_id"])
                 for item in transaction["items"]
             },
-            {"dejagnu": "powertools", "expect": "baseos"},
+            {
+                ("annobin", "install", "dependency", "appstream"),
+                ("cpp", "install", "dependency", "appstream"),
+                ("dejagnu", "install", "user", "powertools"),
+                ("expect", "install", "user", "baseos"),
+                ("gcc", "install", "user", "appstream"),
+                ("gcc-plugin-annobin", "install", "dependency", "appstream"),
+                ("isl", "install", "dependency", "appstream"),
+                ("libgcc", "remove", "unknown", "@System"),
+                ("libgcc", "upgrade", "unknown", "baseos"),
+            },
         )
-        self.assertEqual(len(lock["packages"]), 2)
-        self.assertEqual(transaction["manifests"]["remove"]["packages"], [])
+        self.assertEqual(len(lock["packages"]), 8)
+        self.assertEqual(
+            transaction["manifests"]["remove"]["packages"],
+            ["libgcc-0:8.5.0-22.el8_10.x86_64"],
+        )
 
     def test_locked_gcc_test_contract_rejects_origin_and_purpose_tampering(self):
         transaction = VALIDATOR["load_json"](self.transactions[4])

@@ -35,6 +35,14 @@
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
+    "host_gcc_major": {
+      "const": "8"
+    },
+    "jobs": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32
+    },
     "unexpected_statuses": {
       "type": "array",
       "minItems": 1,
@@ -54,6 +62,14 @@
     "site": {
       "$ref": "#/$defs/file_identity"
     },
+    "source_patches": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/source_patch"
+      }
+    },
     "suites": {
       "type": "array",
       "minItems": 1,
@@ -72,6 +88,83 @@
     }
   },
   "$defs": {
+    "source_patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "suite",
+        "file",
+        "sha256",
+        "strip",
+        "targets"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "libstdcxx-dumpfullversion",
+            "libstdcxx-el8-pr93672-hang",
+            "gcc-testsuite-gcov-under-test",
+            "testsuite-gcov-under-test",
+            "testsuite-cross-gcc-ar"
+          ]
+        },
+        "suite": {
+          "enum": [
+            "g++.full",
+            "gcc.full",
+            "libstdc++.full"
+          ]
+        },
+        "file": {
+          "enum": [
+            "patches/gcc/0001-libstdcxx-use-dumpfullversion.patch",
+            "patches/gcc/0002-testsuite-honor-gcov-under-test.patch",
+            "patches/gcc/0003-testsuite-honor-cross-gcc-ar.patch",
+            "patches/gcc/0004-libstdcxx-skip-el8-pr93672-hang.patch",
+            "patches/gcc/0005-gcc-testsuite-honor-gcov-under-test.patch"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "strip": {
+          "const": 1
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/source_patch_target"
+          }
+        }
+      }
+    },
+    "source_patch_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "before_sha256",
+        "after_sha256"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^(?:gcc|libstdc\\+\\+-v3)/[A-Za-z0-9+_.-]+(?:/[A-Za-z0-9+_.-]+)+$"
+        },
+        "before_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "after_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
     "file_identity": {
       "type": "object",
       "additionalProperties": false,
@@ -95,7 +188,6 @@
       "additionalProperties": false,
       "required": [
         "id",
-        "make_target",
         "sum_file",
         "runtestflags"
       ],
@@ -108,14 +200,26 @@
           "enum": [
             "check-gcc",
             "check-g++",
-            "check-target-libgcc",
-            "check-target-libstdc++-v3",
             "check-target-libgomp"
           ]
         },
+        "make_directory": {
+          "const": "gcc"
+        },
+        "driver": {
+          "const": "runtest-installed"
+        },
+        "tool": {
+          "const": "libstdc++"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 600,
+          "maximum": 14400
+        },
         "sum_file": {
           "type": "string",
-          "pattern": "^(?:\\{target\\}/)?[A-Za-z0-9+_.-]+(?:/[A-Za-z0-9+_.-]+)+\\.sum$"
+          "pattern": "^(?:\\{target\\}/)?[A-Za-z0-9+_.-]+(?:/[A-Za-z0-9+_.-]+)*\\.sum$"
         },
         "runtestflags": {
           "type": "array",

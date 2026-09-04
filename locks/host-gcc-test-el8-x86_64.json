@@ -4,9 +4,43 @@
   "kind": "rpm-lock",
   "transaction": {
     "file": "locks/transactions/host-gcc-test-el8-x86_64.json",
-    "canonical_sha256": "1ae65ef8aae157b88a1c5a4bf99061ee1d2be6d30f6d2bec91599c31a541aff3"
+    "canonical_sha256": "24c120e9c3b27c39da230429047b2e25042c3075c36919116abfc43a65c52b0a"
   },
   "packages": [
+    {
+      "nevra": "annobin-0:11.13-2.el8.x86_64",
+      "received_sha256": "c6ca19e39d9b535b2bed43ef537452ec36b61b4f8c9d8af32af270a44747f8ff",
+      "header": {
+        "name": "annobin",
+        "epoch": 0,
+        "version": "11.13",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "nevra": "annobin-0:11.13-2.el8.x86_64",
+        "source_rpm": "annobin-11.13-2.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "cpp-0:8.5.0-28.el8_10.x86_64",
+      "received_sha256": "f871fae8f0ea77711e07d02813f800ee9d2869634a859effdf98da0a1dda13f8",
+      "header": {
+        "name": "cpp",
+        "epoch": 0,
+        "version": "8.5.0",
+        "release": "28.el8_10",
+        "arch": "x86_64",
+        "nevra": "cpp-0:8.5.0-28.el8_10.x86_64",
+        "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
     {
       "nevra": "dejagnu-1:1.6.1-2.el8.noarch",
       "received_sha256": "ff6423f8cd3d3a447c074cd0dcaa4336c0bdb24ae774353b1af90e8b69d80312",
@@ -35,6 +69,74 @@
         "arch": "x86_64",
         "nevra": "expect-0:5.45.4-5.el8.x86_64",
         "source_rpm": "expect-5.45.4-5.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gcc-0:8.5.0-28.el8_10.x86_64",
+      "received_sha256": "1001f6b4f57720b49bd0fcc64d2b5e29020fd74750611f53f4e815ab79d0939e",
+      "header": {
+        "name": "gcc",
+        "epoch": 0,
+        "version": "8.5.0",
+        "release": "28.el8_10",
+        "arch": "x86_64",
+        "nevra": "gcc-0:8.5.0-28.el8_10.x86_64",
+        "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gcc-plugin-annobin-0:8.5.0-28.el8_10.x86_64",
+      "received_sha256": "7729e1e69e44cec771d98f5f9685dd324504fae40fdef43cba63bfc07083f568",
+      "header": {
+        "name": "gcc-plugin-annobin",
+        "epoch": 0,
+        "version": "8.5.0",
+        "release": "28.el8_10",
+        "arch": "x86_64",
+        "nevra": "gcc-plugin-annobin-0:8.5.0-28.el8_10.x86_64",
+        "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "isl-0:0.16.1-6.el8.x86_64",
+      "received_sha256": "0ddba368d2ac203a49a0778b4d9b4017807ef22928b5313070cc1df35f77824b",
+      "header": {
+        "name": "isl",
+        "epoch": 0,
+        "version": "0.16.1",
+        "release": "6.el8",
+        "arch": "x86_64",
+        "nevra": "isl-0:0.16.1-6.el8.x86_64",
+        "source_rpm": "isl-0.16.1-6.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libgcc-0:8.5.0-28.el8_10.x86_64",
+      "received_sha256": "89f98cff56955f9dc4965dede3749c3b9cecd2d626b493112776c416c865c072",
+      "header": {
+        "name": "libgcc",
+        "epoch": 0,
+        "version": "8.5.0",
+        "release": "28.el8_10",
+        "arch": "x86_64",
+        "nevra": "libgcc-0:8.5.0-28.el8_10.x86_64",
+        "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm"
       },
       "signature": {
         "status": "verified",
