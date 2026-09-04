@@ -28,6 +28,12 @@ case "$format" in
       --install "$package_root"/packages/*.deb
     metadata=$(dpkg-query --admindir="$install_root/var/lib/dpkg" \
       --show --showformat='${Package} ${Version} ${Architecture} ${Status}\n')
+    relation_metadata=$(dpkg-query \
+      --admindir="$install_root/var/lib/dpkg" \
+      --show --showformat='${Provides}\n' crossforge-demo)
+    config_metadata=$(dpkg-query \
+      --admindir="$install_root/var/lib/dpkg" \
+      --show --showformat='${Conffiles}\n' crossforge-demo)
     ;;
   rpm)
     expected_arch=$arch
@@ -36,12 +42,19 @@ case "$format" in
       --install "$package_root"/packages/*.rpm
     metadata=$(rpm --root "$install_root" --query --all \
       --queryformat '%{NAME} %{VERSION}-%{RELEASE} %{ARCH} installed ok\n')
+    relation_metadata=$(rpm --root "$install_root" --query \
+      --provides crossforge-demo)
+    config_metadata=$(rpm --root "$install_root" --query \
+      --configfiles crossforge-demo)
     ;;
   *)
     echo "unsupported package format: $format" >&2
     exit 2
     ;;
 esac
+
+printf '%s\n' "$relation_metadata" | grep -F crossforge-demo-virtual
+printf '%s\n' "$config_metadata" | grep -F /etc/crossforge-demo.conf
 
 count=$(printf '%s\n' "$metadata" | sed '/^$/d' | wc -l)
 test "$count" -eq 4
@@ -64,10 +77,34 @@ fi
 test "$(readlink "$install_root/usr/lib64/libcrossforge-demo.so")" \
   = libcrossforge-demo.so.1
 test -x "$install_root/usr/bin/crossforge-demo"
+test "$(stat -c '%a %U %G' "$install_root/etc/crossforge-demo.conf")" \
+  = '640 root root'
 test -f "$install_root/usr/include/crossforge/demo.h"
 test -f "$install_root/usr/share/crossforge/README"
 test -f \
   "$install_root/usr/lib/debug/usr/lib64/libcrossforge-demo.so.1.debug"
+
+printf '%s\n' 'mode=user' > "$install_root/etc/crossforge-demo.conf"
+case "$format" in
+  deb)
+    dpkg --root="$install_root" --force-architecture --force-confold \
+      --install "$package_root"/upgrade/packages/*.deb
+    upgraded=$(dpkg-query --admindir="$install_root/var/lib/dpkg" \
+      --show --showformat='${Package} ${Version} ${Architecture} ${Status}\n')
+    alternate="$install_root/etc/crossforge-demo.conf.dpkg-dist"
+    ;;
+  rpm)
+    rpm --root "$install_root" --ignorearch --nodeps \
+      --upgrade "$package_root"/upgrade/packages/*.rpm
+    upgraded=$(rpm --root "$install_root" --query --all \
+      --queryformat '%{NAME} %{VERSION}-%{RELEASE} %{ARCH} installed ok\n')
+    alternate="$install_root/etc/crossforge-demo.conf.rpmnew"
+    ;;
+esac
+printf '%s\n' "$upgraded" | grep -F \
+  "crossforge-demo 1.2.3-5 $expected_arch"
+grep -Fx 'mode=user' "$install_root/etc/crossforge-demo.conf"
+grep -Fx 'mode=upgrade-default' "$alternate"
 
 mkdir -p "$(dirname "$output")"
 printf 'crosspack-install-v1 %s %s passed\n' "$format" "$arch" >"$output"

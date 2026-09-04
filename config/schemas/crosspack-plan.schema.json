@@ -100,7 +100,7 @@
         "component",
         "package_names",
         "description",
-        "dependencies",
+        "relations",
         "contents"
       ],
       "properties": {
@@ -115,7 +115,7 @@
           "type": "string",
           "minLength": 1
         },
-        "dependencies": {
+        "relations": {
           "type": "object",
           "additionalProperties": false,
           "required": [
@@ -126,21 +126,16 @@
           "properties": {
             "components": {
               "type": "array",
+              "uniqueItems": true,
               "items": {
-                "type": "string"
+                "$ref": "#/$defs/name"
               }
             },
             "deb": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "$ref": "#/$defs/deb_relations"
             },
             "rpm": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "$ref": "#/$defs/rpm_relations"
             }
           }
         },
@@ -238,6 +233,85 @@
         }
       }
     },
+    "deb_relations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "depends",
+        "pre_depends",
+        "recommends",
+        "suggests",
+        "conflicts",
+        "provides",
+        "replaces",
+        "breaks"
+      ],
+      "properties": {
+        "depends": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "pre_depends": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "recommends": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "suggests": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "conflicts": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "provides": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "replaces": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "breaks": {
+          "$ref": "#/$defs/relation_list"
+        }
+      }
+    },
+    "rpm_relations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requires",
+        "recommends",
+        "suggests",
+        "conflicts",
+        "provides",
+        "obsoletes"
+      ],
+      "properties": {
+        "requires": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "recommends": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "suggests": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "conflicts": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "provides": {
+          "$ref": "#/$defs/relation_list"
+        },
+        "obsoletes": {
+          "$ref": "#/$defs/relation_list"
+        }
+      }
+    },
+    "relation_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/text"
+      }
+    },
     "file_content": {
       "type": "object",
       "additionalProperties": false,
@@ -246,6 +320,9 @@
         "destination",
         "type",
         "mode",
+        "owner",
+        "group",
+        "config",
         "size",
         "sha256"
       ],
@@ -261,6 +338,15 @@
         },
         "mode": {
           "$ref": "#/$defs/mode"
+        },
+        "owner": {
+          "$ref": "#/$defs/owner"
+        },
+        "group": {
+          "$ref": "#/$defs/owner"
+        },
+        "config": {
+          "$ref": "#/$defs/config_type"
         },
         "size": {
           "type": "integer",
@@ -282,6 +368,9 @@
         "destination",
         "type",
         "mode",
+        "owner",
+        "group",
+        "config",
         "link_target"
       ],
       "properties": {
@@ -297,6 +386,15 @@
         "mode": {
           "$ref": "#/$defs/mode"
         },
+        "owner": {
+          "$ref": "#/$defs/owner"
+        },
+        "group": {
+          "$ref": "#/$defs/owner"
+        },
+        "config": {
+          "const": "none"
+        },
         "link_target": {
           "$ref": "#/$defs/text"
         }
@@ -309,7 +407,10 @@
         "source",
         "destination",
         "type",
-        "mode"
+        "mode",
+        "owner",
+        "group",
+        "config"
       ],
       "properties": {
         "source": {
@@ -323,6 +424,15 @@
         },
         "mode": {
           "$ref": "#/$defs/mode"
+        },
+        "owner": {
+          "$ref": "#/$defs/owner"
+        },
+        "group": {
+          "$ref": "#/$defs/owner"
+        },
+        "config": {
+          "const": "none"
         }
       }
     },
@@ -338,6 +448,17 @@
       "type": "integer",
       "minimum": 0,
       "maximum": 4095
+    },
+    "owner": {
+      "type": "string",
+      "pattern": "^(?:[a-z_][a-z0-9_-]{0,31}|[0-9]{1,10})$"
+    },
+    "config_type": {
+      "enum": [
+        "none",
+        "config",
+        "noreplace"
+      ]
     },
     "elf": {
       "type": "object",

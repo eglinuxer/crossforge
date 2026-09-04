@@ -112,7 +112,7 @@
         "package_names",
         "description",
         "files",
-        "dependencies"
+        "relations"
       ],
       "properties": {
         "name": {
@@ -131,8 +131,8 @@
             "$ref": "#/$defs/file_mapping"
           }
         },
-        "dependencies": {
-          "$ref": "#/$defs/dependencies"
+        "relations": {
+          "$ref": "#/$defs/relations"
         }
       }
     },
@@ -179,10 +179,36 @@
         "destination": {
           "type": "string",
           "pattern": "^/(?:[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*)?$"
+        },
+        "attributes": {
+          "$ref": "#/$defs/file_attributes"
         }
       }
     },
-    "dependencies": {
+    "file_attributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "pattern": "^0[0-7]{3}$"
+        },
+        "owner": {
+          "$ref": "#/$defs/owner"
+        },
+        "group": {
+          "$ref": "#/$defs/owner"
+        },
+        "config": {
+          "enum": [
+            "none",
+            "config",
+            "noreplace"
+          ]
+        }
+      }
+    },
+    "relations": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -199,9 +225,81 @@
           }
         },
         "deb": {
-          "$ref": "#/$defs/dependency_list"
+          "$ref": "#/$defs/deb_relations"
         },
         "rpm": {
+          "$ref": "#/$defs/rpm_relations"
+        }
+      }
+    },
+    "deb_relations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "depends",
+        "pre_depends",
+        "recommends",
+        "suggests",
+        "conflicts",
+        "provides",
+        "replaces",
+        "breaks"
+      ],
+      "properties": {
+        "depends": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "pre_depends": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "recommends": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "suggests": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "conflicts": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "provides": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "replaces": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "breaks": {
+          "$ref": "#/$defs/dependency_list"
+        }
+      }
+    },
+    "rpm_relations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requires",
+        "recommends",
+        "suggests",
+        "conflicts",
+        "provides",
+        "obsoletes"
+      ],
+      "properties": {
+        "requires": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "recommends": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "suggests": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "conflicts": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "provides": {
+          "$ref": "#/$defs/dependency_list"
+        },
+        "obsoletes": {
           "$ref": "#/$defs/dependency_list"
         }
       }
@@ -233,6 +331,10 @@
       "type": "string",
       "minLength": 1,
       "pattern": "^[^\\r\\n]+$"
+    },
+    "owner": {
+      "type": "string",
+      "pattern": "^(?:[a-z_][a-z0-9_-]{0,31}|[0-9]{1,10})$"
     }
   }
 }

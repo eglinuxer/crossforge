@@ -140,6 +140,13 @@ def finalize(arguments):
         package_report.get("kind")
         == "crossforge-crosspack-package-qualification"
         and package_report.get("status") == "passed"
+        and package_report.get("package_contract")
+        == {
+            "format_specific_relations": "passed",
+            "configuration_file_semantics": "passed",
+            "configuration_upgrade_preserves_user_changes": "passed",
+            "installed_file_attributes": "passed",
+        }
         and package_report.get("nfpm", {}).get("sha256")
         == source_report.get("binary", {}).get("sha256")
         and set(package_report.get("targets", {})) == {"x86_64", "aarch64"},
@@ -148,6 +155,7 @@ def finalize(arguments):
     markers = {}
     for arch in ("x86_64", "aarch64"):
         artifacts = package_report["targets"][arch].get("artifacts", [])
+        upgrade = package_report["targets"][arch].get("upgrade", {})
         require(
             len(artifacts) == 8
             and {(item.get("format"), item.get("component")) for item in artifacts}
@@ -157,6 +165,22 @@ def finalize(arguments):
                 for component in ("runtime", "development", "tools", "debug")
             },
             "crosspack artifact matrix differs for %s" % arch,
+        )
+        require(
+            upgrade.get("release") == "5"
+            and isinstance(upgrade.get("plan_sha256"), str)
+            and len(upgrade.get("plan_sha256")) == 64
+            and len(upgrade.get("artifacts", [])) == 8
+            and {
+                (item.get("format"), item.get("component"))
+                for item in upgrade.get("artifacts", [])
+            }
+            == {
+                (format_name, component)
+                for format_name in ("deb", "rpm")
+                for component in ("runtime", "development", "tools", "debug")
+            },
+            "crosspack upgrade artifact matrix differs for %s" % arch,
         )
         markers[arch] = {}
         for format_name in ("deb", "rpm"):

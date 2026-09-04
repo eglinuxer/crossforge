@@ -118,6 +118,22 @@ class CrosspackComponentTests(unittest.TestCase):
             policy["external_dependencies"], "explicit-per-format"
         )
         self.assertEqual(
+            policy["relations"]["deb"],
+            [
+                "depends",
+                "pre-depends",
+                "recommends",
+                "suggests",
+                "conflicts",
+                "provides",
+                "replaces",
+                "breaks",
+            ],
+        )
+        self.assertEqual(
+            policy["configuration_files"], ["config", "noreplace"]
+        )
+        self.assertEqual(
             policy["debug_symbols"],
             "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
         )

@@ -31,16 +31,38 @@
         {
           "source": "usr/lib64/libcrossforge-demo.so.1",
           "destination": "/usr/lib64/libcrossforge-demo.so.1"
+        },
+        {
+          "source": "etc/crossforge-demo.conf",
+          "destination": "/etc/crossforge-demo.conf",
+          "attributes": {
+            "mode": "0640",
+            "owner": "root",
+            "group": "root",
+            "config": "noreplace"
+          }
         }
       ],
-      "dependencies": {
+      "relations": {
         "components": [],
-        "deb": [
-          "libc6 (>= 2.28)"
-        ],
-        "rpm": [
-          "glibc >= 2.28"
-        ]
+        "deb": {
+          "depends": ["libc6 (>= 2.28)"],
+          "pre_depends": [],
+          "recommends": [],
+          "suggests": [],
+          "conflicts": [],
+          "provides": ["crossforge-demo-virtual"],
+          "replaces": [],
+          "breaks": []
+        },
+        "rpm": {
+          "requires": ["glibc >= 2.28"],
+          "recommends": [],
+          "suggests": [],
+          "conflicts": [],
+          "provides": ["crossforge-demo-virtual"],
+          "obsoletes": []
+        }
       }
     },
     {
@@ -60,12 +82,28 @@
           "destination": "/usr/lib64/libcrossforge-demo.so"
         }
       ],
-      "dependencies": {
+      "relations": {
         "components": [
           "runtime"
         ],
-        "deb": [],
-        "rpm": []
+        "deb": {
+          "depends": [],
+          "pre_depends": [],
+          "recommends": [],
+          "suggests": [],
+          "conflicts": [],
+          "provides": [],
+          "replaces": [],
+          "breaks": []
+        },
+        "rpm": {
+          "requires": [],
+          "recommends": [],
+          "suggests": [],
+          "conflicts": [],
+          "provides": [],
+          "obsoletes": []
+        }
       }
     },
     {
@@ -81,10 +119,26 @@
           "destination": "/usr/share/crossforge"
         }
       ],
-      "dependencies": {
+      "relations": {
         "components": [],
-        "deb": [],
-        "rpm": []
+        "deb": {
+          "depends": [],
+          "pre_depends": [],
+          "recommends": [],
+          "suggests": [],
+          "conflicts": [],
+          "provides": [],
+          "replaces": [],
+          "breaks": []
+        },
+        "rpm": {
+          "requires": [],
+          "recommends": [],
+          "suggests": [],
+          "conflicts": [],
+          "provides": [],
+          "obsoletes": []
+        }
       }
     }
   ]

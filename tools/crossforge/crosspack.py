@@ -29,7 +29,27 @@ SOURCE_RE = re.compile(r"^[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*$")
 DESTINATION_RE = re.compile(
     r"^/(?:[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*)?$"
 )
+OWNER_RE = re.compile(r"^(?:[a-z_][a-z0-9_-]{0,31}|[0-9]{1,10})$")
 PRIORITIES = {"required", "important", "standard", "optional", "extra"}
+CONFIG_TYPES = {"none", "config", "noreplace"}
+DEB_RELATION_FIELDS = (
+    "depends",
+    "pre_depends",
+    "recommends",
+    "suggests",
+    "conflicts",
+    "provides",
+    "replaces",
+    "breaks",
+)
+RPM_RELATION_FIELDS = (
+    "requires",
+    "recommends",
+    "suggests",
+    "conflicts",
+    "provides",
+    "obsoletes",
+)
 ARCHITECTURES = {
     "x86_64": {"deb": "amd64", "rpm": "x86_64", "elf_machine": 62},
     "aarch64": {"deb": "arm64", "rpm": "aarch64", "elf_machine": 183},
@@ -149,6 +169,53 @@ def validate_dependency_list(value, label):
         text(item, "%s[%d]" % (label, index))
 
 
+def validate_file_attributes(value, label):
+    require(isinstance(value, dict) and value, "%s must be a non-empty object" % label)
+    allowed = {"mode", "owner", "group", "config"}
+    require(set(value) <= allowed, "%s has unknown fields" % label)
+    if "mode" in value:
+        require(
+            isinstance(value["mode"], str)
+            and re.match(r"^0[0-7]{3}$", value["mode"]),
+            "%s.mode must be a four-digit octal string" % label,
+        )
+        mode = int(value["mode"], 8)
+        require(mode & 0o6002 == 0, "%s.mode is unsafe" % label)
+    for field in ("owner", "group"):
+        if field in value:
+            require(
+                isinstance(value[field], str) and OWNER_RE.match(value[field]),
+                "%s.%s is not a safe account identifier" % (label, field),
+            )
+    if "config" in value:
+        require(
+            value["config"] in CONFIG_TYPES,
+            "%s.config is unsupported" % label,
+        )
+
+
+def validate_relations(value, label):
+    exact_keys(value, {"components", "deb", "rpm"}, label)
+    components = value["components"]
+    require(isinstance(components, list), label + ".components must be an array")
+    require(
+        len(components) == len(set(components)),
+        label + ".components contains duplicates",
+    )
+    for dependency in components:
+        name(dependency, label + ".components")
+    for packager, fields in (
+        ("deb", DEB_RELATION_FIELDS),
+        ("rpm", RPM_RELATION_FIELDS),
+    ):
+        relations = value[packager]
+        exact_keys(relations, fields, label + "." + packager)
+        for field in fields:
+            validate_dependency_list(
+                relations[field], "%s.%s.%s" % (label, packager, field)
+            )
+
+
 def validate_config(config):
     exact_keys(
         config,
@@ -211,7 +278,7 @@ def validate_config(config):
         label = "components[%d]" % component_index
         exact_keys(
             component,
-            {"name", "package_names", "description", "files", "dependencies"},
+            {"name", "package_names", "description", "files", "relations"},
             label,
         )
         name(component["name"], label + ".name")
@@ -241,7 +308,12 @@ def validate_config(config):
         observed_mappings = set()
         for mapping_index, mapping in enumerate(mappings):
             mapping_label = "%s.files[%d]" % (label, mapping_index)
-            exact_keys(mapping, {"source", "destination"}, mapping_label)
+            require(
+                isinstance(mapping, dict)
+                and {"source", "destination"} <= set(mapping)
+                and set(mapping) <= {"source", "destination", "attributes"},
+                mapping_label + " fields differ",
+            )
             source = source_path(mapping["source"], mapping_label + ".source")
             destination = destination_path(
                 mapping["destination"], mapping_label + ".destination"
@@ -251,22 +323,12 @@ def validate_config(config):
                 "file mapping is duplicated",
             )
             observed_mappings.add((source, destination))
+            if "attributes" in mapping:
+                validate_file_attributes(
+                    mapping["attributes"], mapping_label + ".attributes"
+                )
 
-        dependencies = component["dependencies"]
-        exact_keys(dependencies, {"components", "deb", "rpm"}, label + ".dependencies")
-        require(
-            isinstance(dependencies["components"], list),
-            label + ".dependencies.components must be an array",
-        )
-        require(
-            len(dependencies["components"])
-            == len(set(dependencies["components"])),
-            label + ".dependencies.components contains duplicates",
-        )
-        for dependency in dependencies["components"]:
-            name(dependency, label + ".dependencies.components")
-        validate_dependency_list(dependencies["deb"], label + ".dependencies.deb")
-        validate_dependency_list(dependencies["rpm"], label + ".dependencies.rpm")
+        validate_relations(component["relations"], label + ".relations")
 
     component_map = {item["name"]: item for item in components}
     if debug_symbols is None:
@@ -295,14 +357,14 @@ def validate_config(config):
         require(
             all(
                 debug_component
-                not in item["dependencies"]["components"]
+                not in item["relations"]["components"]
                 for item in components
                 if item["name"] != debug_component
             ),
             "a runtime component cannot depend on generated debug symbols",
         )
     for component in components:
-        dependencies = component["dependencies"]["components"]
+        dependencies = component["relations"]["components"]
         require(component["name"] not in dependencies, "component cannot depend on itself")
         require(
             all(item in component_map for item in dependencies),
@@ -321,7 +383,7 @@ def validate_acyclic(components):
             return
         require(component not in visiting, "component dependency cycle includes %s" % component)
         visiting.add(component)
-        for dependency in components[component]["dependencies"]["components"]:
+        for dependency in components[component]["relations"]["components"]:
             visit(dependency)
         visiting.remove(component)
         visited.add(component)
@@ -453,6 +515,43 @@ def mapped_destination(base, source, entry_source):
     return destination_path(posixpath.normpath(destination), "expanded destination")
 
 
+def apply_mapping_attributes(mapping, item, match_count, source_kind):
+    content = dict(item)
+    content["owner"] = "root"
+    content["group"] = "root"
+    content["config"] = "none"
+    attributes = mapping.get("attributes")
+    if attributes is None:
+        return content
+    require(
+        match_count == 1,
+        "file attributes require a mapping that resolves exactly one entry",
+    )
+    require(
+        source_kind != "directory"
+        or (
+            item["source"] == mapping["source"]
+            and item["type"] == "directory"
+        ),
+        "file attributes cannot be applied recursively to a directory mapping",
+    )
+    if "mode" in attributes:
+        require(
+            content["type"] != "symlink",
+            "symlink mode cannot be overridden",
+        )
+        content["mode"] = int(attributes["mode"], 8)
+    content["owner"] = attributes.get("owner", "root")
+    content["group"] = attributes.get("group", "root")
+    content["config"] = attributes.get("config", "none")
+    if content["config"] != "none":
+        require(
+            content["type"] == "file",
+            "only a regular file can be marked as configuration",
+        )
+    return content
+
+
 def expand_mappings(config, staging_root, inventory):
     by_source = {item["source"]: item for item in inventory}
     assigned_sources = {}
@@ -494,7 +593,9 @@ def expand_mappings(config, staging_root, inventory):
                 )
                 assigned_sources[item_source] = component_name
                 destination_owners[destination] = component_name
-                content = dict(item)
+                content = apply_mapping_attributes(
+                    mapping, item, len(matches), kind
+                )
                 content["destination"] = destination
                 contents.append(content)
         require(contents, "component has no expanded contents: %s" % component_name)
@@ -522,7 +623,7 @@ def validate_symlinks(config, packages, destination_owners):
     component_map = {item["name"]: item for item in config["components"]}
     destinations = sorted(destination_owners)
     for component_name, contents in packages.items():
-        allowed = set(component_map[component_name]["dependencies"]["components"])
+        allowed = set(component_map[component_name]["relations"]["components"])
         allowed.add(component_name)
         for content in contents:
             if content["type"] != "symlink":
@@ -548,18 +649,24 @@ def validate_symlinks(config, packages, destination_owners):
             )
 
 
-def package_dependencies(config, component, packager):
+def package_relations(config, component, packager):
     project = config["project"]
     version_release = "%s-%s" % (project["version"], project["release"])
     components = {item["name"]: item for item in config["components"]}
     internal = []
-    for logical_name in sorted(component["dependencies"]["components"]):
+    for logical_name in sorted(component["relations"]["components"]):
         package_name = components[logical_name]["package_names"][packager]
         if packager == "deb":
             internal.append("%s (= %s)" % (package_name, version_release))
         else:
             internal.append("%s = %s" % (package_name, version_release))
-    return sorted(component["dependencies"][packager]) + internal
+    relations = {
+        key: sorted(value)
+        for key, value in component["relations"][packager].items()
+    }
+    dependency_field = "depends" if packager == "deb" else "requires"
+    relations[dependency_field] = sorted(relations[dependency_field] + internal)
+    return relations
 
 
 def objcopy_identity(objcopy):
@@ -605,9 +712,12 @@ def prepare_debug_staging(config, staging_root, objcopy, workspace):
         item for item in config["components"] if item["name"] == debug_name
     )
     require(
-        debug_component["dependencies"]["deb"] == []
-        and debug_component["dependencies"]["rpm"] == [],
-        "debug component cannot declare external dependencies",
+        all(
+            not values
+            for packager in ("deb", "rpm")
+            for values in debug_component["relations"][packager].values()
+        ),
+        "debug component cannot declare external package relations",
     )
     base_config = copy.deepcopy(config)
     base_config["debug_symbols"] = None
@@ -629,7 +739,7 @@ def prepare_debug_staging(config, staging_root, objcopy, workspace):
             owners.add(component)
     require(candidates, "debug splitting found no loadable target ELF files")
     require(
-        set(debug_component["dependencies"]["components"]) == owners,
+        set(debug_component["relations"]["components"]) == owners,
         "debug component dependencies must exactly name ELF-owning components",
     )
 
@@ -732,7 +842,7 @@ def build_plan(
     if readelf is not None:
         try:
             component_dependencies = {
-                component["name"]: component["dependencies"]["components"]
+                component["name"]: component["relations"]["components"]
                 for component in config["components"]
             }
             elf_audit = ELF["audit_packages"](
@@ -752,10 +862,10 @@ def build_plan(
                 "component": component["name"],
                 "package_names": dict(component["package_names"]),
                 "description": component["description"],
-                "dependencies": {
-                    "components": sorted(component["dependencies"]["components"]),
-                    "deb": package_dependencies(config, component, "deb"),
-                    "rpm": package_dependencies(config, component, "rpm"),
+                "relations": {
+                    "components": sorted(component["relations"]["components"]),
+                    "deb": package_relations(config, component, "deb"),
+                    "rpm": package_relations(config, component, "rpm"),
                 },
                 "contents": expanded[component["name"]],
             }
@@ -790,12 +900,16 @@ def nfpm_content(content, staging_root, timestamp):
         "file_info": {
             "mode": content["mode"],
             "mtime": timestamp,
-            "owner": "root",
-            "group": "root",
+            "owner": content["owner"],
+            "group": content["group"],
         },
     }
     if content["type"] == "file":
         result["src"] = str((Path(staging_root) / content["source"]).resolve())
+        if content["config"] == "config":
+            result["type"] = "config"
+        elif content["config"] == "noreplace":
+            result["type"] = "config|noreplace"
     elif content["type"] == "symlink":
         result["src"] = content["link_target"]
         result["type"] = "symlink"
@@ -809,6 +923,7 @@ def nfpm_config(plan_document, package, packager, staging_root):
     project = plan_document["project"]
     timestamp = source_date_time(project)
     common_arch = "amd64" if plan_document["target"] == "x86_64" else "arm64"
+    relations = package["relations"][packager]
     result = {
         "name": package["package_names"][packager],
         "arch": common_arch,
@@ -826,7 +941,16 @@ def nfpm_config(plan_document, package, packager, staging_root):
         "mtime": timestamp,
         "disable_globbing": True,
         "umask": 0,
-        "depends": list(package["dependencies"][packager]),
+        "depends": list(
+            relations["depends" if packager == "deb" else "requires"]
+        ),
+        "recommends": list(relations["recommends"]),
+        "suggests": list(relations["suggests"]),
+        "conflicts": list(relations["conflicts"]),
+        "provides": list(relations["provides"]),
+        "replaces": list(
+            relations["replaces" if packager == "deb" else "obsoletes"]
+        ),
         "contents": [
             nfpm_content(content, staging_root, timestamp)
             for content in package["contents"]
@@ -836,6 +960,8 @@ def nfpm_config(plan_document, package, packager, staging_root):
         result["deb"] = {
             "arch": plan_document["architectures"]["deb"],
             "compression": "gzip",
+            "predepends": list(relations["pre_depends"]),
+            "breaks": list(relations["breaks"]),
         }
     else:
         result["rpm"] = {

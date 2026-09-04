@@ -69,6 +69,7 @@ def populate_staging(root, arch):
     sysroot = Path("/opt/crossforge/sysroots/el8") / arch
     require(compiler.is_file() and sysroot.is_dir(), "target SDK is missing")
     (root / "usr/bin").mkdir(parents=True)
+    (root / "etc").mkdir(parents=True)
     (root / "usr/include/crossforge").mkdir(parents=True)
     (root / "usr/lib64").mkdir(parents=True)
     (root / "usr/share/crossforge").mkdir(parents=True)
@@ -105,17 +106,20 @@ def populate_staging(root, arch):
     tool = root / "usr/bin/crossforge-demo"
     tool.write_text("#!/bin/sh\nprintf 'crossforge-package-probe\\n'\n", encoding="utf-8")
     tool.chmod(0o755)
+    (root / "etc/crossforge-demo.conf").write_text(
+        "mode=qualified\n", encoding="utf-8"
+    )
     (root / "usr/share/crossforge/README").write_text(
         "crossforge package qualification\n", encoding="utf-8"
     )
 
 
-def package_config(template, arch):
+def package_config(template, arch, crosspack):
     config = copy.deepcopy(template)
     config["target"] = arch
     for component in config["components"]:
-        component["dependencies"]["deb"] = []
-        component["dependencies"]["rpm"] = []
+        component["relations"]["deb"]["depends"] = []
+        component["relations"]["rpm"]["requires"] = []
     config["debug_symbols"] = {"component": "debug"}
     config["components"].append(
         {
@@ -126,10 +130,14 @@ def package_config(template, arch):
             },
             "description": "Crosspack detached debug symbols",
             "files": [],
-            "dependencies": {
+            "relations": {
                 "components": ["runtime"],
-                "deb": [],
-                "rpm": [],
+                "deb": {
+                    field: [] for field in crosspack["DEB_RELATION_FIELDS"]
+                },
+                "rpm": {
+                    field: [] for field in crosspack["RPM_RELATION_FIELDS"]
+                },
             },
         }
     )
@@ -192,7 +200,7 @@ def validate_plan(plan, arch):
     packages = {item["component"]: item for item in plan.get("packages", [])}
     require(
         set(packages) == {"runtime", "development", "tools", "debug"}
-        and packages["debug"]["dependencies"]["components"] == ["runtime"],
+        and packages["debug"]["relations"]["components"] == ["runtime"],
         "crosspack split-package set differs",
     )
     runtime = next(
@@ -243,7 +251,7 @@ def build(
             for arch in ("x86_64", "aarch64"):
                 staging = temporary / arch / "staging"
                 populate_staging(staging, arch)
-                config = package_config(template, arch)
+                config = package_config(template, arch, crosspack)
                 config_path = temporary / arch / "crosspack.json"
                 write_json(config_path, config)
                 first = temporary / arch / "first"
@@ -272,8 +280,35 @@ def build(
                 compare_outputs(first, second, result)
                 plan = crosspack["load_json"](first / "crosspack-plan.json")
                 validate_plan(plan, arch)
+                upgrade_staging = temporary / arch / "upgrade-staging"
+                shutil.copytree(str(staging), str(upgrade_staging), symlinks=True)
+                (upgrade_staging / "etc/crossforge-demo.conf").write_text(
+                    "mode=upgrade-default\n", encoding="utf-8"
+                )
+                upgrade_config = copy.deepcopy(config)
+                upgrade_config["project"]["release"] = "5"
+                upgrade_config_path = temporary / arch / "crosspack-upgrade.json"
+                write_json(upgrade_config_path, upgrade_config)
+                upgrade = temporary / arch / "upgrade"
+                run(
+                    [
+                        crossforge_cli,
+                        "package",
+                        "build",
+                        "--config",
+                        upgrade_config_path,
+                        "--staging-root",
+                        upgrade_staging,
+                        "--output-directory",
+                        upgrade,
+                    ]
+                )
+                upgrade_result = crosspack["load_json"](
+                    upgrade / "crosspack-result.json"
+                )
                 destination = temporary_output / arch
                 shutil.copytree(str(first), str(destination))
+                shutil.copytree(str(upgrade), str(destination / "upgrade"))
                 write_install_contract(destination, plan)
                 reports[arch] = {
                     "target": arch,
@@ -282,11 +317,22 @@ def build(
                     "artifacts": result["artifacts"],
                     "elf_audit": plan["elf_audit"],
                     "debug_symbols": plan["debug_symbols"],
+                    "upgrade": {
+                        "release": "5",
+                        "artifacts": upgrade_result["artifacts"],
+                        "plan_sha256": upgrade_result["plan_sha256"],
+                    },
                 }
         report = {
             "schema_version": 1,
             "kind": "crossforge-crosspack-package-qualification",
             "status": "passed",
+            "package_contract": {
+                "format_specific_relations": "passed",
+                "configuration_file_semantics": "passed",
+                "configuration_upgrade_preserves_user_changes": "passed",
+                "installed_file_attributes": "passed",
+            },
             "nfpm": {
                 "version": nfpm["version"],
                 "sha256": nfpm["binary"]["extracted_sha256"],

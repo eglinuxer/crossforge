@@ -531,6 +531,13 @@ DEB and RPM sets twice, proves byte identity, installs all sixteen packages into
 isolated roots using real package managers, and rehashes installed payloads.
 No package or installer root enters the SDK image.
 
+The internal schema now exposes format-specific DEB/RPM relations and exact
+component edges. Per-file attributes can override a single staged entry's safe
+mode, owner and group, and can mark configuration files as `config` or
+`noreplace`; these values are recorded in the canonical plan and verified from
+the installed packages. Recursive attribute overrides, unsafe modes and unknown
+relation fields fail closed.
+
 When `debug_symbols` names an otherwise empty debug component, crosspack uses
 the selected target `objcopy` on a private staging copy and adds a matching GNU
 debuglink. Target `readelf` then records SONAME, `DT_NEEDED`, safe origin-only

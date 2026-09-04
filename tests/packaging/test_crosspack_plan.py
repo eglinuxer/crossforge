@@ -32,18 +32,30 @@ def write_elf(path, machine):
     path.write_bytes(header)
 
 
+def empty_relations(components=()):
+    return {
+        "components": list(components),
+        "deb": {field: [] for field in CROSSPACK["DEB_RELATION_FIELDS"]},
+        "rpm": {field: [] for field in CROSSPACK["RPM_RELATION_FIELDS"]},
+    }
+
+
 class CrosspackPlanTests(unittest.TestCase):
     def setUp(self):
         self.config = CROSSPACK["load_json"](FIXTURE)
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name) / "staging"
         (self.root / "usr/bin").mkdir(parents=True)
+        (self.root / "etc").mkdir(parents=True)
         (self.root / "usr/include/crossforge").mkdir(parents=True)
         (self.root / "usr/lib64").mkdir(parents=True)
         (self.root / "usr/share/crossforge").mkdir(parents=True)
         executable = self.root / "usr/bin/crossforge-demo"
         executable.write_text("#!/bin/sh\necho crossforge\n", encoding="utf-8")
         executable.chmod(0o755)
+        (self.root / "etc/crossforge-demo.conf").write_text(
+            "mode=fixture\n", encoding="utf-8"
+        )
         (self.root / "usr/include/crossforge/demo.h").write_text(
             "#define CROSSFORGE_DEMO 1\n", encoding="utf-8"
         )
@@ -70,11 +82,7 @@ class CrosspackPlanTests(unittest.TestCase):
                 },
                 "description": "Detached debug symbols",
                 "files": [],
-                "dependencies": {
-                    "components": ["runtime"],
-                    "deb": [],
-                    "rpm": [],
-                },
+                "relations": empty_relations(["runtime"]),
             }
         )
         return config
@@ -93,7 +101,7 @@ class CrosspackPlanTests(unittest.TestCase):
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate"](plan, plan_schema, plan_schema, "$")
 
-    def test_plan_has_complete_split_ownership_and_exact_dependencies(self):
+    def test_plan_has_complete_split_ownership_and_exact_relations(self):
         plan = CROSSPACK["build_plan"](self.config, self.root)
         self.assertEqual(
             plan["architectures"], {"deb": "amd64", "rpm": "x86_64"}
@@ -104,15 +112,18 @@ class CrosspackPlanTests(unittest.TestCase):
         )
         packages = {item["component"]: item for item in plan["packages"]}
         self.assertEqual(
-            packages["development"]["dependencies"],
-            {
-                "components": ["runtime"],
-                "deb": ["crossforge-demo (= 1.2.3-4)"],
-                "rpm": ["crossforge-demo = 1.2.3-4"],
-            },
+            packages["development"]["relations"]["components"], ["runtime"]
         )
         self.assertEqual(
-            packages["runtime"]["dependencies"]["deb"],
+            packages["development"]["relations"]["deb"]["depends"],
+            ["crossforge-demo (= 1.2.3-4)"],
+        )
+        self.assertEqual(
+            packages["development"]["relations"]["rpm"]["requires"],
+            ["crossforge-demo = 1.2.3-4"],
+        )
+        self.assertEqual(
+            packages["runtime"]["relations"]["deb"]["depends"],
             ["libc6 (>= 2.28)"],
         )
         contents = [
@@ -120,9 +131,18 @@ class CrosspackPlanTests(unittest.TestCase):
             for package in plan["packages"]
             for item in package["contents"]
         ]
-        self.assertEqual(len(contents), 5)
-        self.assertEqual(len({item["source"] for item in contents}), 5)
-        self.assertEqual(len({item["destination"] for item in contents}), 5)
+        self.assertEqual(len(contents), 6)
+        self.assertEqual(len({item["source"] for item in contents}), 6)
+        self.assertEqual(len({item["destination"] for item in contents}), 6)
+        config = next(
+            item
+            for item in contents
+            if item["destination"] == "/etc/crossforge-demo.conf"
+        )
+        self.assertEqual(config["mode"], 0o640)
+        self.assertEqual(config["owner"], "root")
+        self.assertEqual(config["group"], "root")
+        self.assertEqual(config["config"], "noreplace")
         library = next(item for item in contents if item.get("elf"))
         self.assertEqual(
             library["elf"],
@@ -150,7 +170,15 @@ class CrosspackPlanTests(unittest.TestCase):
         runtime_rpm = rendered["rpm"]["runtime"]
         self.assertTrue(development["disable_globbing"])
         self.assertEqual(development["mtime"], "2023-11-14T22:13:20Z")
-        self.assertEqual(development["deb"], {"arch": "amd64", "compression": "gzip"})
+        self.assertEqual(
+            development["deb"],
+            {
+                "arch": "amd64",
+                "compression": "gzip",
+                "predepends": [],
+                "breaks": [],
+            },
+        )
         self.assertEqual(
             runtime_rpm["rpm"],
             {
@@ -173,6 +201,16 @@ class CrosspackPlanTests(unittest.TestCase):
                     self.assertEqual(
                         content["file_info"]["mtime"], "2023-11-14T22:13:20Z"
                     )
+        runtime_deb = rendered["deb"]["runtime"]
+        runtime_config = next(
+            item
+            for item in runtime_deb["contents"]
+            if item["dst"] == "/etc/crossforge-demo.conf"
+        )
+        self.assertEqual(runtime_config["type"], "config|noreplace")
+        self.assertEqual(runtime_config["file_info"]["mode"], 0o640)
+        self.assertEqual(runtime_deb["provides"], ["crossforge-demo-virtual"])
+        self.assertEqual(runtime_rpm["provides"], ["crossforge-demo-virtual"])
         packages = {item["component"]: item for item in plan["packages"]}
         self.assertEqual(
             CROSSPACK["package_filename"](
@@ -184,6 +222,46 @@ class CrosspackPlanTests(unittest.TestCase):
             CROSSPACK["package_filename"](plan, packages["runtime"], "rpm"),
             "crossforge-demo-1.2.3-4.x86_64.rpm",
         )
+
+    def test_all_format_specific_relations_map_to_nfpm(self):
+        plan = CROSSPACK["build_plan"](self.config, self.root)
+        runtime = next(
+            item for item in plan["packages"] if item["component"] == "runtime"
+        )
+        runtime["relations"]["deb"] = {
+            "depends": ["deb-dep"],
+            "pre_depends": ["deb-pre"],
+            "recommends": ["deb-rec"],
+            "suggests": ["deb-suggest"],
+            "conflicts": ["deb-conflict"],
+            "provides": ["deb-provide"],
+            "replaces": ["deb-replace"],
+            "breaks": ["deb-break"],
+        }
+        runtime["relations"]["rpm"] = {
+            "requires": ["rpm-require"],
+            "recommends": ["rpm-rec"],
+            "suggests": ["rpm-suggest"],
+            "conflicts": ["rpm-conflict"],
+            "provides": ["rpm-provide"],
+            "obsoletes": ["rpm-obsolete"],
+        }
+        deb = CROSSPACK["nfpm_config"](plan, runtime, "deb", self.root)
+        rpm = CROSSPACK["nfpm_config"](plan, runtime, "rpm", self.root)
+        self.assertEqual(deb["depends"], ["deb-dep"])
+        self.assertEqual(deb["recommends"], ["deb-rec"])
+        self.assertEqual(deb["suggests"], ["deb-suggest"])
+        self.assertEqual(deb["conflicts"], ["deb-conflict"])
+        self.assertEqual(deb["provides"], ["deb-provide"])
+        self.assertEqual(deb["replaces"], ["deb-replace"])
+        self.assertEqual(deb["deb"]["predepends"], ["deb-pre"])
+        self.assertEqual(deb["deb"]["breaks"], ["deb-break"])
+        self.assertEqual(rpm["depends"], ["rpm-require"])
+        self.assertEqual(rpm["recommends"], ["rpm-rec"])
+        self.assertEqual(rpm["suggests"], ["rpm-suggest"])
+        self.assertEqual(rpm["conflicts"], ["rpm-conflict"])
+        self.assertEqual(rpm["provides"], ["rpm-provide"])
+        self.assertEqual(rpm["replaces"], ["rpm-obsolete"])
 
     def test_target_mapping_and_elf_machine_are_exact(self):
         self.config["target"] = "aarch64"
@@ -433,7 +511,7 @@ class CrosspackPlanTests(unittest.TestCase):
                     "files": [
                         {"source": "usr/bin", "destination": "/usr/bin"}
                     ],
-                    "dependencies": {"components": [], "deb": [], "rpm": []},
+                    "relations": empty_relations(),
                 }
             ],
         }
@@ -518,13 +596,13 @@ class CrosspackPlanTests(unittest.TestCase):
         self.assertNotEqual(record["runtime_sha256"], original_sha256)
         packages = {item["component"]: item for item in first["packages"]}
         self.assertEqual(
-            packages["debug"]["dependencies"]["components"], ["runtime"]
+            packages["debug"]["relations"]["components"], ["runtime"]
         )
         self.assertEqual(len(packages["debug"]["contents"]), 1)
         self.assertEqual(first["elf_audit"]["elf_count"], 2)
 
         invalid = self.debug_config()
-        invalid["components"][-1]["dependencies"]["components"] = []
+        invalid["components"][-1]["relations"]["components"] = []
         invalid_path = Path(self.temporary.name) / "invalid-debug.json"
         invalid_path.write_text(json.dumps(invalid), encoding="utf-8")
         with self.assertRaises(CROSSPACK["CrosspackError"]):
@@ -566,7 +644,7 @@ class CrosspackPlanTests(unittest.TestCase):
 
     def test_symlinks_require_owned_targets_and_declared_component_edges(self):
         missing_edge = copy.deepcopy(self.config)
-        missing_edge["components"][1]["dependencies"]["components"] = []
+        missing_edge["components"][1]["relations"]["components"] = []
         with self.assertRaises(CROSSPACK["CrosspackError"]):
             CROSSPACK["build_plan"](missing_edge, self.root)
         (self.root / "usr/lib64/libcrossforge-demo.so").unlink()
@@ -576,8 +654,8 @@ class CrosspackPlanTests(unittest.TestCase):
 
     def test_cycles_unsafe_paths_and_unknown_fields_are_rejected(self):
         cycle = copy.deepcopy(self.config)
-        cycle["components"][0]["dependencies"]["components"] = ["tools"]
-        cycle["components"][2]["dependencies"]["components"] = ["development"]
+        cycle["components"][0]["relations"]["components"] = ["tools"]
+        cycle["components"][2]["relations"]["components"] = ["development"]
         with self.assertRaises(CROSSPACK["CrosspackError"]):
             CROSSPACK["build_plan"](cycle, self.root)
         for field, value in (
@@ -603,6 +681,38 @@ class CrosspackPlanTests(unittest.TestCase):
         invalid_epoch["project"]["source_date_epoch"] = True
         with self.assertRaises(CROSSPACK["CrosspackError"]):
             CROSSPACK["validate_config"](invalid_epoch)
+
+        for attributes in (
+            {},
+            {"mode": "0777"},
+            {"mode": "755"},
+            {"owner": "Unsafe Owner"},
+            {"group": "root", "unknown": True},
+            {"config": "replace-always"},
+        ):
+            with self.subTest(attributes=attributes):
+                candidate = copy.deepcopy(self.config)
+                candidate["components"][0]["files"][0][
+                    "attributes"
+                ] = attributes
+                with self.assertRaises(CROSSPACK["CrosspackError"]):
+                    CROSSPACK["validate_config"](candidate)
+
+        recursive_attributes = copy.deepcopy(self.config)
+        recursive_attributes["components"][0]["files"][0]["attributes"] = {
+            "owner": "root"
+        }
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "cannot be applied recursively"
+        ):
+            CROSSPACK["build_plan"](recursive_attributes, self.root)
+
+        malformed_relations = copy.deepcopy(self.config)
+        malformed_relations["components"][0]["relations"]["deb"][
+            "unknown"
+        ] = []
+        with self.assertRaises(CROSSPACK["CrosspackError"]):
+            CROSSPACK["validate_config"](malformed_relations)
 
     def test_duplicate_json_keys_are_rejected(self):
         path = Path(self.temporary.name) / "duplicate.json"
@@ -634,7 +744,7 @@ class CrosspackPlanTests(unittest.TestCase):
                 "package_names": {"deb": "empty", "rpm": "empty"},
                 "description": "Empty directory fixture",
                 "files": [{"source": "var/lib/empty", "destination": "/var/lib/empty"}],
-                "dependencies": {"components": [], "deb": [], "rpm": []},
+                "relations": empty_relations(),
             }
         ]
         empty_root = Path(self.temporary.name) / "empty-staging"

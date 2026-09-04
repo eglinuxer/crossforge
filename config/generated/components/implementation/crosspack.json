@@ -9,12 +9,24 @@
       "value": "https://crossforge.dev/schemas/crosspack.schema.json"
     },
     {
+      "path": "/@implementation/crosspack/configuration_files/0",
+      "value": "config"
+    },
+    {
+      "path": "/@implementation/crosspack/configuration_files/1",
+      "value": "noreplace"
+    },
+    {
       "path": "/@implementation/crosspack/debug_symbols",
       "value": "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink"
     },
     {
       "path": "/@implementation/crosspack/external_dependencies",
       "value": "explicit-per-format"
+    },
+    {
+      "path": "/@implementation/crosspack/file_attributes",
+      "value": "single-entry-mode-owner-group"
     },
     {
       "path": "/@implementation/crosspack/formats/0",
@@ -39,6 +51,62 @@
     {
       "path": "/@implementation/crosspack/plan_schema",
       "value": "https://crossforge.dev/schemas/crosspack-plan.schema.json"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/deb/0",
+      "value": "depends"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/deb/1",
+      "value": "pre-depends"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/deb/2",
+      "value": "recommends"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/deb/3",
+      "value": "suggests"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/deb/4",
+      "value": "conflicts"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/deb/5",
+      "value": "provides"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/deb/6",
+      "value": "replaces"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/deb/7",
+      "value": "breaks"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/rpm/0",
+      "value": "requires"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/rpm/1",
+      "value": "recommends"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/rpm/2",
+      "value": "suggests"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/rpm/3",
+      "value": "conflicts"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/rpm/4",
+      "value": "provides"
+    },
+    {
+      "path": "/@implementation/crosspack/relations/rpm/5",
+      "value": "obsoletes"
     },
     {
       "path": "/@implementation/crosspack/reproducibility/compression",
