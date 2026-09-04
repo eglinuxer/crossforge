@@ -75,6 +75,16 @@ ZSTD_BUILD_POLICY = {
     "exclude_archive_symbols": True,
     "selected_license": "BSD-3-Clause",
 }
+CANDIDATE_MANIFEST_POLICY = {
+    "schema_version": 1,
+    "schema": "https://crossforge.dev/schemas/candidate.schema.json",
+    "kind": "crossforge-candidate",
+    "identity": "canonical-json-sha256",
+    "source_commit": "full-lowercase-git-sha1",
+    "image_identity": "oci-index-and-platform-manifest-digests",
+    "tag_trust": "none-digest-only",
+    "platform": "linux/amd64",
+}
 if "COMPONENT_EXTENSIONS" not in globals():
     COMPONENT_EXTENSIONS = ()
 PYTHON_QUALIFICATION_COMPONENTS = {
@@ -250,6 +260,32 @@ def zstd_policy_materials():
     ]
 
 
+def policy_materials(prefix, policy):
+    """Flatten a nested implementation policy into canonical material records."""
+    require(prefix.startswith("/@implementation/"), "unsafe policy material prefix")
+    records = []
+
+    def visit(path, value):
+        if isinstance(value, dict) and value:
+            for key in sorted(value):
+                visit(path + (key,), value[key])
+            return
+        if isinstance(value, list) and value:
+            for index, item in enumerate(value):
+                visit(path + (str(index),), item)
+            return
+        records.append(
+            {
+                "path": prefix + "/".join(path),
+                "value": copy.deepcopy(value),
+            }
+        )
+
+    visit((), policy)
+    require(records, "implementation policy has no materials")
+    return records
+
+
 def component_path(component):
     parts = component.split("/")
     require(
@@ -366,6 +402,13 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
         elif path == ("baseline",):
             category = "build"
         elif path in abi_identity_leaves:
+            category = "qualification"
+        elif len(path) == 2 and path[0] == "product" and path[1] in {
+            "name",
+            "version",
+        }:
+            # Product identity must rebind the final SDK qualification without
+            # recompiling any toolchain, Python, or dependency component.
             category = "qualification"
         elif len(path) == 2 and path[0] == "product" and path[1] in {
             "image_repository",
@@ -867,6 +910,20 @@ def _render_expected_components(release, implemented_rows):
         python_qualification_dependencies,
     )
 
+    add(
+        "product/identity",
+        "qualification",
+        selector(("product", "name"), ("product", "version")),
+    )
+
+    add(
+        "implementation/candidate-manifest",
+        "supply",
+        explicit_materials=policy_materials(
+            "/@implementation/candidate-manifest/", CANDIDATE_MANIFEST_POLICY
+        ),
+    )
+
     for extension in COMPONENT_EXTENSIONS:
         require(callable(extension), "component extension must be callable")
         extension(
@@ -890,6 +947,7 @@ def _render_expected_components(release, implemented_rows):
             ("schema_version",),
             ("product",),
         ),
+        ("implementation/candidate-manifest",),
     )
 
     add(

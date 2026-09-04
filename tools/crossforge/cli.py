@@ -58,6 +58,8 @@ def info_document(release, root=Path("/")):
     return {
         "schema_version": 1,
         "kind": "crossforge-info",
+        "name": release["product"]["name"],
+        "version": release["product"]["version"],
         "baseline": release["baseline"],
         "host": "x86_64",
         "targets": sorted(TARGETS),
@@ -83,7 +85,7 @@ def print_info(release, as_json):
     if as_json:
         print(json.dumps(document, indent=2, sort_keys=True))
         return
-    print("Crossforge EL8 SDK")
+    print("Crossforge %s EL8 SDK" % document["version"])
     print("host: x86_64")
     print("targets: x86_64, aarch64")
     print(

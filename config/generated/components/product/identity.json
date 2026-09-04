@@ -1,0 +1,18 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "product/identity",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/product/name",
+      "value": "crossforge"
+    },
+    {
+      "path": "/product/version",
+      "value": "0.1.0"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

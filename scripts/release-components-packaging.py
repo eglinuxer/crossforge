@@ -163,7 +163,12 @@ def extend_component_graph(context):
     add(
         "product/sdk-qualification",
         "qualification",
-        selector(("baseline",), ("platforms",)),
+        selector(
+            ("baseline",),
+            ("platforms",),
+            ("product", "name"),
+            ("product", "version"),
+        ),
         (
             "implementation/complete-sdk-qualification",
             "implementation/launcher",

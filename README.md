@@ -50,6 +50,25 @@ invented URLs or hashes. Candidate and release builds will require:
 $ ./scripts/validate-release.py --require-locked
 ```
 
+`release.json` also carries the intended Crossforge product version. Once a
+candidate image has been pushed, create its digest-only identity without
+trusting a mutable tag:
+
+```console
+$ ./scripts/candidate_manifest.py create \
+    --source-commit "$(git rev-parse HEAD)" \
+    --digest "$CANDIDATE_DIGEST" \
+    --platform-manifest-digest "$CANDIDATE_AMD64_DIGEST" \
+    --output candidate.json
+$ ./scripts/candidate_manifest.py validate candidate.json \
+    --expected-source-commit "$(git rev-parse HEAD)"
+```
+
+The manifest binds the product version, canonical release digest, source
+commit, public repository, OCI index and `linux/amd64` child manifest. It does
+not carry a candidate tag; later qualification and promotion use only the
+recorded digests.
+
 Check that the cache-scoped release projections and Bake override match
 `config/release.json`:
 

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/candidate-manifest",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/candidate-manifest/identity",
+      "value": "canonical-json-sha256"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/image_identity",
+      "value": "oci-index-and-platform-manifest-digests"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/kind",
+      "value": "crossforge-candidate"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/platform",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/schema",
+      "value": "https://crossforge.dev/schemas/candidate.schema.json"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/schema_version",
+      "value": 1
+    },
+    {
+      "path": "/@implementation/candidate-manifest/source_commit",
+      "value": "full-lowercase-git-sha1"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/tag_trust",
+      "value": "none-digest-only"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "supply"
+}

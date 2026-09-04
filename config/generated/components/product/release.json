@@ -1,7 +1,12 @@
 {
   "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
   "component": "product/release",
-  "dependencies": [],
+  "dependencies": [
+    {
+      "canonical_sha256": "e34b92d1f9bcff9e9bb44bbe52523a41c48eee0c4714bf63cd20764c258d24d0",
+      "component": "implementation/candidate-manifest"
+    }
+  ],
   "kind": "crossforge-release-component",
   "materials": [
     {
@@ -13,8 +18,16 @@
       "value": "ghcr.io/eglinuxer/crossforge"
     },
     {
+      "path": "/product/name",
+      "value": "crossforge"
+    },
+    {
       "path": "/product/stable_channel",
       "value": "gts15-el8"
+    },
+    {
+      "path": "/product/version",
+      "value": "0.1.0"
     },
     {
       "path": "/schema_version",

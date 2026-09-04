@@ -623,6 +623,25 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 )
             )
 
+    def test_product_version_rebinds_only_release_and_final_qualification(self):
+        release = copy.deepcopy(self.release)
+        release["product"]["version"] = "0.1.1"
+        after = RENDERER["render_component_documents"](release, self.rows)
+        self.assertEqual(
+            changed(self.components, after),
+            {
+                "product/identity",
+                "product/release",
+                "product/sdk-qualification",
+            },
+        )
+        self.assertFalse(
+            any(
+                self.components[name]["scope"] == "build"
+                for name in changed(self.components, after)
+            )
+        )
+
     def test_abi_identity_changes_have_exact_qualification_only_impact(self):
         cases = []
         for arch in ("x86_64", "aarch64"):

@@ -149,6 +149,8 @@ class CrossforgeCliTests(unittest.TestCase):
             "opt/crossforge/host-tools/nfpm/%s/bin/nfpm" % nfpm["version"]
         )
         document = cli.info_document(self.release, self.root)
+        self.assertEqual(document["name"], "crossforge")
+        self.assertEqual(document["version"], "0.1.0")
         self.assertEqual(document["targets"], ["aarch64", "x86_64"])
         self.assertTrue(document["vcpkg"]["installed"])
         self.assertTrue(document["nfpm"]["installed"])

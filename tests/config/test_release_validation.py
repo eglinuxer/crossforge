@@ -26,6 +26,28 @@ class ReleaseValidationTests(unittest.TestCase):
         VALIDATOR["validate_schema_subset"](self.schema)
         VALIDATOR["validate"](self.config, self.schema, self.schema, "$")
 
+    def test_product_identity_is_explicit_semver(self):
+        self.assertEqual(self.config["product"]["name"], "crossforge")
+        self.assertEqual(self.config["product"]["version"], "0.1.0")
+        for version in (
+            "1",
+            "01.2.3",
+            "1.02.3",
+            "v1.2.3",
+            "1.2.3.",
+            "1.2.3-01",
+        ):
+            with self.subTest(version=version):
+                config = copy.deepcopy(self.config)
+                config["product"]["version"] = version
+                with self.assertRaises(VALIDATOR["ValidationError"]):
+                    VALIDATOR["validate"](config, self.schema, self.schema, "$")
+
+        missing = copy.deepcopy(self.config)
+        del missing["product"]["version"]
+        with self.assertRaises(VALIDATOR["ValidationError"]):
+            VALIDATOR["validate"](missing, self.schema, self.schema, "$")
+
     def test_supply_chain_evidence_is_bound_to_configuration(self):
         result = EVIDENCE_VALIDATOR["validate_evidence"](self.config, REPOSITORY)
         self.assertEqual(

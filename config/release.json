@@ -47,6 +47,8 @@
     }
   },
   "product": {
+    "name": "crossforge",
+    "version": "0.1.0",
     "image_repository": "ghcr.io/eglinuxer/crossforge",
     "stable_channel": "gts15-el8"
   },

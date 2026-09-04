@@ -36,6 +36,14 @@
     {
       "path": "/platforms/tool_host",
       "value": "linux/amd64"
+    },
+    {
+      "path": "/product/name",
+      "value": "crossforge"
+    },
+    {
+      "path": "/product/version",
+      "value": "0.1.0"
     }
   ],
   "schema_version": 1,
