@@ -24,6 +24,14 @@ def require(condition, message):
         raise QualificationError(message)
 
 
+def is_sha256(value):
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
 def reject_duplicate_keys(pairs):
     result = {}
     for key, value in pairs:
@@ -147,11 +155,27 @@ def finalize(arguments):
             "configuration_upgrade_preserves_user_changes": "passed",
             "installed_file_attributes": "passed",
             "lifecycle_scripts": "passed",
+            "verified_independent_components": "passed",
         }
         and package_report.get("nfpm", {}).get("sha256")
         == source_report.get("binary", {}).get("sha256")
         and set(package_report.get("targets", {})) == {"x86_64", "aarch64"},
         "crosspack package report differs",
+    )
+    independent = package_report.get("independent_components", {})
+    require(
+        set(independent) == {"tools"}
+        and independent["tools"].get("status") == "verified-independent"
+        and set(independent["tools"].get("artifacts", {})) == {"deb", "rpm"}
+        and set(independent["tools"].get("upgrade_artifacts", {}))
+        == {"deb", "rpm"}
+        and is_sha256(independent["tools"].get("package_sha256"))
+        and all(
+            is_sha256(digest)
+            for field in ("artifacts", "upgrade_artifacts")
+            for digest in independent["tools"][field].values()
+        ),
+        "crosspack independent-component report differs",
     )
     markers = {}
     for arch in ("x86_64", "aarch64"):

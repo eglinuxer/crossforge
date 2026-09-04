@@ -99,6 +99,9 @@
       "required": [
         "component",
         "package_names",
+        "architecture",
+        "architecture_qualification",
+        "architectures",
         "description",
         "relations",
         "scripts",
@@ -111,6 +114,21 @@
         },
         "package_names": {
           "$ref": "#/$defs/package_names"
+        },
+        "architecture": {
+          "enum": [
+            "target",
+            "independent"
+          ]
+        },
+        "architecture_qualification": {
+          "enum": [
+            "target-specific",
+            "declared-independent"
+          ]
+        },
+        "architectures": {
+          "$ref": "#/$defs/package_architectures"
         },
         "description": {
           "type": "string",
@@ -314,6 +332,30 @@
         "rpm": {
           "type": "string",
           "pattern": "^[a-z0-9][a-z0-9+._-]*$"
+        }
+      }
+    },
+    "package_architectures": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deb",
+        "rpm"
+      ],
+      "properties": {
+        "deb": {
+          "enum": [
+            "amd64",
+            "arm64",
+            "all"
+          ]
+        },
+        "rpm": {
+          "enum": [
+            "x86_64",
+            "aarch64",
+            "noarch"
+          ]
         }
       }
     },

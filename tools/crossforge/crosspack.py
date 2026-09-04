@@ -64,6 +64,15 @@ NFPM_SCRIPT_FIELDS = {
 }
 SCRIPT_INTERPRETER = "/bin/sh"
 SCRIPT_MAX_SIZE = 1024 * 1024
+INDEPENDENT_FORBIDDEN_SUFFIXES = (
+    ".a",
+    ".o",
+    ".obj",
+    ".pyc",
+    ".qmlc",
+    ".jsc",
+    ".debug",
+)
 ARCHITECTURES = {
     "x86_64": {"deb": "amd64", "rpm": "x86_64", "elf_machine": 62},
     "aarch64": {"deb": "arm64", "rpm": "aarch64", "elf_machine": 183},
@@ -341,11 +350,17 @@ def validate_config(config):
         require(
             isinstance(component, dict)
             and component_keys <= set(component)
-            and set(component) <= component_keys | {"scripts"},
-            "%s keys differ: expected %s with optional scripts"
+            and set(component)
+            <= component_keys | {"architecture", "scripts"},
+            "%s keys differ: expected %s with optional architecture/scripts"
             % (label, ", ".join(sorted(component_keys))),
         )
         name(component["name"], label + ".name")
+        require(
+            component.get("architecture", "target")
+            in ("target", "independent"),
+            label + ".architecture differs",
+        )
         require(component["name"] not in logical_names, "component name is duplicated")
         logical_names.add(component["name"])
         text(component["description"], label + ".description")
@@ -411,6 +426,11 @@ def validate_config(config):
         require(
             component_map[debug_component]["files"] == [],
             "debug component files must be generated, not declared",
+        )
+        require(
+            component_map[debug_component].get("architecture", "target")
+            == "target",
+            "debug component must use target architecture",
         )
         require(
             all(
@@ -683,6 +703,69 @@ def expand_mappings(config, staging_root, inventory):
         )
     validate_symlinks(config, packages, destination_owners)
     return packages
+
+
+def package_architectures(component, target):
+    if component.get("architecture", "target") == "independent":
+        return {"deb": "all", "rpm": "noarch"}
+    return {
+        "deb": ARCHITECTURES[target]["deb"],
+        "rpm": ARCHITECTURES[target]["rpm"],
+    }
+
+
+def validate_independent_components(config, packages, staging_root):
+    for component in config["components"]:
+        if component.get("architecture", "target") != "independent":
+            continue
+        for content in packages[component["name"]]:
+            destination = content["destination"]
+            lower = destination.lower()
+            basename = posixpath.basename(lower)
+            require(
+                content.get("elf") is None,
+                "independent component contains ELF: %s" % destination,
+            )
+            require(
+                not lower.startswith("/usr/lib/debug/")
+                and not basename.startswith("_sysconfigdata_")
+                and not lower.endswith(INDEPENDENT_FORBIDDEN_SUFFIXES)
+                and re.search(r"\.so(?:\.[0-9]+)*$", lower) is None,
+                "independent component contains target artifact: %s"
+                % destination,
+            )
+            if content["type"] == "file":
+                try:
+                    source = Path(staging_root) / content["source"]
+                    with source.open("rb") as stream:
+                        prefix = stream.read(8)
+                except OSError as error:
+                    raise CrosspackError(
+                        "cannot inspect independent file %s: %s"
+                        % (destination, error)
+                    ) from error
+                require(
+                    prefix not in (b"!<arch>\n", b"!<thin>\n")
+                    and not prefix.startswith(b"BC\xc0\xde")
+                    and not prefix.startswith(b"\xde\xc0\x17\x0b"),
+                    "independent component contains target binary: %s"
+                    % destination,
+                )
+            if content["type"] == "symlink":
+                target = content["link_target"].lower()
+                require(
+                    not any(
+                        marker in target
+                        for marker in (
+                            "x86_64",
+                            "aarch64",
+                            "x86_64-unknown-linux-gnu",
+                            "aarch64-unknown-linux-gnu",
+                        )
+                    ),
+                    "independent component contains target symlink: %s"
+                    % destination,
+                )
 
 
 def validate_symlinks(config, packages, destination_owners):
@@ -1027,6 +1110,7 @@ def build_plan(
     )
     inventory = inventory_staging(staging_root, config["target"])
     expanded = expand_mappings(config, staging_root, inventory)
+    validate_independent_components(config, expanded, staging_root)
     scripts = prepare_scripts(config, config_root, script_root)
     elf_audit = None
     if readelf is not None:
@@ -1051,6 +1135,15 @@ def build_plan(
             {
                 "component": component["name"],
                 "package_names": dict(component["package_names"]),
+                "architecture": component.get("architecture", "target"),
+                "architecture_qualification": (
+                    "declared-independent"
+                    if component.get("architecture", "target") == "independent"
+                    else "target-specific"
+                ),
+                "architectures": package_architectures(
+                    component, config["target"]
+                ),
                 "description": component["description"],
                 "relations": {
                     "components": sorted(component["relations"]["components"]),
@@ -1135,11 +1228,10 @@ def nfpm_config(plan_document, package, packager, staging_root, script_root=None
     require(packager in ("deb", "rpm"), "unsupported package format")
     project = plan_document["project"]
     timestamp = source_date_time(project)
-    common_arch = "amd64" if plan_document["target"] == "x86_64" else "arm64"
     relations = package["relations"][packager]
     result = {
         "name": package["package_names"][packager],
-        "arch": common_arch,
+        "arch": package["architectures"][packager],
         "platform": "linux",
         "version": project["version"],
         "version_schema": "none",
@@ -1175,14 +1267,14 @@ def nfpm_config(plan_document, package, packager, staging_root, script_root=None
         result["scripts"] = scripts
     if packager == "deb":
         result["deb"] = {
-            "arch": plan_document["architectures"]["deb"],
+            "arch": package["architectures"]["deb"],
             "compression": "gzip",
             "predepends": list(relations["pre_depends"]),
             "breaks": list(relations["breaks"]),
         }
     else:
         result["rpm"] = {
-            "arch": plan_document["architectures"]["rpm"],
+            "arch": package["architectures"]["rpm"],
             "buildhost": "crossforge.invalid",
             "compression": "gzip",
             "packager": project["maintainer"],
@@ -1205,7 +1297,7 @@ def package_filename(plan_document, package, packager):
     project = plan_document["project"]
     package_name = package["package_names"][packager]
     package_version = version_release(project, packager, include_epoch=False)
-    architecture = plan_document["architectures"][packager]
+    architecture = package["architectures"][packager]
     if packager == "deb":
         return "%s_%s_%s.deb" % (package_name, package_version, architecture)
     return "%s-%s.%s.rpm" % (package_name, package_version, architecture)

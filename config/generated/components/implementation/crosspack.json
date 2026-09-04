@@ -5,6 +5,18 @@
   "kind": "crossforge-release-component",
   "materials": [
     {
+      "path": "/@implementation/crosspack/component_architectures/independent/deb",
+      "value": "all"
+    },
+    {
+      "path": "/@implementation/crosspack/component_architectures/independent/rpm",
+      "value": "noarch"
+    },
+    {
+      "path": "/@implementation/crosspack/component_architectures/target",
+      "value": "selected-target"
+    },
+    {
       "path": "/@implementation/crosspack/config_schema",
       "value": "https://crossforge.dev/schemas/crosspack.schema.json"
     },

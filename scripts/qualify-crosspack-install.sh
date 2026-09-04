@@ -31,6 +31,7 @@ done
 case "$format" in
   deb)
     expected_arch=amd64
+    expected_independent_arch=all
     if [ "$arch" = aarch64 ]; then
       expected_arch=arm64
     fi
@@ -47,6 +48,7 @@ case "$format" in
     ;;
   rpm)
     expected_arch=$arch
+    expected_independent_arch=noarch
     rpm --root "$install_root" --initdb
     rpm --root "$install_root" --ignorearch --nodeps \
       --install "$package_root"/packages/*.rpm
@@ -71,7 +73,8 @@ test "$count" -eq 4
 printf '%s\n' "$metadata" | grep -F "crossforge-demo 1.2.3-4 $expected_arch"
 printf '%s\n' "$metadata" | grep -F "crossforge-demo-dev 1.2.3-4 $expected_arch" \
   || printf '%s\n' "$metadata" | grep -F "crossforge-demo-devel 1.2.3-4 $expected_arch"
-printf '%s\n' "$metadata" | grep -F "crossforge-demo-tools 1.2.3-4 $expected_arch"
+printf '%s\n' "$metadata" | grep -F \
+  "crossforge-demo-tools 1.2.3-4 $expected_independent_arch"
 if [ "$format" = deb ]; then
   printf '%s\n' "$metadata" | grep -F \
     "crossforge-demo-dbgsym 1.2.3-4 $expected_arch"

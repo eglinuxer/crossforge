@@ -226,6 +226,18 @@ def validate_plan(plan, arch):
         and packages["debug"]["relations"]["components"] == ["runtime"],
         "crosspack split-package set differs",
     )
+    require(
+        packages["tools"]["architecture"] == "independent"
+        and packages["tools"]["architecture_qualification"]
+        == "declared-independent"
+        and packages["tools"]["architectures"]
+        == {"deb": "all", "rpm": "noarch"}
+        and all(
+            item.get("elf") is None
+            for item in packages["tools"]["contents"]
+        ),
+        "crosspack independent package differs",
+    )
     runtime_scripts = packages["runtime"]["scripts"]
     require(
         all(
@@ -277,6 +289,7 @@ def build(
         tempfile.mkdtemp(prefix=".crosspack-qualification.", dir=str(output_root.parent))
     )
     reports = {}
+    independent_observations = {}
     try:
         with tempfile.TemporaryDirectory(
             prefix="crossforge-crosspack-build-"
@@ -344,6 +357,37 @@ def build(
                 upgrade_result = crosspack["load_json"](
                     upgrade / "crosspack-result.json"
                 )
+                for package in plan["packages"]:
+                    if package["architecture"] != "independent":
+                        continue
+                    component = package["component"]
+                    observation = {
+                        "package": package,
+                        "artifacts": sorted(
+                            (
+                                item
+                                for item in result["artifacts"]
+                                if item["component"] == component
+                            ),
+                            key=lambda item: item["format"],
+                        ),
+                        "upgrade_artifacts": sorted(
+                            (
+                                item
+                                for item in upgrade_result["artifacts"]
+                                if item["component"] == component
+                            ),
+                            key=lambda item: item["format"],
+                        ),
+                    }
+                    if component in independent_observations:
+                        require(
+                            independent_observations[component] == observation,
+                            "independent component differs across targets: %s"
+                            % component,
+                        )
+                    else:
+                        independent_observations[component] = observation
                 destination = temporary_output / arch
                 shutil.copytree(str(first), str(destination))
                 shutil.copytree(str(upgrade), str(destination / "upgrade"))
@@ -361,6 +405,24 @@ def build(
                         "plan_sha256": upgrade_result["plan_sha256"],
                     },
                 }
+        require(
+            set(independent_observations) == {"tools"},
+            "independent qualification coverage differs",
+        )
+        independent_components = {}
+        for component, observation in independent_observations.items():
+            independent_components[component] = {
+                "status": "verified-independent",
+                "package_sha256": canonical_sha256(observation["package"]),
+                "artifacts": {
+                    item["format"]: item["sha256"]
+                    for item in observation["artifacts"]
+                },
+                "upgrade_artifacts": {
+                    item["format"]: item["sha256"]
+                    for item in observation["upgrade_artifacts"]
+                },
+            }
         report = {
             "schema_version": 1,
             "kind": "crossforge-crosspack-package-qualification",
@@ -371,11 +433,13 @@ def build(
                 "configuration_upgrade_preserves_user_changes": "passed",
                 "installed_file_attributes": "passed",
                 "lifecycle_scripts": "passed",
+                "verified_independent_components": "passed",
             },
             "nfpm": {
                 "version": nfpm["version"],
                 "sha256": nfpm["binary"]["extracted_sha256"],
             },
+            "independent_components": independent_components,
             "targets": reports,
         }
         write_json(temporary_output / "qualification.json", report)

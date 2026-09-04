@@ -422,8 +422,10 @@ payload。当前内部 schema 已提供格式特定 relations、精确 component
 mode/owner/group、`config`/`noreplace`、共享 project version 下格式特定的
 epoch/release，并按最终 destination/RUNPATH 唯一解析 `DT_NEEDED` provider；
 格式特定 lifecycle scriptlets 也已绑定摘要并经过真实安装、升级、卸载执行。
-DEB/RPM 各自的 libdir、independent component 和 sealed staging/variant provenance
-仍须在首次公开发布前完成。现有安装门禁也不构成目标发行版运行资格化。
+显式 independent component 已映射为 DEB `all`/RPM `noarch`，并以双 target 完整
+component plan 和两代 package 字节一致性取得 `verified-independent` 证据。
+DEB/RPM 各自的 libdir 和 sealed staging/variant provenance 仍须在首次公开发布前完成。
+现有安装门禁也不构成目标发行版运行资格化。
 不能先发布一个功能不足的 schema v1，再立即用 schema v2 修正基本生产语义。
 
 ### 14.1 职责边界

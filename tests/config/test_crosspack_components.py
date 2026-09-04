@@ -152,6 +152,13 @@ class CrosspackComponentTests(unittest.TestCase):
             },
         )
         self.assertEqual(
+            policy["component_architectures"],
+            {
+                "target": "selected-target",
+                "independent": {"deb": "all", "rpm": "noarch"},
+            },
+        )
+        self.assertEqual(
             policy["debug_symbols"],
             "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
         )

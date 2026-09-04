@@ -119,6 +119,7 @@
     },
     {
       "name": "tools",
+      "architecture": "independent",
       "package_names": {
         "deb": "crossforge-demo-tools",
         "rpm": "crossforge-demo-tools"

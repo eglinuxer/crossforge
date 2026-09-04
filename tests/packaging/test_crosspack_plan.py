@@ -112,6 +112,24 @@ class CrosspackPlanTests(unittest.TestCase):
             ["development", "runtime", "tools"],
         )
         packages = {item["component"]: item for item in plan["packages"]}
+        self.assertEqual(packages["runtime"]["architecture"], "target")
+        self.assertEqual(
+            packages["runtime"]["architecture_qualification"],
+            "target-specific",
+        )
+        self.assertEqual(
+            packages["runtime"]["architectures"],
+            {"deb": "amd64", "rpm": "x86_64"},
+        )
+        self.assertEqual(packages["tools"]["architecture"], "independent")
+        self.assertEqual(
+            packages["tools"]["architecture_qualification"],
+            "declared-independent",
+        )
+        self.assertEqual(
+            packages["tools"]["architectures"],
+            {"deb": "all", "rpm": "noarch"},
+        )
         self.assertEqual(
             packages["development"]["relations"]["components"], ["runtime"]
         )
@@ -169,6 +187,8 @@ class CrosspackPlanTests(unittest.TestCase):
         rendered = CROSSPACK["render_nfpm_configs"](plan, self.root)
         development = rendered["deb"]["development"]
         runtime_rpm = rendered["rpm"]["runtime"]
+        tools_deb = rendered["deb"]["tools"]
+        tools_rpm = rendered["rpm"]["tools"]
         self.assertTrue(development["disable_globbing"])
         self.assertEqual(development["mtime"], "2023-11-14T22:13:20Z")
         self.assertEqual(
@@ -188,6 +208,11 @@ class CrosspackPlanTests(unittest.TestCase):
                 "compression": "gzip",
                 "packager": self.config["project"]["maintainer"],
             },
+        )
+        self.assertEqual((tools_deb["arch"], tools_deb["deb"]["arch"]), ("all", "all"))
+        self.assertEqual(
+            (tools_rpm["arch"], tools_rpm["rpm"]["arch"]),
+            ("noarch", "noarch"),
         )
         link = next(
             item for item in development["contents"] if item.get("type") == "symlink"
@@ -222,6 +247,14 @@ class CrosspackPlanTests(unittest.TestCase):
         self.assertEqual(
             CROSSPACK["package_filename"](plan, packages["runtime"], "rpm"),
             "crossforge-demo-1.2.3-4.x86_64.rpm",
+        )
+        self.assertEqual(
+            CROSSPACK["package_filename"](plan, packages["tools"], "deb"),
+            "crossforge-demo-tools_1.2.3-4_all.deb",
+        )
+        self.assertEqual(
+            CROSSPACK["package_filename"](plan, packages["tools"], "rpm"),
+            "crossforge-demo-tools-1.2.3-4.noarch.rpm",
         )
 
     def test_lifecycle_scripts_are_sealed_bound_and_mapped_per_format(self):
@@ -381,6 +414,15 @@ class CrosspackPlanTests(unittest.TestCase):
         self.assertEqual(
             plan["architectures"], {"deb": "arm64", "rpm": "aarch64"}
         )
+        packages = {item["component"]: item for item in plan["packages"]}
+        self.assertEqual(
+            packages["runtime"]["architectures"],
+            {"deb": "arm64", "rpm": "aarch64"},
+        )
+        self.assertEqual(
+            packages["tools"]["architectures"],
+            {"deb": "all", "rpm": "noarch"},
+        )
         write_elf(self.root / "usr/lib64/libcrossforge-demo.so.1", 62)
         with self.assertRaises(CROSSPACK["CrosspackError"]):
             CROSSPACK["build_plan"](self.config, self.root)
@@ -443,6 +485,11 @@ class CrosspackPlanTests(unittest.TestCase):
                     )
         compiler = shutil.which("gcc")
         if compiler is not None:
+            tools = next(
+                component for component in self.config["components"]
+                if component["name"] == "tools"
+            )
+            tools["architecture"] = "target"
             missing_source = Path(self.temporary.name) / "missing.c"
             consumer_source = Path(self.temporary.name) / "consumer.c"
             missing_library = Path(self.temporary.name) / "libmissing-crossforge.so.1"
@@ -614,6 +661,7 @@ class CrosspackPlanTests(unittest.TestCase):
             "components": [
                 {
                     "name": "tools",
+                    "architecture": "independent",
                     "package_names": {
                         "deb": "crossforge-script",
                         "rpm": "crossforge-script",
@@ -628,6 +676,30 @@ class CrosspackPlanTests(unittest.TestCase):
         }
         plan = CROSSPACK["build_plan"](config, root, readelf, Path("/"))
         self.assertEqual(plan["elf_audit"]["elf_count"], 0)
+        self.assertEqual(
+            plan["packages"][0]["architectures"],
+            {"deb": "all", "rpm": "noarch"},
+        )
+
+    def test_independent_components_reject_target_artifacts(self):
+        config = copy.deepcopy(self.config)
+        runtime = next(
+            component for component in config["components"]
+            if component["name"] == "runtime"
+        )
+        runtime["architecture"] = "independent"
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "independent component contains ELF"
+        ):
+            CROSSPACK["build_plan"](config, self.root)
+
+        runtime["architecture"] = "target"
+        archive = self.root / "usr/share/crossforge/bundle.dat"
+        archive.write_bytes(b"!<arch>\n")
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "independent component contains target binary"
+        ):
+            CROSSPACK["build_plan"](config, self.root)
 
     def test_debug_symbols_are_split_with_target_objcopy_reproducibly(self):
         compiler = shutil.which("gcc")

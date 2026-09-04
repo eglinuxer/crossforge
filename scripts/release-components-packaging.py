@@ -14,6 +14,10 @@ CROSSPACK_POLICY = {
         "x86_64": {"deb": "amd64", "rpm": "x86_64", "elf_machine": 62},
         "aarch64": {"deb": "arm64", "rpm": "aarch64", "elf_machine": 183},
     },
+    "component_architectures": {
+        "target": "selected-target",
+        "independent": {"deb": "all", "rpm": "noarch"},
+    },
     "ownership": "complete-exclusive-staged-tree",
     "paths": "canonical-no-escape-no-overlap",
     "external_dependencies": "explicit-per-format",
@@ -89,6 +93,7 @@ CROSSPACK_QUALIFICATION_POLICY = {
         "configuration_upgrade_preserves_user_changes": True,
         "installed_file_attributes": True,
         "lifecycle_scripts_execute_on_install_upgrade_remove": True,
+        "independent_components_match_across_targets": True,
         "isolated_install_root": True,
         "installed_payload_hashes": True,
         "detached_debug_symbols": True,

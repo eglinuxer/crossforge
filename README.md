@@ -550,6 +550,12 @@ with scripts declare only the formats and hooks they use, while the plan expands
 the complete matrix. Qualification executes every hook during real
 install, upgrade, and removal transactions for both package formats and target
 architectures.
+Components default to the selected target architecture. A component explicitly
+marked `independent` emits DEB `all` and RPM `noarch`, rejects ELF and common
+target-generated artifact classes, and is recorded as declared-independent in
+its plan. Crossforge's dual-target qualification upgrades that claim to
+verified-independent only after the complete component plan and both base and
+upgrade package bytes match exactly between x86_64 and aarch64.
 
 When `debug_symbols` names an otherwise empty debug component, crosspack uses
 the selected target `objcopy` on a private staging copy and adds a matching GNU

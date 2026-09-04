@@ -61,6 +61,10 @@
       "value": true
     },
     {
+      "path": "/@implementation/crosspack-qualification/requirements/independent_components_match_across_targets",
+      "value": true
+    },
+    {
       "path": "/@implementation/crosspack-qualification/requirements/installed_file_attributes",
       "value": true
     },
