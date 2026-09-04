@@ -234,6 +234,7 @@ def package_command(release, arguments):
             tools["readelf"],
             tools["sysroot"],
             tools["objcopy"],
+            arguments.format,
         )
         crosspack.write_json(plan, arguments.output)
         return 0
@@ -247,6 +248,7 @@ def package_command(release, arguments):
         tools["readelf"],
         tools["sysroot"],
         tools["objcopy"],
+        arguments.format,
     )
     print(
         "packaged %s staged tree: %s"
@@ -276,10 +278,16 @@ def parser():
     package_plan = package_subparsers.add_parser("plan", allow_abbrev=False)
     package_plan.add_argument("--config", type=Path, required=True)
     package_plan.add_argument("--staging-root", type=Path, required=True)
+    package_plan.add_argument(
+        "--format", choices=("both", "deb", "rpm"), default="both"
+    )
     package_plan.add_argument("--output", default="-")
     package_build = package_subparsers.add_parser("build", allow_abbrev=False)
     package_build.add_argument("--config", type=Path, required=True)
     package_build.add_argument("--staging-root", type=Path, required=True)
+    package_build.add_argument(
+        "--format", choices=("both", "deb", "rpm"), default="both"
+    )
     package_build.add_argument("--output-directory", type=Path, required=True)
     return result
 

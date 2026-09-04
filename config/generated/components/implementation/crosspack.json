@@ -41,6 +41,10 @@
       "value": "single-entry-mode-owner-group"
     },
     {
+      "path": "/@implementation/crosspack/format_selection",
+      "value": "deb-rpm-or-both-recorded-in-plan"
+    },
+    {
       "path": "/@implementation/crosspack/formats/0",
       "value": "deb"
     },

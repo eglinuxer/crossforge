@@ -290,6 +290,7 @@ def build(
     )
     reports = {}
     independent_observations = {}
+    format_selection = None
     try:
         with tempfile.TemporaryDirectory(
             prefix="crossforge-crosspack-build-"
@@ -326,6 +327,58 @@ def build(
                 )
                 require(result == repeated, "repeated crosspack result differs")
                 compare_outputs(first, second, result)
+                if arch == "x86_64":
+                    rpm_only = temporary / arch / "rpm-only"
+                    run(
+                        [
+                            crossforge_cli,
+                            "package",
+                            "build",
+                            "--config",
+                            config_path,
+                            "--staging-root",
+                            staging,
+                            "--output-directory",
+                            rpm_only,
+                            "--format",
+                            "rpm",
+                        ]
+                    )
+                    selected_result = crosspack["load_json"](
+                        rpm_only / "crosspack-result.json"
+                    )
+                    selected_plan = crosspack["load_json"](
+                        rpm_only / "crosspack-plan.json"
+                    )
+                    require(
+                        selected_plan["formats"] == ["rpm"]
+                        and len(selected_result["artifacts"]) == 4
+                        and all(
+                            item["format"] == "rpm"
+                            for item in selected_result["artifacts"]
+                        ),
+                        "selective package format differs",
+                    )
+                    full_rpm = {
+                        item["component"]: item
+                        for item in result["artifacts"]
+                        if item["format"] == "rpm"
+                    }
+                    for item in selected_result["artifacts"]:
+                        reference = full_rpm[item["component"]]
+                        require(
+                            item["path"] == reference["path"]
+                            and item["sha256"] == reference["sha256"]
+                            and (rpm_only / item["path"]).read_bytes()
+                            == (first / reference["path"]).read_bytes(),
+                            "selective RPM bytes differ: %s"
+                            % item["component"],
+                        )
+                    format_selection = {
+                        "formats": ["rpm"],
+                        "artifact_count": 4,
+                        "status": "passed",
+                    }
                 plan = crosspack["load_json"](first / "crosspack-plan.json")
                 validate_plan(plan, arch)
                 upgrade_staging = temporary / arch / "upgrade-staging"
@@ -409,6 +462,10 @@ def build(
             set(independent_observations) == {"tools"},
             "independent qualification coverage differs",
         )
+        require(
+            format_selection is not None,
+            "selective format qualification is missing",
+        )
         independent_components = {}
         for component, observation in independent_observations.items():
             independent_components[component] = {
@@ -434,12 +491,14 @@ def build(
                 "installed_file_attributes": "passed",
                 "lifecycle_scripts": "passed",
                 "verified_independent_components": "passed",
+                "selective_format_encoding": "passed",
             },
             "nfpm": {
                 "version": nfpm["version"],
                 "sha256": nfpm["binary"]["extracted_sha256"],
             },
             "independent_components": independent_components,
+            "format_selection": format_selection,
             "targets": reports,
         }
         write_json(temporary_output / "qualification.json", report)

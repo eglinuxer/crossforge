@@ -32,6 +32,7 @@ DESTINATION_RE = re.compile(
 OWNER_RE = re.compile(r"^(?:[a-z_][a-z0-9_-]{0,31}|[0-9]{1,10})$")
 PRIORITIES = {"required", "important", "standard", "optional", "extra"}
 CONFIG_TYPES = {"none", "config", "noreplace"}
+PACKAGE_FORMATS = ("deb", "rpm")
 DEB_RELATION_FIELDS = (
     "depends",
     "pre_depends",
@@ -158,6 +159,21 @@ def version(value, label):
         isinstance(value, str) and VERSION_RE.match(value) is not None,
         "%s is not a safe version" % label,
     )
+
+
+def selected_formats(value=None):
+    if value in (None, "both"):
+        return PACKAGE_FORMATS
+    if isinstance(value, str):
+        value = (value,)
+    require(
+        isinstance(value, (list, tuple))
+        and value
+        and len(value) == len(set(value))
+        and set(value) <= set(PACKAGE_FORMATS),
+        "package formats must select deb, rpm, or both",
+    )
+    return tuple(packager for packager in PACKAGE_FORMATS if packager in value)
 
 
 def source_path(value, label):
@@ -1102,6 +1118,7 @@ def build_plan(
     debug_symbols=None,
     config_root=None,
     script_root=None,
+    formats=None,
 ):
     validate_config(config)
     require(
@@ -1161,6 +1178,7 @@ def build_plan(
         "config_sha256": config_sha256 or canonical_sha256(config),
         "staging_sha256": canonical_sha256(inventory),
         "target": config["target"],
+        "formats": list(selected_formats(formats)),
         "architectures": {
             "deb": ARCHITECTURES[config["target"]]["deb"],
             "rpm": ARCHITECTURES[config["target"]]["rpm"],
@@ -1283,10 +1301,10 @@ def nfpm_config(plan_document, package, packager, staging_root, script_root=None
 
 
 def render_nfpm_configs(plan_document, staging_root, script_root=None):
-    result = {"deb": {}, "rpm": {}}
+    result = {packager: {} for packager in plan_document["formats"]}
     for package in plan_document["packages"]:
         component = package["component"]
-        for packager in ("deb", "rpm"):
+        for packager in plan_document["formats"]:
             result[packager][component] = nfpm_config(
                 plan_document, package, packager, staging_root, script_root
             )
@@ -1358,6 +1376,7 @@ def package(
     readelf,
     sysroot,
     objcopy,
+    formats=None,
 ):
     config = load_json(config_path)
     validate_config(config)
@@ -1386,6 +1405,7 @@ def package(
             debug_symbols,
             Path(config_path).resolve().parent,
             workspace / "scripts",
+            selected_formats(formats),
         )
         rendered = render_nfpm_configs(
             plan_document, package_staging, workspace / "scripts"
@@ -1409,7 +1429,7 @@ def package(
         packages = {
             item["component"]: item for item in plan_document["packages"]
         }
-        for packager in ("deb", "rpm"):
+        for packager in plan_document["formats"]:
             for component in sorted(packages):
                 current_inventory = inventory_staging(
                     package_staging, plan_document["target"]
@@ -1466,7 +1486,14 @@ def package(
     return result
 
 
-def plan(config_path, staging_root, readelf=None, sysroot=None, objcopy=None):
+def plan(
+    config_path,
+    staging_root,
+    readelf=None,
+    sysroot=None,
+    objcopy=None,
+    formats=None,
+):
     config = load_json(config_path)
     validate_config(config)
     with tempfile.TemporaryDirectory(prefix="crosspack-plan-") as temporary:
@@ -1482,6 +1509,7 @@ def plan(config_path, staging_root, readelf=None, sysroot=None, objcopy=None):
             debug_symbols,
             Path(config_path).resolve().parent,
             Path(temporary) / "scripts",
+            selected_formats(formats),
         )
 
 
@@ -1517,6 +1545,9 @@ def main(argv=None):
     plan_parser.add_argument("--readelf", type=Path, required=True)
     plan_parser.add_argument("--sysroot", type=Path, required=True)
     plan_parser.add_argument("--objcopy", type=Path, required=True)
+    plan_parser.add_argument(
+        "--format", choices=("both", "deb", "rpm"), default="both"
+    )
     plan_parser.add_argument("--output", default="-")
     package_parser = subparsers.add_parser("package", allow_abbrev=False)
     package_parser.add_argument("--config", type=Path, required=True)
@@ -1528,6 +1559,9 @@ def main(argv=None):
     package_parser.add_argument("--readelf", type=Path, required=True)
     package_parser.add_argument("--sysroot", type=Path, required=True)
     package_parser.add_argument("--objcopy", type=Path, required=True)
+    package_parser.add_argument(
+        "--format", choices=("both", "deb", "rpm"), default="both"
+    )
     arguments = parser.parse_args(argv)
     try:
         require(arguments.command in ("plan", "package"), "a crosspack command is required")
@@ -1538,6 +1572,7 @@ def main(argv=None):
                 arguments.readelf,
                 arguments.sysroot,
                 arguments.objcopy,
+                arguments.format,
             )
             write_json(report, arguments.output)
         else:
@@ -1551,6 +1586,7 @@ def main(argv=None):
                 arguments.readelf,
                 arguments.sysroot,
                 arguments.objcopy,
+                arguments.format,
             )
     except CrosspackError as error:
         print("error: %s" % error, file=sys.stderr)

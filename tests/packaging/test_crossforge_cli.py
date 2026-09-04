@@ -227,6 +227,8 @@ class CrossforgeCliTests(unittest.TestCase):
                 "/staging",
                 "--output-directory",
                 "/output",
+                "--format",
+                "rpm",
             ]
         )
         self.assertFalse(hasattr(arguments, "nfpm"))
@@ -246,6 +248,7 @@ class CrossforgeCliTests(unittest.TestCase):
             Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-readelf"),
             Path("/opt/crossforge/sysroots/el8/x86_64"),
             Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-objcopy"),
+            "rpm",
         )
 
     def test_package_plan_does_not_invoke_nfpm(self):
@@ -259,6 +262,8 @@ class CrossforgeCliTests(unittest.TestCase):
                 "/staging",
                 "--output",
                 "/output/plan.json",
+                "--format",
+                "deb",
             ]
         )
         planned = {"schema_version": 1, "kind": "test-plan"}
@@ -274,6 +279,7 @@ class CrossforgeCliTests(unittest.TestCase):
             Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-readelf"),
             Path("/opt/crossforge/sysroots/el8/x86_64"),
             Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-objcopy"),
+            "deb",
         )
         write.assert_called_once_with(planned, arguments.output)
         package.assert_not_called()

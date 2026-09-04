@@ -156,11 +156,21 @@ def finalize(arguments):
             "installed_file_attributes": "passed",
             "lifecycle_scripts": "passed",
             "verified_independent_components": "passed",
+            "selective_format_encoding": "passed",
         }
         and package_report.get("nfpm", {}).get("sha256")
         == source_report.get("binary", {}).get("sha256")
         and set(package_report.get("targets", {})) == {"x86_64", "aarch64"},
         "crosspack package report differs",
+    )
+    require(
+        package_report.get("format_selection")
+        == {
+            "formats": ["rpm"],
+            "artifact_count": 4,
+            "status": "passed",
+        },
+        "crosspack format-selection report differs",
     )
     independent = package_report.get("independent_components", {})
     require(

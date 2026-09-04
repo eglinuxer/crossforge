@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -171,6 +172,66 @@ class CrosspackPlanTests(unittest.TestCase):
                 "machine": "x86_64",
                 "type": "dynamic",
             },
+        )
+
+    def test_format_selection_is_canonical_and_limits_encoding(self):
+        plan = CROSSPACK["build_plan"](
+            self.config, self.root, formats=("rpm",)
+        )
+        self.assertEqual(plan["formats"], ["rpm"])
+        self.assertEqual(
+            set(CROSSPACK["render_nfpm_configs"](plan, self.root)),
+            {"rpm"},
+        )
+        self.assertEqual(
+            CROSSPACK["selected_formats"](("rpm", "deb")),
+            ("deb", "rpm"),
+        )
+        for invalid in ((), ("apk",), ("deb", "deb")):
+            with self.subTest(invalid_formats=invalid):
+                with self.assertRaises(CROSSPACK["CrosspackError"]):
+                    CROSSPACK["selected_formats"](invalid)
+
+        output = Path(self.temporary.name) / "rpm-only"
+
+        def encode(arguments, environment=None):
+            del environment
+            target = Path(arguments[arguments.index("--target") + 1])
+            target.write_bytes(b"package")
+            return "", ""
+
+        identity = {
+            "version": "test",
+            "sha256": "1" * 64,
+            "version_output_sha256": "2" * 64,
+        }
+        with mock.patch.dict(
+            CROSSPACK["package"].__globals__,
+            {
+                "nfpm_identity": mock.Mock(return_value=identity),
+                "run_command": mock.Mock(side_effect=encode),
+            },
+        ):
+            result = CROSSPACK["package"](
+                FIXTURE,
+                self.root,
+                output,
+                "/fake/nfpm",
+                "test",
+                "1" * 64,
+                None,
+                None,
+                None,
+                "rpm",
+            )
+        self.assertEqual(len(result["artifacts"]), 3)
+        self.assertEqual(
+            {artifact["format"] for artifact in result["artifacts"]},
+            {"rpm"},
+        )
+        self.assertEqual(
+            CROSSPACK["load_json"](output / "crosspack-plan.json")["formats"],
+            ["rpm"],
         )
 
     def test_plan_identity_ignores_mtime_and_absolute_staging_path(self):

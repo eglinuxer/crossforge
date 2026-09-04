@@ -424,6 +424,7 @@ epoch/release，并按最终 destination/RUNPATH 唯一解析 `DT_NEEDED` provid
 格式特定 lifecycle scriptlets 也已绑定摘要并经过真实安装、升级、卸载执行。
 显式 independent component 已映射为 DEB `all`/RPM `noarch`，并以双 target 完整
 component plan 和两代 package 字节一致性取得 `verified-independent` 证据。
+`package plan/build` 也已支持选择 DEB、RPM 或两者，并把选择绑定进 canonical plan。
 DEB/RPM 各自的 libdir 和 sealed staging/variant provenance 仍须在首次公开发布前完成。
 现有安装门禁也不构成目标发行版运行资格化。
 不能先发布一个功能不足的 schema v1，再立即用 schema v2 修正基本生产语义。

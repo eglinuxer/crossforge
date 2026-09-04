@@ -10,6 +10,7 @@ CROSSPACK_POLICY = {
     "plan_schema": "https://crossforge.dev/schemas/crosspack-plan.schema.json",
     "result_schema": "https://crossforge.dev/schemas/crosspack-result.schema.json",
     "formats": ["deb", "rpm"],
+    "format_selection": "deb-rpm-or-both-recorded-in-plan",
     "targets": {
         "x86_64": {"deb": "amd64", "rpm": "x86_64", "elf_machine": 62},
         "aarch64": {"deb": "arm64", "rpm": "aarch64", "elf_machine": 183},
@@ -94,6 +95,7 @@ CROSSPACK_QUALIFICATION_POLICY = {
         "installed_file_attributes": True,
         "lifecycle_scripts_execute_on_install_upgrade_remove": True,
         "independent_components_match_across_targets": True,
+        "selective_format_encoding_matches_full_build": True,
         "isolated_install_root": True,
         "installed_payload_hashes": True,
         "detached_debug_symbols": True,

@@ -575,9 +575,14 @@ $ crossforge info --json
 $ crossforge env --target aarch64 --python 3.14 --vcpkg --json
 $ crossforge run --target aarch64 --vcpkg --linkage dynamic -- cmake --build build
 $ crossforge shell --target x86_64
-$ crossforge package plan --config crosspack.json --staging-root stage --output plan.json
-$ crossforge package build --config crosspack.json --staging-root stage --output-directory dist
+$ crossforge package plan --config crosspack.json --staging-root stage --format rpm --output plan.json
+$ crossforge package build --config crosspack.json --staging-root stage --format rpm --output-directory dist
 ```
+
+`package plan` and `package build` accept `--format deb`, `--format rpm`, or
+`--format both` (the default). The canonical plan records the selection and the
+encoder emits only those formats; qualification checks that selective RPM bytes
+equal the corresponding artifacts from a full two-format build.
 
 `env` prints only Crossforge-managed variables and never dumps arbitrary
 inherited secrets. `run` and `shell` build a copied child environment, then

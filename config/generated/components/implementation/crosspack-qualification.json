@@ -81,6 +81,10 @@
       "value": true
     },
     {
+      "path": "/@implementation/crosspack-qualification/requirements/selective_format_encoding_matches_full_build",
+      "value": true
+    },
+    {
       "path": "/@implementation/crosspack-qualification/schema_version",
       "value": 1
     },
