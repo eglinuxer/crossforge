@@ -3,7 +3,7 @@
 import argparse
 import json
 import os
-import subprocess
+import shlex
 import sys
 from pathlib import Path
 
@@ -16,6 +16,47 @@ RELEASE_PATH = Path("/opt/crossforge/release.json")
 
 class CliError(ValueError):
     pass
+
+
+MANAGED_ENVIRONMENT_KEYS = {
+    "AR",
+    "AS",
+    "CC",
+    "CMAKE_TOOLCHAIN_FILE",
+    "CROSSFORGE_CACHE_ROOT",
+    "CROSSFORGE_HOME",
+    "CROSSFORGE_PYTHON",
+    "CROSSFORGE_PYTHON_BUILD",
+    "CROSSFORGE_PYTHON_PREFIX",
+    "CROSSFORGE_SYSROOT",
+    "CROSSFORGE_TARGET",
+    "CROSSFORGE_TARGET_TRIPLE",
+    "CXX",
+    "HOME",
+    "LD",
+    "MESON_CROSS_FILE",
+    "NM",
+    "OBJCOPY",
+    "OBJDUMP",
+    "PATH",
+    "PKG_CONFIG_LIBDIR",
+    "PKG_CONFIG_SYSROOT_DIR",
+    "PYTHON_FOR_BUILD",
+    "RANLIB",
+    "READELF",
+    "STRIP",
+    "VCPKG_DEFAULT_BINARY_CACHE",
+    "VCPKG_DEFAULT_HOST_TRIPLET",
+    "VCPKG_DEFAULT_TRIPLET",
+    "VCPKG_DISABLE_METRICS",
+    "VCPKG_DOWNLOADS",
+    "VCPKG_FORCE_SYSTEM_BINARIES",
+    "VCPKG_OVERLAY_TRIPLETS",
+    "VCPKG_ROOT",
+    "XDG_CACHE_HOME",
+    "_PYTHON_SYSCONFIGDATA_NAME",
+    "_PYTHON_SYSCONFIGDATA_PATH",
+}
 
 
 def require(condition, message):
@@ -99,14 +140,49 @@ def print_info(release, as_json):
     print("nFPM: %s" % document["nfpm"]["version"])
 
 
-def selected_environment(release, arguments):
+def selected_environment(release, arguments, root=Path("/"), base=None):
     return build_environment(
         release,
+        root=root,
         target=arguments.target,
         python=arguments.python,
         vcpkg=arguments.vcpkg,
         linkage=arguments.linkage,
+        base=base,
     )
+
+
+def managed_environment(environment):
+    return {
+        key: environment[key]
+        for key in sorted(MANAGED_ENVIRONMENT_KEYS)
+        if key in environment
+    }
+
+
+def environment_document(release, arguments, root=Path("/"), base=None):
+    selected = selected_environment(release, arguments, root=root, base=base)
+    return {
+        "schema_version": 1,
+        "kind": "crossforge-environment",
+        "selection": {
+            "target": arguments.target or "host",
+            "python": arguments.python,
+            "vcpkg": arguments.vcpkg,
+            "linkage": arguments.linkage if arguments.vcpkg else None,
+        },
+        "environment": managed_environment(selected),
+    }
+
+
+def environment_command(release, arguments):
+    document = environment_document(release, arguments)
+    if arguments.json or arguments.format == "json":
+        print(json.dumps(document, indent=2, sort_keys=True))
+        return 0
+    for key, value in document["environment"].items():
+        print("export %s=%s" % (key, shlex.quote(value)))
+    return 0
 
 
 def run_command(release, arguments):
@@ -114,13 +190,13 @@ def run_command(release, arguments):
     if command and command[0] == "--":
         command.pop(0)
     require(command, "run requires a command after --")
-    return subprocess.call(command, env=selected_environment(release, arguments))
+    os.execvpe(command[0], command, selected_environment(release, arguments))
 
 
 def shell_command(release, arguments):
     shell = arguments.shell or os.environ.get("SHELL") or "/bin/bash"
     require(os.path.isabs(shell), "shell path must be absolute")
-    return subprocess.call([shell], env=selected_environment(release, arguments))
+    os.execvpe(shell, [shell], selected_environment(release, arguments))
 
 
 def package_command(release, arguments):
@@ -155,6 +231,7 @@ def package_command(release, arguments):
 
 def parser():
     result = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    result.add_argument("--version", action="store_true")
     subparsers = result.add_subparsers(dest="subcommand")
     info = subparsers.add_parser("info", allow_abbrev=False)
     info.add_argument("--json", action="store_true")
@@ -164,6 +241,10 @@ def parser():
     shell = subparsers.add_parser("shell", allow_abbrev=False)
     selection_arguments(shell)
     shell.add_argument("--shell")
+    environment = subparsers.add_parser("env", allow_abbrev=False)
+    selection_arguments(environment)
+    environment.add_argument("--format", choices=("shell", "json"), default="shell")
+    environment.add_argument("--json", action="store_true")
     package = subparsers.add_parser("package", allow_abbrev=False)
     package.add_argument("--config", type=Path, required=True)
     package.add_argument("--staging-root", type=Path, required=True)
@@ -174,8 +255,16 @@ def parser():
 def main(argv=None):
     arguments = parser().parse_args(argv)
     try:
+        if arguments.version:
+            require(
+                arguments.subcommand is None,
+                "--version cannot be combined with a command",
+            )
+            release = load_release()
+            print("crossforge %s" % release["product"]["version"])
+            return 0
         require(
-            arguments.subcommand in ("info", "run", "shell", "package"),
+            arguments.subcommand in ("info", "env", "run", "shell", "package"),
             "a subcommand is required",
         )
         release = load_release()
@@ -186,6 +275,8 @@ def main(argv=None):
             return run_command(release, arguments)
         if arguments.subcommand == "shell":
             return shell_command(release, arguments)
+        if arguments.subcommand == "env":
+            return environment_command(release, arguments)
         return package_command(release, arguments)
     except (CliError, CrosspackError, EnvironmentError, KeyError, OSError) as error:
         print("error: %s" % error, file=sys.stderr)

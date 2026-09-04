@@ -540,19 +540,25 @@ present in the package set or locked sysroot fail the build.
 The SDK exposes one launcher. Backend paths and nFPM identities are internal:
 
 ```console
+$ crossforge --version
 $ crossforge info --json
+$ crossforge env --target aarch64 --python 3.14 --vcpkg --json
 $ crossforge run --target aarch64 --vcpkg --linkage dynamic -- cmake --build build
 $ crossforge shell --target x86_64
 $ crossforge package --config crosspack.json --staging-root stage --output-directory dist
 ```
 
-`run` and `shell` build a copied child environment; they never mutate the
-container environment or infer a target from the project. Selecting vcpkg
-switches CMake to its toolchain and an explicit static/dynamic Crossforge
-triplet. The generated Meson cross-file path is exposed as `MESON_CROSS_FILE`.
-The Python selector is fail-closed until the final aggregate image adds the
-qualified Python rows to this packaging/vcpkg base. Phase 15 provides that
-aggregate as the cache-only, non-publishable `sdk-complete-dev` target.
+`env` prints only Crossforge-managed variables and never dumps arbitrary
+inherited secrets. `run` and `shell` build a copied child environment, then
+replace the launcher process so exit status and signals reach the real command;
+they never mutate the container environment or infer a target from the project.
+Selecting vcpkg switches CMake to its toolchain and an explicit static/dynamic
+Crossforge triplet. Its downloads and binary caches live under the writable
+`CROSSFORGE_CACHE_ROOT`, never inside `/opt/crossforge/vcpkg/root`. The generated
+Meson cross-file path is exposed as `MESON_CROSS_FILE`. The Python selector is
+fail-closed until the final aggregate image adds the qualified Python rows to
+this packaging/vcpkg base. Phase 15 provides that aggregate as the cache-only,
+non-publishable `sdk-complete-dev` target.
 
 ## Phase 15: complete SDK composition
 
@@ -575,6 +581,11 @@ unique `candidate-v<version>-g<commit>-r<run>-a<attempt>` tag, pushes with max
 provenance and SBOM attestations, reconstructs `candidate.json` from the raw
 OCI index, then logs out of GHCR and proves the digest is anonymously readable.
 It never creates a SemVer or stable-channel tag.
+
+The public candidate runs as `crossforge` UID/GID 1000 by default. `/opt/crossforge`
+remains root-owned; only the workspace, home, cache and temporary directories are
+writable. `docker run --user <uid>:<gid>` is supported: if the inherited home is
+not writable, the launcher creates an isolated `/tmp/crossforge-<uid>` fallback.
 
 ## Product contract
 

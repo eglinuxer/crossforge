@@ -85,6 +85,9 @@ CANDIDATE_MANIFEST_POLICY = {
     "tag_trust": "none-digest-only",
     "platform": "linux/amd64",
     "registry_resolution": "rehash-index-exact-one-linux-amd64-manifest",
+    "runtime_user": "crossforge:1000:1000",
+    "sdk_root": "root-owned-runtime-immutable",
+    "writable_roots": ["home", "cache", "tmp", "workspace"],
 }
 if "COMPONENT_EXTENSIONS" not in globals():
     COMPONENT_EXTENSIONS = ()

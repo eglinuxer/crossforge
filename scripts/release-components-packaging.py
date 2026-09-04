@@ -63,10 +63,12 @@ CROSSPACK_QUALIFICATION_POLICY = {
 }
 CROSSFORGE_LAUNCHER_POLICY = {
     "schema_version": 1,
-    "commands": ["info", "package", "run", "shell"],
+    "commands": ["env", "info", "package", "run", "shell"],
     "target_selection": "explicit-no-project-guessing",
     "default_environment": "native-gts15-host",
-    "subprocess_environment": "copy-and-overlay",
+    "subprocess_environment": "copy-overlay-and-exec",
+    "environment_output": "managed-whitelist-only",
+    "runtime_directories": "writable-home-and-cache-with-uid-fallback",
     "targets": ["x86_64", "aarch64"],
     "python_minors": ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"],
     "vcpkg_linkage": ["static", "dynamic"],

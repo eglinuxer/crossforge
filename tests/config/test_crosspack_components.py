@@ -139,7 +139,7 @@ class CrosspackComponentTests(unittest.TestCase):
         )
         launcher = RENDERER["CROSSFORGE_LAUNCHER_POLICY"]
         self.assertEqual(
-            launcher["commands"], ["info", "package", "run", "shell"]
+            launcher["commands"], ["env", "info", "package", "run", "shell"]
         )
         self.assertEqual(
             launcher["target_selection"], "explicit-no-project-guessing"
@@ -264,6 +264,10 @@ class CrosspackComponentTests(unittest.TestCase):
         )
         self.assertIn('test "${#CROSSFORGE_SOURCE_COMMIT}" -eq 40', candidate)
         self.assertIn("org.opencontainers.image.revision", candidate)
+        self.assertIn("useradd --uid 1000 --gid 1000", candidate)
+        self.assertIn("USER 1000:1000", candidate)
+        self.assertIn("ENV HOME=/home/crossforge", candidate)
+        self.assertNotIn("ENV CROSSFORGE_HOME=", candidate)
 
     def test_meson_cross_files_are_explicit_and_never_enable_execution(self):
         for arch, triple in (

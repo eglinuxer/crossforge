@@ -171,6 +171,22 @@ def qualify(arguments):
         and info.get("nfpm", {}).get("installed") is True,
         "crossforge info does not describe the complete SDK",
     )
+    require(
+        run([arguments.crossforge, "--version"]).strip()
+        == "crossforge %s" % info["version"],
+        "crossforge version output differs from info",
+    )
+    environment_info = json.loads(
+        run([arguments.crossforge, "env", "--json"])
+    )
+    require(
+        environment_info.get("kind") == "crossforge-environment"
+        and environment_info.get("selection", {}).get("target") == "host"
+        and environment_info.get("environment", {}).get("CROSSFORGE_TARGET")
+        == "host"
+        and "SECRET_TOKEN" not in environment_info.get("environment", {}),
+        "crossforge env does not describe a safe native environment",
+    )
 
     parent_environment = dict(os.environ)
     host = environment_output([arguments.crossforge, "run"])

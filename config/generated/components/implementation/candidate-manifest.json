@@ -25,6 +25,10 @@
       "value": "rehash-index-exact-one-linux-amd64-manifest"
     },
     {
+      "path": "/@implementation/candidate-manifest/runtime_user",
+      "value": "crossforge:1000:1000"
+    },
+    {
       "path": "/@implementation/candidate-manifest/schema",
       "value": "https://crossforge.dev/schemas/candidate.schema.json"
     },
@@ -33,12 +37,32 @@
       "value": 1
     },
     {
+      "path": "/@implementation/candidate-manifest/sdk_root",
+      "value": "root-owned-runtime-immutable"
+    },
+    {
       "path": "/@implementation/candidate-manifest/source_commit",
       "value": "full-lowercase-git-sha1"
     },
     {
       "path": "/@implementation/candidate-manifest/tag_trust",
       "value": "none-digest-only"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/writable_roots/0",
+      "value": "home"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/writable_roots/1",
+      "value": "cache"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/writable_roots/2",
+      "value": "tmp"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/writable_roots/3",
+      "value": "workspace"
     }
   ],
   "schema_version": 1,

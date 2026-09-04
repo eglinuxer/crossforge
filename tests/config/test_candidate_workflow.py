@@ -54,6 +54,16 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("if-no-files-found: error", self.workflow)
         self.assertIn("retention-days: 90", self.workflow)
 
+    def test_public_candidate_runs_non_root_with_a_read_only_sdk(self):
+        self.assertIn('docker run --rm --pull=always "$image" id -u', self.workflow)
+        self.assertIn(')" = 1000', self.workflow)
+        self.assertIn("docker run --rm --read-only", self.workflow)
+        self.assertIn("--tmpfs /home/crossforge:rw,uid=1000,gid=1000,mode=0700", self.workflow)
+        self.assertIn("crossforge env --target aarch64 --vcpkg --json", self.workflow)
+        self.assertIn(
+            "! grep -F '/opt/crossforge/vcpkg/root/downloads'", self.workflow
+        )
+
     def test_ci_and_candidate_share_one_locked_buildx_setup(self):
         local_action = "uses: ./.github/actions/setup-locked-buildx"
         self.assertEqual(self.ci.count(local_action), 1)

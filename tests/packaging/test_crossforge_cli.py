@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -116,6 +117,8 @@ class CrossforgeCliTests(unittest.TestCase):
             "_sysconfigdata_crossforge",
         )
         self.assertNotIn("PYTHONPATH", result)
+        self.assertTrue(Path(result["VCPKG_DOWNLOADS"]).is_dir())
+        self.assertTrue(Path(result["VCPKG_DEFAULT_BINARY_CACHE"]).is_dir())
 
     def test_cross_target_cmake_and_native_host_are_distinct(self):
         target = environment.build_environment(
@@ -142,6 +145,58 @@ class CrossforgeCliTests(unittest.TestCase):
                 python="3.14",
                 base={"PATH": "/usr/bin"},
             )
+
+    def test_runtime_paths_fall_back_for_missing_home(self):
+        result = environment.build_environment(
+            self.release,
+            root=self.root,
+            target="x86_64",
+            base={
+                "PATH": "/usr/bin",
+                "HOME": "/missing-home",
+                "PKG_CONFIG_PATH": "/host/pkgconfig",
+            },
+        )
+        self.assertNotEqual(result["HOME"], "/missing-home")
+        self.assertTrue(Path(result["HOME"]).is_dir())
+        self.assertTrue(Path(result["CROSSFORGE_CACHE_ROOT"]).is_dir())
+        self.assertNotIn("PKG_CONFIG_PATH", result)
+
+    def test_explicit_cache_must_be_absolute_and_not_a_symlink(self):
+        with self.assertRaises(environment.EnvironmentError):
+            environment.build_environment(
+                self.release,
+                root=self.root,
+                target="x86_64",
+                base={
+                    "PATH": "/usr/bin",
+                    "CROSSFORGE_CACHE_ROOT": "relative/cache",
+                },
+            )
+        cache_target = self.root / "cache-target"
+        cache_target.mkdir()
+        cache_link = self.root / "cache-link"
+        cache_link.symlink_to(cache_target.name)
+        with self.assertRaises(environment.EnvironmentError):
+            environment.build_environment(
+                self.release,
+                root=self.root,
+                target="x86_64",
+                base={
+                    "PATH": "/usr/bin",
+                    "CROSSFORGE_CACHE_ROOT": str(cache_link),
+                },
+            )
+
+    def test_python_selection_removes_inherited_pythonpath(self):
+        result = environment.build_environment(
+            self.release,
+            root=self.root,
+            target="aarch64",
+            python="3.14",
+            base={"PATH": "/usr/bin", "PYTHONPATH": "/host/python"},
+        )
+        self.assertNotIn("PYTHONPATH", result)
 
     def test_info_reports_installed_state_without_guessing(self):
         nfpm = self.release["nfpm"]
@@ -191,6 +246,52 @@ class CrossforgeCliTests(unittest.TestCase):
             Path("/opt/crossforge/sysroots/el8/x86_64"),
             Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-objcopy"),
         )
+
+    def test_env_json_is_versioned_and_never_discloses_inherited_secrets(self):
+        arguments = cli.parser().parse_args(
+            ["env", "--target", "aarch64", "--vcpkg", "--json"]
+        )
+        document = cli.environment_document(
+            self.release,
+            arguments,
+            root=self.root,
+            base={"PATH": "/usr/bin", "SECRET_TOKEN": "do-not-print"},
+        )
+        self.assertEqual(document["kind"], "crossforge-environment")
+        self.assertEqual(document["selection"]["target"], "aarch64")
+        self.assertTrue(document["selection"]["vcpkg"])
+        self.assertNotIn("SECRET_TOKEN", document["environment"])
+        self.assertIn("VCPKG_DOWNLOADS", document["environment"])
+
+    def test_env_shell_quotes_values_and_run_replaces_the_launcher(self):
+        arguments = cli.parser().parse_args(["env", "--target", "x86_64"])
+        with mock.patch.object(
+            cli, "environment_document"
+        ) as document, mock.patch("builtins.print") as output:
+            document.return_value = {
+                "environment": {"CC": "/tool path/gcc --sysroot=/sdk"}
+            }
+            self.assertEqual(cli.environment_command(self.release, arguments), 0)
+        output.assert_called_once_with(
+            "export CC='/tool path/gcc --sysroot=/sdk'"
+        )
+
+        run = cli.parser().parse_args(["run", "--", "/usr/bin/true"])
+        selected = {"PATH": "/usr/bin"}
+        with mock.patch.object(
+            cli, "selected_environment", return_value=selected
+        ), mock.patch.object(os, "execvpe") as execute:
+            cli.run_command(self.release, run)
+        execute.assert_called_once_with(
+            "/usr/bin/true", ["/usr/bin/true"], selected
+        )
+
+    def test_version_uses_the_canonical_release_version(self):
+        with mock.patch.object(
+            cli, "load_release", return_value=self.release
+        ), mock.patch("builtins.print") as output:
+            self.assertEqual(cli.main(["--version"]), 0)
+        output.assert_called_once_with("crossforge 0.1.0")
 
     def test_launcher_sources_remain_python36_compatible(self):
         for path in (

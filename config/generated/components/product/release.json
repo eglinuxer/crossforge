@@ -3,7 +3,7 @@
   "component": "product/release",
   "dependencies": [
     {
-      "canonical_sha256": "8e5f12a80b45e905889055f7c97e15e74f82ec3b7187b447db81b129f66e3730",
+      "canonical_sha256": "88857411360aa3868ea5d898ff1a6db864c0fa64662e488b83f262e0d0988134",
       "component": "implementation/candidate-manifest"
     }
   ],

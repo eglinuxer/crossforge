@@ -54,6 +54,75 @@ def regular_file(path, label):
     return str(path)
 
 
+def environment_path(root, value, label):
+    require(
+        isinstance(value, str) and value.startswith("/"),
+        "%s must be absolute" % label,
+    )
+    path = Path(value)
+    root = Path(root)
+    if root == Path("/"):
+        return path
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return rooted(root, value)
+    return path
+
+
+def usable_directory(path):
+    return (
+        path.is_dir()
+        and not path.is_symlink()
+        and os.access(str(path), os.W_OK | os.X_OK)
+    )
+
+
+def ensure_user_directory(path, label):
+    try:
+        path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    except OSError as error:
+        raise EnvironmentError("%s is not writable: %s" % (label, path)) from error
+    require(usable_directory(path), "%s is not writable: %s" % (label, path))
+    return path
+
+
+def runtime_environment(root, environment):
+    explicit_home = environment.get("CROSSFORGE_HOME")
+    inherited_home = environment.get("HOME")
+    if explicit_home:
+        home = ensure_user_directory(
+            environment_path(root, explicit_home, "CROSSFORGE_HOME"),
+            "Crossforge home",
+        )
+    else:
+        home = None
+        if inherited_home:
+            candidate = environment_path(root, inherited_home, "HOME")
+            if usable_directory(candidate):
+                home = candidate
+        if home is None:
+            home = ensure_user_directory(
+                rooted(root, "/tmp/crossforge-%d/home" % os.geteuid()),
+                "Crossforge fallback home",
+            )
+
+    explicit_cache = environment.get("CROSSFORGE_CACHE_ROOT")
+    cache = (
+        environment_path(root, explicit_cache, "CROSSFORGE_CACHE_ROOT")
+        if explicit_cache
+        else home / ".cache/crossforge"
+    )
+    cache = ensure_user_directory(cache, "Crossforge cache")
+    xdg_cache = ensure_user_directory(home / ".cache", "XDG cache")
+    return {
+        "HOME": str(home),
+        "XDG_CACHE_HOME": str(xdg_cache),
+        "CROSSFORGE_HOME": str(home),
+        "CROSSFORGE_CACHE_ROOT": str(cache),
+    }
+
+
 def python_row(release, minor):
     matches = [
         entry
@@ -169,7 +238,7 @@ def host_environment(root):
     return tools
 
 
-def vcpkg_environment(root, arch, linkage):
+def vcpkg_environment(root, arch, linkage, cache_root):
     vcpkg_root = rooted(root, "/opt/crossforge/vcpkg/root")
     triplet_root = rooted(root, "/opt/crossforge/vcpkg/triplets")
     executable(vcpkg_root / "vcpkg", "vcpkg")
@@ -180,6 +249,12 @@ def vcpkg_environment(root, arch, linkage):
         triplet = "crossforge-host-x64-el8"
     else:
         triplet = TARGETS[arch]["vcpkg"][linkage]
+    downloads = ensure_user_directory(
+        Path(cache_root) / "vcpkg/downloads", "vcpkg downloads cache"
+    )
+    binary_cache = ensure_user_directory(
+        Path(cache_root) / "vcpkg/binary", "vcpkg binary cache"
+    )
     return {
         "VCPKG_ROOT": str(vcpkg_root),
         "VCPKG_OVERLAY_TRIPLETS": str(triplet_root),
@@ -187,6 +262,8 @@ def vcpkg_environment(root, arch, linkage):
         "VCPKG_DEFAULT_TRIPLET": triplet,
         "VCPKG_DISABLE_METRICS": "1",
         "VCPKG_FORCE_SYSTEM_BINARIES": "1",
+        "VCPKG_DOWNLOADS": str(downloads),
+        "VCPKG_DEFAULT_BINARY_CACHE": str(binary_cache),
         "CMAKE_TOOLCHAIN_FILE": str(toolchain),
     }
 
@@ -205,6 +282,7 @@ def build_environment(
     require(vcpkg or linkage == "static", "--linkage requires --vcpkg")
     require(python is None or target is not None, "--python requires --target")
     environment = dict(os.environ if base is None else base)
+    environment.update(runtime_environment(root, environment))
     overlay = (
         host_environment(root)
         if target is None
@@ -212,9 +290,16 @@ def build_environment(
     )
     triple = None if target is None else TARGETS[target]["triple"]
     if python is not None:
+        environment.pop("PYTHONPATH", None)
         overlay.update(python_environment(release, root, python, triple))
     if vcpkg:
-        overlay.update(vcpkg_environment(root, target, linkage))
+        overlay.update(
+            vcpkg_environment(
+                root, target, linkage, environment["CROSSFORGE_CACHE_ROOT"]
+            )
+        )
+    if target is not None:
+        environment.pop("PKG_CONFIG_PATH", None)
     path_entries = [
         str(rooted(root, "/opt/crossforge/host-tools/cmake/4.4.0/bin")),
         str(rooted(root, "/opt/crossforge/host-tools/ninja/1.13.2/bin")),

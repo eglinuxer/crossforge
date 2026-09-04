@@ -279,10 +279,19 @@ RUN --network=none \
        esac \
     && crossforge info --json \
       | grep -F "\"version\": \"$CROSSFORGE_PRODUCT_VERSION\"" \
-    && rm -rf /work
+    && groupadd --gid 1000 crossforge \
+    && useradd --uid 1000 --gid 1000 --home-dir /home/crossforge \
+      --create-home --shell /bin/bash crossforge \
+    && install -d -m 0755 -o crossforge -g crossforge /workspace \
+    && install -d -m 0700 -o crossforge -g crossforge \
+      /home/crossforge/.cache/crossforge \
+    && rm -rf /work /root/.cache/crossforge
 LABEL org.opencontainers.image.title="Crossforge" \
       org.opencontainers.image.description="GTS-derived cross SDK for EL8 targets" \
       org.opencontainers.image.source="https://github.com/eglinuxer/crossforge" \
       org.opencontainers.image.version="${CROSSFORGE_PRODUCT_VERSION}" \
       org.opencontainers.image.revision="${CROSSFORGE_SOURCE_COMMIT}"
+ENV HOME=/home/crossforge \
+    XDG_CACHE_HOME=/home/crossforge/.cache
+USER 1000:1000
 WORKDIR /workspace

@@ -113,6 +113,27 @@ jobs:
             --expected-digest "$CANDIDATE_DIGEST")
           test "$anonymous_platform" = \
             "${{ steps.digest.outputs.platform_digest }}"
+      - name: Run the anonymous non-root candidate
+        env:
+          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+        run: |
+          set -Eeuo pipefail
+          image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
+          test "$(docker run --rm --pull=always "$image" id -u)" = 1000
+          docker run --rm "$image" crossforge --version \
+            | grep -E '^crossforge (0|[1-9][0-9]*)\.'
+          docker run --rm --read-only \
+            --tmpfs /tmp:rw,uid=1000,gid=1000,mode=1777 \
+            --tmpfs /home/crossforge:rw,uid=1000,gid=1000,mode=0700 \
+            "$image" \
+            crossforge env --target aarch64 --vcpkg --json \
+            > "$RUNNER_TEMP/candidate-environment.json"
+          grep -F '"kind": "crossforge-environment"' \
+            "$RUNNER_TEMP/candidate-environment.json"
+          grep -F '"VCPKG_DOWNLOADS": "/home/crossforge/.cache/crossforge/vcpkg/downloads"' \
+            "$RUNNER_TEMP/candidate-environment.json"
+          ! grep -F '/opt/crossforge/vcpkg/root/downloads' \
+            "$RUNNER_TEMP/candidate-environment.json"
       - name: Upload immutable candidate identity
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

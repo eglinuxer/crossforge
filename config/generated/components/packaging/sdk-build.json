@@ -7,7 +7,7 @@
       "component": "implementation/crosspack"
     },
     {
-      "canonical_sha256": "4fd6effbb6c261c8164eab5d0e9269e28aa297cc64a7d318a9eccbdc9771a145",
+      "canonical_sha256": "4ca291acf98f54f287a2d52fe7a24d3d92c2485405a9caa011f98405f86345e3",
       "component": "implementation/launcher"
     },
     {

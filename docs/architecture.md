@@ -324,13 +324,21 @@ inventory 摘要进入 canonical plan。Phase 14 已实际安装并复核双架�
 唯一 launcher 是一个无网络、无插件系统的轻量 Python CLI：
 
 ```text
+crossforge --version
 crossforge info
+crossforge env
 crossforge shell
 crossforge run
 crossforge package
 ```
 
 `run`/`shell` 显式选择 `--target x86_64|aarch64`，并可选择 `--python 3.14`、`--vcpkg` 与 `--linkage static|dynamic`。它只在子进程中设置 compiler、sysroot、CMake、Meson、pkg-config、Python 和 vcpkg 环境，不修改全局环境，也不根据宿主或项目内容猜测 target。未选择 target 时使用原生 GTS15 host 环境。
+
+`env` 以 shell 或版本化 JSON 输出同一选择结果，但只暴露 Crossforge 管理的白名单
+变量，不回显继承环境中的 token 或 credential。`run`/`shell` 以 exec 语义替换 launcher，
+使退出码和 signal 直接到达真实进程。vcpkg downloads/binary cache 位于可写的
+`CROSSFORGE_CACHE_ROOT`，不得写入 root-owned `/opt/crossforge/vcpkg/root`；target
+选择清除 inherited `PKG_CONFIG_PATH`，Python 选择清除 inherited `PYTHONPATH`。
 
 该入口现已安装到 packaging SDK 的 `/usr/local/bin/crossforge`。`package` 只接收
 manifest、staging root 与输出目录，nFPM 路径、版本和摘要从镜像内固定 release 自动
@@ -341,6 +349,9 @@ vcpkg 时才设置明确 triplet 并把 CMake 切到 vcpkg toolchain；`--python
 `sdk-complete-dev` 从 packaging-qualified vcpkg SDK 出发，只复制已经资格化的六行
 Python 产物和 final report，再由 launcher 离线遍历 native host 以及 2 target × 6
 Python minor × 2 linkage 的 24 种选择。该目标仍为 cache-only `-dev`，不得发布。
+公开 `sdk-candidate` 默认使用 `crossforge` UID/GID 1000，保持 `/opt/crossforge`
+root-owned；workspace、home、cache 和 `/tmp` 是唯一运行时可写边界。显式覆盖任意
+UID/GID 时，不可写的 inherited home 会安全回退到该 UID 专用的 `/tmp` home/cache。
 
 ## 11. 验收与发布门禁
 
