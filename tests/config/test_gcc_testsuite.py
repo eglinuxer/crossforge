@@ -43,6 +43,11 @@ class GccTestsuiteContractTests(unittest.TestCase):
 
     def test_full_plan_has_exactly_the_four_real_upstream_testsuites(self):
         self.assertEqual(self.full_plan["profile"], "full")
+        self.assertEqual(
+            self.full_plan["targets"],
+            CONTRACT["PROFILE_TARGET_CONTRACTS"]["full"],
+        )
+        self.assertEqual(len(self.full_plan["targets"]), 1)
         self.assertEqual(self.full_plan["host_gcc_major"], "8")
         self.assertEqual(self.full_plan["jobs"], 4)
         self.assertEqual(
@@ -454,8 +459,16 @@ class GccTestsuiteContractTests(unittest.TestCase):
             self.assertIn("unset_board_info isremote", text)
             self.assertIn("set_board_info isremote 0", text)
             self.assertIn('setenv QEMU_LD_PREFIX "%s"' % root, text)
-            self.assertIn("qemu-aarch64 -L %s" % root, text)
-            self.assertIn("-cpu cortex-a53 -r 4.18.0", text)
+            self.assertIn("proc unix_load { dest prog args }", text)
+            self.assertIn("remote_spawn $dest $command", text)
+            self.assertIn("remote_wait $dest 300", text)
+            self.assertIn(
+                "/usr/local/libexec/crossforge/qemu-aarch64", text
+            )
+            self.assertIn("-L $crossforge_runtime_root", text)
+            self.assertIn("-cpu cortex-a53", text)
+            self.assertIn("-r 4.18.0", text)
+            self.assertNotIn("set_board_info exec_shell", text)
             self.assertNotIn("-static", text)
 
     def test_full_site_bridges_final_compilers_into_runtime_suites(self):

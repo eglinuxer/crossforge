@@ -3,7 +3,7 @@
   "schema_version": 1,
   "kind": "gcc-testsuite-baseline",
   "profile": "smoke",
-  "plan_sha256": "c6eab2a821dee2f052c4d5523073f2d4f2f5ab6ea6023a3d2302f24d0ba50ebf",
+  "plan_sha256": "517de2af8c2d8ce2eee2bd100c3be35db2c97ee5ef3f81558c6ba6fe7a270324",
   "target": "aarch64-unknown-linux-gnu",
   "runtime_tier": "locked-sysroot",
   "unexpected": []

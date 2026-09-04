@@ -68,7 +68,7 @@ TARGET_CONTRACT = [
                 "board": {
                     "name": "crossforge-aarch64-locked",
                     "file": "tests/gcc/boards/crossforge-aarch64-locked.exp",
-                    "sha256": "d48843e17cfa0ad8ae5f8a4190df0b3d5c68a3a31bc74f9dc9e2e9a81c36ff21",
+                    "sha256": "df04f7723a6967ed32219986314f32b7ddd886772ce810f0b3e1d5191bf8ef16",
                 },
             },
             {
@@ -76,12 +76,16 @@ TARGET_CONTRACT = [
                 "board": {
                     "name": "crossforge-aarch64-clean",
                     "file": "tests/gcc/boards/crossforge-aarch64-clean.exp",
-                    "sha256": "81dda3ea4668a5a273bace5a5b3204450f7e9300f45de8cd8f634cc53d59c7ae",
+                    "sha256": "b2fe504bc715f74e8490deb7f9078bece0b38162cb099360c1105ddb9fcb218b",
                 },
             },
         ],
     },
 ]
+PROFILE_TARGET_CONTRACTS = {
+    "smoke": TARGET_CONTRACT,
+    "full": TARGET_CONTRACT[:1],
+}
 SMOKE_SUITE_CONTRACT = [
     {
         "id": "gcc.execute",
@@ -251,7 +255,7 @@ def validate_plan(plan):
         raise ValidationError("unknown GCC testsuite profile")
     if plan["unexpected_statuses"] != EXPECTED_UNEXPECTED:
         raise ValidationError("GCC testsuite unexpected status policy differs")
-    if plan["targets"] != TARGET_CONTRACT:
+    if plan["targets"] != PROFILE_TARGET_CONTRACTS[plan["profile"]]:
         raise ValidationError("GCC testsuite target/runtime matrix differs")
     if plan["suites"] != SUITE_CONTRACTS[plan["profile"]]:
         raise ValidationError(

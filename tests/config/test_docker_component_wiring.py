@@ -319,6 +319,7 @@ class DockerComponentWiringTests(unittest.TestCase):
             block = self.stages[base] + self.stages[stage]
             self.assertEqual(self.parents[base], "host-gcc-test-locked")
             self.assertEqual(self.parents[stage], base)
+            self.assertIn("COPY patches/gcc/", self.stages[base])
             self.assertIn("ARG %s" % argument, block)
             self.assertIn(
                 "COPY config/generated/components/%s.json" % component,
@@ -377,7 +378,10 @@ class DockerComponentWiringTests(unittest.TestCase):
         self.assertEqual(block.count("--mode observation"), 4)
         self.assertIn("config/gcc-testsuite-full.json", block)
         self.assertIn("--candidate-baseline", block)
-        self.assertIn("COPY patches/gcc/ /work/patches/gcc/", block)
+        self.assertIn(
+            "COPY patches/gcc/ /work/patches/gcc/",
+            self.stages["gcc-testsuite-x86_64-base"],
+        )
         self.assertIn("--network=none", block)
         self.assertNotIn("qualification-component", block)
         for suite in ("g++.full", "gcc.full", "libgomp.full", "libstdc++.full"):

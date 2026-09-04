@@ -988,6 +988,7 @@ COPY config/schemas/gcc-testsuite-baseline.schema.json \
   /work/config/schemas/gcc-testsuite-baseline.schema.json
 COPY config/gcc-testsuite-smoke.json config/gcc-testsuite-full.json \
   /work/config/
+COPY patches/gcc/ /work/patches/gcc/
 COPY tests/gcc/ /work/tests/gcc/
 COPY scripts/validate-release.py scripts/release_component.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
@@ -1030,7 +1031,6 @@ RUN --network=none /usr/libexec/platform-python \
         /work/qualification/gcc-testsuite/x86_64-host-direct.json
 
 FROM gcc-testsuite-x86_64-base AS gcc-testsuite-x86_64-full-libstdcxx-observe
-COPY patches/gcc/ /work/patches/gcc/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
       --mode observation \
@@ -1058,7 +1058,6 @@ FROM gcc-testsuite-x86_64-base AS gcc-testsuite-x86_64-full-qualified
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
 COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
   /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
-COPY patches/gcc/ /work/patches/gcc/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
       --profile full \
@@ -1161,6 +1160,7 @@ COPY config/schemas/gcc-testsuite-baseline.schema.json \
   /work/config/schemas/gcc-testsuite-baseline.schema.json
 COPY config/gcc-testsuite-smoke.json config/gcc-testsuite-full.json \
   /work/config/
+COPY patches/gcc/ /work/patches/gcc/
 COPY tests/gcc/ /work/tests/gcc/
 COPY scripts/validate-release.py scripts/release_component.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/

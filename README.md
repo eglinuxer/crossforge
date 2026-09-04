@@ -26,10 +26,10 @@ build-system-independent DEB/RPM packaging.
 > them with pinned real `dpkg` and Rocky `rpm`. The single `crossforge`
 > launcher, detached debug packages, dynamic ELF audit, and the complete
 > Python/vcpkg/packaging SDK composition are qualified. The four-suite x86_64
-> GCC full gate now qualifies 453,334 PASS records against an exact reviewed
-> baseline. The native ARM release workflow is implemented but still requires
-> its first public-candidate execution; Qt acceptance and the remaining release
-> supply chain are pending.
+> GCC full gate now qualifies more than 453,000 PASS occurrences against an
+> exact reviewed baseline. The native ARM release workflow is implemented but
+> still requires its first public-candidate execution; Qt acceptance and the
+> remaining release supply chain are pending.
 > Checked-in Bake outputs remain cache-only; only the manually dispatched
 > public-candidate workflow may emit a user-facing image.
 

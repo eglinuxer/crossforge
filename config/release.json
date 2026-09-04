@@ -118,40 +118,40 @@
     "profile": "smoke",
     "plan": {
       "file": "config/gcc-testsuite-smoke.json",
-      "canonical_sha256": "c6eab2a821dee2f052c4d5523073f2d4f2f5ab6ea6023a3d2302f24d0ba50ebf"
+      "canonical_sha256": "517de2af8c2d8ce2eee2bd100c3be35db2c97ee5ef3f81558c6ba6fe7a270324"
     },
     "baselines": [
       {
         "target": "x86_64-unknown-linux-gnu",
         "runtime_tier": "host-direct",
         "file": "tests/gcc/baselines/smoke/x86_64-host-direct.json",
-        "canonical_sha256": "8a16a5acf98e1de5281b50f867505a171fca9114c6289a4bdff857a380d7fa68"
+        "canonical_sha256": "5f712cb3de4a3a7ecb1d2d28af8ce7bab517d27605b4660582c632ec21220f8c"
       },
       {
         "target": "aarch64-unknown-linux-gnu",
         "runtime_tier": "locked-sysroot",
         "file": "tests/gcc/baselines/smoke/aarch64-locked-sysroot.json",
-        "canonical_sha256": "d17cc2560c9c4b8b9ba22cc041d044cf55b6f50e7eca9193a38d5eae4d5bf8b5"
+        "canonical_sha256": "99b817ec770c9d7f7f1170af0ae109a1b3a5f6745cc69f9fa38afca237726426"
       },
       {
         "target": "aarch64-unknown-linux-gnu",
         "runtime_tier": "clean-rocky",
         "file": "tests/gcc/baselines/smoke/aarch64-clean-rocky.json",
-        "canonical_sha256": "c599df1fc98dd0492e83fae7efa34b1b26044a06319c84f1651e5770172f55c7"
+        "canonical_sha256": "e30cd8d67e71706fafe3831f6bfa4d358acdaf4f605b314ff7d6f9edda11cc8a"
       }
     ],
     "full": {
       "profile": "full",
       "plan": {
         "file": "config/gcc-testsuite-full.json",
-        "canonical_sha256": "d6ad733311c9b541b436e54792d3d85a2ef0dd567d914d14db829708d3c4fc20"
+        "canonical_sha256": "b81d85e4f176c4e26c1a3062522847664ec853f9e5cee5994c993db2e079f6e7"
       },
       "baselines": [
         {
           "target": "x86_64-unknown-linux-gnu",
           "runtime_tier": "host-direct",
           "file": "tests/gcc/baselines/full/x86_64-host-direct.json",
-          "canonical_sha256": "b8c5108590d76e77dfc5030df5a765da39d0a584679d6756ef141ea89f6d0bb4"
+          "canonical_sha256": "1c1ede9bd00d1e40c7da24ff083f93f15d4e6a16854266da1d1899fba6437866"
         }
       ]
     }

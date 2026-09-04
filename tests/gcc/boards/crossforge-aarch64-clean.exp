@@ -4,4 +4,58 @@ set_board_info bmk,use_alarm 1
 unset_board_info isremote
 set_board_info isremote 0
 setenv QEMU_LD_PREFIX "/runtime-root"
-set_board_info exec_shell "/usr/local/libexec/crossforge/qemu-aarch64 -L /runtime-root -cpu cortex-a53 -r 4.18.0"
+set crossforge_runtime_root "/runtime-root"
+
+# DejaGNU 1.6.1's local unix_load executes the target binary directly and does
+# not consume an exec_shell board field. Override the protocol procedure so
+# target execution is explicit QEMU rather than accidental host exec/binfmt.
+proc unix_load { dest prog args } {
+    global ld_library_path crossforge_runtime_root
+    if {![file exists $prog]} {
+        perror "$prog does not exist in crossforge unix_load."
+        return "untested"
+    }
+    set parg ""
+    set inp ""
+    if {[llength $args] > 0} {
+        set parg [lindex $args 0]
+    }
+    if {[llength $args] > 1} {
+        set inp [lindex $args 1]
+    }
+    set command [list \
+        /usr/local/libexec/crossforge/qemu-aarch64 \
+        -L $crossforge_runtime_root \
+        -cpu cortex-a53 \
+        -r 4.18.0 \
+        $prog]
+    if {$parg ne ""} {
+        set command [concat $command $parg]
+    }
+    if {$inp ne ""} {
+        append command " < " [list $inp]
+    }
+    set original_ld_library_path [getenv LD_LIBRARY_PATH]
+    if {![info exists ld_library_path]} {
+        set ld_library_path ""
+    }
+    setenv LD_LIBRARY_PATH "$ld_library_path:$original_ld_library_path"
+    setenv SHLIB_PATH "$ld_library_path:$original_ld_library_path"
+    verbose -log "Crossforge QEMU execute: $command" 2
+    set id [remote_spawn $dest $command "readonly"]
+    if {$id < 0} {
+        set status -1
+        set output "remote_spawn failed for Crossforge QEMU"
+    } else {
+        set waited [remote_wait $dest 300]
+        set status [lindex $waited 0]
+        set output [lindex $waited 1]
+    }
+    setenv LD_LIBRARY_PATH $original_ld_library_path
+    setenv SHLIB_PATH $original_ld_library_path
+    verbose -log "Crossforge QEMU status $status: $output" 2
+    if {$status == 0} {
+        return [list "pass" $output]
+    }
+    return [list "fail" $output]
+}
