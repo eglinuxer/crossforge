@@ -497,6 +497,8 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             category = (
                 "supply" if path[3].endswith("_evidence") else "qualification"
             )
+        elif len(path) >= 2 and path[:2] == ("qt", "qualification"):
+            category = "future"
         elif path and path[0] == "qt":
             category = "build"
         elif (
@@ -709,7 +711,17 @@ def _render_expected_components(release, implemented_rows):
         "sources/binutils", "build", selector(("binutils",), ("trust",))
     )
     add("sources/zstd", "build", selector(("python", "zstd")))
-    add("sources/qt", "build", selector(("qt",)))
+    add(
+        "sources/qt",
+        "build",
+        selector(("qt", "version"), ("qt", "source")),
+    )
+    add(
+        "future/qt-qualification",
+        "future",
+        selector(("qt", "qualification")),
+        ("sources/qt",),
+    )
     add("sources/vcpkg", "build", selector(("vcpkg",)))
     add("sources/nfpm", "build", selector(("nfpm",)))
     for tool in sorted(release["host_tools"]):
@@ -968,7 +980,9 @@ def _render_expected_components(release, implemented_rows):
     )
 
     future_selector = classification_selector(
-        classifications, "future", (("python", "versions"),)
+        classifications,
+        "future",
+        (("python", "versions"), ("qt", "qualification")),
     )
     if any(future_selector(path) for path, _value in leaves):
         add("future/product", "future", future_selector)

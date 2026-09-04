@@ -1,0 +1,348 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/qt-qualification-plan.schema.json",
+  "title": "Crossforge Qt qualification plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "status",
+    "profile",
+    "qt_version",
+    "source_component",
+    "host",
+    "locks",
+    "modules",
+    "build",
+    "required_features",
+    "required_support_checks",
+    "targets",
+    "acceptance"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/qt-qualification-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-qt-qualification-plan"
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "locked"
+      ]
+    },
+    "profile": {
+      "const": "linux-desktop-full"
+    },
+    "qt_version": {
+      "const": "6.8.4"
+    },
+    "source_component": {
+      "$ref": "#/$defs/source_component"
+    },
+    "host": {
+      "$ref": "#/$defs/host"
+    },
+    "locks": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/lock"
+      }
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "qtbase",
+          "qtdeclarative",
+          "qtmultimedia",
+          "qtquick3d",
+          "qtshadertools",
+          "qttools",
+          "qtwayland",
+          "qtwebengine"
+        ]
+      }
+    },
+    "build": {
+      "$ref": "#/$defs/build"
+    },
+    "required_features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "qtbase",
+        "qtwebengine"
+      ],
+      "properties": {
+        "qtbase": {
+          "$ref": "#/$defs/string_set"
+        },
+        "qtwebengine": {
+          "$ref": "#/$defs/string_set"
+        }
+      }
+    },
+    "required_support_checks": {
+      "$ref": "#/$defs/string_set"
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/target"
+      }
+    },
+    "acceptance": {
+      "$ref": "#/$defs/acceptance"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "const": "sources/qt"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platform",
+        "compiler",
+        "qt_host_path",
+        "cmake_version",
+        "ninja_version",
+        "required_tools"
+      ],
+      "properties": {
+        "platform": {
+          "const": "linux/amd64"
+        },
+        "compiler": {
+          "const": "native-gts15"
+        },
+        "qt_host_path": {
+          "const": "/opt/crossforge/qualification/qt/6.8.4/host"
+        },
+        "cmake_version": {
+          "const": "4.4.0"
+        },
+        "ninja_version": {
+          "const": "1.13.2"
+        },
+        "required_tools": {
+          "$ref": "#/$defs/string_set"
+        }
+      }
+    },
+    "lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "plan_file",
+        "lock_file",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "host-qt-build",
+            "qt-target-x86_64",
+            "qt-target-aarch64"
+          ]
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "locked"
+          ]
+        },
+        "plan_file": {
+          "type": "string",
+          "pattern": "^config/rpm/(?:host-qt-build|qt-target)-el8-(?:x86_64|aarch64)\\.plan\\.json$"
+        },
+        "lock_file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "canonical_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "string_set": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\r\\n]+$"
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "configuration",
+        "shared",
+        "developer_build",
+        "examples",
+        "tests",
+        "documentation",
+        "commercial",
+        "confirm_license",
+        "target_execution",
+        "output"
+      ],
+      "properties": {
+        "configuration": {
+          "const": "release"
+        },
+        "shared": {
+          "const": true
+        },
+        "developer_build": {
+          "const": false
+        },
+        "examples": {
+          "const": false
+        },
+        "tests": {
+          "const": false
+        },
+        "documentation": {
+          "const": false
+        },
+        "commercial": {
+          "const": false
+        },
+        "confirm_license": {
+          "const": true
+        },
+        "target_execution": {
+          "const": "forbidden"
+        },
+        "output": {
+          "const": "qualification-only"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arch",
+        "triple",
+        "sysroot_component",
+        "dependency_lock",
+        "runtime_tiers"
+      ],
+      "properties": {
+        "arch": {
+          "enum": [
+            "x86_64",
+            "aarch64"
+          ]
+        },
+        "triple": {
+          "enum": [
+            "x86_64-unknown-linux-gnu",
+            "aarch64-unknown-linux-gnu"
+          ]
+        },
+        "sysroot_component": {
+          "enum": [
+            "rpm/sysroot-x86_64",
+            "rpm/sysroot-aarch64"
+          ]
+        },
+        "dependency_lock": {
+          "enum": [
+            "qt-target-x86_64",
+            "qt-target-aarch64"
+          ]
+        },
+        "runtime_tiers": {
+          "$ref": "#/$defs/string_set"
+        }
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_modules_must_build",
+        "required_features_must_be_enabled",
+        "configure_errors_forbidden",
+        "configure_warnings_reviewed",
+        "host_target_version_match",
+        "target_elf_audit",
+        "runtime_smoke",
+        "artifacts_enter_sdk"
+      ],
+      "properties": {
+        "required_modules_must_build": {
+          "const": true
+        },
+        "required_features_must_be_enabled": {
+          "const": true
+        },
+        "configure_errors_forbidden": {
+          "const": true
+        },
+        "configure_warnings_reviewed": {
+          "const": true
+        },
+        "host_target_version_match": {
+          "const": true
+        },
+        "target_elf_audit": {
+          "const": true
+        },
+        "runtime_smoke": {
+          "const": true
+        },
+        "artifacts_enter_sdk": {
+          "const": false
+        }
+      }
+    }
+  }
+}

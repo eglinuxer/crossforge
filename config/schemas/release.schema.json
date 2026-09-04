@@ -819,7 +819,8 @@
       "additionalProperties": false,
       "required": [
         "version",
-        "source"
+        "source",
+        "qualification"
       ],
       "properties": {
         "version": {
@@ -827,6 +828,42 @@
         },
         "source": {
           "$ref": "#/$defs/qt_source"
+        },
+        "qualification": {
+          "$ref": "#/$defs/qt_qualification"
+        }
+      }
+    },
+    "qt_qualification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "plan"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "planned",
+            "locked"
+          ]
+        },
+        "plan": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "file": {
+              "const": "config/qt-qualification.json"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
         }
       }
     },

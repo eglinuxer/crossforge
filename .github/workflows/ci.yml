@@ -22,6 +22,7 @@ jobs:
         run: |
           ./scripts/validate-release.py
           ./scripts/validate-gcc-testsuite.py --plan config/gcc-testsuite-full.json
+          ./scripts/validate-qt-qualification.py
           ./scripts/validate-supply-chain-evidence.py
           ./scripts/validate-frozen-abi.py
           ./scripts/validate-python-runtime-providers.py

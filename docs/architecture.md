@@ -389,6 +389,8 @@ Qt 验收固定 Qt 6.8.4 `qt-everywhere` 官方源码和 SHA256，构建完整�
 
 Qt source boundary 同时固定 994,798,840 字节归档、官方 108 字节 SHA256 sidecar 及其离线 base64 envelope。上游未提供独立签名，因此真实性边界明确标为 `hash-pinned-https-sidecar-no-signature`，不得包装成签名验证。离线 source acceptance 扫描全部 399,185 个 tar member，要求唯一 `qt-everywhere-src-6.8.4` 顶层、无绝对/逃逸路径、无 device/FIFO，并逐字节验证八个 required module 的 `CMakeLists.txt`、根 `configure` 与七份顶层许可证；输出仅为 cache-only source artifact，不进入任何 SDK/candidate ancestry。
 
+`config/qt-qualification.json` 是后续构建的严格 planned contract：固定八模块依赖顺序、same-version host Qt、CMake/Ninja 版本、WebEngine 的 Node/Python/html5lib/Bison/Flex/GPerf/pkg-config 与 Linux support checks、两套 target/runtime 及禁止 target execution 的 cross 边界。`host-qt-build`、`qt-target-x86_64`、`qt-target-aarch64` 三项 lock 未生成时必须保持 `pending`/null，并只投影为 `future/qt-qualification`；此时 `--require-locked` 必须失败，且不得影响 `sources/qt`、SDK 或 candidate identity。
+
 ## 12. 发布、供应链与许可边界
 
 Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单一供应链。所有源码、RPM、工具和基础镜像均固定 hash 或 digest；禁止 `curl | sh`。BuildKit cache 只用于加速，不构成发布身份或测试证据。

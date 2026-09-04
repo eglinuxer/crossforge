@@ -20,6 +20,12 @@
       "scope": "qualification"
     },
     {
+      "canonical_sha256": "99275ee345060908b32074705e69e968924fcc805eed6ce8f3c2eed801a6d2e9",
+      "component": "future/qt-qualification",
+      "path": "config/generated/components/future/qt-qualification.json",
+      "scope": "future"
+    },
+    {
       "canonical_sha256": "f14d24f806b4d270d2455ade0ec8a0e3b7c7904188e5b93f900f41ad44a652a4",
       "component": "host-tools/cmake",
       "path": "config/generated/components/host-tools/cmake.json",
@@ -508,7 +514,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "662fa5f2b21e898640f551a763e0a9e1e42e2e1f202684a298417c3ce20e496d",
+    "canonical_sha256": "f263dbc1522ac011eb0be9dc6401f4e2e8b2fb035b93f6b4eb51dd1a43accc54",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

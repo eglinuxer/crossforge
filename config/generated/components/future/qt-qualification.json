@@ -1,0 +1,27 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "future/qt-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "540c01aacded48198436157ab351090990ed06772f82f203563c32422b37a502",
+      "component": "sources/qt"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/qt/qualification/plan/canonical_sha256",
+      "value": "289faf4b6fd94fc0fce4a240206c93e7933a018db373b1e59bece8811a8fc074"
+    },
+    {
+      "path": "/qt/qualification/plan/file",
+      "value": "config/qt-qualification.json"
+    },
+    {
+      "path": "/qt/qualification/status",
+      "value": "planned"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "future"
+}

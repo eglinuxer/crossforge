@@ -285,6 +285,13 @@
           }
         ]
       }
+    },
+    "qualification": {
+      "status": "planned",
+      "plan": {
+        "file": "config/qt-qualification.json",
+        "canonical_sha256": "289faf4b6fd94fc0fce4a240206c93e7933a018db373b1e59bece8811a8fc074"
+      }
     }
   },
   "targets": [

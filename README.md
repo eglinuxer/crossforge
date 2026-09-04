@@ -151,6 +151,18 @@ This target binds the official archive and SHA256 sidecar, rejects unsafe tar
 members, and verifies the eight required module roots plus all seven top-level
 license texts before exporting a cache-only source artifact.
 
+The next Qt boundary is explicit but remains planned until its three RPM locks
+exist. Inspect it without implying qualification:
+
+```console
+$ ./scripts/validate-qt-qualification.py
+```
+
+The plan fixes the eight-module build order, same-version `QT_HOST_PATH`,
+WebEngine host tools and support checks, both target runtimes, and the rule that
+Qt artifacts are qualification-only. `--require-locked` intentionally fails
+while the host and two target dependency locks remain pending.
+
 ## Phase 3: reproducible RPM foundation
 
 Host preparation is split deliberately: common tools contain the exact

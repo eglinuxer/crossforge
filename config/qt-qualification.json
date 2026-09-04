@@ -1,0 +1,146 @@
+{
+  "$schema": "https://crossforge.dev/schemas/qt-qualification-plan.schema.json",
+  "schema_version": 1,
+  "kind": "crossforge-qt-qualification-plan",
+  "status": "planned",
+  "profile": "linux-desktop-full",
+  "qt_version": "6.8.4",
+  "source_component": {
+    "component": "sources/qt",
+    "canonical_sha256": "540c01aacded48198436157ab351090990ed06772f82f203563c32422b37a502"
+  },
+  "host": {
+    "platform": "linux/amd64",
+    "compiler": "native-gts15",
+    "qt_host_path": "/opt/crossforge/qualification/qt/6.8.4/host",
+    "cmake_version": "4.4.0",
+    "ninja_version": "1.13.2",
+    "required_tools": [
+      "bison",
+      "flex",
+      "gperf",
+      "nodejs>=14",
+      "perl",
+      "pkg-config",
+      "python>=3.8+html5lib"
+    ]
+  },
+  "locks": [
+    {
+      "id": "host-qt-build",
+      "status": "pending",
+      "plan_file": "config/rpm/host-qt-build-el8-x86_64.plan.json",
+      "lock_file": null,
+      "canonical_sha256": null
+    },
+    {
+      "id": "qt-target-x86_64",
+      "status": "pending",
+      "plan_file": "config/rpm/qt-target-el8-x86_64.plan.json",
+      "lock_file": null,
+      "canonical_sha256": null
+    },
+    {
+      "id": "qt-target-aarch64",
+      "status": "pending",
+      "plan_file": "config/rpm/qt-target-el8-aarch64.plan.json",
+      "lock_file": null,
+      "canonical_sha256": null
+    }
+  ],
+  "modules": [
+    "qtbase",
+    "qtshadertools",
+    "qtdeclarative",
+    "qttools",
+    "qtwayland",
+    "qtmultimedia",
+    "qtquick3d",
+    "qtwebengine"
+  ],
+  "build": {
+    "configuration": "release",
+    "shared": true,
+    "developer_build": false,
+    "examples": false,
+    "tests": false,
+    "documentation": false,
+    "commercial": false,
+    "confirm_license": true,
+    "target_execution": "forbidden",
+    "output": "qualification-only"
+  },
+  "required_features": {
+    "qtbase": [
+      "c++20",
+      "cross_compile",
+      "dbus",
+      "gui",
+      "network",
+      "openssl",
+      "openssl-linked",
+      "opensslv11",
+      "pkg-config",
+      "thread",
+      "widgets",
+      "xml"
+    ],
+    "qtwebengine": [
+      "qtwebengine-build",
+      "qtwebengine-core-build",
+      "qtwebengine-quick-build",
+      "qtwebengine-widgets-build",
+      "webengine-build-gn",
+      "webengine-build-ninja",
+      "webengine-ozone-x11"
+    ]
+  },
+  "required_support_checks": [
+    "supported-linux-cross-architecture",
+    "non-static-webengine",
+    "nodejs>=14-64-bit",
+    "python>=3.8",
+    "python-html5lib",
+    "gperf",
+    "bison",
+    "flex",
+    "pkg-config",
+    "glibc>=2.17",
+    "khronos-development-headers",
+    "fontconfig",
+    "nss>=3.26",
+    "dbus",
+    "gnu-c++20"
+  ],
+  "targets": [
+    {
+      "arch": "x86_64",
+      "triple": "x86_64-unknown-linux-gnu",
+      "sysroot_component": "rpm/sysroot-x86_64",
+      "dependency_lock": "qt-target-x86_64",
+      "runtime_tiers": [
+        "clean-rocky"
+      ]
+    },
+    {
+      "arch": "aarch64",
+      "triple": "aarch64-unknown-linux-gnu",
+      "sysroot_component": "rpm/sysroot-aarch64",
+      "dependency_lock": "qt-target-aarch64",
+      "runtime_tiers": [
+        "clean-rocky-qemu",
+        "native-release"
+      ]
+    }
+  ],
+  "acceptance": {
+    "required_modules_must_build": true,
+    "required_features_must_be_enabled": true,
+    "configure_errors_forbidden": true,
+    "configure_warnings_reviewed": true,
+    "host_target_version_match": true,
+    "target_elf_audit": true,
+    "runtime_smoke": true,
+    "artifacts_enter_sdk": false
+  }
+}

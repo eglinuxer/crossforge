@@ -962,7 +962,29 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                     )
                 ),
             ),
+            {"sources/qt", "future/qt-qualification"},
+        )
+
+    def test_planned_qt_qualification_cannot_rebind_source_or_sdk(self):
+        future = self.components["future/qt-qualification"]
+        self.assertEqual(future["scope"], "future")
+        self.assertEqual(
+            {item["component"] for item in future["dependencies"]},
             {"sources/qt"},
+        )
+        self.assertTrue(
+            all(
+                item["path"].startswith("/qt/qualification/")
+                for item in future["materials"]
+            )
+        )
+        after = self.render_mutation(
+            lambda release: release["qt"]["qualification"]["plan"].__setitem__(
+                "canonical_sha256", "0" * 64
+            )
+        )
+        self.assertEqual(
+            changed(self.components, after), {"future/qt-qualification"}
         )
 
     def test_ninja_host_tool_has_isolated_source_policy_and_consumers(self):
