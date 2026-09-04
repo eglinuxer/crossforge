@@ -3,7 +3,7 @@
   "component": "packaging/sdk-build",
   "dependencies": [
     {
-      "canonical_sha256": "a8993ed44c5eaa47d0713148c36b3c94f8794d0924c29611bcee47355b26c47e",
+      "canonical_sha256": "44773fac9f9329aea170bfdca999a4d9bd4b224d04c703cd07b5f83a317beadc",
       "component": "implementation/crosspack"
     },
     {

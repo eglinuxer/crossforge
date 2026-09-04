@@ -535,7 +535,11 @@ When `debug_symbols` names an otherwise empty debug component, crosspack uses
 the selected target `objcopy` on a private staging copy and adds a matching GNU
 debuglink. Target `readelf` then records SONAME, `DT_NEEDED`, safe origin-only
 RUNPATH and an export digest; RPATH, TEXTREL, parent traversal and providers not
-present in the package set or locked sysroot fail the build.
+present in the package set or locked sysroot fail the build. Origin-relative
+RUNPATH entries are resolved from each final package destination: a canonical
+`$ORIGIN/../lib` is accepted only inside one root-owned private application
+prefix, every provider must be uniquely reachable, and cross-component
+providers require an explicit component dependency.
 
 The SDK exposes one launcher. Backend paths and nFPM identities are internal:
 

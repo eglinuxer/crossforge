@@ -217,6 +217,17 @@ class CrosspackPlanTests(unittest.TestCase):
         )
         self.assertEqual(runtime["elf"]["machine"], "x86_64")
         self.assertEqual(runtime["elf"]["runpath"], [])
+        self.assertEqual(runtime["elf"]["runpath_resolution"], [])
+        self.assertEqual(
+            [item["soname"] for item in runtime["elf"]["needed_providers"]],
+            runtime["elf"]["needed"],
+        )
+        self.assertTrue(
+            all(
+                item["kind"] == "sysroot"
+                for item in runtime["elf"]["needed_providers"]
+            )
+        )
         self.assertRegex(runtime["elf"]["exports_sha256"], r"^[0-9a-f]{64}$")
         self.assertGreaterEqual(runtime["elf"]["exports_count"], 0)
         with self.assertRaises(CROSSPACK["CrosspackError"]):
@@ -227,10 +238,20 @@ class CrosspackPlanTests(unittest.TestCase):
             CROSSPACK["ELF"]["dynamic_identity"](
                 "0x (RPATH) Library rpath: [/tmp/host]\n"
             )
-        with self.assertRaises(CROSSPACK["ElfError"]):
-            CROSSPACK["ELF"]["dynamic_identity"](
-                "0x (RUNPATH) Library runpath: [$ORIGIN/../lib]\n"
-            )
+        identity = CROSSPACK["ELF"]["dynamic_identity"](
+            "0x (RUNPATH) Library runpath: [$ORIGIN/../lib]\n"
+        )
+        self.assertEqual(identity["runpath"], ["$ORIGIN/../lib"])
+        for runpath in (
+            "$ORIGIN/lib/../alt",
+            "$ORIGIN/${LIB}",
+            "$ORIGIN//lib",
+        ):
+            with self.subTest(runpath=runpath):
+                with self.assertRaises(CROSSPACK["ElfError"]):
+                    CROSSPACK["ELF"]["dynamic_identity"](
+                        "0x (RUNPATH) Library runpath: [%s]\n" % runpath
+                    )
         compiler = shutil.which("gcc")
         if compiler is not None:
             missing_source = Path(self.temporary.name) / "missing.c"
@@ -284,6 +305,107 @@ class CrosspackPlanTests(unittest.TestCase):
                 CROSSPACK["build_plan"](
                     self.config, self.root, readelf, Path("/")
                 )
+
+    def test_loader_resolution_enforces_private_prefix_and_component_edges(self):
+        provider = {
+            "type": "file",
+            "destination": "/opt/acme/demo/lib/libprivate.so.1",
+            "sha256": "1" * 64,
+            "elf": {
+                "type": "dynamic",
+                "soname": "libprivate.so.1",
+            },
+        }
+        packages = {"app": [], "runtime": [provider]}
+        index = CROSSPACK["ELF"]["destination_index"](packages)
+        resolved = CROSSPACK["ELF"]["resolve_needed_provider"](
+            "app",
+            "/opt/acme/demo/bin/app",
+            "libprivate.so.1",
+            ["$ORIGIN/../lib"],
+            index,
+            {"app": ["runtime"]},
+            self.root,
+        )
+        self.assertEqual(resolved["kind"], "package")
+        self.assertEqual(resolved["component"], "runtime")
+        self.assertEqual(resolved["destination"], provider["destination"])
+
+        with self.assertRaisesRegex(
+            CROSSPACK["ElfError"], "undeclared component dependency"
+        ):
+            CROSSPACK["ELF"]["resolve_needed_provider"](
+                "app",
+                "/opt/acme/demo/bin/app",
+                "libprivate.so.1",
+                ["$ORIGIN/../lib"],
+                index,
+                {"app": []},
+                self.root,
+            )
+        with self.assertRaisesRegex(
+            CROSSPACK["ElfError"], "unresolved DT_NEEDED provider"
+        ):
+            CROSSPACK["ELF"]["resolve_needed_provider"](
+                "app",
+                "/opt/acme/demo/bin/app",
+                "libprivate.so.1",
+                ["$ORIGIN"],
+                index,
+                {"app": ["runtime"]},
+                self.root,
+            )
+
+    def test_loader_resolution_rejects_parent_escape_and_ambiguous_providers(self):
+        self.assertEqual(
+            CROSSPACK["ELF"]["resolve_runpath"](
+                "/opt/acme/demo/bin/app", ["$ORIGIN/../lib"]
+            ),
+            [
+                {
+                    "entry": "$ORIGIN/../lib",
+                    "directory": "/opt/acme/demo/lib",
+                }
+            ],
+        )
+        for destination, runpath in (
+            ("/usr/bin/app", "$ORIGIN/../lib"),
+            ("/opt/acme/demo/bin/app", "$ORIGIN/../../escape"),
+        ):
+            with self.subTest(destination=destination, runpath=runpath):
+                with self.assertRaisesRegex(
+                    CROSSPACK["ElfError"], "private install prefix"
+                ):
+                    CROSSPACK["ELF"]["resolve_runpath"](
+                        destination, [runpath]
+                    )
+
+        packages = {"app": [], "runtime": []}
+        for directory, digest in (("lib", "2"), ("alt", "3")):
+            packages["runtime"].append(
+                {
+                    "type": "file",
+                    "destination": "/opt/acme/demo/%s/libprivate.so.1"
+                    % directory,
+                    "sha256": digest * 64,
+                    "elf": {
+                        "type": "dynamic",
+                        "soname": "libprivate.so.1",
+                    },
+                }
+            )
+        with self.assertRaisesRegex(
+            CROSSPACK["ElfError"], "ambiguous DT_NEEDED provider"
+        ):
+            CROSSPACK["ELF"]["resolve_needed_provider"](
+                "app",
+                "/opt/acme/demo/bin/app",
+                "libprivate.so.1",
+                ["$ORIGIN/../lib", "$ORIGIN/../alt"],
+                CROSSPACK["ELF"]["destination_index"](packages),
+                {"app": ["runtime"]},
+                self.root,
+            )
 
     def test_elf_audit_allows_a_pure_script_package(self):
         readelf = shutil.which("readelf")

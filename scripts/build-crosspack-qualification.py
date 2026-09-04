@@ -205,6 +205,10 @@ def validate_plan(plan, arch):
         and runtime["elf"]["soname"] == "libcrossforge-demo.so.1"
         and runtime["elf"]["needed"] == ["libc.so.6"]
         and runtime["elf"]["runpath"] == []
+        and runtime["elf"]["runpath_resolution"] == []
+        and len(runtime["elf"]["needed_providers"]) == 1
+        and runtime["elf"]["needed_providers"][0]["soname"] == "libc.so.6"
+        and runtime["elf"]["needed_providers"][0]["kind"] == "sysroot"
         and runtime["elf"]["exports_count"] >= 1,
         "crosspack runtime ELF audit differs",
     )

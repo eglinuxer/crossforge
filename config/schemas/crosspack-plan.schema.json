@@ -389,11 +389,75 @@
             "type": "string"
           }
         },
+        "runpath_resolution": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/runpath_resolution"
+          }
+        },
+        "needed_providers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/needed_provider"
+          }
+        },
         "exports_count": {
           "type": "integer",
           "minimum": 0
         },
         "exports_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "runpath_resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entry",
+        "directory"
+      ],
+      "properties": {
+        "entry": {
+          "type": "string"
+        },
+        "directory": {
+          "$ref": "#/$defs/destination"
+        }
+      }
+    },
+    "needed_provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "soname",
+        "kind",
+        "destination",
+        "component",
+        "sha256"
+      ],
+      "properties": {
+        "soname": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "package",
+            "sysroot"
+          ]
+        },
+        "destination": {
+          "$ref": "#/$defs/destination"
+        },
+        "component": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sha256": {
           "$ref": "#/$defs/sha256"
         }
       }

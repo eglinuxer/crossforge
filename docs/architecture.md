@@ -316,8 +316,11 @@ component dependency 必须精确覆盖所有 ELF owner；crosspack 在私有 st
 对应 target `objcopy --only-keep-debug/--strip-debug/--add-gnu-debuglink` 生成 detached
 symbols，原 staging 不变。随后 target `readelf` 拒绝 `DT_RPATH`、TEXTREL、包含空项、
 绝对路径或 `..` 的 RUNPATH，以及不能由同一 package set 或固定 target sysroot 解析的
-`DT_NEEDED`；SONAME、NEEDED、RUNPATH、导出符号摘要、readelf 摘要和 sysroot provider
-inventory 摘要进入 canonical plan。Phase 14 已实际安装并复核双架构共 16 个包。
+`DT_NEEDED`。RUNPATH 从 ELF 最终 destination 解析，只有仍受 root-owned private prefix
+约束的 `$ORIGIN/../lib` 一类规范路径可跨父目录；每个 NEEDED 必须唯一解析到可达的
+package component 或 sysroot provider，跨 component 时还必须有显式依赖边。SONAME、
+NEEDED、解析后的 provider/destination、RUNPATH、导出符号摘要、readelf 摘要和 sysroot
+provider inventory 摘要进入 canonical plan。Phase 14 已实际安装并复核双架构共 16 个包。
 
 ## 10. 用户接口
 

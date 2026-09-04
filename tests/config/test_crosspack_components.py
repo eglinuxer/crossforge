@@ -123,7 +123,11 @@ class CrosspackComponentTests(unittest.TestCase):
         )
         self.assertEqual(
             policy["security"]["elf"]["needed"],
-            "package-or-target-sysroot-provider",
+            "unique-loader-resolved-package-or-sysroot-provider",
+        )
+        self.assertEqual(
+            policy["security"]["elf"]["runpath"],
+            "origin-only-semantic-private-prefix-containment",
         )
         qualification = RENDERER["CROSSPACK_QUALIFICATION_POLICY"]
         self.assertEqual(qualification["installers"], {"deb": "dpkg", "rpm": "rpm"})

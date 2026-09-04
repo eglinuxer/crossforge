@@ -731,12 +731,17 @@ def build_plan(
     elf_audit = None
     if readelf is not None:
         try:
+            component_dependencies = {
+                component["name"]: component["dependencies"]["components"]
+                for component in config["components"]
+            }
             elf_audit = ELF["audit_packages"](
                 expanded,
                 staging_root,
                 config["target"],
                 readelf,
                 sysroot,
+                component_dependencies,
             )
         except ElfError as error:
             raise CrosspackError(str(error)) from error

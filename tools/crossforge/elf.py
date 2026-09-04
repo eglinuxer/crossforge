@@ -12,6 +12,8 @@ from pathlib import Path
 MACHINES = {"x86_64": 62, "aarch64": 183}
 ELF_TYPES = {1: "relocatable", 2: "executable", 3: "dynamic", 4: "core"}
 SONAME_RE = re.compile(r"^[A-Za-z0-9+._-]+\.so(?:\.[A-Za-z0-9+._-]+)*\Z")
+RUNPATH_PART_RE = re.compile(r"^[A-Za-z0-9+._@~-]+\Z")
+SYSTEM_LIBRARY_DIRECTORIES = ("/lib", "/lib64", "/usr/lib", "/usr/lib64")
 
 
 class ElfError(ValueError):
@@ -131,16 +133,29 @@ def dynamic_identity(output):
     for value in runpaths:
         for entry in value.split(":"):
             require(entry, "empty DT_RUNPATH entry is forbidden")
+            parts = entry.split("/")
             require(
                 entry == "$ORIGIN"
                 or (
                     entry.startswith("$ORIGIN/")
-                    and posixpath.normpath(entry) == entry
-                    and ".." not in entry.split("/")
+                    and all(
+                        part == ".." or RUNPATH_PART_RE.match(part)
+                        for part in parts[1:]
+                    )
                 ),
                 "unsafe DT_RUNPATH entry: %s" % entry,
             )
+            seen_named_part = False
+            for part in parts[1:]:
+                if part == "..":
+                    require(
+                        not seen_named_part,
+                        "DT_RUNPATH parent traversal is not canonical: %s" % entry,
+                    )
+                else:
+                    seen_named_part = True
             search.append(entry)
+    require(len(search) == len(set(search)), "ELF repeats a DT_RUNPATH entry")
     return {
         "needed": needed,
         "soname": sonames[0] if sonames else None,
@@ -206,15 +221,207 @@ def provider_inventory(sysroot):
     return ordered
 
 
-def audit_packages(packages, staging_root, target, readelf, sysroot):
+def is_within(path, prefix):
+    return path == prefix or path.startswith(prefix + "/")
+
+
+def private_install_prefix(destination):
+    parts = destination.split("/")
+    if len(parts) >= 5 and parts[1] == "opt":
+        return "/".join(parts[:4])
+    if len(parts) >= 5 and parts[1:3] == ["usr", "libexec"]:
+        return "/".join(parts[:4])
+    return None
+
+
+def resolve_runpath(destination, entries):
+    origin = posixpath.dirname(destination)
+    resolved = []
+    for entry in entries:
+        relative = "" if entry == "$ORIGIN" else entry[len("$ORIGIN/") :]
+        directory = posixpath.normpath(posixpath.join(origin, relative))
+        require(directory.startswith("/"), "DT_RUNPATH escapes the package root")
+        if ".." in entry.split("/"):
+            prefix = private_install_prefix(destination)
+            require(
+                prefix is not None and is_within(directory, prefix),
+                "DT_RUNPATH parent traversal escapes the private install prefix: %s"
+                % entry,
+            )
+        resolved.append({"entry": entry, "directory": directory})
+    directories = [item["directory"] for item in resolved]
+    require(
+        len(directories) == len(set(directories)),
+        "DT_RUNPATH resolves the same directory more than once",
+    )
+    return resolved
+
+
+def destination_index(packages):
+    result = {}
+    for component, contents in packages.items():
+        for content in contents:
+            destination = content["destination"]
+            require(destination not in result, "package destination is duplicated")
+            result[destination] = {"component": component, "content": content}
+    return result
+
+
+def follow_package_symlink(index, destination):
+    seen = set()
+    current = destination
+    while True:
+        require(current not in seen, "package provider symlink cycle: %s" % destination)
+        seen.add(current)
+        record = index.get(current)
+        if record is None:
+            return None
+        content = record["content"]
+        if content["type"] != "symlink":
+            return record
+        target = content["link_target"]
+        current = (
+            posixpath.normpath(target)
+            if target.startswith("/")
+            else posixpath.normpath(posixpath.join(posixpath.dirname(current), target))
+        )
+        require(current.startswith("/"), "package provider symlink escapes package root")
+
+
+def package_provider(index, directory, soname):
+    destination = posixpath.join(directory, soname)
+    record = follow_package_symlink(index, destination)
+    if record is None:
+        return None
+    content = record["content"]
+    elf = content.get("elf")
+    require(
+        content["type"] == "file"
+        and isinstance(elf, dict)
+        and elf.get("type") == "dynamic"
+        and elf.get("soname") == soname,
+        "packaged DT_NEEDED provider is not a matching shared library: %s"
+        % destination,
+    )
+    return {
+        "soname": soname,
+        "kind": "package",
+        "destination": record["content"]["destination"],
+        "component": record["component"],
+        "sha256": content["sha256"],
+    }
+
+
+def sysroot_provider(sysroot, directory, soname):
+    if directory not in SYSTEM_LIBRARY_DIRECTORIES:
+        return None
+    root = Path(sysroot).resolve()
+    directory_path = Path(sysroot) / directory.lstrip("/")
+    paths = [directory_path / soname]
+    if directory_path.is_dir():
+        paths.extend(sorted(directory_path.glob("*/" + soname)))
+    paths = [path for path in paths if path.exists() or path.is_symlink()]
+    if not paths:
+        return None
+    resolved_paths = {}
+    for candidate in paths:
+        try:
+            resolved = candidate.resolve(strict=True)
+        except (OSError, RuntimeError) as error:
+            raise ElfError(
+                "cannot resolve sysroot provider %s: %s" % (candidate, error)
+            ) from error
+        require(root in resolved.parents, "sysroot provider escapes the target root")
+        require(resolved.is_file(), "sysroot provider is not a regular file")
+        resolved_paths[str(resolved)] = resolved
+    require(
+        len(resolved_paths) == 1,
+        "sysroot has ambiguous provider %s below %s" % (soname, directory),
+    )
+    resolved = next(iter(resolved_paths.values()))
+    canonical_destination = "/" + str(resolved.relative_to(root))
+    return {
+        "soname": soname,
+        "kind": "sysroot",
+        "destination": canonical_destination,
+        "component": None,
+        "sha256": sha256_file(resolved),
+    }
+
+
+def resolve_needed_provider(
+    consumer_component,
+    consumer_destination,
+    soname,
+    runpath,
+    index,
+    component_dependencies,
+    sysroot,
+):
+    search = [item["directory"] for item in resolve_runpath(consumer_destination, runpath)]
+    search.extend(SYSTEM_LIBRARY_DIRECTORIES)
+    candidates = []
+    for directory in search:
+        packaged = package_provider(index, directory, soname)
+        system = sysroot_provider(sysroot, directory, soname)
+        if packaged is not None:
+            candidates.append(packaged)
+        if system is not None:
+            candidates.append(system)
+    unique = {}
+    for candidate in candidates:
+        key = (
+            candidate["kind"],
+            candidate["component"],
+            candidate["destination"],
+            candidate["sha256"],
+        )
+        unique[key] = candidate
+    candidates = sorted(
+        unique.values(),
+        key=lambda item: (
+            item["kind"],
+            item["component"] or "",
+            item["destination"],
+        ),
+    )
+    require(
+        candidates,
+        "ELF has unresolved DT_NEEDED provider %s from %s"
+        % (soname, consumer_destination),
+    )
+    require(
+        len(candidates) == 1,
+        "ELF has ambiguous DT_NEEDED provider %s from %s: %s"
+        % (
+            soname,
+            consumer_destination,
+            ", ".join(item["destination"] for item in candidates),
+        ),
+    )
+    provider = candidates[0]
+    if provider["kind"] == "package" and provider["component"] != consumer_component:
+        allowed = set(component_dependencies.get(consumer_component, ()))
+        require(
+            provider["component"] in allowed,
+            "ELF provider crosses an undeclared component dependency: %s -> %s"
+            % (consumer_component, provider["component"]),
+        )
+    return provider
+
+
+def audit_packages(
+    packages,
+    staging_root,
+    target,
+    readelf,
+    sysroot,
+    component_dependencies=None,
+):
     readelf = executable(readelf, "target readelf")
     version_output_sha256 = validate_readelf(readelf)
     providers = provider_inventory(sysroot)
-    available = set(providers)
-    for contents in packages.values():
-        for content in contents:
-            if content["type"] == "file" and "elf" in content:
-                available.add(posixpath.basename(content["destination"]))
+    component_dependencies = component_dependencies or {}
     elf_count = 0
     for component in sorted(packages):
         for content in packages[component]:
@@ -224,12 +431,6 @@ def audit_packages(packages, staging_root, target, readelf, sysroot):
             header = header_identity(path, target)
             dynamic = dynamic_identity(
                 run_readelf(readelf, ("--wide", "--dynamic"), path)
-            )
-            missing = sorted(set(dynamic["needed"]) - available)
-            require(
-                not missing,
-                "ELF has unresolved DT_NEEDED providers: %s"
-                % ", ".join(missing),
             )
             exports = dynamic_symbols(
                 run_readelf(readelf, ("--wide", "--dyn-syms"), path)
@@ -243,6 +444,26 @@ def audit_packages(packages, staging_root, target, readelf, sysroot):
                 exports_sha256=canonical_sha256(exports),
             )
             elf_count += 1
+    index = destination_index(packages)
+    for component in sorted(packages):
+        for content in packages[component]:
+            if "elf" not in content:
+                continue
+            content["elf"]["runpath_resolution"] = resolve_runpath(
+                content["destination"], content["elf"]["runpath"]
+            )
+            content["elf"]["needed_providers"] = [
+                resolve_needed_provider(
+                    component,
+                    content["destination"],
+                    soname,
+                    content["elf"]["runpath"],
+                    index,
+                    component_dependencies,
+                    sysroot,
+                )
+                for soname in content["elf"]["needed"]
+            ]
     return {
         "readelf_sha256": sha256_file(readelf.resolve(strict=True)),
         "readelf_version_output_sha256": version_output_sha256,

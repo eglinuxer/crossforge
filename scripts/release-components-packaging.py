@@ -31,9 +31,9 @@ CROSSPACK_POLICY = {
         "symlink_target": "owned-with-declared-component-edge",
         "elf": {
             "identity": "64-bit-little-endian-exact-target",
-            "needed": "package-or-target-sysroot-provider",
+            "needed": "unique-loader-resolved-package-or-sysroot-provider",
             "rpath": "forbidden",
-            "runpath": "origin-only-no-parent-traversal",
+            "runpath": "origin-only-semantic-private-prefix-containment",
             "text_relocations": "forbidden",
             "exports": "canonical-sha256",
         },

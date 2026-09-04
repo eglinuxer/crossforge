@@ -70,7 +70,7 @@
     },
     {
       "path": "/@implementation/crosspack/security/elf/needed",
-      "value": "package-or-target-sysroot-provider"
+      "value": "unique-loader-resolved-package-or-sysroot-provider"
     },
     {
       "path": "/@implementation/crosspack/security/elf/rpath",
@@ -78,7 +78,7 @@
     },
     {
       "path": "/@implementation/crosspack/security/elf/runpath",
-      "value": "origin-only-no-parent-traversal"
+      "value": "origin-only-semantic-private-prefix-containment"
     },
     {
       "path": "/@implementation/crosspack/security/elf/text_relocations",
