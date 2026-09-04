@@ -151,17 +151,20 @@ This target binds the official archive and SHA256 sidecar, rejects unsafe tar
 members, and verifies the eight required module roots plus all seven top-level
 license texts before exporting a cache-only source artifact.
 
-The next Qt boundary is explicit but remains planned until its three RPM locks
-exist. Inspect it without implying qualification:
+The Qt dependency boundary now contains three signed Rocky 8.10 RPM locks.
+Validate the complete source/plan/lock binding with:
 
 ```console
-$ ./scripts/validate-qt-qualification.py
+$ ./scripts/validate-qt-qualification.py --require-locked
 ```
 
 The plan fixes the eight-module build order, same-version `QT_HOST_PATH`,
 WebEngine host tools and support checks, both target runtimes, and the rule that
-Qt artifacts are qualification-only. `--require-locked` intentionally fails
-while the host and two target dependency locks remain pending.
+Qt artifacts are qualification-only. The host lock contains 207 RPM payloads;
+the x86_64 and aarch64 target overlays contain 226 and 223 respectively. Their
+common package EVRs must match exactly, with only the reviewed x86_64 PCI
+dependency trio allowed to differ. Locked dependencies do not yet mean Qt
+itself is qualified or part of the SDK.
 
 ## Phase 3: reproducible RPM foundation
 

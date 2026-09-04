@@ -1,0 +1,108 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-plan.schema.json",
+  "schema_version": 1,
+  "kind": "rpm-plan",
+  "identity": {
+    "name": "host-qt-build-el8-x86_64",
+    "role": "host-qt-build",
+    "distribution": "rocky",
+    "release": "8.10",
+    "baseline": "el8",
+    "arch": "x86_64",
+    "target_triple": null
+  },
+  "base": {
+    "mode": "lock",
+    "parent_lock": "locks/host-build-common-el8-x86_64.json",
+    "parent_sha256": "d6d1b33772faa48658a30b01f5cc6a254c0b6c7640d52296b2e0f4efe7945c01"
+  },
+  "repositories": [
+    {
+      "id": "baseos",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/"
+    },
+    {
+      "id": "appstream",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/"
+    },
+    {
+      "id": "powertools",
+      "baseurl": "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/"
+    }
+  ],
+  "solver_policy": {
+    "allowed_arches": [
+      "x86_64",
+      "noarch"
+    ],
+    "install_weak_deps": false,
+    "best": true,
+    "strict": true,
+    "allow_erasing": false,
+    "module_platform_id": "platform:el8",
+    "enabled_modules": [
+      "nodejs:20",
+      "perl:5.26",
+      "perl-IO-Socket-SSL:2.066",
+      "perl-libwww-perl:6.34",
+      "python38:3.8"
+    ]
+  },
+  "roots": [
+    {"name": "alsa-lib-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "at-spi2-core-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "bison", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "cups-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "dbus-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "expat-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "flex", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "fontconfig-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "freetype-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "glib2-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "gperf", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "gstreamer1-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "gstreamer1-plugins-base-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libICE-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libSM-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libX11-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libX11-xcb", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libXcomposite-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libXcursor-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libXdamage-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libXext-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libXfixes-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libXi-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libXrandr-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libXrender-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libXtst-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libdrm-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libinput-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libjpeg-turbo-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libpng-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libxcb-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libxkbcommon-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libxkbcommon-x11-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libxkbfile-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "libxshmfence-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "mesa-libEGL-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "mesa-libGL-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "nodejs", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "nss-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "openssl-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "pciutils-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "pkgconf-pkg-config", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "pulseaudio-libs-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "python3-html5lib", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "python38", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "sqlite-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "wayland-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "wayland-protocols-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "xcb-util-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "xcb-util-image-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "xcb-util-keysyms-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "xcb-util-renderutil-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "xcb-util-wm-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "xorg-x11-proto-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "zlib-devel", "arch": "any", "purpose": "qt-host-build"}
+  ]
+}

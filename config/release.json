@@ -337,10 +337,10 @@
       }
     },
     "qualification": {
-      "status": "planned",
+      "status": "locked",
       "plan": {
         "file": "config/qt-qualification.json",
-        "canonical_sha256": "83e19dfcd08a637b4f2bb4b4ff067966bb2a89571a5cf5c8ad1860a442b2bb1e"
+        "canonical_sha256": "ad2c3fbd2c57424c23777959f20ec23bd4a1fa30918d155dd6ee0c46b58c3f55"
       }
     }
   },

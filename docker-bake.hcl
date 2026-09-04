@@ -54,6 +54,14 @@ group "default" {
   targets = ["validate"]
 }
 
+group "qt-rpm-locked" {
+  targets = [
+    "host-qt-build-locked",
+    "qt-target-x86_64-locked",
+    "qt-target-aarch64-locked",
+  ]
+}
+
 target "validate" {
   inherits = ["_common"]
   target   = "config-validate"
@@ -69,6 +77,24 @@ target "platform-python-check" {
 target "sdk-skeleton" {
   inherits = ["_common"]
   target   = "sdk-skeleton"
+  output   = ["type=cacheonly"]
+}
+
+target "host-qt-build-locked" {
+  inherits = ["_common"]
+  target   = "host-qt-build-locked"
+  output   = ["type=cacheonly"]
+}
+
+target "qt-target-x86_64-locked" {
+  inherits = ["_common"]
+  target   = "qt-target-x86_64-locked"
+  output   = ["type=cacheonly"]
+}
+
+target "qt-target-aarch64-locked" {
+  inherits = ["_common"]
+  target   = "qt-target-aarch64-locked"
   output   = ["type=cacheonly"]
 }
 
@@ -220,6 +246,27 @@ target "rpm-lock-host-gcc-test" {
 target "rpm-lock-host-python-build" {
   inherits = ["_common"]
   target   = "rpm-lock-host-python-build"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-lock-host-qt-build" {
+  inherits = ["_common"]
+  target   = "rpm-lock-host-qt-build"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-lock-qt-target-x86_64" {
+  inherits = ["_common"]
+  target   = "rpm-lock-qt-target-x86_64"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-lock-qt-target-aarch64" {
+  inherits = ["_common"]
+  target   = "rpm-lock-qt-target-aarch64"
   no-cache = true
   output   = ["type=cacheonly"]
 }

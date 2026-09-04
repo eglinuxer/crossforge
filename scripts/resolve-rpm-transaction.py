@@ -555,17 +555,36 @@ def validate_plan_semantics(plan):
     arch = identity["arch"]
     role = identity["role"]
     triple = identity["target_triple"]
-    if role == "target-sysroot":
-        expected_name = "sysroot-el8-%s" % arch
+    if role in ("target-sysroot", "qt-target"):
+        expected_name = (
+            "sysroot-el8-%s" % arch
+            if role == "target-sysroot"
+            else "qt-target-el8-%s" % arch
+        )
         expected = TARGET_TRIPLES.get(arch)
         if expected is None or triple != expected:
-            raise ResolutionError("target sysroot triple differs from its architecture")
+            raise ResolutionError("target RPM triple differs from its architecture")
         expected_repositories = [
             (
                 "baseos",
                 "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/%s/os/" % arch,
             )
         ]
+        if role == "qt-target":
+            expected_repositories.extend(
+                [
+                    (
+                        "appstream",
+                        "https://download.rockylinux.org/pub/rocky/8.10/AppStream/%s/os/"
+                        % arch,
+                    ),
+                    (
+                        "powertools",
+                        "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/%s/os/"
+                        % arch,
+                    ),
+                ]
+            )
     else:
         if arch != "x86_64" or triple is not None:
             raise ResolutionError("host RPM plans must use x86_64 and a null triple")
@@ -580,7 +599,7 @@ def validate_plan_semantics(plan):
                 "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/",
             ),
         ]
-        if role in ("host-gcc-test", "host-runtime"):
+        if role in ("host-gcc-test", "host-runtime", "host-qt-build"):
             expected_repositories.append(
                 (
                     "powertools",
@@ -617,7 +636,7 @@ def validate_plan_semantics(plan):
     root_keys = [(item["name"], item["arch"]) for item in plan["roots"]]
     if len(root_keys) != len(set(root_keys)):
         raise ResolutionError("duplicate root request")
-    if role == "target-sysroot":
+    if role in ("target-sysroot", "qt-target"):
         for root in plan["roots"]:
             if root["name"] in FORBIDDEN_PACKAGES:
                 raise ResolutionError("forbidden RPM root: %s" % root["name"])
@@ -781,7 +800,24 @@ def reason_mapping(transaction_module):
     return result
 
 
-def configure_base(plan, work, dnf):
+def validated_parent_root(plan, configured):
+    role = plan["identity"]["role"]
+    if role != "qt-target":
+        if configured is not None:
+            raise ResolutionError("only qt-target may use a parent root")
+        return None
+    if configured is None:
+        raise ResolutionError("qt-target requires a materialized parent root")
+    path = configured
+    if path.is_symlink() or not path.is_dir():
+        raise ResolutionError("Qt parent root is not a regular directory")
+    resolved = path.resolve()
+    if str(resolved) == "/":
+        raise ResolutionError("Qt parent root must not be the filesystem root")
+    return resolved
+
+
+def configure_base(plan, work, dnf, parent_root=None):
     identity = plan["identity"]
     policy = plan["solver_policy"]
     installroot = work / "installroot"
@@ -794,7 +830,9 @@ def configure_base(plan, work, dnf):
 
     configuration = dnf.conf.Conf()
     configuration.installroot = (
-        str(installroot) if plan["base"]["mode"] == "empty" else "/"
+        str(installroot)
+        if plan["base"]["mode"] == "empty"
+        else (str(parent_root) if parent_root is not None else "/")
     )
     configuration.cachedir = str(cache)
     configuration.persistdir = str(persist)
@@ -1186,6 +1224,7 @@ def resolve(arguments):
         raise ResolutionError("Rocky key fingerprint differs from release.json")
 
     parent_inventory = load_parent_inventory(plan, tools)
+    parent_root = validated_parent_root(plan, arguments.parent_root)
     dnf, hawkey, transaction_module = import_dnf()
     reason_names = reason_mapping(transaction_module)
     if not action_mapping(transaction_module) or not reason_names:
@@ -1204,7 +1243,7 @@ def resolve(arguments):
             prefix="crossforge-rpm-resolver-"
         )
         work = Path(work_context.name)
-        base, installroot = configure_base(plan, work, dnf)
+        base, installroot = configure_base(plan, work, dnf, parent_root)
         repositories = add_repositories(base, plan, arguments.key)
         repository_records = []
         for configured in sorted(
@@ -1279,7 +1318,7 @@ def resolve(arguments):
                     "DNF selected forbidden package architecture: %s" % package
                 )
             if (
-                plan["identity"]["role"] == "target-sysroot"
+                plan["identity"]["role"] in ("target-sysroot", "qt-target")
                 and package.name in FORBIDDEN_PACKAGES
             ):
                 raise ResolutionError("DNF selected forbidden package: %s" % package.name)
@@ -1461,6 +1500,7 @@ def parse_arguments():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--rpm-dir", type=Path, required=True)
     parser.add_argument("--metadata-dir", type=Path, required=True)
+    parser.add_argument("--parent-root", type=Path)
     return parser.parse_args()
 
 

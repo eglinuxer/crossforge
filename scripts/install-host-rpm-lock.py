@@ -25,6 +25,7 @@ ALLOWED_ROLES = {
     "host-gcc-test",
     "host-python-build",
     "host-runtime",
+    "host-qt-build",
 }
 ALLOWED_ACTIONS = {"install", "upgrade"}
 HEX_SHA256 = re.compile(r"^[0-9a-f]{64}\Z")

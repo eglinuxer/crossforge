@@ -23,6 +23,9 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "config/rpm/host-gcc-test-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/host-python-build-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/host-runtime-el8-x86_64.plan.json",
+            REPOSITORY / "config/rpm/host-qt-build-el8-x86_64.plan.json",
+            REPOSITORY / "config/rpm/qt-target-el8-x86_64.plan.json",
+            REPOSITORY / "config/rpm/qt-target-el8-aarch64.plan.json",
         ]
         cls.transactions = [
             REPOSITORY / "locks/transactions/sysroot-el8-x86_64.json",
@@ -42,20 +45,149 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "locks/host-python-build-el8-x86_64.json",
             REPOSITORY / "locks/host-runtime-el8-x86_64.json",
         ]
+        cls.qt_transactions = [
+            REPOSITORY / "locks/transactions/host-qt-build-el8-x86_64.json",
+            REPOSITORY / "locks/transactions/qt-target-el8-x86_64.json",
+            REPOSITORY / "locks/transactions/qt-target-el8-aarch64.json",
+        ]
+        cls.qt_locks = [
+            REPOSITORY / "locks/host-qt-build-el8-x86_64.json",
+            REPOSITORY / "locks/qt-target-el8-x86_64.json",
+            REPOSITORY / "locks/qt-target-el8-aarch64.json",
+        ]
 
     def test_current_plans_are_strict_and_semantically_valid(self):
         for path in self.plans:
             VALIDATOR["validate_document"](VALIDATOR["load_json"](path))
 
+    def test_qt_plans_separate_host_tools_from_target_libraries(self):
+        host, x86_64, aarch64 = [
+            VALIDATOR["load_json"](path) for path in self.plans[-3:]
+        ]
+        self.assertEqual(
+            host["solver_policy"]["enabled_modules"],
+            VALIDATOR["QT_HOST_MODULES"],
+        )
+        self.assertEqual(
+            {record["name"] for record in host["roots"]},
+            VALIDATOR["HOST_QT_ROOTS"],
+        )
+        self.assertTrue(
+            {"nodejs", "python38", "python3-html5lib", "gperf"}.issubset(
+                VALIDATOR["HOST_QT_ROOTS"]
+            )
+        )
+        for plan in (x86_64, aarch64):
+            self.assertEqual(plan["identity"]["role"], "qt-target")
+            self.assertEqual(plan["solver_policy"]["enabled_modules"], [])
+            self.assertEqual(
+                {record["name"] for record in plan["roots"]},
+                VALIDATOR["QT_TARGET_ROOTS"],
+            )
+            self.assertFalse(
+                {"nodejs", "python38", "python3-html5lib", "gperf"}.intersection(
+                    {record["name"] for record in plan["roots"]}
+                )
+            )
+            self.assertEqual(
+                plan["base"]["parent_lock"],
+                "locks/sysroot-el8-%s.json" % plan["identity"]["arch"],
+            )
+        self.assertEqual(
+            [record["name"] for record in x86_64["roots"]],
+            [record["name"] for record in aarch64["roots"]],
+        )
+
+    def test_qt_plan_rejects_host_tools_in_a_target_or_unlocked_parent(self):
+        target = VALIDATOR["load_json"](self.plans[-2])
+        target["roots"].append(
+            {"name": "nodejs", "arch": "target", "purpose": "qt-target"}
+        )
+        target["base"]["parent_sha256"] = "0" * 64
+        with self.assertRaises(VALIDATOR["ValidationError"]):
+            VALIDATOR["validate_document"](target)
+
+    def test_qt_target_resolver_requires_an_explicit_non_root_parent(self):
+        target = VALIDATOR["load_json"](self.plans[-2])
+        with self.assertRaises(RESOLVER["ResolutionError"]):
+            RESOLVER["validated_parent_root"](target, None)
+        with self.assertRaises(RESOLVER["ResolutionError"]):
+            RESOLVER["validated_parent_root"](target, Path("/"))
+        with tempfile.TemporaryDirectory() as temporary:
+            self.assertEqual(
+                RESOLVER["validated_parent_root"](target, Path(temporary)),
+                Path(temporary).resolve(),
+            )
+            host = VALIDATOR["load_json"](self.plans[-3])
+            with self.assertRaises(RESOLVER["ResolutionError"]):
+                RESOLVER["validated_parent_root"](host, Path(temporary))
+
+    def test_qt_target_resolver_stages_bind_each_materialized_sysroot(self):
+        dockerfile = (REPOSITORY / "docker/Dockerfile").read_text(
+            encoding="utf-8"
+        )
+        for arch in ("x86_64", "aarch64"):
+            stage = dockerfile.split(
+                " AS rpm-resolve-qt-target-%s" % arch, 1
+            )[1].split("\nFROM ", 1)[0]
+            root = "/opt/crossforge/sysroots/el8/%s" % arch
+            self.assertIn("--from=sysroot-%s" % arch, stage)
+            self.assertIn("--parent-root " + root, stage)
+            self.assertIn(
+                "--plan ./config/rpm/qt-target-el8-%s.plan.json" % arch,
+                stage,
+            )
+
+    def test_qt_locked_stages_install_without_repository_access(self):
+        dockerfile = (REPOSITORY / "docker/Dockerfile").read_text(
+            encoding="utf-8"
+        )
+        host = dockerfile.split(" AS host-qt-build-locked", 1)[1].split(
+            "\nFROM ", 1
+        )[0]
+        self.assertIn("RUN --network=none", host)
+        self.assertIn("host-qt-build-rpms", host)
+        for arch in ("x86_64", "aarch64"):
+            target = dockerfile.split(
+                " AS qt-target-%s-locked" % arch, 1
+            )[1].split("\nFROM ", 1)[0]
+            self.assertIn("RUN --network=none", target)
+            self.assertIn("install-overlay", target)
+            self.assertIn("--from=qt-target-rpms-%s" % arch, target)
+            self.assertIn("/qt-rpm-bundle/", target)
+            self.assertIn("--bundle /qt-rpm-bundle", target)
+
     def test_current_transactions_encode_valid_dnf_algebra(self):
-        for path in self.transactions:
+        for path in self.transactions + self.qt_transactions:
             VALIDATOR["validate_document"](VALIDATOR["load_json"](path))
 
     def test_current_locks_are_bound_to_release_and_signed_metadata(self):
         release = REPOSITORY / "config/release.json"
-        for path in self.locks:
+        for path in self.locks + self.qt_locks:
             lock = VALIDATOR["load_json"](path)
             VALIDATOR["validate_release_binding"](lock, path, release)
+
+    def test_locked_qt_closures_have_reviewed_architecture_difference(self):
+        host, x86_64, aarch64 = [
+            VALIDATOR["load_json"](path) for path in self.qt_transactions
+        ]
+        self.assertEqual(len(host["items"]), 217)
+        self.assertEqual(len(x86_64["items"]), 226)
+        self.assertEqual(len(aarch64["items"]), 223)
+        pair = runpy.run_path(
+            str(REPOSITORY / "scripts/validate-qt-qualification.py")
+        )["validate_target_pair"]([x86_64, aarch64])
+        self.assertEqual(pair["x86_64_packages"], 226)
+        self.assertEqual(pair["aarch64_packages"], 223)
+
+    def test_locked_qt_target_rejects_power_tools_origin_drift(self):
+        transaction = VALIDATOR["load_json"](self.qt_transactions[1])
+        item = next(
+            item for item in transaction["items"] if item["repo_id"] == "powertools"
+        )
+        item["repo_id"] = "appstream"
+        with self.assertRaises(VALIDATOR["ValidationError"]):
+            VALIDATOR["validate_locked_qt_target_contract"](transaction)
 
     def test_sysroot_user_set_exactly_matches_roots(self):
         for path in self.transactions[:2]:
@@ -162,7 +294,7 @@ class RpmLockValidationTests(unittest.TestCase):
                 VALIDATOR["validate_locked_transaction_semantics"](candidate)
 
     def test_host_runtime_is_an_independent_user_tool_closure(self):
-        plan = VALIDATOR["load_json"](self.plans[-1])
+        plan = VALIDATOR["load_json"](self.plans[6])
         RESOLVER["validate_plan_semantics"](plan)
         self.assertEqual(plan["identity"]["role"], "host-runtime")
         self.assertEqual(

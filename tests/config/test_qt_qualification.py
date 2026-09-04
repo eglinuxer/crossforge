@@ -19,7 +19,7 @@ class QtQualificationPlanTests(unittest.TestCase):
 
     def test_plan_is_honest_future_policy_with_isolated_source_identity(self):
         plan = self.contract["plan"]
-        self.assertEqual(plan["status"], "planned")
+        self.assertEqual(plan["status"], "locked")
         self.assertEqual(plan["modules"], VALIDATOR["MODULES"])
         self.assertEqual(plan["host"], VALIDATOR["HOST"])
         self.assertEqual(
@@ -47,13 +47,41 @@ class QtQualificationPlanTests(unittest.TestCase):
             ["sources/xcb-util-cursor"],
         )
 
-    def test_locked_qualification_cannot_be_claimed_with_pending_inputs(self):
-        with self.assertRaisesRegex(
-            VALIDATOR["ValidationError"], "still planned"
-        ):
-            VALIDATOR["validate_release_contract"](
-                REPOSITORY / "config/release.json", require_locked=True
-            )
+    def test_locked_inputs_are_release_bound_and_revalidated(self):
+        contract = VALIDATOR["validate_release_contract"](
+            REPOSITORY / "config/release.json", require_locked=True
+        )
+        self.assertEqual(len(contract["locked_inputs"]), 3)
+        self.assertTrue(
+            all(document["kind"] == "rpm-lock" for document in contract["locked_inputs"])
+        )
+        self.assertEqual(
+            contract["target_pair"],
+            {
+                "x86_64_packages": 226,
+                "aarch64_packages": 223,
+                "x86_64_only": [
+                    "hwdata",
+                    "libpciaccess",
+                    "libpciaccess-devel",
+                ],
+            },
+        )
+
+    def test_target_pair_rejects_unreviewed_architecture_drift(self):
+        targets = [
+            copy.deepcopy(transaction)
+            for transaction in self.contract["locked_transactions"]
+            if transaction["identity"]["role"] == "qt-target"
+        ]
+        aarch64 = next(
+            transaction
+            for transaction in targets
+            if transaction["identity"]["arch"] == "aarch64"
+        )
+        aarch64["items"].pop()
+        with self.assertRaises(VALIDATOR["ValidationError"]):
+            VALIDATOR["validate_target_pair"](targets)
 
     def test_semantic_mutations_fail_closed(self):
         plan = self.contract["plan"]
@@ -68,8 +96,11 @@ class QtQualificationPlanTests(unittest.TestCase):
         target["targets"][1]["runtime_tiers"].pop()
         mutations.append(target)
         false_lock = copy.deepcopy(plan)
-        false_lock["locks"][0]["status"] = "locked"
+        false_lock["locks"][0]["status"] = "pending"
         mutations.append(false_lock)
+        forged_plan = copy.deepcopy(plan)
+        forged_plan["locks"][0]["plan_sha256"] = "0" * 64
+        mutations.append(forged_plan)
         for candidate in mutations:
             with self.subTest(candidate=candidate):
                 with self.assertRaises(VALIDATOR["ValidationError"]):
@@ -84,12 +115,12 @@ class QtQualificationPlanTests(unittest.TestCase):
             )
             VALIDATOR["STRICT"]["validate"](plan, schema, schema, "$")
 
-    def test_ci_validates_the_plan_without_claiming_it_is_locked(self):
+    def test_ci_requires_the_locked_plan(self):
         workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )
         self.assertIn("./scripts/validate-qt-qualification.py", workflow)
-        self.assertNotIn(
+        self.assertIn(
             "validate-qt-qualification.py --require-locked", workflow
         )
 

@@ -257,6 +257,7 @@
         "id",
         "status",
         "plan_file",
+        "plan_sha256",
         "lock_file",
         "canonical_sha256"
       ],
@@ -277,6 +278,9 @@
         "plan_file": {
           "type": "string",
           "pattern": "^config/rpm/(?:host-qt-build|qt-target)-el8-(?:x86_64|aarch64)\\.plan\\.json$"
+        },
+        "plan_sha256": {
+          "$ref": "#/$defs/sha256"
         },
         "lock_file": {
           "type": [

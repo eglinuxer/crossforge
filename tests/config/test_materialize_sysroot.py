@@ -213,6 +213,17 @@ class MaterializeSysrootTests(unittest.TestCase):
                 )
             self.assertFalse(destination.exists())
 
+    def test_overlay_install_rejects_a_non_qt_target_before_mutation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with self.assertRaises(MATERIALIZER["ValidationError"]):
+                MATERIALIZER["install_overlay"](
+                    context_for(b"rpm"),
+                    root / "bundle",
+                    root / "key",
+                    root / "sysroot",
+                )
+
     def test_root_inventory_is_canonicalized(self):
         original = MATERIALIZER["root_inventory"].__globals__["command"]
         MATERIALIZER["root_inventory"].__globals__["command"] = (
@@ -310,6 +321,87 @@ class MaterializeSysrootTests(unittest.TestCase):
             self.assertTrue((metadata / "sysroot-transaction.json").is_file())
             self.assertTrue(
                 (metadata / "sysroot-release-binding.json").is_file()
+            )
+
+    def test_qt_overlay_requires_parent_inventory_and_uses_offline_flags(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            bundle = root / "bundle"
+            bundle.mkdir()
+            destination = root / "sysroot"
+            destination.mkdir()
+            key = root / "key"
+            key.write_bytes(b"key")
+            package = package_for(b"rpm")
+            base = ["base-0:1-1.x86_64"]
+            result = base + ["fake-0:1-1.x86_64"]
+            context = {
+                "role": "qt-target",
+                "arch": "x86_64",
+                "packages": [package],
+                "result_packages": result,
+                "lock": {"kind": "rpm-lock"},
+                "transaction": {
+                    "kind": "rpm-transaction",
+                    "manifests": {"base": {"packages": base}},
+                },
+                "release_binding": {
+                    "kind": "release-config",
+                    "canonical_sha256": "c" * 64,
+                },
+            }
+            calls = []
+            inventories = iter((base, result))
+            globals_ = MATERIALIZER["install_overlay"].__globals__
+            originals = {
+                name: globals_[name]
+                for name in (
+                    "verify_bundle",
+                    "verify_key_and_headers",
+                    "command",
+                    "root_inventory",
+                )
+            }
+            globals_["verify_bundle"] = lambda _context, _bundle: None
+            globals_["verify_key_and_headers"] = (
+                lambda _context, _bundle, _key: [package]
+            )
+            globals_["command"] = lambda arguments, _label: (
+                calls.append([str(argument) for argument in arguments]) or ("", "")
+            )
+            globals_["root_inventory"] = lambda _destination: next(inventories)
+            try:
+                for path in (
+                    "usr/include/X11/Xlib.h",
+                    "usr/include/dbus-1.0/dbus/dbus.h",
+                    "usr/include/fontconfig/fontconfig.h",
+                    "usr/include/xcb/xcb.h",
+                    "usr/include/xkbcommon/xkbcommon.h",
+                    "usr/include/EGL/egl.h",
+                    "usr/lib64/pkgconfig/dbus-1.pc",
+                    "usr/lib64/pkgconfig/fontconfig.pc",
+                    "usr/lib64/pkgconfig/nss.pc",
+                    "usr/lib64/pkgconfig/wayland-client.pc",
+                    "usr/lib64/pkgconfig/xcb.pc",
+                ):
+                    target = destination / path
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.touch()
+                with redirect_stdout(io.StringIO()):
+                    MATERIALIZER["install_overlay"](
+                        context, bundle, key, destination
+                    )
+            finally:
+                for name, value in originals.items():
+                    globals_[name] = value
+            self.assertEqual(len(calls), 1)
+            self.assertIn("--noscripts", calls[0])
+            self.assertIn("--notriggers", calls[0])
+            metadata = destination / "usr/share/crossforge"
+            self.assertTrue((metadata / "qt-target-lock.json").is_file())
+            self.assertTrue((metadata / "qt-target-transaction.json").is_file())
+            self.assertTrue(
+                (metadata / "qt-target-release-binding.json").is_file()
             )
 
 

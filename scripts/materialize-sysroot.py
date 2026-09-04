@@ -376,8 +376,13 @@ def verify_key_and_headers(context, directory, key):
             verified.append(package)
     finally:
         shutil.rmtree(str(temporary))
-    if len([item for item in verified if item["item"]["name"] == "filesystem"]) != 1:
+    filesystem_count = len(
+        [item for item in verified if item["item"]["name"] == "filesystem"]
+    )
+    if context["role"] == "target-sysroot" and filesystem_count != 1:
         raise ValidationError("target sysroot must contain exactly one filesystem RPM")
+    if context["role"] == "qt-target" and filesystem_count != 0:
+        raise ValidationError("Qt target overlay must not replace the filesystem RPM")
     verified.sort(
         key=lambda item: (
             item["item"]["name"] != "filesystem",
@@ -472,6 +477,30 @@ def write_metadata(destination, context):
         )
 
 
+def write_overlay_metadata(destination, context):
+    metadata = destination / "usr/share/crossforge"
+    reject_symlink_components(metadata, "Qt overlay metadata directory")
+    if not path_is_within(metadata, destination):
+        raise ValidationError("Qt overlay metadata path escapes the destination")
+    metadata.mkdir(parents=True, exist_ok=True)
+    for name, document in (
+        ("qt-target-lock.json", context["lock"]),
+        ("qt-target-transaction.json", context["transaction"]),
+        (
+            "qt-target-release-binding.json",
+            validate_release_binding_identity(
+                context.get("release_binding"),
+                context.get("role"),
+                context.get("arch"),
+            ),
+        ),
+    ):
+        (metadata / name).write_text(
+            json.dumps(document, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+
+
 def install(context, bundle, key, destination):
     validate_release_binding_identity(
         context.get("release_binding"), context.get("role"), context.get("arch")
@@ -530,6 +559,67 @@ def install(context, bundle, key, destination):
     )
 
 
+def install_overlay(context, bundle, key, destination):
+    validate_release_binding_identity(
+        context.get("release_binding"), context.get("role"), context.get("arch")
+    )
+    if context["role"] != "qt-target":
+        raise ValidationError("only qt-target RPM locks may be installed as overlays")
+    verify_bundle(context, bundle)
+    verified = verify_key_and_headers(context, bundle, key)
+    reject_symlink_components(destination, "Qt target destination")
+    if destination.is_symlink() or not destination.is_dir():
+        raise ValidationError("Qt target destination must be an existing directory")
+    destination = destination.resolve()
+    if str(destination) == "/":
+        raise ValidationError("refusing filesystem root as Qt target destination")
+    expected_base = context["transaction"]["manifests"]["base"]["packages"]
+    actual_base = root_inventory(destination)
+    if actual_base != expected_base:
+        raise ValidationError("Qt target parent inventory differs from the lock")
+    arguments = [
+        "rpm",
+        "--root",
+        destination,
+        "-U",
+        "--noscripts",
+        "--notriggers",
+        "--excludedocs",
+        "--nocaps",
+        "--nocontexts",
+    ]
+    if context["arch"] != os.uname().machine:
+        arguments.append("--ignorearch")
+    arguments.extend(bundle / package_filename(package) for package in verified)
+    command(arguments, "locked Qt target RPM overlay")
+    actual_result = root_inventory(destination)
+    if actual_result != context["result_packages"]:
+        raise ValidationError("installed Qt target inventory differs from transaction")
+    required_paths = [
+        "usr/include/X11/Xlib.h",
+        "usr/include/dbus-1.0/dbus/dbus.h",
+        "usr/include/fontconfig/fontconfig.h",
+        "usr/include/xcb/xcb.h",
+        "usr/include/xkbcommon/xkbcommon.h",
+        "usr/include/EGL/egl.h",
+        "usr/lib64/pkgconfig/dbus-1.pc",
+        "usr/lib64/pkgconfig/fontconfig.pc",
+        "usr/lib64/pkgconfig/nss.pc",
+        "usr/lib64/pkgconfig/wayland-client.pc",
+        "usr/lib64/pkgconfig/xcb.pc",
+    ]
+    missing = [path for path in required_paths if not (destination / path).is_file()]
+    if missing:
+        raise ValidationError(
+            "Qt target overlay is missing: %s" % ", ".join(missing)
+        )
+    write_overlay_metadata(destination, context)
+    print(
+        "installed %d locked Qt target RPMs into %s (lock sha256:%s)"
+        % (len(verified), destination, canonical_sha256(context["lock"]))
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("lock", type=Path)
@@ -557,6 +647,14 @@ def main():
     install_parser.add_argument("--key", type=Path, required=True)
     install_parser.add_argument("--destination", type=Path, required=True)
 
+    overlay_parser = subparsers.add_parser("install-overlay")
+    VALIDATOR["add_release_binding_arguments"](
+        overlay_parser, suppress_defaults=True
+    )
+    overlay_parser.add_argument("--bundle", type=Path, required=True)
+    overlay_parser.add_argument("--key", type=Path, required=True)
+    overlay_parser.add_argument("--destination", type=Path, required=True)
+
     arguments = parser.parse_args()
     try:
         if arguments.operation is None:
@@ -575,8 +673,12 @@ def main():
                 "verified %d locked RPMs for %s"
                 % (len(context["packages"]), context["role"])
             )
-        else:
+        elif arguments.operation == "install":
             install(context, arguments.bundle, arguments.key, arguments.destination)
+        else:
+            install_overlay(
+                context, arguments.bundle, arguments.key, arguments.destination
+            )
     except (OSError, ValidationError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1

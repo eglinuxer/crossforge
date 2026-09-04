@@ -1994,6 +1994,11 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_PYTHON_BUILD_SHA256": "3a3c0c9e014032d1a38b20962133c83bcdb7a6f59914f1974832e6f0f18ef7a0"
       }
     },
+    "host-qt-build-locked": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d"
+      }
+    },
     "host-runtime-locked": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_RUNTIME_SHA256": "15bebccbafc2f5b849de9b0f36ec694fb0cc829aebada4d936c1c595ec1ef029"
@@ -2676,6 +2681,16 @@
       ],
       "target": "qt-source-export"
     },
+    "qt-target-aarch64-locked": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4"
+      }
+    },
+    "qt-target-x86_64-locked": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89"
+      }
+    },
     "rpm-lock-host-gcc-build": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d"
@@ -2690,6 +2705,23 @@
     "rpm-lock-host-python-build": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d"
+      }
+    },
+    "rpm-lock-host-qt-build": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d"
+      }
+    },
+    "rpm-lock-qt-target-aarch64": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4"
+      }
+    },
+    "rpm-lock-qt-target-x86_64": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89"
       }
     },
     "runtime-smoke-aarch64": {

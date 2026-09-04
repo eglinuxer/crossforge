@@ -300,6 +300,137 @@ RUN --network=none \
       --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256"
 ENV PATH="/opt/rh/gcc-toolset-15/root/usr/bin:${PATH}"
 
+FROM rpm-locked-input-base AS host-qt-build-rpms
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY config/qt-qualification.json ./config/qt-qualification.json
+COPY config/schemas/qt-qualification-plan.schema.json \
+  ./config/schemas/qt-qualification-plan.schema.json
+COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
+COPY locks/transactions/host-build-common-el8-x86_64.json \
+  ./locks/transactions/host-build-common-el8-x86_64.json
+COPY locks/host-qt-build-el8-x86_64.json ./locks/host-qt-build-el8-x86_64.json
+COPY locks/transactions/host-qt-build-el8-x86_64.json \
+  ./locks/transactions/host-qt-build-el8-x86_64.json
+COPY locks/metadata/host-qt-build-el8-x86_64/ \
+  ./locks/metadata/host-qt-build-el8-x86_64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/host-qt-build-el8-x86_64.json --require-lock \
+      --release-config ./config/release.json \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/host-qt-build-el8-x86_64.json fetch \
+      --output /rpm-bundle --jobs 8 \
+      --release-config ./config/release.json
+
+FROM host-build-common-locked AS host-qt-build-locked
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY config/qt-qualification.json ./config/qt-qualification.json
+COPY config/schemas/qt-qualification-plan.schema.json \
+  ./config/schemas/qt-qualification-plan.schema.json
+COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
+COPY locks/transactions/host-build-common-el8-x86_64.json \
+  ./locks/transactions/host-build-common-el8-x86_64.json
+COPY locks/host-qt-build-el8-x86_64.json ./locks/host-qt-build-el8-x86_64.json
+COPY locks/transactions/host-qt-build-el8-x86_64.json \
+  ./locks/transactions/host-qt-build-el8-x86_64.json
+COPY locks/metadata/host-qt-build-el8-x86_64/ \
+  ./locks/metadata/host-qt-build-el8-x86_64/
+COPY scripts/install-host-rpm-lock.py ./scripts/install-host-rpm-lock.py
+RUN --network=none \
+    --mount=type=bind,from=host-qt-build-rpms,source=/rpm-bundle,target=/rpm-bundle,ro \
+    /usr/libexec/platform-python ./scripts/install-host-rpm-lock.py \
+      ./locks/host-qt-build-el8-x86_64.json \
+      --transaction ./locks/transactions/host-qt-build-el8-x86_64.json \
+      --bundle /rpm-bundle \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --marker /usr/share/crossforge/rpm-locks/host-qt-build.json \
+      --release-config ./config/release.json
+
+FROM rpm-locked-input-base AS qt-target-rpms-x86_64
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY config/qt-qualification.json ./config/qt-qualification.json
+COPY config/schemas/qt-qualification-plan.schema.json \
+  ./config/schemas/qt-qualification-plan.schema.json
+COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
+COPY locks/transactions/sysroot-el8-x86_64.json \
+  ./locks/transactions/sysroot-el8-x86_64.json
+COPY locks/qt-target-el8-x86_64.json ./locks/qt-target-el8-x86_64.json
+COPY locks/transactions/qt-target-el8-x86_64.json \
+  ./locks/transactions/qt-target-el8-x86_64.json
+COPY locks/metadata/qt-target-el8-x86_64/ \
+  ./locks/metadata/qt-target-el8-x86_64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/qt-target-el8-x86_64.json --require-lock \
+      --release-config ./config/release.json \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/qt-target-el8-x86_64.json fetch \
+      --output /rpm-bundle --jobs 8 \
+      --release-config ./config/release.json
+
+FROM sysroot-x86_64 AS qt-target-x86_64-locked
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY config/qt-qualification.json ./config/qt-qualification.json
+COPY config/schemas/qt-qualification-plan.schema.json \
+  ./config/schemas/qt-qualification-plan.schema.json
+COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
+COPY locks/transactions/sysroot-el8-x86_64.json \
+  ./locks/transactions/sysroot-el8-x86_64.json
+COPY locks/qt-target-el8-x86_64.json ./locks/qt-target-el8-x86_64.json
+COPY locks/transactions/qt-target-el8-x86_64.json \
+  ./locks/transactions/qt-target-el8-x86_64.json
+COPY locks/metadata/qt-target-el8-x86_64/ \
+  ./locks/metadata/qt-target-el8-x86_64/
+COPY --from=qt-target-rpms-x86_64 /rpm-bundle/ /qt-rpm-bundle/
+COPY scripts/materialize-sysroot.py ./scripts/materialize-sysroot.py
+RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/qt-target-el8-x86_64.json install-overlay \
+      --bundle /qt-rpm-bundle \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --destination /opt/crossforge/sysroots/el8/x86_64 \
+      --release-config ./config/release.json
+
+FROM rpm-locked-input-base AS qt-target-rpms-aarch64
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY config/qt-qualification.json ./config/qt-qualification.json
+COPY config/schemas/qt-qualification-plan.schema.json \
+  ./config/schemas/qt-qualification-plan.schema.json
+COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
+COPY locks/transactions/sysroot-el8-aarch64.json \
+  ./locks/transactions/sysroot-el8-aarch64.json
+COPY locks/qt-target-el8-aarch64.json ./locks/qt-target-el8-aarch64.json
+COPY locks/transactions/qt-target-el8-aarch64.json \
+  ./locks/transactions/qt-target-el8-aarch64.json
+COPY locks/metadata/qt-target-el8-aarch64/ \
+  ./locks/metadata/qt-target-el8-aarch64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/qt-target-el8-aarch64.json --require-lock \
+      --release-config ./config/release.json \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/qt-target-el8-aarch64.json fetch \
+      --output /rpm-bundle --jobs 8 \
+      --release-config ./config/release.json
+
+FROM sysroot-aarch64 AS qt-target-aarch64-locked
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY config/qt-qualification.json ./config/qt-qualification.json
+COPY config/schemas/qt-qualification-plan.schema.json \
+  ./config/schemas/qt-qualification-plan.schema.json
+COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
+COPY locks/transactions/sysroot-el8-aarch64.json \
+  ./locks/transactions/sysroot-el8-aarch64.json
+COPY locks/qt-target-el8-aarch64.json ./locks/qt-target-el8-aarch64.json
+COPY locks/transactions/qt-target-el8-aarch64.json \
+  ./locks/transactions/qt-target-el8-aarch64.json
+COPY locks/metadata/qt-target-el8-aarch64/ \
+  ./locks/metadata/qt-target-el8-aarch64/
+COPY --from=qt-target-rpms-aarch64 /rpm-bundle/ /qt-rpm-bundle/
+COPY scripts/materialize-sysroot.py ./scripts/materialize-sysroot.py
+RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/qt-target-el8-aarch64.json install-overlay \
+      --bundle /qt-rpm-bundle \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --destination /opt/crossforge/sysroots/el8/aarch64 \
+      --release-config ./config/release.json
+
 FROM host-build-common-locked AS qemu-aarch64-validated
 ARG QEMU_EXECUTOR_VERSION
 ARG QEMU_EXECUTOR_BINARY_SHA256
@@ -645,6 +776,89 @@ RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
 
 FROM scratch AS rpm-lock-host-python-build
 COPY --from=rpm-resolve-host-python-build /resolved/ /
+
+FROM host-build-common-locked AS rpm-resolve-host-qt-build
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/host-qt-build-el8-x86_64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/host-qt-build-el8-x86_64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-host-qt-build
+COPY --from=rpm-resolve-host-qt-build /resolved/ /
+
+FROM host-build-common-locked AS rpm-resolve-qt-target-x86_64
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
+COPY locks/transactions/sysroot-el8-x86_64.json \
+  ./locks/transactions/sysroot-el8-x86_64.json
+COPY --from=sysroot-x86_64 \
+  /opt/crossforge/sysroots/el8/x86_64/ \
+  /opt/crossforge/sysroots/el8/x86_64/
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/qt-target-el8-x86_64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --parent-root /opt/crossforge/sysroots/el8/x86_64 \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/qt-target-el8-x86_64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-qt-target-x86_64
+COPY --from=rpm-resolve-qt-target-x86_64 /resolved/ /
+
+FROM host-build-common-locked AS rpm-resolve-qt-target-aarch64
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
+COPY locks/transactions/sysroot-el8-aarch64.json \
+  ./locks/transactions/sysroot-el8-aarch64.json
+COPY --from=sysroot-aarch64 \
+  /opt/crossforge/sysroots/el8/aarch64/ \
+  /opt/crossforge/sysroots/el8/aarch64/
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/qt-target-el8-aarch64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --parent-root /opt/crossforge/sysroots/el8/aarch64 \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/qt-target-el8-aarch64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-qt-target-aarch64
+COPY --from=rpm-resolve-qt-target-aarch64 /resolved/ /
 
 FROM host-build-common-locked AS binutils-prep-input
 ARG GTS_BINUTILS_SHA256

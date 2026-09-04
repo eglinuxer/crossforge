@@ -2,7 +2,7 @@
   "$schema": "https://crossforge.dev/schemas/qt-qualification-plan.schema.json",
   "schema_version": 1,
   "kind": "crossforge-qt-qualification-plan",
-  "status": "planned",
+  "status": "locked",
   "profile": "linux-desktop-full",
   "qt_version": "6.8.4",
   "source_component": {
@@ -49,24 +49,27 @@
   "locks": [
     {
       "id": "host-qt-build",
-      "status": "pending",
+      "status": "locked",
       "plan_file": "config/rpm/host-qt-build-el8-x86_64.plan.json",
-      "lock_file": null,
-      "canonical_sha256": null
+      "plan_sha256": "bf4cf2cb294e60952ecc8d4e5de92b1e55f9dca052a27203c7d024e125119698",
+      "lock_file": "locks/host-qt-build-el8-x86_64.json",
+      "canonical_sha256": "037e88d29e8cd13fa727f3b9f9905c5e411dbc0f39e2d322e85755b4d30e604d"
     },
     {
       "id": "qt-target-x86_64",
-      "status": "pending",
+      "status": "locked",
       "plan_file": "config/rpm/qt-target-el8-x86_64.plan.json",
-      "lock_file": null,
-      "canonical_sha256": null
+      "plan_sha256": "82e39eb29f9380a6135ab7f4542347b6dd8889b493287640031700892be075b4",
+      "lock_file": "locks/qt-target-el8-x86_64.json",
+      "canonical_sha256": "9a876e8e78b7a3c283aa7eb44778955767d90652e225c67d033d2881c98cdd37"
     },
     {
       "id": "qt-target-aarch64",
-      "status": "pending",
+      "status": "locked",
       "plan_file": "config/rpm/qt-target-el8-aarch64.plan.json",
-      "lock_file": null,
-      "canonical_sha256": null
+      "plan_sha256": "4fb67293efb964623e0569d4eab8ee85b43ebdb74ff868d1ce41fb9111e1eb63",
+      "lock_file": "locks/qt-target-el8-aarch64.json",
+      "canonical_sha256": "cbf2325ae20a31ff9b5e298eb888947b92bad806baf038c2838f4ade86b0b172"
     }
   ],
   "modules": [

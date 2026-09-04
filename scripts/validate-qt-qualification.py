@@ -12,6 +12,7 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 STRICT = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
+RPM = runpy.run_path(str(REPOSITORY / "scripts/validate-rpm-lock.py"))
 ValidationError = STRICT["ValidationError"]
 PLAN_SCHEMA = REPOSITORY / "config/schemas/qt-qualification-plan.schema.json"
 MODULES = [
@@ -59,6 +60,19 @@ LOCKS = [
     ("qt-target-x86_64", "config/rpm/qt-target-el8-x86_64.plan.json"),
     ("qt-target-aarch64", "config/rpm/qt-target-el8-aarch64.plan.json"),
 ]
+LOCK_IDENTITIES = {
+    "host-qt-build": ("host-qt-build", "x86_64", None),
+    "qt-target-x86_64": (
+        "qt-target",
+        "x86_64",
+        "x86_64-unknown-linux-gnu",
+    ),
+    "qt-target-aarch64": (
+        "qt-target",
+        "aarch64",
+        "aarch64-unknown-linux-gnu",
+    ),
+}
 BUILD = {
     "configuration": "release",
     "shared": True,
@@ -150,6 +164,11 @@ ACCEPTANCE = {
     "artifacts_enter_sdk": False,
 }
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+X86_ONLY_TARGET_PACKAGES = {
+    "hwdata",
+    "libpciaccess",
+    "libpciaccess-devel",
+}
 
 
 def require(condition, message):
@@ -198,6 +217,29 @@ def validate_plan(plan, require_locked=False):
         == LOCKS,
         "Qt lock order or plan paths differ",
     )
+    for record in plan["locks"]:
+        plan_path = REPOSITORY / record["plan_file"]
+        rpm_plan = load_and_validate(
+            plan_path, REPOSITORY / "config/schemas/rpm-plan.schema.json"
+        )
+        try:
+            RPM["validate_plan_semantics"](rpm_plan)
+        except RPM["ValidationError"] as error:
+            raise ValidationError(str(error)) from error
+        require(
+            canonical_sha256(rpm_plan) == record["plan_sha256"],
+            "Qt RPM plan digest differs: %s" % record["id"],
+        )
+        identity = rpm_plan["identity"]
+        require(
+            (
+                identity["role"],
+                identity["arch"],
+                identity["target_triple"],
+            )
+            == LOCK_IDENTITIES[record["id"]],
+            "Qt RPM plan identity differs: %s" % record["id"],
+        )
     statuses = [record["status"] for record in plan["locks"]]
     if plan["status"] == "planned":
         require(
@@ -229,6 +271,49 @@ def binding_component(binding, name):
     ]
     require(len(matches) == 1, "release binding has no unique %s" % name)
     return matches[0]
+
+
+def validate_target_pair(transactions):
+    targets = {
+        transaction["identity"]["arch"]: transaction
+        for transaction in transactions
+        if transaction["identity"]["role"] == "qt-target"
+    }
+    require(
+        set(targets) == {"x86_64", "aarch64"} and len(targets) == 2,
+        "Qt target lock pair is incomplete",
+    )
+
+    def identities(transaction):
+        records = [
+            item for item in transaction["items"] if item["action"] != "remove"
+        ]
+        result = {
+            item["name"]: (item["epoch"], item["version"], item["release"])
+            for item in records
+        }
+        require(
+            len(result) == len(records),
+            "Qt target lock contains multiple packages with one name",
+        )
+        return result
+
+    x86_64 = identities(targets["x86_64"])
+    aarch64 = identities(targets["aarch64"])
+    require(
+        set(x86_64) - set(aarch64) == X86_ONLY_TARGET_PACKAGES,
+        "Qt x86_64-only dependency set differs",
+    )
+    require(not set(aarch64) - set(x86_64), "Qt AArch64-only dependency appeared")
+    require(
+        all(x86_64[name] == aarch64[name] for name in set(x86_64) & set(aarch64)),
+        "Qt target package EVRs differ across architectures",
+    )
+    return {
+        "x86_64_packages": len(x86_64),
+        "aarch64_packages": len(aarch64),
+        "x86_64_only": sorted(X86_ONLY_TARGET_PACKAGES),
+    }
 
 
 def validate_release_contract(release_path, require_locked=False):
@@ -276,6 +361,31 @@ def validate_release_contract(release_path, require_locked=False):
     )
     future = binding_component(binding, "future/qt-qualification")
     require(future["scope"] == "future", "Qt planned component is not future")
+    locked_inputs = []
+    locked_transactions = []
+    if plan["status"] == "locked":
+        for record in plan["locks"]:
+            lock_path = REPOSITORY / record["lock_file"]
+            lock = load_and_validate(
+                lock_path, REPOSITORY / "config/schemas/rpm-lock.schema.json"
+            )
+            require(
+                canonical_sha256(lock) == record["canonical_sha256"],
+                "Qt RPM lock digest differs: %s" % record["id"],
+            )
+            try:
+                transaction, _identity = RPM["validate_lock_binding"](
+                    lock, lock_path, release_path=release_path
+                )
+            except RPM["ValidationError"] as error:
+                raise ValidationError(str(error)) from error
+            locked_inputs.append(lock)
+            locked_transactions.append(transaction)
+    target_pair = (
+        validate_target_pair(locked_transactions)
+        if plan["status"] == "locked"
+        else None
+    )
     if require_locked:
         require(contract["status"] == "locked", "release Qt status is not locked")
     return {
@@ -284,6 +394,9 @@ def validate_release_contract(release_path, require_locked=False):
         "plan_sha256": plan_sha256,
         "source_component_sha256": source["canonical_sha256"],
         "source_dependencies": source_dependencies,
+        "locked_inputs": locked_inputs,
+        "locked_transactions": locked_transactions,
+        "target_pair": target_pair,
         "qualification_component": future,
     }
 

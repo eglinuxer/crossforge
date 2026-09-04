@@ -21,6 +21,7 @@ class InstallHostRPMLockTests(unittest.TestCase):
                 "host-gcc-test",
                 "host-python-build",
                 "host-runtime",
+                "host-qt-build",
             },
         )
 

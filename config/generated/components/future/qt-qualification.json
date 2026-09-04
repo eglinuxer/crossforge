@@ -15,7 +15,7 @@
   "materials": [
     {
       "path": "/qt/qualification/plan/canonical_sha256",
-      "value": "83e19dfcd08a637b4f2bb4b4ff067966bb2a89571a5cf5c8ad1860a442b2bb1e"
+      "value": "ad2c3fbd2c57424c23777959f20ec23bd4a1fa30918d155dd6ee0c46b58c3f55"
     },
     {
       "path": "/qt/qualification/plan/file",
@@ -23,7 +23,7 @@
     },
     {
       "path": "/qt/qualification/status",
-      "value": "planned"
+      "value": "locked"
     }
   ],
   "schema_version": 1,

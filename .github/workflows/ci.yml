@@ -22,7 +22,7 @@ jobs:
         run: |
           ./scripts/validate-release.py
           ./scripts/validate-gcc-testsuite.py --plan config/gcc-testsuite-full.json
-          ./scripts/validate-qt-qualification.py
+          ./scripts/validate-qt-qualification.py --require-locked
           ./scripts/validate-supply-chain-evidence.py
           ./scripts/validate-frozen-abi.py
           ./scripts/validate-python-runtime-providers.py
@@ -35,6 +35,9 @@ jobs:
           ./scripts/validate-rpm-lock.py config/rpm/host-gcc-test-el8-x86_64.plan.json
           ./scripts/validate-rpm-lock.py config/rpm/host-python-build-el8-x86_64.plan.json
           ./scripts/validate-rpm-lock.py config/rpm/host-runtime-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/host-qt-build-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/qt-target-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/qt-target-el8-aarch64.plan.json
           ./scripts/validate-rpm-lock.py locks/sysroot-el8-x86_64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/sysroot-el8-aarch64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock
@@ -42,6 +45,9 @@ jobs:
           ./scripts/validate-rpm-lock.py locks/host-gcc-test-el8-x86_64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/host-python-build-el8-x86_64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/host-runtime-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/host-qt-build-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/qt-target-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/qt-target-el8-aarch64.json --require-lock
       - name: Configuration tests
         run: python3 -m unittest discover -s tests/config -p 'test_*.py'
       - name: Packaging planner tests
@@ -73,6 +79,7 @@ jobs:
           docker buildx bake validate platform-python-check \
             host-build-common-locked host-gcc-build-locked \
             host-gcc-test-locked host-python-build-locked qemu-aarch64-validated \
+            qt-rpm-locked \
             host-runtime-qualified \
             ninja-host-tool cmake-host-tool \
             vcpkg-source \
