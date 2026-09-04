@@ -20,6 +20,7 @@ VALIDATOR = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
 FIXTURE = REPOSITORY / "tests/packaging/fixtures/basic/crosspack.json"
 CONFIG_SCHEMA = REPOSITORY / "config/schemas/crosspack.schema.json"
 PLAN_SCHEMA = REPOSITORY / "config/schemas/crosspack-plan.schema.json"
+STAGING_SCHEMA = REPOSITORY / "config/schemas/crosspack-staging.schema.json"
 
 
 def write_elf(path, machine):
@@ -72,6 +73,18 @@ class CrosspackPlanTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
+    def seal(self, config_path=FIXTURE, staging_root=None, name="staging.json"):
+        staging_root = staging_root or self.root
+        manifest = CROSSPACK["create_staging_manifest"](
+            config_path,
+            staging_root,
+            "a" * 64,
+            "b" * 64,
+        )
+        path = Path(self.temporary.name) / name
+        CROSSPACK["write_new_json"](manifest, path)
+        return path
+
     def debug_config(self):
         config = copy.deepcopy(self.config)
         config["debug_symbols"] = {
@@ -99,16 +112,77 @@ class CrosspackPlanTests(unittest.TestCase):
     def test_manifest_and_generated_plan_validate_against_strict_schemas(self):
         config_schema = VALIDATOR["load_json"](CONFIG_SCHEMA)
         plan_schema = VALIDATOR["load_json"](PLAN_SCHEMA)
-        for schema in (config_schema, plan_schema):
+        staging_schema = VALIDATOR["load_json"](STAGING_SCHEMA)
+        for schema in (config_schema, plan_schema, staging_schema):
             VALIDATOR["validate_schema_subset"](schema)
         VALIDATOR["validate"](
             self.config, config_schema, config_schema, "$"
         )
         plan = CROSSPACK["build_plan"](self.config, self.root)
         VALIDATOR["validate"](plan, plan_schema, plan_schema, "$")
+        self.assertEqual(plan["staging"]["state"], "observed-unsealed")
         plan["project"]["source_date_epoch"] = 253402300800
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate"](plan, plan_schema, plan_schema, "$")
+
+    def test_sealed_staging_binds_config_variant_resolution_and_tree(self):
+        manifest = CROSSPACK["create_staging_manifest"](
+            FIXTURE,
+            self.root,
+            "1" * 64,
+            "2" * 64,
+        )
+        staging_schema = VALIDATOR["load_json"](STAGING_SCHEMA)
+        VALIDATOR["validate"](
+            manifest, staging_schema, staging_schema, "$"
+        )
+        output = Path(self.temporary.name) / "sealed.json"
+        CROSSPACK["write_new_json"](manifest, output)
+        provenance = CROSSPACK["verify_staging_manifest"](
+            self.config, self.root, output
+        )
+        self.assertEqual(provenance["state"], "sealed")
+        self.assertEqual(provenance["variant_id"], "1" * 64)
+        self.assertEqual(provenance["resolution_sha256"], "2" * 64)
+        with self.assertRaises(CROSSPACK["CrosspackError"]):
+            CROSSPACK["write_new_json"](manifest, output)
+        linked = Path(self.temporary.name) / "linked-staging.json"
+        linked.symlink_to(output.name)
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "regular non-symlink"
+        ):
+            CROSSPACK["verify_staging_manifest"](
+                self.config, self.root, linked
+            )
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "outside the staged tree"
+        ):
+            CROSSPACK["write_staging_manifest"](
+                manifest, self.root, self.root / "staging.json"
+            )
+        typed = copy.deepcopy(manifest)
+        typed["entries"][0]["mode"] = True
+        typed["inventory_sha256"] = CROSSPACK["canonical_sha256"](
+            typed["entries"]
+        )
+        typed_path = Path(self.temporary.name) / "typed-staging.json"
+        CROSSPACK["write_new_json"](typed, typed_path)
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "differs from its sealed manifest"
+        ):
+            CROSSPACK["verify_staging_manifest"](
+                self.config, self.root, typed_path
+            )
+
+        (self.root / "usr/share/crossforge/README").write_text(
+            "changed after seal\n", encoding="utf-8"
+        )
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "differs from its sealed manifest"
+        ):
+            CROSSPACK["verify_staging_manifest"](
+                self.config, self.root, output
+            )
 
     def test_plan_has_complete_split_ownership_and_exact_relations(self):
         plan = CROSSPACK["build_plan"](self.config, self.root)
@@ -227,6 +301,7 @@ class CrosspackPlanTests(unittest.TestCase):
                     CROSSPACK["selected_formats"](invalid)
 
         output = Path(self.temporary.name) / "rpm-only"
+        staging_manifest = self.seal(name="rpm-only-staging.json")
 
         def encode(arguments, environment=None):
             del environment
@@ -257,6 +332,7 @@ class CrosspackPlanTests(unittest.TestCase):
                 None,
                 None,
                 "rpm",
+                staging_manifest,
             )
         self.assertEqual(len(result["artifacts"]), 3)
         self.assertEqual(
@@ -865,11 +941,24 @@ class CrosspackPlanTests(unittest.TestCase):
         config_path.write_text(
             json.dumps(config, sort_keys=True), encoding="utf-8"
         )
+        staging_manifest = self.seal(
+            config_path, name="debug-staging.json"
+        )
         first = CROSSPACK["plan"](
-            config_path, self.root, readelf, Path("/"), objcopy
+            config_path,
+            self.root,
+            readelf,
+            Path("/"),
+            objcopy,
+            staging_manifest_path=staging_manifest,
         )
         second = CROSSPACK["plan"](
-            config_path, self.root, readelf, Path("/"), objcopy
+            config_path,
+            self.root,
+            readelf,
+            Path("/"),
+            objcopy,
+            staging_manifest_path=staging_manifest,
         )
         self.assertEqual(first, second)
         plan_schema = VALIDATOR["load_json"](PLAN_SCHEMA)
@@ -925,7 +1014,12 @@ class CrosspackPlanTests(unittest.TestCase):
         invalid_path.write_text(json.dumps(invalid), encoding="utf-8")
         with self.assertRaises(CROSSPACK["CrosspackError"]):
             CROSSPACK["plan"](
-                invalid_path, self.root, readelf, Path("/"), objcopy
+                invalid_path,
+                self.root,
+                readelf,
+                Path("/"),
+                objcopy,
+                staging_manifest_path=staging_manifest,
             )
 
     def test_unassigned_overlap_and_destination_collisions_fail_closed(self):
@@ -1068,6 +1162,11 @@ class CrosspackPlanTests(unittest.TestCase):
         )
         with self.assertRaises(CROSSPACK["CrosspackError"]):
             CROSSPACK["load_json"](path)
+        path.write_text('{"value":NaN}\n', encoding="utf-8")
+        with self.assertRaisesRegex(
+            CROSSPACK["CrosspackError"], "non-finite JSON number"
+        ):
+            CROSSPACK["load_json"](path)
 
     def test_format_specific_epoch_and_release_drive_relations_and_metadata(self):
         config = copy.deepcopy(self.config)
@@ -1154,6 +1253,7 @@ class CrosspackPlanTests(unittest.TestCase):
         shutil.copy2(
             "/bin/true", self.root / "usr/lib64/libcrossforge-demo.so.1"
         )
+        staging_manifest = self.seal(name="cli-staging.json")
         output = Path(self.temporary.name) / "plan.json"
         process = subprocess.run(
             [
@@ -1170,6 +1270,8 @@ class CrosspackPlanTests(unittest.TestCase):
                 "/",
                 "--objcopy",
                 objcopy,
+                "--staging-manifest",
+                str(staging_manifest),
                 "--output",
                 str(output),
             ],
@@ -1180,8 +1282,13 @@ class CrosspackPlanTests(unittest.TestCase):
         self.assertEqual(process.returncode, 0, process.stderr)
         self.assertEqual(
             json.loads(output.read_text(encoding="utf-8")),
-            CROSSPACK["build_plan"](
-                self.config, self.root, readelf, Path("/")
+            CROSSPACK["plan"](
+                FIXTURE,
+                self.root,
+                readelf,
+                Path("/"),
+                objcopy,
+                staging_manifest_path=staging_manifest,
             ),
         )
 
@@ -1202,6 +1309,7 @@ class CrosspackPlanTests(unittest.TestCase):
         nfpm_sha256 = CROSSPACK["sha256_file"](nfpm)
         output_one = Path(self.temporary.name) / "packages-one"
         output_two = Path(self.temporary.name) / "packages-two"
+        staging_manifest = self.seal(name="package-staging.json")
         result_one = CROSSPACK["package"](
             FIXTURE,
             self.root,
@@ -1212,6 +1320,8 @@ class CrosspackPlanTests(unittest.TestCase):
             readelf,
             Path("/"),
             objcopy,
+            None,
+            staging_manifest,
         )
         result_two = CROSSPACK["package"](
             FIXTURE,
@@ -1223,6 +1333,8 @@ class CrosspackPlanTests(unittest.TestCase):
             readelf,
             Path("/"),
             objcopy,
+            None,
+            staging_manifest,
         )
         result_schema = VALIDATOR["load_json"](
             REPOSITORY / "config/schemas/crosspack-result.schema.json"
@@ -1248,6 +1360,8 @@ class CrosspackPlanTests(unittest.TestCase):
                 readelf,
                 Path("/"),
                 objcopy,
+                None,
+                staging_manifest,
             )
         artifacts = {
             (item["component"], item["format"]): output_one / item["path"]

@@ -159,6 +159,7 @@ def finalize(arguments):
             "selective_format_encoding": "passed",
             "package_metadata": "passed",
             "format_specific_layout": "passed",
+            "sealed_staging": "passed",
         }
         and package_report.get("nfpm", {}).get("sha256")
         == source_report.get("binary", {}).get("sha256")
@@ -193,6 +194,21 @@ def finalize(arguments):
     for arch in ("x86_64", "aarch64"):
         artifacts = package_report["targets"][arch].get("artifacts", [])
         upgrade = package_report["targets"][arch].get("upgrade", {})
+        staging = package_report["targets"][arch].get("staging", {})
+        require(
+            staging.get("state") == "sealed"
+            and all(
+                is_sha256(staging.get(field))
+                for field in (
+                    "manifest_sha256",
+                    "variant_id",
+                    "resolution_sha256",
+                    "sealed_inventory_sha256",
+                    "prepared_inventory_sha256",
+                )
+            ),
+            "crosspack staging report differs for %s" % arch,
+        )
         require(
             len(artifacts) == 8
             and {(item.get("format"), item.get("component")) for item in artifacts}

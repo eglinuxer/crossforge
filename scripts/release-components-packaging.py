@@ -9,6 +9,7 @@ CROSSPACK_POLICY = {
     "config_schema": "https://crossforge.dev/schemas/crosspack.schema.json",
     "plan_schema": "https://crossforge.dev/schemas/crosspack-plan.schema.json",
     "result_schema": "https://crossforge.dev/schemas/crosspack-result.schema.json",
+    "staging_schema": "https://crossforge.dev/schemas/crosspack-staging.schema.json",
     "formats": ["deb", "rpm"],
     "format_selection": "deb-rpm-or-both-recorded-in-plan",
     "targets": {
@@ -55,6 +56,7 @@ CROSSPACK_POLICY = {
     },
     "debug_symbols": "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
     "format_layout": "shared-or-explicit-deb-rpm-destinations",
+    "staging": "external-immutable-manifest-required-by-plan-and-build",
     "reproducibility": {
         "identity": "canonical-json-sha256",
         "timestamp": "source-date-epoch",
@@ -100,6 +102,7 @@ CROSSPACK_QUALIFICATION_POLICY = {
         "selective_format_encoding_matches_full_build": True,
         "summary_description_and_license_metadata": True,
         "format_specific_library_and_debug_destinations": True,
+        "sealed_staging_manifest_reverified_before_encoding": True,
         "isolated_install_root": True,
         "installed_payload_hashes": True,
         "detached_debug_symbols": True,
@@ -118,7 +121,7 @@ CROSSFORGE_LAUNCHER_POLICY = {
     "python_minors": ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"],
     "vcpkg_linkage": ["static", "dynamic"],
     "package_backend": "internal-locked-nfpm",
-    "package_commands": ["plan", "build"],
+    "package_commands": ["seal", "plan", "build"],
 }
 COMPLETE_SDK_QUALIFICATION_POLICY = {
     "schema_version": 1,

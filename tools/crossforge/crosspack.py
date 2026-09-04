@@ -21,6 +21,7 @@ from pathlib import Path, PurePosixPath
 CONFIG_SCHEMA = "https://crossforge.dev/schemas/crosspack.schema.json"
 PLAN_SCHEMA = "https://crossforge.dev/schemas/crosspack-plan.schema.json"
 RESULT_SCHEMA = "https://crossforge.dev/schemas/crosspack-result.schema.json"
+STAGING_SCHEMA = "https://crossforge.dev/schemas/crosspack-staging.schema.json"
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9+._-]*$")
 DEB_PACKAGE_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9+.-]*$")
 RPM_PACKAGE_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9+._-]*$")
@@ -109,11 +110,19 @@ def reject_duplicate_keys(pairs):
     return result
 
 
+def reject_nonfinite(value):
+    raise CrosspackError("non-finite JSON number: %s" % value)
+
+
 def load_json(path):
     path = Path(path)
     try:
         with path.open("r", encoding="utf-8") as stream:
-            value = json.load(stream, object_pairs_hook=reject_duplicate_keys)
+            value = json.load(
+                stream,
+                object_pairs_hook=reject_duplicate_keys,
+                parse_constant=reject_nonfinite,
+            )
     except (OSError, ValueError) as error:
         raise CrosspackError("cannot load %s: %s" % (path, error)) from error
     require(isinstance(value, dict), "%s must contain a JSON object" % path)
@@ -136,6 +145,17 @@ def sha256_file(path):
     except OSError as error:
         raise CrosspackError("cannot hash %s: %s" % (path, error)) from error
     return digest.hexdigest()
+
+
+def sha256_digest(value, label, nullable=False):
+    if nullable and value is None:
+        return None
+    require(
+        isinstance(value, str)
+        and re.match(r"^[0-9a-f]{64}$", value) is not None,
+        "%s must be a lowercase SHA256 digest" % label,
+    )
+    return value
 
 
 def exact_keys(value, keys, label):
@@ -640,6 +660,96 @@ def inventory_staging(staging_root, target):
     entries.sort(key=lambda item: item["source"])
     require(entries, "staging root has no packageable entries")
     return entries
+
+
+def create_staging_manifest(
+    config_path,
+    staging_root,
+    variant_id,
+    resolution_sha256=None,
+):
+    config = load_json(config_path)
+    validate_config(config)
+    variant_id = sha256_digest(variant_id, "variant_id")
+    resolution_sha256 = sha256_digest(
+        resolution_sha256, "resolution_sha256", nullable=True
+    )
+    entries = inventory_staging(staging_root, config["target"])
+    return {
+        "$schema": STAGING_SCHEMA,
+        "schema_version": 1,
+        "kind": "crossforge-sealed-staging",
+        "state": "sealed",
+        "config_sha256": canonical_sha256(config),
+        "target": config["target"],
+        "variant_id": variant_id,
+        "resolution_sha256": resolution_sha256,
+        "inventory_sha256": canonical_sha256(entries),
+        "entries": entries,
+    }
+
+
+def verify_staging_manifest(config, staging_root, manifest_path):
+    require(manifest_path is not None, "a sealed staging manifest is required")
+    manifest_path = Path(manifest_path)
+    require(
+        manifest_path.is_file() and not manifest_path.is_symlink(),
+        "staging manifest must be a regular non-symlink file",
+    )
+    manifest = load_json(manifest_path)
+    exact_keys(
+        manifest,
+        {
+            "$schema",
+            "schema_version",
+            "kind",
+            "state",
+            "config_sha256",
+            "target",
+            "variant_id",
+            "resolution_sha256",
+            "inventory_sha256",
+            "entries",
+        },
+        "staging manifest",
+    )
+    require(manifest["$schema"] == STAGING_SCHEMA, "staging schema differs")
+    require(manifest["schema_version"] == 1, "staging schema version differs")
+    require(
+        manifest["kind"] == "crossforge-sealed-staging"
+        and manifest["state"] == "sealed",
+        "staging manifest state differs",
+    )
+    sha256_digest(manifest["config_sha256"], "staging config_sha256")
+    sha256_digest(manifest["variant_id"], "staging variant_id")
+    sha256_digest(
+        manifest["resolution_sha256"],
+        "staging resolution_sha256",
+        nullable=True,
+    )
+    sha256_digest(manifest["inventory_sha256"], "staging inventory_sha256")
+    require(
+        manifest["config_sha256"] == canonical_sha256(config),
+        "staging manifest belongs to a different package config",
+    )
+    require(
+        manifest["target"] == config["target"],
+        "staging manifest target differs",
+    )
+    inventory = inventory_staging(staging_root, config["target"])
+    inventory_sha256 = canonical_sha256(inventory)
+    require(
+        canonical_sha256(manifest["entries"]) == inventory_sha256
+        and manifest["inventory_sha256"] == inventory_sha256,
+        "staging tree differs from its sealed manifest",
+    )
+    return {
+        "state": "sealed",
+        "manifest_sha256": canonical_sha256(manifest),
+        "variant_id": manifest["variant_id"],
+        "resolution_sha256": manifest["resolution_sha256"],
+        "sealed_inventory_sha256": inventory_sha256,
+    }
 
 
 def source_node(staging_root, source):
@@ -1244,6 +1354,7 @@ def build_plan(
     config_root=None,
     script_root=None,
     formats=None,
+    staging_provenance=None,
 ):
     validate_config(config)
     require(
@@ -1251,6 +1362,17 @@ def build_plan(
         "target readelf and sysroot must be provided together",
     )
     inventory = inventory_staging(staging_root, config["target"])
+    prepared_inventory_sha256 = canonical_sha256(inventory)
+    if staging_provenance is None:
+        staging_provenance = {
+            "state": "observed-unsealed",
+            "manifest_sha256": None,
+            "variant_id": None,
+            "resolution_sha256": None,
+            "sealed_inventory_sha256": prepared_inventory_sha256,
+        }
+    staging = dict(staging_provenance)
+    staging["prepared_inventory_sha256"] = prepared_inventory_sha256
     expanded = expand_mappings(config, staging_root, inventory)
     validate_independent_components(config, expanded, staging_root)
     scripts = prepare_scripts(config, config_root, script_root)
@@ -1311,7 +1433,8 @@ def build_plan(
         "schema_version": 1,
         "kind": "crossforge-crosspack-plan",
         "config_sha256": config_sha256 or canonical_sha256(config),
-        "staging_sha256": canonical_sha256(inventory),
+        "staging_sha256": prepared_inventory_sha256,
+        "staging": staging,
         "target": config["target"],
         "formats": list(selected_formats(formats)),
         "architectures": {
@@ -1513,9 +1636,13 @@ def package(
     sysroot,
     objcopy,
     formats=None,
+    staging_manifest_path=None,
 ):
     config = load_json(config_path)
     validate_config(config)
+    staging_provenance = verify_staging_manifest(
+        config, staging_root, staging_manifest_path
+    )
     output_directory = Path(output_directory)
     require(not output_directory.exists(), "output directory already exists")
     output_directory.parent.mkdir(parents=True, exist_ok=True)
@@ -1542,6 +1669,7 @@ def package(
             Path(config_path).resolve().parent,
             workspace / "scripts",
             selected_formats(formats),
+            staging_provenance,
         )
         rendered = render_nfpm_configs(
             plan_document, package_staging, workspace / "scripts"
@@ -1629,9 +1757,13 @@ def plan(
     sysroot=None,
     objcopy=None,
     formats=None,
+    staging_manifest_path=None,
 ):
     config = load_json(config_path)
     validate_config(config)
+    staging_provenance = verify_staging_manifest(
+        config, staging_root, staging_manifest_path
+    )
     with tempfile.TemporaryDirectory(prefix="crosspack-plan-") as temporary:
         effective, prepared, debug_symbols = prepare_debug_staging(
             config, staging_root, objcopy, Path(temporary)
@@ -1646,6 +1778,7 @@ def plan(
             Path(config_path).resolve().parent,
             Path(temporary) / "scripts",
             selected_formats(formats),
+            staging_provenance,
         )
 
 
@@ -1672,9 +1805,54 @@ def write_json(document, output):
         raise
 
 
+def write_new_json(document, output):
+    payload = json.dumps(document, indent=2, sort_keys=True) + "\n"
+    path = Path(output)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    require(
+        path.parent.is_dir() and not path.parent.is_symlink(),
+        "output parent must be a real directory",
+    )
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(str(path), flags, 0o644)
+    except OSError as error:
+        raise CrosspackError("cannot create %s: %s" % (path, error)) from error
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            descriptor = None
+            stream.write(payload)
+    except BaseException:
+        if descriptor is not None:
+            os.close(descriptor)
+        try:
+            path.unlink()
+        except OSError:
+            pass
+        raise
+
+
+def write_staging_manifest(document, staging_root, output):
+    root = Path(staging_root).resolve(strict=True)
+    path = Path(output)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    parent = path.parent.resolve(strict=True)
+    require(
+        parent != root and root not in parent.parents,
+        "staging manifest must be written outside the staged tree",
+    )
+    write_new_json(document, path)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     subparsers = parser.add_subparsers(dest="command")
+    seal_parser = subparsers.add_parser("seal", allow_abbrev=False)
+    seal_parser.add_argument("--config", type=Path, required=True)
+    seal_parser.add_argument("--staging-root", type=Path, required=True)
+    seal_parser.add_argument("--variant-id", required=True)
+    seal_parser.add_argument("--resolution-sha256")
+    seal_parser.add_argument("--output", type=Path, required=True)
     plan_parser = subparsers.add_parser("plan", allow_abbrev=False)
     plan_parser.add_argument("--config", type=Path, required=True)
     plan_parser.add_argument("--staging-root", type=Path, required=True)
@@ -1684,6 +1862,7 @@ def main(argv=None):
     plan_parser.add_argument(
         "--format", choices=("both", "deb", "rpm"), default="both"
     )
+    plan_parser.add_argument("--staging-manifest", type=Path, required=True)
     plan_parser.add_argument("--output", default="-")
     package_parser = subparsers.add_parser("package", allow_abbrev=False)
     package_parser.add_argument("--config", type=Path, required=True)
@@ -1698,10 +1877,24 @@ def main(argv=None):
     package_parser.add_argument(
         "--format", choices=("both", "deb", "rpm"), default="both"
     )
+    package_parser.add_argument("--staging-manifest", type=Path, required=True)
     arguments = parser.parse_args(argv)
     try:
-        require(arguments.command in ("plan", "package"), "a crosspack command is required")
-        if arguments.command == "plan":
+        require(
+            arguments.command in ("seal", "plan", "package"),
+            "a crosspack command is required",
+        )
+        if arguments.command == "seal":
+            manifest = create_staging_manifest(
+                arguments.config,
+                arguments.staging_root,
+                arguments.variant_id,
+                arguments.resolution_sha256,
+            )
+            write_staging_manifest(
+                manifest, arguments.staging_root, arguments.output
+            )
+        elif arguments.command == "plan":
             report = plan(
                 arguments.config,
                 arguments.staging_root,
@@ -1709,6 +1902,7 @@ def main(argv=None):
                 arguments.sysroot,
                 arguments.objcopy,
                 arguments.format,
+                arguments.staging_manifest,
             )
             write_json(report, arguments.output)
         else:
@@ -1723,6 +1917,7 @@ def main(argv=None):
                 arguments.sysroot,
                 arguments.objcopy,
                 arguments.format,
+                arguments.staging_manifest,
             )
     except CrosspackError as error:
         print("error: %s" % error, file=sys.stderr)

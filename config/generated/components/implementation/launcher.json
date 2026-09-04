@@ -38,10 +38,14 @@
     },
     {
       "path": "/@implementation/launcher/package_commands/0",
-      "value": "plan"
+      "value": "seal"
     },
     {
       "path": "/@implementation/launcher/package_commands/1",
+      "value": "plan"
+    },
+    {
+      "path": "/@implementation/launcher/package_commands/2",
       "value": "build"
     },
     {

@@ -10,6 +10,7 @@
     "kind",
     "config_sha256",
     "staging_sha256",
+    "staging",
     "target",
     "formats",
     "architectures",
@@ -33,6 +34,9 @@
     },
     "staging_sha256": {
       "$ref": "#/$defs/sha256"
+    },
+    "staging": {
+      "$ref": "#/$defs/staging"
     },
     "target": {
       "enum": [
@@ -99,6 +103,51 @@
     }
   },
   "$defs": {
+    "staging": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "manifest_sha256",
+        "variant_id",
+        "resolution_sha256",
+        "sealed_inventory_sha256",
+        "prepared_inventory_sha256"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "sealed",
+            "observed-unsealed"
+          ]
+        },
+        "manifest_sha256": {
+          "$ref": "#/$defs/optional_sha256"
+        },
+        "variant_id": {
+          "$ref": "#/$defs/optional_sha256"
+        },
+        "resolution_sha256": {
+          "$ref": "#/$defs/optional_sha256"
+        },
+        "sealed_inventory_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "prepared_inventory_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "optional_sha256": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/sha256"
+        }
+      ]
+    },
     "package": {
       "type": "object",
       "additionalProperties": false,

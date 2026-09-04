@@ -225,6 +225,14 @@
       "value": "forbidden"
     },
     {
+      "path": "/@implementation/crosspack/staging",
+      "value": "external-immutable-manifest-required-by-plan-and-build"
+    },
+    {
+      "path": "/@implementation/crosspack/staging_schema",
+      "value": "https://crossforge.dev/schemas/crosspack-staging.schema.json"
+    },
+    {
       "path": "/@implementation/crosspack/targets/aarch64/deb",
       "value": "arm64"
     },

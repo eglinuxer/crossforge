@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/crosspack-staging.schema.json",
+  "title": "Crosspack sealed staging manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "state",
+    "config_sha256",
+    "target",
+    "variant_id",
+    "resolution_sha256",
+    "inventory_sha256",
+    "entries"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/crosspack-staging.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-sealed-staging"
+    },
+    "state": {
+      "const": "sealed"
+    },
+    "config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "target": {
+      "enum": [
+        "x86_64",
+        "aarch64"
+      ]
+    },
+    "variant_id": {
+      "$ref": "#/$defs/sha256"
+    },
+    "resolution_sha256": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/sha256"
+        }
+      ]
+    },
+    "inventory_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/file_entry"
+          },
+          {
+            "$ref": "#/$defs/directory_entry"
+          },
+          {
+            "$ref": "#/$defs/symlink_entry"
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "file_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "type",
+        "mode",
+        "size",
+        "sha256"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "type": {
+          "const": "file"
+        },
+        "mode": {
+          "$ref": "#/$defs/mode"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "elf": {
+          "$ref": "#/$defs/elf"
+        }
+      }
+    },
+    "directory_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "type",
+        "mode"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "type": {
+          "const": "directory"
+        },
+        "mode": {
+          "$ref": "#/$defs/mode"
+        }
+      }
+    },
+    "symlink_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "type",
+        "mode",
+        "link_target"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "type": {
+          "const": "symlink"
+        },
+        "mode": {
+          "$ref": "#/$defs/mode"
+        },
+        "link_target": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\r\\n]+$"
+        }
+      }
+    },
+    "elf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class",
+        "endianness",
+        "machine",
+        "type"
+      ],
+      "properties": {
+        "class": {
+          "const": 64
+        },
+        "endianness": {
+          "const": "little"
+        },
+        "machine": {
+          "enum": [
+            "x86_64",
+            "aarch64"
+          ]
+        },
+        "type": {
+          "enum": [
+            "relocatable",
+            "executable",
+            "dynamic",
+            "core"
+          ]
+        }
+      }
+    },
+    "source": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+._@~-]+(?:/[A-Za-z0-9+._@~-]+)*$"
+    },
+    "mode": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4095
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

@@ -51,6 +51,7 @@ COPY --from=crossforge_nfpm_tool /source.json \
 COPY config/schemas/crosspack.schema.json \
   config/schemas/crosspack-plan.schema.json \
   config/schemas/crosspack-result.schema.json \
+  config/schemas/crosspack-staging.schema.json \
   /opt/crossforge/schemas/
 COPY integration/meson/ /opt/crossforge/meson/
 COPY tools/crossforge/ /opt/crossforge/lib/crossforge/

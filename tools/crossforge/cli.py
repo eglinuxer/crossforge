@@ -221,11 +221,23 @@ def package_tools(release, config):
 
 def package_command(release, arguments):
     require(
-        arguments.package_command in ("plan", "build"),
+        arguments.package_command in ("seal", "plan", "build"),
         "a package command is required",
     )
     config = crosspack.load_json(arguments.config)
     crosspack.validate_config(config)
+    if arguments.package_command == "seal":
+        manifest = crosspack.create_staging_manifest(
+            arguments.config,
+            arguments.staging_root,
+            arguments.variant_id,
+            arguments.resolution_sha256,
+        )
+        crosspack.write_staging_manifest(
+            manifest, arguments.staging_root, arguments.output
+        )
+        print("sealed %s staged tree: %s" % (config["target"], arguments.output))
+        return 0
     tools = package_tools(release, config)
     if arguments.package_command == "plan":
         plan = crosspack.plan(
@@ -235,6 +247,7 @@ def package_command(release, arguments):
             tools["sysroot"],
             tools["objcopy"],
             arguments.format,
+            arguments.staging_manifest,
         )
         crosspack.write_json(plan, arguments.output)
         return 0
@@ -249,6 +262,7 @@ def package_command(release, arguments):
         tools["sysroot"],
         tools["objcopy"],
         arguments.format,
+        arguments.staging_manifest,
     )
     print(
         "packaged %s staged tree: %s"
@@ -275,12 +289,19 @@ def parser():
     environment.add_argument("--json", action="store_true")
     package = subparsers.add_parser("package", allow_abbrev=False)
     package_subparsers = package.add_subparsers(dest="package_command")
+    package_seal = package_subparsers.add_parser("seal", allow_abbrev=False)
+    package_seal.add_argument("--config", type=Path, required=True)
+    package_seal.add_argument("--staging-root", type=Path, required=True)
+    package_seal.add_argument("--variant-id", required=True)
+    package_seal.add_argument("--resolution-sha256")
+    package_seal.add_argument("--output", type=Path, required=True)
     package_plan = package_subparsers.add_parser("plan", allow_abbrev=False)
     package_plan.add_argument("--config", type=Path, required=True)
     package_plan.add_argument("--staging-root", type=Path, required=True)
     package_plan.add_argument(
         "--format", choices=("both", "deb", "rpm"), default="both"
     )
+    package_plan.add_argument("--staging-manifest", type=Path, required=True)
     package_plan.add_argument("--output", default="-")
     package_build = package_subparsers.add_parser("build", allow_abbrev=False)
     package_build.add_argument("--config", type=Path, required=True)
@@ -288,6 +309,7 @@ def parser():
     package_build.add_argument(
         "--format", choices=("both", "deb", "rpm"), default="both"
     )
+    package_build.add_argument("--staging-manifest", type=Path, required=True)
     package_build.add_argument("--output-directory", type=Path, required=True)
     return result
 

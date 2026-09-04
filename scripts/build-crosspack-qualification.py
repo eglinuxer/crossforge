@@ -233,6 +233,25 @@ def write_install_contract(root, plan):
 
 def validate_plan(plan, arch):
     require(plan.get("target") == arch, "crosspack plan target differs")
+    staging = plan.get("staging", {})
+    require(
+        staging.get("state") == "sealed"
+        and all(
+            isinstance(staging.get(field), str)
+            and len(staging[field]) == 64
+            for field in (
+                "manifest_sha256",
+                "variant_id",
+                "resolution_sha256",
+                "sealed_inventory_sha256",
+                "prepared_inventory_sha256",
+            )
+        )
+        and staging["prepared_inventory_sha256"] == plan["staging_sha256"]
+        and staging["prepared_inventory_sha256"]
+        != staging["sealed_inventory_sha256"],
+        "crosspack sealed staging identity differs",
+    )
     audit = plan.get("elf_audit")
     require(
         isinstance(audit, dict)
@@ -360,6 +379,30 @@ def build(
                 write_scriptlets(temporary / arch, config)
                 config_path = temporary / arch / "crosspack.json"
                 write_json(config_path, config)
+                variant_id = canonical_sha256(
+                    {"kind": "crosspack-qualification-variant", "target": arch}
+                )
+                resolution_sha256 = canonical_sha256(
+                    {"kind": "crosspack-qualification-resolution"}
+                )
+                staging_manifest = temporary / arch / "staging.json"
+                run(
+                    [
+                        crossforge_cli,
+                        "package",
+                        "seal",
+                        "--config",
+                        config_path,
+                        "--staging-root",
+                        staging,
+                        "--variant-id",
+                        variant_id,
+                        "--resolution-sha256",
+                        resolution_sha256,
+                        "--output",
+                        staging_manifest,
+                    ]
+                )
                 first = temporary / arch / "first"
                 second = temporary / arch / "second"
                 for output in (first, second):
@@ -372,6 +415,8 @@ def build(
                             config_path,
                             "--staging-root",
                             staging,
+                            "--staging-manifest",
+                            staging_manifest,
                             "--output-directory",
                             output,
                         ]
@@ -395,6 +440,8 @@ def build(
                             config_path,
                             "--staging-root",
                             staging,
+                            "--staging-manifest",
+                            staging_manifest,
                             "--output-directory",
                             rpm_only,
                             "--format",
@@ -450,6 +497,30 @@ def build(
                 }
                 upgrade_config_path = temporary / arch / "crosspack-upgrade.json"
                 write_json(upgrade_config_path, upgrade_config)
+                upgrade_manifest = temporary / arch / "upgrade-staging.json"
+                run(
+                    [
+                        crossforge_cli,
+                        "package",
+                        "seal",
+                        "--config",
+                        upgrade_config_path,
+                        "--staging-root",
+                        upgrade_staging,
+                        "--variant-id",
+                        canonical_sha256(
+                            {
+                                "kind": "crosspack-qualification-variant",
+                                "target": arch,
+                                "generation": "upgrade",
+                            }
+                        ),
+                        "--resolution-sha256",
+                        resolution_sha256,
+                        "--output",
+                        upgrade_manifest,
+                    ]
+                )
                 upgrade = temporary / arch / "upgrade"
                 run(
                     [
@@ -460,6 +531,8 @@ def build(
                         upgrade_config_path,
                         "--staging-root",
                         upgrade_staging,
+                        "--staging-manifest",
+                        upgrade_manifest,
                         "--output-directory",
                         upgrade,
                     ]
@@ -506,6 +579,7 @@ def build(
                     "target": arch,
                     "config_sha256": canonical_sha256(config),
                     "plan_sha256": result["plan_sha256"],
+                    "staging": plan["staging"],
                     "artifacts": result["artifacts"],
                     "elf_audit": plan["elf_audit"],
                     "debug_symbols": plan["debug_symbols"],
@@ -551,6 +625,7 @@ def build(
                 "selective_format_encoding": "passed",
                 "package_metadata": "passed",
                 "format_specific_layout": "passed",
+                "sealed_staging": "passed",
             },
             "nfpm": {
                 "version": nfpm["version"],

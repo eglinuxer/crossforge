@@ -171,6 +171,10 @@ class CrosspackComponentTests(unittest.TestCase):
             "shared-or-explicit-deb-rpm-destinations",
         )
         self.assertEqual(
+            policy["staging"],
+            "external-immutable-manifest-required-by-plan-and-build",
+        )
+        self.assertEqual(
             policy["debug_symbols"],
             "target-objcopy-only-keep-debug-strip-debug-gnu-debuglink",
         )
@@ -198,7 +202,9 @@ class CrosspackComponentTests(unittest.TestCase):
         self.assertEqual(
             launcher["commands"], ["env", "info", "package", "run", "shell"]
         )
-        self.assertEqual(launcher["package_commands"], ["plan", "build"])
+        self.assertEqual(
+            launcher["package_commands"], ["seal", "plan", "build"]
+        )
         self.assertEqual(
             launcher["target_selection"], "explicit-no-project-guessing"
         )

@@ -225,6 +225,8 @@ class CrossforgeCliTests(unittest.TestCase):
                 str(REPOSITORY / "tests/packaging/fixtures/basic/crosspack.json"),
                 "--staging-root",
                 "/staging",
+                "--staging-manifest",
+                "/staging.json",
                 "--output-directory",
                 "/output",
                 "--format",
@@ -249,7 +251,47 @@ class CrossforgeCliTests(unittest.TestCase):
             Path("/opt/crossforge/sysroots/el8/x86_64"),
             Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-objcopy"),
             "rpm",
+            Path("/staging.json"),
         )
+
+    def test_package_seal_does_not_invoke_build_tools(self):
+        arguments = cli.parser().parse_args(
+            [
+                "package",
+                "seal",
+                "--config",
+                str(REPOSITORY / "tests/packaging/fixtures/basic/crosspack.json"),
+                "--staging-root",
+                "/staging",
+                "--variant-id",
+                "1" * 64,
+                "--resolution-sha256",
+                "2" * 64,
+                "--output",
+                "/output/staging.json",
+            ]
+        )
+        manifest = {"kind": "crossforge-sealed-staging"}
+        with mock.patch.object(
+            cli.crosspack,
+            "create_staging_manifest",
+            return_value=manifest,
+        ) as create, mock.patch.object(
+            cli.crosspack, "write_staging_manifest"
+        ) as write, mock.patch.object(
+            cli, "package_tools"
+        ) as tools, mock.patch("builtins.print"):
+            self.assertEqual(cli.package_command(self.release, arguments), 0)
+        create.assert_called_once_with(
+            arguments.config,
+            arguments.staging_root,
+            "1" * 64,
+            "2" * 64,
+        )
+        write.assert_called_once_with(
+            manifest, arguments.staging_root, arguments.output
+        )
+        tools.assert_not_called()
 
     def test_package_plan_does_not_invoke_nfpm(self):
         arguments = cli.parser().parse_args(
@@ -260,6 +302,8 @@ class CrossforgeCliTests(unittest.TestCase):
                 str(REPOSITORY / "tests/packaging/fixtures/basic/crosspack.json"),
                 "--staging-root",
                 "/staging",
+                "--staging-manifest",
+                "/staging.json",
                 "--output",
                 "/output/plan.json",
                 "--format",
@@ -280,6 +324,7 @@ class CrossforgeCliTests(unittest.TestCase):
             Path("/opt/crossforge/sysroots/el8/x86_64"),
             Path("/opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-objcopy"),
             "deb",
+            Path("/staging.json"),
         )
         write.assert_called_once_with(planned, arguments.output)
         package.assert_not_called()

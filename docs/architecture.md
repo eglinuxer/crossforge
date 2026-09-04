@@ -428,7 +428,9 @@ component plan 和两代 package 字节一致性取得 `verified-independent` �
 component 的单行 summary 与规范多段 description 已拆分，并经过真实包 metadata 查询。
 单路径简写与显式 DEB/RPM destination 已同时支持；两套 libdir、debug destination、
 symlink/冲突与 ELF provider closure 分开规划、审计和安装验证。sealed staging/variant
-provenance 仍须在首次公开发布前完成。
+边界已要求外部 immutable manifest 绑定 config、target、variant、resolution 与完整
+inventory，并在 plan/build 入口和每次编码前复核；上游 variant spec/resolution/assets
+生成与 origin/link evidence 绑定仍须在首次公开发布前完成。
 现有安装门禁也不构成目标发行版运行资格化。
 不能先发布一个功能不足的 schema v1，再立即用 schema v2 修正基本生产语义。
 

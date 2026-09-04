@@ -85,6 +85,10 @@
       "value": true
     },
     {
+      "path": "/@implementation/crosspack-qualification/requirements/sealed_staging_manifest_reverified_before_encoding",
+      "value": true
+    },
+    {
       "path": "/@implementation/crosspack-qualification/requirements/selective_format_encoding_matches_full_build",
       "value": true
     },
