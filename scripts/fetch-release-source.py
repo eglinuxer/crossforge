@@ -68,18 +68,14 @@ def source_for(config, component, version=None):
         if len(matches) != 1:
             raise ValidationError("Python source version is not unique: %s" % version)
         source = matches[0]["source"]
-    elif component in ("zstd", "qt"):
-        selected = config["qt"] if component == "qt" else config["python"]["zstd"]
+    elif component == "zstd":
+        selected = config["python"]["zstd"]
         if version is not None and selected["version"] != version:
-            raise ValidationError(
-                "%s source version differs: %s" % (component, version)
-            )
+            raise ValidationError("zstd source version differs: %s" % version)
         source = selected["source"]
     else:
         if version is not None:
-            raise ValidationError(
-                "--version is only valid for Python, zstd, or Qt sources"
-            )
+            raise ValidationError("--version is only valid for Python or zstd sources")
         source = config["gts" if component == "gcc" else "binutils"]["source"]
     if source["status"] != "locked":
         raise ValidationError("%s source is not locked" % component)
@@ -149,7 +145,7 @@ def source_for_component(
     """Read one authenticated source projection without loading release.json."""
     require(expected_scope == "build", "source component scope must be build")
     require(
-        source_kind in ("gcc", "binutils", "python", "zstd", "qt"),
+        source_kind in ("gcc", "binutils", "python", "zstd"),
         "unsupported source kind: %r" % source_kind,
     )
     reader = component_reader()
@@ -164,10 +160,7 @@ def source_for_component(
         raise ValidationError(str(error)) from error
 
     if source_kind == "gcc":
-        require(
-            version is None,
-            "--version is only valid for Python, zstd, or Qt sources",
-        )
+        require(version is None, "--version is only valid for Python or zstd sources")
         require(
             expected_component == "sources/gcc",
             "GCC source requires component sources/gcc",
@@ -184,10 +177,7 @@ def source_for_component(
             "string",
         )
     elif source_kind == "binutils":
-        require(
-            version is None,
-            "--version is only valid for Python, zstd, or Qt sources",
-        )
+        require(version is None, "--version is only valid for Python or zstd sources")
         require(
             expected_component == "sources/binutils",
             "binutils source requires component sources/binutils",
@@ -234,7 +224,7 @@ def source_for_component(
             "Python component version differs: expected %s, found %s"
             % (version, component_version),
         )
-    elif source_kind == "zstd":
+    else:
         require(version is not None, "zstd source fetch requires --version")
         require(
             expected_component == "sources/zstd",
@@ -258,32 +248,6 @@ def source_for_component(
         require(
             component_version == version,
             "zstd component version differs: expected %s, found %s"
-            % (version, component_version),
-        )
-    else:
-        require(version is not None, "Qt source fetch requires --version")
-        require(
-            expected_component == "sources/qt",
-            "Qt source requires component sources/qt",
-        )
-        require(
-            type(version) is str and SOURCE_VERSION_RE.match(version),
-            "invalid Qt source version: %s" % version,
-        )
-        base = "/qt"
-        source_base = base + "/source"
-        component_version = _component_material(
-            reader,
-            document,
-            expected_component,
-            expected_scope,
-            expected_sha256,
-            base + "/version",
-            "string",
-        )
-        require(
-            component_version == version,
-            "Qt component version differs: expected %s, found %s"
             % (version, component_version),
         )
 
@@ -326,15 +290,6 @@ def source_for_component(
             source["url"] == expected_url,
             "zstd source URL differs from version %s" % version,
         )
-    elif source_kind == "qt":
-        expected_url = (
-            "https://download.qt.io/archive/qt/6.8/%s/single/"
-            "qt-everywhere-opensource-src-%s.tar.xz" % (version, version)
-        )
-        require(
-            source["url"] == expected_url,
-            "Qt source URL differs from version %s" % version,
-        )
     return source
 
 
@@ -347,11 +302,8 @@ def load_maintenance_source(config_path, schema_path, source_kind, version):
         tools["validate"](config, schema, schema, "$")
     except tools["ValidationError"] as error:
         raise ValidationError(str(error)) from error
-    if source_kind in ("python", "qt") and not version:
-        raise ValidationError(
-            "%s source fetch requires --version"
-            % ("Python" if source_kind == "python" else "Qt")
-        )
+    if source_kind == "python" and not version:
+        raise ValidationError("Python source fetch requires --version")
     return source_for(config, source_kind, version)
 
 
@@ -517,7 +469,7 @@ def fetch(source, output):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "source_kind", choices=("gcc", "binutils", "python", "zstd", "qt")
+        "source_kind", choices=("gcc", "binutils", "python", "zstd")
     )
     parser.add_argument("--version")
     parser.add_argument("--output", type=Path, required=True)

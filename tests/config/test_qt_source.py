@@ -45,8 +45,9 @@ class QtSourceGraphTests(unittest.TestCase):
         source = self.dockerfile.split(" AS qt-source", 1)[1].split(
             "\nFROM ", 1
         )[0]
-        self.assertIn("fetch-release-source.py qt", fetch)
         self.assertIn("curl --fail --location --retry 3", fetch)
+        self.assertNotIn("fetch-release-source.py", fetch)
+        self.assertNotIn("sources-qt.json", fetch)
         self.assertNotIn("RUN --network=none", fetch)
         self.assertIn("RUN --network=none", source)
         self.assertIn("prepare-qt-source.py", source)

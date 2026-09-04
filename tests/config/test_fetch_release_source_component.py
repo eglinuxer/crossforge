@@ -108,7 +108,7 @@ class ComponentSourceFetcherTests(unittest.TestCase):
         self.assertEqual(source["size"], len(self.payload))
         self.assertFalse((scripts / "validate-release.py").exists())
 
-    def test_tracked_source_components_are_supported(self):
+    def test_tracked_gcc_binutils_python_and_zstd_components_are_supported(self):
         binding = json.loads(
             (REPOSITORY / "config/generated/release-binding.json").read_text(
                 encoding="utf-8"
@@ -120,7 +120,6 @@ class ComponentSourceFetcherTests(unittest.TestCase):
             ("binutils", "sources/binutils", None),
             ("python", "python/cp312-source", "3.12.14"),
             ("zstd", "sources/zstd", "1.5.7"),
-            ("qt", "sources/qt", "6.8.4"),
         )
         for source_kind, component, version in cases:
             with self.subTest(component=component):

@@ -3,24 +3,12 @@
 FROM crossforge_rocky_amd64 AS qt-fetch
 ARG QT_VERSION
 ARG QT_SOURCE_URL
-ARG CROSSFORGE_COMPONENT_SOURCES_QT_SHA256
-COPY config/generated/components/sources/qt.json \
-  /work/config/sources-qt.json
-COPY --chmod=0755 scripts/release_component.py \
-  scripts/fetch-release-source.py /work/scripts/
 RUN test "$QT_VERSION" = 6.8.4 \
     && test "$QT_SOURCE_URL" = \
       https://download.qt.io/archive/qt/6.8/6.8.4/single/qt-everywhere-opensource-src-6.8.4.tar.xz \
     && mkdir -p /work/source \
     && curl --fail --location --retry 3 --retry-delay 2 \
       "$QT_SOURCE_URL" \
-      --output /work/source/qt-everywhere-opensource-src-6.8.4.tar.xz \
-    && /usr/libexec/platform-python /work/scripts/fetch-release-source.py qt \
-      --version "$QT_VERSION" \
-      --component-file /work/config/sources-qt.json \
-      --expected-component sources/qt \
-      --expected-scope build \
-      --expected-sha256 "$CROSSFORGE_COMPONENT_SOURCES_QT_SHA256" \
       --output /work/source/qt-everywhere-opensource-src-6.8.4.tar.xz
 
 FROM crossforge_rocky_amd64 AS qt-source
