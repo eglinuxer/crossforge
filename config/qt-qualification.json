@@ -11,6 +11,12 @@
   },
   "source_dependencies": [
     {
+      "name": "ffmpeg",
+      "component": "sources/ffmpeg",
+      "canonical_sha256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
+      "usage": "host-and-target-qt-multimedia-backend-build"
+    },
+    {
       "name": "xcb-util-cursor",
       "component": "sources/xcb-util-cursor",
       "canonical_sha256": "68084bc48751b6ea2f1d1778411231852ff22797d58e72b259f353c67ab85680",
@@ -102,7 +108,10 @@
       "egl",
       "fontconfig",
       "freetype",
+      "gbm",
       "gui",
+      "libinput",
+      "libudev",
       "network",
       "opengl",
       "opengl-desktop",
@@ -118,6 +127,10 @@
       "xkbcommon",
       "xkbcommon-x11",
       "xml"
+    ],
+    "qtmultimedia": [
+      "ffmpeg",
+      "pulseaudio"
     ],
     "qtwebengine": [
       "qtwebengine-build",
@@ -144,6 +157,7 @@
     "fontconfig",
     "nss>=3.26",
     "dbus",
+    "ffmpeg-7.1.1-lgpl-shared",
     "gnu-c++20"
   ],
   "targets": [

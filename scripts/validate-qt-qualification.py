@@ -50,6 +50,11 @@ HOST = {
 }
 SOURCE_DEPENDENCIES = [
     {
+        "name": "ffmpeg",
+        "component": "sources/ffmpeg",
+        "usage": "host-and-target-qt-multimedia-backend-build",
+    },
+    {
         "name": "xcb-util-cursor",
         "component": "sources/xcb-util-cursor",
         "usage": "host-and-target-xcb-platform-plugin-build",
@@ -93,7 +98,10 @@ FEATURES = {
         "egl",
         "fontconfig",
         "freetype",
+        "gbm",
         "gui",
+        "libinput",
+        "libudev",
         "network",
         "opengl",
         "opengl-desktop",
@@ -110,6 +118,7 @@ FEATURES = {
         "xkbcommon-x11",
         "xml",
     ],
+    "qtmultimedia": ["ffmpeg", "pulseaudio"],
     "qtwebengine": [
         "qtwebengine-build",
         "qtwebengine-core-build",
@@ -135,6 +144,7 @@ SUPPORT_CHECKS = [
     "fontconfig",
     "nss>=3.26",
     "dbus",
+    "ffmpeg-7.1.1-lgpl-shared",
     "gnu-c++20",
 ]
 TARGETS = [

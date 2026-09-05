@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/ffmpeg-source-manifest.schema.json",
+  "title": "Crossforge authenticated FFmpeg source manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "version",
+    "source_component",
+    "archive",
+    "signature",
+    "license",
+    "top_directory",
+    "member_count",
+    "files"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/ffmpeg-source-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-ffmpeg-source"
+    },
+    "version": {
+      "const": "7.1.1"
+    },
+    "source_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "const": "sources/ffmpeg"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "size"
+      ],
+      "properties": {
+        "file": {
+          "const": "ffmpeg-7.1.1.tar.xz"
+        },
+        "sha256": {
+          "const": "733984395e0dbbe5c046abda2dc49a5544e7e0e1e2366bba849222ae9e3a03b1"
+        },
+        "size": {
+          "const": 11019500
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "size",
+        "evidence",
+        "evidence_sha256",
+        "key"
+      ],
+      "properties": {
+        "file": {
+          "const": "ffmpeg-7.1.1.tar.xz.asc"
+        },
+        "sha256": {
+          "const": "a52e92620b266ea341191a01b42a191e01c15a9f56e99b173582181781f5bc75"
+        },
+        "size": {
+          "const": 520
+        },
+        "evidence": {
+          "const": "evidence/gpg/ffmpeg-7.1.1.tar.xz.asc.b64"
+        },
+        "evidence_sha256": {
+          "const": "2bb55dbeb5dd905dc5f2ae536a18190e3e3bf548cc77342aabab547ebf646d32"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "expression": {
+          "const": "LGPL-2.1-or-later AND BSD-3-Clause AND BSD-2-Clause AND BSD-Source-Code AND ISC AND MIT AND MPL-2.0"
+        },
+        "file": {
+          "const": "COPYING.LGPLv2.1"
+        },
+        "sha256": {
+          "const": "b634ab5640e258563c536e658cad87080553df6f34f62269a21d554844e58bfe"
+        }
+      }
+    },
+    "top_directory": {
+      "const": "ffmpeg-7.1.1"
+    },
+    "member_count": {
+      "const": 8646
+    },
+    "files": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/regular_file"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "fingerprint",
+        "retrieval_url"
+      ],
+      "properties": {
+        "file": {
+          "const": "keys/FFMPEG-RELEASE-KEY.asc"
+        },
+        "sha256": {
+          "const": "397b3becedcd5a98769967ff1ff8501ddc89f8368b8f766e4701377d7dbaabe5"
+        },
+        "fingerprint": {
+          "const": "fcf986ea15e6e293a5644f10b4322f04d67658d8"
+        },
+        "retrieval_url": {
+          "const": "https://ffmpeg.org/ffmpeg-devel.asc"
+        }
+      }
+    },
+    "regular_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256",
+        "size",
+        "mode"
+      ],
+      "properties": {
+        "file": {
+          "enum": [
+            "COPYING.LGPLv2.1",
+            "LICENSE.md",
+            "configure",
+            "libavcodec/version_major.h",
+            "libavformat/version_major.h",
+            "libavutil/version.h"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mode": {
+          "type": "string",
+          "pattern": "^0[0-7]{3}$"
+        }
+      }
+    }
+  }
+}

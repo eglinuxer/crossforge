@@ -43,6 +43,51 @@ RUN --network=none test "$QT_VERSION" = 6.8.4 \
 FROM scratch AS qt-source-export
 COPY --from=qt-source /out/ /
 
+FROM crossforge_rocky_amd64 AS ffmpeg-fetch
+ARG FFMPEG_VERSION
+ARG FFMPEG_SOURCE_URL
+RUN test "$FFMPEG_VERSION" = 7.1.1 \
+    && test "$FFMPEG_SOURCE_URL" = \
+      https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz \
+    && mkdir -p /work/source \
+    && curl --fail --location --retry 3 --retry-delay 2 \
+      "$FFMPEG_SOURCE_URL" \
+      --output /work/source/ffmpeg-7.1.1.tar.xz
+
+FROM crossforge_rocky_amd64 AS ffmpeg-source
+ARG FFMPEG_VERSION
+ARG CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256
+COPY --from=ffmpeg-fetch /work/source/ffmpeg-7.1.1.tar.xz \
+  /work/source/ffmpeg-7.1.1.tar.xz
+COPY config/generated/components/sources/ffmpeg.json \
+  /work/config/sources-ffmpeg.json
+COPY config/schemas/ffmpeg-source-manifest.schema.json \
+  /work/config/schemas/ffmpeg-source-manifest.schema.json
+COPY keys/FFMPEG-RELEASE-KEY.asc /work/keys/FFMPEG-RELEASE-KEY.asc
+COPY evidence/gpg/ffmpeg-7.1.1.tar.xz.asc.b64 \
+  /work/evidence/gpg/ffmpeg-7.1.1.tar.xz.asc.b64
+COPY --chmod=0755 scripts/release_component.py scripts/validate-release.py \
+  scripts/prepare-ffmpeg-source.py /work/scripts/
+RUN --network=none test "$FFMPEG_VERSION" = 7.1.1 \
+    && base64 --decode \
+      /work/evidence/gpg/ffmpeg-7.1.1.tar.xz.asc.b64 \
+      > /work/source/ffmpeg-7.1.1.tar.xz.asc \
+    && /usr/libexec/platform-python /work/scripts/prepare-ffmpeg-source.py \
+      --component /work/config/sources-ffmpeg.json \
+      --component-sha256 "$CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256" \
+      --archive /work/source/ffmpeg-7.1.1.tar.xz \
+      --signature /work/source/ffmpeg-7.1.1.tar.xz.asc \
+      --signature-evidence \
+        /work/evidence/gpg/ffmpeg-7.1.1.tar.xz.asc.b64 \
+      --output /out/source-manifest.json \
+    && install -D -m 0644 /work/source/ffmpeg-7.1.1.tar.xz \
+      /out/materials/ffmpeg-7.1.1.tar.xz \
+    && install -D -m 0644 /work/source/ffmpeg-7.1.1.tar.xz.asc \
+      /out/materials/ffmpeg-7.1.1.tar.xz.asc
+
+FROM scratch AS ffmpeg-source-export
+COPY --from=ffmpeg-source /out/ /
+
 FROM crossforge_rocky_amd64 AS xcb-util-cursor-fetch
 ARG XCB_UTIL_CURSOR_VERSION
 ARG XCB_UTIL_CURSOR_SOURCE_URL

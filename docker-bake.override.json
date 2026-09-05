@@ -313,6 +313,7 @@
     "qt-source-qualified": {
       "targets": [
         "qt-source",
+        "ffmpeg-source",
         "xcb-util-cursor-source"
       ]
     },
@@ -1866,6 +1867,23 @@
       ],
       "target": "cpython-source"
     },
+    "ffmpeg-source": {
+      "args": {
+        "CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
+        "FFMPEG_SOURCE_URL": "https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz",
+        "FFMPEG_VERSION": "7.1.1"
+      },
+      "contexts": {
+        "crossforge_rocky_amd64": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "ffmpeg-source-export"
+    },
     "gcc-aarch64": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
@@ -3102,7 +3120,7 @@
     },
     "xcb-util-cursor-aarch64-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "2794c448cf83607d65d338e1e644741df638bab55f0341b82e3c4ece832dccc2",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "5ced27a38fa8555ff4c92abedb7483b4ad1516a60496b0ef2f5768bcea52d928",
         "CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256": "68084bc48751b6ea2f1d1778411231852ff22797d58e72b259f353c67ab85680",
         "XCB_UTIL_CURSOR_RPM_LOCK": "locks/qt-target-el8-aarch64.json",
         "XCB_UTIL_CURSOR_RPM_TRANSACTION": "locks/transactions/qt-target-el8-aarch64.json",
@@ -3125,7 +3143,7 @@
     },
     "xcb-util-cursor-host-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "2794c448cf83607d65d338e1e644741df638bab55f0341b82e3c4ece832dccc2",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "5ced27a38fa8555ff4c92abedb7483b4ad1516a60496b0ef2f5768bcea52d928",
         "CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256": "68084bc48751b6ea2f1d1778411231852ff22797d58e72b259f353c67ab85680"
       },
       "contexts": {
@@ -3159,7 +3177,7 @@
     },
     "xcb-util-cursor-x86_64-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "2794c448cf83607d65d338e1e644741df638bab55f0341b82e3c4ece832dccc2",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "5ced27a38fa8555ff4c92abedb7483b4ad1516a60496b0ef2f5768bcea52d928",
         "CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256": "68084bc48751b6ea2f1d1778411231852ff22797d58e72b259f353c67ab85680",
         "XCB_UTIL_CURSOR_RPM_LOCK": "locks/qt-target-el8-x86_64.json",
         "XCB_UTIL_CURSOR_RPM_TRANSACTION": "locks/transactions/qt-target-el8-x86_64.json",

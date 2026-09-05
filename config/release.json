@@ -287,6 +287,62 @@
       }
     },
     "dependencies": {
+      "ffmpeg": {
+        "version": "7.1.1",
+        "source": {
+          "status": "locked",
+          "url": "https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz",
+          "sha256": "733984395e0dbbe5c046abda2dc49a5544e7e0e1e2366bba849222ae9e3a03b1",
+          "size": 11019500,
+          "signature": {
+            "url": "https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz.asc",
+            "sha256": "a52e92620b266ea341191a01b42a191e01c15a9f56e99b173582181781f5bc75",
+            "size": 520,
+            "evidence": "evidence/gpg/ffmpeg-7.1.1.tar.xz.asc.b64",
+            "key": {
+              "file": "keys/FFMPEG-RELEASE-KEY.asc",
+              "retrieval_url": "https://ffmpeg.org/ffmpeg-devel.asc",
+              "sha256": "397b3becedcd5a98769967ff1ff8501ddc89f8368b8f766e4701377d7dbaabe5",
+              "fingerprint": "fcf986ea15e6e293a5644f10b4322f04d67658d8"
+            }
+          }
+        },
+        "license": {
+          "expression": "LGPL-2.1-or-later AND BSD-3-Clause AND BSD-2-Clause AND BSD-Source-Code AND ISC AND MIT AND MPL-2.0",
+          "file": "COPYING.LGPLv2.1",
+          "sha256": "b634ab5640e258563c536e658cad87080553df6f34f62269a21d554844e58bfe"
+        },
+        "layout": {
+          "top_directory": "ffmpeg-7.1.1",
+          "member_count": 8646,
+          "files": [
+            {
+              "file": "COPYING.LGPLv2.1",
+              "sha256": "b634ab5640e258563c536e658cad87080553df6f34f62269a21d554844e58bfe"
+            },
+            {
+              "file": "LICENSE.md",
+              "sha256": "cb48bf09a11f5fb576cddb0431c8f5ed0a60157a9ec942adffc13907cbe083f2"
+            },
+            {
+              "file": "configure",
+              "sha256": "e7c000ab52464fe5bf1e88b07ff2118875e79c056cd85ff0b877415f7d9deb54"
+            },
+            {
+              "file": "libavcodec/version_major.h",
+              "sha256": "1363595d85d4bec36318f4c33bd46ad7ab49f16a893c7b3585a0d420e385112c"
+            },
+            {
+              "file": "libavformat/version_major.h",
+              "sha256": "b50b3071ab4aa54ca6802b393a9de139d41a5cffd21a0dcaa7347a7c0bba7f5b"
+            },
+            {
+              "file": "libavutil/version.h",
+              "sha256": "d9889f49a84933fee0a83f36f59d2fce87e16f9b66c4c7bfce56a2da59fecc40"
+            }
+          ]
+        }
+      },
       "xcb_util_cursor": {
         "version": "0.1.6",
         "source": {
@@ -340,7 +396,7 @@
       "status": "locked",
       "plan": {
         "file": "config/qt-qualification.json",
-        "canonical_sha256": "ad2c3fbd2c57424c23777959f20ec23bd4a1fa30918d155dd6ee0c46b58c3f55"
+        "canonical_sha256": "e9c14ae2660d7df13d3dc89cfec7496af68d849d8ff6449291299e899d814788"
       }
     }
   },

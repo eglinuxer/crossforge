@@ -44,7 +44,7 @@ class QtQualificationPlanTests(unittest.TestCase):
         )
         self.assertEqual(
             [record["component"] for record in self.contract["source_dependencies"]],
-            ["sources/xcb-util-cursor"],
+            ["sources/ffmpeg", "sources/xcb-util-cursor"],
         )
 
     def test_locked_inputs_are_release_bound_and_revalidated(self):

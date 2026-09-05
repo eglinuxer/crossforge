@@ -717,6 +717,11 @@ def _render_expected_components(release, implemented_rows):
         selector(("qt", "version"), ("qt", "source")),
     )
     add(
+        "sources/ffmpeg",
+        "build",
+        selector(("qt", "dependencies", "ffmpeg")),
+    )
+    add(
         "sources/xcb-util-cursor",
         "build",
         selector(("qt", "dependencies", "xcb_util_cursor")),
@@ -725,7 +730,7 @@ def _render_expected_components(release, implemented_rows):
         "future/qt-qualification",
         "future",
         selector(("qt", "qualification")),
-        ("sources/qt", "sources/xcb-util-cursor"),
+        ("sources/ffmpeg", "sources/qt", "sources/xcb-util-cursor"),
     )
     add("sources/vcpkg", "build", selector(("vcpkg",)))
     add("sources/nfpm", "build", selector(("nfpm",)))

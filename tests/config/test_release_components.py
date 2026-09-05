@@ -970,7 +970,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         self.assertEqual(future["scope"], "future")
         self.assertEqual(
             {item["component"] for item in future["dependencies"]},
-            {"sources/qt", "sources/xcb-util-cursor"},
+            {"sources/ffmpeg", "sources/qt", "sources/xcb-util-cursor"},
         )
         self.assertTrue(
             all(
@@ -1007,6 +1007,26 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         self.assertEqual(
             changed(self.components, after),
             {"sources/xcb-util-cursor", "future/qt-qualification"},
+        )
+
+    def test_qt_ffmpeg_source_pin_is_an_isolated_future_dependency(self):
+        source = self.components["sources/ffmpeg"]
+        self.assertEqual(source["scope"], "build")
+        self.assertEqual(source["dependencies"], [])
+        self.assertTrue(
+            all(
+                material["path"].startswith("/qt/dependencies/ffmpeg/")
+                for material in source["materials"]
+            )
+        )
+        after = self.render_mutation(
+            lambda release: release["qt"]["dependencies"]["ffmpeg"][
+                "source"
+            ].__setitem__("sha256", "0" * 64)
+        )
+        self.assertEqual(
+            changed(self.components, after),
+            {"sources/ffmpeg", "future/qt-qualification"},
         )
 
     def test_ninja_host_tool_has_isolated_source_policy_and_consumers(self):

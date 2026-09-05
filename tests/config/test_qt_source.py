@@ -35,8 +35,30 @@ class QtSourceGraphTests(unittest.TestCase):
         )
         self.assertEqual(
             self.bake["group"]["qt-source-qualified"]["targets"],
-            ["qt-source", "xcb-util-cursor-source"],
+            ["qt-source", "ffmpeg-source", "xcb-util-cursor-source"],
         )
+
+    def test_ffmpeg_source_is_signed_offline_and_cache_only(self):
+        target = self.bake["target"]["ffmpeg-source"]
+        self.assertEqual(target["inherits"], ["_qt_common"])
+        self.assertEqual(target["target"], "ffmpeg-source-export")
+        self.assertEqual(target["output"], ["type=cacheonly"])
+        self.assertEqual(target["args"]["FFMPEG_VERSION"], "7.1.1")
+        self.assertRegex(
+            target["args"]["CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256"],
+            r"^[0-9a-f]{64}$",
+        )
+        fetch = self.dockerfile.split(" AS ffmpeg-fetch", 1)[1].split(
+            "\nFROM ", 1
+        )[0]
+        source = self.dockerfile.split(" AS ffmpeg-source", 1)[1].split(
+            "\nFROM ", 1
+        )[0]
+        self.assertIn("curl --fail --location --retry 3", fetch)
+        self.assertIn("RUN --network=none", source)
+        self.assertIn("prepare-ffmpeg-source.py", source)
+        self.assertIn("FFMPEG-RELEASE-KEY.asc", source)
+        self.assertIn("FROM scratch AS ffmpeg-source-export", self.dockerfile)
 
     def test_xcb_cursor_source_is_signed_offline_and_cache_only(self):
         target = self.bake["target"]["xcb-util-cursor-source"]

@@ -529,6 +529,93 @@ def validate_evidence(config, repository):
         "Qt checksum evidence differs from the source identity",
     )
 
+    ffmpeg = qt["dependencies"]["ffmpeg"]
+    ffmpeg_source = ffmpeg["source"]
+    ffmpeg_signature = ffmpeg_source["signature"]
+    ffmpeg_key = ffmpeg_signature["key"]
+    expected_ffmpeg_url = "https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz"
+    require(
+        ffmpeg["version"] == "7.1.1"
+        and ffmpeg_source["status"] == "locked"
+        and ffmpeg_source["url"] == expected_ffmpeg_url
+        and ffmpeg_source["sha256"]
+        == "733984395e0dbbe5c046abda2dc49a5544e7e0e1e2366bba849222ae9e3a03b1"
+        and ffmpeg_source["size"] == 11019500
+        and ffmpeg_signature["url"] == expected_ffmpeg_url + ".asc"
+        and ffmpeg_signature["sha256"]
+        == "a52e92620b266ea341191a01b42a191e01c15a9f56e99b173582181781f5bc75"
+        and ffmpeg_signature["size"] == 520,
+        "FFmpeg source or signature identity mismatch",
+    )
+    ffmpeg_signature_payload = load_evidence(
+        repository, ffmpeg_signature["evidence"]
+    )
+    require(
+        len(ffmpeg_signature_payload) == ffmpeg_signature["size"]
+        and hashlib.sha256(ffmpeg_signature_payload).hexdigest()
+        == ffmpeg_signature["sha256"],
+        "FFmpeg detached signature evidence mismatch",
+    )
+    ffmpeg_key_payload = load_locked_file(
+        repository, ffmpeg_key["file"], "FFmpeg release key"
+    )
+    require(
+        ffmpeg_key["retrieval_url"] == "https://ffmpeg.org/ffmpeg-devel.asc"
+        and hashlib.sha256(ffmpeg_key_payload).hexdigest()
+        == ffmpeg_key["sha256"]
+        == "397b3becedcd5a98769967ff1ff8501ddc89f8368b8f766e4701377d7dbaabe5"
+        and ffmpeg_key["fingerprint"]
+        == "fcf986ea15e6e293a5644f10b4322f04d67658d8"
+        and ffmpeg_key_payload.startswith(b"-----BEGIN PGP PUBLIC KEY BLOCK-----\n")
+        and ffmpeg_key_payload.rstrip().endswith(
+            b"-----END PGP PUBLIC KEY BLOCK-----"
+        ),
+        "FFmpeg release key identity mismatch",
+    )
+    require(
+        ffmpeg["license"]
+        == {
+            "expression": (
+                "LGPL-2.1-or-later AND BSD-3-Clause AND BSD-2-Clause AND "
+                "BSD-Source-Code AND ISC AND MIT AND MPL-2.0"
+            ),
+            "file": "COPYING.LGPLv2.1",
+            "sha256": "b634ab5640e258563c536e658cad87080553df6f34f62269a21d554844e58bfe",
+        }
+        and ffmpeg["layout"]
+        == {
+            "top_directory": "ffmpeg-7.1.1",
+            "member_count": 8646,
+            "files": [
+                {
+                    "file": "COPYING.LGPLv2.1",
+                    "sha256": "b634ab5640e258563c536e658cad87080553df6f34f62269a21d554844e58bfe",
+                },
+                {
+                    "file": "LICENSE.md",
+                    "sha256": "cb48bf09a11f5fb576cddb0431c8f5ed0a60157a9ec942adffc13907cbe083f2",
+                },
+                {
+                    "file": "configure",
+                    "sha256": "e7c000ab52464fe5bf1e88b07ff2118875e79c056cd85ff0b877415f7d9deb54",
+                },
+                {
+                    "file": "libavcodec/version_major.h",
+                    "sha256": "1363595d85d4bec36318f4c33bd46ad7ab49f16a893c7b3585a0d420e385112c",
+                },
+                {
+                    "file": "libavformat/version_major.h",
+                    "sha256": "b50b3071ab4aa54ca6802b393a9de139d41a5cffd21a0dcaa7347a7c0bba7f5b",
+                },
+                {
+                    "file": "libavutil/version.h",
+                    "sha256": "d9889f49a84933fee0a83f36f59d2fce87e16f9b66c4c7bfce56a2da59fecc40",
+                },
+            ],
+        },
+        "FFmpeg license or archive layout identity mismatch",
+    )
+
     xcb_cursor = qt["dependencies"]["xcb_util_cursor"]
     xcb_source = xcb_cursor["source"]
     xcb_signature = xcb_source["signature"]
@@ -1088,6 +1175,8 @@ def validate_evidence(config, repository):
         "zstd_signature_sha256": zstd_signature["sha256"],
         "qt_source_sha256": qt_source["sha256"],
         "qt_checksum_sha256": qt_checksum["sha256"],
+        "ffmpeg_source_sha256": ffmpeg_source["sha256"],
+        "ffmpeg_signature_sha256": ffmpeg_signature["sha256"],
         "xcb_util_cursor_source_sha256": xcb_source["sha256"],
         "xcb_util_cursor_signature_sha256": xcb_signature["sha256"],
         "vcpkg_tag_object": vcpkg_release["tag_object"],
@@ -1115,7 +1204,7 @@ def main():
     print(
         "valid supply-chain evidence: Rocky %s; QEMU %s; source %s; "
         "CPython Sigstore bundles %s; patches %d; zstd %s; vcpkg %s; "
-        "Qt %s + xcb-util-cursor %s; Ninja %s; CMake %s"
+        "Qt %s + FFmpeg %s + xcb-util-cursor %s; Ninja %s; CMake %s"
         % (
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
@@ -1125,6 +1214,7 @@ def main():
             result["zstd_commit"],
             result["vcpkg_commit"],
             config["qt"]["version"],
+            config["qt"]["dependencies"]["ffmpeg"]["version"],
             config["qt"]["dependencies"]["xcb_util_cursor"]["version"],
             result["ninja_commit"],
             config["host_tools"]["cmake"]["version"],

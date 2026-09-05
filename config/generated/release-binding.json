@@ -20,7 +20,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "2794c448cf83607d65d338e1e644741df638bab55f0341b82e3c4ece832dccc2",
+      "canonical_sha256": "5ced27a38fa8555ff4c92abedb7483b4ad1516a60496b0ef2f5768bcea52d928",
       "component": "future/qt-qualification",
       "path": "config/generated/components/future/qt-qualification.json",
       "scope": "future"
@@ -392,6 +392,12 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
+      "component": "sources/ffmpeg",
+      "path": "config/generated/components/sources/ffmpeg.json",
+      "scope": "build"
+    },
+    {
       "canonical_sha256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
       "component": "sources/gcc",
       "path": "config/generated/components/sources/gcc.json",
@@ -520,7 +526,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "e9142b7751ab0465bf660bafb56d486d150ca1e13572dcf6da02b2934b129747",
+    "canonical_sha256": "c293ecade3cf86f2c8f752a5c8641ed7603492f281f1f6bbed530ab55c28de81",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

@@ -1072,11 +1072,13 @@ def render_python_graph(config, targets, component_arguments):
 
 def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
     component_argument = component_argument_name("sources/qt")
+    ffmpeg_component_argument = component_argument_name("sources/ffmpeg")
     xcb_cursor_component_argument = component_argument_name(
         "sources/xcb-util-cursor"
     )
     try:
         component_sha256 = component_arguments[component_argument]
+        ffmpeg_component_sha256 = component_arguments[ffmpeg_component_argument]
         xcb_cursor_component_sha256 = component_arguments[
             xcb_cursor_component_argument
         ]
@@ -1095,6 +1097,20 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
             "QT_VERSION": config["qt"]["version"],
             "QT_SOURCE_URL": config["qt"]["source"]["url"],
             component_argument: component_sha256,
+        },
+        "contexts": {
+            "crossforge_rocky_amd64": "docker-image://%s" % rocky_amd64_image,
+        },
+        "output": ["type=cacheonly"],
+    }
+    ffmpeg = config["qt"]["dependencies"]["ffmpeg"]
+    targets["ffmpeg-source"] = {
+        "inherits": ["_qt_common"],
+        "target": "ffmpeg-source-export",
+        "args": {
+            "FFMPEG_VERSION": ffmpeg["version"],
+            "FFMPEG_SOURCE_URL": ffmpeg["source"]["url"],
+            ffmpeg_component_argument: ffmpeg_component_sha256,
         },
         "contexts": {
             "crossforge_rocky_amd64": "docker-image://%s" % rocky_amd64_image,
@@ -1182,7 +1198,7 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
     }
     return {
         "qt-source-qualified": {
-            "targets": ["qt-source", "xcb-util-cursor-source"]
+            "targets": ["qt-source", "ffmpeg-source", "xcb-util-cursor-source"]
         },
         "xcb-util-cursor-qualified": {"targets": xcb_builds},
         "qt-host-configure-observed": {

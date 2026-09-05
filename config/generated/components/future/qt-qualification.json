@@ -3,6 +3,10 @@
   "component": "future/qt-qualification",
   "dependencies": [
     {
+      "canonical_sha256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
+      "component": "sources/ffmpeg"
+    },
+    {
       "canonical_sha256": "540c01aacded48198436157ab351090990ed06772f82f203563c32422b37a502",
       "component": "sources/qt"
     },
@@ -15,7 +19,7 @@
   "materials": [
     {
       "path": "/qt/qualification/plan/canonical_sha256",
-      "value": "ad2c3fbd2c57424c23777959f20ec23bd4a1fa30918d155dd6ee0c46b58c3f55"
+      "value": "e9c14ae2660d7df13d3dc89cfec7496af68d849d8ff6449291299e899d814788"
     },
     {
       "path": "/qt/qualification/plan/file",
