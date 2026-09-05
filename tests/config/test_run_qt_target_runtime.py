@@ -1,5 +1,6 @@
 import argparse
 import ast
+import json
 import runpy
 import tempfile
 import unittest
@@ -9,6 +10,9 @@ from pathlib import Path
 REPOSITORY = Path(__file__).resolve().parents[2]
 SCRIPT = REPOSITORY / "scripts/run-qt-target-runtime.py"
 RUNTIME = runpy.run_path(str(SCRIPT))
+CANDIDATE = runpy.run_path(
+    str(REPOSITORY / "scripts/candidate_manifest.py")
+)
 
 
 class RunQtTargetRuntimeTests(unittest.TestCase):
@@ -20,6 +24,10 @@ class RunQtTargetRuntimeTests(unittest.TestCase):
             qemu_uname_release="4.18.0",
             qemu=None,
             native_release=False,
+            candidate=None,
+            candidate_schema=None,
+            expected_source_commit=None,
+            input_rootfs_sha256=None,
         )
 
     def test_script_remains_python36_compatible(self):
@@ -146,6 +154,100 @@ class RunQtTargetRuntimeTests(unittest.TestCase):
             "native release is not executing on AArch64",
         ):
             RUNTIME["validate_executor"](arguments, {})
+
+    def test_native_release_binds_candidate_and_rootfs_digest(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            release = json.loads(
+                (REPOSITORY / "config/release.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            candidate = CANDIDATE["candidate_document"](
+                release,
+                "1" * 40,
+                "sha256:" + "2" * 64,
+                "sha256:" + "3" * 64,
+            )
+            candidate_path = root / "candidate.json"
+            candidate_path.write_text(
+                json.dumps(candidate) + "\n", encoding="utf-8"
+            )
+            arguments = self.arguments("aarch64")
+            arguments.native_release = True
+            arguments.candidate = candidate_path
+            arguments.candidate_schema = (
+                REPOSITORY / "config/schemas/candidate.schema.json"
+            )
+            arguments.expected_source_commit = "1" * 40
+            arguments.input_rootfs_sha256 = "4" * 64
+            binding = RUNTIME["validate_candidate_binding"](
+                arguments, release
+            )
+            self.assertEqual(binding["source_commit"], "1" * 40)
+            self.assertEqual(binding["digest"], "sha256:" + "2" * 64)
+            self.assertEqual(
+                binding["canonical_sha256"],
+                CANDIDATE["canonical_sha256"](candidate),
+            )
+            arguments.input_rootfs_sha256 = "invalid"
+            with self.assertRaisesRegex(
+                RUNTIME["ValidationError"], "rootfs digest is invalid"
+            ):
+                RUNTIME["validate_candidate_binding"](arguments, release)
+
+    def test_non_release_tiers_reject_candidate_inputs(self):
+        arguments = self.arguments("x86_64")
+        arguments.expected_source_commit = "1" * 40
+        with self.assertRaisesRegex(
+            RUNTIME["ValidationError"],
+            "must not receive candidate inputs",
+        ):
+            RUNTIME["validate_candidate_binding"](arguments, {})
+
+    def test_runtime_schema_requires_release_only_identity_fields(self):
+        schema = RUNTIME["STRICT"]["load_json"](
+            REPOSITORY / "config/schemas/qt-target-runtime.schema.json"
+        )
+        RUNTIME["STRICT"]["validate_schema_subset"](schema)
+        identity_schema = schema["properties"]["identity"]
+        identity = {
+            "target": {
+                "arch": "aarch64",
+                "triple": "aarch64-unknown-linux-gnu",
+            },
+            "tier": "clean-rocky-qemu",
+            "base_image": {
+                "index_digest": "sha256:" + "1" * 64,
+                "manifest_digest": "sha256:" + "2" * 64,
+            },
+            "release_sha256": "3" * 64,
+            "runtime_qualification": {
+                "component": "future/qt-runtime-qualification",
+                "canonical_sha256": "4" * 64,
+                "plan_sha256": "5" * 64,
+            },
+            "build_evidence_sha256": "6" * 64,
+            "overlay_evidence_sha256": "7" * 64,
+            "artifact_tree": {"entries": 1, "sha256": "8" * 64},
+        }
+        validate = RUNTIME["STRICT"]["validate"]
+        validate(identity, identity_schema, schema, "$.identity")
+        identity["tier"] = "native-release"
+        with self.assertRaises(RUNTIME["ValidationError"]):
+            validate(identity, identity_schema, schema, "$.identity")
+        identity["candidate"] = {
+            "source_commit": "9" * 40,
+            "repository": "ghcr.io/eglinuxer/crossforge",
+            "digest": "sha256:" + "a" * 64,
+            "platform_manifest_digest": "sha256:" + "b" * 64,
+            "canonical_sha256": "c" * 64,
+        }
+        identity["input_rootfs_sha256"] = "d" * 64
+        validate(identity, identity_schema, schema, "$.identity")
+        identity["tier"] = "clean-rocky-qemu"
+        with self.assertRaises(RUNTIME["ValidationError"]):
+            validate(identity, identity_schema, schema, "$.identity")
 
     def test_artifact_tree_is_deterministic_and_rejects_escape(self):
         with tempfile.TemporaryDirectory() as temporary:

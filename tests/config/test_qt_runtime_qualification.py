@@ -94,6 +94,9 @@ class QtRuntimeQualificationTests(unittest.TestCase):
         self.assertIn(
             "./scripts/validate-qt-runtime-qualification.py", candidate
         )
+        self.assertIn("qt-aarch64-native-runtime-root", candidate)
+        self.assertIn("--native-release", candidate)
+        self.assertIn("--candidate /input/candidate.json", candidate)
 
 
 if __name__ == "__main__":

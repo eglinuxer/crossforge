@@ -94,6 +94,54 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("docker pull --platform linux/arm64", self.workflow)
         self.assertIn("--pull=never --platform linux/arm64", self.workflow)
         self.assertIn("--network none --read-only", self.workflow)
+        self.assertIn("needs: [publish, qt-native-input]", self.workflow)
+        qt_job = self.workflow.split("\n  qt-native-input:\n", 1)[1].split(
+            "\n  native-aarch64:\n", 1
+        )[0]
+        self.assertIn("permissions:\n      contents: read", qt_job)
+        self.assertNotIn("packages: write", qt_job)
+        self.assertIn("qt-aarch64-native-runtime-root", self.workflow)
+        self.assertIn(
+            "qt-aarch64-native-runtime-root.output=type=tar,dest=$archive",
+            self.workflow,
+        )
+        self.assertIn("tar -tf \"$archive\"", self.workflow)
+        self.assertIn("qt-target-build.json", self.workflow)
+        self.assertIn("qt-runtime-overlay.json", self.workflow)
+        self.assertIn("(\\./)?opt/crossforge-qualification", self.workflow)
+        self.assertIn("(\\./)?\\.crossforge/qemu-aarch64", self.workflow)
+        self.assertIn("! grep -E -x", self.workflow)
+        self.assertIn("qemu-aarch64", self.workflow)
+        self.assertIn("compression-level: 0", self.workflow)
+        self.assertIn(
+            "EXPECTED_QT_ROOTFS_SHA256: "
+            "${{ needs.qt-native-input.outputs.rootfs_sha256 }}",
+            self.workflow,
+        )
+        self.assertGreaterEqual(
+            self.workflow.count(
+                "CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}"
+            ),
+            2,
+        )
+        self.assertGreaterEqual(
+            self.workflow.count(
+                'test "$(jq -r .digest "$candidate")" = "$CANDIDATE_DIGEST"'
+            ),
+            2,
+        )
+        self.assertIn(
+            "docker image import --platform linux/arm64", self.workflow
+        )
+        self.assertIn("run-qt-target-runtime.py", self.workflow)
+        self.assertIn("--native-release", self.workflow)
+        self.assertIn("--candidate /input/candidate.json", self.workflow)
+        self.assertIn("--expected-source-commit \"$GITHUB_SHA\"", self.workflow)
+        self.assertIn(
+            "--input-rootfs-sha256 \"$EXPECTED_QT_ROOTFS_SHA256\"",
+            self.workflow,
+        )
+        self.assertIn("qt-native-aarch64-runtime.json", self.workflow)
         self.assertIn(
             "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
             self.workflow,
@@ -102,7 +150,7 @@ class CandidateWorkflowTests(unittest.TestCase):
     def test_every_ci_and_candidate_job_uses_the_locked_buildx_setup(self):
         local_action = "uses: ./.github/actions/setup-locked-buildx"
         self.assertEqual(self.ci.count(local_action), 2)
-        self.assertEqual(self.workflow.count(local_action), 1)
+        self.assertEqual(self.workflow.count(local_action), 2)
         self.assertIn("buildx-v0.36.1.linux-amd64", self.setup)
         self.assertIn("--retry 5 --retry-all-errors", self.setup)
         self.assertIn("--retry-delay 2 --connect-timeout 30", self.setup)

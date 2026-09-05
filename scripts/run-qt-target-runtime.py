@@ -21,6 +21,7 @@ STRICT = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
 LOADER = runpy.run_path(str(REPOSITORY / "scripts/loader_evidence.py"))
 ValidationError = STRICT["ValidationError"]
 SCHEMA_ID = "https://crossforge.dev/schemas/qt-target-runtime.schema.json"
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 TARGETS = {
     "x86_64": {
         "triple": "x86_64-unknown-linux-gnu",
@@ -342,6 +343,52 @@ def validate_executor(arguments, release):
     }
 
 
+def validate_candidate_binding(arguments, release):
+    values = (
+        arguments.candidate,
+        arguments.candidate_schema,
+        arguments.expected_source_commit,
+        arguments.input_rootfs_sha256,
+    )
+    if not arguments.native_release:
+        require(
+            all(value is None for value in values),
+            "non-release runtime must not receive candidate inputs",
+        )
+        return None
+    require(
+        all(value is not None for value in values),
+        "native release requires candidate and rootfs inputs",
+    )
+    require(
+        SHA256_RE.match(arguments.input_rootfs_sha256 or ""),
+        "native release rootfs digest is invalid",
+    )
+    candidate_helpers = runpy.run_path(
+        str(REPOSITORY / "scripts/candidate_manifest.py")
+    )
+    candidate = load_json(arguments.candidate)
+    try:
+        schema = candidate_helpers["load_candidate_schema"](
+            arguments.candidate_schema
+        )
+        candidate_sha256 = candidate_helpers["validate_candidate"](
+            candidate,
+            release,
+            schema,
+            expected_source_commit=arguments.expected_source_commit,
+        )
+    except candidate_helpers["CandidateError"] as error:
+        raise ValidationError(str(error)) from error
+    return {
+        "source_commit": candidate["source_commit"],
+        "repository": candidate["repository"],
+        "digest": candidate["digest"],
+        "platform_manifest_digest": candidate["platform_manifest_digest"],
+        "canonical_sha256": candidate_sha256,
+    }
+
+
 def write_json(path, document):
     schema = STRICT["load_json"](
         REPOSITORY / "config/schemas/qt-target-runtime.schema.json"
@@ -357,6 +404,23 @@ def write_json(path, document):
         tier == profile["tier"]
         or (target["arch"] == "aarch64" and tier == "native-release"),
         "runtime evidence tier differs",
+    )
+    base_identity_keys = {
+        "target",
+        "tier",
+        "base_image",
+        "release_sha256",
+        "runtime_qualification",
+        "build_evidence_sha256",
+        "overlay_evidence_sha256",
+        "artifact_tree",
+    }
+    release_identity_keys = {"candidate", "input_rootfs_sha256"}
+    require(
+        set(document["identity"])
+        == base_identity_keys
+        | (release_identity_keys if tier == "native-release" else set()),
+        "runtime evidence identity fields differ",
     )
     executor = document["executor"]
     expected_executor_keys = (
@@ -431,6 +495,7 @@ def qualify(arguments):
         "Qt overlay release binding differs",
     )
     executor = validate_executor(arguments, release)
+    candidate = validate_candidate_binding(arguments, release)
     tier = "native-release" if arguments.native_release else target["tier"]
     require(
         not (arguments.runtime_root / "usr/share/crossforge/sysroot-lock.json").exists(),
@@ -510,21 +575,25 @@ def qualify(arguments):
         "Qt runtime execution leaked the build tree",
     )
     consumer = arguments.runtime_root / CONSUMER
+    identity = {
+        "target": expected_target,
+        "tier": tier,
+        "base_image": overlay["identity"]["base_image"],
+        "release_sha256": canonical_sha256(release),
+        "runtime_qualification": overlay["identity"]["runtime_qualification"],
+        "build_evidence_sha256": canonical_sha256(build),
+        "overlay_evidence_sha256": canonical_sha256(overlay),
+        "artifact_tree": artifact_tree(arguments.runtime_root),
+    }
+    if candidate is not None:
+        identity["candidate"] = candidate
+        identity["input_rootfs_sha256"] = arguments.input_rootfs_sha256
     document = {
         "$schema": SCHEMA_ID,
         "schema_version": 1,
         "kind": "crossforge-qt-target-runtime",
         "qt_version": "6.8.4",
-        "identity": {
-            "target": expected_target,
-            "tier": tier,
-            "base_image": overlay["identity"]["base_image"],
-            "release_sha256": canonical_sha256(release),
-            "runtime_qualification": overlay["identity"]["runtime_qualification"],
-            "build_evidence_sha256": canonical_sha256(build),
-            "overlay_evidence_sha256": canonical_sha256(overlay),
-            "artifact_tree": artifact_tree(arguments.runtime_root),
-        },
+        "identity": identity,
         "executor": executor,
         "execution": {
             "consumer_sha256": sha256_file(consumer),
@@ -562,6 +631,10 @@ def main():
     parser.add_argument("--qemu-cpu")
     parser.add_argument("--qemu-uname-release")
     parser.add_argument("--native-release", action="store_true")
+    parser.add_argument("--candidate", type=Path)
+    parser.add_argument("--candidate-schema", type=Path)
+    parser.add_argument("--expected-source-commit")
+    parser.add_argument("--input-rootfs-sha256")
     parser.add_argument("--output", type=Path, required=True)
     arguments = parser.parse_args()
     try:
