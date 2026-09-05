@@ -173,6 +173,75 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertIn("/deps/host/ffmpeg", stage)
         self.assertIn("qualify-qt-host-configure.py", stage)
 
+    def test_host_build_requires_the_qualified_configure_and_raises_nofile(self):
+        target = self.bake["target"]["qt-host-build"]
+        self.assertEqual(target["target"], "qt-host-install-checked")
+        self.assertEqual(
+            self.bake["group"]["qt-host-built"]["targets"],
+            ["qt-host-build"],
+        )
+        self.assertEqual(
+            target["contexts"],
+            self.bake["target"]["qt-host-configure-qualified"]["contexts"],
+        )
+        stage = self.dockerfile.split(" AS qt-host-build", 1)[1]
+        self.assertIn("FROM qt-host-configure-qualified", self.dockerfile)
+        self.assertIn("RUN --network=none", stage)
+        script = (REPOSITORY / "scripts/build-qt-host.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("ulimit -Sn", script)
+        self.assertIn("-print-file-name=libatomic.so", script)
+        self.assertIn("qt-host-configure.json", script)
+        self.assertNotIn("libQt6Core", script)
+        check = (REPOSITORY / "scripts/check-qt-host-install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("lib/libQt6Core.so.6.8.4", check)
+        self.assertNotIn("lib64/libQt6Core", check)
+        checked_stage = self.dockerfile.split(
+            " AS qt-host-install-checked", 1
+        )[1]
+        self.assertIn("FROM qt-host-build", self.dockerfile)
+        self.assertIn("RUN --network=none", checked_stage)
+
+    def test_host_rpm_plan_supplies_chromium_atomic_link_support(self):
+        host_plan = json.loads(
+            (
+                REPOSITORY
+                / "config/rpm/host-qt-build-el8-x86_64.plan.json"
+            ).read_text(encoding="utf-8")
+        )
+        host_roots = {item["name"] for item in host_plan["roots"]}
+        self.assertIn("gcc-toolset-15-libatomic-devel", host_roots)
+        for arch in ("x86_64", "aarch64"):
+            target_plan = json.loads(
+                (
+                    REPOSITORY
+                    / ("config/rpm/qt-target-el8-%s.plan.json" % arch)
+                ).read_text(encoding="utf-8")
+            )
+            target_roots = {item["name"] for item in target_plan["roots"]}
+            self.assertNotIn("gcc-toolset-15-libatomic-devel", target_roots)
+
+    def test_host_build_qualification_is_downstream_and_offline(self):
+        qualified = self.bake["target"]["qt-host-qualified"]
+        evidence = self.bake["target"]["qt-host-qualification-evidence"]
+        self.assertEqual(qualified["target"], "qt-host-qualified")
+        self.assertEqual(evidence["target"], "qt-host-qualification-evidence")
+        self.assertEqual(qualified["contexts"], evidence["contexts"])
+        self.assertEqual(
+            self.bake["group"]["qt-host-qualified"]["targets"],
+            ["qt-host-qualification-evidence"],
+        )
+        stage = self.dockerfile.split(" AS qt-host-qualified", 1)[1]
+        self.assertIn("FROM qt-host-install-checked", self.dockerfile)
+        self.assertIn("RUN --network=none", stage)
+        self.assertIn("qualify-qt-host-build.py", stage)
+        self.assertIn("qt-host-build.schema.json", stage)
+        self.assertIn("--ffmpeg-prefix", stage)
+        self.assertIn("--xcb-prefix", stage)
+
     def test_fetch_is_networked_but_all_source_acceptance_is_offline(self):
         fetch = self.dockerfile.split(" AS qt-fetch", 1)[1].split(
             "\nFROM ", 1

@@ -58,6 +58,7 @@
     {"name": "flex", "arch": "any", "purpose": "qt-host-build"},
     {"name": "fontconfig-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "freetype-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "gcc-toolset-15-libatomic-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "glib2-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "gperf", "arch": "any", "purpose": "qt-host-build"},
     {"name": "libICE-devel", "arch": "any", "purpose": "qt-host-build"},

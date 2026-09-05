@@ -4,7 +4,7 @@
   "kind": "rpm-lock",
   "transaction": {
     "file": "locks/transactions/host-qt-build-el8-x86_64.json",
-    "canonical_sha256": "abd99d2efcbda506bf8483605f82c546b148fbd7ca8cfd463c56d9f5b65d1e1f"
+    "canonical_sha256": "955be5cceb8410dc1fc066e8a5aea17a61c7057bb3cc7760b434ca1d10514529"
   },
   "packages": [
     {
@@ -494,6 +494,23 @@
         "arch": "x86_64",
         "nevra": "freetype-devel-0:2.9.1-10.el8_10.x86_64",
         "source_rpm": "freetype-2.9.1-10.el8_10.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "gcc-toolset-15-libatomic-devel-0:15.2.1-7.1.el8_10.x86_64",
+      "received_sha256": "4a0481276864006afaead1e1c512c36cf85afa26a45aba5bc43bd498c044a723",
+      "header": {
+        "name": "gcc-toolset-15-libatomic-devel",
+        "epoch": 0,
+        "version": "15.2.1",
+        "release": "7.1.el8_10",
+        "arch": "x86_64",
+        "nevra": "gcc-toolset-15-libatomic-devel-0:15.2.1-7.1.el8_10.x86_64",
+        "source_rpm": "gcc-toolset-15-gcc-15.2.1-7.1.el8_10.src.rpm"
       },
       "signature": {
         "status": "verified",
@@ -1208,6 +1225,23 @@
         "arch": "x86_64",
         "nevra": "libasyncns-0:0.8-14.el8.x86_64",
         "source_rpm": "libasyncns-0.8-14.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libatomic-0:8.5.0-28.el8_10.x86_64",
+      "received_sha256": "97467bd64967dd24ab1fb7100e839c794df300168ea9d2c315af92984148b7f2",
+      "header": {
+        "name": "libatomic",
+        "epoch": 0,
+        "version": "8.5.0",
+        "release": "28.el8_10",
+        "arch": "x86_64",
+        "nevra": "libatomic-0:8.5.0-28.el8_10.x86_64",
+        "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm"
       },
       "signature": {
         "status": "verified",

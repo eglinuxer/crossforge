@@ -442,3 +442,52 @@ COPY --from=qt-host-configure-qualified /work/build/qt-host/CMakeCache.txt /
 COPY --from=qt-host-configure-qualified /work/build/qt-host/config.summary /
 COPY --from=qt-host-configure-qualified /work/build/qt-host/configure.log /
 COPY --from=qt-host-configure-qualified /work/build/qt-host/qt-host-configure.json /
+
+FROM qt-host-configure-qualified AS qt-host-build
+ARG CROSSFORGE_JOBS=4
+COPY --chmod=0755 scripts/build-qt-host.sh /work/scripts/build-qt-host.sh
+RUN --network=none /work/scripts/build-qt-host.sh \
+      /work/build/qt-host \
+      /opt/crossforge/qualification/qt/6.8.4/host \
+      /work/build/qt-host/qt-host-configure.json \
+      "$CROSSFORGE_JOBS"
+
+FROM qt-host-build AS qt-host-install-checked
+COPY --chmod=0755 scripts/check-qt-host-install.sh \
+  /work/scripts/check-qt-host-install.sh
+RUN --network=none /work/scripts/check-qt-host-install.sh \
+      /opt/crossforge/qualification/qt/6.8.4/host
+
+FROM qt-host-install-checked AS qt-host-qualified
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+COPY config/schemas/qt-host-build.schema.json \
+  /work/config/schemas/qt-host-build.schema.json
+COPY --chmod=0755 scripts/qualify-qt-host-build.py \
+  /work/scripts/qualify-qt-host-build.py
+RUN --network=none /work/scripts/qualify-qt-host-build.py \
+      --prefix /opt/crossforge/qualification/qt/6.8.4/host \
+      --build-root /work/build/qt-host \
+      --configure-evidence /work/build/qt-host/qt-host-configure.json \
+      --plan /work/config/qt-qualification.json \
+      --qualification-component /work/config/qt-qualification-component.json \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256" \
+      --ffmpeg-prefix \
+        /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg \
+      --xcb-prefix \
+        /opt/crossforge/qualification/qt/6.8.4/deps/host/xcb-util-cursor \
+      --cmake /opt/crossforge/host-tools/cmake/4.4.0/bin/cmake \
+      --ninja /opt/crossforge/host-tools/ninja/1.13.2/bin/ninja \
+      --cxx /opt/rh/gcc-toolset-15/root/usr/bin/g++ \
+      --toolchain /opt/rh/gcc-toolset-15/root/usr/bin \
+      --builder /work/scripts/build-qt-host.sh \
+      --install-checker /work/scripts/check-qt-host-install.sh \
+      --output \
+        /opt/crossforge/qualification/qt/6.8.4/host/qt-host-build.json
+
+FROM scratch AS qt-host-qualification-evidence
+COPY --from=qt-host-qualified \
+  /opt/crossforge/qualification/qt/6.8.4/host/qt-host-build.json /
+COPY --from=qt-host-qualified /work/build/qt-host/build.log /
+COPY --from=qt-host-qualified /work/build/qt-host/install.log /
+COPY --from=qt-host-qualified /work/build/qt-host/install_manifest.txt /

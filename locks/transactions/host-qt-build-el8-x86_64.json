@@ -13,7 +13,7 @@
   },
   "plan": {
     "file": "config/rpm/host-qt-build-el8-x86_64.plan.json",
-    "canonical_sha256": "15b9f2c2fe35d511a72e02e8d754afd923188e981d36cf940ae2d3a3e893f80a"
+    "canonical_sha256": "3a5cedd26da27993ca17eed26219ff67ff67185182092c35161818350f34ec35"
   },
   "resolver": {
     "implementation": "python3-dnf",
@@ -610,6 +610,13 @@
       "arch": "any",
       "purpose": "qt-host-build",
       "resolved_nevra": "freetype-devel-0:2.9.1-10.el8_10.x86_64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "gcc-toolset-15-libatomic-devel",
+      "arch": "any",
+      "purpose": "qt-host-build",
+      "resolved_nevra": "gcc-toolset-15-libatomic-devel-0:15.2.1-7.1.el8_10.x86_64",
       "disposition": "transaction"
     },
     {
@@ -1626,6 +1633,26 @@
       "reason": "user"
     },
     {
+      "name": "gcc-toolset-15-libatomic-devel",
+      "epoch": 0,
+      "version": "15.2.1",
+      "release": "7.1.el8_10",
+      "arch": "x86_64",
+      "nevra": "gcc-toolset-15-libatomic-devel-0:15.2.1-7.1.el8_10.x86_64",
+      "repo_id": "appstream",
+      "location": "Packages/g/gcc-toolset-15-libatomic-devel-15.2.1-7.1.el8_10.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/g/gcc-toolset-15-libatomic-devel-15.2.1-7.1.el8_10.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "4a0481276864006afaead1e1c512c36cf85afa26a45aba5bc43bd498c044a723"
+      },
+      "size": 30472,
+      "install_size": 163388,
+      "source_rpm": "gcc-toolset-15-gcc-15.2.1-7.1.el8_10.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
       "name": "gettext",
       "epoch": 0,
       "version": "0.19.8.1",
@@ -2479,6 +2506,26 @@
       "size": 32084,
       "install_size": 57074,
       "source_rpm": "libasyncns-0.8-14.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "libatomic",
+      "epoch": 0,
+      "version": "8.5.0",
+      "release": "28.el8_10",
+      "arch": "x86_64",
+      "nevra": "libatomic-0:8.5.0-28.el8_10.x86_64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libatomic-8.5.0-28.el8_10.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/l/libatomic-8.5.0-28.el8_10.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "97467bd64967dd24ab1fb7100e839c794df300168ea9d2c315af92984148b7f2"
+      },
+      "size": 26012,
+      "install_size": 28920,
+      "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -5307,6 +5354,7 @@
         "gcc-toolset-15-binutils-0:2.44-3.el8.x86_64",
         "gcc-toolset-15-gcc-0:15.2.1-7.1.el8_10.x86_64",
         "gcc-toolset-15-gcc-c++-0:15.2.1-7.1.el8_10.x86_64",
+        "gcc-toolset-15-libatomic-devel-0:15.2.1-7.1.el8_10.x86_64",
         "gcc-toolset-15-libstdc++-devel-0:15.2.1-7.1.el8_10.x86_64",
         "gcc-toolset-15-runtime-0:15.0-9.el8_10.x86_64",
         "gdb-headless-0:8.2-20.el8.0.1.x86_64",
@@ -5388,6 +5436,7 @@
         "libarchive-0:3.3.3-5.el8.x86_64",
         "libassuan-0:2.5.1-3.el8.x86_64",
         "libasyncns-0:0.8-14.el8.x86_64",
+        "libatomic-0:8.5.0-28.el8_10.x86_64",
         "libatomic_ops-0:7.6.2-3.el8.x86_64",
         "libattr-0:2.4.48-3.el8.x86_64",
         "libbabeltrace-0:1.5.4-4.el8.x86_64",
@@ -5682,7 +5731,7 @@
         "zlib-devel-0:1.2.11-26.el8.x86_64",
         "zstd-0:1.4.4-1.el8.x86_64"
       ],
-      "canonical_sha256": "4e765fcbbb4d9526ae31201177972f299cb0e1c6a427d0b7f4d788bf6cd56a24"
+      "canonical_sha256": "03f4a0c8aaff1d3ba2d231cad1db3c3b26f3a59dc811dd11198dfeb014a6ef66"
     }
   }
 }

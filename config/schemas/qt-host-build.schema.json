@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/qt-host-build.schema.json",
+  "title": "Crossforge Qt host build evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "qt_version",
+    "identity",
+    "prefix",
+    "qualification_component",
+    "build_environment",
+    "inputs",
+    "builders",
+    "components",
+    "libraries",
+    "plugins",
+    "executables",
+    "host_tools",
+    "resources",
+    "tools",
+    "checks"
+  ],
+  "properties": {
+    "$schema": {"const": "https://crossforge.dev/schemas/qt-host-build.schema.json"},
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-qt-host-build"},
+    "qt_version": {"const": "6.8.4"},
+    "identity": {"const": "host"},
+    "prefix": {"const": "/opt/crossforge/qualification/qt/6.8.4/host"},
+    "qualification_component": {"$ref": "#/$defs/component"},
+    "build_environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["image", "target", "tier"],
+      "properties": {
+        "image": {"const": "host-qt-build-locked"},
+        "target": {"const": "host"},
+        "tier": {"const": "host-direct"}
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_sha256",
+        "configure_evidence_sha256",
+        "build_log_sha256",
+        "install_log_sha256",
+        "install_manifest_sha256"
+      ],
+      "properties": {
+        "plan_sha256": {"$ref": "#/$defs/sha256"},
+        "configure_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "build_log_sha256": {"$ref": "#/$defs/sha256"},
+        "install_log_sha256": {"$ref": "#/$defs/sha256"},
+        "install_manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "builders": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"$ref": "#/$defs/file_digest"}
+    },
+    "components": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "libraries": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {"$ref": "#/$defs/elf"}
+    },
+    "plugins": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {"$ref": "#/$defs/plugin_elf"}
+    },
+    "executables": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {"$ref": "#/$defs/plugin_elf"}
+    },
+    "host_tools": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "resources": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["qmake", "qtpaths"],
+      "properties": {
+        "qmake": {"const": "6.8.4"},
+        "qtpaths": {"const": "6.8.4"}
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "build_completed",
+        "install_completed",
+        "required_cmake_packages",
+        "required_resources",
+        "elf_machine",
+        "sonames",
+        "dependency_closure",
+        "safe_runpath",
+        "no_textrel",
+        "cmake_consumer_compile",
+        "offscreen_runtime"
+      ],
+      "properties": {
+        "build_completed": {"const": true},
+        "install_completed": {"const": true},
+        "required_cmake_packages": {"const": true},
+        "required_resources": {"const": true},
+        "elf_machine": {"const": true},
+        "sonames": {"const": true},
+        "dependency_closure": {"const": true},
+        "safe_runpath": {"const": true},
+        "no_textrel": {"const": true},
+        "cmake_consumer_compile": {"const": true},
+        "offscreen_runtime": {"const": true}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component", "canonical_sha256"],
+      "properties": {
+        "component": {"const": "future/qt-qualification"},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "file_digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "sha256"],
+      "properties": {
+        "file": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "elf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "path", "sha256", "size", "machine", "soname", "needed", "runpath"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "integer", "minimum": 1},
+        "machine": {"const": "Advanced Micro Devices X86-64"},
+        "soname": {"type": "string", "minLength": 1},
+        "needed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "runpath": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "plugin_elf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "path", "sha256", "size", "machine", "needed", "runpath"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "integer", "minimum": 1},
+        "machine": {"const": "Advanced Micro Devices X86-64"},
+        "soname": {"type": "string", "minLength": 1},
+        "needed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "runpath": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

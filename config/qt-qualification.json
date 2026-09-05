@@ -57,9 +57,9 @@
       "id": "host-qt-build",
       "status": "locked",
       "plan_file": "config/rpm/host-qt-build-el8-x86_64.plan.json",
-      "plan_sha256": "15b9f2c2fe35d511a72e02e8d754afd923188e981d36cf940ae2d3a3e893f80a",
+      "plan_sha256": "3a5cedd26da27993ca17eed26219ff67ff67185182092c35161818350f34ec35",
       "lock_file": "locks/host-qt-build-el8-x86_64.json",
-      "canonical_sha256": "04b93f71348fb36f666cbd664ecc0c2e3f5a8f4d47fafc256180bb3f3af6dc30"
+      "canonical_sha256": "834f08e29f58c453d80ca84e9b0e3763d591090c383efc6df298bbbbacc5178d"
     },
     {
       "id": "qt-target-x86_64",

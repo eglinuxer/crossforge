@@ -1252,6 +1252,27 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
         "contexts": dict(targets["qt-host-configure-qualified"]["contexts"]),
         "output": ["type=cacheonly"],
     }
+    targets["qt-host-build"] = {
+        "inherits": ["_qt_common"],
+        "target": "qt-host-install-checked",
+        "args": dict(targets["qt-host-configure-qualified"]["args"]),
+        "contexts": dict(targets["qt-host-configure-qualified"]["contexts"]),
+        "output": ["type=cacheonly"],
+    }
+    targets["qt-host-qualified"] = {
+        "inherits": ["_qt_common"],
+        "target": "qt-host-qualified",
+        "args": dict(targets["qt-host-configure-qualified"]["args"]),
+        "contexts": dict(targets["qt-host-configure-qualified"]["contexts"]),
+        "output": ["type=cacheonly"],
+    }
+    targets["qt-host-qualification-evidence"] = {
+        "inherits": ["_qt_common"],
+        "target": "qt-host-qualification-evidence",
+        "args": dict(targets["qt-host-qualified"]["args"]),
+        "contexts": dict(targets["qt-host-qualified"]["contexts"]),
+        "output": ["type=cacheonly"],
+    }
     return {
         "qt-source-qualified": {
             "targets": ["qt-source", "ffmpeg-source", "xcb-util-cursor-source"]
@@ -1260,6 +1281,10 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
         "ffmpeg-qualified": {"targets": ffmpeg_builds},
         "qt-host-configure-qualified": {
             "targets": ["qt-host-configure-evidence"]
+        },
+        "qt-host-built": {"targets": ["qt-host-build"]},
+        "qt-host-qualified": {
+            "targets": ["qt-host-qualification-evidence"]
         },
     }
 

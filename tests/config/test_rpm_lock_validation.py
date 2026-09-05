@@ -171,7 +171,7 @@ class RpmLockValidationTests(unittest.TestCase):
         host, x86_64, aarch64 = [
             VALIDATOR["load_json"](path) for path in self.qt_transactions
         ]
-        self.assertEqual(len(host["items"]), 202)
+        self.assertEqual(len(host["items"]), 204)
         self.assertEqual(len(x86_64["items"]), 204)
         self.assertEqual(len(aarch64["items"]), 201)
         pair = runpy.run_path(

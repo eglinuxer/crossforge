@@ -263,6 +263,7 @@ QT_TARGET_NOARCH_ROOTS = {
 HOST_QT_ROOTS = QT_TARGET_ROOTS | {
     "bison",
     "flex",
+    "gcc-toolset-15-libatomic-devel",
     "gperf",
     "nodejs",
     "pkgconf-pkg-config",
