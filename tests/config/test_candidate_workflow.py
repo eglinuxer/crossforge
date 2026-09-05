@@ -104,6 +104,8 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertEqual(self.ci.count(local_action), 1)
         self.assertEqual(self.workflow.count(local_action), 1)
         self.assertIn("buildx-v0.36.1.linux-amd64", self.setup)
+        self.assertIn("--retry 5 --retry-all-errors", self.setup)
+        self.assertIn("--retry-delay 2 --connect-timeout 30", self.setup)
         self.assertIn(
             "48af8a397ebd60178778bf63611dbcebe5f5e7a9be90eb9147b24b9587455778",
             self.setup,

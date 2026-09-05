@@ -8,7 +8,8 @@ runs:
       run: |
         set -Eeuo pipefail
         mkdir -p "$HOME/.docker/cli-plugins"
-        curl --fail --location --retry 3 \
+        curl --fail --location --retry 5 --retry-all-errors \
+          --retry-delay 2 --connect-timeout 30 \
           https://github.com/docker/buildx/releases/download/v0.36.1/buildx-v0.36.1.linux-amd64 \
           --output "$RUNNER_TEMP/docker-buildx"
         printf '%s  %s\n' \
