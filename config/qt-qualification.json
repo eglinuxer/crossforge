@@ -88,22 +88,6 @@
       "plan_sha256": "58c99a682df58df9b3ac785e8fa227118abb5ba13560ea60764c05157116dd47",
       "lock_file": "locks/qt-target-el8-aarch64.json",
       "canonical_sha256": "a07335df834350957a58b801709a2f33b81f013101c8a833ae2668ba654fb5fa"
-    },
-    {
-      "id": "qt-runtime-x86_64",
-      "status": "locked",
-      "plan_file": "config/rpm/qt-runtime-el8-x86_64.plan.json",
-      "plan_sha256": "d1f2d1041d3b55231ac7efd08c37de6f18cf4bc3bd9dba5c0d22a8aeda4a8a01",
-      "lock_file": "locks/qt-runtime-el8-x86_64.json",
-      "canonical_sha256": "b9808d6755a8d898435512e00c581fe31de8b1c91d7506df93a6d4628930b21b"
-    },
-    {
-      "id": "qt-runtime-aarch64",
-      "status": "locked",
-      "plan_file": "config/rpm/qt-runtime-el8-aarch64.plan.json",
-      "plan_sha256": "27dd884ecade8ada6c2fd3be8db85a6fc3e69a1c6c8741ad7ba5f750dfca3ced",
-      "lock_file": "locks/qt-runtime-el8-aarch64.json",
-      "canonical_sha256": "c6f45b6339f77836b486df84ecd0006de955ca8b9c148f120f8ee560ff2afa9c"
     }
   ],
   "modules": [
@@ -193,20 +177,13 @@
       "arch": "x86_64",
       "triple": "x86_64-unknown-linux-gnu",
       "sysroot_component": "rpm/sysroot-x86_64",
-      "dependency_lock": "qt-target-x86_64",
-      "runtime_tiers": [
-        "clean-rocky"
-      ]
+      "dependency_lock": "qt-target-x86_64"
     },
     {
       "arch": "aarch64",
       "triple": "aarch64-unknown-linux-gnu",
       "sysroot_component": "rpm/sysroot-aarch64",
-      "dependency_lock": "qt-target-aarch64",
-      "runtime_tiers": [
-        "clean-rocky-qemu",
-        "native-release"
-      ]
+      "dependency_lock": "qt-target-aarch64"
     }
   ],
   "acceptance": {
@@ -216,7 +193,6 @@
     "configure_warnings_reviewed": true,
     "host_target_version_match": true,
     "target_elf_audit": true,
-    "runtime_smoke": true,
     "artifacts_enter_sdk": false
   }
 }

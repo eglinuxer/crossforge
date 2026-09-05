@@ -821,7 +821,8 @@
         "version",
         "source",
         "dependencies",
-        "qualification"
+        "qualification",
+        "runtime_qualification"
       ],
       "properties": {
         "version": {
@@ -835,6 +836,9 @@
         },
         "qualification": {
           "$ref": "#/$defs/qt_qualification"
+        },
+        "runtime_qualification": {
+          "$ref": "#/$defs/qt_runtime_qualification"
         }
       }
     },
@@ -1224,6 +1228,36 @@
           "properties": {
             "file": {
               "const": "config/qt-qualification.json"
+            },
+            "canonical_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "qt_runtime_qualification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "plan"
+      ],
+      "properties": {
+        "status": {
+          "const": "locked"
+        },
+        "plan": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file",
+            "canonical_sha256"
+          ],
+          "properties": {
+            "file": {
+              "const": "config/qt-runtime-qualification.json"
             },
             "canonical_sha256": {
               "type": "string",

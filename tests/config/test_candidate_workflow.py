@@ -99,9 +99,9 @@ class CandidateWorkflowTests(unittest.TestCase):
             self.workflow,
         )
 
-    def test_ci_and_candidate_share_one_locked_buildx_setup(self):
+    def test_every_ci_and_candidate_job_uses_the_locked_buildx_setup(self):
         local_action = "uses: ./.github/actions/setup-locked-buildx"
-        self.assertEqual(self.ci.count(local_action), 1)
+        self.assertEqual(self.ci.count(local_action), 2)
         self.assertEqual(self.workflow.count(local_action), 1)
         self.assertIn("buildx-v0.36.1.linux-amd64", self.setup)
         self.assertIn("--retry 5 --retry-all-errors", self.setup)
@@ -125,6 +125,13 @@ class CandidateWorkflowTests(unittest.TestCase):
             self.ci,
         )
         self.assertIn("cancel-in-progress: true", self.workflow)
+
+    def test_qt_runtime_probe_is_compiled_with_strict_warnings(self):
+        self.assertIn(
+            "gcc -fsyntax-only -Wall -Wextra -Werror "
+            "scripts/qt-plugin-probe.c",
+            self.ci,
+        )
 
 
 if __name__ == "__main__":

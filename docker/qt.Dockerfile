@@ -382,9 +382,8 @@ COPY --from=ffmpeg-host-build /work/build/ffmpeg-host/source/ffbuild/config.mak 
 COPY --from=ffmpeg-host-build \
   /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg/ /ffmpeg/
 
-FROM crossforge_ffmpeg_host AS qt-host-configure-qualified
+FROM crossforge_ffmpeg_host AS qt-host-configure
 ARG QT_VERSION
-ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
 COPY --from=crossforge_qt_source \
   /materials/qt-everywhere-opensource-src-6.8.4.tar.xz \
   /work/source/qt-everywhere-opensource-src-6.8.4.tar.xz
@@ -405,6 +404,9 @@ RUN --network=none test "$QT_VERSION" = 6.8.4 \
       /opt/crossforge/qualification/qt/6.8.4/host \
       /opt/crossforge/qualification/qt/6.8.4/deps/host/xcb-util-cursor \
       /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg
+
+FROM qt-host-configure AS qt-host-configure-qualified
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
 COPY config/generated/components/future/qt-qualification.json \
   /work/config/qt-qualification-component.json
 COPY config/qt-qualification.json /work/config/qt-qualification.json
@@ -443,14 +445,13 @@ COPY --from=qt-host-configure-qualified /work/build/qt-host/config.summary /
 COPY --from=qt-host-configure-qualified /work/build/qt-host/configure.log /
 COPY --from=qt-host-configure-qualified /work/build/qt-host/qt-host-configure.json /
 
-FROM qt-host-configure-qualified AS qt-host-build
+FROM qt-host-configure AS qt-host-build
 ARG CROSSFORGE_JOBS=4
 COPY --chmod=0755 scripts/build-qt-host.sh \
   scripts/print-build-log-diagnostics.py /work/scripts/
 RUN --network=none /work/scripts/build-qt-host.sh \
       /work/build/qt-host \
       /opt/crossforge/qualification/qt/6.8.4/host \
-      /work/build/qt-host/qt-host-configure.json \
       "$CROSSFORGE_JOBS"
 
 FROM qt-host-build AS qt-host-install-checked
@@ -461,14 +462,22 @@ RUN --network=none /work/scripts/check-qt-host-install.sh \
 
 FROM qt-host-install-checked AS qt-host-qualified
 ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+COPY --from=qt-host-configure-qualified \
+  /work/build/qt-host/qt-host-configure.json \
+  /work/evidence/qt-host-configure.json
+COPY config/generated/components/future/qt-qualification.json \
+  /work/config/qt-qualification-component.json
+COPY config/qt-qualification.json /work/config/qt-qualification.json
 COPY config/schemas/qt-host-build.schema.json \
-  /work/config/schemas/qt-host-build.schema.json
-COPY --chmod=0755 scripts/qualify-qt-host-build.py \
-  /work/scripts/qualify-qt-host-build.py
+  config/schemas/qt-host-configure.schema.json \
+  config/schemas/qt-qualification-plan.schema.json \
+  /work/config/schemas/
+COPY --chmod=0755 scripts/release_component.py scripts/validate-release.py \
+  scripts/qualify-qt-host-build.py /work/scripts/
 RUN --network=none /work/scripts/qualify-qt-host-build.py \
       --prefix /opt/crossforge/qualification/qt/6.8.4/host \
       --build-root /work/build/qt-host \
-      --configure-evidence /work/build/qt-host/qt-host-configure.json \
+      --configure-evidence /work/evidence/qt-host-configure.json \
       --plan /work/config/qt-qualification.json \
       --qualification-component /work/config/qt-qualification-component.json \
       --qualification-component-sha256 \

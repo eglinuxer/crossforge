@@ -497,7 +497,11 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             category = (
                 "supply" if path[3].endswith("_evidence") else "qualification"
             )
-        elif len(path) >= 2 and path[:2] == ("qt", "qualification"):
+        elif (
+            len(path) >= 2
+            and path[:2]
+            in (("qt", "qualification"), ("qt", "runtime_qualification"))
+        ):
             category = "future"
         elif path and path[0] == "qt":
             category = "build"
@@ -731,6 +735,12 @@ def _render_expected_components(release, implemented_rows):
         "future",
         selector(("qt", "qualification")),
         ("sources/ffmpeg", "sources/qt", "sources/xcb-util-cursor"),
+    )
+    add(
+        "future/qt-runtime-qualification",
+        "future",
+        selector(("qt", "runtime_qualification")),
+        ("future/qt-qualification",),
     )
     add("sources/vcpkg", "build", selector(("vcpkg",)))
     add("sources/nfpm", "build", selector(("nfpm",)))
@@ -992,7 +1002,11 @@ def _render_expected_components(release, implemented_rows):
     future_selector = classification_selector(
         classifications,
         "future",
-        (("python", "versions"), ("qt", "qualification")),
+        (
+            ("python", "versions"),
+            ("qt", "qualification"),
+            ("qt", "runtime_qualification"),
+        ),
     )
     if any(future_selector(path) for path, _value in leaves):
         add("future/product", "future", future_selector)

@@ -1318,7 +1318,8 @@ def resolve(arguments):
                     "DNF selected forbidden package architecture: %s" % package
                 )
             if (
-                plan["identity"]["role"] in ("target-sysroot", "qt-target", "qt-runtime")
+                plan["identity"]["role"]
+                in ("target-sysroot", "qt-target", "qt-runtime")
                 and package.name in FORBIDDEN_PACKAGES
             ):
                 raise ResolutionError("DNF selected forbidden package: %s" % package.name)

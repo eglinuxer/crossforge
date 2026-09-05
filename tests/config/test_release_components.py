@@ -962,7 +962,11 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                     )
                 ),
             ),
-            {"sources/qt", "future/qt-qualification"},
+            {
+                "sources/qt",
+                "future/qt-qualification",
+                "future/qt-runtime-qualification",
+            },
         )
 
     def test_planned_qt_qualification_cannot_rebind_source_or_sdk(self):
@@ -984,7 +988,31 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             )
         )
         self.assertEqual(
-            changed(self.components, after), {"future/qt-qualification"}
+            changed(self.components, after),
+            {"future/qt-qualification", "future/qt-runtime-qualification"},
+        )
+
+    def test_qt_runtime_identity_does_not_invalidate_the_build_identity(self):
+        runtime = self.components["future/qt-runtime-qualification"]
+        self.assertEqual(runtime["scope"], "future")
+        self.assertEqual(
+            [item["component"] for item in runtime["dependencies"]],
+            ["future/qt-qualification"],
+        )
+        self.assertTrue(
+            all(
+                item["path"].startswith("/qt/runtime_qualification/")
+                for item in runtime["materials"]
+            )
+        )
+        after = self.render_mutation(
+            lambda release: release["qt"]["runtime_qualification"][
+                "plan"
+            ].__setitem__("canonical_sha256", "0" * 64)
+        )
+        self.assertEqual(
+            changed(self.components, after),
+            {"future/qt-runtime-qualification"},
         )
 
     def test_qt_xcb_cursor_source_pin_is_an_isolated_future_dependency(self):
@@ -1006,7 +1034,11 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         )
         self.assertEqual(
             changed(self.components, after),
-            {"sources/xcb-util-cursor", "future/qt-qualification"},
+            {
+                "sources/xcb-util-cursor",
+                "future/qt-qualification",
+                "future/qt-runtime-qualification",
+            },
         )
 
     def test_qt_ffmpeg_source_pin_is_an_isolated_future_dependency(self):
@@ -1026,7 +1058,11 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         )
         self.assertEqual(
             changed(self.components, after),
-            {"sources/ffmpeg", "future/qt-qualification"},
+            {
+                "sources/ffmpeg",
+                "future/qt-qualification",
+                "future/qt-runtime-qualification",
+            },
         )
 
     def test_ninja_host_tool_has_isolated_source_policy_and_consumers(self):

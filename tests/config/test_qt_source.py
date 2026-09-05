@@ -23,6 +23,9 @@ class QtSourceGraphTests(unittest.TestCase):
         cls.dockerfile = (REPOSITORY / "docker/qt.Dockerfile").read_text(
             encoding="utf-8"
         )
+        cls.runtime_dockerfile = (
+            REPOSITORY / "docker/qt-runtime.Dockerfile"
+        ).read_text(encoding="utf-8")
 
     def test_source_target_is_cache_only_and_release_component_bound(self):
         target = self.bake["target"]["qt-source"]
@@ -114,7 +117,9 @@ class QtSourceGraphTests(unittest.TestCase):
                 target["contexts"]["crossforge_toolchain"],
                 "target:toolchain-%s-dev" % arch,
             )
-        build = self.dockerfile.split(" AS xcb-util-cursor-target-build", 1)[1]
+        build = self.dockerfile.split(
+            " AS xcb-util-cursor-target-build", 1
+        )[1].split("\nFROM ", 1)[0]
         self.assertIn("RUN --network=none", build)
         self.assertNotIn("HOSTRUNNER", build)
         self.assertNotIn("qemu", build.lower())
@@ -147,7 +152,9 @@ class QtSourceGraphTests(unittest.TestCase):
                 target["contexts"]["crossforge_toolchain"],
                 "target:toolchain-%s-dev" % arch,
             )
-        build = self.dockerfile.split(" AS ffmpeg-target-build", 1)[1]
+        build = self.dockerfile.split(
+            " AS ffmpeg-target-build", 1
+        )[1].split("\nFROM ", 1)[0]
         self.assertIn("RUN --network=none", build)
         self.assertIn("qualify-ffmpeg-build.py", build)
         self.assertNotIn("HOSTRUNNER", build)
@@ -172,13 +179,19 @@ class QtSourceGraphTests(unittest.TestCase):
         report = self.bake["target"]["qt-host-configure-evidence"]
         self.assertEqual(report["target"], "qt-host-configure-evidence")
         self.assertEqual(report["contexts"], target["contexts"])
-        stage = self.dockerfile.split(" AS qt-host-configure-qualified", 1)[1]
-        self.assertIn("RUN --network=none", stage)
-        self.assertIn("configure-qt-host.sh", stage)
-        self.assertIn("/deps/host/ffmpeg", stage)
-        self.assertIn("qualify-qt-host-configure.py", stage)
+        configure_stage = self.dockerfile.split(
+            " AS qt-host-configure", 1
+        )[1].split("\nFROM ", 1)[0]
+        qualified_stage = self.dockerfile.split(
+            " AS qt-host-configure-qualified", 1
+        )[1].split("\nFROM ", 1)[0]
+        self.assertIn("RUN --network=none", configure_stage)
+        self.assertIn("configure-qt-host.sh", configure_stage)
+        self.assertIn("/deps/host/ffmpeg", configure_stage)
+        self.assertNotIn("FUTURE_QT_QUALIFICATION", configure_stage)
+        self.assertIn("qualify-qt-host-configure.py", qualified_stage)
 
-    def test_host_build_requires_the_qualified_configure_and_raises_nofile(self):
+    def test_host_build_uses_configured_tree_without_policy_cache_coupling(self):
         target = self.bake["target"]["qt-host-build"]
         self.assertEqual(target["target"], "qt-host-install-checked")
         self.assertEqual(
@@ -189,15 +202,19 @@ class QtSourceGraphTests(unittest.TestCase):
             target["contexts"],
             self.bake["target"]["qt-host-configure-qualified"]["contexts"],
         )
-        stage = self.dockerfile.split(" AS qt-host-build", 1)[1]
-        self.assertIn("FROM qt-host-configure-qualified", self.dockerfile)
+        stage = self.dockerfile.split(" AS qt-host-build", 1)[1].split(
+            "\nFROM ", 1
+        )[0]
+        self.assertIn("FROM qt-host-configure AS qt-host-build", self.dockerfile)
         self.assertIn("RUN --network=none", stage)
         script = (REPOSITORY / "scripts/build-qt-host.sh").read_text(
             encoding="utf-8"
         )
         self.assertIn("ulimit -Sn", script)
         self.assertIn("-print-file-name=libatomic.so", script)
-        self.assertIn("qt-host-configure.json", script)
+        self.assertNotIn("qt-host-configure.json", script)
+        self.assertIn("CMakeCache.txt", script)
+        self.assertIn("config.summary", script)
         self.assertIn("print-build-log-diagnostics.py", script)
         self.assertNotIn("| tee", script)
         self.assertNotIn("libQt6Core", script)
@@ -246,6 +263,8 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertIn("RUN --network=none", stage)
         self.assertIn("qualify-qt-host-build.py", stage)
         self.assertIn("qt-host-build.schema.json", stage)
+        self.assertIn("--from=qt-host-configure-qualified", stage)
+        self.assertIn("/work/evidence/qt-host-configure.json", stage)
         self.assertIn("--ffmpeg-prefix", stage)
         self.assertIn("--xcb-prefix", stage)
         self.assertIn("--diagnostics", stage)
@@ -369,6 +388,15 @@ class QtSourceGraphTests(unittest.TestCase):
             )
             self.assertEqual(qualified["args"], configure["args"])
             self.assertEqual(qualified["contexts"], configure["contexts"])
+            qualified_root = self.bake["target"][
+                "qt-%s-build-qualified-root" % arch
+            ]
+            self.assertEqual(
+                qualified_root["target"], "qt-target-build-qualified"
+            )
+            self.assertEqual(qualified_root["args"], configure["args"])
+            self.assertEqual(qualified_root["contexts"], configure["contexts"])
+            self.assertEqual(qualified_root["output"], ["type=cacheonly"])
         build_script = (REPOSITORY / "scripts/build-qt-target.sh").read_text(
             encoding="utf-8"
         )
@@ -397,6 +425,155 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertIn("qt-target-build.schema.json", stage)
         self.assertIn("FROM scratch AS qt-target-qualification-evidence", stage)
         self.assertIn("RUN --network=none", stage)
+
+    def test_runtime_overlay_is_isolated_from_the_qt_build_identity(self):
+        self.assertEqual(
+            self.bake["group"]["qt-runtime-overlay-qualified"]["targets"],
+            [
+                "qt-x86_64-runtime-overlay-qualified",
+                "qt-aarch64-runtime-overlay-qualified",
+            ],
+        )
+        self.assertEqual(
+            self.bake["group"]["qt-target-runtime-qualified"]["targets"],
+            [
+                "qt-x86_64-runtime-qualified",
+                "qt-aarch64-runtime-qualified",
+            ],
+        )
+        runtime_argument = (
+            "CROSSFORGE_COMPONENT_FUTURE_QT_RUNTIME_QUALIFICATION_SHA256"
+        )
+        build_argument = "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256"
+        base = self.release["base_image"]
+        for arch, oci_arch in (("x86_64", "amd64"), ("aarch64", "arm64")):
+            runtime = self.bake["target"][
+                "qt-%s-runtime-overlay-qualified" % arch
+            ]
+            build = self.bake["target"]["qt-%s-qualified" % arch]
+            self.assertEqual(runtime["target"], "qt-runtime-overlay-evidence")
+            self.assertEqual(
+                runtime["dockerfile"], "docker/qt-runtime.Dockerfile"
+            )
+            self.assertIn(runtime_argument, runtime["args"])
+            self.assertNotIn(runtime_argument, build["args"])
+            self.assertNotIn(build_argument, runtime["args"])
+            self.assertNotIn("QT_XNNPACK_PATCH_SHA256", runtime["args"])
+            self.assertEqual(
+                set(runtime["contexts"]),
+                {
+                    "crossforge_host_qt",
+                    "crossforge_qt_runtime_rpms",
+                    "crossforge_rocky_target",
+                },
+            )
+            self.assertEqual(
+                runtime["contexts"]["crossforge_qt_runtime_rpms"],
+                "target:qt-runtime-rpms-%s" % arch,
+            )
+            self.assertEqual(
+                runtime["contexts"]["crossforge_rocky_target"],
+                "docker-image://%s:%s@%s"
+                % (
+                    base["repository"],
+                    base["tag"],
+                    base["manifests"][oci_arch],
+                ),
+            )
+            qualified = self.bake["target"][
+                "qt-%s-runtime-qualified" % arch
+            ]
+            self.assertEqual(
+                qualified["target"],
+                "qt-target-runtime-%s-evidence" % arch,
+            )
+            self.assertEqual(
+                qualified["dockerfile"], "docker/qt-runtime.Dockerfile"
+            )
+            self.assertEqual(
+                qualified["contexts"]["crossforge_qt_target"],
+                "target:qt-%s-build-qualified-root" % arch,
+            )
+            if arch == "aarch64":
+                self.assertEqual(
+                    qualified["contexts"]["crossforge_qemu_validated"],
+                    "target:qemu-aarch64-validated",
+                )
+            else:
+                self.assertNotIn(
+                    "crossforge_qemu_validated", qualified["contexts"]
+                )
+            for expanded_context in (
+                "crossforge_cmake",
+                "crossforge_ffmpeg_target",
+                "crossforge_ninja",
+                "crossforge_qt_host",
+                "crossforge_qt_source",
+                "crossforge_toolchain",
+                "crossforge_xcb_target",
+            ):
+                self.assertNotIn(expanded_context, qualified["contexts"])
+        stage = self.runtime_dockerfile.split(
+            " AS qt-runtime-overlay-qualified", 1
+        )[1].split("\nFROM ", 1)[0]
+        self.assertIn(
+            "FROM crossforge_host_qt AS qt-runtime-overlay-qualified",
+            self.runtime_dockerfile,
+        )
+        self.assertIn("COPY --from=crossforge_rocky_target", stage)
+        self.assertIn("COPY --from=crossforge_qt_runtime_rpms", stage)
+        self.assertIn("assemble-qt-runtime.py", stage)
+        self.assertIn("config/rpm/qt-runtime-el8-x86_64.plan.json", stage)
+        self.assertIn("--qualification-component-sha256", stage)
+        self.assertIn("RUN --network=none", stage)
+        staged = self.runtime_dockerfile.split(
+            " AS qt-runtime-artifacts-staged", 1
+        )[1].split("\nFROM ", 1)[0]
+        self.assertIn(
+            "FROM crossforge_qt_target AS qt-runtime-artifacts-staged",
+            self.runtime_dockerfile,
+        )
+        self.assertIn("--from=qt-runtime-overlay-qualified", staged)
+        self.assertIn("/work/config/release.json", staged)
+        self.assertIn("/work/config/schemas/release.schema.json", staged)
+        self.assertIn("/work/config/schemas/qt-runtime-overlay.schema.json", staged)
+        self.assertIn(
+            '"$sysroot"/usr/lib64/libavcodec.so*', staged
+        )
+        self.assertIn("scripts/qt-plugin-probe.c", staged)
+        self.assertIn("$QT_TARGET_TRIPLE-gcc", staged)
+        self.assertIn("-Wall -Wextra -Werror", staged)
+        self.assertIn("qt-plugin-probe", staged)
+        self.assertNotIn(
+            '"$sysroot"/usr/lib/libavcodec.so*', staged
+        )
+        runtime_stage = self.runtime_dockerfile.split(
+            " AS qt-target-runtime-aarch64-qualified", 1
+        )[1].split("\nFROM ", 1)[0]
+        self.assertIn("run-qt-target-runtime.py", runtime_stage)
+        self.assertIn("--mount=type=bind,from=crossforge_qemu_validated", runtime_stage)
+        x86_stage = self.runtime_dockerfile.split(
+            " AS qt-target-runtime-x86_64-qualified", 1
+        )[1].split("\nFROM ", 1)[0]
+        self.assertIn("run-qt-target-runtime.py", x86_stage)
+        self.assertNotIn("qemu", x86_stage.lower())
+        native = self.bake["target"]["qt-aarch64-native-runtime-root"]
+        self.assertEqual(native["target"], "qt-native-runtime-root")
+        self.assertEqual(
+            native["dockerfile"], "docker/qt-runtime.Dockerfile"
+        )
+        self.assertNotIn("crossforge_qemu_validated", native["contexts"])
+        self.assertFalse(any(key.startswith("QEMU_") for key in native["args"]))
+        self.assertEqual(
+            self.bake["group"]["qt-native-runtime-root"]["targets"],
+            ["qt-aarch64-native-runtime-root"],
+        )
+        native_stage = self.runtime_dockerfile.split(
+            " AS qt-native-runtime-root", 1
+        )[1].split("\nFROM ", 1)[0]
+        self.assertIn("FROM scratch", self.runtime_dockerfile)
+        self.assertIn("--from=qt-runtime-artifacts-staged", native_stage)
+        self.assertNotIn("qemu", native_stage.lower())
 
     def test_fetch_is_networked_but_all_source_acceptance_is_offline(self):
         fetch = self.dockerfile.split(" AS qt-fetch", 1)[1].split(

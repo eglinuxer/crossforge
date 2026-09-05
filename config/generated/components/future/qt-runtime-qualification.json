@@ -1,0 +1,27 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "future/qt-runtime-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
+      "component": "future/qt-qualification"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/qt/runtime_qualification/plan/canonical_sha256",
+      "value": "fcf6395257769dc3c285848afcfe220e60b0540432c29ef4e98dec9c89f47710"
+    },
+    {
+      "path": "/qt/runtime_qualification/plan/file",
+      "value": "config/qt-runtime-qualification.json"
+    },
+    {
+      "path": "/qt/runtime_qualification/status",
+      "value": "locked"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "future"
+}

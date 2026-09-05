@@ -70,6 +70,29 @@ linux-vdso.so.1 (0x000000743e100000)
             ],
         )
 
+    def test_loader_debug_evidence_ignores_process_ids_and_noise(self):
+        first = """\
+       421: find library=libQt6Core.so.6 [0]; searching
+       421:   trying file=/usr/lib/libQt6Core.so.6
+       421: calling init: /usr/lib/libQt6Core.so.6
+       421: calling init: /usr/plugins/platforms/libqoffscreen.so
+"""
+        second = """\
+        99: calling init: /usr/plugins/platforms/libqoffscreen.so
+        99: calling init: /usr/lib/libQt6Core.so.6
+        99: find library=libQt6Core.so.6 [0]; searching
+"""
+        normalize = LOADER_EVIDENCE["normalize_loader_debug_listing"]
+        self.assertEqual(normalize(first), normalize(second))
+        self.assertEqual(
+            normalize(first),
+            [
+                "loaded:/usr/lib/libQt6Core.so.6",
+                "loaded:/usr/plugins/platforms/libqoffscreen.so",
+                "needed:libQt6Core.so.6",
+            ],
+        )
+
     def test_duplicate_runtime_result_key_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             result = self.write_result(Path(temporary), ("status=passed",))

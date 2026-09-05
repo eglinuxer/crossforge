@@ -13,7 +13,7 @@
   },
   "plan": {
     "file": "config/rpm/qt-runtime-el8-aarch64.plan.json",
-    "canonical_sha256": "27dd884ecade8ada6c2fd3be8db85a6fc3e69a1c6c8741ad7ba5f750dfca3ced"
+    "canonical_sha256": "e5ae580b76bf1f2f9e93b31106644a1e877ea733200e3b0906515465e11ba577"
   },
   "resolver": {
     "implementation": "python3-dnf",
@@ -551,10 +551,38 @@
       "disposition": "transaction"
     },
     {
+      "name": "at-spi2-core",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "at-spi2-core-0:2.28.0-1.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "ca-certificates",
+      "arch": "noarch",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "ca-certificates-0:2025.2.80_v9.0.304-80.2.el8_10.noarch",
+      "disposition": "transaction"
+    },
+    {
+      "name": "cups-libs",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "cups-libs-1:2.2.6-68.el8_10.aarch64",
+      "disposition": "transaction"
+    },
+    {
       "name": "dbus-libs",
       "arch": "target",
       "purpose": "qt-runtime",
       "resolved_nevra": "dbus-libs-1:1.12.8-28.el8_10.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "dejavu-sans-fonts",
+      "arch": "noarch",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "dejavu-sans-fonts-0:2.35-7.el8.noarch",
       "disposition": "transaction"
     },
     {
@@ -621,6 +649,27 @@
       "disposition": "transaction"
     },
     {
+      "name": "libXcomposite",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libXcomposite-0:0.4.4-14.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "libXcursor",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libXcursor-0:1.1.15-3.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "libXdamage",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libXdamage-0:1.1.4-14.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
       "name": "libXext",
       "arch": "target",
       "purpose": "qt-runtime",
@@ -628,10 +677,38 @@
       "disposition": "transaction"
     },
     {
+      "name": "libXfixes",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libXfixes-0:5.0.3-7.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
       "name": "libXi",
       "arch": "target",
       "purpose": "qt-runtime",
       "resolved_nevra": "libXi-0:1.7.10-1.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "libXrandr",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libXrandr-0:1.5.2-1.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "libXrender",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libXrender-0:0.9.10-7.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "libXtst",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libXtst-0:1.2.3-7.el8.aarch64",
       "disposition": "transaction"
     },
     {
@@ -663,6 +740,13 @@
       "disposition": "transaction"
     },
     {
+      "name": "libglvnd-gles",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libglvnd-gles-1:1.3.4-2.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
       "name": "libglvnd-glx",
       "arch": "target",
       "purpose": "qt-runtime",
@@ -674,6 +758,20 @@
       "arch": "target",
       "purpose": "qt-runtime",
       "resolved_nevra": "libglvnd-opengl-1:1.3.4-2.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "libgudev",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libgudev-0:232-4.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "libinput",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libinput-0:1.16.3-3.el8_6.aarch64",
       "disposition": "transaction"
     },
     {
@@ -709,6 +807,13 @@
       "arch": "target",
       "purpose": "qt-runtime",
       "resolved_nevra": "libwayland-cursor-0:1.21.0-1.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "libwayland-egl",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "libwayland-egl-0:1.21.0-1.el8.aarch64",
       "disposition": "transaction"
     },
     {
@@ -789,6 +894,13 @@
       "disposition": "transaction"
     },
     {
+      "name": "systemd-libs",
+      "arch": "target",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "systemd-libs-0:239-82.el8_10.17.aarch64",
+      "disposition": "transaction"
+    },
+    {
       "name": "xcb-util",
       "arch": "target",
       "purpose": "qt-runtime",
@@ -824,6 +936,13 @@
       "disposition": "transaction"
     },
     {
+      "name": "xkeyboard-config",
+      "arch": "noarch",
+      "purpose": "qt-runtime",
+      "resolved_nevra": "xkeyboard-config-0:2.28-1.el8.noarch",
+      "disposition": "transaction"
+    },
+    {
       "name": "zlib",
       "arch": "target",
       "purpose": "qt-runtime",
@@ -832,6 +951,26 @@
     }
   ],
   "items": [
+    {
+      "name": "acl",
+      "epoch": 0,
+      "version": "2.4.0",
+      "release": "1.el8_10",
+      "arch": "aarch64",
+      "nevra": "acl-0:2.4.0-1.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/a/acl-2.4.0-1.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/a/acl-2.4.0-1.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "3ffa51315ecb2fc7dab237fdc5e548d64c7050e72b7e46822b02340cfded5c08"
+      },
+      "size": 85924,
+      "install_size": 341738,
+      "source_rpm": "acl-2.4.0-1.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
     {
       "name": "alsa-lib",
       "epoch": 0,
@@ -851,6 +990,66 @@
       "source_rpm": "alsa-lib-1.2.10-2.el8.src.rpm",
       "action": "install",
       "reason": "user"
+    },
+    {
+      "name": "at-spi2-core",
+      "epoch": 0,
+      "version": "2.28.0",
+      "release": "1.el8",
+      "arch": "aarch64",
+      "nevra": "at-spi2-core-0:2.28.0-1.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/a/at-spi2-core-2.28.0-1.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/a/at-spi2-core-2.28.0-1.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "ce49ea87477cbb515d99d553d6008c4938e483495915a1ac2157971a2c843603"
+      },
+      "size": 167688,
+      "install_size": 640607,
+      "source_rpm": "at-spi2-core-2.28.0-1.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "audit-libs",
+      "epoch": 0,
+      "version": "3.1.2",
+      "release": "1.el8_10.1",
+      "arch": "aarch64",
+      "nevra": "audit-libs-0:3.1.2-1.el8_10.1.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/a/audit-libs-3.1.2-1.el8_10.1.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/a/audit-libs-3.1.2-1.el8_10.1.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "3978ae37f5d8729b9550dd7e866d955603a2bb8424f2efb078d18615e7ff80aa"
+      },
+      "size": 122316,
+      "install_size": 365490,
+      "source_rpm": "audit-3.1.2-1.el8_10.1.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "avahi-libs",
+      "epoch": 0,
+      "version": "0.7",
+      "release": "27.el8_10.1",
+      "arch": "aarch64",
+      "nevra": "avahi-libs-0:0.7-27.el8_10.1.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/a/avahi-libs-0.7-27.el8_10.1.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/a/avahi-libs-0.7-27.el8_10.1.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "bbe19406e78b900ef1243febbe82683d55de89db574adf8c22bd59faf21255af"
+      },
+      "size": 61124,
+      "install_size": 233288,
+      "source_rpm": "avahi-0.7-27.el8_10.1.src.rpm",
+      "action": "install",
+      "reason": "dependency"
     },
     {
       "name": "basesystem",
@@ -930,7 +1129,7 @@
       "install_size": 2542397,
       "source_rpm": "ca-certificates-2025.2.80_v9.0.304-80.2.el8_10.src.rpm",
       "action": "install",
-      "reason": "dependency"
+      "reason": "user"
     },
     {
       "name": "chkconfig",
@@ -993,6 +1192,46 @@
       "reason": "dependency"
     },
     {
+      "name": "cracklib",
+      "epoch": 0,
+      "version": "2.9.6",
+      "release": "15.el8",
+      "arch": "aarch64",
+      "nevra": "cracklib-0:2.9.6-15.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/c/cracklib-2.9.6-15.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/c/cracklib-2.9.6-15.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "7850e3b197ca42eb625e524573e38e0bf3366b8da69b9c5cd08efdbb57439994"
+      },
+      "size": 93892,
+      "install_size": 434663,
+      "source_rpm": "cracklib-2.9.6-15.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "cracklib-dicts",
+      "epoch": 0,
+      "version": "2.9.6",
+      "release": "15.el8",
+      "arch": "aarch64",
+      "nevra": "cracklib-dicts-0:2.9.6-15.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/c/cracklib-dicts-2.9.6-15.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/c/cracklib-dicts-2.9.6-15.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "3de7f7a185d72b768965b67eb00290f3cf4a27ea169009fbaab5a4cd0f39ab9c"
+      },
+      "size": 4143716,
+      "install_size": 9815016,
+      "source_rpm": "cracklib-2.9.6-15.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "crypto-policies",
       "epoch": 0,
       "version": "20230731",
@@ -1033,6 +1272,106 @@
       "reason": "dependency"
     },
     {
+      "name": "cryptsetup-libs",
+      "epoch": 0,
+      "version": "2.3.7",
+      "release": "7.el8",
+      "arch": "aarch64",
+      "nevra": "cryptsetup-libs-0:2.3.7-7.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/c/cryptsetup-libs-2.3.7-7.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/c/cryptsetup-libs-2.3.7-7.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "9541ed7f6e491abb79e65fe229843cfdbbfb391a13a538d725ae00b47e0e7739"
+      },
+      "size": 483936,
+      "install_size": 2162135,
+      "source_rpm": "cryptsetup-2.3.7-7.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "cups-libs",
+      "epoch": 1,
+      "version": "2.2.6",
+      "release": "68.el8_10",
+      "arch": "aarch64",
+      "nevra": "cups-libs-1:2.2.6-68.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/c/cups-libs-2.2.6-68.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/c/cups-libs-2.2.6-68.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "e47989925ac52cdbf7bb10573040cff1b88d0355f050d22646e6ccc2f5011a71"
+      },
+      "size": 432088,
+      "install_size": 1060468,
+      "source_rpm": "cups-2.2.6-68.el8_10.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "dbus",
+      "epoch": 1,
+      "version": "1.12.8",
+      "release": "28.el8_10",
+      "arch": "aarch64",
+      "nevra": "dbus-1:1.12.8-28.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/d/dbus-1.12.8-28.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/d/dbus-1.12.8-28.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "41d70b618d49e6ce4dc62af8c4d47e3da948794fef2c567e5f4e9f6d59e1f4fa"
+      },
+      "size": 42396,
+      "install_size": 0,
+      "source_rpm": "dbus-1.12.8-28.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "dbus-common",
+      "epoch": 1,
+      "version": "1.12.8",
+      "release": "28.el8_10",
+      "arch": "noarch",
+      "nevra": "dbus-common-1:1.12.8-28.el8_10.noarch",
+      "repo_id": "baseos",
+      "location": "Packages/d/dbus-common-1.12.8-28.el8_10.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/d/dbus-common-1.12.8-28.el8_10.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "716073bcc3a07c99ddf13d6a3be16c389a5080b71f499e5c5dddb483445ae4a9"
+      },
+      "size": 47316,
+      "install_size": 11044,
+      "source_rpm": "dbus-1.12.8-28.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "dbus-daemon",
+      "epoch": 1,
+      "version": "1.12.8",
+      "release": "28.el8_10",
+      "arch": "aarch64",
+      "nevra": "dbus-daemon-1:1.12.8-28.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/d/dbus-daemon-1.12.8-28.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/d/dbus-daemon-1.12.8-28.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "1b11c86e046f9d774f2355f4cd7711ec22f2e159ac194d0a61a45a99cbd2e6c9"
+      },
+      "size": 239452,
+      "install_size": 746125,
+      "source_rpm": "dbus-1.12.8-28.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "dbus-libs",
       "epoch": 1,
       "version": "1.12.8",
@@ -1051,6 +1390,26 @@
       "source_rpm": "dbus-1.12.8-28.el8_10.src.rpm",
       "action": "install",
       "reason": "user"
+    },
+    {
+      "name": "dbus-tools",
+      "epoch": 1,
+      "version": "1.12.8",
+      "release": "28.el8_10",
+      "arch": "aarch64",
+      "nevra": "dbus-tools-1:1.12.8-28.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/d/dbus-tools-1.12.8-28.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/d/dbus-tools-1.12.8-28.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "310b3bd9f2a39fc772aa6956f2b3fdfa931568f07793cdb6e527ef8137921ef4"
+      },
+      "size": 86404,
+      "install_size": 316626,
+      "source_rpm": "dbus-1.12.8-28.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
     },
     {
       "name": "dejavu-fonts-common",
@@ -1089,6 +1448,106 @@
       "size": 1557304,
       "install_size": 5644750,
       "source_rpm": "dejavu-fonts-2.35-7.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "device-mapper",
+      "epoch": 8,
+      "version": "1.02.181",
+      "release": "15.el8_10.3",
+      "arch": "aarch64",
+      "nevra": "device-mapper-8:1.02.181-15.el8_10.3.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/d/device-mapper-1.02.181-15.el8_10.3.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/d/device-mapper-1.02.181-15.el8_10.3.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "bda1690507cb7132af62a8d26e31ad906f0f4135328d0cbd89cc68f11f938739"
+      },
+      "size": 383544,
+      "install_size": 446652,
+      "source_rpm": "lvm2-2.03.14-15.el8_10.3.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "device-mapper-libs",
+      "epoch": 8,
+      "version": "1.02.181",
+      "release": "15.el8_10.3",
+      "arch": "aarch64",
+      "nevra": "device-mapper-libs-8:1.02.181-15.el8_10.3.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/d/device-mapper-libs-1.02.181-15.el8_10.3.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/d/device-mapper-libs-1.02.181-15.el8_10.3.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "c9870d459d38a72daaed9d7f68eab9315b0d87d9e37c853228da5668e735e8d9"
+      },
+      "size": 408096,
+      "install_size": 456455,
+      "source_rpm": "lvm2-2.03.14-15.el8_10.3.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "elfutils-default-yama-scope",
+      "epoch": 0,
+      "version": "0.190",
+      "release": "2.el8",
+      "arch": "noarch",
+      "nevra": "elfutils-default-yama-scope-0:0.190-2.el8.noarch",
+      "repo_id": "baseos",
+      "location": "Packages/e/elfutils-default-yama-scope-0.190-2.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/e/elfutils-default-yama-scope-0.190-2.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "f5e46bf54b40eb7feb74b42b4ea28f5dbe0e160199f35cf0e6d0e2c5a29f88d3"
+      },
+      "size": 52796,
+      "install_size": 1810,
+      "source_rpm": "elfutils-0.190-2.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "elfutils-libelf",
+      "epoch": 0,
+      "version": "0.190",
+      "release": "2.el8",
+      "arch": "aarch64",
+      "nevra": "elfutils-libelf-0:0.190-2.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/e/elfutils-libelf-0.190-2.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/e/elfutils-libelf-0.190-2.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "99e237fd0357b574c0f8ff4805a9b9a3a64cdfe87c49be34b97f3164e63ef817"
+      },
+      "size": 235312,
+      "install_size": 1052562,
+      "source_rpm": "elfutils-0.190-2.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "elfutils-libs",
+      "epoch": 0,
+      "version": "0.190",
+      "release": "2.el8",
+      "arch": "aarch64",
+      "nevra": "elfutils-libs-0:0.190-2.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/e/elfutils-libs-0.190-2.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/e/elfutils-libs-0.190-2.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "0329d8c9a12a6fa524b168c34f4c1cf4d1b3b05d2156c9a984380c3eab25b8ae"
+      },
+      "size": 300316,
+      "install_size": 767039,
+      "source_rpm": "elfutils-0.190-2.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -1433,6 +1892,26 @@
       "reason": "dependency"
     },
     {
+      "name": "gzip",
+      "epoch": 0,
+      "version": "1.9",
+      "release": "13.el8_5",
+      "arch": "aarch64",
+      "nevra": "gzip-0:1.9-13.el8_5.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/g/gzip-1.9-13.el8_5.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/g/gzip-1.9-13.el8_5.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "f106a7f7904c1caf97eead75f1fa6031aa6d2ca66b77b3b65fa5671976700ac1"
+      },
+      "size": 167496,
+      "install_size": 393562,
+      "source_rpm": "gzip-1.9-13.el8_5.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "info",
       "epoch": 0,
       "version": "6.5",
@@ -1453,6 +1932,26 @@
       "reason": "dependency"
     },
     {
+      "name": "json-c",
+      "epoch": 0,
+      "version": "0.13.1",
+      "release": "3.el8",
+      "arch": "aarch64",
+      "nevra": "json-c-0:0.13.1-3.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/j/json-c-0.13.1-3.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/j/json-c-0.13.1-3.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "2b9864631453555d917c715ed9fe356e644835e6f1f916c2b0236f18d4ea6a3c"
+      },
+      "size": 39828,
+      "install_size": 73170,
+      "source_rpm": "json-c-0.13.1-3.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "keyutils-libs",
       "epoch": 0,
       "version": "1.5.10",
@@ -1469,6 +1968,26 @@
       "size": 33536,
       "install_size": 96878,
       "source_rpm": "keyutils-1.5.10-9.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "kmod-libs",
+      "epoch": 0,
+      "version": "25",
+      "release": "20.el8",
+      "arch": "aarch64",
+      "nevra": "kmod-libs-0:25-20.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/k/kmod-libs-25-20.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/k/kmod-libs-25-20.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "70667e477eec83fd85d1a6ea2a69fc562335b6e2ee4fb720c5a103c4e93069d6"
+      },
+      "size": 66520,
+      "install_size": 163160,
+      "source_rpm": "kmod-25-20.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -1613,6 +2132,66 @@
       "reason": "dependency"
     },
     {
+      "name": "libXcomposite",
+      "epoch": 0,
+      "version": "0.4.4",
+      "release": "14.el8",
+      "arch": "aarch64",
+      "nevra": "libXcomposite-0:0.4.4-14.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/l/libXcomposite-0.4.4-14.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libXcomposite-0.4.4-14.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "84317213c36de5f00f1e794d0d3c18925ea726511855e43dd79a90988f4c292e"
+      },
+      "size": 28148,
+      "install_size": 92984,
+      "source_rpm": "libXcomposite-0.4.4-14.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "libXcursor",
+      "epoch": 0,
+      "version": "1.1.15",
+      "release": "3.el8",
+      "arch": "aarch64",
+      "nevra": "libXcursor-0:1.1.15-3.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/l/libXcursor-1.1.15-3.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libXcursor-1.1.15-3.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "3a68834e855da960ee5de0a8b16d97e3d00d0aea5febeadbb6a1ccba636472fd"
+      },
+      "size": 35012,
+      "install_size": 71727,
+      "source_rpm": "libXcursor-1.1.15-3.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "libXdamage",
+      "epoch": 0,
+      "version": "1.1.4",
+      "release": "14.el8",
+      "arch": "aarch64",
+      "nevra": "libXdamage-0:1.1.4-14.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/l/libXdamage-1.1.4-14.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libXdamage-1.1.4-14.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "f766446d5270c5cf7326bb6987c6779a705261cf0dca38bdbfa4df0a78cee3fd"
+      },
+      "size": 26292,
+      "install_size": 87456,
+      "source_rpm": "libXdamage-1.1.4-14.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
       "name": "libXext",
       "epoch": 0,
       "version": "1.3.4",
@@ -1650,7 +2229,7 @@
       "install_size": 72671,
       "source_rpm": "libXfixes-5.0.3-7.el8.src.rpm",
       "action": "install",
-      "reason": "dependency"
+      "reason": "user"
     },
     {
       "name": "libXi",
@@ -1673,6 +2252,46 @@
       "reason": "user"
     },
     {
+      "name": "libXrandr",
+      "epoch": 0,
+      "version": "1.5.2",
+      "release": "1.el8",
+      "arch": "aarch64",
+      "nevra": "libXrandr-0:1.5.2-1.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/l/libXrandr-1.5.2-1.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libXrandr-1.5.2-1.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "8652123d8c1cd8afd548e758086467d652217219dfc8c6e22e921d7dc1bedc72"
+      },
+      "size": 32356,
+      "install_size": 73826,
+      "source_rpm": "libXrandr-1.5.2-1.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "libXrender",
+      "epoch": 0,
+      "version": "0.9.10",
+      "release": "7.el8",
+      "arch": "aarch64",
+      "nevra": "libXrender-0:0.9.10-7.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/l/libXrender-0.9.10-7.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libXrender-0.9.10-7.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "6f7fec3924c0efeb10b3f694d1b41a7252aa9662e7dd93614ceaa86bfd5421e2"
+      },
+      "size": 30984,
+      "install_size": 72283,
+      "source_rpm": "libXrender-0.9.10-7.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
       "name": "libXtst",
       "epoch": 0,
       "version": "1.2.3",
@@ -1690,7 +2309,7 @@
       "install_size": 75674,
       "source_rpm": "libXtst-1.2.3-7.el8.src.rpm",
       "action": "install",
-      "reason": "dependency"
+      "reason": "user"
     },
     {
       "name": "libXxf86vm",
@@ -1833,6 +2452,26 @@
       "reason": "dependency"
     },
     {
+      "name": "libcap-ng",
+      "epoch": 0,
+      "version": "0.7.11",
+      "release": "1.el8",
+      "arch": "aarch64",
+      "nevra": "libcap-ng-0:0.7.11-1.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libcap-ng-0.7.11-1.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libcap-ng-0.7.11-1.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "ca0c5cd3a6ff1505113b2b220844603077d282b81f790a205e7d23ab6cf68a61"
+      },
+      "size": 32480,
+      "install_size": 95902,
+      "source_rpm": "libcap-ng-0.7.11-1.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "libcom_err",
       "epoch": 0,
       "version": "1.45.6",
@@ -1849,6 +2488,26 @@
       "size": 49436,
       "install_size": 114505,
       "source_rpm": "e2fsprogs-1.45.6-7.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "libdb",
+      "epoch": 0,
+      "version": "5.3.28",
+      "release": "42.el8_4",
+      "arch": "aarch64",
+      "nevra": "libdb-0:5.3.28-42.el8_4.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libdb-5.3.28-42.el8_4.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libdb-5.3.28-42.el8_4.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "f1b46b46efe469ee828526cc8840a0491b454c9f8bd55a89a91313111176d02e"
+      },
+      "size": 702264,
+      "install_size": 1759432,
+      "source_rpm": "libdb-5.3.28-42.el8_4.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -1871,6 +2530,46 @@
       "source_rpm": "libdrm-2.4.115-2.el8.src.rpm",
       "action": "install",
       "reason": "user"
+    },
+    {
+      "name": "libevdev",
+      "epoch": 0,
+      "version": "1.10.0",
+      "release": "1.el8",
+      "arch": "aarch64",
+      "nevra": "libevdev-0:1.10.0-1.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/l/libevdev-1.10.0-1.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libevdev-1.10.0-1.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "5c661690ee0361ebf0e38f885aaf6bb9130dafc7e9ffbe7971fdbaeff02dce67"
+      },
+      "size": 42796,
+      "install_size": 137054,
+      "source_rpm": "libevdev-1.10.0-1.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "libfdisk",
+      "epoch": 0,
+      "version": "2.32.1",
+      "release": "48.el8_10",
+      "arch": "aarch64",
+      "nevra": "libfdisk-0:2.32.1-48.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libfdisk-2.32.1-48.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libfdisk-2.32.1-48.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "f751887b98fb88413d61771b5549e1f50407efcd6aba3c03a6c9ec8cb59ad34b"
+      },
+      "size": 249456,
+      "install_size": 438402,
+      "source_rpm": "util-linux-2.32.1-48.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
     },
     {
       "name": "libffi",
@@ -1973,6 +2672,26 @@
       "reason": "user"
     },
     {
+      "name": "libglvnd-gles",
+      "epoch": 1,
+      "version": "1.3.4",
+      "release": "2.el8",
+      "arch": "aarch64",
+      "nevra": "libglvnd-gles-1:1.3.4-2.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/l/libglvnd-gles-1.3.4-2.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libglvnd-gles-1.3.4-2.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "9081004b48e19abe7346d9a7f901671754b84c1294e2e4d01e229c8466e2c0f5"
+      },
+      "size": 39776,
+      "install_size": 405296,
+      "source_rpm": "libglvnd-1.3.4-2.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
       "name": "libglvnd-glx",
       "epoch": 1,
       "version": "1.3.4",
@@ -2033,6 +2752,26 @@
       "reason": "dependency"
     },
     {
+      "name": "libgudev",
+      "epoch": 0,
+      "version": "232",
+      "release": "4.el8",
+      "arch": "aarch64",
+      "nevra": "libgudev-0:232-4.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libgudev-232-4.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libgudev-232-4.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "f52f502194242ad10be75b7911ccb58dfc2a8670ffcb3f29cbfc7f64efcc4008"
+      },
+      "size": 32528,
+      "install_size": 104173,
+      "source_rpm": "libgudev-232-4.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
       "name": "libidn2",
       "epoch": 0,
       "version": "2.2.0",
@@ -2051,6 +2790,26 @@
       "source_rpm": "libidn2-2.2.0-1.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
+    },
+    {
+      "name": "libinput",
+      "epoch": 0,
+      "version": "1.16.3",
+      "release": "3.el8_6",
+      "arch": "aarch64",
+      "nevra": "libinput-0:1.16.3-3.el8_6.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/l/libinput-1.16.3-3.el8_6.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libinput-1.16.3-3.el8_6.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "be78e53edf9ba8666802b546afebe5c5f49f95ee8e6470108450ddbafb280d42"
+      },
+      "size": 207504,
+      "install_size": 870387,
+      "source_rpm": "libinput-1.16.3-3.el8_6.src.rpm",
+      "action": "install",
+      "reason": "user"
     },
     {
       "name": "libjpeg-turbo",
@@ -2153,6 +2912,46 @@
       "reason": "user"
     },
     {
+      "name": "libpwquality",
+      "epoch": 0,
+      "version": "1.4.4",
+      "release": "6.el8",
+      "arch": "aarch64",
+      "nevra": "libpwquality-0:1.4.4-6.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libpwquality-1.4.4-6.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libpwquality-1.4.4-6.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "e490223a9b8a3c494f190487d10290115b60bc42cced7bf772c062edad08abed"
+      },
+      "size": 107824,
+      "install_size": 612750,
+      "source_rpm": "libpwquality-1.4.4-6.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "libseccomp",
+      "epoch": 0,
+      "version": "2.5.2",
+      "release": "1.el8",
+      "arch": "aarch64",
+      "nevra": "libseccomp-0:2.5.2-1.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libseccomp-2.5.2-1.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libseccomp-2.5.2-1.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "00163c8639df2c21996a6ad4d725d4df3026f0ac725ff2ec51d2805ad5953bce"
+      },
+      "size": 70500,
+      "install_size": 177781,
+      "source_rpm": "libseccomp-2.5.2-1.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "libselinux",
       "epoch": 0,
       "version": "2.9",
@@ -2169,6 +2968,26 @@
       "size": 165632,
       "install_size": 206376,
       "source_rpm": "libselinux-2.9-11.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "libsemanage",
+      "epoch": 0,
+      "version": "2.9",
+      "release": "12.el8_10",
+      "arch": "aarch64",
+      "nevra": "libsemanage-0:2.9-12.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libsemanage-2.9-12.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libsemanage-2.9-12.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "3ddfded9ad4e7859901b87a777915ab93d003855ea4d47de94656e83d13e55c4"
+      },
+      "size": 167436,
+      "install_size": 308120,
+      "source_rpm": "libsemanage-2.9-12.el8_10.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -2209,6 +3028,26 @@
       "size": 29820,
       "install_size": 98650,
       "source_rpm": "libsigsegv-2.11-5.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "libsmartcols",
+      "epoch": 0,
+      "version": "2.32.1",
+      "release": "48.el8_10",
+      "arch": "aarch64",
+      "nevra": "libsmartcols-0:2.32.1-48.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libsmartcols-2.32.1-48.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libsmartcols-2.32.1-48.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "225171e0f9307e2004af4e55e420422dc0569adaaf75b4804a2f673f18213f8d"
+      },
+      "size": 178688,
+      "install_size": 297434,
+      "source_rpm": "util-linux-2.32.1-48.el8_10.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -2313,6 +3152,26 @@
       "reason": "dependency"
     },
     {
+      "name": "libutempter",
+      "epoch": 0,
+      "version": "1.1.6",
+      "release": "14.el8",
+      "arch": "aarch64",
+      "nevra": "libutempter-0:1.1.6-14.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libutempter-1.1.6-14.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libutempter-1.1.6-14.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "0fd28ba281c16e68f11e75f30631ec790ec13cb6336d056f55a7d7c043c4350a"
+      },
+      "size": 31424,
+      "install_size": 165709,
+      "source_rpm": "libutempter-1.1.6-14.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "libuuid",
       "epoch": 0,
       "version": "2.32.1",
@@ -2373,6 +3232,46 @@
       "reason": "dependency"
     },
     {
+      "name": "libwacom",
+      "epoch": 0,
+      "version": "1.6",
+      "release": "3.el8",
+      "arch": "aarch64",
+      "nevra": "libwacom-0:1.6-3.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/l/libwacom-1.6-3.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libwacom-1.6-3.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "aae51db7035bf1aabdd61d742b6441a6a2eabf880f3cb21afd4ca3698f12f154"
+      },
+      "size": 40800,
+      "install_size": 142957,
+      "source_rpm": "libwacom-1.6-3.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "libwacom-data",
+      "epoch": 0,
+      "version": "1.6",
+      "release": "3.el8",
+      "arch": "noarch",
+      "nevra": "libwacom-data-0:1.6-3.el8.noarch",
+      "repo_id": "appstream",
+      "location": "Packages/l/libwacom-data-1.6-3.el8.noarch.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libwacom-data-1.6-3.el8.noarch.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "7e5450f5dc8a0ebb6181f737709bfa81cd5879251d77ccf6aa28b1b8024e5f11"
+      },
+      "size": 105100,
+      "install_size": 513480,
+      "source_rpm": "libwacom-1.6-3.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "libwayland-client",
       "epoch": 0,
       "version": "1.21.0",
@@ -2408,6 +3307,26 @@
       },
       "size": 24904,
       "install_size": 83436,
+      "source_rpm": "wayland-1.21.0-1.el8.src.rpm",
+      "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "libwayland-egl",
+      "epoch": 0,
+      "version": "1.21.0",
+      "release": "1.el8",
+      "arch": "aarch64",
+      "nevra": "libwayland-egl-0:1.21.0-1.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/l/libwayland-egl-1.21.0-1.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/l/libwayland-egl-1.21.0-1.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "248a2fba37f1f8326d3f55583dd24675b3a5941e56ce8531eab6941a68b9d892"
+      },
+      "size": 18888,
+      "install_size": 70164,
       "source_rpm": "wayland-1.21.0-1.el8.src.rpm",
       "action": "install",
       "reason": "user"
@@ -2553,6 +3472,26 @@
       "reason": "dependency"
     },
     {
+      "name": "libzstd",
+      "epoch": 0,
+      "version": "1.4.4",
+      "release": "1.el8",
+      "arch": "aarch64",
+      "nevra": "libzstd-0:1.4.4-1.el8.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libzstd-1.4.4-1.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libzstd-1.4.4-1.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "44d11e194b4d5ebf9bad5f1dc8adb136061e747c68a20bc14034359c98feda87"
+      },
+      "size": 244952,
+      "install_size": 619901,
+      "source_rpm": "zstd-1.4.4-1.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "lz4-libs",
       "epoch": 0,
       "version": "1.8.3",
@@ -2669,6 +3608,26 @@
       "size": 217688,
       "install_size": 575049,
       "source_rpm": "mpfr-3.1.6-1.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "mtdev",
+      "epoch": 0,
+      "version": "1.1.5",
+      "release": "12.el8",
+      "arch": "aarch64",
+      "nevra": "mtdev-0:1.1.5-12.el8.aarch64",
+      "repo_id": "appstream",
+      "location": "Packages/m/mtdev-1.1.5-12.el8.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/aarch64/os/Packages/m/mtdev-1.1.5-12.el8.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "023b076486a6ec4d0621ec49341b761e8cdfccd640fa9c2a3240918eef0747dd"
+      },
+      "size": 22876,
+      "install_size": 71357,
+      "source_rpm": "mtdev-1.1.5-12.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -2929,6 +3888,26 @@
       "size": 136940,
       "install_size": 544321,
       "source_rpm": "p11-kit-0.23.22-2.el8.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "pam",
+      "epoch": 0,
+      "version": "1.3.1",
+      "release": "40.el8_10",
+      "arch": "aarch64",
+      "nevra": "pam-0:1.3.1-40.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/p/pam-1.3.1-40.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/p/pam-1.3.1-40.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "c14125fb470f86a7f7258a427c9336ad3f3cfa4ee41675da3cd1260663f6ba13"
+      },
+      "size": 761272,
+      "install_size": 5584487,
+      "source_rpm": "pam-1.3.1-40.el8_10.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -3253,6 +4232,26 @@
       "reason": "dependency"
     },
     {
+      "name": "shadow-utils",
+      "epoch": 2,
+      "version": "4.6",
+      "release": "23.el8_10",
+      "arch": "aarch64",
+      "nevra": "shadow-utils-2:4.6-23.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/s/shadow-utils-4.6-23.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/s/shadow-utils-4.6-23.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "155ab0d7d740e9b7cc69c3ec5bcd467123127cf59982825e420c29d8e3cc15c4"
+      },
+      "size": 1271800,
+      "install_size": 4731238,
+      "source_rpm": "shadow-utils-4.6-23.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
       "name": "sqlite-libs",
       "epoch": 0,
       "version": "3.26.0",
@@ -3269,6 +4268,26 @@
       "size": 562908,
       "install_size": 1162329,
       "source_rpm": "sqlite-3.26.0-21.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "systemd",
+      "epoch": 0,
+      "version": "239",
+      "release": "82.el8_10.17",
+      "arch": "aarch64",
+      "nevra": "systemd-0:239-82.el8_10.17.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/s/systemd-239-82.el8_10.17.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/s/systemd-239-82.el8_10.17.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "673e2246df2c9fc426c7a79311529c3ecb9ecf32af3c5776ee9a0dee3def4cbd"
+      },
+      "size": 3516756,
+      "install_size": 13745180,
+      "source_rpm": "systemd-239-82.el8_10.17.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -3290,6 +4309,26 @@
       "install_size": 4683622,
       "source_rpm": "systemd-239-82.el8_10.17.src.rpm",
       "action": "install",
+      "reason": "user"
+    },
+    {
+      "name": "systemd-pam",
+      "epoch": 0,
+      "version": "239",
+      "release": "82.el8_10.17",
+      "arch": "aarch64",
+      "nevra": "systemd-pam-0:239-82.el8_10.17.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/s/systemd-pam-239-82.el8_10.17.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/s/systemd-pam-239-82.el8_10.17.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "464ce7ac0e1af55076f4f9740ce4c2112245a63247bab78b23cd0a4d6ad3c362"
+      },
+      "size": 491204,
+      "install_size": 946296,
+      "source_rpm": "systemd-239-82.el8_10.17.src.rpm",
+      "action": "install",
       "reason": "dependency"
     },
     {
@@ -3309,6 +4348,26 @@
       "size": 562648,
       "install_size": 1976397,
       "source_rpm": "tzdata-2026c-1.el8_10.src.rpm",
+      "action": "install",
+      "reason": "dependency"
+    },
+    {
+      "name": "util-linux",
+      "epoch": 0,
+      "version": "2.32.1",
+      "release": "48.el8_10",
+      "arch": "aarch64",
+      "nevra": "util-linux-0:2.32.1-48.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/u/util-linux-2.32.1-48.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/u/util-linux-2.32.1-48.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "8dba662364ecfd096d05fcf228f9c36c04a9ed93492ce9319aecd337ea4dc8d3"
+      },
+      "size": 2587640,
+      "install_size": 15189837,
+      "source_rpm": "util-linux-2.32.1-48.el8_10.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -3430,7 +4489,7 @@
       "install_size": 5683972,
       "source_rpm": "xkeyboard-config-2.28-1.el8.src.rpm",
       "action": "install",
-      "reason": "dependency"
+      "reason": "user"
     },
     {
       "name": "xz-libs",
@@ -3484,7 +4543,11 @@
     },
     "result": {
       "packages": [
+        "acl-0:2.4.0-1.el8_10.aarch64",
         "alsa-lib-0:1.2.10-2.el8.aarch64",
+        "at-spi2-core-0:2.28.0-1.el8.aarch64",
+        "audit-libs-0:3.1.2-1.el8_10.1.aarch64",
+        "avahi-libs-0:0.7-27.el8_10.1.aarch64",
         "basesystem-0:11-5.el8.noarch",
         "bash-0:4.4.20-6.el8_10.aarch64",
         "bzip2-libs-0:1.0.6-28.el8_10.aarch64",
@@ -3492,11 +4555,24 @@
         "chkconfig-0:1.19.2-1.el8.aarch64",
         "coreutils-0:8.30-20.el8_10.aarch64",
         "coreutils-common-0:8.30-20.el8_10.aarch64",
+        "cracklib-0:2.9.6-15.el8.aarch64",
+        "cracklib-dicts-0:2.9.6-15.el8.aarch64",
         "crypto-policies-0:20230731-1.git3177e06.el8.noarch",
         "crypto-policies-scripts-0:20230731-1.git3177e06.el8.noarch",
+        "cryptsetup-libs-0:2.3.7-7.el8.aarch64",
+        "cups-libs-1:2.2.6-68.el8_10.aarch64",
+        "dbus-1:1.12.8-28.el8_10.aarch64",
+        "dbus-common-1:1.12.8-28.el8_10.noarch",
+        "dbus-daemon-1:1.12.8-28.el8_10.aarch64",
         "dbus-libs-1:1.12.8-28.el8_10.aarch64",
+        "dbus-tools-1:1.12.8-28.el8_10.aarch64",
         "dejavu-fonts-common-0:2.35-7.el8.noarch",
         "dejavu-sans-fonts-0:2.35-7.el8.noarch",
+        "device-mapper-8:1.02.181-15.el8_10.3.aarch64",
+        "device-mapper-libs-8:1.02.181-15.el8_10.3.aarch64",
+        "elfutils-default-yama-scope-0:0.190-2.el8.noarch",
+        "elfutils-libelf-0:0.190-2.el8.aarch64",
+        "elfutils-libs-0:0.190-2.el8.aarch64",
         "expat-0:2.5.0-2.el8_10.aarch64",
         "filesystem-0:3.8-6.el8.aarch64",
         "flac-libs-0:1.3.2-11.el8.aarch64",
@@ -3514,8 +4590,11 @@
         "gnutls-0:3.6.16-8.el8_10.6.aarch64",
         "grep-0:3.1-6.el8.aarch64",
         "gsm-0:1.0.17-5.el8.aarch64",
+        "gzip-0:1.9-13.el8_5.aarch64",
         "info-0:6.5-7.el8.aarch64",
+        "json-c-0:0.13.1-3.el8.aarch64",
         "keyutils-libs-0:1.5.10-9.el8.aarch64",
+        "kmod-libs-0:25-20.el8.aarch64",
         "krb5-libs-0:1.18.2-34.el8_10.aarch64",
         "libICE-0:1.0.9-15.el8.aarch64",
         "libSM-0:1.2.3-1.el8.aarch64",
@@ -3523,9 +4602,14 @@
         "libX11-common-0:1.6.8-9.el8_10.noarch",
         "libX11-xcb-0:1.6.8-9.el8_10.aarch64",
         "libXau-0:1.0.9-3.el8.aarch64",
+        "libXcomposite-0:0.4.4-14.el8.aarch64",
+        "libXcursor-0:1.1.15-3.el8.aarch64",
+        "libXdamage-0:1.1.4-14.el8.aarch64",
         "libXext-0:1.3.4-1.el8.aarch64",
         "libXfixes-0:5.0.3-7.el8.aarch64",
         "libXi-0:1.7.10-1.el8.aarch64",
+        "libXrandr-0:1.5.2-1.el8.aarch64",
+        "libXrender-0:0.9.10-7.el8.aarch64",
         "libXtst-0:1.2.3-7.el8.aarch64",
         "libXxf86vm-0:1.1.4-9.el8.aarch64",
         "libacl-0:2.4.0-1.el8_10.aarch64",
@@ -3534,35 +4618,50 @@
         "libattr-0:2.6.0-1.el8_10.aarch64",
         "libblkid-0:2.32.1-48.el8_10.aarch64",
         "libcap-0:2.48-6.el8_10.1.aarch64",
+        "libcap-ng-0:0.7.11-1.el8.aarch64",
         "libcom_err-0:1.45.6-7.el8_10.aarch64",
+        "libdb-0:5.3.28-42.el8_4.aarch64",
         "libdrm-0:2.4.115-2.el8.aarch64",
+        "libevdev-0:1.10.0-1.el8.aarch64",
+        "libfdisk-0:2.32.1-48.el8_10.aarch64",
         "libffi-0:3.1-24.el8.aarch64",
         "libgcc-0:8.5.0-28.el8_10.aarch64",
         "libgcrypt-0:1.8.5-8.el8_10.aarch64",
         "libglvnd-1:1.3.4-2.el8.aarch64",
         "libglvnd-egl-1:1.3.4-2.el8.aarch64",
+        "libglvnd-gles-1:1.3.4-2.el8.aarch64",
         "libglvnd-glx-1:1.3.4-2.el8.aarch64",
         "libglvnd-opengl-1:1.3.4-2.el8.aarch64",
         "libgpg-error-0:1.31-1.el8.aarch64",
+        "libgudev-0:232-4.el8.aarch64",
         "libidn2-0:2.2.0-1.el8.aarch64",
+        "libinput-0:1.16.3-3.el8_6.aarch64",
         "libjpeg-turbo-0:1.5.3-14.el8_10.aarch64",
         "libmount-0:2.32.1-48.el8_10.aarch64",
         "libnsl2-0:1.2.0-2.20180605git4a062cf.el8.aarch64",
         "libogg-2:1.3.2-10.el8.aarch64",
         "libpng-2:1.6.34-11.el8_10.aarch64",
+        "libpwquality-0:1.4.4-6.el8.aarch64",
+        "libseccomp-0:2.5.2-1.el8.aarch64",
         "libselinux-0:2.9-11.el8_10.aarch64",
+        "libsemanage-0:2.9-12.el8_10.aarch64",
         "libsepol-0:2.9-3.el8.aarch64",
         "libsigsegv-0:2.11-5.el8.aarch64",
+        "libsmartcols-0:2.32.1-48.el8_10.aarch64",
         "libsndfile-0:1.0.28-17.el8_10.aarch64",
         "libstdc++-0:8.5.0-28.el8_10.aarch64",
         "libtasn1-0:4.13-6.el8_10.aarch64",
         "libtirpc-0:1.1.4-12.el8_10.aarch64",
         "libunistring-0:0.9.9-3.el8.aarch64",
+        "libutempter-0:1.1.6-14.el8.aarch64",
         "libuuid-0:2.32.1-48.el8_10.aarch64",
         "libverto-0:0.3.2-2.el8.aarch64",
         "libvorbis-1:1.3.6-2.el8.aarch64",
+        "libwacom-0:1.6-3.el8.aarch64",
+        "libwacom-data-0:1.6-3.el8.noarch",
         "libwayland-client-0:1.21.0-1.el8.aarch64",
         "libwayland-cursor-0:1.21.0-1.el8.aarch64",
+        "libwayland-egl-0:1.21.0-1.el8.aarch64",
         "libwayland-server-0:1.21.0-1.el8.aarch64",
         "libxcb-0:1.13.1-1.el8.aarch64",
         "libxcrypt-0:4.1.1-6.el8.aarch64",
@@ -3570,12 +4669,14 @@
         "libxkbcommon-x11-0:0.9.1-1.el8.aarch64",
         "libxkbfile-0:1.1.0-1.el8.aarch64",
         "libxshmfence-0:1.3-2.el8.aarch64",
+        "libzstd-0:1.4.4-1.el8.aarch64",
         "lz4-libs-0:1.8.3-5.el8_10.aarch64",
         "mesa-libEGL-0:23.1.4-4.el8_10.aarch64",
         "mesa-libGL-0:23.1.4-4.el8_10.aarch64",
         "mesa-libgbm-0:23.1.4-4.el8_10.aarch64",
         "mesa-libglapi-0:23.1.4-4.el8_10.aarch64",
         "mpfr-0:3.1.6-1.el8.aarch64",
+        "mtdev-0:1.1.5-12.el8.aarch64",
         "ncurses-0:6.1-10.20180224.el8.aarch64",
         "ncurses-base-0:6.1-10.20180224.el8.noarch",
         "ncurses-libs-0:6.1-10.20180224.el8.aarch64",
@@ -3589,6 +4690,7 @@
         "openssl-libs-1:1.1.1k-17.el8_10.aarch64",
         "p11-kit-0:0.23.22-2.el8.aarch64",
         "p11-kit-trust-0:0.23.22-2.el8.aarch64",
+        "pam-0:1.3.1-40.el8_10.aarch64",
         "pciutils-libs-0:3.7.0-3.el8.aarch64",
         "pcre-0:8.42-6.el8.aarch64",
         "pcre2-0:10.32-3.el8_6.aarch64",
@@ -3605,9 +4707,13 @@
         "rocky-repos-0:8.10-1.14.el8.noarch",
         "sed-0:4.5-5.el8.aarch64",
         "setup-0:2.12.2-11.el8.noarch",
+        "shadow-utils-2:4.6-23.el8_10.aarch64",
         "sqlite-libs-0:3.26.0-21.el8_10.aarch64",
+        "systemd-0:239-82.el8_10.17.aarch64",
         "systemd-libs-0:239-82.el8_10.17.aarch64",
+        "systemd-pam-0:239-82.el8_10.17.aarch64",
         "tzdata-0:2026c-1.el8_10.noarch",
+        "util-linux-0:2.32.1-48.el8_10.aarch64",
         "xcb-util-0:0.4.0-10.el8.aarch64",
         "xcb-util-image-0:0.4.0-9.el8.aarch64",
         "xcb-util-keysyms-0:0.4.0-7.el8.aarch64",
@@ -3617,7 +4723,7 @@
         "xz-libs-0:5.2.4-4.el8_6.aarch64",
         "zlib-0:1.2.11-26.el8.aarch64"
       ],
-      "canonical_sha256": "a6ed33a18b2b89b3ab05f152bab7f478bb85665ad1c3a4d4037d3ceb97d06db8"
+      "canonical_sha256": "a6405fcbe3d03ea2f405a53bfd41efb6521462a2778bb87dc419b79dff4acaa2"
     }
   }
 }

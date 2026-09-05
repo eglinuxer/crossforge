@@ -34,6 +34,7 @@ jobs:
           ./scripts/validate-supply-chain-evidence.py
           ./scripts/validate-frozen-abi.py
           ./scripts/validate-python-runtime-providers.py
+          ./scripts/validate-qt-runtime-qualification.py
           ./scripts/render-release-components.py --check
           ./scripts/render-vcpkg-integration.py --check
           ./scripts/render-bake.py --check

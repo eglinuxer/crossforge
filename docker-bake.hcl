@@ -59,6 +59,8 @@ group "qt-rpm-locked" {
     "host-qt-build-locked",
     "qt-target-x86_64-locked",
     "qt-target-aarch64-locked",
+    "qt-runtime-rpms-x86_64",
+    "qt-runtime-rpms-aarch64",
   ]
 }
 
@@ -95,6 +97,18 @@ target "qt-target-x86_64-locked" {
 target "qt-target-aarch64-locked" {
   inherits = ["_common"]
   target   = "qt-target-aarch64-locked"
+  output   = ["type=cacheonly"]
+}
+
+target "qt-runtime-rpms-x86_64" {
+  inherits = ["_common"]
+  target   = "qt-runtime-rpms-x86_64"
+  output   = ["type=cacheonly"]
+}
+
+target "qt-runtime-rpms-aarch64" {
+  inherits = ["_common"]
+  target   = "qt-runtime-rpms-aarch64"
   output   = ["type=cacheonly"]
 }
 

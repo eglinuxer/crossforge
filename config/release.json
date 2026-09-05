@@ -396,7 +396,14 @@
       "status": "locked",
       "plan": {
         "file": "config/qt-qualification.json",
-        "canonical_sha256": "6e7cfca1bdd741072f3dd1f637acb3198922c8d10e40fa23b906892e7962955b"
+        "canonical_sha256": "031e8220250258286948f3cd66c0c3ddee26d1b9643503cdba0e506751c72033"
+      }
+    },
+    "runtime_qualification": {
+      "status": "locked",
+      "plan": {
+        "file": "config/qt-runtime-qualification.json",
+        "canonical_sha256": "fcf6395257769dc3c285848afcfe220e60b0540432c29ef4e98dec9c89f47710"
       }
     }
   },

@@ -70,8 +70,8 @@
     },
     "locks": {
       "type": "array",
-      "minItems": 5,
-      "maxItems": 5,
+      "minItems": 3,
+      "maxItems": 3,
       "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/lock"
@@ -354,9 +354,7 @@
           "enum": [
             "host-qt-build",
             "qt-target-x86_64",
-            "qt-target-aarch64",
-            "qt-runtime-x86_64",
-            "qt-runtime-aarch64"
+            "qt-target-aarch64"
           ]
         },
         "status": {
@@ -367,7 +365,7 @@
         },
         "plan_file": {
           "type": "string",
-          "pattern": "^config/rpm/(?:host-qt-build|qt-target|qt-runtime)-el8-(?:x86_64|aarch64)\\.plan\\.json$"
+          "pattern": "^config/rpm/(?:host-qt-build|qt-target)-el8-(?:x86_64|aarch64)\\.plan\\.json$"
         },
         "plan_sha256": {
           "$ref": "#/$defs/sha256"
@@ -451,8 +449,7 @@
         "arch",
         "triple",
         "sysroot_component",
-        "dependency_lock",
-        "runtime_tiers"
+        "dependency_lock"
       ],
       "properties": {
         "arch": {
@@ -478,9 +475,6 @@
             "qt-target-x86_64",
             "qt-target-aarch64"
           ]
-        },
-        "runtime_tiers": {
-          "$ref": "#/$defs/string_set"
         }
       }
     },
@@ -494,7 +488,6 @@
         "configure_warnings_reviewed",
         "host_target_version_match",
         "target_elf_audit",
-        "runtime_smoke",
         "artifacts_enter_sdk"
       ],
       "properties": {
@@ -514,9 +507,6 @@
           "const": true
         },
         "target_elf_audit": {
-          "const": true
-        },
-        "runtime_smoke": {
           "const": true
         },
         "artifacts_enter_sdk": {

@@ -158,7 +158,12 @@ class RpmLockValidationTests(unittest.TestCase):
             )
             self.assertTrue(
                 all(
-                    root["arch"] == "target"
+                    root["arch"]
+                    == (
+                        "noarch"
+                        if root["name"] in VALIDATOR["QT_RUNTIME_NOARCH_ROOTS"]
+                        else "target"
+                    )
                     and root["purpose"] == "qt-runtime"
                     and not root["name"].endswith(
                         ("-devel", "-headers", "-static")
@@ -249,13 +254,13 @@ class RpmLockValidationTests(unittest.TestCase):
         self.assertEqual(pair["x86_64_packages"], 205)
         self.assertEqual(pair["aarch64_packages"], 202)
         runtime_pair = runpy.run_path(
-            str(REPOSITORY / "scripts/validate-qt-qualification.py")
+            str(REPOSITORY / "scripts/validate-qt-runtime-qualification.py")
         )["validate_runtime_pair"]([runtime_x86_64, runtime_aarch64])
         self.assertEqual(
             runtime_pair,
             {
-                "x86_64_packages": 134,
-                "aarch64_packages": 132,
+                "x86_64_packages": 181,
+                "aarch64_packages": 179,
                 "x86_64_only": ["hwdata", "libpciaccess"],
             },
         )

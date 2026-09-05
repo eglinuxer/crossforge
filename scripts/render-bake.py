@@ -1090,6 +1090,12 @@ def render_qt_graph(
         qualification_component_sha256 = component_arguments[
             qualification_component_argument
         ]
+        runtime_qualification_component_argument = component_argument_name(
+            "future/qt-runtime-qualification"
+        )
+        runtime_qualification_component_sha256 = component_arguments[
+            runtime_qualification_component_argument
+        ]
     except KeyError as error:
         raise ValueError("missing Qt source dependency component digest") from error
     if len(qt_plan["patches"]) != 1:
@@ -1283,6 +1289,8 @@ def render_qt_graph(
     qt_target_webengine_builds = []
     qt_target_builds = []
     qt_target_qualifications = []
+    qt_runtime_overlay_qualifications = []
+    qt_target_runtime_qualifications = []
     for target in config["targets"]:
         arch = target["arch"]
         triple = target["triple"]
@@ -1350,6 +1358,94 @@ def render_qt_graph(
             "output": ["type=cacheonly"],
         }
         qt_target_qualifications.append(qualification_name)
+        qualified_root_name = "qt-%s-build-qualified-root" % arch
+        targets[qualified_root_name] = {
+            "inherits": ["_qt_common"],
+            "target": "qt-target-build-qualified",
+            "args": dict(targets[name]["args"]),
+            "contexts": dict(targets[name]["contexts"]),
+            "output": ["type=cacheonly"],
+        }
+        runtime_overlay_name = "qt-%s-runtime-overlay-qualified" % arch
+        oci_arch = "amd64" if arch == "x86_64" else "arm64"
+        rocky = config["base_image"]
+        rocky_target_image = "%s:%s@%s" % (
+            rocky["repository"],
+            rocky["tag"],
+            rocky["manifests"][oci_arch],
+        )
+        runtime_overlay_arguments = {
+            "QT_TARGET_ARCH": arch,
+            "ROCKY_TARGET_MANIFEST_DIGEST": rocky["manifests"][oci_arch],
+            runtime_qualification_component_argument: (
+                runtime_qualification_component_sha256
+            ),
+        }
+        runtime_overlay_contexts = {
+            "crossforge_host_qt": "target:host-qt-build-locked",
+            "crossforge_qt_runtime_rpms": (
+                "target:qt-runtime-rpms-%s" % arch
+            ),
+            "crossforge_rocky_target": (
+                "docker-image://%s" % rocky_target_image
+            ),
+        }
+        targets[runtime_overlay_name] = {
+            "inherits": ["_qt_common"],
+            "dockerfile": "docker/qt-runtime.Dockerfile",
+            "target": "qt-runtime-overlay-evidence",
+            "args": runtime_overlay_arguments,
+            "contexts": runtime_overlay_contexts,
+            "output": ["type=cacheonly"],
+        }
+        qt_runtime_overlay_qualifications.append(runtime_overlay_name)
+        runtime_name = "qt-%s-runtime-qualified" % arch
+        qemu = config["qemu"]["executor"]
+        runtime_arguments = {
+            "QT_TARGET_ARCH": arch,
+            "QT_TARGET_TRIPLE": triple,
+        }
+        runtime_arguments.update(runtime_overlay_arguments)
+        runtime_contexts = dict(runtime_overlay_contexts)
+        runtime_contexts["crossforge_qt_target"] = (
+            "target:%s" % qualified_root_name
+        )
+        if arch == "aarch64":
+            runtime_arguments.update(
+                {
+                    "QEMU_EXECUTOR_CPU": qemu["cpu"],
+                    "QEMU_EXECUTOR_UNAME_RELEASE": qemu["uname_release"],
+                }
+            )
+            runtime_contexts["crossforge_qemu_validated"] = (
+                "target:qemu-aarch64-validated"
+            )
+        targets[runtime_name] = {
+            "inherits": ["_qt_common"],
+            "dockerfile": "docker/qt-runtime.Dockerfile",
+            "target": "qt-target-runtime-%s-evidence" % arch,
+            "args": runtime_arguments,
+            "contexts": runtime_contexts,
+            "output": ["type=cacheonly"],
+        }
+        qt_target_runtime_qualifications.append(runtime_name)
+        if arch == "aarch64":
+            targets["qt-aarch64-native-runtime-root"] = {
+                "inherits": ["_qt_common"],
+                "dockerfile": "docker/qt-runtime.Dockerfile",
+                "target": "qt-native-runtime-root",
+                "args": {
+                    key: value
+                    for key, value in runtime_arguments.items()
+                    if not key.startswith("QEMU_")
+                },
+                "contexts": {
+                    key: value
+                    for key, value in runtime_contexts.items()
+                    if key != "crossforge_qemu_validated"
+                },
+                "output": ["type=cacheonly"],
+            }
     return {
         "qt-source-qualified": {
             "targets": ["qt-source", "ffmpeg-source", "xcb-util-cursor-source"]
@@ -1371,6 +1467,15 @@ def render_qt_graph(
         "qt-target-built": {"targets": qt_target_builds},
         "qt-target-build-qualified": {
             "targets": qt_target_qualifications
+        },
+        "qt-runtime-overlay-qualified": {
+            "targets": qt_runtime_overlay_qualifications
+        },
+        "qt-target-runtime-qualified": {
+            "targets": qt_target_runtime_qualifications
+        },
+        "qt-native-runtime-root": {
+            "targets": ["qt-aarch64-native-runtime-root"]
         },
     }
 

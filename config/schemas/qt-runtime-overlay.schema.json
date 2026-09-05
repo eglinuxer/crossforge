@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/qt-runtime-overlay.schema.json",
+  "title": "Crossforge Qt clean-Rocky runtime overlay evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "qualification_only",
+    "identity",
+    "identity_sha256",
+    "runtime_inventory"
+  ],
+  "properties": {
+    "$schema": {"const": "https://crossforge.dev/schemas/qt-runtime-overlay.schema.json"},
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-qt-runtime-overlay"},
+    "qualification_only": {"const": true},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base_image",
+        "release_sha256",
+        "target",
+        "runtime_qualification",
+        "runtime_lock",
+        "retained_base_packages",
+        "installed_packages",
+        "closure_sha256"
+      ],
+      "properties": {
+        "base_image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["index_digest", "manifest_digest"],
+          "properties": {
+            "index_digest": {"$ref": "#/$defs/oci_digest"},
+            "manifest_digest": {"$ref": "#/$defs/oci_digest"}
+          }
+        },
+        "release_sha256": {"$ref": "#/$defs/sha256"},
+        "target": {"$ref": "#/$defs/target"},
+        "runtime_qualification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["component", "canonical_sha256", "plan_sha256"],
+          "properties": {
+            "component": {"const": "future/qt-runtime-qualification"},
+            "canonical_sha256": {"$ref": "#/$defs/sha256"},
+            "plan_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "runtime_lock": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["plan_sha256", "transaction_sha256", "lock_sha256"],
+          "properties": {
+            "plan_sha256": {"$ref": "#/$defs/sha256"},
+            "transaction_sha256": {"$ref": "#/$defs/sha256"},
+            "lock_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "retained_base_packages": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/retained_package"}
+        },
+        "installed_packages": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/installed_package"}
+        },
+        "closure_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "identity_sha256": {"$ref": "#/$defs/sha256"},
+    "runtime_inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before_sha256",
+        "before_item_count",
+        "after_sha256",
+        "after_item_count",
+        "installed_nevras",
+        "os_release_sha256"
+      ],
+      "properties": {
+        "before_sha256": {"$ref": "#/$defs/sha256"},
+        "before_item_count": {"type": "integer", "minimum": 1},
+        "after_sha256": {"$ref": "#/$defs/sha256"},
+        "after_item_count": {"type": "integer", "minimum": 1},
+        "installed_nevras": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "os_release_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "oci_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["arch", "triple"],
+      "properties": {
+        "arch": {"enum": ["x86_64", "aarch64"]},
+        "triple": {"enum": ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"]}
+      }
+    },
+    "retained_package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "base_name", "base_nevra", "locked_nevra"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "base_name": {"type": "string", "minLength": 1},
+        "base_nevra": {"type": "string", "minLength": 1},
+        "locked_nevra": {"type": "string", "minLength": 1}
+      }
+    },
+    "installed_package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "nevra", "received_sha256"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "nevra": {"type": "string", "minLength": 1},
+        "received_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

@@ -327,6 +327,17 @@
         "qt-host-qualification-evidence"
       ]
     },
+    "qt-native-runtime-root": {
+      "targets": [
+        "qt-aarch64-native-runtime-root"
+      ]
+    },
+    "qt-runtime-overlay-qualified": {
+      "targets": [
+        "qt-x86_64-runtime-overlay-qualified",
+        "qt-aarch64-runtime-overlay-qualified"
+      ]
+    },
     "qt-source-qualified": {
       "targets": [
         "qt-source",
@@ -356,6 +367,12 @@
       "targets": [
         "qt-x86_64-configure-qualified",
         "qt-aarch64-configure-qualified"
+      ]
+    },
+    "qt-target-runtime-qualified": {
+      "targets": [
+        "qt-x86_64-runtime-qualified",
+        "qt-aarch64-runtime-qualified"
       ]
     },
     "qt-target-webengine-built": {
@@ -1916,7 +1933,7 @@
     },
     "ffmpeg-aarch64-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
         "FFMPEG_RPM_LOCK": "locks/qt-target-el8-aarch64.json",
         "FFMPEG_RPM_TRANSACTION": "locks/transactions/qt-target-el8-aarch64.json",
@@ -1940,7 +1957,7 @@
     },
     "ffmpeg-host-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
         "FFMPEG_VERSION": "7.1.1"
       },
@@ -1958,7 +1975,7 @@
     },
     "ffmpeg-host-build-observation": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
         "FFMPEG_VERSION": "7.1.1"
       },
@@ -1993,7 +2010,7 @@
     },
     "ffmpeg-x86_64-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
         "FFMPEG_RPM_LOCK": "locks/qt-target-el8-x86_64.json",
         "FFMPEG_RPM_TRANSACTION": "locks/transactions/qt-target-el8-x86_64.json",
@@ -2827,7 +2844,7 @@
     },
     "qt-aarch64-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_TARGET_ARCH": "aarch64",
         "QT_TARGET_TRIPLE": "aarch64-unknown-linux-gnu",
         "QT_VERSION": "6.8.4",
@@ -2851,9 +2868,35 @@
       ],
       "target": "qt-target-build-observation"
     },
+    "qt-aarch64-build-qualified-root": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
+        "QT_TARGET_ARCH": "aarch64",
+        "QT_TARGET_TRIPLE": "aarch64-unknown-linux-gnu",
+        "QT_VERSION": "6.8.4",
+        "QT_XNNPACK_PATCH_SHA256": "f206a8f686e9208c424f9b7a1a0aab960da4ffbc2cae112b6489408ac20953b3"
+      },
+      "contexts": {
+        "crossforge_cmake": "target:cmake-host-tool",
+        "crossforge_ffmpeg_target": "target:ffmpeg-aarch64-build",
+        "crossforge_host_qt": "target:host-qt-build-locked",
+        "crossforge_ninja": "target:ninja-host-tool",
+        "crossforge_qt_host": "target:qt-host-qualified",
+        "crossforge_qt_source": "target:qt-source",
+        "crossforge_toolchain": "target:toolchain-aarch64-dev",
+        "crossforge_xcb_target": "target:xcb-util-cursor-aarch64-build"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-target-build-qualified"
+    },
     "qt-aarch64-configure-observation": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_TARGET_ARCH": "aarch64",
         "QT_TARGET_TRIPLE": "aarch64-unknown-linux-gnu",
         "QT_VERSION": "6.8.4",
@@ -2879,7 +2922,7 @@
     },
     "qt-aarch64-configure-qualified": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_TARGET_ARCH": "aarch64",
         "QT_TARGET_TRIPLE": "aarch64-unknown-linux-gnu",
         "QT_VERSION": "6.8.4",
@@ -2903,9 +2946,31 @@
       ],
       "target": "qt-target-configure-evidence"
     },
+    "qt-aarch64-native-runtime-root": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_RUNTIME_QUALIFICATION_SHA256": "afa5c2c6d2eee0fd6de55cf85eedd5063c9463227c37ec292aeb38a47d861319",
+        "QT_TARGET_ARCH": "aarch64",
+        "QT_TARGET_TRIPLE": "aarch64-unknown-linux-gnu",
+        "ROCKY_TARGET_MANIFEST_DIGEST": "sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+      },
+      "contexts": {
+        "crossforge_host_qt": "target:host-qt-build-locked",
+        "crossforge_qt_runtime_rpms": "target:qt-runtime-rpms-aarch64",
+        "crossforge_qt_target": "target:qt-aarch64-build-qualified-root",
+        "crossforge_rocky_target": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+      },
+      "dockerfile": "docker/qt-runtime.Dockerfile",
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-native-runtime-root"
+    },
     "qt-aarch64-qualified": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_TARGET_ARCH": "aarch64",
         "QT_TARGET_TRIPLE": "aarch64-unknown-linux-gnu",
         "QT_VERSION": "6.8.4",
@@ -2929,9 +2994,54 @@
       ],
       "target": "qt-target-qualification-evidence"
     },
+    "qt-aarch64-runtime-overlay-qualified": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_RUNTIME_QUALIFICATION_SHA256": "afa5c2c6d2eee0fd6de55cf85eedd5063c9463227c37ec292aeb38a47d861319",
+        "QT_TARGET_ARCH": "aarch64",
+        "ROCKY_TARGET_MANIFEST_DIGEST": "sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+      },
+      "contexts": {
+        "crossforge_host_qt": "target:host-qt-build-locked",
+        "crossforge_qt_runtime_rpms": "target:qt-runtime-rpms-aarch64",
+        "crossforge_rocky_target": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+      },
+      "dockerfile": "docker/qt-runtime.Dockerfile",
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-runtime-overlay-evidence"
+    },
+    "qt-aarch64-runtime-qualified": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_RUNTIME_QUALIFICATION_SHA256": "afa5c2c6d2eee0fd6de55cf85eedd5063c9463227c37ec292aeb38a47d861319",
+        "QEMU_EXECUTOR_CPU": "cortex-a53",
+        "QEMU_EXECUTOR_UNAME_RELEASE": "4.18.0",
+        "QT_TARGET_ARCH": "aarch64",
+        "QT_TARGET_TRIPLE": "aarch64-unknown-linux-gnu",
+        "ROCKY_TARGET_MANIFEST_DIGEST": "sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+      },
+      "contexts": {
+        "crossforge_host_qt": "target:host-qt-build-locked",
+        "crossforge_qemu_validated": "target:qemu-aarch64-validated",
+        "crossforge_qt_runtime_rpms": "target:qt-runtime-rpms-aarch64",
+        "crossforge_qt_target": "target:qt-aarch64-build-qualified-root",
+        "crossforge_rocky_target": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+      },
+      "dockerfile": "docker/qt-runtime.Dockerfile",
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-target-runtime-aarch64-evidence"
+    },
     "qt-aarch64-webengine-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_TARGET_ARCH": "aarch64",
         "QT_TARGET_TRIPLE": "aarch64-unknown-linux-gnu",
         "QT_VERSION": "6.8.4",
@@ -2957,7 +3067,7 @@
     },
     "qt-host-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_VERSION": "6.8.4"
       },
       "contexts": {
@@ -2976,7 +3086,7 @@
     },
     "qt-host-configure-evidence": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_VERSION": "6.8.4"
       },
       "contexts": {
@@ -2995,7 +3105,7 @@
     },
     "qt-host-configure-qualified": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_VERSION": "6.8.4"
       },
       "contexts": {
@@ -3014,7 +3124,7 @@
     },
     "qt-host-qualification-evidence": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_VERSION": "6.8.4"
       },
       "contexts": {
@@ -3033,7 +3143,7 @@
     },
     "qt-host-qualified": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_VERSION": "6.8.4"
       },
       "contexts": {
@@ -3079,7 +3189,7 @@
     },
     "qt-x86_64-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_TARGET_ARCH": "x86_64",
         "QT_TARGET_TRIPLE": "x86_64-unknown-linux-gnu",
         "QT_VERSION": "6.8.4",
@@ -3103,9 +3213,35 @@
       ],
       "target": "qt-target-build-observation"
     },
+    "qt-x86_64-build-qualified-root": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
+        "QT_TARGET_ARCH": "x86_64",
+        "QT_TARGET_TRIPLE": "x86_64-unknown-linux-gnu",
+        "QT_VERSION": "6.8.4",
+        "QT_XNNPACK_PATCH_SHA256": "f206a8f686e9208c424f9b7a1a0aab960da4ffbc2cae112b6489408ac20953b3"
+      },
+      "contexts": {
+        "crossforge_cmake": "target:cmake-host-tool",
+        "crossforge_ffmpeg_target": "target:ffmpeg-x86_64-build",
+        "crossforge_host_qt": "target:host-qt-build-locked",
+        "crossforge_ninja": "target:ninja-host-tool",
+        "crossforge_qt_host": "target:qt-host-qualified",
+        "crossforge_qt_source": "target:qt-source",
+        "crossforge_toolchain": "target:toolchain-x86_64-dev",
+        "crossforge_xcb_target": "target:xcb-util-cursor-x86_64-build"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-target-build-qualified"
+    },
     "qt-x86_64-configure-observation": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_TARGET_ARCH": "x86_64",
         "QT_TARGET_TRIPLE": "x86_64-unknown-linux-gnu",
         "QT_VERSION": "6.8.4",
@@ -3131,7 +3267,7 @@
     },
     "qt-x86_64-configure-qualified": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_TARGET_ARCH": "x86_64",
         "QT_TARGET_TRIPLE": "x86_64-unknown-linux-gnu",
         "QT_VERSION": "6.8.4",
@@ -3157,7 +3293,7 @@
     },
     "qt-x86_64-qualified": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_TARGET_ARCH": "x86_64",
         "QT_TARGET_TRIPLE": "x86_64-unknown-linux-gnu",
         "QT_VERSION": "6.8.4",
@@ -3181,9 +3317,51 @@
       ],
       "target": "qt-target-qualification-evidence"
     },
+    "qt-x86_64-runtime-overlay-qualified": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_RUNTIME_QUALIFICATION_SHA256": "afa5c2c6d2eee0fd6de55cf85eedd5063c9463227c37ec292aeb38a47d861319",
+        "QT_TARGET_ARCH": "x86_64",
+        "ROCKY_TARGET_MANIFEST_DIGEST": "sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+      },
+      "contexts": {
+        "crossforge_host_qt": "target:host-qt-build-locked",
+        "crossforge_qt_runtime_rpms": "target:qt-runtime-rpms-x86_64",
+        "crossforge_rocky_target": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+      },
+      "dockerfile": "docker/qt-runtime.Dockerfile",
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-runtime-overlay-evidence"
+    },
+    "qt-x86_64-runtime-qualified": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_RUNTIME_QUALIFICATION_SHA256": "afa5c2c6d2eee0fd6de55cf85eedd5063c9463227c37ec292aeb38a47d861319",
+        "QT_TARGET_ARCH": "x86_64",
+        "QT_TARGET_TRIPLE": "x86_64-unknown-linux-gnu",
+        "ROCKY_TARGET_MANIFEST_DIGEST": "sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+      },
+      "contexts": {
+        "crossforge_host_qt": "target:host-qt-build-locked",
+        "crossforge_qt_runtime_rpms": "target:qt-runtime-rpms-x86_64",
+        "crossforge_qt_target": "target:qt-x86_64-build-qualified-root",
+        "crossforge_rocky_target": "docker-image://quay.io/rockylinux/rockylinux:8@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+      },
+      "dockerfile": "docker/qt-runtime.Dockerfile",
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-target-runtime-x86_64-evidence"
+    },
     "qt-x86_64-webengine-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "QT_TARGET_ARCH": "x86_64",
         "QT_TARGET_TRIPLE": "x86_64-unknown-linux-gnu",
         "QT_VERSION": "6.8.4",
@@ -3570,7 +3748,7 @@
     },
     "xcb-util-cursor-aarch64-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256": "68084bc48751b6ea2f1d1778411231852ff22797d58e72b259f353c67ab85680",
         "XCB_UTIL_CURSOR_RPM_LOCK": "locks/qt-target-el8-aarch64.json",
         "XCB_UTIL_CURSOR_RPM_TRANSACTION": "locks/transactions/qt-target-el8-aarch64.json",
@@ -3593,7 +3771,7 @@
     },
     "xcb-util-cursor-host-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256": "68084bc48751b6ea2f1d1778411231852ff22797d58e72b259f353c67ab85680"
       },
       "contexts": {
@@ -3627,7 +3805,7 @@
     },
     "xcb-util-cursor-x86_64-build": {
       "args": {
-        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "a1a4ad3b319cd12de9c8b6b520230fcadfd690c83d6a9a98b6fa3c7ff1c06b7e",
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
         "CROSSFORGE_COMPONENT_SOURCES_XCB_UTIL_CURSOR_SHA256": "68084bc48751b6ea2f1d1778411231852ff22797d58e72b259f353c67ab85680",
         "XCB_UTIL_CURSOR_RPM_LOCK": "locks/qt-target-el8-x86_64.json",
         "XCB_UTIL_CURSOR_RPM_TRANSACTION": "locks/transactions/qt-target-el8-x86_64.json",

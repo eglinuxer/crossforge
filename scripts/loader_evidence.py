@@ -7,6 +7,9 @@ import sys
 
 ADDRESS_SUFFIX = re.compile(r"\s+\(0x[0-9a-fA-F]+\)\s*$")
 ARROW_SPACING = re.compile(r"\s*=>\s*")
+DEBUG_PREFIX = re.compile(r"^\s*[0-9]+:\s*")
+DEBUG_FIND = re.compile(r"^find library=([^ ]+) \[[0-9]+\]; searching$")
+DEBUG_INIT = re.compile(r"^calling init:\s*(/[^ ]+)$")
 
 
 def normalize_loader_listing(text):
@@ -16,6 +19,20 @@ def normalize_loader_listing(text):
         line = ARROW_SPACING.sub(" => ", line)
         if line:
             dependencies.add(line)
+    return sorted(dependencies)
+
+
+def normalize_loader_debug_listing(text):
+    dependencies = set()
+    for raw_line in text.splitlines():
+        line = DEBUG_PREFIX.sub("", raw_line).strip()
+        found = DEBUG_FIND.match(line)
+        if found:
+            dependencies.add("needed:" + found.group(1))
+            continue
+        initialized = DEBUG_INIT.match(line)
+        if initialized:
+            dependencies.add("loaded:" + initialized.group(1))
     return sorted(dependencies)
 
 

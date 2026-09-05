@@ -263,7 +263,11 @@ QT_TARGET_NOARCH_ROOTS = {
 }
 QT_RUNTIME_ROOTS = {
     "alsa-lib",
+    "at-spi2-core",
+    "ca-certificates",
+    "cups-libs",
     "dbus-libs",
+    "dejavu-sans-fonts",
     "expat",
     "fontconfig",
     "freetype",
@@ -273,19 +277,30 @@ QT_RUNTIME_ROOTS = {
     "libSM",
     "libX11",
     "libX11-xcb",
+    "libXcomposite",
+    "libXcursor",
+    "libXdamage",
     "libXext",
+    "libXfixes",
     "libXi",
+    "libXrandr",
+    "libXrender",
+    "libXtst",
     "libatomic",
     "libdrm",
     "libgcc",
     "libglvnd-egl",
+    "libglvnd-gles",
     "libglvnd-glx",
     "libglvnd-opengl",
+    "libgudev",
+    "libinput",
     "libjpeg-turbo",
     "libpng",
     "libstdc++",
     "libwayland-client",
     "libwayland-cursor",
+    "libwayland-egl",
     "libwayland-server",
     "libxcb",
     "libxkbcommon",
@@ -297,12 +312,19 @@ QT_RUNTIME_ROOTS = {
     "openssl-libs",
     "pciutils-libs",
     "pulseaudio-libs",
+    "systemd-libs",
     "xcb-util",
     "xcb-util-image",
     "xcb-util-keysyms",
     "xcb-util-renderutil",
     "xcb-util-wm",
+    "xkeyboard-config",
     "zlib",
+}
+QT_RUNTIME_NOARCH_ROOTS = {
+    "ca-certificates",
+    "dejavu-sans-fonts",
+    "xkeyboard-config",
 }
 HOST_QT_ROOTS = (QT_TARGET_ROOTS - {"libatomic"}) | {
     "bison",
@@ -1059,11 +1081,17 @@ def validate_locked_qt_runtime_contract(transaction):
     if {request["name"] for request in requests} != QT_RUNTIME_ROOTS:
         raise ValidationError("locked Qt runtime roots differ")
     for request in requests:
+        expected_selector = (
+            "noarch"
+            if request["name"] in QT_RUNTIME_NOARCH_ROOTS
+            else "target"
+        )
         _name, resolved_arch = nevra_name_arch(request["resolved_nevra"])
+        expected_arch = "noarch" if expected_selector == "noarch" else arch
         if (
-            request["arch"] != "target"
+            request["arch"] != expected_selector
             or request["purpose"] != "qt-runtime"
-            or resolved_arch != arch
+            or resolved_arch != expected_arch
             or request["disposition"] != "transaction"
         ):
             raise ValidationError("locked Qt runtime request differs")
@@ -1098,9 +1126,7 @@ def validate_plan_semantics(plan):
         }[role]
         if identity["target_triple"] != TARGET_TRIPLES[arch]:
             raise ValidationError("target RPM triple and arch disagree")
-        expected_mode = (
-            "lock" if role == "qt-target" else "empty"
-        )
+        expected_mode = "lock" if role == "qt-target" else "empty"
         if plan["base"]["mode"] != expected_mode:
             raise ValidationError(
                 "%s must use a %s base" % (role, expected_mode)
@@ -1189,8 +1215,14 @@ def validate_plan_semantics(plan):
             if root["arch"] != expected_arch:
                 raise ValidationError("Qt target root architecture differs")
     elif role == "qt-runtime":
-        if any(root["arch"] != "target" for root in plan["roots"]):
-            raise ValidationError("Qt runtime roots must select the target arch")
+        for root in plan["roots"]:
+            expected_arch = (
+                "noarch"
+                if root["name"] in QT_RUNTIME_NOARCH_ROOTS
+                else "target"
+            )
+            if root["arch"] != expected_arch:
+                raise ValidationError("Qt runtime root architecture differs")
     elif any(root["arch"] != "any" for root in plan["roots"]):
         raise ValidationError("host roots must use DNF's best target/noarch choice")
     expected_purpose = {
@@ -1722,11 +1754,20 @@ def full_release_binding(release, transaction):
             raise ValidationError("release target is not unique")
         pin = matches[0]["sysroot"]
     elif role in ("host-qt-build", "qt-target", "qt-runtime"):
-        contract = release["qt"]["qualification"]
+        runtime = role == "qt-runtime"
+        contract = release["qt"][
+            "runtime_qualification" if runtime else "qualification"
+        ]
         plan_path = repository_file(contract["plan"]["file"], "Qt plan")
         plan = load_json(plan_path)
         schema = load_json(
-            REPOSITORY / "config/schemas/qt-qualification-plan.schema.json"
+            REPOSITORY
+            / "config/schemas"
+            / (
+                "qt-runtime-qualification-plan.schema.json"
+                if runtime
+                else "qt-qualification-plan.schema.json"
+            )
         )
         STRICT["validate_schema_subset"](schema)
         STRICT["validate"](plan, schema, schema, "$")

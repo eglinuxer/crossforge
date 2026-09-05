@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-if [[ $# -ne 4 ]]; then
-  echo "usage: $0 BUILD_ROOT PREFIX CONFIGURE_EVIDENCE JOBS" >&2
+if [[ $# -ne 3 ]]; then
+  echo "usage: $0 BUILD_ROOT PREFIX JOBS" >&2
   exit 2
 fi
 
 build_root=$1
 prefix=$2
-configure_evidence=$3
-jobs=$4
+jobs=$3
 cmake=/opt/crossforge/host-tools/cmake/4.4.0/bin/cmake
 ninja=/opt/crossforge/host-tools/ninja/1.13.2/bin/ninja
 cxx=/opt/rh/gcc-toolset-15/root/usr/bin/g++
@@ -17,13 +16,13 @@ ffmpeg=/opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg
 xcb_cursor=/opt/crossforge/qualification/qt/6.8.4/deps/host/xcb-util-cursor
 
 [[ "$build_root" == /work/build/qt-host \
-  && "$prefix" == /opt/crossforge/qualification/qt/6.8.4/host \
-  && "$configure_evidence" == "$build_root/qt-host-configure.json" ]] || {
+  && "$prefix" == /opt/crossforge/qualification/qt/6.8.4/host ]] || {
   echo "error: Qt host build path contract differs" >&2
   exit 1
 }
-[[ -d "$build_root" && -f "$configure_evidence" \
-  && -x "$cmake" && -x "$ninja" && ! -e "$prefix" ]] || {
+[[ -d "$build_root" && -f "$build_root/CMakeCache.txt" \
+  && -f "$build_root/config.summary" && -x "$cmake" \
+  && -x "$ninja" && ! -e "$prefix" ]] || {
   echo "error: Qt host build input is incomplete or install prefix is stale" >&2
   exit 1
 }

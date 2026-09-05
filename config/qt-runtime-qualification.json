@@ -1,0 +1,56 @@
+{
+  "$schema": "https://crossforge.dev/schemas/qt-runtime-qualification-plan.schema.json",
+  "schema_version": 1,
+  "kind": "crossforge-qt-runtime-qualification-plan",
+  "status": "locked",
+  "qt_version": "6.8.4",
+  "build_qualification": {
+    "component": "future/qt-qualification",
+    "plan_file": "config/qt-qualification.json",
+    "plan_sha256": "031e8220250258286948f3cd66c0c3ddee26d1b9643503cdba0e506751c72033"
+  },
+  "locks": [
+    {
+      "id": "qt-runtime-x86_64",
+      "status": "locked",
+      "plan_file": "config/rpm/qt-runtime-el8-x86_64.plan.json",
+      "plan_sha256": "2d26c9ed93fbde83c0c36e8af909bb1cb443ae6a2e18cd3a65804b3e2b650a64",
+      "lock_file": "locks/qt-runtime-el8-x86_64.json",
+      "canonical_sha256": "57b964d46f2e7097ec57c84c74a0c773782748eb6ccbefe8f6fa2e2ec6a49f0c"
+    },
+    {
+      "id": "qt-runtime-aarch64",
+      "status": "locked",
+      "plan_file": "config/rpm/qt-runtime-el8-aarch64.plan.json",
+      "plan_sha256": "e5ae580b76bf1f2f9e93b31106644a1e877ea733200e3b0906515465e11ba577",
+      "lock_file": "locks/qt-runtime-el8-aarch64.json",
+      "canonical_sha256": "303992cc5f861f91eeb8ff7067556e4cff50ae6beecdb9802291e9c3a3e67f82"
+    }
+  ],
+  "targets": [
+    {
+      "arch": "x86_64",
+      "triple": "x86_64-unknown-linux-gnu",
+      "runtime_tiers": [
+        {"tier": "clean-rocky", "executor": "native"}
+      ]
+    },
+    {
+      "arch": "aarch64",
+      "triple": "aarch64-unknown-linux-gnu",
+      "runtime_tiers": [
+        {"tier": "clean-rocky-qemu", "executor": "explicit-qemu"},
+        {"tier": "native-release", "executor": "native"}
+      ]
+    }
+  ],
+  "acceptance": {
+    "clean_rocky_runtime": true,
+    "offscreen_widget": true,
+    "platform_plugin_load": true,
+    "plugin_dependency_closure": true,
+    "dependency_closure": true,
+    "native_aarch64_release": true,
+    "artifacts_enter_sdk": false
+  }
+}

@@ -62,7 +62,7 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_component_arguments_cover_the_complete_release_binding(self):
         records = self.binding["components"]
-        self.assertEqual(len(records), 87)
+        self.assertEqual(len(records), 88)
         expected = {
             RENDERER["component_argument_name"](record["component"]): record[
                 "canonical_sha256"
@@ -175,7 +175,13 @@ class RenderBakeTests(unittest.TestCase):
             for record in self.binding["components"]
             if record["scope"] == "future"
         }
-        self.assertEqual(future, {"future/qt-qualification"})
+        self.assertEqual(
+            future,
+            {
+                "future/qt-qualification",
+                "future/qt-runtime-qualification",
+            },
+        )
         self.assertNotIn(
             "CROSSFORGE_RELEASE_SHA256",
             self.targets["_common"]["args"],
@@ -513,6 +519,7 @@ class RenderBakeTests(unittest.TestCase):
                 for contract in RENDERER["IMPLEMENTED_ROWS"]
             }
             | {"python-dev", "sdk-phase13-base"}
+            | {"qt-aarch64-runtime-qualified"}
             | {
                 "python-phase%d-dev" % phase
                 for phase in range(5, RENDERER["LATEST_PHASE"] + 1)

@@ -431,6 +431,50 @@ RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py
       --destination /opt/crossforge/sysroots/el8/aarch64 \
       --release-config ./config/release.json
 
+FROM rpm-locked-input-base AS qt-runtime-rpms-x86_64
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY config/qt-qualification.json ./config/qt-qualification.json
+COPY config/qt-runtime-qualification.json \
+  ./config/qt-runtime-qualification.json
+COPY config/schemas/qt-qualification-plan.schema.json \
+  ./config/schemas/qt-qualification-plan.schema.json
+COPY config/schemas/qt-runtime-qualification-plan.schema.json \
+  ./config/schemas/qt-runtime-qualification-plan.schema.json
+COPY locks/qt-runtime-el8-x86_64.json ./locks/qt-runtime-el8-x86_64.json
+COPY locks/transactions/qt-runtime-el8-x86_64.json \
+  ./locks/transactions/qt-runtime-el8-x86_64.json
+COPY locks/metadata/qt-runtime-el8-x86_64/ \
+  ./locks/metadata/qt-runtime-el8-x86_64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/qt-runtime-el8-x86_64.json --require-lock \
+      --release-config ./config/release.json \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/qt-runtime-el8-x86_64.json fetch \
+      --output /rpm-bundle --jobs 8 \
+      --release-config ./config/release.json
+
+FROM rpm-locked-input-base AS qt-runtime-rpms-aarch64
+COPY --from=rpm-input-base /src/config/ ./config/
+COPY config/qt-qualification.json ./config/qt-qualification.json
+COPY config/qt-runtime-qualification.json \
+  ./config/qt-runtime-qualification.json
+COPY config/schemas/qt-qualification-plan.schema.json \
+  ./config/schemas/qt-qualification-plan.schema.json
+COPY config/schemas/qt-runtime-qualification-plan.schema.json \
+  ./config/schemas/qt-runtime-qualification-plan.schema.json
+COPY locks/qt-runtime-el8-aarch64.json ./locks/qt-runtime-el8-aarch64.json
+COPY locks/transactions/qt-runtime-el8-aarch64.json \
+  ./locks/transactions/qt-runtime-el8-aarch64.json
+COPY locks/metadata/qt-runtime-el8-aarch64/ \
+  ./locks/metadata/qt-runtime-el8-aarch64/
+RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
+      ./locks/qt-runtime-el8-aarch64.json --require-lock \
+      --release-config ./config/release.json \
+    && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
+      ./locks/qt-runtime-el8-aarch64.json fetch \
+      --output /rpm-bundle --jobs 8 \
+      --release-config ./config/release.json
+
 FROM host-build-common-locked AS qemu-aarch64-validated
 ARG QEMU_EXECUTOR_VERSION
 ARG QEMU_EXECUTOR_BINARY_SHA256
