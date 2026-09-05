@@ -24,8 +24,12 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertNotIn("push:\n", self.workflow)
         self.assertIn("packages: write", self.workflow)
         self.assertIn("sdk-candidate.output=type=image,push=true", self.workflow)
-        self.assertIn("--provenance=mode=max", self.workflow)
-        self.assertIn("--sbom=true", self.workflow)
+        self.assertIn(
+            "sdk-candidate.attest=type=provenance,mode=max", self.workflow
+        )
+        self.assertIn("sdk-candidate.attest+=type=sbom", self.workflow)
+        self.assertNotIn("--provenance=", self.workflow)
+        self.assertNotIn("--sbom=", self.workflow)
         self.assertNotIn("sdk-complete-dev.output", self.workflow)
         self.assertNotIn(":gts15-el8", self.workflow)
         self.assertNotIn(":v0.1.0", self.workflow)

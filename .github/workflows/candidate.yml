@@ -73,8 +73,8 @@ jobs:
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
             --set "sdk-candidate.tags=$CANDIDATE_REFERENCE" \
             --set "sdk-candidate.output=type=image,push=true" \
-            --provenance=mode=max \
-            --sbom=true \
+            --set "sdk-candidate.attest=type=provenance,mode=max" \
+            --set "sdk-candidate.attest+=type=sbom" \
             --metadata-file "$RUNNER_TEMP/build-metadata.json" \
             --progress=plain
       - name: Bind the pushed OCI index and platform manifest
