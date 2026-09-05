@@ -215,8 +215,6 @@ QT_TARGET_ROOTS = {
     "fontconfig-devel",
     "freetype-devel",
     "glib2-devel",
-    "gstreamer1-devel",
-    "gstreamer1-plugins-base-devel",
     "libICE-devel",
     "libSM-devel",
     "libX11-devel",
@@ -241,11 +239,13 @@ QT_TARGET_ROOTS = {
     "libxshmfence-devel",
     "mesa-libEGL-devel",
     "mesa-libGL-devel",
+    "mesa-libgbm-devel",
     "nss-devel",
     "openssl-devel",
     "pciutils-devel",
     "pulseaudio-libs-devel",
     "sqlite-devel",
+    "systemd-devel",
     "wayland-devel",
     "wayland-protocols-devel",
     "xcb-util-devel",
@@ -268,6 +268,7 @@ HOST_QT_ROOTS = QT_TARGET_ROOTS | {
     "pkgconf-pkg-config",
     "python3-html5lib",
     "python38",
+    "yasm",
 }
 QT_TARGET_PARENT_LOCKS = {
     "x86_64": (
@@ -288,11 +289,13 @@ HOST_QT_POWERTOOLS_FORWARD = {
     "libinput-devel",
     "libxkbcommon-x11-devel",
     "libxkbfile-devel",
+    "mesa-libgbm-devel",
     "xcb-util-devel",
     "xcb-util-image-devel",
     "xcb-util-keysyms-devel",
     "xcb-util-renderutil-devel",
     "xcb-util-wm-devel",
+    "yasm",
 }
 HOST_QT_REPLACEMENTS = {
     "dbus",
@@ -305,8 +308,11 @@ HOST_QT_REPLACEMENTS = {
     "openssl",
     "openssl-libs",
     "sqlite-libs",
+    "systemd",
+    "systemd-libs",
+    "systemd-pam",
 }
-QT_TARGET_POWERTOOLS_FORWARD = HOST_QT_POWERTOOLS_FORWARD - {"gperf"}
+QT_TARGET_POWERTOOLS_FORWARD = HOST_QT_POWERTOOLS_FORWARD - {"gperf", "yasm"}
 QT_FORBIDDEN_HOST_TOOLS = {
     "bison",
     "flex",

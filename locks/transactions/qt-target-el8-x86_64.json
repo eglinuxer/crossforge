@@ -13,7 +13,7 @@
   },
   "plan": {
     "file": "config/rpm/qt-target-el8-x86_64.plan.json",
-    "canonical_sha256": "82e39eb29f9380a6135ab7f4542347b6dd8889b493287640031700892be075b4"
+    "canonical_sha256": "f558aa43c0c215fe5a4f0fcc9933e9674cc549e47de02364a7d741ae25f23824"
   },
   "resolver": {
     "implementation": "python3-dnf",
@@ -600,20 +600,6 @@
       "disposition": "transaction"
     },
     {
-      "name": "gstreamer1-devel",
-      "arch": "target",
-      "purpose": "qt-target",
-      "resolved_nevra": "gstreamer1-devel-0:1.16.1-2.el8.x86_64",
-      "disposition": "transaction"
-    },
-    {
-      "name": "gstreamer1-plugins-base-devel",
-      "arch": "target",
-      "purpose": "qt-target",
-      "resolved_nevra": "gstreamer1-plugins-base-devel-0:1.16.1-6.el8_10.1.x86_64",
-      "disposition": "transaction"
-    },
-    {
       "name": "libICE-devel",
       "arch": "target",
       "purpose": "qt-target",
@@ -782,6 +768,13 @@
       "disposition": "transaction"
     },
     {
+      "name": "mesa-libgbm-devel",
+      "arch": "target",
+      "purpose": "qt-target",
+      "resolved_nevra": "mesa-libgbm-devel-0:23.1.4-4.el8_10.x86_64",
+      "disposition": "transaction"
+    },
+    {
       "name": "nss-devel",
       "arch": "target",
       "purpose": "qt-target",
@@ -815,6 +808,13 @@
       "purpose": "qt-target",
       "resolved_nevra": "sqlite-devel-0:3.26.0-21.el8_10.x86_64",
       "disposition": "base"
+    },
+    {
+      "name": "systemd-devel",
+      "arch": "target",
+      "purpose": "qt-target",
+      "resolved_nevra": "systemd-devel-0:239-82.el8_10.17.x86_64",
+      "disposition": "transaction"
     },
     {
       "name": "wayland-devel",
@@ -1018,66 +1018,6 @@
       "size": 62704,
       "install_size": 155928,
       "source_rpm": "avahi-0.7-27.el8_10.1.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "cairo",
-      "epoch": 0,
-      "version": "1.15.12",
-      "release": "6.el8",
-      "arch": "x86_64",
-      "nevra": "cairo-0:1.15.12-6.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/c/cairo-1.15.12-6.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/c/cairo-1.15.12-6.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "7fd42a923afbaebcff03073c443235685e4094ef7eab8ca48c8043d198b92673"
-      },
-      "size": 734772,
-      "install_size": 1806404,
-      "source_rpm": "cairo-1.15.12-6.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "check",
-      "epoch": 0,
-      "version": "0.12.0",
-      "release": "2.el8",
-      "arch": "x86_64",
-      "nevra": "check-0:0.12.0-2.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/c/check-0.12.0-2.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/c/check-0.12.0-2.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "d4c69fb828aebeabd58269dbeaaa10cb7dcbabe9df726efcbd3a57b4212b8791"
-      },
-      "size": 89940,
-      "install_size": 149565,
-      "source_rpm": "check-0.12.0-2.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "check-devel",
-      "epoch": 0,
-      "version": "0.12.0",
-      "release": "2.el8",
-      "arch": "x86_64",
-      "nevra": "check-devel-0:0.12.0-2.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/c/check-devel-0.12.0-2.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/c/check-devel-0.12.0-2.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "06bd69430f73bbe74a90bea5e35894b0b67e49895b673e4b5c19e0358df20a55"
-      },
-      "size": 34860,
-      "install_size": 108911,
-      "source_rpm": "check-0.12.0-2.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -1642,26 +1582,6 @@
       "reason": "user"
     },
     {
-      "name": "fribidi",
-      "epoch": 0,
-      "version": "1.0.4",
-      "release": "9.el8",
-      "arch": "x86_64",
-      "nevra": "fribidi-0:1.0.4-9.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/f/fribidi-1.0.4-9.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/f/fribidi-1.0.4-9.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "140455eb981d3ea0296f5719b1026b29f8e6316caf885301b5607af38483edec"
-      },
-      "size": 90468,
-      "install_size": 319773,
-      "source_rpm": "fribidi-1.0.4-9.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
       "name": "gdbm",
       "epoch": 1,
       "version": "1.18",
@@ -1902,26 +1822,6 @@
       "reason": "dependency"
     },
     {
-      "name": "graphite2",
-      "epoch": 0,
-      "version": "1.3.10",
-      "release": "10.el8",
-      "arch": "x86_64",
-      "nevra": "graphite2-0:1.3.10-10.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/g/graphite2-1.3.10-10.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/g/graphite2-1.3.10-10.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "b008a03eec2d111f34e4e4857fef2133997ee831d22ab06a5e47beb450d5093b"
-      },
-      "size": 123012,
-      "install_size": 252924,
-      "source_rpm": "graphite2-1.3.10-10.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
       "name": "gsm",
       "epoch": 0,
       "version": "1.0.17",
@@ -1940,86 +1840,6 @@
       "source_rpm": "gsm-1.0.17-5.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
-    },
-    {
-      "name": "gstreamer1",
-      "epoch": 0,
-      "version": "1.16.1",
-      "release": "2.el8",
-      "arch": "x86_64",
-      "nevra": "gstreamer1-0:1.16.1-2.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/g/gstreamer1-1.16.1-2.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/g/gstreamer1-1.16.1-2.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "74abf0a1fc61255b2dcd15e305266551beb9b2d111f0a52a5aef27c62c873450"
-      },
-      "size": 1373112,
-      "install_size": 4604116,
-      "source_rpm": "gstreamer1-1.16.1-2.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "gstreamer1-devel",
-      "epoch": 0,
-      "version": "1.16.1",
-      "release": "2.el8",
-      "arch": "x86_64",
-      "nevra": "gstreamer1-devel-0:1.16.1-2.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/g/gstreamer1-devel-1.16.1-2.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/g/gstreamer1-devel-1.16.1-2.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "73a77d1ce7274051e7cfb6237cbf4c4e4b6421902799183421370fc8f73f140b"
-      },
-      "size": 502176,
-      "install_size": 4344460,
-      "source_rpm": "gstreamer1-1.16.1-2.el8.src.rpm",
-      "action": "install",
-      "reason": "user"
-    },
-    {
-      "name": "gstreamer1-plugins-base",
-      "epoch": 0,
-      "version": "1.16.1",
-      "release": "6.el8_10.1",
-      "arch": "x86_64",
-      "nevra": "gstreamer1-plugins-base-0:1.16.1-6.el8_10.1.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/g/gstreamer1-plugins-base-1.16.1-6.el8_10.1.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/g/gstreamer1-plugins-base-1.16.1-6.el8_10.1.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "7aebfeedacd39a75eb628c1fd9d231795b52b693fd5efea6e7308d8989b18568"
-      },
-      "size": 2049132,
-      "install_size": 6573218,
-      "source_rpm": "gstreamer1-plugins-base-1.16.1-6.el8_10.1.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "gstreamer1-plugins-base-devel",
-      "epoch": 0,
-      "version": "1.16.1",
-      "release": "6.el8_10.1",
-      "arch": "x86_64",
-      "nevra": "gstreamer1-plugins-base-devel-0:1.16.1-6.el8_10.1.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/g/gstreamer1-plugins-base-devel-1.16.1-6.el8_10.1.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/g/gstreamer1-plugins-base-devel-1.16.1-6.el8_10.1.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "3ec3aaceb4505918ac67b060869a304d0756d309e5a695af2e83e42404dfcde6"
-      },
-      "size": 431372,
-      "install_size": 3850513,
-      "source_rpm": "gstreamer1-plugins-base-1.16.1-6.el8_10.1.src.rpm",
-      "action": "install",
-      "reason": "user"
     },
     {
       "name": "gzip",
@@ -2042,26 +1862,6 @@
       "reason": "dependency"
     },
     {
-      "name": "harfbuzz",
-      "epoch": 0,
-      "version": "1.7.5",
-      "release": "4.el8",
-      "arch": "x86_64",
-      "nevra": "harfbuzz-0:1.7.5-4.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/h/harfbuzz-1.7.5-4.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/h/harfbuzz-1.7.5-4.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "248547c45cdb44b64f6d3c9cd4cc15dfb5a8eec1ba4696256929798a38665a90"
-      },
-      "size": 301732,
-      "install_size": 737194,
-      "source_rpm": "harfbuzz-1.7.5-4.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
       "name": "hwdata",
       "epoch": 0,
       "version": "0.314",
@@ -2078,26 +1878,6 @@
       "size": 1928200,
       "install_size": 9498621,
       "source_rpm": "hwdata-0.314-8.22.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "iso-codes",
-      "epoch": 0,
-      "version": "3.79",
-      "release": "2.el8",
-      "arch": "noarch",
-      "nevra": "iso-codes-0:3.79-2.el8.noarch",
-      "repo_id": "appstream",
-      "location": "Packages/i/iso-codes-3.79-2.el8.noarch.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/i/iso-codes-3.79-2.el8.noarch.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "b8404250d7d959fb605ea6617335671c2fa47e7a19cdc3d21fa2f99230fe8385"
-      },
-      "size": 3608328,
-      "install_size": 18244318,
-      "source_rpm": "iso-codes-3.79-2.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -2542,26 +2322,6 @@
       "reason": "user"
     },
     {
-      "name": "libXft",
-      "epoch": 0,
-      "version": "2.3.3",
-      "release": "1.el8",
-      "arch": "x86_64",
-      "nevra": "libXft-0:2.3.3-1.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/l/libXft-2.3.3-1.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/l/libXft-2.3.3-1.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "2d4a1d4c0c9e61c70936873f0563ed2ac6b468549c3163bf73f91134ff2e9860"
-      },
-      "size": 67216,
-      "install_size": 132448,
-      "source_rpm": "libXft-2.3.3-1.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
       "name": "libXi",
       "epoch": 0,
       "version": "1.7.10",
@@ -2722,26 +2482,6 @@
       "reason": "user"
     },
     {
-      "name": "libXv",
-      "epoch": 0,
-      "version": "1.0.11",
-      "release": "7.el8",
-      "arch": "x86_64",
-      "nevra": "libXv-0:1.0.11-7.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/l/libXv-1.0.11-7.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/l/libXv-1.0.11-7.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "e603742c134dea3bc5ff70d19baddb75e76ba02f8a8232918dfa3e495330b0ec"
-      },
-      "size": 18960,
-      "install_size": 26847,
-      "source_rpm": "libXv-1.0.11-7.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
       "name": "libXxf86vm",
       "epoch": 0,
       "version": "1.1.4",
@@ -2838,26 +2578,6 @@
       "size": 114212,
       "install_size": 330819,
       "source_rpm": "libcroco-0.6.12-4.el8_2.1.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "libdatrie",
-      "epoch": 0,
-      "version": "0.2.9",
-      "release": "7.el8",
-      "arch": "x86_64",
-      "nevra": "libdatrie-0:0.2.9-7.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/l/libdatrie-0.2.9-7.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/l/libdatrie-0.2.9-7.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "af6561333c5b3e0a13d7539c5fc34756cb0facd69184a5dfc3c83cf1a148e8d7"
-      },
-      "size": 32744,
-      "install_size": 60255,
-      "source_rpm": "libdatrie-0.2.9-7.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -3582,46 +3302,6 @@
       "reason": "dependency"
     },
     {
-      "name": "libthai",
-      "epoch": 0,
-      "version": "0.1.27",
-      "release": "2.el8",
-      "arch": "x86_64",
-      "nevra": "libthai-0:0.1.27-2.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/l/libthai-0.1.27-2.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/l/libthai-0.1.27-2.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "40184946b4bdf8e00577e89d2aaad32794785946834a92b9b7f6b5bba46da12f"
-      },
-      "size": 206476,
-      "install_size": 768549,
-      "source_rpm": "libthai-0.1.27-2.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "libtheora",
-      "epoch": 1,
-      "version": "1.1.1",
-      "release": "21.el8",
-      "arch": "x86_64",
-      "nevra": "libtheora-1:1.1.1-21.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/l/libtheora-1.1.1-21.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/l/libtheora-1.1.1-21.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "fbb33aaa6152300ddabcf9b03ba4e585a2ab715d0e6229e511fc5e500263f227"
-      },
-      "size": 187652,
-      "install_size": 667602,
-      "source_rpm": "libtheora-1.1.1-21.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
       "name": "libtirpc",
       "epoch": 0,
       "version": "1.1.4",
@@ -3678,26 +3358,6 @@
       "size": 31384,
       "install_size": 51373,
       "source_rpm": "libutempter-1.1.6-14.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "libvisual",
-      "epoch": 1,
-      "version": "0.4.0",
-      "release": "25.el8",
-      "arch": "x86_64",
-      "nevra": "libvisual-1:0.4.0-25.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/l/libvisual-0.4.0-25.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/l/libvisual-0.4.0-25.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "770b1865cb2580cdf75ee48ba979fb912bc4a48fb2fd8af2d69f554d923a2c85"
-      },
-      "size": 147616,
-      "install_size": 429720,
-      "source_rpm": "libvisual-0.4.0-25.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -4022,26 +3682,6 @@
       "reason": "dependency"
     },
     {
-      "name": "libxml2-devel",
-      "epoch": 0,
-      "version": "2.9.7",
-      "release": "21.el8_10.7",
-      "arch": "x86_64",
-      "nevra": "libxml2-devel-0:2.9.7-21.el8_10.7.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/l/libxml2-devel-2.9.7-21.el8_10.7.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/l/libxml2-devel-2.9.7-21.el8_10.7.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "fb72800cb477bd99737d60402a3d932d963fba07b2539598a541745abe8bb984"
-      },
-      "size": 1091836,
-      "install_size": 9203684,
-      "source_rpm": "libxml2-2.9.7-21.el8_10.7.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
       "name": "libxshmfence",
       "epoch": 0,
       "version": "1.3",
@@ -4220,6 +3860,26 @@
       "source_rpm": "mesa-23.1.4-4.el8_10.src.rpm",
       "action": "install",
       "reason": "dependency"
+    },
+    {
+      "name": "mesa-libgbm-devel",
+      "epoch": 0,
+      "version": "23.1.4",
+      "release": "4.el8_10",
+      "arch": "x86_64",
+      "nevra": "mesa-libgbm-devel-0:23.1.4-4.el8_10.x86_64",
+      "repo_id": "powertools",
+      "location": "Packages/m/mesa-libgbm-devel-23.1.4-4.el8_10.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/x86_64/os/Packages/m/mesa-libgbm-devel-23.1.4-4.el8_10.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "14f332899abc352a660a5a9420da2f5c0fb8bd6143fcf6e5e84d07813ae4170f"
+      },
+      "size": 38080,
+      "install_size": 17681,
+      "source_rpm": "mesa-23.1.4-4.el8_10.src.rpm",
+      "action": "install",
+      "reason": "user"
     },
     {
       "name": "mesa-libglapi",
@@ -4522,86 +4182,6 @@
       "reason": "dependency"
     },
     {
-      "name": "opus",
-      "epoch": 0,
-      "version": "1.3",
-      "release": "0.4.beta.el8",
-      "arch": "x86_64",
-      "nevra": "opus-0:1.3-0.4.beta.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/o/opus-1.3-0.4.beta.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/o/opus-1.3-0.4.beta.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "dbd945e7554fe0b2905431adeca8b6c0ecdff1c4b30592c12494b2240a17fa3f"
-      },
-      "size": 207028,
-      "install_size": 366296,
-      "source_rpm": "opus-1.3-0.4.beta.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "orc",
-      "epoch": 0,
-      "version": "0.4.28",
-      "release": "4.el8_10",
-      "arch": "x86_64",
-      "nevra": "orc-0:0.4.28-4.el8_10.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/o/orc-0.4.28-4.el8_10.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/o/orc-0.4.28-4.el8_10.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "068c8181a77124143b6ee505a9f9a433fb40a3b5302aed169c02961da068ddd3"
-      },
-      "size": 178244,
-      "install_size": 588872,
-      "source_rpm": "orc-0.4.28-4.el8_10.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "orc-compiler",
-      "epoch": 0,
-      "version": "0.4.28",
-      "release": "4.el8_10",
-      "arch": "x86_64",
-      "nevra": "orc-compiler-0:0.4.28-4.el8_10.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/o/orc-compiler-0.4.28-4.el8_10.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/o/orc-compiler-0.4.28-4.el8_10.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "0244b81265e627c61ba261a207c19dd5aeca7376625e3d4185e471925bf9a343"
-      },
-      "size": 29116,
-      "install_size": 46424,
-      "source_rpm": "orc-0.4.28-4.el8_10.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "orc-devel",
-      "epoch": 0,
-      "version": "0.4.28",
-      "release": "4.el8_10",
-      "arch": "x86_64",
-      "nevra": "orc-devel-0:0.4.28-4.el8_10.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/o/orc-devel-0.4.28-4.el8_10.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/o/orc-devel-0.4.28-4.el8_10.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "04d8a9fda7ff2ec317e6209014d4b897ff89c528728eaf25113df86e63965db6"
-      },
-      "size": 49912,
-      "install_size": 221861,
-      "source_rpm": "orc-0.4.28-4.el8_10.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
       "name": "p11-kit-devel",
       "epoch": 0,
       "version": "0.23.22",
@@ -4638,26 +4218,6 @@
       "size": 767128,
       "install_size": 2654567,
       "source_rpm": "pam-1.3.1-40.el8_10.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "pango",
-      "epoch": 0,
-      "version": "1.42.4",
-      "release": "8.el8",
-      "arch": "x86_64",
-      "nevra": "pango-0:1.42.4-8.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/p/pango-1.42.4-8.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/pango-1.42.4-8.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "481dc7c787260e8d261cd4f7d7499105def3a3a64835e4f7f4ed6ab0ddf92723"
-      },
-      "size": 303228,
-      "install_size": 789403,
-      "source_rpm": "pango-1.42.4-8.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -4778,26 +4338,6 @@
       "size": 189256,
       "install_size": 436691,
       "source_rpm": "pcre-8.42-6.el8.src.rpm",
-      "action": "install",
-      "reason": "dependency"
-    },
-    {
-      "name": "pixman",
-      "epoch": 0,
-      "version": "0.38.4",
-      "release": "4.el8",
-      "arch": "x86_64",
-      "nevra": "pixman-0:0.38.4-4.el8.x86_64",
-      "repo_id": "appstream",
-      "location": "Packages/p/pixman-0.38.4-4.el8.x86_64.rpm",
-      "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/x86_64/os/Packages/p/pixman-0.38.4-4.el8.x86_64.rpm",
-      "repository_checksum": {
-        "algorithm": "sha256",
-        "value": "1e77fd4d381fdfd58aea1d884b2e2a43d97971123ad802b281f8856910c74a7d"
-      },
-      "size": 262656,
-      "install_size": 697399,
-      "source_rpm": "pixman-0.38.4-4.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
     },
@@ -5000,6 +4540,26 @@
       "source_rpm": "systemd-239-82.el8_10.17.src.rpm",
       "action": "install",
       "reason": "dependency"
+    },
+    {
+      "name": "systemd-devel",
+      "epoch": 0,
+      "version": "239",
+      "release": "82.el8_10.17",
+      "arch": "x86_64",
+      "nevra": "systemd-devel-0:239-82.el8_10.17.x86_64",
+      "repo_id": "baseos",
+      "location": "Packages/s/systemd-devel-239-82.el8_10.17.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/s/systemd-devel-239-82.el8_10.17.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "5237d5c713fd49fabdc22f2d4195c50a86009de2301541d3180e008f1f6a869b"
+      },
+      "size": 427296,
+      "install_size": 305525,
+      "source_rpm": "systemd-239-82.el8_10.17.src.rpm",
+      "action": "install",
+      "reason": "user"
     },
     {
       "name": "systemd-libs",
@@ -5504,9 +5064,6 @@
         "bzip2-devel-0:1.0.6-28.el8_10.x86_64",
         "bzip2-libs-0:1.0.6-28.el8_10.x86_64",
         "ca-certificates-0:2025.2.80_v9.0.304-80.2.el8_10.noarch",
-        "cairo-0:1.15.12-6.el8.x86_64",
-        "check-0:0.12.0-2.el8.x86_64",
-        "check-devel-0:0.12.0-2.el8.x86_64",
         "chkconfig-0:1.19.2-1.el8.x86_64",
         "cmake-filesystem-0:3.26.5-2.el8.x86_64",
         "coreutils-0:8.30-20.el8_10.x86_64",
@@ -5540,7 +5097,6 @@
         "fontpackages-filesystem-0:1.44-22.el8.noarch",
         "freetype-0:2.9.1-10.el8_10.x86_64",
         "freetype-devel-0:2.9.1-10.el8_10.x86_64",
-        "fribidi-0:1.0.4-9.el8.x86_64",
         "gawk-0:4.2.1-4.el8.x86_64",
         "gdbm-1:1.18-2.el8.x86_64",
         "gdbm-libs-1:1.18-2.el8.x86_64",
@@ -5560,18 +5116,11 @@
         "gnutls-c++-0:3.6.16-8.el8_10.6.x86_64",
         "gnutls-dane-0:3.6.16-8.el8_10.6.x86_64",
         "gnutls-devel-0:3.6.16-8.el8_10.6.x86_64",
-        "graphite2-0:1.3.10-10.el8.x86_64",
         "grep-0:3.1-6.el8.x86_64",
         "gsm-0:1.0.17-5.el8.x86_64",
-        "gstreamer1-0:1.16.1-2.el8.x86_64",
-        "gstreamer1-devel-0:1.16.1-2.el8.x86_64",
-        "gstreamer1-plugins-base-0:1.16.1-6.el8_10.1.x86_64",
-        "gstreamer1-plugins-base-devel-0:1.16.1-6.el8_10.1.x86_64",
         "gzip-0:1.9-13.el8_5.x86_64",
-        "harfbuzz-0:1.7.5-4.el8.x86_64",
         "hwdata-0:0.314-8.22.el8.noarch",
         "info-0:6.5-7.el8.x86_64",
-        "iso-codes-0:3.79-2.el8.noarch",
         "json-c-0:0.13.1-3.el8.x86_64",
         "kernel-headers-0:4.18.0-553.158.1.el8_10.x86_64",
         "keyutils-libs-0:1.5.10-9.el8.x86_64",
@@ -5599,7 +5148,6 @@
         "libXext-devel-0:1.3.4-1.el8.x86_64",
         "libXfixes-0:5.0.3-7.el8.x86_64",
         "libXfixes-devel-0:5.0.3-7.el8.x86_64",
-        "libXft-0:2.3.3-1.el8.x86_64",
         "libXi-0:1.7.10-1.el8.x86_64",
         "libXi-devel-0:1.7.10-1.el8.x86_64",
         "libXrandr-0:1.5.2-1.el8.x86_64",
@@ -5608,7 +5156,6 @@
         "libXrender-devel-0:0.9.10-7.el8.x86_64",
         "libXtst-0:1.2.3-7.el8.x86_64",
         "libXtst-devel-0:1.2.3-7.el8.x86_64",
-        "libXv-0:1.0.11-7.el8.x86_64",
         "libXxf86vm-0:1.1.4-9.el8.x86_64",
         "libacl-0:2.4.0-1.el8_10.x86_64",
         "libasyncns-0:0.8-14.el8.x86_64",
@@ -5619,7 +5166,6 @@
         "libcom_err-0:1.45.6-7.el8_10.x86_64",
         "libcom_err-devel-0:1.45.6-7.el8_10.x86_64",
         "libcroco-0:0.6.12-4.el8_2.1.x86_64",
-        "libdatrie-0:0.2.9-7.el8.x86_64",
         "libdb-0:5.3.28-42.el8_4.x86_64",
         "libdrm-0:2.4.115-2.el8.x86_64",
         "libdrm-devel-0:2.4.115-2.el8.x86_64",
@@ -5668,8 +5214,6 @@
         "libstdc++-0:8.5.0-28.el8_10.x86_64",
         "libtasn1-0:4.13-6.el8_10.x86_64",
         "libtasn1-devel-0:4.13-6.el8_10.x86_64",
-        "libthai-0:0.1.27-2.el8.x86_64",
-        "libtheora-1:1.1.1-21.el8.x86_64",
         "libtirpc-0:1.1.4-12.el8_10.x86_64",
         "libunistring-0:0.9.9-3.el8.x86_64",
         "libutempter-0:1.1.6-14.el8.x86_64",
@@ -5677,7 +5221,6 @@
         "libuuid-devel-0:2.32.1-48.el8_10.x86_64",
         "libverto-0:0.3.2-2.el8.x86_64",
         "libverto-devel-0:0.3.2-2.el8.x86_64",
-        "libvisual-1:0.4.0-25.el8.x86_64",
         "libvorbis-1:1.3.6-2.el8.x86_64",
         "libwacom-0:1.6-3.el8.x86_64",
         "libwacom-data-0:1.6-3.el8.noarch",
@@ -5696,7 +5239,6 @@
         "libxkbfile-0:1.1.0-1.el8.x86_64",
         "libxkbfile-devel-0:1.1.0-1.el8.x86_64",
         "libxml2-0:2.9.7-21.el8_10.7.x86_64",
-        "libxml2-devel-0:2.9.7-21.el8_10.7.x86_64",
         "libxshmfence-0:1.3-2.el8.x86_64",
         "libxshmfence-devel-0:1.3-2.el8.x86_64",
         "libzstd-0:1.4.4-1.el8.x86_64",
@@ -5706,6 +5248,7 @@
         "mesa-libGL-0:23.1.4-4.el8_10.x86_64",
         "mesa-libGL-devel-0:23.1.4-4.el8_10.x86_64",
         "mesa-libgbm-0:23.1.4-4.el8_10.x86_64",
+        "mesa-libgbm-devel-0:23.1.4-4.el8_10.x86_64",
         "mesa-libglapi-0:23.1.4-4.el8_10.x86_64",
         "mpfr-0:3.1.6-1.el8.x86_64",
         "mtdev-0:1.1.5-12.el8.x86_64",
@@ -5727,15 +5270,10 @@
         "nss-util-devel-0:3.112.0-8.el8_10.x86_64",
         "openssl-devel-1:1.1.1k-17.el8_10.x86_64",
         "openssl-libs-1:1.1.1k-17.el8_10.x86_64",
-        "opus-0:1.3-0.4.beta.el8.x86_64",
-        "orc-0:0.4.28-4.el8_10.x86_64",
-        "orc-compiler-0:0.4.28-4.el8_10.x86_64",
-        "orc-devel-0:0.4.28-4.el8_10.x86_64",
         "p11-kit-0:0.23.22-2.el8.x86_64",
         "p11-kit-devel-0:0.23.22-2.el8.x86_64",
         "p11-kit-trust-0:0.23.22-2.el8.x86_64",
         "pam-0:1.3.1-40.el8_10.x86_64",
-        "pango-0:1.42.4-8.el8.x86_64",
         "pciutils-devel-0:3.7.0-3.el8.x86_64",
         "pciutils-libs-0:3.7.0-3.el8.x86_64",
         "pcre-0:8.42-6.el8.x86_64",
@@ -5747,7 +5285,6 @@
         "pcre2-devel-0:10.32-3.el8_6.x86_64",
         "pcre2-utf16-0:10.32-3.el8_6.x86_64",
         "pcre2-utf32-0:10.32-3.el8_6.x86_64",
-        "pixman-0:0.38.4-4.el8.x86_64",
         "pkgconf-0:1.4.2-1.el8.x86_64",
         "pkgconf-m4-0:1.4.2-1.el8.noarch",
         "pkgconf-pkg-config-0:1.4.2-1.el8.x86_64",
@@ -5771,6 +5308,7 @@
         "sqlite-devel-0:3.26.0-21.el8_10.x86_64",
         "sqlite-libs-0:3.26.0-21.el8_10.x86_64",
         "systemd-0:239-82.el8_10.17.x86_64",
+        "systemd-devel-0:239-82.el8_10.17.x86_64",
         "systemd-libs-0:239-82.el8_10.17.x86_64",
         "systemd-pam-0:239-82.el8_10.17.x86_64",
         "tzdata-0:2026c-1.el8_10.noarch",
@@ -5797,7 +5335,7 @@
         "zlib-0:1.2.11-26.el8.x86_64",
         "zlib-devel-0:1.2.11-26.el8.x86_64"
       ],
-      "canonical_sha256": "0a4c48f64c6925f9bed5314f3052c036a2e84126d71c568c285e838dc5399ac9"
+      "canonical_sha256": "239f83aafe79896da354827b65a2d5af55ecbb3b421e5c75413599bf076bb8e1"
     }
   }
 }

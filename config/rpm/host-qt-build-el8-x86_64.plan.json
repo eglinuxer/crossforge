@@ -60,8 +60,6 @@
     {"name": "freetype-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "glib2-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "gperf", "arch": "any", "purpose": "qt-host-build"},
-    {"name": "gstreamer1-devel", "arch": "any", "purpose": "qt-host-build"},
-    {"name": "gstreamer1-plugins-base-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "libICE-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "libSM-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "libX11-devel", "arch": "any", "purpose": "qt-host-build"},
@@ -86,6 +84,7 @@
     {"name": "libxshmfence-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "mesa-libEGL-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "mesa-libGL-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "mesa-libgbm-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "nodejs", "arch": "any", "purpose": "qt-host-build"},
     {"name": "nss-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "openssl-devel", "arch": "any", "purpose": "qt-host-build"},
@@ -95,6 +94,7 @@
     {"name": "python3-html5lib", "arch": "any", "purpose": "qt-host-build"},
     {"name": "python38", "arch": "any", "purpose": "qt-host-build"},
     {"name": "sqlite-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "systemd-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "wayland-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "wayland-protocols-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "xcb-util-devel", "arch": "any", "purpose": "qt-host-build"},
@@ -103,6 +103,7 @@
     {"name": "xcb-util-renderutil-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "xcb-util-wm-devel", "arch": "any", "purpose": "qt-host-build"},
     {"name": "xorg-x11-proto-devel", "arch": "any", "purpose": "qt-host-build"},
+    {"name": "yasm", "arch": "any", "purpose": "qt-host-build"},
     {"name": "zlib-devel", "arch": "any", "purpose": "qt-host-build"}
   ]
 }

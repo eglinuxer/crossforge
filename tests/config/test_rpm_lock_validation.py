@@ -171,14 +171,14 @@ class RpmLockValidationTests(unittest.TestCase):
         host, x86_64, aarch64 = [
             VALIDATOR["load_json"](path) for path in self.qt_transactions
         ]
-        self.assertEqual(len(host["items"]), 217)
-        self.assertEqual(len(x86_64["items"]), 226)
-        self.assertEqual(len(aarch64["items"]), 223)
+        self.assertEqual(len(host["items"]), 202)
+        self.assertEqual(len(x86_64["items"]), 204)
+        self.assertEqual(len(aarch64["items"]), 201)
         pair = runpy.run_path(
             str(REPOSITORY / "scripts/validate-qt-qualification.py")
         )["validate_target_pair"]([x86_64, aarch64])
-        self.assertEqual(pair["x86_64_packages"], 226)
-        self.assertEqual(pair["aarch64_packages"], 223)
+        self.assertEqual(pair["x86_64_packages"], 204)
+        self.assertEqual(pair["aarch64_packages"], 201)
 
     def test_locked_qt_target_rejects_power_tools_origin_drift(self):
         transaction = VALIDATOR["load_json"](self.qt_transactions[1])
