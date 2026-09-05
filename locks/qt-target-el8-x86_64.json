@@ -4,7 +4,7 @@
   "kind": "rpm-lock",
   "transaction": {
     "file": "locks/transactions/qt-target-el8-x86_64.json",
-    "canonical_sha256": "b713c4c5499ca4d2f783a7163ab6ddfbd2750e28a26919be124931f43390b30a"
+    "canonical_sha256": "23797eda551f60ad921147329b6bfcbc2a89bfe60280c8d2a2a4f0bfc654811a"
   },
   "packages": [
     {
@@ -1395,6 +1395,23 @@
         "arch": "x86_64",
         "nevra": "libasyncns-0:0.8-14.el8.x86_64",
         "source_rpm": "libasyncns-0.8-14.el8.src.rpm"
+      },
+      "signature": {
+        "status": "verified",
+        "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60"
+      }
+    },
+    {
+      "nevra": "libatomic-0:8.5.0-28.el8_10.x86_64",
+      "received_sha256": "97467bd64967dd24ab1fb7100e839c794df300168ea9d2c315af92984148b7f2",
+      "header": {
+        "name": "libatomic",
+        "epoch": 0,
+        "version": "8.5.0",
+        "release": "28.el8_10",
+        "arch": "x86_64",
+        "nevra": "libatomic-0:8.5.0-28.el8_10.x86_64",
+        "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm"
       },
       "signature": {
         "status": "verified",

@@ -352,6 +352,15 @@ class DockerComponentWiringTests(unittest.TestCase):
         build = (REPOSITORY / "scripts/build-gcc.sh").read_text(encoding="utf-8")
         self.assertIn("all-target-libgomp", build)
         self.assertNotIn("install-target-libgomp", build)
+        self.assertIn("all-target-libatomic", build)
+        self.assertIn("install-target-libatomic", build)
+        self.assertIn("[libatomic.so.1]", build)
+        qualification = (
+            REPOSITORY / "scripts/qualify-toolchain.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("-print-file-name=libatomic.so", qualification)
+        self.assertIn('"-latomic"', qualification)
+        self.assertIn("[libatomic.so.1]", qualification)
         self.assertIn("--enable-shared", build)
         self.assertIn('readlink -e "$isl_soname"', build)
         self.assertIn("[libisl.so.23]", build)

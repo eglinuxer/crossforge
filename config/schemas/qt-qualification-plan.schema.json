@@ -13,6 +13,7 @@
     "qt_version",
     "source_component",
     "source_dependencies",
+    "patches",
     "host",
     "locks",
     "modules",
@@ -54,6 +55,14 @@
       "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/source_dependency"
+      }
+    },
+    "patches": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "$ref": "#/$defs/patch"
       }
     },
     "host": {
@@ -155,6 +164,47 @@
           "$ref": "#/$defs/xcb_util_cursor_source_dependency"
         }
       ]
+    },
+    "patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "scope",
+        "sha256",
+        "upstream"
+      ],
+      "properties": {
+        "file": {
+          "const": "patches/qt/0001-xnnpack-use-uint16-neon-fp16-load.patch"
+        },
+        "scope": {
+          "const": "target-builds"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "upstream": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "repository",
+            "commit",
+            "url"
+          ],
+          "properties": {
+            "repository": {
+              "const": "https://github.com/google/XNNPACK"
+            },
+            "commit": {
+              "const": "1b11a8b0620afe8c047304273674c4c57c289755"
+            },
+            "url": {
+              "const": "https://github.com/google/XNNPACK/commit/1b11a8b0620afe8c047304273674c4c57c289755"
+            }
+          }
+        }
+      }
     },
     "ffmpeg_source_dependency": {
       "type": "object",

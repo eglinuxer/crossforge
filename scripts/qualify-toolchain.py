@@ -238,7 +238,12 @@ def main():
     libstdcxx, _ = run([gxx, "-print-file-name=libstdc++.so"])
     libgcc_s, _ = run([gcc, "-print-file-name=libgcc_s.so"])
     libgcc_a, _ = run([gcc, "-print-file-name=libgcc.a"])
-    for name, path in (("libstdc++", libstdcxx.strip()), ("libgcc_s", libgcc_s.strip())):
+    libatomic, _ = run([gcc, "-print-file-name=libatomic.so"])
+    for name, path in (
+        ("libstdc++", libstdcxx.strip()),
+        ("libgcc_s", libgcc_s.strip()),
+        ("libatomic", libatomic.strip()),
+    ):
         require(path.startswith(str(arguments.prefix) + "/"), "%s linker script escaped prefix" % name)
         require(Path(path).is_file(), "%s linker script is missing" % name)
     libgcc_archive = Path(libgcc_a.strip())
@@ -284,7 +289,31 @@ def main():
     lto_archive_object = arguments.work / "lto-archive.o"
     lto_archive = arguments.work / "liblto-archive.a"
     lto_archive_executable = arguments.work / "lto-archive"
+    atomic_source = arguments.work / "atomic.c"
+    atomic_probe = arguments.work / "atomic-link"
     run([gcc, "-O2", smoke / "hello.c", HARDENED_LINKER_FLAG, "-o", hello])
+    atomic_source.write_text(
+        "int main(void) { unsigned __int128 value = 0; "
+        "return (int)__atomic_fetch_add(&value, 1, __ATOMIC_SEQ_CST); }\n",
+        encoding="utf-8",
+    )
+    run(
+        [
+            gcc,
+            "-O2",
+            atomic_source,
+            "-Wl,--no-as-needed",
+            "-latomic",
+            HARDENED_LINKER_FLAG,
+            "-o",
+            atomic_probe,
+        ]
+    )
+    atomic_dynamic, _ = run([readelf, "-d", atomic_probe])
+    require(
+        "[libatomic.so.1]" in atomic_dynamic,
+        "libatomic link probe did not retain the target runtime",
+    )
     # This one binary deliberately observes the unmodified compiler defaults.
     # It is compile-only evidence and is not a qualified runtime smoke binary.
     run([gcc, "-O2", smoke / "hello.c", "-o", compiler_default_canary])

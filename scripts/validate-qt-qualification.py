@@ -60,6 +60,21 @@ SOURCE_DEPENDENCIES = [
         "usage": "host-and-target-xcb-platform-plugin-build",
     }
 ]
+PATCHES = [
+    {
+        "file": "patches/qt/0001-xnnpack-use-uint16-neon-fp16-load.patch",
+        "scope": "target-builds",
+        "sha256": "f206a8f686e9208c424f9b7a1a0aab960da4ffbc2cae112b6489408ac20953b3",
+        "upstream": {
+            "repository": "https://github.com/google/XNNPACK",
+            "commit": "1b11a8b0620afe8c047304273674c4c57c289755",
+            "url": (
+                "https://github.com/google/XNNPACK/commit/"
+                "1b11a8b0620afe8c047304273674c4c57c289755"
+            ),
+        },
+    }
+]
 LOCKS = [
     ("host-qt-build", "config/rpm/host-qt-build-el8-x86_64.plan.json"),
     ("qt-target-x86_64", "config/rpm/qt-target-el8-x86_64.plan.json"),
@@ -212,6 +227,15 @@ def validate_plan(plan, require_locked=False):
         == SOURCE_DEPENDENCIES,
         "Qt source dependency contract differs",
     )
+    require(plan["patches"] == PATCHES, "Qt patch contract differs")
+    for record in plan["patches"]:
+        patch_path = REPOSITORY / record["file"]
+        require(
+            patch_path.is_file()
+            and hashlib.sha256(patch_path.read_bytes()).hexdigest()
+            == record["sha256"],
+            "Qt patch bytes differ: %s" % record["file"],
+        )
     require(plan["host"] == HOST, "Qt host contract differs")
     require(plan["modules"] == MODULES, "Qt module order or set differs")
     require(plan["build"] == BUILD, "Qt build contract differs")

@@ -52,6 +52,7 @@
     {"name": "libXrandr-devel", "arch": "target", "purpose": "qt-target"},
     {"name": "libXrender-devel", "arch": "target", "purpose": "qt-target"},
     {"name": "libXtst-devel", "arch": "target", "purpose": "qt-target"},
+    {"name": "libatomic", "arch": "target", "purpose": "qt-target"},
     {"name": "libdrm-devel", "arch": "target", "purpose": "qt-target"},
     {"name": "libinput-devel", "arch": "target", "purpose": "qt-target"},
     {"name": "libjpeg-turbo-devel", "arch": "target", "purpose": "qt-target"},

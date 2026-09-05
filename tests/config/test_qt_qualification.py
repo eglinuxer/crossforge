@@ -58,8 +58,8 @@ class QtQualificationPlanTests(unittest.TestCase):
         self.assertEqual(
             contract["target_pair"],
             {
-                "x86_64_packages": 204,
-                "aarch64_packages": 201,
+                "x86_64_packages": 205,
+                "aarch64_packages": 202,
                 "x86_64_only": [
                     "hwdata",
                     "libpciaccess",

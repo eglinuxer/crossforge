@@ -14,6 +14,11 @@ class QtSourceGraphTests(unittest.TestCase):
         cls.release = json.loads(
             (REPOSITORY / "config/release.json").read_text(encoding="utf-8")
         )
+        cls.plan = json.loads(
+            (REPOSITORY / "config/qt-qualification.json").read_text(
+                encoding="utf-8"
+            )
+        )
         cls.bake = json.loads(RENDERER["render"](REPOSITORY))
         cls.dockerfile = (REPOSITORY / "docker/qt.Dockerfile").read_text(
             encoding="utf-8"
@@ -193,6 +198,8 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertIn("ulimit -Sn", script)
         self.assertIn("-print-file-name=libatomic.so", script)
         self.assertIn("qt-host-configure.json", script)
+        self.assertIn("print-build-log-diagnostics.py", script)
+        self.assertNotIn("| tee", script)
         self.assertNotIn("libQt6Core", script)
         check = (REPOSITORY / "scripts/check-qt-host-install.sh").read_text(
             encoding="utf-8"
@@ -241,6 +248,155 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertIn("qt-host-build.schema.json", stage)
         self.assertIn("--ffmpeg-prefix", stage)
         self.assertIn("--xcb-prefix", stage)
+        self.assertIn("--diagnostics", stage)
+        schema = json.loads(
+            (
+                REPOSITORY / "config/schemas/qt-host-build.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(schema["properties"]["builders"]["minItems"], 4)
+        self.assertEqual(schema["properties"]["builders"]["maxItems"], 4)
+
+    def test_target_configure_uses_qualified_host_and_never_executes_target_code(self):
+        expected = []
+        for arch, triple in (
+            ("x86_64", "x86_64-unknown-linux-gnu"),
+            ("aarch64", "aarch64-unknown-linux-gnu"),
+        ):
+            name = "qt-%s-configure-observation" % arch
+            expected.append(name)
+            target = self.bake["target"][name]
+            self.assertEqual(target["target"], "qt-target-configure-observation")
+            self.assertEqual(target["args"]["QT_TARGET_TRIPLE"], triple)
+            self.assertEqual(
+                target["args"]["QT_XNNPACK_PATCH_SHA256"],
+                self.plan["patches"][0]["sha256"],
+            )
+            self.assertEqual(
+                target["contexts"]["crossforge_qt_host"],
+                "target:qt-host-qualified",
+            )
+            self.assertEqual(
+                target["contexts"]["crossforge_xcb_target"],
+                "target:xcb-util-cursor-%s-build" % arch,
+            )
+            self.assertEqual(
+                target["contexts"]["crossforge_ffmpeg_target"],
+                "target:ffmpeg-%s-build" % arch,
+            )
+        self.assertEqual(
+            self.bake["group"]["qt-target-configure-observed"]["targets"],
+            expected,
+        )
+        self.assertEqual(
+            self.bake["group"]["qt-target-configure-qualified"]["targets"],
+            [
+                "qt-x86_64-configure-qualified",
+                "qt-aarch64-configure-qualified",
+            ],
+        )
+        for arch in ("x86_64", "aarch64"):
+            qualified = self.bake["target"][
+                "qt-%s-configure-qualified" % arch
+            ]
+            observed = self.bake["target"][
+                "qt-%s-configure-observation" % arch
+            ]
+            self.assertEqual(qualified["target"], "qt-target-configure-evidence")
+            self.assertEqual(qualified["args"], observed["args"])
+            self.assertEqual(qualified["contexts"], observed["contexts"])
+        stage = self.dockerfile.split(" AS qt-target-configure", 1)[1]
+        self.assertIn("RUN --network=none", stage)
+        self.assertIn("configure-qt-target.sh", stage)
+        script = (REPOSITORY / "scripts/configure-qt-target.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("-qt-host-path", script)
+        self.assertIn("-DCMAKE_TOOLCHAIN_FILE=", script)
+        self.assertIn(
+            "-DPKG_CONFIG_HOST_EXECUTABLE=/usr/bin/pkg-config", script
+        )
+        self.assertIn("sha256sum --check --status", script)
+        self.assertIn("patch --batch --forward --fuzz=0", script)
+        self.assertIn("vld1q_dup_u16(&params->neon.scale)", script)
+        self.assertIn("Qt target XNNPACK incompatible load remains", script)
+        patch = REPOSITORY / self.plan["patches"][0]["file"]
+        self.assertTrue(patch.is_file())
+        self.assertIn(
+            self.plan["patches"][0]["upstream"]["commit"],
+            patch.read_text(encoding="utf-8"),
+        )
+        self.assertIn("CMAKE_CROSSCOMPILING_EMULATOR", script)
+        self.assertNotIn("qemu", script.lower())
+        qualified_stage = self.dockerfile.split(
+            " AS qt-target-configure-qualified", 1
+        )[1]
+        self.assertIn("qualify-qt-target-configure.py", qualified_stage)
+        self.assertIn("qt-target-configure.schema.json", qualified_stage)
+        self.assertIn("FROM qt-target-configure AS", self.dockerfile)
+        self.assertIn("FROM qt-target-configure AS qt-target-webengine-build", self.dockerfile)
+
+    def test_target_builds_are_split_from_install_checks_and_forbid_execution(self):
+        self.assertEqual(
+            self.bake["group"]["qt-target-webengine-built"]["targets"],
+            ["qt-x86_64-webengine-build", "qt-aarch64-webengine-build"],
+        )
+        self.assertEqual(
+            self.bake["group"]["qt-target-built"]["targets"],
+            ["qt-x86_64-build", "qt-aarch64-build"],
+        )
+        self.assertEqual(
+            self.bake["group"]["qt-target-build-qualified"]["targets"],
+            ["qt-x86_64-qualified", "qt-aarch64-qualified"],
+        )
+        for arch in ("x86_64", "aarch64"):
+            webengine = self.bake["target"][
+                "qt-%s-webengine-build" % arch
+            ]
+            build = self.bake["target"]["qt-%s-build" % arch]
+            configure = self.bake["target"][
+                "qt-%s-configure-observation" % arch
+            ]
+            self.assertEqual(webengine["target"], "qt-target-webengine-build")
+            self.assertEqual(webengine["args"], configure["args"])
+            self.assertEqual(webengine["contexts"], configure["contexts"])
+            self.assertEqual(build["target"], "qt-target-build-observation")
+            self.assertEqual(build["args"], configure["args"])
+            self.assertEqual(build["contexts"], configure["contexts"])
+            qualified = self.bake["target"]["qt-%s-qualified" % arch]
+            self.assertEqual(
+                qualified["target"], "qt-target-qualification-evidence"
+            )
+            self.assertEqual(qualified["args"], configure["args"])
+            self.assertEqual(qualified["contexts"], configure["contexts"])
+        build_script = (REPOSITORY / "scripts/build-qt-target.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("ulimit -Sn", build_script)
+        self.assertIn("CMAKE_CROSSCOMPILING_EMULATOR", build_script)
+        self.assertIn("--target WebEngineCore", build_script)
+        self.assertIn("print-build-log-diagnostics.py", build_script)
+        self.assertNotIn("| tee", build_script)
+        self.assertNotIn("libQt6Core", build_script)
+        self.assertNotIn("qemu", build_script.lower())
+        check_script = (
+            REPOSITORY / "scripts/check-qt-target-install.sh"
+        ).read_text(encoding="utf-8")
+        self.assertIn("lib/libQt6Core.so.6.8.4", check_script)
+        stage = self.dockerfile.split(" AS qt-target-webengine-build", 1)[1]
+        self.assertIn("FROM qt-target-configure", self.dockerfile)
+        self.assertIn(
+            "FROM qt-target-webengine-build AS qt-target-build", stage
+        )
+        self.assertIn("FROM qt-target-build AS qt-target-install-checked", stage)
+        self.assertIn(
+            "FROM qt-target-install-checked AS qt-target-build-qualified",
+            stage,
+        )
+        self.assertIn("qualify-qt-target-build.py", stage)
+        self.assertIn("qt-target-build.schema.json", stage)
+        self.assertIn("FROM scratch AS qt-target-qualification-evidence", stage)
+        self.assertIn("RUN --network=none", stage)
 
     def test_fetch_is_networked_but_all_source_acceptance_is_offline(self):
         fetch = self.dockerfile.split(" AS qt-fetch", 1)[1].split(

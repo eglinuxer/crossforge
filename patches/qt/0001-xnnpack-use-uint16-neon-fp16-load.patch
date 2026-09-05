@@ -1,0 +1,50 @@
+From 1b11a8b0620afe8c047304273674c4c57c289755 Mon Sep 17 00:00:00 2001
+From: XNNPACK authors
+Date: Wed, 20 Dec 2023 08:44:55 +0000
+Subject: [PATCH] Use an integer NEON load for the encoded FP16 scale
+
+Backport the relevant generated-source and template hunks from upstream
+XNNPACK commit 1b11a8b0620afe8c047304273674c4c57c289755.  The parameter stores
+the FP16 bit pattern as uint16_t, while GCC 15 correctly rejects passing
+its address to vld1q_dup_f16 as an incompatible pointer type.
+
+Upstream: https://github.com/google/XNNPACK/commit/1b11a8b0620afe8c047304273674c4c57c289755
+---
+ .../xnnpack/src/amalgam/gen/neonfp16arith.c        | 6 +++++-
+ .../xnnpack/src/qs8-f16-vcvt/neon.c.in             | 6 +++++-
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/qtwebengine/src/3rdparty/chromium/third_party/xnnpack/src/src/amalgam/gen/neonfp16arith.c b/qtwebengine/src/3rdparty/chromium/third_party/xnnpack/src/src/amalgam/gen/neonfp16arith.c
+--- a/qtwebengine/src/3rdparty/chromium/third_party/xnnpack/src/src/amalgam/gen/neonfp16arith.c
++++ b/qtwebengine/src/3rdparty/chromium/third_party/xnnpack/src/src/amalgam/gen/neonfp16arith.c
+@@ -12611,7 +12611,11 @@ void xnn_qs8_f16_vcvt_ukernel__neonfp16arith_u32(
+ 
+   uint16_t* o = (uint16_t*) output;
+   const int16x8_t vminus_zero_point = vreinterpretq_s16_u16(vld1q_dup_u16((const void*) &params->neon.minus_zero_point));
+-  const float16x8_t vscale = vld1q_dup_f16(&params->neon.scale);
++#ifdef XNN_COMPILER_MSVC
++  const float16x8_t vscale = vreinterpretq_f16_u16(vdupq_n_u16(params->neon.scale));
++#else
++  const float16x8_t vscale = vreinterpretq_f16_u16(vld1q_dup_u16(&params->neon.scale));
++#endif
+   for (; batch >= 32 * sizeof(int8_t); batch -= 32 * sizeof(int8_t)) {
+     const int8x8_t vx01234567 = vld1_s8(input); input += 8;
+     const int8x8_t vx89ABCDEF = vld1_s8(input); input += 8;
+diff --git a/qtwebengine/src/3rdparty/chromium/third_party/xnnpack/src/src/qs8-f16-vcvt/neon.c.in b/qtwebengine/src/3rdparty/chromium/third_party/xnnpack/src/src/qs8-f16-vcvt/neon.c.in
+--- a/qtwebengine/src/3rdparty/chromium/third_party/xnnpack/src/src/qs8-f16-vcvt/neon.c.in
++++ b/qtwebengine/src/3rdparty/chromium/third_party/xnnpack/src/src/qs8-f16-vcvt/neon.c.in
+@@ -28,7 +28,11 @@ void xnn_qs8_f16_vcvt_ukernel__neonfp16arith_u${BATCH_TILE}(
+ 
+   uint16_t* o = (uint16_t*) output;
+   const int16x8_t vminus_zero_point = vreinterpretq_s16_u16(vld1q_dup_u16((const void*) &params->neon.minus_zero_point));
+-  const float16x8_t vscale = vld1q_dup_f16(&params->neon.scale);
++#ifdef XNN_COMPILER_MSVC
++  const float16x8_t vscale = vreinterpretq_f16_u16(vdupq_n_u16(params->neon.scale));
++#else
++  const float16x8_t vscale = vreinterpretq_f16_u16(vld1q_dup_u16(&params->neon.scale));
++#endif
+   $if BATCH_TILE > 8:
+     for (; batch >= ${BATCH_TILE} * sizeof(int8_t); batch -= ${BATCH_TILE} * sizeof(int8_t)) {
+       $for N in range(0, BATCH_TILE, 8):
+-- 
+2.43.5

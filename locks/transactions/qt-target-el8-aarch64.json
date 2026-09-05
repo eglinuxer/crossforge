@@ -13,7 +13,7 @@
   },
   "plan": {
     "file": "config/rpm/qt-target-el8-aarch64.plan.json",
-    "canonical_sha256": "f3ec4d47f9d23897c52f58e9a6f534e4c79ea5de1a96e0ad8f94a823d8c353a9"
+    "canonical_sha256": "58c99a682df58df9b3ac785e8fa227118abb5ba13560ea60764c05157116dd47"
   },
   "resolver": {
     "implementation": "python3-dnf",
@@ -688,6 +688,13 @@
       "arch": "target",
       "purpose": "qt-target",
       "resolved_nevra": "libXtst-devel-0:1.2.3-7.el8.aarch64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "libatomic",
+      "arch": "target",
+      "purpose": "qt-target",
+      "resolved_nevra": "libatomic-0:8.5.0-28.el8_10.aarch64",
       "disposition": "transaction"
     },
     {
@@ -2500,6 +2507,26 @@
       "source_rpm": "libasyncns-0.8-14.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
+    },
+    {
+      "name": "libatomic",
+      "epoch": 0,
+      "version": "8.5.0",
+      "release": "28.el8_10",
+      "arch": "aarch64",
+      "nevra": "libatomic-0:8.5.0-28.el8_10.aarch64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libatomic-8.5.0-28.el8_10.aarch64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/aarch64/os/Packages/l/libatomic-8.5.0-28.el8_10.aarch64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "177ea1f700b8b7292e96dffafe0298939504462d23408135afabf33780b40360"
+      },
+      "size": 26472,
+      "install_size": 70232,
+      "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm",
+      "action": "install",
+      "reason": "user"
     },
     {
       "name": "libblkid",
@@ -5098,6 +5125,7 @@
         "libXxf86vm-0:1.1.4-9.el8.aarch64",
         "libacl-0:2.4.0-1.el8_10.aarch64",
         "libasyncns-0:0.8-14.el8.aarch64",
+        "libatomic-0:8.5.0-28.el8_10.aarch64",
         "libattr-0:2.6.0-1.el8_10.aarch64",
         "libblkid-0:2.32.1-48.el8_10.aarch64",
         "libcap-0:2.48-6.el8_10.1.aarch64",
@@ -5272,7 +5300,7 @@
         "zlib-0:1.2.11-26.el8.aarch64",
         "zlib-devel-0:1.2.11-26.el8.aarch64"
       ],
-      "canonical_sha256": "cb9e75a430f5216f4989a318d6ac4717515568453d5c12868afba4af2518dfb4"
+      "canonical_sha256": "a726bc4ec8ec6f211541f02850ff36251b965beb07ddd223a092981916639145"
     }
   }
 }

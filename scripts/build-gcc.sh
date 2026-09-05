@@ -123,9 +123,11 @@ export LDFLAGS_FOR_TARGET='-Wl,-z,relro,-z,now'
   "${target_options[@]}"
 
 make -j"$jobs" \
-  all-gcc all-target-libgcc all-target-libstdc++-v3 all-target-libgomp
+  all-gcc all-target-libgcc all-target-libstdc++-v3 all-target-libgomp \
+  all-target-libatomic
 make DESTDIR="$destdir" \
-  install-gcc install-target-libgcc install-target-libstdc++-v3
+  install-gcc install-target-libgcc install-target-libstdc++-v3 \
+  install-target-libatomic
 
 compiler_libdir=$destdir$prefix/lib/gcc/$target/15
 isl_soname=$isl_prefix/lib/libisl.so.23
@@ -158,6 +160,16 @@ readelf -d "$compiler_libdir/${isl_runtime##*/}" \
 }
 [[ -f "$build_directory/gcc-build/$target/libgomp/.libs/libgomp.so" ]] || {
   echo "error: GCC testsuite libgomp runtime was not built" >&2
+  exit 1
+}
+libatomic_link=$(find "$destdir$prefix" -name libatomic.so -print -quit)
+[[ -n "$libatomic_link" && -e "$libatomic_link" ]] || {
+  echo "error: target libatomic development link was not installed" >&2
+  exit 1
+}
+readelf -d "$(readlink -e "$libatomic_link")" \
+  | grep -F '(SONAME)' | grep -F '[libatomic.so.1]' >/dev/null || {
+  echo "error: target libatomic SONAME differs" >&2
   exit 1
 }
 

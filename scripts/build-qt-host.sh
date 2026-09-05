@@ -52,13 +52,27 @@ fi
   exit 1
 }
 
+run_logged() {
+  local label=$1
+  local log=$2
+  shift 2
+  if "$@" >"$log" 2>&1; then
+    echo "$label completed; full log: $log"
+    return 0
+  fi
+  echo "error: $label failed; reporting bounded diagnostics" >&2
+  /usr/libexec/platform-python \
+    /work/scripts/print-build-log-diagnostics.py "$log" >&2 || true
+  return 1
+}
+
 export PATH=/opt/crossforge/host-tools/cmake/4.4.0/bin:/opt/crossforge/host-tools/ninja/1.13.2/bin:/opt/rh/gcc-toolset-15/root/usr/bin:$PATH
 export LD_LIBRARY_PATH=$ffmpeg/lib64:$xcb_cursor/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 export PYTHONPATH=/usr/lib/python3.6/site-packages
 export LC_ALL=C.UTF-8
 export SOURCE_DATE_EPOCH=0
 
-"$cmake" --build "$build_root" --parallel "$jobs" \
-  2>&1 | tee "$build_root/build.log"
-"$cmake" --install "$build_root" \
-  2>&1 | tee "$build_root/install.log"
+run_logged "Qt host build" "$build_root/build.log" \
+  "$cmake" --build "$build_root" --parallel "$jobs"
+run_logged "Qt host install" "$build_root/install.log" \
+  "$cmake" --install "$build_root"

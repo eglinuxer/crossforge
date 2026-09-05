@@ -84,6 +84,8 @@ class RpmLockValidationTests(unittest.TestCase):
                 {record["name"] for record in plan["roots"]},
                 VALIDATOR["QT_TARGET_ROOTS"],
             )
+            self.assertIn("libatomic", VALIDATOR["QT_TARGET_ROOTS"])
+            self.assertNotIn("libatomic", VALIDATOR["HOST_QT_ROOTS"])
             self.assertFalse(
                 {"nodejs", "python38", "python3-html5lib", "gperf"}.intersection(
                     {record["name"] for record in plan["roots"]}
@@ -172,13 +174,13 @@ class RpmLockValidationTests(unittest.TestCase):
             VALIDATOR["load_json"](path) for path in self.qt_transactions
         ]
         self.assertEqual(len(host["items"]), 204)
-        self.assertEqual(len(x86_64["items"]), 204)
-        self.assertEqual(len(aarch64["items"]), 201)
+        self.assertEqual(len(x86_64["items"]), 205)
+        self.assertEqual(len(aarch64["items"]), 202)
         pair = runpy.run_path(
             str(REPOSITORY / "scripts/validate-qt-qualification.py")
         )["validate_target_pair"]([x86_64, aarch64])
-        self.assertEqual(pair["x86_64_packages"], 204)
-        self.assertEqual(pair["aarch64_packages"], 201)
+        self.assertEqual(pair["x86_64_packages"], 205)
+        self.assertEqual(pair["aarch64_packages"], 202)
 
     def test_locked_qt_target_rejects_power_tools_origin_drift(self):
         transaction = VALIDATOR["load_json"](self.qt_transactions[1])

@@ -139,7 +139,7 @@ class ToolchainQualificationAbiTests(unittest.TestCase):
             },
             expected_artifacts,
         )
-        self.assertEqual(source.count("HARDENED_LINKER_FLAG"), 9)
+        self.assertEqual(source.count("HARDENED_LINKER_FLAG"), 10)
         self.assertIn(
             'run([gcc, "-O2", smoke / "hello.c", "-o", compiler_default_canary])',
             source,

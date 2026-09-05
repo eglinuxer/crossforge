@@ -23,6 +23,18 @@
       "usage": "host-and-target-xcb-platform-plugin-build"
     }
   ],
+  "patches": [
+    {
+      "file": "patches/qt/0001-xnnpack-use-uint16-neon-fp16-load.patch",
+      "scope": "target-builds",
+      "sha256": "f206a8f686e9208c424f9b7a1a0aab960da4ffbc2cae112b6489408ac20953b3",
+      "upstream": {
+        "commit": "1b11a8b0620afe8c047304273674c4c57c289755",
+        "repository": "https://github.com/google/XNNPACK",
+        "url": "https://github.com/google/XNNPACK/commit/1b11a8b0620afe8c047304273674c4c57c289755"
+      }
+    }
+  ],
   "host": {
     "platform": "linux/amd64",
     "compiler": "native-gts15",
@@ -65,17 +77,17 @@
       "id": "qt-target-x86_64",
       "status": "locked",
       "plan_file": "config/rpm/qt-target-el8-x86_64.plan.json",
-      "plan_sha256": "f558aa43c0c215fe5a4f0fcc9933e9674cc549e47de02364a7d741ae25f23824",
+      "plan_sha256": "e20c4afee94960a3ae990f2b2460fc5d1ab9f83822f9e77abf063d3fe6b38857",
       "lock_file": "locks/qt-target-el8-x86_64.json",
-      "canonical_sha256": "4cdcfbdb23cdb7e18dec16ef20abad6ed18139dd91c849f3ec07397ef62c2442"
+      "canonical_sha256": "43f58bbb5274b2564a6ce21b5cd5d9dd67fe706aaa5c70f981022cdd401f5218"
     },
     {
       "id": "qt-target-aarch64",
       "status": "locked",
       "plan_file": "config/rpm/qt-target-el8-aarch64.plan.json",
-      "plan_sha256": "f3ec4d47f9d23897c52f58e9a6f534e4c79ea5de1a96e0ad8f94a823d8c353a9",
+      "plan_sha256": "58c99a682df58df9b3ac785e8fa227118abb5ba13560ea60764c05157116dd47",
       "lock_file": "locks/qt-target-el8-aarch64.json",
-      "canonical_sha256": "7b529f60e885c4e72c4b212b996febafa3921173ba1184bc6e0ca92656ebe887"
+      "canonical_sha256": "a07335df834350957a58b801709a2f33b81f013101c8a833ae2668ba654fb5fa"
     }
   ],
   "modules": [

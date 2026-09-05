@@ -228,6 +228,7 @@ QT_TARGET_ROOTS = {
     "libXrandr-devel",
     "libXrender-devel",
     "libXtst-devel",
+    "libatomic",
     "libdrm-devel",
     "libinput-devel",
     "libjpeg-turbo-devel",
@@ -260,7 +261,7 @@ QT_TARGET_NOARCH_ROOTS = {
     "wayland-protocols-devel",
     "xorg-x11-proto-devel",
 }
-HOST_QT_ROOTS = QT_TARGET_ROOTS | {
+HOST_QT_ROOTS = (QT_TARGET_ROOTS - {"libatomic"}) | {
     "bison",
     "flex",
     "gcc-toolset-15-libatomic-devel",

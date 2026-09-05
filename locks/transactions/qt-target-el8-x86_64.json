@@ -13,7 +13,7 @@
   },
   "plan": {
     "file": "config/rpm/qt-target-el8-x86_64.plan.json",
-    "canonical_sha256": "f558aa43c0c215fe5a4f0fcc9933e9674cc549e47de02364a7d741ae25f23824"
+    "canonical_sha256": "e20c4afee94960a3ae990f2b2460fc5d1ab9f83822f9e77abf063d3fe6b38857"
   },
   "resolver": {
     "implementation": "python3-dnf",
@@ -688,6 +688,13 @@
       "arch": "target",
       "purpose": "qt-target",
       "resolved_nevra": "libXtst-devel-0:1.2.3-7.el8.x86_64",
+      "disposition": "transaction"
+    },
+    {
+      "name": "libatomic",
+      "arch": "target",
+      "purpose": "qt-target",
+      "resolved_nevra": "libatomic-0:8.5.0-28.el8_10.x86_64",
       "disposition": "transaction"
     },
     {
@@ -2520,6 +2527,26 @@
       "source_rpm": "libasyncns-0.8-14.el8.src.rpm",
       "action": "install",
       "reason": "dependency"
+    },
+    {
+      "name": "libatomic",
+      "epoch": 0,
+      "version": "8.5.0",
+      "release": "28.el8_10",
+      "arch": "x86_64",
+      "nevra": "libatomic-0:8.5.0-28.el8_10.x86_64",
+      "repo_id": "baseos",
+      "location": "Packages/l/libatomic-8.5.0-28.el8_10.x86_64.rpm",
+      "url": "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/l/libatomic-8.5.0-28.el8_10.x86_64.rpm",
+      "repository_checksum": {
+        "algorithm": "sha256",
+        "value": "97467bd64967dd24ab1fb7100e839c794df300168ea9d2c315af92984148b7f2"
+      },
+      "size": 26012,
+      "install_size": 28920,
+      "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm",
+      "action": "install",
+      "reason": "user"
     },
     {
       "name": "libblkid",
@@ -5159,6 +5186,7 @@
         "libXxf86vm-0:1.1.4-9.el8.x86_64",
         "libacl-0:2.4.0-1.el8_10.x86_64",
         "libasyncns-0:0.8-14.el8.x86_64",
+        "libatomic-0:8.5.0-28.el8_10.x86_64",
         "libattr-0:2.6.0-1.el8_10.x86_64",
         "libblkid-0:2.32.1-48.el8_10.x86_64",
         "libcap-0:2.48-6.el8_10.1.x86_64",
@@ -5335,7 +5363,7 @@
         "zlib-0:1.2.11-26.el8.x86_64",
         "zlib-devel-0:1.2.11-26.el8.x86_64"
       ],
-      "canonical_sha256": "239f83aafe79896da354827b65a2d5af55ecbb3b421e5c75413599bf076bb8e1"
+      "canonical_sha256": "a35676362c443fe5d838a312a8f03127bebda6258909a857a12e6b89556f6539"
     }
   }
 }

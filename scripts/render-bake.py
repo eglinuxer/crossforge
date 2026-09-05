@@ -1070,7 +1070,9 @@ def render_python_graph(config, targets, component_arguments):
     return groups
 
 
-def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
+def render_qt_graph(
+    config, qt_plan, targets, component_arguments, rocky_amd64_image
+):
     component_argument = component_argument_name("sources/qt")
     ffmpeg_component_argument = component_argument_name("sources/ffmpeg")
     xcb_cursor_component_argument = component_argument_name(
@@ -1090,6 +1092,9 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
         ]
     except KeyError as error:
         raise ValueError("missing Qt source dependency component digest") from error
+    if len(qt_plan["patches"]) != 1:
+        raise ValueError("Qt target patch contract differs")
+    qt_target_patch = qt_plan["patches"][0]
     targets["qt-source"] = {
         "inherits": ["_qt_common"],
         "target": "qt-source-export",
@@ -1273,6 +1278,78 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
         "contexts": dict(targets["qt-host-qualified"]["contexts"]),
         "output": ["type=cacheonly"],
     }
+    qt_target_configures = []
+    qt_target_configure_qualifications = []
+    qt_target_webengine_builds = []
+    qt_target_builds = []
+    qt_target_qualifications = []
+    for target in config["targets"]:
+        arch = target["arch"]
+        triple = target["triple"]
+        name = "qt-%s-configure-observation" % arch
+        targets[name] = {
+            "inherits": ["_qt_common"],
+            "target": "qt-target-configure-observation",
+            "args": {
+                "QT_VERSION": config["qt"]["version"],
+                "QT_TARGET_ARCH": arch,
+                "QT_TARGET_TRIPLE": triple,
+                "QT_XNNPACK_PATCH_SHA256": qt_target_patch["sha256"],
+                qualification_component_argument: qualification_component_sha256,
+            },
+            "contexts": {
+                "crossforge_cmake": "target:cmake-host-tool",
+                "crossforge_ffmpeg_target": "target:ffmpeg-%s-build" % arch,
+                "crossforge_host_qt": "target:host-qt-build-locked",
+                "crossforge_ninja": "target:ninja-host-tool",
+                "crossforge_qt_host": "target:qt-host-qualified",
+                "crossforge_qt_source": "target:qt-source",
+                "crossforge_toolchain": "target:toolchain-%s-dev" % arch,
+                "crossforge_xcb_target": (
+                    "target:xcb-util-cursor-%s-build" % arch
+                ),
+            },
+            "output": ["type=cacheonly"],
+        }
+        qt_target_configures.append(name)
+        configure_qualification_name = "qt-%s-configure-qualified" % arch
+        targets[configure_qualification_name] = {
+            "inherits": ["_qt_common"],
+            "target": "qt-target-configure-evidence",
+            "args": dict(targets[name]["args"]),
+            "contexts": dict(targets[name]["contexts"]),
+            "output": ["type=cacheonly"],
+        }
+        qt_target_configure_qualifications.append(
+            configure_qualification_name
+        )
+        webengine_build_name = "qt-%s-webengine-build" % arch
+        targets[webengine_build_name] = {
+            "inherits": ["_qt_common"],
+            "target": "qt-target-webengine-build",
+            "args": dict(targets[name]["args"]),
+            "contexts": dict(targets[name]["contexts"]),
+            "output": ["type=cacheonly"],
+        }
+        qt_target_webengine_builds.append(webengine_build_name)
+        build_name = "qt-%s-build" % arch
+        targets[build_name] = {
+            "inherits": ["_qt_common"],
+            "target": "qt-target-build-observation",
+            "args": dict(targets[name]["args"]),
+            "contexts": dict(targets[name]["contexts"]),
+            "output": ["type=cacheonly"],
+        }
+        qt_target_builds.append(build_name)
+        qualification_name = "qt-%s-qualified" % arch
+        targets[qualification_name] = {
+            "inherits": ["_qt_common"],
+            "target": "qt-target-qualification-evidence",
+            "args": dict(targets[name]["args"]),
+            "contexts": dict(targets[name]["contexts"]),
+            "output": ["type=cacheonly"],
+        }
+        qt_target_qualifications.append(qualification_name)
     return {
         "qt-source-qualified": {
             "targets": ["qt-source", "ffmpeg-source", "xcb-util-cursor-source"]
@@ -1285,6 +1362,15 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
         "qt-host-built": {"targets": ["qt-host-build"]},
         "qt-host-qualified": {
             "targets": ["qt-host-qualification-evidence"]
+        },
+        "qt-target-configure-observed": {"targets": qt_target_configures},
+        "qt-target-configure-qualified": {
+            "targets": qt_target_configure_qualifications
+        },
+        "qt-target-webengine-built": {"targets": qt_target_webengine_builds},
+        "qt-target-built": {"targets": qt_target_builds},
+        "qt-target-build-qualified": {
+            "targets": qt_target_qualifications
         },
     }
 
@@ -1301,6 +1387,14 @@ def render(repository):
     schema = load_json(schema_path)
     validate_schema_subset(schema)
     validate(config, schema, schema, "$")
+    qt_validator = runpy.run_path(
+        str(repository / "scripts/validate-qt-qualification.py")
+    )
+    qt_plan = qt_validator["load_and_validate"](
+        repository / "config/qt-qualification.json",
+        repository / "config/schemas/qt-qualification-plan.schema.json",
+    )
+    qt_validator["validate_plan"](qt_plan, require_locked=True)
 
     base = config["base_image"]
     rocky_amd64_image = "%s:%s@%s" % (
@@ -1387,7 +1481,7 @@ def render(repository):
         }
     render_zstd_graph(config, targets, component_arguments, rocky_amd64_image)
     qt_groups = render_qt_graph(
-        config, targets, component_arguments, rocky_amd64_image
+        config, qt_plan, targets, component_arguments, rocky_amd64_image
     )
     ninja_groups = render_ninja_graph(config, targets, component_arguments)
     component_renderer = runpy.run_path(
