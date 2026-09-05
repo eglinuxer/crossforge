@@ -1161,11 +1161,33 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
             "output": ["type=cacheonly"],
         }
         xcb_builds.append(name)
+    targets["qt-host-configure-observe"] = {
+        "inherits": ["_qt_common"],
+        "target": "qt-host-configure-observe",
+        "args": {"QT_VERSION": config["qt"]["version"]},
+        "contexts": {
+            "crossforge_cmake": "target:cmake-host-tool",
+            "crossforge_ninja": "target:ninja-host-tool",
+            "crossforge_qt_source": "target:qt-source",
+            "crossforge_xcb_host": "target:xcb-util-cursor-host-build",
+        },
+        "output": ["type=cacheonly"],
+    }
+    targets["qt-host-configure-observation"] = {
+        "inherits": ["_qt_common"],
+        "target": "qt-host-configure-observation",
+        "args": {"QT_VERSION": config["qt"]["version"]},
+        "contexts": dict(targets["qt-host-configure-observe"]["contexts"]),
+        "output": ["type=cacheonly"],
+    }
     return {
         "qt-source-qualified": {
             "targets": ["qt-source", "xcb-util-cursor-source"]
         },
         "xcb-util-cursor-qualified": {"targets": xcb_builds},
+        "qt-host-configure-observed": {
+            "targets": ["qt-host-configure-observation"]
+        },
     }
 
 

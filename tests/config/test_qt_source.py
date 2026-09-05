@@ -92,6 +92,29 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertNotIn("HOSTRUNNER", build)
         self.assertNotIn("qemu", build.lower())
 
+    def test_host_configure_observation_uses_locked_tools_and_inputs_offline(self):
+        target = self.bake["target"]["qt-host-configure-observe"]
+        self.assertEqual(target["target"], "qt-host-configure-observe")
+        self.assertEqual(
+            target["contexts"],
+            {
+                "crossforge_cmake": "target:cmake-host-tool",
+                "crossforge_ninja": "target:ninja-host-tool",
+                "crossforge_qt_source": "target:qt-source",
+                "crossforge_xcb_host": "target:xcb-util-cursor-host-build",
+            },
+        )
+        self.assertEqual(
+            self.bake["group"]["qt-host-configure-observed"]["targets"],
+            ["qt-host-configure-observation"],
+        )
+        report = self.bake["target"]["qt-host-configure-observation"]
+        self.assertEqual(report["target"], "qt-host-configure-observation")
+        self.assertEqual(report["contexts"], target["contexts"])
+        stage = self.dockerfile.split(" AS qt-host-configure-observe", 1)[1]
+        self.assertIn("RUN --network=none", stage)
+        self.assertIn("configure-qt-host.sh", stage)
+
     def test_fetch_is_networked_but_all_source_acceptance_is_offline(self):
         fetch = self.dockerfile.split(" AS qt-fetch", 1)[1].split(
             "\nFROM ", 1

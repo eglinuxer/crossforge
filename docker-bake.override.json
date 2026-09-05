@@ -305,6 +305,11 @@
         "cpython-build-cp310"
       ]
     },
+    "qt-host-configure-observed": {
+      "targets": [
+        "qt-host-configure-observation"
+      ]
+    },
     "qt-source-qualified": {
       "targets": [
         "qt-source",
@@ -2670,6 +2675,42 @@
       "contexts": {
         "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
       }
+    },
+    "qt-host-configure-observation": {
+      "args": {
+        "QT_VERSION": "6.8.4"
+      },
+      "contexts": {
+        "crossforge_cmake": "target:cmake-host-tool",
+        "crossforge_ninja": "target:ninja-host-tool",
+        "crossforge_qt_source": "target:qt-source",
+        "crossforge_xcb_host": "target:xcb-util-cursor-host-build"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-host-configure-observation"
+    },
+    "qt-host-configure-observe": {
+      "args": {
+        "QT_VERSION": "6.8.4"
+      },
+      "contexts": {
+        "crossforge_cmake": "target:cmake-host-tool",
+        "crossforge_ninja": "target:ninja-host-tool",
+        "crossforge_qt_source": "target:qt-source",
+        "crossforge_xcb_host": "target:xcb-util-cursor-host-build"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-host-configure-observe"
     },
     "qt-source": {
       "args": {

@@ -202,3 +202,28 @@ RUN --network=none case \
       --jobs "$CROSSFORGE_JOBS" \
       --output \
         "/opt/crossforge/qualification/qt/6.8.4/deps/$XCB_UTIL_CURSOR_TARGET_TRIPLE/xcb-util-cursor-build.json"
+
+FROM crossforge_xcb_host AS qt-host-configure-observe
+ARG QT_VERSION
+COPY --from=crossforge_qt_source \
+  /materials/qt-everywhere-opensource-src-6.8.4.tar.xz \
+  /work/source/qt-everywhere-opensource-src-6.8.4.tar.xz
+COPY --from=crossforge_cmake \
+  /opt/crossforge/host-tools/cmake/4.4.0/ \
+  /opt/crossforge/host-tools/cmake/4.4.0/
+COPY --from=crossforge_ninja \
+  /opt/crossforge/host-tools/ninja/1.13.2/ \
+  /opt/crossforge/host-tools/ninja/1.13.2/
+COPY --chmod=0755 scripts/configure-qt-host.sh /work/scripts/configure-qt-host.sh
+RUN --network=none test "$QT_VERSION" = 6.8.4 \
+    && /work/scripts/configure-qt-host.sh \
+      /work/source/qt-everywhere-opensource-src-6.8.4.tar.xz \
+      /work/source/qt-everywhere-src-6.8.4 \
+      /work/build/qt-host \
+      /opt/crossforge/qualification/qt/6.8.4/host \
+      /opt/crossforge/qualification/qt/6.8.4/deps/host/xcb-util-cursor
+
+FROM scratch AS qt-host-configure-observation
+COPY --from=qt-host-configure-observe /work/build/qt-host/CMakeCache.txt /
+COPY --from=qt-host-configure-observe /work/build/qt-host/config.summary /
+COPY --from=qt-host-configure-observe /work/build/qt-host/configure.log /
