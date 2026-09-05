@@ -5,6 +5,13 @@
         "sdk-candidate"
       ]
     },
+    "ffmpeg-qualified": {
+      "targets": [
+        "ffmpeg-host-build",
+        "ffmpeg-x86_64-build",
+        "ffmpeg-aarch64-build"
+      ]
+    },
     "phase10": {
       "targets": [
         "validate",
@@ -1867,6 +1874,66 @@
       ],
       "target": "cpython-source"
     },
+    "ffmpeg-aarch64-build": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "b48a4d5033eaa792d4a5bebdc7b7277d69fa7af5b1d1f35089367c9eb015d885",
+        "CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
+        "FFMPEG_RPM_LOCK": "locks/qt-target-el8-aarch64.json",
+        "FFMPEG_RPM_TRANSACTION": "locks/transactions/qt-target-el8-aarch64.json",
+        "FFMPEG_TARGET_ARCH": "aarch64",
+        "FFMPEG_TARGET_TRIPLE": "aarch64-unknown-linux-gnu",
+        "FFMPEG_VERSION": "7.1.1"
+      },
+      "contexts": {
+        "crossforge_ffmpeg_source": "target:ffmpeg-source",
+        "crossforge_host_qt": "target:host-qt-build-locked",
+        "crossforge_qt_target": "target:qt-target-aarch64-locked",
+        "crossforge_toolchain": "target:toolchain-aarch64-dev"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "ffmpeg-target-build"
+    },
+    "ffmpeg-host-build": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "b48a4d5033eaa792d4a5bebdc7b7277d69fa7af5b1d1f35089367c9eb015d885",
+        "CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
+        "FFMPEG_VERSION": "7.1.1"
+      },
+      "contexts": {
+        "crossforge_ffmpeg_source": "target:ffmpeg-source",
+        "crossforge_xcb_host": "target:xcb-util-cursor-host-build"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "ffmpeg-host-build"
+    },
+    "ffmpeg-host-build-observation": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "b48a4d5033eaa792d4a5bebdc7b7277d69fa7af5b1d1f35089367c9eb015d885",
+        "CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
+        "FFMPEG_VERSION": "7.1.1"
+      },
+      "contexts": {
+        "crossforge_ffmpeg_source": "target:ffmpeg-source",
+        "crossforge_xcb_host": "target:xcb-util-cursor-host-build"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "ffmpeg-host-build-observation"
+    },
     "ffmpeg-source": {
       "args": {
         "CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
@@ -1883,6 +1950,30 @@
         "type=cacheonly"
       ],
       "target": "ffmpeg-source-export"
+    },
+    "ffmpeg-x86_64-build": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "b48a4d5033eaa792d4a5bebdc7b7277d69fa7af5b1d1f35089367c9eb015d885",
+        "CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256": "ab323fc8d456aee93a8aaf70cf08b1dbc7f47ded96819c2ef431b21d3b3c066a",
+        "FFMPEG_RPM_LOCK": "locks/qt-target-el8-x86_64.json",
+        "FFMPEG_RPM_TRANSACTION": "locks/transactions/qt-target-el8-x86_64.json",
+        "FFMPEG_TARGET_ARCH": "x86_64",
+        "FFMPEG_TARGET_TRIPLE": "x86_64-unknown-linux-gnu",
+        "FFMPEG_VERSION": "7.1.1"
+      },
+      "contexts": {
+        "crossforge_ffmpeg_source": "target:ffmpeg-source",
+        "crossforge_host_qt": "target:host-qt-build-locked",
+        "crossforge_qt_target": "target:qt-target-x86_64-locked",
+        "crossforge_toolchain": "target:toolchain-x86_64-dev"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "ffmpeg-target-build"
     },
     "gcc-aarch64": {
       "args": {
@@ -2700,9 +2791,9 @@
       },
       "contexts": {
         "crossforge_cmake": "target:cmake-host-tool",
+        "crossforge_ffmpeg_host": "target:ffmpeg-host-build",
         "crossforge_ninja": "target:ninja-host-tool",
-        "crossforge_qt_source": "target:qt-source",
-        "crossforge_xcb_host": "target:xcb-util-cursor-host-build"
+        "crossforge_qt_source": "target:qt-source"
       },
       "inherits": [
         "_qt_common"
@@ -2718,9 +2809,9 @@
       },
       "contexts": {
         "crossforge_cmake": "target:cmake-host-tool",
+        "crossforge_ffmpeg_host": "target:ffmpeg-host-build",
         "crossforge_ninja": "target:ninja-host-tool",
-        "crossforge_qt_source": "target:qt-source",
-        "crossforge_xcb_host": "target:xcb-util-cursor-host-build"
+        "crossforge_qt_source": "target:qt-source"
       },
       "inherits": [
         "_qt_common"

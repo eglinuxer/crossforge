@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-if [[ $# -ne 5 ]]; then
-  echo "usage: $0 ARCHIVE SOURCE_ROOT BUILD_ROOT PREFIX XCB_CURSOR_PREFIX" >&2
+if [[ $# -ne 6 ]]; then
+  echo "usage: $0 ARCHIVE SOURCE_ROOT BUILD_ROOT PREFIX XCB_CURSOR_PREFIX FFMPEG_PREFIX" >&2
   exit 2
 fi
 
@@ -11,13 +11,15 @@ source_root=$2
 build_root=$3
 prefix=$4
 xcb_cursor_prefix=$5
+ffmpeg_prefix=$6
 cmake_root=/opt/crossforge/host-tools/cmake/4.4.0
 ninja_root=/opt/crossforge/host-tools/ninja/1.13.2
 gts_root=/opt/rh/gcc-toolset-15/root/usr
 modules=qtbase,qtshadertools,qtdeclarative,qttools,qtwayland,qtmultimedia,qtquick3d,qtwebengine
 
 [[ "$archive" = /* && "$source_root" = /* && "$build_root" = /* \
-  && "$prefix" = /* && "$xcb_cursor_prefix" = /* ]] || {
+  && "$prefix" = /* && "$xcb_cursor_prefix" = /* \
+  && "$ffmpeg_prefix" = /* ]] || {
   echo "error: Qt configure paths must be absolute" >&2
   exit 1
 }
@@ -55,8 +57,8 @@ tar --extract --xz --file "$archive" --directory "$source_root" \
 export PATH="$cmake_root/bin:$ninja_root/bin:$gts_root/bin:$PATH"
 export CC="$gts_root/bin/gcc"
 export CXX="$gts_root/bin/g++"
-export PKG_CONFIG_PATH="$xcb_cursor_prefix/lib64/pkgconfig"
-export LD_LIBRARY_PATH="$xcb_cursor_prefix/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export PKG_CONFIG_PATH="$ffmpeg_prefix/lib64/pkgconfig:$xcb_cursor_prefix/lib64/pkgconfig"
+export LD_LIBRARY_PATH="$ffmpeg_prefix/lib64:$xcb_cursor_prefix/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export PYTHONPATH=/usr/lib/python3.6/site-packages
 export LC_ALL=C
 export SOURCE_DATE_EPOCH=0
@@ -80,8 +82,8 @@ cd "$build_root"
   -system-zlib \
   -qt-harfbuzz \
   -qt-pcre \
-  -no-feature-ffmpeg \
   -- \
+  -DFFMPEG_DIR="$ffmpeg_prefix" \
   -DQT_BUILD_EXAMPLES=OFF \
   -DQT_BUILD_TESTS=OFF \
   -DQT_BUILD_TOOLS_BY_DEFAULT=ON \

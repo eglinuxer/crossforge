@@ -114,6 +114,40 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertNotIn("HOSTRUNNER", build)
         self.assertNotIn("qemu", build.lower())
 
+    def test_ffmpeg_builds_cover_host_and_both_targets_without_target_execution(self):
+        self.assertEqual(
+            self.bake["group"]["ffmpeg-qualified"]["targets"],
+            ["ffmpeg-host-build", "ffmpeg-x86_64-build", "ffmpeg-aarch64-build"],
+        )
+        host = self.bake["target"]["ffmpeg-host-build"]
+        self.assertEqual(
+            host["contexts"]["crossforge_xcb_host"],
+            "target:xcb-util-cursor-host-build",
+        )
+        for arch, triple in (
+            ("x86_64", "x86_64-unknown-linux-gnu"),
+            ("aarch64", "aarch64-unknown-linux-gnu"),
+        ):
+            target = self.bake["target"]["ffmpeg-%s-build" % arch]
+            self.assertEqual(target["args"]["FFMPEG_TARGET_TRIPLE"], triple)
+            self.assertEqual(
+                target["args"]["FFMPEG_RPM_LOCK"],
+                "locks/qt-target-el8-%s.json" % arch,
+            )
+            self.assertEqual(
+                target["contexts"]["crossforge_qt_target"],
+                "target:qt-target-%s-locked" % arch,
+            )
+            self.assertEqual(
+                target["contexts"]["crossforge_toolchain"],
+                "target:toolchain-%s-dev" % arch,
+            )
+        build = self.dockerfile.split(" AS ffmpeg-target-build", 1)[1]
+        self.assertIn("RUN --network=none", build)
+        self.assertIn("qualify-ffmpeg-build.py", build)
+        self.assertNotIn("HOSTRUNNER", build)
+        self.assertNotIn("qemu", build.lower())
+
     def test_host_configure_observation_uses_locked_tools_and_inputs_offline(self):
         target = self.bake["target"]["qt-host-configure-observe"]
         self.assertEqual(target["target"], "qt-host-configure-observe")
@@ -121,9 +155,9 @@ class QtSourceGraphTests(unittest.TestCase):
             target["contexts"],
             {
                 "crossforge_cmake": "target:cmake-host-tool",
+                "crossforge_ffmpeg_host": "target:ffmpeg-host-build",
                 "crossforge_ninja": "target:ninja-host-tool",
                 "crossforge_qt_source": "target:qt-source",
-                "crossforge_xcb_host": "target:xcb-util-cursor-host-build",
             },
         )
         self.assertEqual(
@@ -136,6 +170,7 @@ class QtSourceGraphTests(unittest.TestCase):
         stage = self.dockerfile.split(" AS qt-host-configure-observe", 1)[1]
         self.assertIn("RUN --network=none", stage)
         self.assertIn("configure-qt-host.sh", stage)
+        self.assertIn("/deps/host/ffmpeg", stage)
 
     def test_fetch_is_networked_but_all_source_acceptance_is_offline(self):
         fetch = self.dockerfile.split(" AS qt-fetch", 1)[1].split(

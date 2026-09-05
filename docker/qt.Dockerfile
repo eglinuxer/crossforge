@@ -248,7 +248,141 @@ RUN --network=none case \
       --output \
         "/opt/crossforge/qualification/qt/6.8.4/deps/$XCB_UTIL_CURSOR_TARGET_TRIPLE/xcb-util-cursor-build.json"
 
-FROM crossforge_xcb_host AS qt-host-configure-observe
+FROM crossforge_xcb_host AS ffmpeg-host-build
+ARG FFMPEG_VERSION
+ARG CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+ARG CROSSFORGE_JOBS=4
+COPY --from=crossforge_ffmpeg_source / \
+  /work/prepared/ffmpeg/
+COPY config/generated/components/sources/ffmpeg.json \
+  /work/config/sources-ffmpeg.json
+COPY config/generated/components/future/qt-qualification.json \
+  /work/config/qt-qualification-component.json
+COPY config/qt-qualification.json /work/config/qt-qualification.json
+COPY config/schemas/ffmpeg-build.schema.json \
+  config/schemas/ffmpeg-source-manifest.schema.json \
+  config/schemas/qt-qualification-plan.schema.json \
+  config/schemas/rpm-lock.schema.json \
+  config/schemas/rpm-transaction.schema.json \
+  /work/config/schemas/
+COPY locks/host-qt-build-el8-x86_64.json \
+  /work/locks/host-qt-build-el8-x86_64.json
+COPY locks/transactions/host-qt-build-el8-x86_64.json \
+  /work/locks/transactions/host-qt-build-el8-x86_64.json
+COPY --chmod=0755 scripts/release_component.py scripts/validate-release.py \
+  scripts/build-ffmpeg.sh scripts/qualify-ffmpeg-build.py /work/scripts/
+RUN --network=none test "$FFMPEG_VERSION" = 7.1.1 \
+    && /work/scripts/build-ffmpeg.sh \
+      host \
+      /work/prepared/ffmpeg/materials/ffmpeg-7.1.1.tar.xz \
+      /work/build/ffmpeg-host \
+      /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg \
+      /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg \
+      '' \
+      /opt/rh/gcc-toolset-15/root/usr/bin \
+      "$CROSSFORGE_JOBS" \
+    && /work/scripts/qualify-ffmpeg-build.py \
+      --identity host \
+      --source-archive \
+        /work/prepared/ffmpeg/materials/ffmpeg-7.1.1.tar.xz \
+      --source-manifest /work/prepared/ffmpeg/source-manifest.json \
+      --source-component /work/config/sources-ffmpeg.json \
+      --source-component-sha256 \
+        "$CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256" \
+      --qualification-component \
+        /work/config/qt-qualification-component.json \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256" \
+      --plan /work/config/qt-qualification.json \
+      --rpm-lock /work/locks/host-qt-build-el8-x86_64.json \
+      --rpm-transaction \
+        /work/locks/transactions/host-qt-build-el8-x86_64.json \
+      --toolchain /opt/rh/gcc-toolset-15/root/usr/bin \
+      --install-root \
+        /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg \
+      --prefix /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg \
+      --build-root /work/build/ffmpeg-host \
+      --builder /work/scripts/build-ffmpeg.sh \
+      --output \
+        /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg/ffmpeg-build.json
+
+FROM crossforge_host_qt AS ffmpeg-target-build
+ARG FFMPEG_VERSION
+ARG FFMPEG_TARGET_ARCH
+ARG FFMPEG_TARGET_TRIPLE
+ARG FFMPEG_RPM_LOCK
+ARG FFMPEG_RPM_TRANSACTION
+ARG CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+ARG CROSSFORGE_JOBS=4
+COPY --from=crossforge_ffmpeg_source / \
+  /work/prepared/ffmpeg/
+COPY --from=crossforge_toolchain \
+  /opt/crossforge/targets/${FFMPEG_TARGET_TRIPLE}/ \
+  /opt/crossforge/targets/${FFMPEG_TARGET_TRIPLE}/
+COPY --from=crossforge_qt_target \
+  /opt/crossforge/sysroots/el8/${FFMPEG_TARGET_ARCH}/ \
+  /opt/crossforge/sysroots/el8/${FFMPEG_TARGET_ARCH}/
+COPY config/generated/components/sources/ffmpeg.json \
+  /work/config/sources-ffmpeg.json
+COPY config/generated/components/future/qt-qualification.json \
+  /work/config/qt-qualification-component.json
+COPY config/qt-qualification.json /work/config/qt-qualification.json
+COPY config/schemas/ffmpeg-build.schema.json \
+  config/schemas/ffmpeg-source-manifest.schema.json \
+  config/schemas/qt-qualification-plan.schema.json \
+  config/schemas/rpm-lock.schema.json \
+  config/schemas/rpm-transaction.schema.json \
+  /work/config/schemas/
+COPY --from=crossforge_qt_target /src/locks/ /work/locks/
+COPY --chmod=0755 scripts/release_component.py scripts/validate-release.py \
+  scripts/build-ffmpeg.sh scripts/qualify-ffmpeg-build.py /work/scripts/
+RUN --network=none case \
+      "$FFMPEG_TARGET_ARCH:$FFMPEG_TARGET_TRIPLE:$FFMPEG_RPM_LOCK:$FFMPEG_RPM_TRANSACTION" in \
+      x86_64:x86_64-unknown-linux-gnu:locks/qt-target-el8-x86_64.json:locks/transactions/qt-target-el8-x86_64.json|aarch64:aarch64-unknown-linux-gnu:locks/qt-target-el8-aarch64.json:locks/transactions/qt-target-el8-aarch64.json) ;; \
+      *) echo 'error: invalid FFmpeg target identity' >&2; exit 1 ;; \
+    esac \
+    && /work/scripts/build-ffmpeg.sh \
+      "$FFMPEG_TARGET_TRIPLE" \
+      /work/prepared/ffmpeg/materials/ffmpeg-7.1.1.tar.xz \
+      "/work/build/ffmpeg-$FFMPEG_TARGET_ARCH" \
+      "/opt/crossforge/qualification/qt/6.8.4/deps/$FFMPEG_TARGET_TRIPLE/ffmpeg" \
+      /usr \
+      "/opt/crossforge/sysroots/el8/$FFMPEG_TARGET_ARCH" \
+      "/opt/crossforge/targets/$FFMPEG_TARGET_TRIPLE/bin" \
+      "$CROSSFORGE_JOBS" \
+    && /work/scripts/qualify-ffmpeg-build.py \
+      --identity "$FFMPEG_TARGET_TRIPLE" \
+      --source-archive \
+        /work/prepared/ffmpeg/materials/ffmpeg-7.1.1.tar.xz \
+      --source-manifest /work/prepared/ffmpeg/source-manifest.json \
+      --source-component /work/config/sources-ffmpeg.json \
+      --source-component-sha256 \
+        "$CROSSFORGE_COMPONENT_SOURCES_FFMPEG_SHA256" \
+      --qualification-component \
+        /work/config/qt-qualification-component.json \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256" \
+      --plan /work/config/qt-qualification.json \
+      --rpm-lock "/work/$FFMPEG_RPM_LOCK" \
+      --rpm-transaction "/work/$FFMPEG_RPM_TRANSACTION" \
+      --toolchain "/opt/crossforge/targets/$FFMPEG_TARGET_TRIPLE/bin" \
+      --install-root \
+        "/opt/crossforge/qualification/qt/6.8.4/deps/$FFMPEG_TARGET_TRIPLE/ffmpeg/usr" \
+      --prefix /usr \
+      --build-root "/work/build/ffmpeg-$FFMPEG_TARGET_ARCH" \
+      --builder /work/scripts/build-ffmpeg.sh \
+      --output \
+        "/opt/crossforge/qualification/qt/6.8.4/deps/$FFMPEG_TARGET_TRIPLE/ffmpeg/ffmpeg-build.json"
+
+FROM scratch AS ffmpeg-host-build-observation
+COPY --from=ffmpeg-host-build /work/build/ffmpeg-host/source/config.h /
+COPY --from=ffmpeg-host-build /work/build/ffmpeg-host/source/ffbuild/config.mak /
+COPY --from=ffmpeg-host-build \
+  /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg/ /ffmpeg/
+
+FROM crossforge_ffmpeg_host AS qt-host-configure-observe
 ARG QT_VERSION
 COPY --from=crossforge_qt_source \
   /materials/qt-everywhere-opensource-src-6.8.4.tar.xz \
@@ -266,7 +400,8 @@ RUN --network=none test "$QT_VERSION" = 6.8.4 \
       /work/source/qt-everywhere-src-6.8.4 \
       /work/build/qt-host \
       /opt/crossforge/qualification/qt/6.8.4/host \
-      /opt/crossforge/qualification/qt/6.8.4/deps/host/xcb-util-cursor
+      /opt/crossforge/qualification/qt/6.8.4/deps/host/xcb-util-cursor \
+      /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg
 
 FROM scratch AS qt-host-configure-observation
 COPY --from=qt-host-configure-observe /work/build/qt-host/CMakeCache.txt /

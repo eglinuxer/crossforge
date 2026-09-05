@@ -1177,15 +1177,68 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
             "output": ["type=cacheonly"],
         }
         xcb_builds.append(name)
+    ffmpeg_build_arguments = {
+        ffmpeg_component_argument: ffmpeg_component_sha256,
+        qualification_component_argument: qualification_component_sha256,
+    }
+    targets["ffmpeg-host-build"] = {
+        "inherits": ["_qt_common"],
+        "target": "ffmpeg-host-build",
+        "args": dict(
+            ffmpeg_build_arguments,
+            FFMPEG_VERSION=config["qt"]["dependencies"]["ffmpeg"]["version"],
+        ),
+        "contexts": {
+            "crossforge_ffmpeg_source": "target:ffmpeg-source",
+            "crossforge_xcb_host": "target:xcb-util-cursor-host-build",
+        },
+        "output": ["type=cacheonly"],
+    }
+    targets["ffmpeg-host-build-observation"] = {
+        "inherits": ["_qt_common"],
+        "target": "ffmpeg-host-build-observation",
+        "args": dict(targets["ffmpeg-host-build"]["args"]),
+        "contexts": dict(targets["ffmpeg-host-build"]["contexts"]),
+        "output": ["type=cacheonly"],
+    }
+    ffmpeg_builds = ["ffmpeg-host-build"]
+    for target in config["targets"]:
+        arch = target["arch"]
+        triple = target["triple"]
+        name = "ffmpeg-%s-build" % arch
+        targets[name] = {
+            "inherits": ["_qt_common"],
+            "target": "ffmpeg-target-build",
+            "args": dict(
+                ffmpeg_build_arguments,
+                FFMPEG_VERSION=config["qt"]["dependencies"]["ffmpeg"][
+                    "version"
+                ],
+                FFMPEG_TARGET_ARCH=arch,
+                FFMPEG_TARGET_TRIPLE=triple,
+                FFMPEG_RPM_LOCK="locks/qt-target-el8-%s.json" % arch,
+                FFMPEG_RPM_TRANSACTION=(
+                    "locks/transactions/qt-target-el8-%s.json" % arch
+                ),
+            ),
+            "contexts": {
+                "crossforge_ffmpeg_source": "target:ffmpeg-source",
+                "crossforge_host_qt": "target:host-qt-build-locked",
+                "crossforge_qt_target": "target:qt-target-%s-locked" % arch,
+                "crossforge_toolchain": "target:toolchain-%s-dev" % arch,
+            },
+            "output": ["type=cacheonly"],
+        }
+        ffmpeg_builds.append(name)
     targets["qt-host-configure-observe"] = {
         "inherits": ["_qt_common"],
         "target": "qt-host-configure-observe",
         "args": {"QT_VERSION": config["qt"]["version"]},
         "contexts": {
             "crossforge_cmake": "target:cmake-host-tool",
+            "crossforge_ffmpeg_host": "target:ffmpeg-host-build",
             "crossforge_ninja": "target:ninja-host-tool",
             "crossforge_qt_source": "target:qt-source",
-            "crossforge_xcb_host": "target:xcb-util-cursor-host-build",
         },
         "output": ["type=cacheonly"],
     }
@@ -1201,6 +1254,7 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
             "targets": ["qt-source", "ffmpeg-source", "xcb-util-cursor-source"]
         },
         "xcb-util-cursor-qualified": {"targets": xcb_builds},
+        "ffmpeg-qualified": {"targets": ffmpeg_builds},
         "qt-host-configure-observed": {
             "targets": ["qt-host-configure-observation"]
         },

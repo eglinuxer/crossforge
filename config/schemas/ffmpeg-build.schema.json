@@ -1,0 +1,342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/ffmpeg-build.schema.json",
+  "title": "Crossforge FFmpeg build evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "version",
+    "identity",
+    "prefix",
+    "compiler_dumpmachine",
+    "build_environment",
+    "builders",
+    "source_component",
+    "qualification_component",
+    "rpm_input",
+    "configuration",
+    "libraries",
+    "license",
+    "checks"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/ffmpeg-build.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "crossforge-ffmpeg-build"
+    },
+    "version": {
+      "const": "7.1.1"
+    },
+    "identity": {
+      "enum": [
+        "host",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ]
+    },
+    "prefix": {
+      "type": "string",
+      "pattern": "^/(?:usr|opt/crossforge/qualification/qt/6\\.8\\.4/deps/host/ffmpeg)$"
+    },
+    "compiler_dumpmachine": {
+      "type": "string",
+      "minLength": 1
+    },
+    "build_environment": {
+      "$ref": "#/$defs/build_environment"
+    },
+    "builders": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/builder"
+      }
+    },
+    "source_component": {
+      "$ref": "#/$defs/source_component"
+    },
+    "qualification_component": {
+      "$ref": "#/$defs/qualification_component"
+    },
+    "rpm_input": {
+      "$ref": "#/$defs/rpm_input"
+    },
+    "configuration": {
+      "$ref": "#/$defs/configuration"
+    },
+    "libraries": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/library"
+      }
+    },
+    "license": {
+      "$ref": "#/$defs/license"
+    },
+    "checks": {
+      "$ref": "#/$defs/checks"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "build_environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image",
+        "target",
+        "tier"
+      ],
+      "properties": {
+        "image": {
+          "enum": [
+            "host-qt-build-locked",
+            "qt-target-x86_64-locked",
+            "qt-target-aarch64-locked"
+          ]
+        },
+        "target": {
+          "enum": [
+            "host",
+            "x86_64-unknown-linux-gnu",
+            "aarch64-unknown-linux-gnu"
+          ]
+        },
+        "tier": {
+          "enum": [
+            "host-direct",
+            "cross-no-exec"
+          ]
+        }
+      }
+    },
+    "builder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "file": {
+          "enum": [
+            "scripts/build-ffmpeg.sh",
+            "scripts/qualify-ffmpeg-build.py"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "source_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "const": "sources/ffmpeg"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "qualification_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "component": {
+          "const": "future/qt-qualification"
+        },
+        "canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "rpm_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lock_file",
+        "lock_sha256",
+        "transaction_sha256",
+        "parent_lock_sha256"
+      ],
+      "properties": {
+        "lock_file": {
+          "type": "string",
+          "pattern": "^locks/(?:host-qt-build-el8-x86_64|qt-target-el8-(?:x86_64|aarch64))\\.json$"
+        },
+        "lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "transaction_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "parent_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shared",
+        "static",
+        "pic",
+        "network",
+        "pthreads",
+        "openssl",
+        "zlib",
+        "gpl",
+        "version3",
+        "nonfree",
+        "programs",
+        "avdevice",
+        "avfilter",
+        "autodetect"
+      ],
+      "properties": {
+        "shared": {"const": true},
+        "static": {"const": false},
+        "pic": {"const": true},
+        "network": {"const": true},
+        "pthreads": {"const": true},
+        "openssl": {"const": true},
+        "zlib": {"const": true},
+        "gpl": {"const": false},
+        "version3": {"const": false},
+        "nonfree": {"const": false},
+        "programs": {"const": false},
+        "avdevice": {"const": false},
+        "avfilter": {"const": false},
+        "autodetect": {"const": false}
+      }
+    },
+    "library": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "path",
+        "sha256",
+        "size",
+        "machine",
+        "soname",
+        "needed"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "avcodec",
+            "avformat",
+            "avutil",
+            "swresample",
+            "swscale"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^lib64/lib(?:avcodec|avformat|avutil|swresample|swscale)\\.so\\.[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "machine": {
+          "enum": [
+            "Advanced Micro Devices X86-64",
+            "AArch64"
+          ]
+        },
+        "soname": {
+          "type": "string",
+          "pattern": "^lib(?:avcodec|avformat|avutil|swresample|swscale)\\.so\\.[0-9]+$"
+        },
+        "needed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "expression": {
+          "const": "LGPL-2.1-or-later AND BSD-3-Clause AND BSD-2-Clause AND BSD-Source-Code AND ISC AND MIT AND MPL-2.0"
+        },
+        "path": {
+          "const": "share/licenses/ffmpeg/COPYING.LGPLv2.1"
+        },
+        "sha256": {
+          "const": "b634ab5640e258563c536e658cad87080553df6f34f62269a21d554844e58bfe"
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "no_rpath",
+        "no_textrel",
+        "required_headers",
+        "required_pkgconfig",
+        "target_execution",
+        "host_probe_passed"
+      ],
+      "properties": {
+        "no_rpath": {"const": true},
+        "no_textrel": {"const": true},
+        "required_headers": {"const": true},
+        "required_pkgconfig": {"const": true},
+        "target_execution": {
+          "enum": [
+            "host-version-probe",
+            "forbidden"
+          ]
+        },
+        "host_probe_passed": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
