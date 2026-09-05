@@ -79,6 +79,8 @@ LOCKS = [
     ("host-qt-build", "config/rpm/host-qt-build-el8-x86_64.plan.json"),
     ("qt-target-x86_64", "config/rpm/qt-target-el8-x86_64.plan.json"),
     ("qt-target-aarch64", "config/rpm/qt-target-el8-aarch64.plan.json"),
+    ("qt-runtime-x86_64", "config/rpm/qt-runtime-el8-x86_64.plan.json"),
+    ("qt-runtime-aarch64", "config/rpm/qt-runtime-el8-aarch64.plan.json"),
 ]
 LOCK_IDENTITIES = {
     "host-qt-build": ("host-qt-build", "x86_64", None),
@@ -89,6 +91,16 @@ LOCK_IDENTITIES = {
     ),
     "qt-target-aarch64": (
         "qt-target",
+        "aarch64",
+        "aarch64-unknown-linux-gnu",
+    ),
+    "qt-runtime-x86_64": (
+        "qt-runtime",
+        "x86_64",
+        "x86_64-unknown-linux-gnu",
+    ),
+    "qt-runtime-aarch64": (
+        "qt-runtime",
         "aarch64",
         "aarch64-unknown-linux-gnu",
     ),
@@ -194,6 +206,7 @@ X86_ONLY_TARGET_PACKAGES = {
     "libpciaccess",
     "libpciaccess-devel",
 }
+X86_ONLY_RUNTIME_PACKAGES = {"hwdata", "libpciaccess"}
 
 
 def require(condition, message):
@@ -350,6 +363,52 @@ def validate_target_pair(transactions):
     }
 
 
+def validate_runtime_pair(transactions):
+    runtimes = {
+        transaction["identity"]["arch"]: transaction
+        for transaction in transactions
+        if transaction["identity"]["role"] == "qt-runtime"
+    }
+    require(
+        set(runtimes) == {"x86_64", "aarch64"} and len(runtimes) == 2,
+        "Qt runtime lock pair is incomplete",
+    )
+
+    def identities(transaction):
+        records = [
+            item for item in transaction["items"] if item["action"] != "remove"
+        ]
+        result = {
+            item["name"]: (item["epoch"], item["version"], item["release"])
+            for item in records
+        }
+        require(
+            len(result) == len(records),
+            "Qt runtime lock contains multiple packages with one name",
+        )
+        return result
+
+    x86_64 = identities(runtimes["x86_64"])
+    aarch64 = identities(runtimes["aarch64"])
+    require(
+        set(x86_64) - set(aarch64) == X86_ONLY_RUNTIME_PACKAGES,
+        "Qt runtime x86_64-only dependency set differs",
+    )
+    require(
+        not set(aarch64) - set(x86_64),
+        "Qt runtime AArch64-only dependency appeared",
+    )
+    require(
+        all(x86_64[name] == aarch64[name] for name in set(x86_64) & set(aarch64)),
+        "Qt runtime package EVRs differ across architectures",
+    )
+    return {
+        "x86_64_packages": len(x86_64),
+        "aarch64_packages": len(aarch64),
+        "x86_64_only": sorted(X86_ONLY_RUNTIME_PACKAGES),
+    }
+
+
 def validate_release_contract(release_path, require_locked=False):
     release = load_and_validate(
         release_path, REPOSITORY / "config/schemas/release.schema.json"
@@ -420,6 +479,11 @@ def validate_release_contract(release_path, require_locked=False):
         if plan["status"] == "locked"
         else None
     )
+    runtime_pair = (
+        validate_runtime_pair(locked_transactions)
+        if plan["status"] == "locked"
+        else None
+    )
     if require_locked:
         require(contract["status"] == "locked", "release Qt status is not locked")
     return {
@@ -431,6 +495,7 @@ def validate_release_contract(release_path, require_locked=False):
         "locked_inputs": locked_inputs,
         "locked_transactions": locked_transactions,
         "target_pair": target_pair,
+        "runtime_pair": runtime_pair,
         "qualification_component": future,
     }
 

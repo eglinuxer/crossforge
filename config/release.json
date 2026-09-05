@@ -396,7 +396,7 @@
       "status": "locked",
       "plan": {
         "file": "config/qt-qualification.json",
-        "canonical_sha256": "a8c280e45459b6ff96a655ec790f763032afc8a747c8d802b9340e8437712a5d"
+        "canonical_sha256": "6e7cfca1bdd741072f3dd1f637acb3198922c8d10e40fa23b906892e7962955b"
       }
     }
   },

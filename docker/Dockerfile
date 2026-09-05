@@ -664,6 +664,50 @@ RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
 FROM scratch AS rpm-lock-sysroot-aarch64
 COPY --from=rpm-resolve-sysroot-aarch64 /resolved/ /
 
+FROM rpm-input-base AS rpm-resolve-qt-runtime-x86_64
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/qt-runtime-el8-x86_64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/qt-runtime-el8-x86_64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-qt-runtime-x86_64
+COPY --from=rpm-resolve-qt-runtime-x86_64 /resolved/ /
+
+FROM rpm-input-base AS rpm-resolve-qt-runtime-aarch64
+COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
+COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py
+RUN /usr/libexec/platform-python ./scripts/resolve-rpm-transaction.py \
+      --plan ./config/rpm/qt-runtime-el8-aarch64.plan.json \
+      --plan-schema ./config/schemas/rpm-plan.schema.json \
+      --release-config ./config/release.json \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/transaction.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata
+RUN --network=none /usr/libexec/platform-python ./scripts/render-rpm-lock.py \
+      --transaction /resolved/transaction.json \
+      --transaction-reference locks/transactions/qt-runtime-el8-aarch64.json \
+      --rpm-dir /resolved/rpms \
+      --metadata-dir /resolved/metadata \
+      --key ./keys/RPM-GPG-KEY-rockyofficial \
+      --output /resolved/lock.json
+
+FROM scratch AS rpm-lock-qt-runtime-aarch64
+COPY --from=rpm-resolve-qt-runtime-aarch64 /resolved/ /
+
 FROM rpm-input-base AS rpm-resolve-host-build-common
 COPY scripts/resolve-rpm-transaction.py ./scripts/resolve-rpm-transaction.py
 COPY scripts/render-rpm-lock.py ./scripts/render-rpm-lock.py

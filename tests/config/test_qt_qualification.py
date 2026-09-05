@@ -51,7 +51,7 @@ class QtQualificationPlanTests(unittest.TestCase):
         contract = VALIDATOR["validate_release_contract"](
             REPOSITORY / "config/release.json", require_locked=True
         )
-        self.assertEqual(len(contract["locked_inputs"]), 3)
+        self.assertEqual(len(contract["locked_inputs"]), 5)
         self.assertTrue(
             all(document["kind"] == "rpm-lock" for document in contract["locked_inputs"])
         )
@@ -65,6 +65,14 @@ class QtQualificationPlanTests(unittest.TestCase):
                     "libpciaccess",
                     "libpciaccess-devel",
                 ],
+            },
+        )
+        self.assertEqual(
+            contract["runtime_pair"],
+            {
+                "x86_64_packages": 134,
+                "aarch64_packages": 132,
+                "x86_64_only": ["hwdata", "libpciaccess"],
             },
         )
 
@@ -82,6 +90,21 @@ class QtQualificationPlanTests(unittest.TestCase):
         aarch64["items"].pop()
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate_target_pair"](targets)
+
+    def test_runtime_pair_rejects_unreviewed_architecture_drift(self):
+        runtimes = [
+            copy.deepcopy(transaction)
+            for transaction in self.contract["locked_transactions"]
+            if transaction["identity"]["role"] == "qt-runtime"
+        ]
+        aarch64 = next(
+            transaction
+            for transaction in runtimes
+            if transaction["identity"]["arch"] == "aarch64"
+        )
+        aarch64["items"].pop()
+        with self.assertRaises(VALIDATOR["ValidationError"]):
+            VALIDATOR["validate_runtime_pair"](runtimes)
 
     def test_semantic_mutations_fail_closed(self):
         plan = self.contract["plan"]

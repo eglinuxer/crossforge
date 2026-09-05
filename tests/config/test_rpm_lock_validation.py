@@ -26,6 +26,8 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "config/rpm/host-qt-build-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/qt-target-el8-x86_64.plan.json",
             REPOSITORY / "config/rpm/qt-target-el8-aarch64.plan.json",
+            REPOSITORY / "config/rpm/qt-runtime-el8-x86_64.plan.json",
+            REPOSITORY / "config/rpm/qt-runtime-el8-aarch64.plan.json",
         ]
         cls.transactions = [
             REPOSITORY / "locks/transactions/sysroot-el8-x86_64.json",
@@ -49,11 +51,15 @@ class RpmLockValidationTests(unittest.TestCase):
             REPOSITORY / "locks/transactions/host-qt-build-el8-x86_64.json",
             REPOSITORY / "locks/transactions/qt-target-el8-x86_64.json",
             REPOSITORY / "locks/transactions/qt-target-el8-aarch64.json",
+            REPOSITORY / "locks/transactions/qt-runtime-el8-x86_64.json",
+            REPOSITORY / "locks/transactions/qt-runtime-el8-aarch64.json",
         ]
         cls.qt_locks = [
             REPOSITORY / "locks/host-qt-build-el8-x86_64.json",
             REPOSITORY / "locks/qt-target-el8-x86_64.json",
             REPOSITORY / "locks/qt-target-el8-aarch64.json",
+            REPOSITORY / "locks/qt-runtime-el8-x86_64.json",
+            REPOSITORY / "locks/qt-runtime-el8-aarch64.json",
         ]
 
     def test_current_plans_are_strict_and_semantically_valid(self):
@@ -62,7 +68,12 @@ class RpmLockValidationTests(unittest.TestCase):
 
     def test_qt_plans_separate_host_tools_from_target_libraries(self):
         host, x86_64, aarch64 = [
-            VALIDATOR["load_json"](path) for path in self.plans[-3:]
+            VALIDATOR["load_json"](REPOSITORY / path)
+            for path in (
+                "config/rpm/host-qt-build-el8-x86_64.plan.json",
+                "config/rpm/qt-target-el8-x86_64.plan.json",
+                "config/rpm/qt-target-el8-aarch64.plan.json",
+            )
         ]
         self.assertEqual(
             host["solver_policy"]["enabled_modules"],
@@ -101,7 +112,9 @@ class RpmLockValidationTests(unittest.TestCase):
         )
 
     def test_qt_plan_rejects_host_tools_in_a_target_or_unlocked_parent(self):
-        target = VALIDATOR["load_json"](self.plans[-2])
+        target = VALIDATOR["load_json"](
+            REPOSITORY / "config/rpm/qt-target-el8-x86_64.plan.json"
+        )
         target["roots"].append(
             {"name": "nodejs", "arch": "target", "purpose": "qt-target"}
         )
@@ -110,7 +123,9 @@ class RpmLockValidationTests(unittest.TestCase):
             VALIDATOR["validate_document"](target)
 
     def test_qt_target_resolver_requires_an_explicit_non_root_parent(self):
-        target = VALIDATOR["load_json"](self.plans[-2])
+        target = VALIDATOR["load_json"](
+            REPOSITORY / "config/rpm/qt-target-el8-x86_64.plan.json"
+        )
         with self.assertRaises(RESOLVER["ResolutionError"]):
             RESOLVER["validated_parent_root"](target, None)
         with self.assertRaises(RESOLVER["ResolutionError"]):
@@ -120,9 +135,61 @@ class RpmLockValidationTests(unittest.TestCase):
                 RESOLVER["validated_parent_root"](target, Path(temporary)),
                 Path(temporary).resolve(),
             )
-            host = VALIDATOR["load_json"](self.plans[-3])
+            host = VALIDATOR["load_json"](
+                REPOSITORY / "config/rpm/host-qt-build-el8-x86_64.plan.json"
+            )
             with self.assertRaises(RESOLVER["ResolutionError"]):
                 RESOLVER["validated_parent_root"](host, Path(temporary))
+
+    def test_qt_runtime_plans_are_target_only_and_development_free(self):
+        plans = [
+            VALIDATOR["load_json"](
+                REPOSITORY / ("config/rpm/qt-runtime-el8-%s.plan.json" % arch)
+            )
+            for arch in ("x86_64", "aarch64")
+        ]
+        for plan in plans:
+            self.assertEqual(plan["identity"]["role"], "qt-runtime")
+            self.assertEqual(plan["base"]["mode"], "empty")
+            self.assertEqual(plan["solver_policy"]["enabled_modules"], [])
+            self.assertEqual(
+                {root["name"] for root in plan["roots"]},
+                VALIDATOR["QT_RUNTIME_ROOTS"],
+            )
+            self.assertTrue(
+                all(
+                    root["arch"] == "target"
+                    and root["purpose"] == "qt-runtime"
+                    and not root["name"].endswith(
+                        ("-devel", "-headers", "-static")
+                    )
+                    for root in plan["roots"]
+                )
+            )
+        self.assertEqual(
+            [root["name"] for root in plans[0]["roots"]],
+            [root["name"] for root in plans[1]["roots"]],
+        )
+
+    def test_qt_runtime_resolvers_start_from_empty_target_roots(self):
+        dockerfile = (REPOSITORY / "docker/Dockerfile").read_text(
+            encoding="utf-8"
+        )
+        bake = (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8")
+        for arch in ("x86_64", "aarch64"):
+            stage = dockerfile.split(
+                " AS rpm-resolve-qt-runtime-%s" % arch, 1
+            )[1].split("\nFROM ", 1)[0]
+            self.assertIn(
+                "--plan ./config/rpm/qt-runtime-el8-%s.plan.json" % arch,
+                stage,
+            )
+            self.assertNotIn("--parent-root", stage)
+            self.assertIn("RUN --network=none", stage)
+            self.assertIn(
+                'target "rpm-lock-qt-runtime-%s"' % arch,
+                bake,
+            )
 
     def test_qt_target_resolver_stages_bind_each_materialized_sysroot(self):
         dockerfile = (REPOSITORY / "docker/Dockerfile").read_text(
@@ -170,7 +237,7 @@ class RpmLockValidationTests(unittest.TestCase):
             VALIDATOR["validate_release_binding"](lock, path, release)
 
     def test_locked_qt_closures_have_reviewed_architecture_difference(self):
-        host, x86_64, aarch64 = [
+        host, x86_64, aarch64, runtime_x86_64, runtime_aarch64 = [
             VALIDATOR["load_json"](path) for path in self.qt_transactions
         ]
         self.assertEqual(len(host["items"]), 204)
@@ -181,6 +248,30 @@ class RpmLockValidationTests(unittest.TestCase):
         )["validate_target_pair"]([x86_64, aarch64])
         self.assertEqual(pair["x86_64_packages"], 205)
         self.assertEqual(pair["aarch64_packages"], 202)
+        runtime_pair = runpy.run_path(
+            str(REPOSITORY / "scripts/validate-qt-qualification.py")
+        )["validate_runtime_pair"]([runtime_x86_64, runtime_aarch64])
+        self.assertEqual(
+            runtime_pair,
+            {
+                "x86_64_packages": 134,
+                "aarch64_packages": 132,
+                "x86_64_only": ["hwdata", "libpciaccess"],
+            },
+        )
+
+    def test_locked_qt_runtime_closures_exclude_development_packages(self):
+        for path in self.qt_transactions[-2:]:
+            transaction = VALIDATOR["load_json"](path)
+            VALIDATOR["validate_locked_qt_runtime_contract"](transaction)
+            names = {item["name"] for item in transaction["items"]}
+            self.assertFalse(
+                {
+                    name
+                    for name in names
+                    if name.endswith(("-devel", "-headers", "-static"))
+                }
+            )
 
     def test_locked_qt_target_rejects_power_tools_origin_drift(self):
         transaction = VALIDATOR["load_json"](self.qt_transactions[1])

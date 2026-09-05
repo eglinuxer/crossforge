@@ -555,12 +555,12 @@ def validate_plan_semantics(plan):
     arch = identity["arch"]
     role = identity["role"]
     triple = identity["target_triple"]
-    if role in ("target-sysroot", "qt-target"):
-        expected_name = (
-            "sysroot-el8-%s" % arch
-            if role == "target-sysroot"
-            else "qt-target-el8-%s" % arch
-        )
+    if role in ("target-sysroot", "qt-target", "qt-runtime"):
+        expected_name = {
+            "target-sysroot": "sysroot-el8-%s" % arch,
+            "qt-target": "qt-target-el8-%s" % arch,
+            "qt-runtime": "qt-runtime-el8-%s" % arch,
+        }[role]
         expected = TARGET_TRIPLES.get(arch)
         if expected is None or triple != expected:
             raise ResolutionError("target RPM triple differs from its architecture")
@@ -570,7 +570,7 @@ def validate_plan_semantics(plan):
                 "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/%s/os/" % arch,
             )
         ]
-        if role == "qt-target":
+        if role in ("qt-target", "qt-runtime"):
             expected_repositories.extend(
                 [
                     (
@@ -636,14 +636,14 @@ def validate_plan_semantics(plan):
     root_keys = [(item["name"], item["arch"]) for item in plan["roots"]]
     if len(root_keys) != len(set(root_keys)):
         raise ResolutionError("duplicate root request")
-    if role in ("target-sysroot", "qt-target"):
+    if role in ("target-sysroot", "qt-target", "qt-runtime"):
         for root in plan["roots"]:
             if root["name"] in FORBIDDEN_PACKAGES:
                 raise ResolutionError("forbidden RPM root: %s" % root["name"])
     base = plan["base"]
     expected_base_mode = (
         "empty"
-        if role == "target-sysroot"
+        if role in ("target-sysroot", "qt-runtime")
         else (
             "image"
             if role in ("host-build-common", "host-runtime")
@@ -1318,7 +1318,7 @@ def resolve(arguments):
                     "DNF selected forbidden package architecture: %s" % package
                 )
             if (
-                plan["identity"]["role"] in ("target-sysroot", "qt-target")
+                plan["identity"]["role"] in ("target-sysroot", "qt-target", "qt-runtime")
                 and package.name in FORBIDDEN_PACKAGES
             ):
                 raise ResolutionError("DNF selected forbidden package: %s" % package.name)

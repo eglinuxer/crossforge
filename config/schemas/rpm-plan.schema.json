@@ -83,7 +83,8 @@
             "host-python-build",
             "host-runtime",
             "host-qt-build",
-            "qt-target"
+            "qt-target",
+            "qt-runtime"
           ]
         },
         "distribution": {

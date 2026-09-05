@@ -261,6 +261,49 @@ QT_TARGET_NOARCH_ROOTS = {
     "wayland-protocols-devel",
     "xorg-x11-proto-devel",
 }
+QT_RUNTIME_ROOTS = {
+    "alsa-lib",
+    "dbus-libs",
+    "expat",
+    "fontconfig",
+    "freetype",
+    "glib2",
+    "glibc",
+    "libICE",
+    "libSM",
+    "libX11",
+    "libX11-xcb",
+    "libXext",
+    "libXi",
+    "libatomic",
+    "libdrm",
+    "libgcc",
+    "libglvnd-egl",
+    "libglvnd-glx",
+    "libglvnd-opengl",
+    "libjpeg-turbo",
+    "libpng",
+    "libstdc++",
+    "libwayland-client",
+    "libwayland-cursor",
+    "libwayland-server",
+    "libxcb",
+    "libxkbcommon",
+    "libxkbcommon-x11",
+    "libxkbfile",
+    "mesa-libgbm",
+    "nspr",
+    "nss",
+    "openssl-libs",
+    "pciutils-libs",
+    "pulseaudio-libs",
+    "xcb-util",
+    "xcb-util-image",
+    "xcb-util-keysyms",
+    "xcb-util-renderutil",
+    "xcb-util-wm",
+    "zlib",
+}
 HOST_QT_ROOTS = (QT_TARGET_ROOTS - {"libatomic"}) | {
     "bison",
     "flex",
@@ -589,6 +632,7 @@ def expected_role_roots(role):
         "host-runtime": HOST_RUNTIME_ROOTS,
         "host-qt-build": HOST_QT_ROOTS,
         "qt-target": QT_TARGET_ROOTS,
+        "qt-runtime": QT_RUNTIME_ROOTS,
     }[role]
 
 
@@ -964,19 +1008,99 @@ def validate_locked_qt_target_contract(transaction):
         raise ValidationError("locked Qt target PowerTools package set differs")
 
 
+def validate_locked_qt_runtime_contract(transaction):
+    """Keep the clean-Rocky Qt runtime closure target-only and development-free."""
+    identity = transaction["identity"]
+    arch = identity["arch"]
+    if identity != {
+        "name": "qt-runtime-el8-%s" % arch,
+        "role": "qt-runtime",
+        "distribution": "rocky",
+        "release": "8.10",
+        "baseline": "el8",
+        "arch": arch,
+        "target_triple": TARGET_TRIPLES.get(arch),
+    }:
+        raise ValidationError("locked Qt runtime identity differs")
+    if transaction["base"] != {
+        "mode": "empty",
+        "parent_lock": None,
+        "parent_sha256": None,
+    }:
+        raise ValidationError("locked Qt runtime must resolve from an empty root")
+    if transaction["solver_policy"] != {
+        "allowed_arches": [arch, "noarch"],
+        "install_weak_deps": False,
+        "best": True,
+        "strict": True,
+        "allow_erasing": False,
+        "module_platform_id": "platform:el8",
+        "enabled_modules": [],
+    }:
+        raise ValidationError("locked Qt runtime solver policy differs")
+    repositories = {
+        item["id"]: item["baseurl"] for item in transaction["repositories"]
+    }
+    if repositories != {
+        "baseos": (
+            "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/%s/os/" % arch
+        ),
+        "appstream": (
+            "https://download.rockylinux.org/pub/rocky/8.10/AppStream/%s/os/" % arch
+        ),
+        "powertools": (
+            "https://download.rockylinux.org/pub/rocky/8.10/PowerTools/%s/os/" % arch
+        ),
+    }:
+        raise ValidationError("locked Qt runtime repositories differ")
+    if transaction["resolver"]["load_system_repo"] is not False:
+        raise ValidationError("Qt runtime must resolve independently of the host RPMDB")
+    requests = transaction["requests"]
+    if {request["name"] for request in requests} != QT_RUNTIME_ROOTS:
+        raise ValidationError("locked Qt runtime roots differ")
+    for request in requests:
+        _name, resolved_arch = nevra_name_arch(request["resolved_nevra"])
+        if (
+            request["arch"] != "target"
+            or request["purpose"] != "qt-runtime"
+            or resolved_arch != arch
+            or request["disposition"] != "transaction"
+        ):
+            raise ValidationError("locked Qt runtime request differs")
+    if transaction["manifests"]["base"]["packages"]:
+        raise ValidationError("locked Qt runtime base manifest is not empty")
+    if transaction["manifests"]["remove"]["packages"]:
+        raise ValidationError("locked Qt runtime remove manifest is not empty")
+    if any(item["action"] != "install" for item in transaction["items"]):
+        raise ValidationError("Qt runtime closure may only install RPMs")
+    forbidden = sorted(
+        item["name"]
+        for item in transaction["items"]
+        if item["name"].endswith(("-devel", "-headers", "-static"))
+        or item["name"] in QT_FORBIDDEN_HOST_TOOLS
+    )
+    if forbidden:
+        raise ValidationError(
+            "development or host packages entered the Qt runtime: %s"
+            % ", ".join(forbidden)
+        )
+
+
 def validate_plan_semantics(plan):
     identity = plan["identity"]
     role = identity["role"]
     arch = identity["arch"]
-    if role in ("target-sysroot", "qt-target"):
-        expected_name = (
-            "sysroot-el8-%s" % arch
-            if role == "target-sysroot"
-            else "qt-target-el8-%s" % arch
-        )
+    if role in ("target-sysroot", "qt-target", "qt-runtime"):
+        expected_name = {
+            "target-sysroot": "sysroot-el8-%s" % arch,
+            "qt-target": "qt-target-el8-%s" % arch,
+            "qt-runtime": "qt-runtime-el8-%s" % arch,
+        }[role]
         if identity["target_triple"] != TARGET_TRIPLES[arch]:
             raise ValidationError("target RPM triple and arch disagree")
-        expected_mode = "empty" if role == "target-sysroot" else "lock"
+        expected_mode = (
+            "lock" if role == "qt-target" else "empty"
+        )
         if plan["base"]["mode"] != expected_mode:
             raise ValidationError(
                 "%s must use a %s base" % (role, expected_mode)
@@ -985,7 +1109,7 @@ def validate_plan_semantics(plan):
         expected_repository_urls = [
             "https://download.rockylinux.org/pub/rocky/8.10/BaseOS/%s/os/" % arch
         ]
-        if role == "qt-target":
+        if role in ("qt-target", "qt-runtime"):
             expected_repositories.extend(["appstream", "powertools"])
             expected_repository_urls.extend(
                 [
@@ -995,13 +1119,14 @@ def validate_plan_semantics(plan):
                     % arch,
                 ]
             )
-            parent_lock, parent_sha256 = QT_TARGET_PARENT_LOCKS[arch]
-            if plan["base"] != {
-                "mode": "lock",
-                "parent_lock": parent_lock,
-                "parent_sha256": parent_sha256,
-            }:
-                raise ValidationError("Qt target parent sysroot lock differs")
+            if role == "qt-target":
+                parent_lock, parent_sha256 = QT_TARGET_PARENT_LOCKS[arch]
+                if plan["base"] != {
+                    "mode": "lock",
+                    "parent_lock": parent_lock,
+                    "parent_sha256": parent_sha256,
+                }:
+                    raise ValidationError("Qt target parent sysroot lock differs")
         expected_modules = []
     else:
         if arch != "x86_64":
@@ -1063,11 +1188,15 @@ def validate_plan_semantics(plan):
             )
             if root["arch"] != expected_arch:
                 raise ValidationError("Qt target root architecture differs")
+    elif role == "qt-runtime":
+        if any(root["arch"] != "target" for root in plan["roots"]):
+            raise ValidationError("Qt runtime roots must select the target arch")
     elif any(root["arch"] != "any" for root in plan["roots"]):
         raise ValidationError("host roots must use DNF's best target/noarch choice")
     expected_purpose = {
         "host-qt-build": "qt-host-build",
         "qt-target": "qt-target",
+        "qt-runtime": "qt-runtime",
     }.get(role)
     if expected_purpose is not None and any(
         root["purpose"] != expected_purpose for root in plan["roots"]
@@ -1201,7 +1330,7 @@ def validate_transaction_semantics(transaction):
             expected_url = repositories_by_id[item["repo_id"]]["baseurl"] + location
             if item["url"] != expected_url:
                 raise ValidationError("RPM URL differs from repository baseurl/location")
-            if role in ("target-sysroot", "qt-target") and item["name"] in SYSROOT_FORBIDDEN:
+            if role in ("target-sysroot", "qt-target", "qt-runtime") and item["name"] in SYSROOT_FORBIDDEN:
                 raise ValidationError("forbidden package entered target sysroot")
         elif item["action"] == "remove":
             removed.append(item)
@@ -1251,14 +1380,14 @@ def validate_transaction_semantics(transaction):
             accepted = {"user"} if role == "target-sysroot" else {"user", "unknown"}
             if matches[0]["reason"] not in accepted:
                 raise ValidationError("transaction root has an invalid DNF reason")
-    if role == "target-sysroot":
+    if role in ("target-sysroot", "qt-runtime"):
         if base_manifest or removed_nevras:
-            raise ValidationError("target sysroot transaction must start empty")
+            raise ValidationError("empty-root target transaction must start empty")
         if any(item["action"] != "install" for item in forward):
-            raise ValidationError("target sysroot transaction may only install")
+            raise ValidationError("empty-root target transaction may only install")
         user_nevras = {item["nevra"] for item in forward if item["reason"] == "user"}
         if user_nevras != request_nevras:
-            raise ValidationError("sysroot DNF user set differs from roots")
+            raise ValidationError("empty-root DNF user set differs from roots")
     parent = load_parent_transaction(plan)
     if parent is not None:
         if parent["manifests"]["result"] != transaction["manifests"]["base"]:
@@ -1271,6 +1400,8 @@ def validate_transaction_semantics(transaction):
         validate_locked_host_qt_contract(transaction)
     if role == "qt-target":
         validate_locked_qt_target_contract(transaction)
+    if role == "qt-runtime":
+        validate_locked_qt_runtime_contract(transaction)
     return plan
 
 
@@ -1279,7 +1410,7 @@ def validate_locked_transaction_semantics(transaction):
     identity = transaction["identity"]
     role = identity["role"]
     arch = identity["arch"]
-    if role in ("target-sysroot", "qt-target"):
+    if role in ("target-sysroot", "qt-target", "qt-runtime"):
         if arch not in TARGET_TRIPLES or identity["target_triple"] != TARGET_TRIPLES[arch]:
             raise ValidationError("locked target transaction arch/triple mismatch")
     elif role not in (
@@ -1314,6 +1445,8 @@ def validate_locked_transaction_semantics(transaction):
         validate_locked_host_qt_contract(transaction)
     if role == "qt-target":
         validate_locked_qt_target_contract(transaction)
+    if role == "qt-runtime":
+        validate_locked_qt_runtime_contract(transaction)
 
 
 def load_referenced_transaction(lock, validate_plan=True):
@@ -1588,7 +1721,7 @@ def full_release_binding(release, transaction):
         if len(matches) != 1:
             raise ValidationError("release target is not unique")
         pin = matches[0]["sysroot"]
-    elif role in ("host-qt-build", "qt-target"):
+    elif role in ("host-qt-build", "qt-target", "qt-runtime"):
         contract = release["qt"]["qualification"]
         plan_path = repository_file(contract["plan"]["file"], "Qt plan")
         plan = load_json(plan_path)
@@ -1605,7 +1738,11 @@ def full_release_binding(release, transaction):
         identifier = (
             "host-qt-build"
             if role == "host-qt-build"
-            else "qt-target-%s" % transaction["identity"]["arch"]
+            else "%s-%s"
+            % (
+                "qt-target" if role == "qt-target" else "qt-runtime",
+                transaction["identity"]["arch"],
+            )
         )
         matches = [item for item in plan["locks"] if item["id"] == identifier]
         if len(matches) != 1:

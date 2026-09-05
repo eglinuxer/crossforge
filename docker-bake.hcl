@@ -271,6 +271,20 @@ target "rpm-lock-qt-target-aarch64" {
   output   = ["type=cacheonly"]
 }
 
+target "rpm-lock-qt-runtime-x86_64" {
+  inherits = ["_common"]
+  target   = "rpm-lock-qt-runtime-x86_64"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-lock-qt-runtime-aarch64" {
+  inherits = ["_common"]
+  target   = "rpm-lock-qt-runtime-aarch64"
+  no-cache = true
+  output   = ["type=cacheonly"]
+}
+
 target "gcc-prepared" {
   inherits = ["_common"]
   target   = "gcc-prepared"
