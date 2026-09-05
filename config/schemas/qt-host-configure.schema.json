@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/qt-host-configure.schema.json",
+  "title": "Crossforge Qt host configure evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "qt_version",
+    "identity",
+    "qualification_component",
+    "inputs",
+    "configuration",
+    "tools",
+    "features",
+    "reviewed_warnings",
+    "checks"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/qt-host-configure.schema.json"
+    },
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-qt-host-configure"},
+    "qt_version": {"const": "6.8.4"},
+    "identity": {"const": "host"},
+    "qualification_component": {
+      "$ref": "#/$defs/component"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "qt_source_component",
+        "xcb_util_cursor_build_sha256",
+        "ffmpeg_build_sha256",
+        "plan_sha256"
+      ],
+      "properties": {
+        "qt_source_component": {"$ref": "#/$defs/component"},
+        "xcb_util_cursor_build_sha256": {"$ref": "#/$defs/sha256"},
+        "ffmpeg_build_sha256": {"$ref": "#/$defs/sha256"},
+        "plan_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "build_type",
+        "shared",
+        "developer_build",
+        "examples",
+        "tests",
+        "documentation",
+        "modules"
+      ],
+      "properties": {
+        "build_type": {"const": "Release"},
+        "shared": {"const": true},
+        "developer_build": {"const": false},
+        "examples": {"const": false},
+        "tests": {"const": false},
+        "documentation": {"const": false},
+        "modules": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cmake", "ninja", "cxx"],
+      "properties": {
+        "cmake": {"const": "4.4.0"},
+        "ninja": {"const": "1.13.2"},
+        "cxx": {"const": "15.2.1"}
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "disabled_reviewed"],
+      "properties": {
+        "enabled": {"$ref": "#/$defs/string_set"},
+        "disabled_reviewed": {"$ref": "#/$defs/string_set"}
+      }
+    },
+    "reviewed_warnings": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "documentation-qdoc-disabled-without-clang",
+          "clang-lupdate-parser-disabled"
+        ]
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "configure_completed",
+        "critical_warnings_absent",
+        "cxx20_compile",
+        "required_modules_enabled",
+        "required_features_enabled"
+      ],
+      "properties": {
+        "configure_completed": {"const": true},
+        "critical_warnings_absent": {"const": true},
+        "cxx20_compile": {"const": true},
+        "required_modules_enabled": {"const": true},
+        "required_features_enabled": {"const": true}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component", "canonical_sha256"],
+      "properties": {
+        "component": {"type": "string", "minLength": 1},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "string_set": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

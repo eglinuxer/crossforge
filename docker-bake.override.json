@@ -312,9 +312,9 @@
         "cpython-build-cp310"
       ]
     },
-    "qt-host-configure-observed": {
+    "qt-host-configure-qualified": {
       "targets": [
-        "qt-host-configure-observation"
+        "qt-host-configure-evidence"
       ]
     },
     "qt-source-qualified": {
@@ -2785,8 +2785,9 @@
         "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
       }
     },
-    "qt-host-configure-observation": {
+    "qt-host-configure-evidence": {
       "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "b48a4d5033eaa792d4a5bebdc7b7277d69fa7af5b1d1f35089367c9eb015d885",
         "QT_VERSION": "6.8.4"
       },
       "contexts": {
@@ -2801,10 +2802,11 @@
       "output": [
         "type=cacheonly"
       ],
-      "target": "qt-host-configure-observation"
+      "target": "qt-host-configure-evidence"
     },
-    "qt-host-configure-observe": {
+    "qt-host-configure-qualified": {
       "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "b48a4d5033eaa792d4a5bebdc7b7277d69fa7af5b1d1f35089367c9eb015d885",
         "QT_VERSION": "6.8.4"
       },
       "contexts": {
@@ -2819,7 +2821,7 @@
       "output": [
         "type=cacheonly"
       ],
-      "target": "qt-host-configure-observe"
+      "target": "qt-host-configure-qualified"
     },
     "qt-source": {
       "args": {

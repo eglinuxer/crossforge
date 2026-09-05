@@ -382,11 +382,14 @@ COPY --from=ffmpeg-host-build /work/build/ffmpeg-host/source/ffbuild/config.mak 
 COPY --from=ffmpeg-host-build \
   /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg/ /ffmpeg/
 
-FROM crossforge_ffmpeg_host AS qt-host-configure-observe
+FROM crossforge_ffmpeg_host AS qt-host-configure-qualified
 ARG QT_VERSION
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
 COPY --from=crossforge_qt_source \
   /materials/qt-everywhere-opensource-src-6.8.4.tar.xz \
   /work/source/qt-everywhere-opensource-src-6.8.4.tar.xz
+COPY --from=crossforge_qt_source /source-manifest.json \
+  /work/prepared/qt/source-manifest.json
 COPY --from=crossforge_cmake \
   /opt/crossforge/host-tools/cmake/4.4.0/ \
   /opt/crossforge/host-tools/cmake/4.4.0/
@@ -402,8 +405,40 @@ RUN --network=none test "$QT_VERSION" = 6.8.4 \
       /opt/crossforge/qualification/qt/6.8.4/host \
       /opt/crossforge/qualification/qt/6.8.4/deps/host/xcb-util-cursor \
       /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg
+COPY config/generated/components/future/qt-qualification.json \
+  /work/config/qt-qualification-component.json
+COPY config/qt-qualification.json /work/config/qt-qualification.json
+COPY config/schemas/ffmpeg-build.schema.json \
+  config/schemas/qt-host-configure.schema.json \
+  config/schemas/qt-qualification-plan.schema.json \
+  config/schemas/qt-source-manifest.schema.json \
+  config/schemas/xcb-util-cursor-build.schema.json \
+  /work/config/schemas/
+COPY --chmod=0755 scripts/release_component.py scripts/validate-release.py \
+  scripts/qualify-qt-host-configure.py /work/scripts/
+RUN --network=none /work/scripts/qualify-qt-host-configure.py \
+      --cache /work/build/qt-host/CMakeCache.txt \
+      --summary /work/build/qt-host/config.summary \
+      --log /work/build/qt-host/configure.log \
+      --plan /work/config/qt-qualification.json \
+      --qualification-component \
+        /work/config/qt-qualification-component.json \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256" \
+      --qt-source-manifest /work/prepared/qt/source-manifest.json \
+      --xcb-build-manifest \
+        /opt/crossforge/qualification/qt/6.8.4/deps/host/xcb-util-cursor-build.json \
+      --ffmpeg-build-manifest \
+        /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg/ffmpeg-build.json \
+      --ffmpeg-prefix \
+        /opt/crossforge/qualification/qt/6.8.4/deps/host/ffmpeg \
+      --cmake /opt/crossforge/host-tools/cmake/4.4.0/bin/cmake \
+      --ninja /opt/crossforge/host-tools/ninja/1.13.2/bin/ninja \
+      --cxx /opt/rh/gcc-toolset-15/root/usr/bin/g++ \
+      --output /work/build/qt-host/qt-host-configure.json
 
-FROM scratch AS qt-host-configure-observation
-COPY --from=qt-host-configure-observe /work/build/qt-host/CMakeCache.txt /
-COPY --from=qt-host-configure-observe /work/build/qt-host/config.summary /
-COPY --from=qt-host-configure-observe /work/build/qt-host/configure.log /
+FROM scratch AS qt-host-configure-evidence
+COPY --from=qt-host-configure-qualified /work/build/qt-host/CMakeCache.txt /
+COPY --from=qt-host-configure-qualified /work/build/qt-host/config.summary /
+COPY --from=qt-host-configure-qualified /work/build/qt-host/configure.log /
+COPY --from=qt-host-configure-qualified /work/build/qt-host/qt-host-configure.json /

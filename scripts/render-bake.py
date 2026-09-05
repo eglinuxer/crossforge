@@ -1230,10 +1230,13 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
             "output": ["type=cacheonly"],
         }
         ffmpeg_builds.append(name)
-    targets["qt-host-configure-observe"] = {
+    targets["qt-host-configure-qualified"] = {
         "inherits": ["_qt_common"],
-        "target": "qt-host-configure-observe",
-        "args": {"QT_VERSION": config["qt"]["version"]},
+        "target": "qt-host-configure-qualified",
+        "args": {
+            "QT_VERSION": config["qt"]["version"],
+            qualification_component_argument: qualification_component_sha256,
+        },
         "contexts": {
             "crossforge_cmake": "target:cmake-host-tool",
             "crossforge_ffmpeg_host": "target:ffmpeg-host-build",
@@ -1242,11 +1245,11 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
         },
         "output": ["type=cacheonly"],
     }
-    targets["qt-host-configure-observation"] = {
+    targets["qt-host-configure-evidence"] = {
         "inherits": ["_qt_common"],
-        "target": "qt-host-configure-observation",
-        "args": {"QT_VERSION": config["qt"]["version"]},
-        "contexts": dict(targets["qt-host-configure-observe"]["contexts"]),
+        "target": "qt-host-configure-evidence",
+        "args": dict(targets["qt-host-configure-qualified"]["args"]),
+        "contexts": dict(targets["qt-host-configure-qualified"]["contexts"]),
         "output": ["type=cacheonly"],
     }
     return {
@@ -1255,8 +1258,8 @@ def render_qt_graph(config, targets, component_arguments, rocky_amd64_image):
         },
         "xcb-util-cursor-qualified": {"targets": xcb_builds},
         "ffmpeg-qualified": {"targets": ffmpeg_builds},
-        "qt-host-configure-observed": {
-            "targets": ["qt-host-configure-observation"]
+        "qt-host-configure-qualified": {
+            "targets": ["qt-host-configure-evidence"]
         },
     }
 
