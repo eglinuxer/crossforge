@@ -68,6 +68,27 @@ class InstallHostRPMLockTests(unittest.TestCase):
         self.assertNotIn("release_sha256", value)
         self.assertEqual(len(calls), 2)
 
+    def test_host_qt_accepts_only_its_qualification_parent_binding(self):
+        binding = {
+            "kind": "qt-qualification-component",
+            "component": "future/qt-qualification",
+            "scope": "future",
+            "canonical_sha256": "a" * 64,
+            "parent_component": "rpm/host-build-common",
+            "parent_canonical_sha256": "b" * 64,
+        }
+        self.assertEqual(
+            INSTALLER["validate_release_binding_identity"](
+                binding, "host-qt-build"
+            ),
+            binding,
+        )
+        invalid = dict(binding, parent_component="rpm/host-runtime")
+        with self.assertRaises(INSTALLER["ValidationError"]):
+            INSTALLER["validate_release_binding_identity"](
+                invalid, "host-qt-build"
+            )
+
     def test_invalid_component_binding_fails_before_rpm_or_marker_mutation(self):
         normalized = {
             "role": "host-python-build",

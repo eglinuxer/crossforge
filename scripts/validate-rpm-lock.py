@@ -1685,6 +1685,166 @@ def component_binding(document, transaction, component_name, component_sha256):
     }
 
 
+def qt_qualification_binding(
+    qualification,
+    qualification_sha256,
+    parent_component,
+    parent_component_name,
+    parent_component_sha256,
+    lock,
+    lock_path,
+    transaction,
+):
+    role = transaction["identity"]["role"]
+    arch = transaction["identity"]["arch"]
+    if role == "host-qt-build":
+        lock_id = "host-qt-build"
+        expected_parent = "rpm/host-build-common"
+    elif role == "qt-target" and arch in TARGET_TRIPLES:
+        lock_id = "qt-target-%s" % arch
+        expected_parent = "rpm/sysroot-%s" % arch
+    else:
+        raise ValidationError(
+            "Qt qualification component cannot bind RPM role/arch %s/%s"
+            % (role, arch)
+        )
+    if parent_component_name != expected_parent:
+        raise ValidationError(
+            "Qt RPM parent component differs: expected %s, found %s"
+            % (expected_parent, parent_component_name)
+        )
+
+    dependency_names = [
+        dependency["component"]
+        for dependency in qualification["dependencies"]
+    ]
+    if dependency_names != [
+        "sources/ffmpeg",
+        "sources/qt",
+        "sources/xcb-util-cursor",
+    ]:
+        raise ValidationError(
+            "Qt qualification component dependencies differ"
+        )
+
+    materials = component_material_map(qualification)
+    expected_materials = {
+        ("qt", "qualification", "plan", "canonical_sha256"),
+        ("qt", "qualification", "plan", "file"),
+        ("qt", "qualification", "status"),
+    }
+    if set(materials) != expected_materials:
+        raise ValidationError(
+            "Qt qualification component materials differ"
+        )
+    plan_file = safe_binding_path(
+        require_material(
+            materials,
+            ("qt", "qualification", "plan", "file"),
+            str,
+            "Qt qualification plan path",
+        ),
+        "Qt qualification plan path",
+    )
+    if plan_file != "config/qt-qualification.json":
+        raise ValidationError("Qt qualification plan path differs")
+    if require_material(
+        materials,
+        ("qt", "qualification", "status"),
+        str,
+        "Qt qualification status",
+    ) != "locked":
+        raise ValidationError("Qt qualification component is not locked")
+    plan_path = repository_file(plan_file, "Qt qualification plan")
+    plan = load_json(plan_path)
+    plan_schema = load_json(
+        REPOSITORY / "config/schemas/qt-qualification-plan.schema.json"
+    )
+    STRICT["validate_schema_subset"](plan_schema)
+    STRICT["validate"](plan, plan_schema, plan_schema, "$")
+    plan_sha256 = canonical_sha256(plan)
+    if plan_sha256 != require_material(
+        materials,
+        ("qt", "qualification", "plan", "canonical_sha256"),
+        str,
+        "Qt qualification plan SHA256",
+    ):
+        raise ValidationError("Qt qualification plan digest differs")
+    if plan["status"] != "locked":
+        raise ValidationError("Qt qualification plan is not locked")
+    pins = [record for record in plan["locks"] if record["id"] == lock_id]
+    if len(pins) != 1:
+        raise ValidationError("Qt qualification lock pin is not unique")
+    pin = pins[0]
+    try:
+        relative_lock = lock_path.resolve().relative_to(REPOSITORY).as_posix()
+    except ValueError:
+        raise ValidationError("lock path is outside the repository")
+    if (
+        pin["status"] != "locked"
+        or pin["lock_file"] != relative_lock
+        or pin["canonical_sha256"] != canonical_sha256(lock)
+    ):
+        raise ValidationError("Qt qualification lock pin differs")
+
+    rpm_plan_path = repository_file(pin["plan_file"], "Qt RPM plan")
+    rpm_plan = load_json(rpm_plan_path)
+    rpm_plan_schema = load_json(REPOSITORY / "config/schemas/rpm-plan.schema.json")
+    STRICT["validate_schema_subset"](rpm_plan_schema)
+    STRICT["validate"](rpm_plan, rpm_plan_schema, rpm_plan_schema, "$")
+    validate_plan_semantics(rpm_plan)
+    if (
+        canonical_sha256(rpm_plan) != pin["plan_sha256"]
+        or transaction["plan"]
+        != {
+            "file": pin["plan_file"],
+            "canonical_sha256": pin["plan_sha256"],
+        }
+    ):
+        raise ValidationError("Qt RPM plan binding differs")
+
+    base = transaction["base"]
+    if base["mode"] != "lock":
+        raise ValidationError("Qt RPM transaction does not inherit a lock")
+    parent_lock_path = repository_file(base["parent_lock"], "Qt parent lock")
+    parent_lock = load_json(parent_lock_path)
+    validate_schema(parent_lock)
+    if canonical_sha256(parent_lock) != base["parent_sha256"]:
+        raise ValidationError("Qt parent lock digest differs")
+    parent_transaction = validate_lock_semantics(
+        parent_lock, validate_plan=False
+    )
+    parent_binding = component_binding(
+        parent_component,
+        parent_transaction,
+        parent_component_name,
+        parent_component_sha256,
+    )
+    if (
+        parent_binding["pin"]["status"] != "locked"
+        or parent_binding["pin"]["lock_file"] != base["parent_lock"]
+        or parent_binding["pin"]["canonical_sha256"] != base["parent_sha256"]
+    ):
+        raise ValidationError("Qt parent release component pin differs")
+    return {
+        "base": parent_binding["base"],
+        "trust": parent_binding["trust"],
+        "pin": {
+            "status": pin["status"],
+            "lock_file": pin["lock_file"],
+            "canonical_sha256": pin["canonical_sha256"],
+        },
+        "identity": {
+            "kind": "qt-qualification-component",
+            "component": "future/qt-qualification",
+            "scope": "future",
+            "canonical_sha256": qualification_sha256,
+            "parent_component": parent_component_name,
+            "parent_canonical_sha256": parent_component_sha256,
+        },
+    }
+
+
 def validate_bound_transaction(lock, lock_path, transaction, binding):
     resolver = transaction["resolver"]
     base = binding["base"]
@@ -1809,6 +1969,8 @@ def validate_lock_binding(
     release_component=None,
     release_component_name=None,
     release_component_sha256=None,
+    qt_qualification_component=None,
+    qt_qualification_component_sha256=None,
 ):
     component_values = (
         release_component,
@@ -1816,6 +1978,11 @@ def validate_lock_binding(
         release_component_sha256,
     )
     component_mode = any(value is not None for value in component_values)
+    qt_values = (
+        qt_qualification_component,
+        qt_qualification_component_sha256,
+    )
+    qt_mode = any(value is not None for value in qt_values)
     if component_mode and not all(value is not None for value in component_values):
         raise ValidationError(
             "release component path, name and SHA256 must be provided together"
@@ -1823,6 +1990,14 @@ def validate_lock_binding(
     if component_mode and release_path is not None:
         raise ValidationError(
             "--release-config and --release-component are mutually exclusive"
+        )
+    if qt_mode and not all(value is not None for value in qt_values):
+        raise ValidationError(
+            "Qt qualification component path and SHA256 must be provided together"
+        )
+    if qt_mode and not all(value is not None for value in component_values):
+        raise ValidationError(
+            "Qt qualification binding requires a parent release component"
         )
 
     document = None
@@ -1838,8 +2013,34 @@ def validate_lock_binding(
         except reader["ComponentError"] as error:
             raise ValidationError("invalid release component: %s" % error) from error
 
+    qualification = None
+    if qt_mode:
+        reader = component_reader()
+        try:
+            qualification = reader["load_component"](
+                qt_qualification_component,
+                "future/qt-qualification",
+                "future",
+                qt_qualification_component_sha256,
+            )
+        except reader["ComponentError"] as error:
+            raise ValidationError(
+                "invalid Qt qualification component: %s" % error
+            ) from error
+
     transaction = validate_lock_semantics(lock, validate_plan=not component_mode)
-    if component_mode:
+    if qt_mode:
+        binding = qt_qualification_binding(
+            qualification,
+            qt_qualification_component_sha256,
+            document,
+            release_component_name,
+            release_component_sha256,
+            lock,
+            lock_path,
+            transaction,
+        )
+    elif component_mode:
         binding = component_binding(
             document,
             transaction,
@@ -1873,6 +2074,12 @@ def add_release_binding_arguments(parser, suppress_defaults=False):
     parser.add_argument("--release-component", type=Path, **optional)
     parser.add_argument("--release-component-name", **optional)
     parser.add_argument("--release-component-sha256", **optional)
+    parser.add_argument(
+        "--qt-qualification-component", type=Path, **optional
+    )
+    parser.add_argument(
+        "--qt-qualification-component-sha256", **optional
+    )
 
 
 def release_binding_arguments(arguments):
@@ -1891,11 +2098,31 @@ def release_binding_arguments(arguments):
         raise ValidationError(
             "--release-config and --release-component are mutually exclusive"
         )
+    qt_values = (
+        arguments.qt_qualification_component,
+        arguments.qt_qualification_component_sha256,
+    )
+    if any(value is not None for value in qt_values) and not all(
+        value is not None for value in qt_values
+    ):
+        raise ValidationError(
+            "Qt qualification component path and SHA256 must be provided together"
+        )
+    if any(value is not None for value in qt_values) and not all(
+        value is not None for value in values
+    ):
+        raise ValidationError(
+            "Qt qualification binding requires a parent release component"
+        )
     return {
         "release_path": arguments.release_config,
         "release_component": arguments.release_component,
         "release_component_name": arguments.release_component_name,
         "release_component_sha256": arguments.release_component_sha256,
+        "qt_qualification_component": arguments.qt_qualification_component,
+        "qt_qualification_component_sha256": (
+            arguments.qt_qualification_component_sha256
+        ),
     }
 
 

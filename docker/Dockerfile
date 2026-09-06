@@ -300,11 +300,24 @@ RUN --network=none \
       --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256"
 ENV PATH="/opt/rh/gcc-toolset-15/root/usr/bin:${PATH}"
 
-FROM rpm-locked-input-base AS host-qt-build-rpms
-COPY --from=rpm-input-base /src/config/ ./config/
+FROM rpm-locked-input-base AS qt-build-lock-input-base
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+COPY config/generated/components/future/qt-qualification.json \
+  ./config/components/qt-qualification.json
 COPY config/qt-qualification.json ./config/qt-qualification.json
+COPY config/rpm/host-qt-build-el8-x86_64.plan.json \
+  config/rpm/qt-target-el8-x86_64.plan.json \
+  config/rpm/qt-target-el8-aarch64.plan.json ./config/rpm/
+COPY config/schemas/rpm-plan.schema.json \
+  ./config/schemas/rpm-plan.schema.json
 COPY config/schemas/qt-qualification-plan.schema.json \
   ./config/schemas/qt-qualification-plan.schema.json
+
+FROM qt-build-lock-input-base AS host-qt-build-rpms
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+ARG CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256
+COPY config/generated/components/rpm/host-build-common.json \
+  ./config/components/rpm-host-build-common.json
 COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
 COPY locks/transactions/host-build-common-el8-x86_64.json \
   ./locks/transactions/host-build-common-el8-x86_64.json
@@ -315,17 +328,32 @@ COPY locks/metadata/host-qt-build-el8-x86_64/ \
   ./locks/metadata/host-qt-build-el8-x86_64/
 RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
       ./locks/host-qt-build-el8-x86_64.json --require-lock \
-      --release-config ./config/release.json \
+      --release-component ./config/components/rpm-host-build-common.json \
+      --release-component-name rpm/host-build-common \
+      --release-component-sha256 \
+        "$CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256" \
+      --qt-qualification-component \
+        ./config/components/qt-qualification.json \
+      --qt-qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256" \
     && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
       ./locks/host-qt-build-el8-x86_64.json fetch \
       --output /rpm-bundle --jobs 8 \
-      --release-config ./config/release.json
+      --release-component ./config/components/rpm-host-build-common.json \
+      --release-component-name rpm/host-build-common \
+      --release-component-sha256 \
+        "$CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256" \
+      --qt-qualification-component \
+        ./config/components/qt-qualification.json \
+      --qt-qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256"
 
 FROM host-build-common-locked AS host-qt-build-locked
-COPY --from=rpm-input-base /src/config/ ./config/
-COPY config/qt-qualification.json ./config/qt-qualification.json
-COPY config/schemas/qt-qualification-plan.schema.json \
-  ./config/schemas/qt-qualification-plan.schema.json
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+ARG CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256
+COPY --from=qt-build-lock-input-base /src/config/ ./config/
+COPY config/generated/components/rpm/host-build-common.json \
+  ./config/components/rpm-host-build-common.json
 COPY locks/host-build-common-el8-x86_64.json ./locks/host-build-common-el8-x86_64.json
 COPY locks/transactions/host-build-common-el8-x86_64.json \
   ./locks/transactions/host-build-common-el8-x86_64.json
@@ -343,13 +371,20 @@ RUN --network=none \
       --bundle /rpm-bundle \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --marker /usr/share/crossforge/rpm-locks/host-qt-build.json \
-      --release-config ./config/release.json
+      --release-component ./config/components/rpm-host-build-common.json \
+      --release-component-name rpm/host-build-common \
+      --release-component-sha256 \
+        "$CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256" \
+      --qt-qualification-component \
+        ./config/components/qt-qualification.json \
+      --qt-qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256"
 
-FROM rpm-locked-input-base AS qt-target-rpms-x86_64
-COPY --from=rpm-input-base /src/config/ ./config/
-COPY config/qt-qualification.json ./config/qt-qualification.json
-COPY config/schemas/qt-qualification-plan.schema.json \
-  ./config/schemas/qt-qualification-plan.schema.json
+FROM qt-build-lock-input-base AS qt-target-rpms-x86_64
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256
+COPY config/generated/components/rpm/sysroot-x86_64.json \
+  ./config/components/rpm-sysroot-x86_64.json
 COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
 COPY locks/transactions/sysroot-el8-x86_64.json \
   ./locks/transactions/sysroot-el8-x86_64.json
@@ -360,17 +395,32 @@ COPY locks/metadata/qt-target-el8-x86_64/ \
   ./locks/metadata/qt-target-el8-x86_64/
 RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
       ./locks/qt-target-el8-x86_64.json --require-lock \
-      --release-config ./config/release.json \
+      --release-component ./config/components/rpm-sysroot-x86_64.json \
+      --release-component-name rpm/sysroot-x86_64 \
+      --release-component-sha256 \
+        "$CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256" \
+      --qt-qualification-component \
+        ./config/components/qt-qualification.json \
+      --qt-qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256" \
     && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
       ./locks/qt-target-el8-x86_64.json fetch \
       --output /rpm-bundle --jobs 8 \
-      --release-config ./config/release.json
+      --release-component ./config/components/rpm-sysroot-x86_64.json \
+      --release-component-name rpm/sysroot-x86_64 \
+      --release-component-sha256 \
+        "$CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256" \
+      --qt-qualification-component \
+        ./config/components/qt-qualification.json \
+      --qt-qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256"
 
 FROM sysroot-x86_64 AS qt-target-x86_64-locked
-COPY --from=rpm-input-base /src/config/ ./config/
-COPY config/qt-qualification.json ./config/qt-qualification.json
-COPY config/schemas/qt-qualification-plan.schema.json \
-  ./config/schemas/qt-qualification-plan.schema.json
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256
+COPY --from=qt-build-lock-input-base /src/config/ ./config/
+COPY config/generated/components/rpm/sysroot-x86_64.json \
+  ./config/components/rpm-sysroot-x86_64.json
 COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
 COPY locks/transactions/sysroot-el8-x86_64.json \
   ./locks/transactions/sysroot-el8-x86_64.json
@@ -386,13 +436,20 @@ RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py
       --bundle /qt-rpm-bundle \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --destination /opt/crossforge/sysroots/el8/x86_64 \
-      --release-config ./config/release.json
+      --release-component ./config/components/rpm-sysroot-x86_64.json \
+      --release-component-name rpm/sysroot-x86_64 \
+      --release-component-sha256 \
+        "$CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256" \
+      --qt-qualification-component \
+        ./config/components/qt-qualification.json \
+      --qt-qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256"
 
-FROM rpm-locked-input-base AS qt-target-rpms-aarch64
-COPY --from=rpm-input-base /src/config/ ./config/
-COPY config/qt-qualification.json ./config/qt-qualification.json
-COPY config/schemas/qt-qualification-plan.schema.json \
-  ./config/schemas/qt-qualification-plan.schema.json
+FROM qt-build-lock-input-base AS qt-target-rpms-aarch64
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256
+COPY config/generated/components/rpm/sysroot-aarch64.json \
+  ./config/components/rpm-sysroot-aarch64.json
 COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
 COPY locks/transactions/sysroot-el8-aarch64.json \
   ./locks/transactions/sysroot-el8-aarch64.json
@@ -403,17 +460,32 @@ COPY locks/metadata/qt-target-el8-aarch64/ \
   ./locks/metadata/qt-target-el8-aarch64/
 RUN /usr/libexec/platform-python ./scripts/validate-rpm-lock.py \
       ./locks/qt-target-el8-aarch64.json --require-lock \
-      --release-config ./config/release.json \
+      --release-component ./config/components/rpm-sysroot-aarch64.json \
+      --release-component-name rpm/sysroot-aarch64 \
+      --release-component-sha256 \
+        "$CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256" \
+      --qt-qualification-component \
+        ./config/components/qt-qualification.json \
+      --qt-qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256" \
     && /usr/libexec/platform-python ./scripts/materialize-sysroot.py \
       ./locks/qt-target-el8-aarch64.json fetch \
       --output /rpm-bundle --jobs 8 \
-      --release-config ./config/release.json
+      --release-component ./config/components/rpm-sysroot-aarch64.json \
+      --release-component-name rpm/sysroot-aarch64 \
+      --release-component-sha256 \
+        "$CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256" \
+      --qt-qualification-component \
+        ./config/components/qt-qualification.json \
+      --qt-qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256"
 
 FROM sysroot-aarch64 AS qt-target-aarch64-locked
-COPY --from=rpm-input-base /src/config/ ./config/
-COPY config/qt-qualification.json ./config/qt-qualification.json
-COPY config/schemas/qt-qualification-plan.schema.json \
-  ./config/schemas/qt-qualification-plan.schema.json
+ARG CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256
+COPY --from=qt-build-lock-input-base /src/config/ ./config/
+COPY config/generated/components/rpm/sysroot-aarch64.json \
+  ./config/components/rpm-sysroot-aarch64.json
 COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
 COPY locks/transactions/sysroot-el8-aarch64.json \
   ./locks/transactions/sysroot-el8-aarch64.json
@@ -429,7 +501,14 @@ RUN --network=none /usr/libexec/platform-python ./scripts/materialize-sysroot.py
       --bundle /qt-rpm-bundle \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --destination /opt/crossforge/sysroots/el8/aarch64 \
-      --release-config ./config/release.json
+      --release-component ./config/components/rpm-sysroot-aarch64.json \
+      --release-component-name rpm/sysroot-aarch64 \
+      --release-component-sha256 \
+        "$CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256" \
+      --qt-qualification-component \
+        ./config/components/qt-qualification.json \
+      --qt-qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256"
 
 FROM rpm-locked-input-base AS qt-runtime-rpms-x86_64
 COPY --from=rpm-input-base /src/config/ ./config/

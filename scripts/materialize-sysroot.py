@@ -128,6 +128,8 @@ def load_lock(
     release_component=None,
     release_component_name=None,
     release_component_sha256=None,
+    qt_qualification_component=None,
+    qt_qualification_component_sha256=None,
 ):
     lock = load_json(path)
     component_mode = any(
@@ -151,6 +153,10 @@ def load_lock(
         release_component=release_component,
         release_component_name=release_component_name,
         release_component_sha256=release_component_sha256,
+        qt_qualification_component=qt_qualification_component,
+        qt_qualification_component_sha256=(
+            qt_qualification_component_sha256
+        ),
     )
     return normalize_lock(lock, transaction, binding_identity)
 
@@ -178,6 +184,42 @@ def validate_release_binding_identity(identity, role=None, arch=None):
                 raise ValidationError(
                     "RPM release component differs from context role/arch"
                 )
+    elif kind == "qt-qualification-component":
+        expected = {
+            "kind",
+            "component",
+            "scope",
+            "canonical_sha256",
+            "parent_component",
+            "parent_canonical_sha256",
+        }
+        if (
+            set(identity) != expected
+            or identity.get("component") != "future/qt-qualification"
+            or identity.get("scope") != "future"
+            or role not in (None, "host-qt-build", "qt-target")
+            or arch not in (None, "x86_64", "aarch64")
+        ):
+            raise ValidationError("invalid Qt qualification binding identity")
+        if role == "qt-target" and identity["parent_component"] != (
+            "rpm/sysroot-%s" % arch
+        ):
+            raise ValidationError(
+                "Qt qualification parent component differs from target"
+            )
+        if (
+            role == "host-qt-build"
+            and identity["parent_component"] != "rpm/host-build-common"
+        ):
+            raise ValidationError(
+                "Qt qualification parent component differs from host"
+            )
+        if not VALIDATOR["is_sha256"](
+            identity.get("parent_canonical_sha256")
+        ):
+            raise ValidationError(
+                "invalid Qt qualification parent component SHA256"
+            )
     elif kind == "release-config":
         if set(identity) != {"kind", "canonical_sha256"}:
             raise ValidationError("invalid full release identity")

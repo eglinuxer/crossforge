@@ -49,6 +49,23 @@ class RPMComponentBindingTests(unittest.TestCase):
             release_component_sha256=digest or self.digests[name],
         )
 
+    def validate_qt(self, lock_name, parent_component):
+        lock_path = REPOSITORY / "locks" / lock_name
+        lock = VALIDATOR["load_json"](lock_path)
+        return VALIDATOR["validate_lock_binding"](
+            lock,
+            lock_path,
+            release_component=self.component_path(parent_component),
+            release_component_name=parent_component,
+            release_component_sha256=self.digests[parent_component],
+            qt_qualification_component=self.component_path(
+                "future/qt-qualification"
+            ),
+            qt_qualification_component_sha256=self.digests[
+                "future/qt-qualification"
+            ],
+        )
+
     def write_component(self, directory, name, mutate):
         document = READER["load_json"](self.component_path(name))
         mutate(document)
@@ -211,6 +228,17 @@ class RPMComponentBindingTests(unittest.TestCase):
                 release_component_name=name,
                 release_component_sha256=self.digests[name],
             )
+        with self.assertRaises(VALIDATOR["ValidationError"]):
+            VALIDATOR["validate_lock_binding"](
+                lock,
+                lock_path,
+                qt_qualification_component=self.component_path(
+                    "future/qt-qualification"
+                ),
+                qt_qualification_component_sha256=self.digests[
+                    "future/qt-qualification"
+                ],
+            )
 
     def test_component_mode_never_reads_full_release_configuration(self):
         name = "rpm/sysroot-x86_64"
@@ -245,6 +273,143 @@ class RPMComponentBindingTests(unittest.TestCase):
         finally:
             globals_["load_referenced_plan"] = original
         self.assertEqual(identity["component"], name)
+
+    def test_qt_build_locks_bind_plan_and_parent_components_without_release(self):
+        cases = (
+            (
+                "host-qt-build-el8-x86_64.json",
+                "rpm/host-build-common",
+            ),
+            ("qt-target-el8-x86_64.json", "rpm/sysroot-x86_64"),
+            ("qt-target-el8-aarch64.json", "rpm/sysroot-aarch64"),
+        )
+        function = VALIDATOR["validate_lock_binding"]
+        globals_ = function.__globals__
+        original = globals_["load_json"]
+
+        def reject_release(path):
+            if Path(path).name == "release.json":
+                raise AssertionError("Qt component mode read release.json")
+            return original(path)
+
+        globals_["load_json"] = reject_release
+        try:
+            for lock_name, parent in cases:
+                with self.subTest(lock=lock_name):
+                    transaction, identity = self.validate_qt(
+                        lock_name, parent
+                    )
+                    self.assertEqual(
+                        identity,
+                        {
+                            "kind": "qt-qualification-component",
+                            "component": "future/qt-qualification",
+                            "scope": "future",
+                            "canonical_sha256": self.digests[
+                                "future/qt-qualification"
+                            ],
+                            "parent_component": parent,
+                            "parent_canonical_sha256": self.digests[parent],
+                        },
+                    )
+                    self.assertIn(
+                        transaction["identity"]["role"],
+                        ("host-qt-build", "qt-target"),
+                    )
+                    MATERIALIZER["validate_release_binding_identity"](
+                        identity,
+                        transaction["identity"]["role"],
+                        transaction["identity"]["arch"],
+                    )
+        finally:
+            globals_["load_json"] = original
+
+    def test_qt_component_binding_rejects_wrong_parent_and_tampered_contract(self):
+        lock_path = REPOSITORY / "locks/qt-target-el8-x86_64.json"
+        lock = VALIDATOR["load_json"](lock_path)
+        with self.assertRaises(VALIDATOR["ValidationError"]):
+            VALIDATOR["validate_lock_binding"](
+                lock,
+                lock_path,
+                release_component=self.component_path(
+                    "rpm/sysroot-aarch64"
+                ),
+                release_component_name="rpm/sysroot-aarch64",
+                release_component_sha256=self.digests[
+                    "rpm/sysroot-aarch64"
+                ],
+                qt_qualification_component=self.component_path(
+                    "future/qt-qualification"
+                ),
+                qt_qualification_component_sha256=self.digests[
+                    "future/qt-qualification"
+                ],
+            )
+        with tempfile.TemporaryDirectory() as directory:
+            path, digest = self.write_component(
+                directory,
+                "future/qt-qualification",
+                lambda document: next(
+                    record
+                    for record in document["materials"]
+                    if record["path"].endswith("/canonical_sha256")
+                ).__setitem__("value", "0" * 64),
+            )
+            with self.assertRaises(VALIDATOR["ValidationError"]):
+                VALIDATOR["validate_lock_binding"](
+                    lock,
+                    lock_path,
+                    release_component=self.component_path(
+                        "rpm/sysroot-x86_64"
+                    ),
+                    release_component_name="rpm/sysroot-x86_64",
+                    release_component_sha256=self.digests[
+                        "rpm/sysroot-x86_64"
+                    ],
+                    qt_qualification_component=path,
+                    qt_qualification_component_sha256=digest,
+                )
+
+            path, digest = self.write_component(
+                directory,
+                "future/qt-qualification",
+                lambda document: document["dependencies"].pop(),
+            )
+            with self.assertRaises(VALIDATOR["ValidationError"]):
+                VALIDATOR["validate_lock_binding"](
+                    lock,
+                    lock_path,
+                    release_component=self.component_path(
+                        "rpm/sysroot-x86_64"
+                    ),
+                    release_component_name="rpm/sysroot-x86_64",
+                    release_component_sha256=self.digests[
+                        "rpm/sysroot-x86_64"
+                    ],
+                    qt_qualification_component=path,
+                    qt_qualification_component_sha256=digest,
+                )
+
+    def test_materializer_carries_qt_qualification_binding(self):
+        context = MATERIALIZER["load_lock"](
+            REPOSITORY / "locks/qt-target-el8-x86_64.json",
+            release_component=self.component_path("rpm/sysroot-x86_64"),
+            release_component_name="rpm/sysroot-x86_64",
+            release_component_sha256=self.digests["rpm/sysroot-x86_64"],
+            qt_qualification_component=self.component_path(
+                "future/qt-qualification"
+            ),
+            qt_qualification_component_sha256=self.digests[
+                "future/qt-qualification"
+            ],
+        )
+        self.assertEqual(
+            context["release_binding"]["kind"],
+            "qt-qualification-component",
+        )
+        MATERIALIZER["validate_release_binding_identity"](
+            context["release_binding"], "qt-target", "x86_64"
+        )
 
     def test_materializer_load_and_mutation_boundaries_carry_component_identity(self):
         name = "rpm/sysroot-x86_64"

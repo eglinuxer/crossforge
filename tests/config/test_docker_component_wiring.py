@@ -64,7 +64,7 @@ class DockerComponentWiringTests(unittest.TestCase):
         self.assertNotIn("config/schemas/release.schema.json", block)
         self.assertNotIn("COPY evidence/", block)
         self.assertNotIn("COPY patches/", block)
-        self.assertNotIn("COPY config/rpm/", block)
+        self.assertNotIn("COPY config/rpm/ ./config/rpm/", block)
 
     def assert_component_stage(self, stage, component, minimum_calls=1):
         block = self.stages[stage]
@@ -209,6 +209,13 @@ class DockerComponentWiringTests(unittest.TestCase):
             "host-python-build-locked",
             "host-runtime-rpms",
             "host-runtime-locked",
+            "qt-build-lock-input-base",
+            "host-qt-build-rpms",
+            "host-qt-build-locked",
+            "qt-target-rpms-x86_64",
+            "qt-target-x86_64-locked",
+            "qt-target-rpms-aarch64",
+            "qt-target-aarch64-locked",
             "binutils-prep-input",
             "gcc-prep-input",
             "binutils-x86_64",
@@ -225,6 +232,45 @@ class DockerComponentWiringTests(unittest.TestCase):
                 self.assertNotIn("config-validate", reachable)
                 for ancestor in reachable:
                     self.assert_no_full_release(self.stages[ancestor])
+
+    def test_qt_build_locks_use_qualification_and_parent_components_only(self):
+        base = self.stages["qt-build-lock-input-base"]
+        self.assertEqual(
+            self.parents["qt-build-lock-input-base"],
+            "rpm-locked-input-base",
+        )
+        self.assertIn(
+            "config/generated/components/future/qt-qualification.json",
+            base,
+        )
+        for plan in (
+            "host-qt-build-el8-x86_64.plan.json",
+            "qt-target-el8-x86_64.plan.json",
+            "qt-target-el8-aarch64.plan.json",
+        ):
+            self.assertIn("config/rpm/%s" % plan, base)
+        self.assertNotIn("qt-runtime", base)
+        self.assert_no_full_release(base)
+        cases = {
+            "host-qt-build-rpms": "rpm/host-build-common",
+            "host-qt-build-locked": "rpm/host-build-common",
+            "qt-target-rpms-x86_64": "rpm/sysroot-x86_64",
+            "qt-target-x86_64-locked": "rpm/sysroot-x86_64",
+            "qt-target-rpms-aarch64": "rpm/sysroot-aarch64",
+            "qt-target-aarch64-locked": "rpm/sysroot-aarch64",
+        }
+        for stage, parent_component in cases.items():
+            with self.subTest(stage=stage):
+                block = self.stages[stage]
+                self.assertIn(
+                    "--release-component-name %s" % parent_component,
+                    block,
+                )
+                self.assertIn("--qt-qualification-component", block)
+                self.assertNotIn("--release-config", block)
+                self.assert_no_full_release(block)
+                reachable = self.reachable_stages(stage)
+                self.assertNotIn("rpm-input-base", reachable)
 
     def test_maintenance_and_qualification_full_release_edges_are_explicit(self):
         maintenance = self.stages["rpm-input-base"]

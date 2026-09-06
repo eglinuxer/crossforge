@@ -97,6 +97,31 @@ class RenderBakeTests(unittest.TestCase):
         ):
             self.assertNotIn(runtime, self.targets[name]["args"])
 
+    def test_qt_build_lock_targets_exclude_runtime_component_identity(self):
+        qualification = RENDERER["component_argument_name"](
+            "future/qt-qualification"
+        )
+        runtime = RENDERER["component_argument_name"](
+            "future/qt-runtime-qualification"
+        )
+        cases = {
+            "host-qt-build-locked": "rpm/host-build-common",
+            "qt-target-x86_64-locked": "rpm/sysroot-x86_64",
+            "qt-target-aarch64-locked": "rpm/sysroot-aarch64",
+        }
+        for target_name, parent_component in cases.items():
+            with self.subTest(target=target_name):
+                parent = RENDERER["component_argument_name"](
+                    parent_component
+                )
+                component_args = {
+                    name
+                    for name in self.targets[target_name]["args"]
+                    if name.startswith("CROSSFORGE_COMPONENT_")
+                }
+                self.assertEqual(component_args, {qualification, parent})
+                self.assertNotIn(runtime, component_args)
+
     def test_component_argument_names_are_stable_unique_and_content_locked(self):
         self.assertEqual(
             RENDERER["component_argument_name"](

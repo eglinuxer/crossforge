@@ -101,6 +101,29 @@ def validate_release_binding_identity(identity, role=None):
             raise ValidationError(
                 "host RPM release component differs from install role"
             )
+    elif identity.get("kind") == "qt-qualification-component":
+        expected = {
+            "kind",
+            "component",
+            "scope",
+            "canonical_sha256",
+            "parent_component",
+            "parent_canonical_sha256",
+        }
+        if (
+            set(identity) != expected
+            or identity.get("component") != "future/qt-qualification"
+            or identity.get("scope") != "future"
+            or role not in (None, "host-qt-build")
+            or identity.get("parent_component")
+            != "rpm/host-build-common"
+            or not HEX_SHA256.match(
+                identity.get("parent_canonical_sha256", "")
+            )
+        ):
+            raise ValidationError(
+                "invalid host Qt qualification binding identity"
+            )
     elif identity.get("kind") == "release-config":
         if set(identity) != {"kind", "canonical_sha256"}:
             raise ValidationError("invalid host RPM full release identity")
