@@ -7,6 +7,7 @@ import runpy
 import shutil
 import tempfile
 import unittest
+import urllib.error
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
@@ -330,6 +331,106 @@ class ComponentSourceFetcherTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(FETCHER["ValidationError"], "ancestor"):
             FETCHER["fetch"](source, redirect / "source.tar.xz")
+
+    def test_transient_network_errors_are_retried_then_atomically_committed(self):
+        output = self.directory / "retry/source.tar.xz"
+        source = {
+            "url": "https://example.invalid/source.tar.xz",
+            "size": len(self.payload),
+            "sha256": hashlib.sha256(self.payload).hexdigest(),
+        }
+        calls = []
+
+        class Response:
+            headers = {"Content-Length": str(len(self.payload))}
+
+            def __init__(self, payload):
+                self.payload = payload
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_arguments):
+                return False
+
+            def read(self, _size):
+                payload, self.payload = self.payload, b""
+                return payload
+
+        class FailingResponse(Response):
+            def read(self, _size):
+                if self.payload:
+                    payload, self.payload = self.payload[:5], b""
+                    return payload
+                raise ConnectionResetError("connection reset")
+
+        original_urlopen = FETCHER["urllib"].request.urlopen
+        original_sleep = FETCHER["time"].sleep
+
+        def urlopen(_request, timeout):
+            self.assertEqual(timeout, 60)
+            calls.append(timeout)
+            if len(calls) == 1:
+                raise urllib.error.URLError("TLS handshake reset")
+            if len(calls) == 2:
+                return FailingResponse(self.payload)
+            return Response(self.payload)
+
+        FETCHER["urllib"].request.urlopen = urlopen
+        FETCHER["time"].sleep = lambda delay: self.assertEqual(delay, 0)
+        stderr = io.StringIO()
+        try:
+            with redirect_stdout(io.StringIO()), redirect_stderr(stderr):
+                FETCHER["fetch"](source, output, attempts=5, retry_delay=0)
+        finally:
+            FETCHER["urllib"].request.urlopen = original_urlopen
+            FETCHER["time"].sleep = original_sleep
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(output.read_bytes(), self.payload)
+        self.assertEqual(stderr.getvalue().count("retrying source download"), 2)
+        self.assertEqual(list(output.parent.glob("*.part")), [])
+
+    def test_identity_failure_is_not_retried(self):
+        output = self.directory / "identity/source.tar.xz"
+        source = {
+            "url": "https://example.invalid/source.tar.xz",
+            "size": len(self.payload),
+            "sha256": hashlib.sha256(self.payload).hexdigest(),
+        }
+        wrong_payload = b"x" * len(self.payload)
+        calls = []
+
+        class Response:
+            headers = {"Content-Length": str(len(wrong_payload))}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_arguments):
+                return False
+
+            def read(self, _size):
+                payload, self.payload = self.payload, b""
+                return payload
+
+        def urlopen(_request, _timeout=None, **_kwargs):
+            calls.append(True)
+            response = Response()
+            response.payload = wrong_payload
+            return response
+
+        original_urlopen = FETCHER["urllib"].request.urlopen
+        FETCHER["urllib"].request.urlopen = urlopen
+        try:
+            with self.assertRaisesRegex(
+                FETCHER["ValidationError"], "SHA256 mismatch"
+            ):
+                FETCHER["fetch"](source, output, attempts=5, retry_delay=0)
+        finally:
+            FETCHER["urllib"].request.urlopen = original_urlopen
+        self.assertEqual(len(calls), 1)
+        self.assertFalse(output.exists())
+        self.assertEqual(list(output.parent.glob("*.part")), [])
 
     def test_fetcher_is_python36_syntax_compatible(self):
         ast.parse(

@@ -3,12 +3,15 @@
 
 import argparse
 import hashlib
+import http.client
 import os
 import re
 import runpy
 import stat
 import sys
 import tempfile
+import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -393,22 +396,25 @@ def verify(path, source):
         raise ValidationError("source SHA256 mismatch: %s" % path)
 
 
-def fetch(source, output):
-    output, exists = _inspect_output(output)
-    if exists:
-        verify(output, source)
-        print("cached: %s" % output)
+def _remove_partial(partial, safe_parent):
+    if partial is None:
         return
-    output.parent.mkdir(parents=True, exist_ok=True)
-    safe_parent = _validate_directory_chain(
-        output.parent, require_complete=True
-    )
-    require(safe_parent == output.parent, "source output directory changed")
+    try:
+        _validate_directory_chain(safe_parent, require_complete=True)
+        information = _lstat(partial)
+        if (
+            partial.parent == safe_parent
+            and information is not None
+            and not stat.S_ISDIR(information.st_mode)
+        ):
+            partial.unlink()
+    except (OSError, ValidationError):
+        pass
+
+
+def _download_once(source, output, safe_parent, request):
     require(_lstat(output) is None, "source output appeared during preparation")
     partial = None
-    request = urllib.request.Request(
-        source["url"], headers={"User-Agent": "crossforge-source-fetch/1"}
-    )
     size = 0
     try:
         with urllib.request.urlopen(request, timeout=60) as response:
@@ -453,20 +459,51 @@ def fetch(source, output):
         os.replace(str(partial), str(output))
         partial = None
         verify(output, source)
-    except Exception:
-        if partial is not None:
-            try:
-                _validate_directory_chain(safe_parent, require_complete=True)
-                information = _lstat(partial)
-                if (
-                    partial.parent == safe_parent
-                    and information is not None
-                    and not stat.S_ISDIR(information.st_mode)
-                ):
-                    partial.unlink()
-            except ValidationError:
-                pass
+    except BaseException:
+        _remove_partial(partial, safe_parent)
         raise
+
+
+def fetch(source, output, attempts=5, retry_delay=2):
+    require(
+        type(attempts) is int and 1 <= attempts <= 10,
+        "source download attempts are out of range",
+    )
+    require(
+        type(retry_delay) in (int, float) and retry_delay >= 0,
+        "source retry delay is invalid",
+    )
+    output, exists = _inspect_output(output)
+    if exists:
+        verify(output, source)
+        print("cached: %s" % output)
+        return
+    output.parent.mkdir(parents=True, exist_ok=True)
+    safe_parent = _validate_directory_chain(
+        output.parent, require_complete=True
+    )
+    require(safe_parent == output.parent, "source output directory changed")
+    request = urllib.request.Request(
+        source["url"], headers={"User-Agent": "crossforge-source-fetch/1"}
+    )
+    for attempt in range(1, attempts + 1):
+        try:
+            _download_once(source, output, safe_parent, request)
+            break
+        except ValidationError:
+            raise
+        except (OSError, urllib.error.URLError, http.client.HTTPException) as error:
+            if attempt == attempts:
+                raise ValidationError(
+                    "source download failed after %d attempts: %s"
+                    % (attempts, error)
+                ) from error
+            print(
+                "retrying source download after attempt %d/%d: %s"
+                % (attempt, attempts, error),
+                file=sys.stderr,
+            )
+            time.sleep(retry_delay)
     print("fetched: %s" % output)
 
 
