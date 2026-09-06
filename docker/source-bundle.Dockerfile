@@ -23,11 +23,11 @@ COPY --from=crossforge_cpython_cp313 /out/Python.tar.xz \
 COPY --from=crossforge_cpython_cp314 /out/Python.tar.xz \
   /work/bundle/sources/product/cpython/Python-3.14.7.tar.xz
 
-COPY --from=crossforge_zstd_source /materials/zstd.tar.gz \
+COPY --from=crossforge_zstd_source /out/materials/zstd.tar.gz \
   /work/bundle/sources/product/zstd/zstd-1.5.7.tar.gz
-COPY --from=crossforge_zstd_source /materials/zstd.tar.gz.sig \
+COPY --from=crossforge_zstd_source /out/materials/zstd.tar.gz.sig \
   /work/bundle/verification/zstd/zstd-1.5.7.tar.gz.sig
-COPY --from=crossforge_zstd_source /source-manifest.json \
+COPY --from=crossforge_zstd_source /out/source-manifest.json \
   /work/bundle/metadata/zstd-source.json
 
 COPY --from=crossforge_cmake_source /materials/cmake-4.4.0.tar.gz \
