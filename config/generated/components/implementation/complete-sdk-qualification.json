@@ -13,6 +13,34 @@
       "value": "x86_64"
     },
     {
+      "path": "/@implementation/complete-sdk-qualification/launcher_consumer/build_system",
+      "value": "cmake-ninja"
+    },
+    {
+      "path": "/@implementation/complete-sdk-qualification/launcher_consumer/fixture",
+      "value": "tests/consumer"
+    },
+    {
+      "path": "/@implementation/complete-sdk-qualification/launcher_consumer/languages/0",
+      "value": "c"
+    },
+    {
+      "path": "/@implementation/complete-sdk-qualification/launcher_consumer/languages/1",
+      "value": "c++20"
+    },
+    {
+      "path": "/@implementation/complete-sdk-qualification/launcher_consumer/target_execution",
+      "value": false
+    },
+    {
+      "path": "/@implementation/complete-sdk-qualification/launcher_consumer/targets/0",
+      "value": "x86_64"
+    },
+    {
+      "path": "/@implementation/complete-sdk-qualification/launcher_consumer/targets/1",
+      "value": "aarch64"
+    },
+    {
       "path": "/@implementation/complete-sdk-qualification/matrix_size",
       "value": 24
     },

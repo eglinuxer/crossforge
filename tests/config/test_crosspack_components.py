@@ -210,6 +210,16 @@ class CrosspackComponentTests(unittest.TestCase):
         )
         complete = RENDERER["COMPLETE_SDK_QUALIFICATION_POLICY"]
         self.assertEqual(complete["matrix_size"], 24)
+        self.assertEqual(
+            complete["launcher_consumer"],
+            {
+                "build_system": "cmake-ninja",
+                "fixture": "tests/consumer",
+                "languages": ["c", "c++20"],
+                "targets": ["x86_64", "aarch64"],
+                "target_execution": False,
+            },
+        )
         self.assertFalse(complete["publishable"])
 
     def test_nfpm_source_archive_and_component_relationships_are_exact(self):

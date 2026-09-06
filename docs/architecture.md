@@ -362,7 +362,12 @@ vcpkg 时才设置明确 triplet 并把 CMake 切到 vcpkg toolchain；`--python
 选择 target，并隔离 build Python 与唯一 target sysconfigdata。Phase 15 的
 `sdk-complete-dev` 从 packaging-qualified vcpkg SDK 出发，只复制已经资格化的六行
 Python 产物和 final report，再由 launcher 离线遍历 native host 以及 2 target × 6
-Python minor × 2 linkage 的 24 种选择。该目标仍为 cache-only `-dev`，不得发布。
+Python minor × 2 linkage 的 24 种选择。环境存在性不能代替用户路径验收：同一阶段还
+必须通过 `crossforge run --target` 为 x86_64/AArch64 分别执行真实 CMake 4.4.0 +
+Ninja 配置和 C/C++20 链接，复核 CMake cache 的 toolchain/compiler 绝对路径与最终
+ELF machine；target binary 只检查字节和 ELF，不执行。public-candidate 再从匿名拉取的
+digest、只读 root 和 UID 1000 可写 workspace 重跑同一 fixture，覆盖真实下游容器边界。
+该目标仍为 cache-only `-dev`，不得发布。
 公开 `sdk-candidate` 默认使用 `crossforge` UID/GID 1000，保持 `/opt/crossforge`
 root-owned；workspace、home、cache 和 `/tmp` 是唯一运行时可写边界。显式覆盖任意
 UID/GID 时，不可写的 inherited home 会安全回退到该 UID 专用的 `/tmp` home/cache。
@@ -776,4 +781,4 @@ integration/             CMake、Meson、vcpkg 集成文件
 tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
-实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、带 debug/ELF 深审计的双格式分包门禁、单一 launcher、完整 SDK 聚合、x86_64 GCC full qualification、digest-bound 原生 ARM release 工作流，以及 Qt source/host/双 target 构建资格已完成；后续取得首份原生 ARM 候选实证并推进 Qt 双 target 运行时验收和原子发布。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、带 debug/ELF 深审计的双格式分包门禁、单一 launcher、完整 SDK 聚合、x86_64 GCC full qualification、digest-bound 原生 ARM release 工作流、Qt source/host/双 target 构建与运行时资格，以及无重建的不可变发布闭环均已实现；后续必须取得首份公开候选/原生 ARM/稳定晋升实证，完成 GitHub 保护设置和正式法律复核。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。

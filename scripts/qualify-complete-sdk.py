@@ -2,11 +2,13 @@
 """Qualify the composed Python, vcpkg, toolchain and packaging SDK."""
 
 import argparse
+import hashlib
 import json
 import os
 import runpy
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -20,6 +22,10 @@ TARGETS = {
     "aarch64": "aarch64-unknown-linux-gnu",
 }
 PYTHON_MINORS = ("3.9", "3.10", "3.11", "3.12", "3.13", "3.14")
+CONSUMER_MACHINES = {
+    "x86_64": "Advanced Micro Devices X86-64",
+    "aarch64": "AArch64",
+}
 
 
 class QualificationError(RuntimeError):
@@ -57,12 +63,19 @@ def load_component(path, name, scope, digest):
 
 
 def run(arguments):
-    process = subprocess.run(
-        [str(argument) for argument in arguments],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-    )
+    command = [str(argument) for argument in arguments]
+    try:
+        process = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=300,
+            universal_newlines=True,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise QualificationError(
+            "command timed out after 300 seconds: %s" % " ".join(command)
+        ) from error
     require(
         process.returncode == 0,
         "command failed (%s):\n%s%s"
@@ -73,6 +86,103 @@ def run(arguments):
         ),
     )
     return process.stdout
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def cmake_cache(path):
+    result = {}
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith(("#", "//")) or "=" not in line:
+            continue
+        key_and_type, value = line.split("=", 1)
+        key, separator, _value_type = key_and_type.partition(":")
+        require(separator and key not in result, "CMake cache is not canonical")
+        result[key] = value
+    return result
+
+
+def qualify_launcher_consumers(crossforge, source):
+    source = Path(source)
+    require(
+        source.is_dir()
+        and all(
+            (source / name).is_file() and not (source / name).is_symlink()
+            for name in ("CMakeLists.txt", "answer.c", "main.cc")
+        ),
+        "launcher consumer source is incomplete",
+    )
+    results = []
+    with tempfile.TemporaryDirectory(
+        prefix="crossforge-launcher-consumer-"
+    ) as temporary:
+        root = Path(temporary)
+        for arch in ("x86_64", "aarch64"):
+            triple = TARGETS[arch]
+            build = root / ("build-" + arch)
+            launcher = [crossforge, "run", "--target", arch, "--"]
+            run(
+                launcher
+                + [
+                    "cmake",
+                    "-S",
+                    source,
+                    "-B",
+                    build,
+                    "-G",
+                    "Ninja",
+                    "-DCMAKE_BUILD_TYPE=Release",
+                ]
+            )
+            run(launcher + ["cmake", "--build", build, "--verbose"])
+            cache = cmake_cache(build / "CMakeCache.txt")
+            expected_toolchain = "/opt/crossforge/cmake/%s.cmake" % triple
+            expected_compiler = (
+                "/opt/crossforge/targets/%s/bin/%s-gcc" % (triple, triple)
+            )
+            require(
+                cache.get("CMAKE_TOOLCHAIN_FILE") == expected_toolchain,
+                "launcher CMake toolchain differs for %s" % arch,
+            )
+            require(
+                cache.get("CMAKE_C_COMPILER") == expected_compiler,
+                "launcher C compiler differs for %s" % arch,
+            )
+            binary = build / "crossforge-consumer"
+            require(
+                binary.is_file() and not binary.is_symlink(),
+                "launcher consumer binary is missing for %s" % arch,
+            )
+            readelf = (
+                "/opt/crossforge/targets/%s/bin/%s-readelf" % (triple, triple)
+            )
+            header = run([readelf, "-h", binary])
+            machines = [
+                line.split(":", 1)[1].strip()
+                for line in header.splitlines()
+                if line.strip().startswith("Machine:")
+            ]
+            require(
+                machines == [CONSUMER_MACHINES[arch]],
+                "launcher consumer ELF machine differs for %s" % arch,
+            )
+            results.append(
+                {
+                    "target": arch,
+                    "triple": triple,
+                    "build_system": "cmake-ninja",
+                    "languages": ["c", "c++20"],
+                    "executed": False,
+                    "binary_sha256": sha256_file(binary),
+                }
+            )
+    return results
 
 
 def environment_output(arguments):
@@ -242,6 +352,14 @@ def qualify(arguments):
                 )
     require(os.environ == parent_environment, "launcher mutated its parent environment")
     require(len(matrix) == 24, "launcher qualification matrix size differs")
+    launcher_consumers = qualify_launcher_consumers(
+        arguments.crossforge, arguments.consumer_source
+    )
+    require(
+        [record["target"] for record in launcher_consumers]
+        == ["x86_64", "aarch64"],
+        "launcher consumer target set differs",
+    )
     return {
         "schema_version": 1,
         "kind": "crossforge-complete-sdk-qualification",
@@ -254,6 +372,7 @@ def qualify(arguments):
             "qualification": component_record(qualification),
         },
         "matrix": matrix,
+        "launcher_consumers": launcher_consumers,
         "python_phase": python_report["phase"],
         "package_targets": packaging_report["targets"],
     }
@@ -267,6 +386,7 @@ def main():
     parser.add_argument("--packaging-report", type=Path, required=True)
     parser.add_argument("--python-report", type=Path, required=True)
     parser.add_argument("--crossforge", type=Path, required=True)
+    parser.add_argument("--consumer-source", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     arguments = parser.parse_args()
     report = qualify(arguments)

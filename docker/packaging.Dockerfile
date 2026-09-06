@@ -232,6 +232,7 @@ COPY LICENSE-APACHE LICENSE-MIT \
 COPY --chmod=0755 scripts/release_component.py \
   scripts/validate-release.py scripts/license-file-inventory.py \
   scripts/qualify-complete-sdk.py /work/scripts/
+COPY tests/consumer/ /work/consumer/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-complete-sdk.py \
       --policy-component /work/config/complete-sdk-policy.json \
@@ -251,6 +252,7 @@ RUN --network=none /usr/libexec/platform-python \
       --python-report \
         /opt/crossforge/qualification/python-final-sdk.json \
       --crossforge /usr/local/bin/crossforge \
+      --consumer-source /work/consumer \
       --output /opt/crossforge/qualification/complete-sdk.json \
     && /usr/libexec/platform-python /work/scripts/license-file-inventory.py \
       create --root / \

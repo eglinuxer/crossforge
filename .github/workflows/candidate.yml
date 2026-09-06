@@ -294,6 +294,50 @@ jobs:
             "$RUNNER_TEMP/candidate-environment.json"
           ! grep -F '/opt/crossforge/vcpkg/root/downloads' \
             "$RUNNER_TEMP/candidate-environment.json"
+      - name: Build downstream consumers through the public launcher
+        env:
+          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+        run: |
+          set -Eeuo pipefail
+          image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
+          consumer_root="$RUNNER_TEMP/public-launcher-consumer"
+          install -d -m 0755 "$consumer_root"
+          sudo chown 1000:1000 "$consumer_root"
+          docker_arguments=(
+            run --rm --pull=never --read-only
+            --tmpfs /tmp:rw,uid=1000,gid=1000,mode=1777
+            --tmpfs /home/crossforge:rw,uid=1000,gid=1000,mode=0700
+            --mount "type=bind,src=$GITHUB_WORKSPACE/tests/consumer,dst=/source,readonly"
+            --mount "type=bind,src=$consumer_root,dst=/workspace"
+          )
+          for target in x86_64 aarch64; do
+            case "$target" in
+              x86_64)
+                triple=x86_64-unknown-linux-gnu
+                machine='Advanced Micro Devices X86-64'
+                ;;
+              aarch64)
+                triple=aarch64-unknown-linux-gnu
+                machine=AArch64
+                ;;
+            esac
+            build="/workspace/build-$target"
+            docker "${docker_arguments[@]}" "$image" \
+              crossforge run --target "$target" -- \
+              cmake -S /source -B "$build" -G Ninja \
+                -DCMAKE_BUILD_TYPE=Release
+            docker "${docker_arguments[@]}" "$image" \
+              crossforge run --target "$target" -- \
+              cmake --build "$build" --verbose
+            test -f "$consumer_root/build-$target/crossforge-consumer"
+            docker "${docker_arguments[@]}" "$image" \
+              crossforge run --target "$target" -- \
+              "/opt/crossforge/targets/$triple/bin/$triple-readelf" \
+              -h "$build/crossforge-consumer" \
+              > "$RUNNER_TEMP/$target-readelf.txt"
+            grep -F "Machine:" "$RUNNER_TEMP/$target-readelf.txt" \
+              | grep -F "$machine"
+          done
       - name: Build native AArch64 probes from the immutable candidate
         id: native_probe
         env:

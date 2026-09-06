@@ -131,6 +131,13 @@ COMPLETE_SDK_QUALIFICATION_POLICY = {
     "vcpkg_linkage": ["static", "dynamic"],
     "matrix_size": 24,
     "composition": "qualified-artifacts-only",
+    "launcher_consumer": {
+        "build_system": "cmake-ninja",
+        "fixture": "tests/consumer",
+        "languages": ["c", "c++20"],
+        "targets": ["x86_64", "aarch64"],
+        "target_execution": False,
+    },
     "publishable": False,
 }
 

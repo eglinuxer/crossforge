@@ -3,7 +3,7 @@
   "component": "product/sdk-qualification",
   "dependencies": [
     {
-      "canonical_sha256": "4d8d5ef5c62a6294a5ba97fde2ae5f56fc0d1a92a37919d83b26fcf9069ba4e8",
+      "canonical_sha256": "5525192ee2c3054ceb6b5cf5ac4aa29cd32fcc3b251ece7ae84790d5fba17ccd",
       "component": "implementation/complete-sdk-qualification"
     },
     {

@@ -130,6 +130,21 @@ class CandidateWorkflowTests(unittest.TestCase):
             self.workflow,
         )
 
+    def test_public_launcher_builds_real_downstream_consumers(self):
+        self.assertIn(
+            "Build downstream consumers through the public launcher",
+            self.workflow,
+        )
+        self.assertIn(
+            "src=$GITHUB_WORKSPACE/tests/consumer,dst=/source,readonly",
+            self.workflow,
+        )
+        self.assertIn("for target in x86_64 aarch64", self.workflow)
+        self.assertIn('crossforge run --target "$target" --', self.workflow)
+        self.assertIn("cmake -S /source -B", self.workflow)
+        self.assertIn('cmake --build "$build" --verbose', self.workflow)
+        self.assertIn("$triple-readelf", self.workflow)
+
     def test_native_arm_gate_consumes_the_exact_candidate_and_pinned_runtime(self):
         self.assertIn("runs-on: ubuntu-24.04-arm", self.workflow)
         self.assertIn('test "$RUNNER_ARCH" = ARM64', self.workflow)

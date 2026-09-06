@@ -56,7 +56,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "4d8d5ef5c62a6294a5ba97fde2ae5f56fc0d1a92a37919d83b26fcf9069ba4e8",
+      "canonical_sha256": "5525192ee2c3054ceb6b5cf5ac4aa29cd32fcc3b251ece7ae84790d5fba17ccd",
       "component": "implementation/complete-sdk-qualification",
       "path": "config/generated/components/implementation/complete-sdk-qualification.json",
       "scope": "qualification"
@@ -188,7 +188,7 @@
       "scope": "supply"
     },
     {
-      "canonical_sha256": "707dfee085d5cdcf48f4e29d7680402578f6cf5e1bf17694d2bd2dcb04c2c757",
+      "canonical_sha256": "70bcaf5bfb4cd05be832f409bb07905bb4d41cdc764e39ed046217b7e8319f0a",
       "component": "product/sdk-qualification",
       "path": "config/generated/components/product/sdk-qualification.json",
       "scope": "qualification"

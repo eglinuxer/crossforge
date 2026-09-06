@@ -30,8 +30,10 @@ build-system-independent DEB/RPM packaging.
 > exact reviewed baseline. Qt 6.8.4 source acceptance, host and dual-target
 > builds, clean-Rocky runtime gates, and the explicit-QEMU AArch64 runtime gate
 > are qualified. The native ARM release workflow, including the candidate-bound
-> AArch64 Qt runtime gate, is implemented but still requires its first public
-> candidate execution; the remaining release supply chain is pending.
+> AArch64 Qt runtime gate and digest-only stable promotion with durable
+> immutable evidence are implemented but still require their first public
+> execution. Repository protection settings and formal legal review remain
+> pre-release operating gates.
 > Checked-in Bake outputs remain cache-only; only the manually dispatched
 > public-candidate workflow may emit a user-facing image.
 
@@ -39,6 +41,11 @@ The accepted implementation contract is in
 [`docs/architecture.md`](docs/architecture.md). The original Rust prototype is
 preserved at tag `prototype-rust-2026-08-28` and has been removed from the
 rewrite branch.
+
+Downstream users should start with
+[`docs/getting-started.md`](docs/getting-started.md). It covers image identity,
+UID-safe mounts, real CMake/Ninja builds, Python and vcpkg selection, source
+retrieval, release-evidence verification and common failure modes.
 
 ## Phase 1
 
