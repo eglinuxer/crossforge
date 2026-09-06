@@ -334,14 +334,26 @@ jobs:
             "$RUNNER_TEMP/native-aarch64-probes.tar" | awk '{print $1}')
           test "${#bundle_sha256}" -eq 64
           printf 'bundle_sha256=%s\n' "$bundle_sha256" >> "$GITHUB_OUTPUT"
+      - name: Stage immutable candidate identity
+        env:
+          IDENTITY_ROOT: ${{ runner.temp }}/candidate-identity
+        run: |
+          set -Eeuo pipefail
+          install -d -m 0755 "$IDENTITY_ROOT"
+          install -m 0644 "$RUNNER_TEMP/candidate.json" \
+            "$IDENTITY_ROOT/candidate.json"
+          install -m 0644 \
+            "$RUNNER_TEMP/source-bundle-identity/source-bundle.json" \
+            "$IDENTITY_ROOT/source-bundle.json"
+          install -m 0644 "$RUNNER_TEMP/source-binding.json" \
+            "$IDENTITY_ROOT/source-binding.json"
+          test "$(find "$IDENTITY_ROOT" -mindepth 1 -maxdepth 1 \
+            -type f | wc -l)" -eq 3
       - name: Upload immutable candidate identity
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: candidate-identity-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/candidate.json
-            ${{ runner.temp }}/source-bundle-identity/source-bundle.json
-            ${{ runner.temp }}/source-binding.json
+          path: ${{ runner.temp }}/candidate-identity/
           if-no-files-found: error
           retention-days: 90
       - name: Upload native AArch64 probe bundle
@@ -717,15 +729,27 @@ jobs:
               .critical.identity."docker-reference" == $repository and
               .critical.image."docker-manifest-digest" == $digest)' \
             "$RUNNER_TEMP/source-bundle-signature.json" >/dev/null
+      - name: Stage candidate signature evidence
+        env:
+          SIGNATURE_ROOT: ${{ runner.temp }}/candidate-signature-evidence
+        run: |
+          set -Eeuo pipefail
+          install -d -m 0755 "$SIGNATURE_ROOT"
+          for file in \
+            "$RUNNER_TEMP/native-aarch64-evidence/candidate.json" \
+            "$RUNNER_TEMP/candidate-signature.json" \
+            "$RUNNER_TEMP/source-bundle-signature.json" \
+            "$RUNNER_TEMP/cosign-tool/sigstore-verification.json"; do
+            test -f "$file" && test ! -L "$file"
+            install -m 0644 "$file" "$SIGNATURE_ROOT/$(basename "$file")"
+          done
+          test "$(find "$SIGNATURE_ROOT" -mindepth 1 -maxdepth 1 \
+            -type f | wc -l)" -eq 4
       - name: Upload candidate signature evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: candidate-signature-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/native-aarch64-evidence/candidate.json
-            ${{ runner.temp }}/candidate-signature.json
-            ${{ runner.temp }}/source-bundle-signature.json
-            ${{ runner.temp }}/cosign-tool/sigstore-verification.json
+          path: ${{ runner.temp }}/candidate-signature-evidence/
           if-no-files-found: error
           retention-days: 90
       - name: Report signed public candidate

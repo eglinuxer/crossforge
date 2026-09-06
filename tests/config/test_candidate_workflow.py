@@ -228,6 +228,17 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertNotIn("native-aarch64-input/candidate.json", upload)
         self.assertNotIn("native-aarch64-output/native-aarch64.json", upload)
 
+    def test_public_identity_and_signature_artifacts_have_flat_layouts(self):
+        for root, count in (
+            ("candidate-identity", 3),
+            ("candidate-signature-evidence", 4),
+        ):
+            with self.subTest(root=root):
+                self.assertIn("${{ runner.temp }}/%s/" % root, self.workflow)
+                self.assertIn('" -eq %d' % count, self.workflow)
+        self.assertIn('"$IDENTITY_ROOT/source-bundle.json"', self.workflow)
+        self.assertIn('"$SIGNATURE_ROOT/$(basename "$file")"', self.workflow)
+
     def test_every_ci_and_candidate_job_uses_the_locked_buildx_setup(self):
         local_action = "uses: ./.github/actions/setup-locked-buildx"
         self.assertEqual(self.ci.count(local_action), 2)
