@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/image-attestations.schema.json",
+  "title": "Crossforge public image attestation evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "image_kind",
+    "source_commit",
+    "repository",
+    "index_digest",
+    "platform_manifest_digest",
+    "attestation_manifest",
+    "attestations",
+    "checks"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/image-attestations.schema.json"
+    },
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-public-image-attestations"},
+    "image_kind": {"enum": ["sdk-candidate", "source-bundle"]},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "repository": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*(?::[0-9]+)?(?:/[a-z0-9]+(?:[._-][a-z0-9]+)*)+$"
+    },
+    "index_digest": {"$ref": "#/$defs/oci_digest"},
+    "platform_manifest_digest": {"$ref": "#/$defs/oci_digest"},
+    "attestation_manifest": {"$ref": "#/$defs/blob"},
+    "attestations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["predicate_type", "digest", "size", "statement_type"],
+        "properties": {
+          "predicate_type": {
+            "enum": [
+              "https://slsa.dev/provenance/v0.2",
+              "https://spdx.dev/Document"
+            ]
+          },
+          "digest": {"$ref": "#/$defs/oci_digest"},
+          "size": {"type": "integer", "minimum": 1, "maximum": 268435456},
+          "statement_type": {"const": "https://in-toto.io/Statement/v0.1"}
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oci_artifact",
+        "subject_bound",
+        "blob_digests",
+        "max_provenance",
+        "source_revision",
+        "spdx_document"
+      ],
+      "properties": {
+        "oci_artifact": {"const": true},
+        "subject_bound": {"const": true},
+        "blob_digests": {"const": true},
+        "max_provenance": {"const": true},
+        "source_revision": {"const": true},
+        "spdx_document": {"const": true}
+      }
+    }
+  },
+  "$defs": {
+    "oci_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "blob": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["digest", "size"],
+      "properties": {
+        "digest": {"$ref": "#/$defs/oci_digest"},
+        "size": {"type": "integer", "minimum": 1, "maximum": 268435456}
+      }
+    }
+  }
+}
