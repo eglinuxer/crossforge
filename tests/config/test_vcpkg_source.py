@@ -1,7 +1,10 @@
 import ast
 import copy
+import hashlib
+import io
 import json
 import runpy
+import tarfile
 import tempfile
 import unittest
 from pathlib import Path
@@ -45,6 +48,58 @@ class VcpkgSourceTests(unittest.TestCase):
             "98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8",
         )
         self.assertEqual(identity["/vcpkg/tool/size"], 8548168)
+        self.assertEqual(
+            identity["/vcpkg/tool/source/sha256"],
+            "5b0142bc8cd44e5ac7e7539257245be44ec6d695b863fc090f4e56589fed50dd",
+        )
+        self.assertEqual(identity["/vcpkg/tool/source/member_count"], 2457)
+
+    def test_tool_source_layout_and_licenses_are_verified(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            archive_path = Path(temporary) / "vcpkg-tool.tar.gz"
+            root = "vcpkg-tool-fixture"
+            payloads = {
+                "LICENSE.txt": b"license\n",
+                "NOTICE.txt": b"notice\n",
+                "CMakeLists.txt": b"project(vcpkg-tool)\n",
+                "src/vcpkg.cpp": b"int main() { return 0; }\n",
+            }
+            with tarfile.open(str(archive_path), "w:gz") as archive:
+                directory = tarfile.TarInfo(root)
+                directory.type = tarfile.DIRTYPE
+                archive.addfile(directory)
+                for name, payload in payloads.items():
+                    member = tarfile.TarInfo(root + "/" + name)
+                    member.size = len(payload)
+                    archive.addfile(member, io.BytesIO(payload))
+            digest, size = PREPARER["file_hash"](archive_path, "sha256")
+            identity = {
+                "/vcpkg/tool/commit": "1" * 40,
+                "/vcpkg/tool/source/sha256": digest,
+                "/vcpkg/tool/source/size": size,
+                "/vcpkg/tool/source/archive_root": root,
+                "/vcpkg/tool/source/member_count": 5,
+                "/vcpkg/tool/source/cmakelists_sha256": hashlib.sha256(
+                    payloads["CMakeLists.txt"]
+                ).hexdigest(),
+                "/vcpkg/tool/source/entrypoint_sha256": hashlib.sha256(
+                    payloads["src/vcpkg.cpp"]
+                ).hexdigest(),
+                "/vcpkg/tool/license/license_sha256": hashlib.sha256(
+                    payloads["LICENSE.txt"]
+                ).hexdigest(),
+                "/vcpkg/tool/license/notice_sha256": hashlib.sha256(
+                    payloads["NOTICE.txt"]
+                ).hexdigest(),
+            }
+            evidence = PREPARER["verify_tool_source"](archive_path, identity)
+            self.assertEqual(evidence["sha256"], digest)
+            wrong = copy.deepcopy(identity)
+            wrong["/vcpkg/tool/source/member_count"] += 1
+            with self.assertRaisesRegex(
+                PREPARER["PreparationError"], "member count"
+            ):
+                PREPARER["verify_tool_source"](archive_path, wrong)
 
     def test_component_tampering_and_incomplete_materials_fail_closed(self):
         for mutate in (
@@ -96,6 +151,12 @@ class VcpkgSourceTests(unittest.TestCase):
         self.assertIn("RUN --network=none", dockerfile)
         self.assertIn("prepare-vcpkg-source.py", dockerfile)
         self.assertIn("fetch-vcpkg-history.py", dockerfile)
+        self.assertIn("fetch-release-source.py", dockerfile)
+        self.assertIn("--tool-source /work/vcpkg-tool-source.tar.gz", dockerfile)
+        self.assertIn(
+            'materials = output.parent / "materials"',
+            PREPARER_PATH.read_text(encoding="utf-8"),
+        )
         self.assertIn("FROM scratch AS vcpkg-source-export", dockerfile)
         hcl = (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8")
         self.assertIn('target "_vcpkg_common"', hcl)

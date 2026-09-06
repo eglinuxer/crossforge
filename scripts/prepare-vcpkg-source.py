@@ -11,6 +11,7 @@ import runpy
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 from pathlib import Path, PurePosixPath
 
@@ -164,6 +165,14 @@ def load_identity(component_path, component_sha256):
         "/vcpkg/tool/sha256": str,
         "/vcpkg/tool/sha512": str,
         "/vcpkg/tool/size": int,
+        "/vcpkg/tool/source/status": str,
+        "/vcpkg/tool/source/url": str,
+        "/vcpkg/tool/source/sha256": str,
+        "/vcpkg/tool/source/size": int,
+        "/vcpkg/tool/source/archive_root": str,
+        "/vcpkg/tool/source/member_count": int,
+        "/vcpkg/tool/source/cmakelists_sha256": str,
+        "/vcpkg/tool/source/entrypoint_sha256": str,
         "/vcpkg/tool/signature/url": str,
         "/vcpkg/tool/signature/sha256": str,
         "/vcpkg/tool/signature/size": int,
@@ -187,6 +196,9 @@ def load_identity(component_path, component_sha256):
         "/vcpkg/registry_license/license_sha256",
         "/vcpkg/registry_license/notice_sha256",
         "/vcpkg/tool/sha256",
+        "/vcpkg/tool/source/sha256",
+        "/vcpkg/tool/source/cmakelists_sha256",
+        "/vcpkg/tool/source/entrypoint_sha256",
         "/vcpkg/tool/signature/sha256",
         "/vcpkg/tool/signature/key/sha256",
         "/vcpkg/tool/license/license_sha256",
@@ -207,15 +219,102 @@ def load_identity(component_path, component_sha256):
     require(
         values["/vcpkg/release/status"] == "locked"
         and values["/vcpkg/tool/status"] == "locked"
+        and values["/vcpkg/tool/source/status"] == "locked"
+        and values["/vcpkg/tool/source/url"]
+        == "https://github.com/microsoft/vcpkg-tool/archive/"
+        + values["/vcpkg/tool/commit"]
+        + ".tar.gz"
+        and values["/vcpkg/tool/source/archive_root"]
+        == "vcpkg-tool-" + values["/vcpkg/tool/commit"]
         and values["/vcpkg/tool/signature/url"]
         == values["/vcpkg/tool/url"] + ".sig"
         and values["/vcpkg/registry_license/expression"] == "MIT"
         and values["/vcpkg/tool/license/expression"] == "MIT"
         and values["/vcpkg/tool/size"] > 0
+        and values["/vcpkg/tool/source/size"] > 0
+        and values["/vcpkg/tool/source/member_count"] > 0
         and values["/vcpkg/tool/signature/size"] > 0,
         "vcpkg source relationships differ",
     )
     return values
+
+
+def verify_tool_source(archive_path, identity):
+    require(
+        archive_path.is_file() and not archive_path.is_symlink(),
+        "vcpkg-tool source archive is missing or non-canonical",
+    )
+    digest, size = file_hash(archive_path, "sha256")
+    require(
+        (digest, size)
+        == (
+            identity["/vcpkg/tool/source/sha256"],
+            identity["/vcpkg/tool/source/size"],
+        ),
+        "vcpkg-tool source archive identity differs",
+    )
+    root = identity["/vcpkg/tool/source/archive_root"]
+    markers = {}
+    seen = set()
+    members = 0
+    try:
+        with tarfile.open(str(archive_path), "r:gz") as archive:
+            for member in archive:
+                members += 1
+                name = member.name
+                require(
+                    name
+                    and name not in seen
+                    and not name.startswith("/")
+                    and ".." not in name.split("/")
+                    and name.split("/", 1)[0] == root,
+                    "vcpkg-tool source archive contains an unsafe path",
+                )
+                seen.add(name)
+                require(
+                    member.isfile() or member.isdir(),
+                    "vcpkg-tool source archive contains a special entry",
+                )
+                relative = name[len(root) + 1 :]
+                if relative in (
+                    "LICENSE.txt",
+                    "NOTICE.txt",
+                    "CMakeLists.txt",
+                    "src/vcpkg.cpp",
+                ):
+                    require(member.isfile(), "vcpkg-tool source marker is not a file")
+                    stream = archive.extractfile(member)
+                    require(stream is not None, "vcpkg-tool source marker is unreadable")
+                    markers[relative] = hashlib.sha256(stream.read()).hexdigest()
+    except (KeyError, OSError, tarfile.TarError) as error:
+        raise PreparationError(
+            "cannot inspect vcpkg-tool source archive: %s" % error
+        ) from error
+    require(
+        members == identity["/vcpkg/tool/source/member_count"],
+        "vcpkg-tool source member count differs",
+    )
+    require(
+        markers
+        == {
+            "LICENSE.txt": identity["/vcpkg/tool/license/license_sha256"],
+            "NOTICE.txt": identity["/vcpkg/tool/license/notice_sha256"],
+            "CMakeLists.txt": identity[
+                "/vcpkg/tool/source/cmakelists_sha256"
+            ],
+            "src/vcpkg.cpp": identity[
+                "/vcpkg/tool/source/entrypoint_sha256"
+            ],
+        },
+        "vcpkg-tool source marker or license differs",
+    )
+    return {
+        "file": "vcpkg-tool-%s.tar.gz" % identity["/vcpkg/tool/commit"],
+        "sha256": digest,
+        "size": size,
+        "archive_root": root,
+        "member_count": members,
+    }
 
 
 def verify_version_trees(repository):
@@ -470,6 +569,7 @@ def prepare(
     repository,
     tool,
     signature,
+    tool_source,
     input_root,
     output,
     manifest_path,
@@ -480,6 +580,7 @@ def prepare(
         repository, identity, input_root
     )
     tool_evidence = verify_signature(tool, signature, identity, input_root)
+    tool_source_evidence = verify_tool_source(tool_source, identity)
     for name in (
         "downloads",
         "buildtrees",
@@ -514,6 +615,12 @@ def prepare(
 
     output.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(str(repository), str(output))
+    materials = output.parent / "materials"
+    require(not materials.exists(), "vcpkg source materials already exist")
+    materials.mkdir()
+    tool_source_output = materials / tool_source_evidence["file"]
+    shutil.copyfile(str(tool_source), str(tool_source_output))
+    os.chmod(str(tool_source_output), 0o644)
     manifest = {
         "schema_version": 1,
         "kind": "crossforge-vcpkg-source",
@@ -522,7 +629,7 @@ def prepare(
             "canonical_sha256": component_sha256,
         },
         "registry": repository_evidence,
-        "tool": tool_evidence,
+        "tool": dict(tool_evidence, source=tool_source_evidence),
         "licenses": license_evidence,
     }
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -540,6 +647,7 @@ def main():
     parser.add_argument("--repository", type=Path, required=True)
     parser.add_argument("--tool", type=Path, required=True)
     parser.add_argument("--signature", type=Path, required=True)
+    parser.add_argument("--tool-source", type=Path, required=True)
     parser.add_argument("--input-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
@@ -550,6 +658,7 @@ def main():
         arguments.repository,
         arguments.tool,
         arguments.signature,
+        arguments.tool_source,
         arguments.input_root,
         arguments.output,
         arguments.manifest,

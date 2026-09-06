@@ -247,9 +247,11 @@ RPATH/TEXTREL、动态依赖闭合，并实际运行 CMake/Ninja、CTest 与 CPa
 历史；version database 中 22 个不可由 tag 到达的 port tree 按固定 OID 补齐，离线
 批量验证全部 3,054 个文件引用的 39,823 个 `git-tree`。匹配的 vcpkg-tool
 `2026-07-27` amd64 glibc 二进制单独绑定 SHA256、上游 SHA512、Microsoft PGP
-签名、公钥指纹及 LICENSE/NOTICE；构建不在线执行 bootstrap。网络 stage 只获取
-registry 与签名工具，Git object/许可证核验、PGP 验证、Rocky 8 工具执行和 scratch
-导出均离线完成。上游未把 EL8 系列列为完整支持 host；Crossforge 只声明对该固定
+签名、公钥指纹及 LICENSE/NOTICE；同 commit 的源码归档也固定 URL、大小、SHA256、
+2,457 个成员、CMake/入口摘要，并证明归档内 LICENSE/NOTICE 与实际选定许可逐字节
+一致。构建不在线执行 bootstrap。网络 stage 只获取 registry、签名工具与工具源码，
+Git object/许可证核验、PGP、源码布局、Rocky 8 工具执行和 scratch 导出均离线完成；
+工具源码只位于 source export 的 `/materials`，不进入 SDK root。上游未把 EL8 系列列为完整支持 host；Crossforge 只声明对该固定
 版本和下述资格化端口集合负责，不将本项目结果表述为上游平台支持。
 
 镜像内固定一个 vcpkg commit，并提供资格化 triplets：

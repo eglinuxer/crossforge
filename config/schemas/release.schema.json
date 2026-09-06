@@ -3177,6 +3177,7 @@
         "sha256",
         "sha512",
         "size",
+        "source",
         "signature",
         "license"
       ],
@@ -3214,12 +3215,39 @@
           "type": "integer",
           "minimum": 1
         },
+        "source": {
+          "$ref": "#/$defs/vcpkg_tool_source"
+        },
         "signature": {
           "$ref": "#/$defs/vcpkg_tool_signature"
         },
         "license": {
           "$ref": "#/$defs/vcpkg_tool_license"
         }
+      }
+    },
+    "vcpkg_tool_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "url",
+        "sha256",
+        "size",
+        "archive_root",
+        "member_count",
+        "cmakelists_sha256",
+        "entrypoint_sha256"
+      ],
+      "properties": {
+        "status": {"const": "locked"},
+        "url": {"const": "https://github.com/microsoft/vcpkg-tool/archive/98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8.tar.gz"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"const": 2990430},
+        "archive_root": {"const": "vcpkg-tool-98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8"},
+        "member_count": {"const": 2457},
+        "cmakelists_sha256": {"$ref": "#/$defs/sha256"},
+        "entrypoint_sha256": {"$ref": "#/$defs/sha256"}
       }
     },
     "vcpkg_tool_signature": {

@@ -84,6 +84,10 @@ def source_for(config, component, version=None):
         if version is not None:
             raise ValidationError("--version is not valid for CMake sources")
         source = config["host_tools"]["cmake"]["source"]
+    elif component == "vcpkg-tool":
+        if version is not None:
+            raise ValidationError("--version is not valid for vcpkg-tool sources")
+        source = config["vcpkg"]["tool"]["source"]
     else:
         if version is not None:
             raise ValidationError("--version is only valid for Python or zstd sources")
@@ -156,7 +160,8 @@ def source_for_component(
     """Read one authenticated source projection without loading release.json."""
     require(expected_scope == "build", "source component scope must be build")
     require(
-        source_kind in ("gcc", "binutils", "python", "zstd", "cmake"),
+        source_kind
+        in ("gcc", "binutils", "python", "zstd", "cmake", "vcpkg-tool"),
         "unsupported source kind: %r" % source_kind,
     )
     reader = component_reader()
@@ -261,7 +266,7 @@ def source_for_component(
             "zstd component version differs: expected %s, found %s"
             % (version, component_version),
         )
-    else:
+    elif source_kind == "cmake":
         require(version is None, "--version is not valid for CMake sources")
         require(
             expected_component == "sources/cmake",
@@ -278,11 +283,34 @@ def source_for_component(
             base + "/version",
             "string",
         )
+    else:
+        require(version is None, "--version is not valid for vcpkg-tool sources")
+        require(
+            expected_component == "sources/vcpkg",
+            "vcpkg-tool source requires component sources/vcpkg",
+        )
+        base = "/vcpkg/tool"
+        source_base = base + "/source"
+        component_version = _component_material(
+            reader,
+            document,
+            expected_component,
+            expected_scope,
+            expected_sha256,
+            base + "/tag",
+            "string",
+        )
 
-    require(
-        SOURCE_VERSION_RE.match(component_version),
-        "%s component version is invalid" % source_kind,
-    )
+    if source_kind == "vcpkg-tool":
+        require(
+            component_version == "2026-07-27",
+            "vcpkg-tool source version differs",
+        )
+    else:
+        require(
+            SOURCE_VERSION_RE.match(component_version),
+            "%s component version is invalid" % source_kind,
+        )
     source = {}
     for field, expected_type in (
         ("status", "string"),
@@ -325,6 +353,13 @@ def source_for_component(
             == "https://github.com/Kitware/CMake/releases/download/v4.4.0/"
             "cmake-4.4.0.tar.gz",
             "CMake source URL differs from version",
+        )
+    elif source_kind == "vcpkg-tool":
+        require(
+            source["url"]
+            == "https://github.com/microsoft/vcpkg-tool/archive/"
+            "98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8.tar.gz",
+            "vcpkg-tool source URL differs from commit",
         )
     return source
 
@@ -540,7 +575,15 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "source_kind",
-        choices=("gcc", "binutils", "python", "zstd", "qemu", "cmake"),
+        choices=(
+            "gcc",
+            "binutils",
+            "python",
+            "zstd",
+            "qemu",
+            "cmake",
+            "vcpkg-tool",
+        ),
     )
     parser.add_argument("--version")
     parser.add_argument("--output", type=Path, required=True)

@@ -556,7 +556,11 @@ RPMDB nor source material enters the SDK.
 Crossforge pins the immutable vcpkg `2026.07.29` release at commit
 `9e593bb18ea69cc5095e012465dcd675a822ed0d`. Its matching vcpkg-tool
 `2026-07-27` binary is independently bound by SHA256, the upstream SHA512,
-Microsoft's detached PGP signature and exact LICENSE/NOTICE files:
+Microsoft's detached PGP signature and exact LICENSE/NOTICE files. The
+corresponding vcpkg-tool source archive is separately locked to the commit
+reported by that binary; offline preparation checks all 2,457 members,
+build/entrypoint markers and byte-identical LICENSE/NOTICE files, then exports
+the archive under scratch-only `/materials` rather than placing it in the SDK:
 
 ```console
 $ ./scripts/validate-supply-chain-evidence.py

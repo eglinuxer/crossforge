@@ -7,7 +7,7 @@
       "component": "implementation/vcpkg-upstream-tier3-qualification"
     },
     {
-      "canonical_sha256": "390ffbf965276f26a6854f14892d5f967c78e4adbbf9e23c1126332067ba9781",
+      "canonical_sha256": "0565b56e5d47944248f10640a4f8d20efcd50fc097b7a8d386d1bf7018e1dc2c",
       "component": "vcpkg/upstream-tier2-qualification"
     }
   ],

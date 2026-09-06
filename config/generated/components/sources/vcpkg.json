@@ -125,6 +125,38 @@
       "value": 8548168
     },
     {
+      "path": "/vcpkg/tool/source/archive_root",
+      "value": "vcpkg-tool-98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8"
+    },
+    {
+      "path": "/vcpkg/tool/source/cmakelists_sha256",
+      "value": "5d0a8e47501857e3883d427e702ed7904f57a55817de1fc55784604c9d5c32e1"
+    },
+    {
+      "path": "/vcpkg/tool/source/entrypoint_sha256",
+      "value": "d62b4e2a8074b25b094ccf1d99730e6c6c43df8c744d114b94c3657359bccca7"
+    },
+    {
+      "path": "/vcpkg/tool/source/member_count",
+      "value": 2457
+    },
+    {
+      "path": "/vcpkg/tool/source/sha256",
+      "value": "5b0142bc8cd44e5ac7e7539257245be44ec6d695b863fc090f4e56589fed50dd"
+    },
+    {
+      "path": "/vcpkg/tool/source/size",
+      "value": 2990430
+    },
+    {
+      "path": "/vcpkg/tool/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/vcpkg/tool/source/url",
+      "value": "https://github.com/microsoft/vcpkg-tool/archive/98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8.tar.gz"
+    },
+    {
       "path": "/vcpkg/tool/status",
       "value": "locked"
     },

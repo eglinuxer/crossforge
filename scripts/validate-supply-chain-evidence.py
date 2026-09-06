@@ -870,6 +870,7 @@ def validate_evidence(config, repository):
     vcpkg = config["vcpkg"]
     vcpkg_release = vcpkg["release"]
     vcpkg_tool = vcpkg["tool"]
+    vcpkg_tool_source = vcpkg_tool["source"]
     vcpkg_signature = vcpkg_tool["signature"]
     vcpkg_key = vcpkg_signature["key"]
     vcpkg_tag_payload = load_evidence(
@@ -930,6 +931,29 @@ def validate_evidence(config, repository):
         "74e6370d7e90e9d07b2c584b7deacc0670f98b477905c2e0d5cba5e01cee93dc"
         and vcpkg_tool["size"] == 8548168,
         "vcpkg-tool release identity mismatch",
+    )
+    require(
+        vcpkg_tool_source
+        == {
+            "status": "locked",
+            "url": "https://github.com/microsoft/vcpkg-tool/archive/"
+            "98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8.tar.gz",
+            "sha256": (
+                "5b0142bc8cd44e5ac7e7539257245be44ec6d695b863fc090f4e56589fed50dd"
+            ),
+            "size": 2990430,
+            "archive_root": (
+                "vcpkg-tool-98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8"
+            ),
+            "member_count": 2457,
+            "cmakelists_sha256": (
+                "5d0a8e47501857e3883d427e702ed7904f57a55817de1fc55784604c9d5c32e1"
+            ),
+            "entrypoint_sha256": (
+                "d62b4e2a8074b25b094ccf1d99730e6c6c43df8c744d114b94c3657359bccca7"
+            ),
+        },
+        "vcpkg-tool corresponding source identity mismatch",
     )
     require(
         tool_commit_payload.startswith(b"tree "),
@@ -1465,6 +1489,7 @@ def validate_evidence(config, repository):
         "vcpkg_tag_object": vcpkg_release["tag_object"],
         "vcpkg_commit": vcpkg_release["commit"],
         "vcpkg_tool_commit": vcpkg_tool["commit"],
+        "vcpkg_tool_source_sha256": vcpkg_tool_source["sha256"],
         "vcpkg_tool_signature_sha256": vcpkg_signature["sha256"],
         "ninja_commit": ninja["commit"],
         "ninja_binary_sha256": ninja_binary["sha256"],

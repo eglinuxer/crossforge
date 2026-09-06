@@ -122,6 +122,7 @@ class ComponentSourceFetcherTests(unittest.TestCase):
             ("python", "python/cp312-source", "3.12.14"),
             ("zstd", "sources/zstd", "1.5.7"),
             ("cmake", "sources/cmake", None),
+            ("vcpkg-tool", "sources/vcpkg", None),
         )
         for source_kind, component, version in cases:
             with self.subTest(component=component):

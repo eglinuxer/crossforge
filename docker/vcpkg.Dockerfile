@@ -10,9 +10,20 @@ ARG VCPKG_RELEASE_COMMIT
 ARG VCPKG_TOOL_URL
 ARG VCPKG_TOOL_SHA256
 ARG VCPKG_TOOL_SIGNATURE_URL
+ARG VCPKG_SOURCE_COMPONENT_SHA256
 WORKDIR /work
-COPY --chmod=0755 scripts/fetch-vcpkg-history.py /work/scripts/
-RUN test -n "$VCPKG_RELEASE_COMMIT" \
+COPY config/generated/components/sources/vcpkg.json \
+  /work/config/sources-vcpkg.json
+COPY --chmod=0755 scripts/release_component.py \
+  scripts/fetch-release-source.py scripts/fetch-vcpkg-history.py /work/scripts/
+RUN /usr/libexec/platform-python /work/scripts/fetch-release-source.py \
+      vcpkg-tool \
+      --component-file /work/config/sources-vcpkg.json \
+      --expected-component sources/vcpkg \
+      --expected-scope build \
+      --expected-sha256 "$VCPKG_SOURCE_COMPONENT_SHA256" \
+      --output /work/vcpkg-tool-source.tar.gz \
+    && test -n "$VCPKG_RELEASE_COMMIT" \
     && test -n "$VCPKG_TOOL_SHA256" \
     && GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 \
       GIT_TERMINAL_PROMPT=0 \
@@ -50,6 +61,7 @@ RUN --network=none /usr/libexec/platform-python \
       --repository /work/repository \
       --tool /work/vcpkg-tool \
       --signature /work/vcpkg-tool.sig \
+      --tool-source /work/vcpkg-tool-source.tar.gz \
       --input-root /work/input \
       --output /out/root \
       --manifest /out/source.json

@@ -15,7 +15,7 @@
       "component": "sources/nfpm"
     },
     {
-      "canonical_sha256": "287b78653a05ea5ba2f8c81211ab5a7e1ce3a8aa14fd7bcac8ea20c3ade245ad",
+      "canonical_sha256": "fedf5f0bdedd9b1e4f2c9592bb7df69acc373a852111615fb052d89a34bff261",
       "component": "vcpkg/sdk-build"
     }
   ],

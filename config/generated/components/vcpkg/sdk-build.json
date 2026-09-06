@@ -19,7 +19,7 @@
       "component": "rpm/host-runtime"
     },
     {
-      "canonical_sha256": "32decc4331f2b02cb83fc96a08b622d7302c346eac55ff74e3cb3345c2fc36da",
+      "canonical_sha256": "0721e60b7a62dceb9ff1eb6c57349d522293e5e0af6368227d0af12bca1c49ec",
       "component": "sources/vcpkg"
     },
     {

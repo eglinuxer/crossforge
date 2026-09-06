@@ -89,6 +89,10 @@ class ReleaseValidationTests(unittest.TestCase):
             result["cmake_source_signature_status"],
             "cryptographically-valid-expired-key",
         )
+        self.assertEqual(
+            result["vcpkg_tool_source_sha256"],
+            self.config["vcpkg"]["tool"]["source"]["sha256"],
+        )
 
     def test_supply_chain_identity_tampering_is_rejected(self):
         mutations = (
@@ -110,6 +114,7 @@ class ReleaseValidationTests(unittest.TestCase):
             ),
             (("vcpkg", "release", "commit"), "0" * 40),
             (("vcpkg", "tool", "sha256"), "0" * 64),
+            (("vcpkg", "tool", "source", "sha256"), "0" * 64),
             (
                 ("vcpkg", "tool", "signature", "key", "fingerprint"),
                 "0" * 40,
