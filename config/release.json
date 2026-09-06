@@ -52,6 +52,21 @@
     "image_repository": "ghcr.io/eglinuxer/crossforge",
     "stable_channel": "gts15-el8"
   },
+  "sigstore": {
+    "trust": {
+      "root_directory": "evidence/sigstore/tuf",
+      "initial_root_version": 5,
+      "final_root_version": 15,
+      "initial_root_sha256": "e2a930b2d1d4053dd56e8faf66fd113658545d522e35d222ccf58fea87ccccf4",
+      "targets_version": 14,
+      "targets_evidence": "evidence/sigstore/tuf/14.targets.json.b64",
+      "targets_sha256": "6a697f7f8908c8ab26c11786ecb490b54acec97fa8c802e399f065f8a0cc1acd",
+      "trusted_root_evidence": "evidence/sigstore/tuf/trusted_root.json.b64",
+      "trusted_root_sha256": "6494e21ea73fa7ee769f85f57d5a3e6a08725eae1e38c755fc3517c9e6bc0b66",
+      "artifact_key_evidence": "evidence/sigstore/tuf/artifact.pub.b64",
+      "artifact_key_sha256": "59ebf97a9850aecec4bc39c1f5c1dc46e6490a6b5fd2a6cacdcac0c3a6fc4cbf"
+    }
+  },
   "base_image": {
     "repository": "quay.io/rockylinux/rockylinux",
     "tag": "8",

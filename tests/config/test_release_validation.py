@@ -417,6 +417,17 @@ class ReleaseValidationTests(unittest.TestCase):
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate"](config, self.schema, self.schema, "$")
 
+    def test_sigstore_tuf_release_version_is_enforced(self):
+        config = copy.deepcopy(self.config)
+        config["sigstore"]["trust"]["targets_version"] = 13
+        with self.assertRaisesRegex(
+            EVIDENCE_VALIDATOR["EvidenceError"],
+            "targets version differs",
+        ):
+            EVIDENCE_VALIDATOR["validate_evidence"](
+                config, REPOSITORY
+            )
+
     def test_python_39_source_and_sigstore_evidence_are_exactly_locked(self):
         entry = self.config["python"]["versions"][0]
         self.assertEqual(entry["version"], "3.9.25")
@@ -449,6 +460,16 @@ class ReleaseValidationTests(unittest.TestCase):
         )
         self.assertEqual(evidence["python_sources"], 6)
         self.assertEqual(evidence["python_sigstore_status"], "archived-unverified")
+        self.assertEqual(evidence["sigstore_tuf_root_version"], 15)
+        self.assertEqual(evidence["sigstore_tuf_targets_version"], 14)
+        self.assertEqual(
+            evidence["sigstore_trusted_root_sha256"],
+            "6494e21ea73fa7ee769f85f57d5a3e6a08725eae1e38c755fc3517c9e6bc0b66",
+        )
+        self.assertEqual(
+            evidence["sigstore_artifact_key_sha256"],
+            "59ebf97a9850aecec4bc39c1f5c1dc46e6490a6b5fd2a6cacdcac0c3a6fc4cbf",
+        )
 
     def test_python_isolation_patches_are_explicit_and_content_locked(self):
         versions = self.config["python"]["versions"]

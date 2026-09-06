@@ -219,6 +219,50 @@
     {
       "path": "/qemu/executor/source/tag_evidence",
       "value": "evidence/git/qemu-v10.2.3.tag.b64"
+    },
+    {
+      "path": "/sigstore/trust/artifact_key_evidence",
+      "value": "evidence/sigstore/tuf/artifact.pub.b64"
+    },
+    {
+      "path": "/sigstore/trust/artifact_key_sha256",
+      "value": "59ebf97a9850aecec4bc39c1f5c1dc46e6490a6b5fd2a6cacdcac0c3a6fc4cbf"
+    },
+    {
+      "path": "/sigstore/trust/final_root_version",
+      "value": 15
+    },
+    {
+      "path": "/sigstore/trust/initial_root_sha256",
+      "value": "e2a930b2d1d4053dd56e8faf66fd113658545d522e35d222ccf58fea87ccccf4"
+    },
+    {
+      "path": "/sigstore/trust/initial_root_version",
+      "value": 5
+    },
+    {
+      "path": "/sigstore/trust/root_directory",
+      "value": "evidence/sigstore/tuf"
+    },
+    {
+      "path": "/sigstore/trust/targets_evidence",
+      "value": "evidence/sigstore/tuf/14.targets.json.b64"
+    },
+    {
+      "path": "/sigstore/trust/targets_sha256",
+      "value": "6a697f7f8908c8ab26c11786ecb490b54acec97fa8c802e399f065f8a0cc1acd"
+    },
+    {
+      "path": "/sigstore/trust/targets_version",
+      "value": 14
+    },
+    {
+      "path": "/sigstore/trust/trusted_root_evidence",
+      "value": "evidence/sigstore/tuf/trusted_root.json.b64"
+    },
+    {
+      "path": "/sigstore/trust/trusted_root_sha256",
+      "value": "6494e21ea73fa7ee769f85f57d5a3e6a08725eae1e38c755fc3517c9e6bc0b66"
     }
   ],
   "schema_version": 1,

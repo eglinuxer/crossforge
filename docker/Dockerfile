@@ -42,10 +42,15 @@ COPY config/ ./config/
 COPY evidence/ ./evidence/
 COPY keys/ZSTD-RELEASE-KEY.asc ./keys/ZSTD-RELEASE-KEY.asc
 COPY keys/MICROSOFT-RELEASE-KEY.asc ./keys/MICROSOFT-RELEASE-KEY.asc
+COPY keys/FFMPEG-RELEASE-KEY.asc ./keys/FFMPEG-RELEASE-KEY.asc
+COPY keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc \
+  ./keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc
 COPY licenses/ ./licenses/
 COPY patches/ ./patches/
 COPY scripts/validate-supply-chain-evidence.py \
   ./scripts/validate-supply-chain-evidence.py
+COPY scripts/verify-sigstore-tuf-root.py \
+  ./scripts/verify-sigstore-tuf-root.py
 RUN /usr/libexec/platform-python ./scripts/validate-supply-chain-evidence.py \
       ./config/release.json
 

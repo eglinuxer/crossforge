@@ -6,6 +6,7 @@ import base64
 import binascii
 import hashlib
 import json
+import runpy
 import sys
 from pathlib import Path
 
@@ -17,6 +18,10 @@ class EvidenceError(ValueError):
 OCI_INDEX = "application/vnd.oci.image.index.v1+json"
 OCI_MANIFEST = "application/vnd.oci.image.manifest.v1+json"
 SLSA_V1 = "https://slsa.dev/provenance/v1"
+REPOSITORY = Path(__file__).resolve().parents[1]
+TUF = runpy.run_path(
+    str(REPOSITORY / "scripts/verify-sigstore-tuf-root.py")
+)
 
 
 def require(condition, message):
@@ -167,6 +172,58 @@ def single_header(headers, key):
 
 
 def validate_evidence(config, repository):
+    sigstore_trust = config["sigstore"]["trust"]
+    try:
+        tuf = TUF["verify_arguments"](
+            argparse.Namespace(
+                root_directory=repository
+                / sigstore_trust["root_directory"],
+                initial_version=sigstore_trust[
+                    "initial_root_version"
+                ],
+                final_version=sigstore_trust["final_root_version"],
+                initial_root_sha256=sigstore_trust[
+                    "initial_root_sha256"
+                ],
+                targets=repository
+                / sigstore_trust["targets_evidence"],
+                targets_sha256=sigstore_trust["targets_sha256"],
+                trusted_root=repository
+                / sigstore_trust["trusted_root_evidence"],
+                trusted_root_sha256=sigstore_trust[
+                    "trusted_root_sha256"
+                ],
+                base64_envelopes=True,
+            )
+        )
+    except (OSError, TUF["TUFError"]) as error:
+        raise EvidenceError("invalid Sigstore TUF trust root: %s" % error) from error
+    require(
+        tuf["targets_version"] == sigstore_trust["targets_version"],
+        "Sigstore TUF targets version differs from release",
+    )
+    targets_payload = load_evidence(
+        repository, sigstore_trust["targets_evidence"]
+    )
+    try:
+        targets = json.loads(
+            targets_payload.decode("utf-8"),
+            object_pairs_hook=reject_duplicate_keys,
+        )
+    except (UnicodeDecodeError, ValueError) as error:
+        raise EvidenceError("invalid Sigstore TUF targets") from error
+    artifact_key = load_evidence(
+        repository, sigstore_trust["artifact_key_evidence"]
+    )
+    artifact_record = targets["signed"]["targets"].get("artifact.pub")
+    require(
+        artifact_record is not None
+        and artifact_record["length"] == len(artifact_key)
+        and artifact_record["hashes"]["sha256"]
+        == hashlib.sha256(artifact_key).hexdigest()
+        == sigstore_trust["artifact_key_sha256"],
+        "Sigstore artifact key differs from authenticated TUF target",
+    )
     base = config["base_image"]
     _rocky_payload, rocky_index = evidence_json(
         repository,
@@ -1161,6 +1218,12 @@ def validate_evidence(config, repository):
         require(bundle_payload, "CPython Sigstore bundle is empty")
 
     return {
+        "sigstore_tuf_root_version": tuf["final_root_version"],
+        "sigstore_tuf_targets_version": tuf["targets_version"],
+        "sigstore_trusted_root_sha256": tuf["trusted_root_sha256"],
+        "sigstore_artifact_key_sha256": hashlib.sha256(
+            artifact_key
+        ).hexdigest(),
         "rocky_index_sha256": sha256(_rocky_payload),
         "qemu_index_sha256": sha256(qemu_index_payload),
         "qemu_manifest_sha256": sha256(qemu_manifest_payload),
@@ -1202,10 +1265,13 @@ def main():
     config = load_json(arguments.config)
     result = validate_evidence(config, repository)
     print(
-        "valid supply-chain evidence: Rocky %s; QEMU %s; source %s; "
+        "valid supply-chain evidence: Sigstore TUF root %d/targets %d; "
+        "Rocky %s; QEMU %s; source %s; "
         "CPython Sigstore bundles %s; patches %d; zstd %s; vcpkg %s; "
         "Qt %s + FFmpeg %s + xcb-util-cursor %s; Ninja %s; CMake %s"
         % (
+            result["sigstore_tuf_root_version"],
+            result["sigstore_tuf_targets_version"],
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
             result["qemu_commit"],

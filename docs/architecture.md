@@ -415,7 +415,7 @@ Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单�
 
 Rocky OCI index、QEMU index/manifest/attestation/SLSA predicate、QEMU Git tag/commit，以及 Ninja GitHub tag-ref/release 与 commit 原始字节以 base64 envelope 签入 `evidence/`。离线 validator 必须重算 OCI/GitHub evidence digest 与 Git object ID，并验证 platform child manifest、attestation subject、provenance builder/build arguments 和源码 tag→commit 关系。当前只归档 QEMU annotated tag 内的 OpenPGP 签名，不宣称已建立 QEMU maintainer keyring 信任；Ninja lightweight tag 也无独立签名，因此依赖完整 commit 与多重内容摘要。正式发布前需补齐相应信任根或保留明确的 hash-pinned 风险边界。
 
-CPython 的上游 Sigstore bundle 同样以原始 base64 envelope 归档，并在结构层将 message/Rekor digest 绑定到 tarball SHA256；当前明确标记为 `archived-unverified`。配置中的预期 signer 仅是维护策略，尚未从证书 SAN/issuer 验证。在固定 Fulcio/Rekor/TSA trust roots 并执行真实签名、证书链、身份、SET 与 inclusion proof 验证前，不得把该归档描述为密码学真实性证明。
+Sigstore 公共信任 bootstrap 已进入 release 的 supply identity：仓库保留官方 TUF root 5 到 root 15 的全部 exact-byte envelope、targets 14、其授权的 `trusted_root.json` 与 artifact key。最早的纯 platform-Python gate 用 OLPC canonical JSON 和 P-256 ECDSA 逐代验证旧/新 root threshold、自签 threshold、targets threshold、metadata 有效期及 target length/SHA256；该链已与 Cosign 的 TUF client 和 OpenSSL 结果交叉验证，且根轮换不会污染任何 build/qualification component。CPython 的上游 Sigstore bundle 同样以原始 base64 envelope 归档，并在结构层将 message/Rekor digest 绑定到 tarball SHA256；当前仍明确标记为 `archived-unverified`。配置中的预期 signer 仅是维护策略，尚未由锁定的发布门禁从证书 SAN/issuer 验证。在固定 Cosign 执行真实签名、证书链、身份、SET、SCT、inclusion proof 及可用的 RFC3161 timestamp 验证前，不得把该归档描述为密码学真实性证明。
 
 每个 release 同时提供：
 

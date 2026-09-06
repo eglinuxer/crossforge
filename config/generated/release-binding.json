@@ -446,7 +446,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "f8f125a2632ccbe01ab58165b09ee18890b70e2d6cc95c78dd9f61a3a64a7dd8",
+      "canonical_sha256": "538bf83503b590e8b3d3adff13c0c3f09d6496672c85d01b67c8c95510ef7a25",
       "component": "supply/evidence",
       "path": "config/generated/components/supply/evidence.json",
       "scope": "supply"
@@ -532,7 +532,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "18bb6f8fe7b639b78d4c98cab1e5565d8057248234e1ae4a15a77aa91b6fb6dc",
+    "canonical_sha256": "2ae90af6259c7725a35a37e1e9670995152108b04d605b909ef5b5c77463add1",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

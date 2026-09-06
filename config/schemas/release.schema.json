@@ -10,6 +10,7 @@
     "baseline",
     "abi",
     "product",
+    "sigstore",
     "base_image",
     "trust",
     "platforms",
@@ -62,6 +63,9 @@
           "const": "gts15-el8"
         }
       }
+    },
+    "sigstore": {
+      "$ref": "#/$defs/sigstore"
     },
     "base_image": {
       "type": "object",
@@ -814,6 +818,72 @@
     }
   },
   "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sigstore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trust"],
+      "properties": {
+        "trust": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "root_directory",
+            "initial_root_version",
+            "final_root_version",
+            "initial_root_sha256",
+            "targets_version",
+            "targets_evidence",
+            "targets_sha256",
+            "trusted_root_evidence",
+            "trusted_root_sha256",
+            "artifact_key_evidence",
+            "artifact_key_sha256"
+          ],
+          "properties": {
+            "root_directory": {
+              "const": "evidence/sigstore/tuf"
+            },
+            "initial_root_version": {
+              "const": 5
+            },
+            "final_root_version": {
+              "type": "integer",
+              "minimum": 5
+            },
+            "initial_root_sha256": {
+              "const": "e2a930b2d1d4053dd56e8faf66fd113658545d522e35d222ccf58fea87ccccf4"
+            },
+            "targets_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "targets_evidence": {
+              "type": "string",
+              "pattern": "^evidence/sigstore/tuf/[1-9][0-9]*\\.targets\\.json\\.b64$"
+            },
+            "targets_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "trusted_root_evidence": {
+              "const": "evidence/sigstore/tuf/trusted_root.json.b64"
+            },
+            "trusted_root_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "artifact_key_evidence": {
+              "const": "evidence/sigstore/tuf/artifact.pub.b64"
+            },
+            "artifact_key_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      }
+    },
     "qt": {
       "type": "object",
       "additionalProperties": false,

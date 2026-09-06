@@ -295,9 +295,14 @@ deployable package transaction. aarch64 uses only the locked explicit QEMU
 executor.
 
 All six CPython 3.9–3.14 source tarballs are content-locked. Their upstream
-Sigstore bundles are archived and structurally bound to those digests, but are
-explicitly marked `archived-unverified`: cryptographic Fulcio/Rekor verification
-is a later release-supply-chain gate and is not claimed by this phase.
+Sigstore bundles are archived and structurally bound to those digests. The
+Sigstore public trust bootstrap is now independently pinned and verified from
+the official threshold-signed TUF root 5 through root 15, targets 14, the
+resulting `trusted_root.json`, and its artifact key; the complete raw metadata
+is retained as exact-byte base64 evidence. The source bundles remain explicitly
+marked `archived-unverified` until the locked Cosign verifier executes their
+Fulcio/Rekor/SCT/time policies, so this phase does not yet claim cryptographic
+source authenticity.
 
 ## Phase 6: parameterized CPython rows
 

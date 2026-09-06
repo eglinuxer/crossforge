@@ -419,6 +419,8 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             "stable_channel",
         }:
             category = "supply"
+        elif path and path[0] == "sigstore":
+            category = "supply"
         elif path in {
             ("base_image", "repository"),
             ("base_image", "tag"),

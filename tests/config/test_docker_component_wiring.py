@@ -97,8 +97,11 @@ class DockerComponentWiringTests(unittest.TestCase):
             block,
         )
         self.assertIn("keys/MICROSOFT-RELEASE-KEY.asc", block)
+        self.assertIn("keys/FFMPEG-RELEASE-KEY.asc", block)
+        self.assertIn("keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc", block)
         self.assertIn("COPY licenses/ ./licenses/", block)
         self.assertIn("validate-supply-chain-evidence.py", block)
+        self.assertIn("verify-sigstore-tuf-root.py", block)
 
     def test_source_fetches_are_exact_component_only_branches(self):
         cases = {
