@@ -255,6 +255,10 @@ FROM sdk-complete-dev AS sdk-candidate
 ARG CROSSFORGE_PRODUCT_VERSION
 ARG CROSSFORGE_PRODUCT_IDENTITY_SHA256
 ARG CROSSFORGE_SOURCE_COMMIT
+ARG CROSSFORGE_SOURCE_BUNDLE_DIGEST
+ARG CROSSFORGE_SOURCE_BUNDLE_PLATFORM_MANIFEST_DIGEST
+ARG CROSSFORGE_SOURCE_ARCHIVE_SHA256
+ARG CROSSFORGE_SOURCE_ARCHIVE_SIZE
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
 COPY --from=crossforge_sigstore_qualified /sigstore-verification.json \
   /opt/crossforge/qualification/sigstore.json
@@ -267,11 +271,13 @@ COPY config/gcc-testsuite-full.json \
 COPY tests/gcc/baselines/full/x86_64-host-direct.json \
   /work/config/gcc-testsuite-full-baseline.json
 COPY --chmod=0755 scripts/release_component.py \
+  scripts/source_binding.py \
   scripts/verify-gcc-testsuite-report.py \
   scripts/validate-release.py \
   scripts/validate-sigstore-report.py /work/scripts/
 COPY config/schemas/release.schema.json \
-  config/schemas/sigstore-verification.schema.json /work/config/schemas/
+  config/schemas/sigstore-verification.schema.json \
+  config/schemas/source-binding.schema.json /work/config/schemas/
 RUN --network=none \
     --mount=type=bind,from=crossforge_gcc_testsuite_full_qualified,source=/qualification/gcc-testsuite/x86_64-host-direct-full.json,target=/tmp/crossforge-gcc-testsuite-full.json,ro \
       /usr/libexec/platform-python /work/scripts/release_component.py validate \
@@ -313,6 +319,18 @@ RUN --network=none \
          *[!0-9a-f]*) exit 1 ;; \
          *) ;; \
        esac \
+    && /usr/libexec/platform-python /work/scripts/source_binding.py create \
+      --release /opt/crossforge/release.json \
+      --release-schema /work/config/schemas/release.schema.json \
+      --schema /work/config/schemas/source-binding.schema.json \
+      --source-commit "$CROSSFORGE_SOURCE_COMMIT" \
+      --digest "$CROSSFORGE_SOURCE_BUNDLE_DIGEST" \
+      --platform-manifest-digest \
+        "$CROSSFORGE_SOURCE_BUNDLE_PLATFORM_MANIFEST_DIGEST" \
+      --archive-sha256 "$CROSSFORGE_SOURCE_ARCHIVE_SHA256" \
+      --archive-size "$CROSSFORGE_SOURCE_ARCHIVE_SIZE" \
+      --output /opt/crossforge/SOURCES.json \
+      --offer /opt/crossforge/SOURCE-OFFER \
     && crossforge info --json \
       | grep -F "\"version\": \"$CROSSFORGE_PRODUCT_VERSION\"" \
     && groupadd --gid 1000 crossforge \

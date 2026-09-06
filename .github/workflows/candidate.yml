@@ -78,19 +78,6 @@ jobs:
               exit 1
             fi
           done
-      - name: Build once and push the candidate
-        env:
-          CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
-        run: |
-          set -Eeuo pipefail
-          docker buildx bake sdk-candidate \
-            --set "sdk-candidate.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
-            --set "sdk-candidate.tags=$CANDIDATE_REFERENCE" \
-            --set "sdk-candidate.output=type=image,push=true" \
-            --set "sdk-candidate.attest=type=provenance,mode=max" \
-            --set "sdk-candidate.attest+=type=sbom" \
-            --metadata-file "$RUNNER_TEMP/build-metadata.json" \
-            --progress=plain
       - name: Build once and push the corresponding source bundle
         id: source
         env:
@@ -124,10 +111,34 @@ jobs:
           source_archive_size=$(jq -r .archive.size "$source_identity")
           test "${#source_archive_sha256}" -eq 64
           test "$source_archive_size" -gt 1456725209
+          ./scripts/source_binding.py create \
+            --source-commit "$GITHUB_SHA" \
+            --digest "$source_digest" \
+            --platform-manifest-digest "$source_platform_digest" \
+            --archive-sha256 "$source_archive_sha256" \
+            --archive-size "$source_archive_size" \
+            --output "$RUNNER_TEMP/source-binding.json"
           printf 'digest=%s\n' "$source_digest" >> "$GITHUB_OUTPUT"
           printf 'platform_digest=%s\n' "$source_platform_digest" >> "$GITHUB_OUTPUT"
           printf 'archive_sha256=%s\n' "$source_archive_sha256" >> "$GITHUB_OUTPUT"
           printf 'archive_size=%s\n' "$source_archive_size" >> "$GITHUB_OUTPUT"
+      - name: Build once and push the source-bound candidate
+        env:
+          CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
+        run: |
+          set -Eeuo pipefail
+          docker buildx bake sdk-candidate \
+            --set "sdk-candidate.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
+            --set "sdk-candidate.args.CROSSFORGE_SOURCE_BUNDLE_DIGEST=${{ steps.source.outputs.digest }}" \
+            --set "sdk-candidate.args.CROSSFORGE_SOURCE_BUNDLE_PLATFORM_MANIFEST_DIGEST=${{ steps.source.outputs.platform_digest }}" \
+            --set "sdk-candidate.args.CROSSFORGE_SOURCE_ARCHIVE_SHA256=${{ steps.source.outputs.archive_sha256 }}" \
+            --set "sdk-candidate.args.CROSSFORGE_SOURCE_ARCHIVE_SIZE=${{ steps.source.outputs.archive_size }}" \
+            --set "sdk-candidate.tags=$CANDIDATE_REFERENCE" \
+            --set "sdk-candidate.output=type=image,push=true" \
+            --set "sdk-candidate.attest=type=provenance,mode=max" \
+            --set "sdk-candidate.attest+=type=sbom" \
+            --metadata-file "$RUNNER_TEMP/build-metadata.json" \
+            --progress=plain
       - name: Bind the pushed OCI index and platform manifest
         id: digest
         env:
@@ -155,6 +166,14 @@ jobs:
           ./scripts/candidate_manifest.py validate \
             "$RUNNER_TEMP/candidate.json" \
             --expected-source-commit "$GITHUB_SHA"
+          jq --sort-keys .source_bundle "$RUNNER_TEMP/candidate.json" \
+            > "$RUNNER_TEMP/candidate-source-binding.json"
+          jq --sort-keys \
+            '{repository, digest, platform, platform_manifest_digest, archive}' \
+            "$RUNNER_TEMP/source-binding.json" \
+            > "$RUNNER_TEMP/expected-source-binding.json"
+          cmp "$RUNNER_TEMP/expected-source-binding.json" \
+            "$RUNNER_TEMP/candidate-source-binding.json"
           printf 'digest=%s\n' "$candidate_digest" >> "$GITHUB_OUTPUT"
           printf 'platform_digest=%s\n' "$platform_digest" >> "$GITHUB_OUTPUT"
           test "$CANDIDATE_REFERENCE" = \
@@ -190,6 +209,16 @@ jobs:
           set -Eeuo pipefail
           image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
           test "$(docker run --rm --pull=always "$image" id -u)" = 1000
+          docker run --rm "$image" cat /opt/crossforge/SOURCES.json \
+            > "$RUNNER_TEMP/candidate-sources.json"
+          cmp "$RUNNER_TEMP/source-binding.json" \
+            "$RUNNER_TEMP/candidate-sources.json"
+          docker run --rm "$image" cat /opt/crossforge/SOURCE-OFFER \
+            > "$RUNNER_TEMP/candidate-source-offer.txt"
+          grep -F "${{ steps.source.outputs.digest }}" \
+            "$RUNNER_TEMP/candidate-source-offer.txt"
+          grep -F "${{ steps.source.outputs.archive_sha256 }}" \
+            "$RUNNER_TEMP/candidate-source-offer.txt"
           docker run --rm "$image" crossforge --version \
             | grep -E '^crossforge (0|[1-9][0-9]*)\.'
           docker run --rm --read-only \
@@ -251,6 +280,7 @@ jobs:
           path: |
             ${{ runner.temp }}/candidate.json
             ${{ runner.temp }}/source-bundle-identity/source-bundle.json
+            ${{ runner.temp }}/source-binding.json
           if-no-files-found: error
           retention-days: 90
       - name: Upload native AArch64 probe bundle

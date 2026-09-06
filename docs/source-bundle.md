@@ -16,6 +16,11 @@ candidate source commit. The vcpkg registry snapshot retains its complete Git
 history and version-database objects, but excludes the prebuilt tool injected
 into the SDK copy.
 
+The SDK's `/opt/crossforge/SOURCES.json` names the public source OCI image by
+digest and records this archive's filename, SHA256 and byte size. Pull that OCI
+reference, copy the archive from the container root, and verify the recorded
+identity before extraction; the paired tag is only a convenience locator.
+
 QEMU 10.2.3 and CMake 4.4.0 have cryptographically valid upstream signatures
 made after the relevant OpenPGP key or signing subkey expired. The manifest and
 release policy preserve those explicit exceptions; they must not be described

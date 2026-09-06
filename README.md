@@ -585,6 +585,20 @@ manifests, and the inner archive SHA256/size. Source and SDK digests are both
 anonymously inspected before native qualification and keyless-signed only
 after the native ARM64 gates pass.
 
+Every public candidate image also contains `/opt/crossforge/SOURCES.json` and
+`/opt/crossforge/SOURCE-OFFER`. They name the source OCI by immutable digest,
+the archive filename, SHA256 and byte size. Given the published
+`candidate.json`, a downstream user can retrieve it without trusting a tag:
+
+```console
+$ source_image="$(jq -r '.source_bundle.repository + "@" + .source_bundle.digest' candidate.json)"
+$ docker pull "$source_image"
+$ container="$(docker create "$source_image" /bin/true)"
+$ docker cp "$container:/$(jq -r .source_bundle.archive.file candidate.json)" .
+$ docker rm "$container"
+$ sha256sum "$(jq -r .source_bundle.archive.file candidate.json)"
+```
+
 ## Phase 13: vcpkg source and SDK integration
 
 Crossforge pins the immutable vcpkg `2026.07.29` release at commit
@@ -787,7 +801,9 @@ unique `candidate-v<version>-g<commit>-r<run>-a<attempt>` tag, pushes with max
 provenance and SBOM attestations, reconstructs `candidate.json` from the raw
 OCI index, builds and pushes the corresponding source archive under a paired
 `source-candidate-*` tag, then logs out of GHCR and proves both digests are
-anonymously readable.
+anonymously readable. The source is built first; its exact OCI/archive identity
+is embedded into the SDK's `SOURCES.json`, and the workflow byte-compares that
+file with the same binding used to construct `candidate.json`.
 It then uses that exact public digest to cross-compile a deterministic,
 SHA256-bound AArch64 probe tar. In parallel, the publish runner exports the
 qualified AArch64 Qt runtime root without QEMU and binds its digest to the same
