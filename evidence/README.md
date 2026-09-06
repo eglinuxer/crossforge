@@ -14,7 +14,11 @@ expired on 2026-05-11 and the 10.2.3 signature was made on 2026-05-27, so the
 result is deliberately labeled `cryptographically-valid-expired-key`. This is
 an explicit upstream risk exception, not a claim that the signature was made
 by a current key. The validator also proves that the archived tag object names
-the archived commit and that pinned binfmt provenance used that tag. Refresh
+the archived commit and that pinned binfmt provenance used that tag. The
+source export additionally carries the exact binfmt builder commit archive and
+checks the Dockerfile, configure script, license and the two provenance-selected
+QEMU patch sets, so downstream users receive both pristine upstream source and
+the transformation layer that produced the shipped executor. Refresh
 evidence only as part of an audited release-input update; never edit decoded
 JSON or Git object bodies by hand.
 

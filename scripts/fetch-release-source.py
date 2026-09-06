@@ -88,6 +88,10 @@ def source_for(config, component, version=None):
         if version is not None:
             raise ValidationError("--version is not valid for vcpkg-tool sources")
         source = config["vcpkg"]["tool"]["source"]
+    elif component == "binfmt":
+        if version is not None:
+            raise ValidationError("--version is not valid for binfmt sources")
+        source = config["qemu"]["executor"]["provenance"]["builder_source"]
     else:
         if version is not None:
             raise ValidationError("--version is only valid for Python or zstd sources")
@@ -583,6 +587,7 @@ def main(argv=None):
             "qemu",
             "cmake",
             "vcpkg-tool",
+            "binfmt",
         ),
     )
     parser.add_argument("--version")

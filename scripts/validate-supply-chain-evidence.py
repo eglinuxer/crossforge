@@ -281,6 +281,7 @@ def validate_evidence(config, repository):
     qemu = config["qemu"]
     executor = qemu["executor"]
     provenance_config = executor["provenance"]
+    builder_source = provenance_config["builder_source"]
     source = executor["source"]
     qemu_index_payload, qemu_index = evidence_json(
         repository,
@@ -440,6 +441,42 @@ def validate_evidence(config, repository):
         request_args.get("build-arg:QEMU_PATCHES") == "cpu-max-arm"
         and request_args.get("build-arg:QEMU_PRESERVE_ARGV0") == "1",
         "QEMU patch build arguments mismatch",
+    )
+    require(
+        builder_source
+        == {
+            "status": "locked",
+            "url": "https://github.com/tonistiigi/binfmt/archive/"
+            "e29e7d72c9672c8c8bf846655ab149b50e1a62bd.tar.gz",
+            "sha256": (
+                "1b50178686d461b5ca300aaa889ad9c3ff195a2d33c0cec688180db70d6d4764"
+            ),
+            "size": 1616824,
+            "archive_root": (
+                "binfmt-e29e7d72c9672c8c8bf846655ab149b50e1a62bd"
+            ),
+            "member_count": 764,
+            "dockerfile_sha256": (
+                "ebb8708a04e004bf32adc83c2dac518e909f82c20ae89e62cbeb4cc2e8a5ebf7"
+            ),
+            "configure_sha256": (
+                "9a3a08e3311fa64a275641f335d34dd1a89f4f2a01b4ae5a2192869b6a2828ba"
+            ),
+            "license_sha256": (
+                "bba3332a1e2ec03031b587452cd9254bd7ab6ec701aef20b12e642f47f423dd6"
+            ),
+            "patches": {
+                "cpu_max_arm_sha256": (
+                    "cbfd75a619b10c616f6e19afc469ed400060eeaa29a54e09a8ba08f5a82c8684"
+                ),
+                "preserve_argv0_sha256": (
+                    "886df00c35f5afc4bc47e8fc96cb42956d8e4be0c35f74b8041f43468b44fed4"
+                ),
+            },
+        }
+        and builder_source["archive_root"]
+        == "binfmt-" + provenance_config["builder_commit"],
+        "QEMU binfmt builder source identity differs",
     )
     llb_definition = build_definition.get("internalParameters", {}).get(
         "buildConfig", {}
@@ -1473,6 +1510,7 @@ def validate_evidence(config, repository):
         "qemu_tag_object": source["tag_object"],
         "qemu_commit": source["commit"],
         "qemu_source_archive_sha256": qemu_archive["sha256"],
+        "qemu_builder_source_sha256": builder_source["sha256"],
         "qemu_source_signature_status": qemu_signature["verification"]["status"],
         "python_sources": len(config["python"]["versions"]),
         "python_patches": python_patch_count,

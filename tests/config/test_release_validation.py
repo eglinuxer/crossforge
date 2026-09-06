@@ -66,6 +66,12 @@ class ReleaseValidationTests(unittest.TestCase):
             result["qemu_source_signature_status"],
             "cryptographically-valid-expired-key",
         )
+        self.assertEqual(
+            result["qemu_builder_source_sha256"],
+            self.config["qemu"]["executor"]["provenance"]["builder_source"][
+                "sha256"
+            ],
+        )
         self.assertEqual(result["python_patches"], 4)
         self.assertEqual(
             result["qt_source_sha256"],
@@ -100,6 +106,16 @@ class ReleaseValidationTests(unittest.TestCase):
             (("qemu", "executor", "provenance", "builder_commit"), "0" * 40),
             (("qemu", "executor", "source", "commit"), "0" * 40),
             (("qemu", "executor", "source", "archive", "sha256"), "0" * 64),
+            (
+                (
+                    "qemu",
+                    "executor",
+                    "provenance",
+                    "builder_source",
+                    "sha256",
+                ),
+                "0" * 64,
+            ),
             (
                 (
                     "qemu",

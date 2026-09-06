@@ -505,6 +505,12 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
         ):
             category = "supply"
         elif (
+            len(path) >= 5
+            and path[:4]
+            == ("qemu", "executor", "provenance", "builder_source")
+        ):
+            category = "supply"
+        elif (
             len(path) == 4
             and path[:3] == ("qemu", "executor", "source")
             and path[3] in qemu_source_fields
@@ -802,7 +808,15 @@ def _render_expected_components(release, implemented_rows):
         selected = selector(*qualification_prefixes)
         if arch == "aarch64":
             selected = selector_without(
-                (("qemu", "executor", "source", "archive"),),
+                (
+                    ("qemu", "executor", "source", "archive"),
+                    (
+                        "qemu",
+                        "executor",
+                        "provenance",
+                        "builder_source",
+                    ),
+                ),
                 *qualification_prefixes
             )
         add(
@@ -972,7 +986,15 @@ def _render_expected_components(release, implemented_rows):
         "python/qualification",
         "qualification",
         selector_without(
-            (("qemu", "executor", "source", "archive"),),
+            (
+                ("qemu", "executor", "source", "archive"),
+                (
+                    "qemu",
+                    "executor",
+                    "provenance",
+                    "builder_source",
+                ),
+            ),
             *qualification_material_prefixes
         ),
         python_qualification_dependencies,

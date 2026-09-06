@@ -61,11 +61,18 @@ COPY scripts/fetch-release-source.py ./scripts/fetch-release-source.py
 RUN /usr/libexec/platform-python ./scripts/fetch-release-source.py qemu \
       --config ./config/release.json \
       --schema ./config/schemas/release.schema.json \
-      --output /qemu-download/qemu-10.2.3.tar.xz
+      --output /qemu-download/qemu-10.2.3.tar.xz \
+    && /usr/libexec/platform-python ./scripts/fetch-release-source.py binfmt \
+      --config ./config/release.json \
+      --schema ./config/schemas/release.schema.json \
+      --output /qemu-download/binfmt-e29e7d72c9672c8c8bf846655ab149b50e1a62bd.tar.gz
 
 FROM config-validate AS qemu-source-qualified
 COPY --from=qemu-source-download /qemu-download/qemu-10.2.3.tar.xz \
   /qemu-download/qemu-10.2.3.tar.xz
+COPY --from=qemu-source-download \
+  /qemu-download/binfmt-e29e7d72c9672c8c8bf846655ab149b50e1a62bd.tar.gz \
+  /qemu-download/binfmt-e29e7d72c9672c8c8bf846655ab149b50e1a62bd.tar.gz
 COPY config/schemas/qemu-source-manifest.schema.json \
   ./config/schemas/qemu-source-manifest.schema.json
 COPY --chmod=0755 scripts/prepare-qemu-source.py \
@@ -73,6 +80,8 @@ COPY --chmod=0755 scripts/prepare-qemu-source.py \
 RUN --network=none \
     /usr/libexec/platform-python ./scripts/prepare-qemu-source.py \
       --archive /qemu-download/qemu-10.2.3.tar.xz \
+      --builder-archive \
+        /qemu-download/binfmt-e29e7d72c9672c8c8bf846655ab149b50e1a62bd.tar.gz \
       --output /qemu-source
 
 FROM scratch AS qemu-source-qualified-output

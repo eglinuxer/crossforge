@@ -172,12 +172,84 @@ def verify_archive(archive_path, policy):
     return identity
 
 
-def prepare(release_path, release_schema, archive, repository, output, gpg):
+def verify_builder_archive(archive_path, policy):
+    identity = file_identity(archive_path)
+    require(
+        identity == {"sha256": policy["sha256"], "size": policy["size"]},
+        "binfmt builder source archive identity differs",
+    )
+    root = policy["archive_root"]
+    selected_paths = {
+        "Dockerfile": "dockerfile_sha256",
+        "LICENSE": "license_sha256",
+        "scripts/configure_qemu.sh": "configure_sha256",
+        "patches/cpu-max-arm/0001-default-to-cpu-max-on-arm.patch": (
+            "cpu_max_arm_sha256"
+        ),
+        "patches/preserve-argv0/0001-linux-user-default-to-preserve-argv0.patch": (
+            "preserve_argv0_sha256"
+        ),
+    }
+    selected = {}
+    seen = set()
+    members = 0
+    try:
+        with tarfile.open(str(archive_path), "r:gz") as archive:
+            for member in archive:
+                members += 1
+                name = member.name
+                require(
+                    name
+                    and name not in seen
+                    and not name.startswith("/")
+                    and ".." not in name.split("/")
+                    and name.split("/", 1)[0] == root,
+                    "binfmt builder source archive contains an unsafe path",
+                )
+                seen.add(name)
+                require(
+                    member.isfile() or member.isdir(),
+                    "binfmt builder source archive contains a special entry",
+                )
+                relative = name[len(root) + 1 :]
+                if relative in selected_paths:
+                    require(member.isfile(), "binfmt builder marker is not a file")
+                    stream = archive.extractfile(member)
+                    require(stream is not None, "binfmt builder marker is unreadable")
+                    selected[relative] = sha256_bytes(stream.read())
+    except (KeyError, OSError, tarfile.TarError) as error:
+        raise ValidationError("cannot inspect binfmt builder source: %s" % error)
+    require(
+        members == policy["member_count"],
+        "binfmt builder source member count differs",
+    )
+    expected = {}
+    for path, field in selected_paths.items():
+        expected[path] = (
+            policy["patches"][field]
+            if field in policy["patches"]
+            else policy[field]
+        )
+    require(selected == expected, "binfmt builder marker or patch differs")
+    return identity
+
+
+def prepare(
+    release_path,
+    release_schema,
+    archive,
+    builder_archive,
+    repository,
+    output,
+    gpg,
+):
     release = STRICT["load_json"](release_path)
     schema = STRICT["load_json"](release_schema)
     STRICT["validate_schema_subset"](schema)
     STRICT["validate"](release, schema, schema, "$")
     source = release["qemu"]["executor"]["source"]
+    provenance = release["qemu"]["executor"]["provenance"]
+    builder_policy = provenance["builder_source"]
     policy = source["archive"]
     signature_policy = policy["signature"]
     signature_evidence = safe_repository_file(
@@ -198,6 +270,7 @@ def prepare(release_path, release_schema, archive, repository, output, gpg):
         repository, signature_policy["key"]["file"], "QEMU release key"
     )
     archive_identity = verify_archive(archive, policy)
+    builder_identity = verify_builder_archive(builder_archive, builder_policy)
     require(not output.exists() and not output.is_symlink(), "QEMU output exists")
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(
@@ -211,9 +284,12 @@ def prepare(release_path, release_schema, archive, repository, output, gpg):
         os.chmod(str(signature_path), 0o644)
         verify_signature(gpg, archive, signature_path, key, signature_policy)
         shutil.copyfile(str(archive), str(materials / "qemu-10.2.3.tar.xz"))
+        builder_name = "binfmt-%s.tar.gz" % provenance["builder_commit"]
+        shutil.copyfile(str(builder_archive), str(materials / builder_name))
         shutil.copyfile(str(key), str(materials / "QEMU-RELEASE-KEY.asc"))
         for path in (
             materials / "qemu-10.2.3.tar.xz",
+            materials / builder_name,
             materials / "QEMU-RELEASE-KEY.asc",
         ):
             os.chmod(str(path), 0o644)
@@ -227,6 +303,21 @@ def prepare(release_path, release_schema, archive, repository, output, gpg):
                 "tag": source["tag"],
                 "commit": source["commit"],
                 "archive": dict({"file": "qemu-10.2.3.tar.xz"}, **archive_identity),
+                "builder": {
+                    "commit": provenance["builder_commit"],
+                    "archive": dict({"file": builder_name}, **builder_identity),
+                    "layout": {
+                        field: builder_policy[field]
+                        for field in (
+                            "archive_root",
+                            "member_count",
+                            "dockerfile_sha256",
+                            "configure_sha256",
+                            "license_sha256",
+                            "patches",
+                        )
+                    },
+                },
                 "signature": {
                     "file": "qemu-10.2.3.tar.xz.sig",
                     "sha256": signature_policy["sha256"],
@@ -259,6 +350,7 @@ def prepare(release_path, release_schema, archive, repository, output, gpg):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--archive", type=Path, required=True)
+    parser.add_argument("--builder-archive", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--release", type=Path, default=REPOSITORY / "config/release.json")
     parser.add_argument(
@@ -274,6 +366,7 @@ def main(argv=None):
             arguments.release,
             arguments.release_schema,
             arguments.archive,
+            arguments.builder_archive,
             arguments.repository,
             arguments.output,
             arguments.gpg,

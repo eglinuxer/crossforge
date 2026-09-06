@@ -201,6 +201,50 @@
       "value": "https://github.com/tonistiigi/binfmt.git"
     },
     {
+      "path": "/qemu/executor/provenance/builder_source/archive_root",
+      "value": "binfmt-e29e7d72c9672c8c8bf846655ab149b50e1a62bd"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_source/configure_sha256",
+      "value": "9a3a08e3311fa64a275641f335d34dd1a89f4f2a01b4ae5a2192869b6a2828ba"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_source/dockerfile_sha256",
+      "value": "ebb8708a04e004bf32adc83c2dac518e909f82c20ae89e62cbeb4cc2e8a5ebf7"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_source/license_sha256",
+      "value": "bba3332a1e2ec03031b587452cd9254bd7ab6ec701aef20b12e642f47f423dd6"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_source/member_count",
+      "value": 764
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_source/patches/cpu_max_arm_sha256",
+      "value": "cbfd75a619b10c616f6e19afc469ed400060eeaa29a54e09a8ba08f5a82c8684"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_source/patches/preserve_argv0_sha256",
+      "value": "886df00c35f5afc4bc47e8fc96cb42956d8e4be0c35f74b8041f43468b44fed4"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_source/sha256",
+      "value": "1b50178686d461b5ca300aaa889ad9c3ff195a2d33c0cec688180db70d6d4764"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_source/size",
+      "value": 1616824
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/qemu/executor/provenance/builder_source/url",
+      "value": "https://github.com/tonistiigi/binfmt/archive/e29e7d72c9672c8c8bf846655ab149b50e1a62bd.tar.gz"
+    },
+    {
       "path": "/qemu/executor/provenance/predicate_digest",
       "value": "sha256:76bf583f0cc90f74bf597e20381e492d5b47ffb58cf1f4becf62ceab2786cffa"
     },

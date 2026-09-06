@@ -137,6 +137,64 @@ class PrepareQEMUSourceTests(unittest.TestCase):
             ):
                 PREPARER["verify_archive"](archive_path, wrong)
 
+    def test_binfmt_builder_archive_binds_provenance_patches(self):
+        with tempfile.TemporaryDirectory() as directory:
+            archive_path = Path(directory) / "binfmt.tar.gz"
+            root = "binfmt-fixture"
+            payloads = {
+                "Dockerfile": b"FROM scratch\n",
+                "LICENSE": b"MIT\n",
+                "scripts/configure_qemu.sh": b"#!/bin/sh\n",
+                "patches/cpu-max-arm/0001-default-to-cpu-max-on-arm.patch": b"cpu\n",
+                "patches/preserve-argv0/0001-linux-user-default-to-preserve-argv0.patch": b"argv0\n",
+            }
+            with tarfile.open(str(archive_path), "w:gz") as archive:
+                top = tarfile.TarInfo(root)
+                top.type = tarfile.DIRTYPE
+                archive.addfile(top)
+                for name, payload in payloads.items():
+                    member = tarfile.TarInfo(root + "/" + name)
+                    member.size = len(payload)
+                    archive.addfile(member, io.BytesIO(payload))
+            identity = PREPARER["file_identity"](archive_path)
+            policy = {
+                "sha256": identity["sha256"],
+                "size": identity["size"],
+                "archive_root": root,
+                "member_count": 6,
+                "dockerfile_sha256": hashlib.sha256(
+                    payloads["Dockerfile"]
+                ).hexdigest(),
+                "configure_sha256": hashlib.sha256(
+                    payloads["scripts/configure_qemu.sh"]
+                ).hexdigest(),
+                "license_sha256": hashlib.sha256(payloads["LICENSE"]).hexdigest(),
+                "patches": {
+                    "cpu_max_arm_sha256": hashlib.sha256(
+                        payloads[
+                            "patches/cpu-max-arm/"
+                            "0001-default-to-cpu-max-on-arm.patch"
+                        ]
+                    ).hexdigest(),
+                    "preserve_argv0_sha256": hashlib.sha256(
+                        payloads[
+                            "patches/preserve-argv0/"
+                            "0001-linux-user-default-to-preserve-argv0.patch"
+                        ]
+                    ).hexdigest(),
+                },
+            }
+            self.assertEqual(
+                PREPARER["verify_builder_archive"](archive_path, policy),
+                identity,
+            )
+            wrong = copy.deepcopy(policy)
+            wrong["patches"]["cpu_max_arm_sha256"] = "0" * 64
+            with self.assertRaisesRegex(
+                PREPARER["ValidationError"], "marker or patch"
+            ):
+                PREPARER["verify_builder_archive"](archive_path, wrong)
+
     def test_docker_qualification_is_offline_and_in_normal_ci(self):
         dockerfile = (REPOSITORY / "docker/Dockerfile").read_text(
             encoding="utf-8"
@@ -146,9 +204,11 @@ class PrepareQEMUSourceTests(unittest.TestCase):
         qualified = dockerfile.split(" AS qemu-source-qualified", 1)[1]
         qualified = qualified.split("\nFROM ", 1)[0]
         self.assertIn("fetch-release-source.py qemu", download)
+        self.assertIn("fetch-release-source.py binfmt", download)
         self.assertNotIn("--network=none", download)
         self.assertIn("RUN --network=none", qualified)
         self.assertIn("prepare-qemu-source.py", qualified)
+        self.assertIn("--builder-archive", qualified)
         self.assertIn("source_signature.py", qualified)
         self.assertIn(
             'target "qemu-source-qualified"',

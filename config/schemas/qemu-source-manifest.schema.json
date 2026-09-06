@@ -24,6 +24,7 @@
         "tag",
         "commit",
         "archive",
+        "builder",
         "signature",
         "key",
         "layout"
@@ -33,6 +34,52 @@
         "tag": {"const": "v10.2.3"},
         "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
         "archive": {"$ref": "#/$defs/file_identity"},
+        "builder": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["commit", "archive", "layout"],
+          "properties": {
+            "commit": {"const": "e29e7d72c9672c8c8bf846655ab149b50e1a62bd"},
+            "archive": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["file", "sha256", "size"],
+              "properties": {
+                "file": {"const": "binfmt-e29e7d72c9672c8c8bf846655ab149b50e1a62bd.tar.gz"},
+                "sha256": {"$ref": "#/$defs/sha256"},
+                "size": {"const": 1616824}
+              }
+            },
+            "layout": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "archive_root",
+                "member_count",
+                "dockerfile_sha256",
+                "configure_sha256",
+                "license_sha256",
+                "patches"
+              ],
+              "properties": {
+                "archive_root": {"const": "binfmt-e29e7d72c9672c8c8bf846655ab149b50e1a62bd"},
+                "member_count": {"const": 764},
+                "dockerfile_sha256": {"$ref": "#/$defs/sha256"},
+                "configure_sha256": {"$ref": "#/$defs/sha256"},
+                "license_sha256": {"$ref": "#/$defs/sha256"},
+                "patches": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["cpu_max_arm_sha256", "preserve_argv0_sha256"],
+                  "properties": {
+                    "cpu_max_arm_sha256": {"$ref": "#/$defs/sha256"},
+                    "preserve_argv0_sha256": {"$ref": "#/$defs/sha256"}
+                  }
+                }
+              }
+            }
+          }
+        },
         "signature": {
           "type": "object",
           "additionalProperties": false,

@@ -326,7 +326,11 @@ The upstream key expired on 2026-05-11, while the QEMU 10.2.3 signature was
 created on 2026-05-27. Crossforge therefore records the cryptographically good
 signature as an explicit expired-key exception rather than presenting it as a
 fully trusted current signature. The archive remains independently pinned by
-HTTPS URL, size and SHA256 for source-bundle assembly.
+HTTPS URL, size and SHA256 for source-bundle assembly. Because the shipped
+static executor is built by tonistiigi/binfmt rather than directly from a
+pristine QEMU tarball, the same source export also locks the provenance builder
+commit archive, Dockerfile, configure script, MIT license and the exact
+`cpu-max-arm`/`preserve-argv0` patches used by the image build.
 
 ## Phase 6: parameterized CPython rows
 
