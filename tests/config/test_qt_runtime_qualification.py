@@ -106,6 +106,10 @@ class QtRuntimeQualificationTests(unittest.TestCase):
         self.assertIn("--label qt-x86_64-runtime --interval 60", ci)
         self.assertIn("--label qt-aarch64-runtime --interval 60", ci)
         self.assertEqual(ci.count("scripts/run-with-heartbeat.py"), 5)
+        architecture = (REPOSITORY / "docs/architecture.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Python/vcpkg、GCC 与 Qt Bake solve", architecture)
         self.assertNotIn(
             "docker buildx bake qt-target-runtime-qualified", ci
         )

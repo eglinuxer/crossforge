@@ -402,7 +402,7 @@ rollback 不创建/移动版本 tag、不重建、不重签，失败后的已完
 - nightly/full：双 target 的 `gcc/` 下 `check-gcc` 与 `check-g++`、针对最终 compiler/runtime 的 installed `runtest --tool libstdc++`、`check-target-libgomp`，完整 Python 矩阵，以及 Qt 6.8.4 双 target；语言测试必须直接从 `gcc/` 子目录启动，使 GNU Make 的 jobserver 分片真正分配给对应 DejaGNU worker，禁止从顶层 `check-gcc` 间接重跑全部语言；GCC 15 的顶层 `check-target-libgcc` 是无测试、无 summary 的空目标，不能作为资格化证据；libgcc 由 compiler testsuite 与最终 hybrid runtime 门禁覆盖；
 - release：同一 digest 的原生 aarch64 终检和资格化证明检查。
 
-CI 中可能持续数小时的 Python/vcpkg 与 GCC Bake solve 必须由
+CI 中可能持续数小时的 Python/vcpkg、GCC 与 Qt Bake solve 必须由
 `run-with-heartbeat.py` 直接启动：子进程继续原样继承 stdout/stderr，每 60 秒额外输出
 PID 与 elapsed liveness，退出码保持不变，并把 SIGINT/SIGTERM 转发给 Buildx。心跳只证明
 进程仍由 runner 管理，不替代各资格化脚本自己的超时、结果或证据门禁。
