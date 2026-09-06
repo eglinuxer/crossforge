@@ -219,12 +219,14 @@ class ValidateQtNativeReleaseTests(unittest.TestCase):
         ):
             with self.subTest(evidence=evidence):
                 output = "$RUNNER_TEMP/native-aarch64-output/%s" % evidence
-                artifact = (
-                    "${{ runner.temp }}/native-aarch64-output/%s" % evidence
-                )
+                staged_input = '"$NATIVE_OUTPUT/%s"' % evidence
                 self.assertGreaterEqual(workflow.count(evidence), 4)
                 self.assertIn(output, workflow)
-                self.assertIn(artifact, workflow)
+                self.assertIn(staged_input, workflow)
+        self.assertIn(
+            "path: ${{ runner.temp }}/native-aarch64-release-evidence/",
+            workflow,
+        )
         self.assertIn("--expected-candidate-digest", workflow)
         self.assertIn("--input-rootfs-sha256", workflow)
 

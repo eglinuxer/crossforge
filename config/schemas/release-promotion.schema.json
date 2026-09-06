@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/release-promotion.schema.json",
+  "title": "Crossforge stable release promotion evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "candidate_run",
+    "promotion_run",
+    "release",
+    "candidate_manifest_sha256",
+    "candidate",
+    "source_bundle",
+    "artifacts",
+    "verification"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/release-promotion.schema.json"
+    },
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-release-promotion"},
+    "candidate_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "attempt",
+        "workflow_path",
+        "event",
+        "head_branch",
+        "head_sha",
+        "repository",
+        "url"
+      ],
+      "properties": {
+        "id": {"type": "integer", "minimum": 1},
+        "attempt": {"type": "integer", "minimum": 1},
+        "workflow_path": {"const": ".github/workflows/candidate.yml"},
+        "event": {"const": "workflow_dispatch"},
+        "head_branch": {"const": "main"},
+        "head_sha": {"$ref": "#/$defs/git_sha1"},
+        "repository": {"$ref": "#/$defs/github_repository"},
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/actions/runs/[1-9][0-9]*$"
+        }
+      }
+    },
+    "promotion_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "attempt", "workflow_sha", "repository"],
+      "properties": {
+        "id": {"type": "integer", "minimum": 1},
+        "attempt": {"type": "integer", "minimum": 1},
+        "workflow_sha": {"$ref": "#/$defs/git_sha1"},
+        "repository": {"$ref": "#/$defs/github_repository"}
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "stable_channel", "canonical_sha256"],
+      "properties": {
+        "version": {"$ref": "#/$defs/semver"},
+        "stable_channel": {"$ref": "#/$defs/tag"},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "candidate_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "candidate": {"$ref": "#/$defs/promoted_image"},
+    "source_bundle": {"$ref": "#/$defs/promoted_image"},
+    "artifacts": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^(candidate-identity|native-aarch64-probes|native-aarch64-evidence|candidate-signature)-[1-9][0-9]*-[1-9][0-9]*$"
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_evidence",
+        "native_aarch64",
+        "qt_native_aarch64",
+        "signatures",
+        "registry"
+      ],
+      "properties": {
+        "candidate_evidence": {"const": "revalidated"},
+        "native_aarch64": {"const": "revalidated"},
+        "qt_native_aarch64": {"const": "revalidated"},
+        "signatures": {"const": "verified-with-pinned-trusted-root"},
+        "registry": {"const": "anonymous-exact-digest"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "oci_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "git_sha1": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "github_repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*(?::[0-9]+)?(?:/[a-z0-9]+(?:[._-][a-z0-9]+)*)+$"
+    },
+    "tag": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$"
+    },
+    "reference": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*(?::[0-9]+)?(?:/[a-z0-9]+(?:[._-][a-z0-9]+)*)+:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "promoted_image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "digest",
+        "platform_manifest_digest",
+        "version_reference",
+        "channel_reference"
+      ],
+      "properties": {
+        "repository": {"$ref": "#/$defs/repository"},
+        "digest": {"$ref": "#/$defs/oci_digest"},
+        "platform_manifest_digest": {"$ref": "#/$defs/oci_digest"},
+        "version_reference": {"$ref": "#/$defs/reference"},
+        "channel_reference": {"$ref": "#/$defs/reference"}
+      }
+    }
+  }
+}

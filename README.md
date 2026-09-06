@@ -823,6 +823,33 @@ candidate and source digests with the workflow's GitHub OIDC identity, logs
 out, and verifies both public signatures against the pinned trusted root. The
 workflow never creates a SemVer or stable-channel tag.
 
+After a successful candidate run, maintainers may dispatch the separate stable
+promotion workflow with that run ID and the release-specific confirmation:
+
+```console
+$ gh workflow run promote.yml \
+    -f candidate_run_id="$CANDIDATE_RUN_ID" \
+    -f confirmation="PROMOTE-v0.1.0"
+```
+
+The `production` GitHub environment is the operator-approval boundary and
+should have required reviewers configured before the first promotion. The
+workflow checks out the candidate run's exact `main` commit, downloads the four
+exact run/attempt artifacts, byte-compares every copy of `candidate.json`, and
+revalidates the source binding, native AArch64 compiler report, native Qt
+report and their raw inputs. It then rebuilds only the pinned Cosign verifier,
+not the SDK or source bundle, and anonymously verifies both signed OCI digests
+against the repository's pinned Sigstore trusted root.
+
+Promotion adds `v<version>` and the configured stable-channel tag to the exact
+candidate digest, plus paired `source-v<version>` and source-channel tags to the
+bound source digest. Existing version tags are accepted only when they already
+resolve to the selected digest; a different version-tag digest fails closed.
+The mutable channels move only after both immutable version tags exist, and
+all four references are resolved anonymously again before strict
+`release-promotion.json` evidence is uploaded. The workflow never rebuilds or
+signs a release during promotion.
+
 The public candidate runs as `crossforge` UID/GID 1000 by default. `/opt/crossforge`
 remains root-owned; only the workspace, home, cache and temporary directories are
 writable. `docker run --user <uid>:<gid>` is supported: if the inherited home is

@@ -1,0 +1,381 @@
+name: stable promotion
+
+concurrency:
+  group: stable-promotion
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run_id:
+        description: Successful public candidate workflow run ID
+        required: true
+        type: string
+      confirmation:
+        description: Enter PROMOTE-v<version> from config/release.json
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  packages: write
+
+env:
+  CANDIDATE_REPOSITORY: ghcr.io/eglinuxer/crossforge
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    steps:
+      - name: Resolve the successful candidate run
+        id: candidate_run
+        env:
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          case "$CANDIDATE_RUN_ID" in
+            ''|*[!0-9]*|0) echo 'candidate run ID must be a positive integer' >&2; exit 1 ;;
+          esac
+          metadata="$RUNNER_TEMP/candidate-run.json"
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "/repos/$GITHUB_REPOSITORY/actions/runs/$CANDIDATE_RUN_ID" \
+            > "$metadata"
+          jq -e --argjson run_id "$CANDIDATE_RUN_ID" \
+            --arg repository "$GITHUB_REPOSITORY" '
+              .id == $run_id and
+              .run_attempt >= 1 and
+              .event == "workflow_dispatch" and
+              .status == "completed" and
+              .conclusion == "success" and
+              .head_branch == "main" and
+              .path == ".github/workflows/candidate.yml" and
+              .repository.full_name == $repository and
+              .head_repository.full_name == $repository and
+              (.head_sha | test("^[0-9a-f]{40}$"))
+            ' "$metadata" >/dev/null
+          printf 'attempt=%s\n' "$(jq -r .run_attempt "$metadata")" \
+            >> "$GITHUB_OUTPUT"
+          printf 'head_sha=%s\n' "$(jq -r .head_sha "$metadata")" \
+            >> "$GITHUB_OUTPUT"
+      - name: Check out the exact candidate source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ steps.candidate_run.outputs.head_sha }}
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Validate the promotion contract and confirmation
+        env:
+          CANDIDATE_HEAD_SHA: ${{ steps.candidate_run.outputs.head_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -Eeuo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_HEAD_SHA"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          expected_confirmation="PROMOTE-v$(jq -r .product.version config/release.json)"
+          test "$CONFIRMATION" = "$expected_confirmation"
+          test "$(jq -r .product.image_repository config/release.json)" = \
+            "$CANDIDATE_REPOSITORY"
+          ./scripts/validate-release.py --require-locked
+          ./scripts/validate-supply-chain-evidence.py
+          ./scripts/validate-frozen-abi.py
+          ./scripts/validate-python-runtime-providers.py
+          ./scripts/validate-qt-runtime-qualification.py
+          ./scripts/render-release-components.py --check
+          ./scripts/render-vcpkg-integration.py --check
+          ./scripts/render-bake.py --check
+      - name: Download immutable candidate identity
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: candidate-identity-${{ inputs.candidate_run_id }}-${{ steps.candidate_run.outputs.attempt }}
+          path: ${{ runner.temp }}/candidate-identity
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.candidate_run_id }}
+      - name: Download immutable native probe bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: native-aarch64-probes-${{ inputs.candidate_run_id }}-${{ steps.candidate_run.outputs.attempt }}
+          path: ${{ runner.temp }}/native-aarch64-probes
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.candidate_run_id }}
+      - name: Download native release evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: native-aarch64-evidence-${{ inputs.candidate_run_id }}-${{ steps.candidate_run.outputs.attempt }}
+          path: ${{ runner.temp }}/native-aarch64-evidence
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.candidate_run_id }}
+      - name: Download candidate signature evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: candidate-signature-${{ inputs.candidate_run_id }}-${{ steps.candidate_run.outputs.attempt }}
+          path: ${{ runner.temp }}/candidate-signature
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.candidate_run_id }}
+      - name: Revalidate every candidate-bound evidence file
+        env:
+          CANDIDATE_HEAD_SHA: ${{ steps.candidate_run.outputs.head_sha }}
+        run: |
+          set -Eeuo pipefail
+          identity="$RUNNER_TEMP/candidate-identity"
+          probes="$RUNNER_TEMP/native-aarch64-probes"
+          native="$RUNNER_TEMP/native-aarch64-evidence"
+          signature="$RUNNER_TEMP/candidate-signature"
+          candidate="$identity/candidate.json"
+          cmp "$candidate" "$probes/candidate.json"
+          cmp "$candidate" "$native/candidate.json"
+          cmp "$candidate" "$signature/candidate.json"
+          ./scripts/candidate_manifest.py validate "$candidate" \
+            --expected-source-commit "$CANDIDATE_HEAD_SHA"
+          ./scripts/source_binding.py validate "$identity/source-binding.json" \
+            --expected-source-commit "$CANDIDATE_HEAD_SHA"
+          jq --sort-keys .source_bundle "$candidate" \
+            > "$RUNNER_TEMP/candidate-source-binding.json"
+          jq --sort-keys \
+            '{repository,digest,platform,platform_manifest_digest,archive}' \
+            "$identity/source-binding.json" \
+            > "$RUNNER_TEMP/artifact-source-binding.json"
+          cmp "$RUNNER_TEMP/candidate-source-binding.json" \
+            "$RUNNER_TEMP/artifact-source-binding.json"
+          recreated="$RUNNER_TEMP/recreated-candidate.json"
+          ./scripts/candidate_manifest.py create \
+            --source-commit "$CANDIDATE_HEAD_SHA" \
+            --digest "$(jq -r .digest "$candidate")" \
+            --platform-manifest-digest \
+              "$(jq -r .platform_manifest_digest "$candidate")" \
+            --source-bundle-digest \
+              "$(jq -r .source_bundle.digest "$candidate")" \
+            --source-bundle-platform-manifest-digest \
+              "$(jq -r .source_bundle.platform_manifest_digest "$candidate")" \
+            --source-bundle-identity "$identity/source-bundle.json" \
+            --output "$recreated"
+          cmp "$candidate" "$recreated"
+          expected_bundle_sha256=$(jq -r .bundle_sha256 \
+            "$native/native-aarch64.json")
+          ./scripts/native-aarch64-release.py validate \
+            --candidate "$candidate" \
+            --bundle "$probes/native-aarch64-probes.tar" \
+            --expected-bundle-sha256 "$expected_bundle_sha256" \
+            --report "$native/native-aarch64.json"
+          rootfs_sha256=$(jq -r .identity.input_rootfs_sha256 \
+            "$native/qt-native-aarch64-runtime.json")
+          ./scripts/validate-qt-native-release.py \
+            --candidate "$candidate" \
+            --report "$native/qt-native-aarch64-runtime.json" \
+            --build-evidence "$native/qt-target-build.json" \
+            --overlay-evidence "$native/qt-runtime-overlay.json" \
+            --expected-source-commit "$CANDIDATE_HEAD_SHA" \
+            --expected-candidate-digest "$(jq -r .digest "$candidate")" \
+            --input-rootfs-sha256 "$rootfs_sha256"
+          ./scripts/validate-sigstore-report.py \
+            "$signature/sigstore-verification.json"
+      - name: Export the TUF-authenticated Cosign verifier
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/cosign-tool"
+          docker buildx bake cosign-host-tool \
+            --set "cosign-host-tool.output=type=local,dest=$output" \
+            --progress=plain
+          expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
+          test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
+          test -x "$output/cosign"
+          ./scripts/validate-sigstore-report.py \
+            "$output/sigstore-verification.json"
+      - name: Verify public digests and signatures without credentials
+        run: |
+          set -Eeuo pipefail
+          docker logout ghcr.io >/dev/null 2>&1 || true
+          candidate="$RUNNER_TEMP/candidate-identity/candidate.json"
+          candidate_digest=$(jq -r .digest "$candidate")
+          candidate_platform=$(jq -r .platform_manifest_digest "$candidate")
+          source_repository=$(jq -r .source_bundle.repository "$candidate")
+          source_digest=$(jq -r .source_bundle.digest "$candidate")
+          source_platform=$(jq -r \
+            .source_bundle.platform_manifest_digest "$candidate")
+          candidate_image="$CANDIDATE_REPOSITORY@$candidate_digest"
+          source_image="$source_repository@$source_digest"
+          docker buildx imagetools inspect "$candidate_image" --raw \
+            > "$RUNNER_TEMP/anonymous-candidate-index.json"
+          test "$(./scripts/resolve_candidate_image.py platform-digest \
+            --index "$RUNNER_TEMP/anonymous-candidate-index.json" \
+            --expected-digest "$candidate_digest")" = "$candidate_platform"
+          docker buildx imagetools inspect "$source_image" --raw \
+            > "$RUNNER_TEMP/anonymous-source-index.json"
+          test "$(./scripts/resolve_candidate_image.py platform-digest \
+            --index "$RUNNER_TEMP/anonymous-source-index.json" \
+            --expected-digest "$source_digest")" = "$source_platform"
+          openssl base64 -d -A \
+            -in evidence/sigstore/tuf/trusted_root.json.b64 \
+            -out "$RUNNER_TEMP/trusted_root.json"
+          cosign="$RUNNER_TEMP/cosign-tool/cosign"
+          identity=$(jq -r .sigstore.signing.identity config/release.json)
+          issuer=$(jq -r .sigstore.signing.oidc_issuer config/release.json)
+          "$cosign" verify \
+            --trusted-root "$RUNNER_TEMP/trusted_root.json" \
+            --certificate-identity "$identity" \
+            --certificate-oidc-issuer "$issuer" \
+            "$candidate_image" > "$RUNNER_TEMP/current-candidate-signature.json"
+          "$cosign" verify \
+            --trusted-root "$RUNNER_TEMP/trusted_root.json" \
+            --certificate-identity "$identity" \
+            --certificate-oidc-issuer "$issuer" \
+            "$source_image" > "$RUNNER_TEMP/current-source-signature.json"
+          for evidence in \
+            "$RUNNER_TEMP/candidate-signature/candidate-signature.json" \
+            "$RUNNER_TEMP/current-candidate-signature.json"; do
+            jq -e --arg repository "$CANDIDATE_REPOSITORY" \
+              --arg digest "$candidate_digest" '
+                length >= 1 and all(.[];
+                  .critical.identity."docker-reference" == $repository and
+                  .critical.image."docker-manifest-digest" == $digest)
+              ' "$evidence" >/dev/null
+          done
+          for evidence in \
+            "$RUNNER_TEMP/candidate-signature/source-bundle-signature.json" \
+            "$RUNNER_TEMP/current-source-signature.json"; do
+            jq -e --arg repository "$source_repository" \
+              --arg digest "$source_digest" '
+                length >= 1 and all(.[];
+                  .critical.identity."docker-reference" == $repository and
+                  .critical.image."docker-manifest-digest" == $digest)
+              ' "$evidence" >/dev/null
+          done
+      - name: Promote only the verified digests
+        env:
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROMOTION_WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          set -Eeuo pipefail
+          candidate="$RUNNER_TEMP/candidate-identity/candidate.json"
+          candidate_digest=$(jq -r .digest "$candidate")
+          source_digest=$(jq -r .source_bundle.digest "$candidate")
+          version=$(jq -r .product.version config/release.json)
+          channel=$(jq -r .product.stable_channel config/release.json)
+          version_tag="v${version/+/_}"
+          candidate_version="$CANDIDATE_REPOSITORY:$version_tag"
+          candidate_channel="$CANDIDATE_REPOSITORY:$channel"
+          source_version="$CANDIDATE_REPOSITORY:source-$version_tag"
+          source_channel="$CANDIDATE_REPOSITORY:source-$channel"
+          registry_path=${CANDIDATE_REPOSITORY#ghcr.io/}
+          registry_token=$(curl --fail --silent --show-error --location \
+            --retry 5 --retry-all-errors --retry-delay 2 \
+            --connect-timeout 30 --get \
+            --data-urlencode 'service=ghcr.io' \
+            --data-urlencode "scope=repository:$registry_path:pull" \
+            https://ghcr.io/token | jq -er '.token // .access_token')
+          public_tag_digest() {
+            local reference=$1
+            local tag=${reference##*:}
+            local output="$RUNNER_TEMP/registry-$tag.json"
+            local status
+            if ! status=$(curl --silent --show-error --location \
+              --retry 5 --retry-all-errors --retry-delay 2 \
+              --connect-timeout 30 \
+              -H "Authorization: Bearer $registry_token" \
+              -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json' \
+              -o "$output" -w '%{http_code}' \
+              "https://ghcr.io/v2/$registry_path/manifests/$tag"); then
+              echo "registry request failed for $reference" >&2
+              return 1
+            fi
+            case "$status" in
+              200) printf 'sha256:%s\n' "$(sha256sum "$output" | awk '{print $1}')" ;;
+              404) printf 'absent\n' ;;
+              *) echo "registry returned HTTP $status for $reference" >&2; return 1 ;;
+            esac
+          }
+          promote_tag() {
+            local target=$1
+            local digest=$2
+            local immutable=$3
+            local current
+            current=$(public_tag_digest "$target")
+            if test "$current" = "$digest"; then
+              echo "tag already resolves to the selected digest: $target"
+              return
+            fi
+            if test "$immutable" = true && test "$current" != absent; then
+              echo "refusing to replace immutable version tag $target ($current)" >&2
+              return 1
+            fi
+            docker buildx imagetools create \
+              --tag "$target" "$CANDIDATE_REPOSITORY@$digest"
+          }
+          candidate_version_state=$(public_tag_digest "$candidate_version")
+          case "$candidate_version_state" in
+            absent|"$candidate_digest") ;;
+            *) echo "immutable version tag differs: $candidate_version" >&2; exit 1 ;;
+          esac
+          source_version_state=$(public_tag_digest "$source_version")
+          case "$source_version_state" in
+            absent|"$source_digest") ;;
+            *) echo "immutable version tag differs: $source_version" >&2; exit 1 ;;
+          esac
+          logged_in=0
+          cleanup_registry_login() {
+            if test "$logged_in" = 1; then
+              docker logout ghcr.io >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_registry_login EXIT
+          printf '%s' "$GHCR_TOKEN" \
+            | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          logged_in=1
+          promote_tag "$source_version" "$source_digest" true
+          promote_tag "$candidate_version" "$candidate_digest" true
+          promote_tag "$source_channel" "$source_digest" false
+          promote_tag "$candidate_channel" "$candidate_digest" false
+          docker logout ghcr.io
+          logged_in=0
+          trap - EXIT
+          for reference_digest in \
+            "$source_version@$source_digest" \
+            "$candidate_version@$candidate_digest" \
+            "$source_channel@$source_digest" \
+            "$candidate_channel@$candidate_digest"; do
+            reference=${reference_digest%@*}
+            expected=${reference_digest##*@}
+            test "$(public_tag_digest "$reference")" = "$expected"
+          done
+          ./scripts/release_promotion.py create \
+            --candidate "$candidate" \
+            --candidate-run "$RUNNER_TEMP/candidate-run.json" \
+            --expected-github-repository "$GITHUB_REPOSITORY" \
+            --expected-candidate-run-id "$CANDIDATE_RUN_ID" \
+            --promotion-run-id "$GITHUB_RUN_ID" \
+            --promotion-run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --promotion-workflow-sha "$PROMOTION_WORKFLOW_SHA" \
+            --output "$RUNNER_TEMP/release-promotion.json"
+          ./scripts/release_promotion.py validate \
+            "$RUNNER_TEMP/release-promotion.json"
+      - name: Upload stable promotion evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-promotion-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-promotion.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Report stable release
+        run: |
+          set -Eeuo pipefail
+          evidence="$RUNNER_TEMP/release-promotion.json"
+          {
+            echo '### Stable Crossforge release'
+            echo
+            echo "- Version: \`$(jq -r .release.version "$evidence")\`"
+            echo "- Candidate: \`$(jq -r .candidate.version_reference "$evidence")\`"
+            echo "- Stable channel: \`$(jq -r .candidate.channel_reference "$evidence")\`"
+            echo "- OCI digest: \`$(jq -r .candidate.digest "$evidence")\`"
+            echo "- Source: \`$(jq -r .source_bundle.version_reference "$evidence")\`"
+            echo "- Candidate run: $(jq -r .candidate_run.url "$evidence")"
+            echo '- Status: exact signed digest promoted without rebuilding'
+          } >> "$GITHUB_STEP_SUMMARY"

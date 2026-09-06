@@ -375,7 +375,9 @@ UID/GID 时，不可写的 inherited home 会安全回退到该 UID 专用的 `/
 source commit → build once → candidate digest → 原物验收 → registry-side promotion
 ```
 
-所有测试通过完整 OCI digest 拉取候选镜像。Release 不重建，只给已资格化 digest 增加不可变版本标签并更新稳定通道。
+所有测试通过完整 OCI digest 拉取候选镜像。Release 不重建，只给已资格化 digest 增加不可变版本标签并更新稳定通道。手动 `stable promotion` 工作流以成功的 public-candidate run ID 和 `PROMOTE-v<version>` 双重输入为入口，并使用 `production` environment 作为运维审批边界；它从 GitHub API 重新约束 workflow path、main head、run attempt 与成功结论，再 checkout 候选的精确 source commit。四组不可变 workflow artifact 必须仍可下载，所有 `candidate.json` 副本逐字节相同，source binding、原生 AArch64 compiler/Qt 证据及其原始输入、固定 TUF root 下的 candidate/source 签名均重新验证后才允许写 tag。
+
+晋升仅通过 registry-side manifest copy 给 candidate digest 增加 `v<version>` 和 `gts15-el8`，并给其绑定的 source digest 增加 `source-v<version>` 和 `source-gts15-el8`。版本 tag 不存在时才可创建；已存在时必须已指向完全相同 digest，否则失败，稳定通道在两份版本 tag 就绪后才移动。注销 registry 后必须匿名重新解析四个 tag 的原始 manifest 字节并得到预期 digest，随后生成符合严格 schema 的 `release-promotion.json`。该工作流不得构建 SDK/source、不得重新签名，也不能把成功 job status 当作资格证据。首次 public candidate 和首次 stable promotion 尚未实际运行，因此当前仍是 implemented/unproven。
 
 测试分层如下：
 
