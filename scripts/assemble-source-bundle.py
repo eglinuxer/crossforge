@@ -197,6 +197,33 @@ def expected_entries(release, lock, source_commit):
             policy["size"],
         )
 
+    sbom_generator = release["sbom"]["generator"]
+    sbom_source = sbom_generator["source"]
+    add_source(
+        add,
+        "sources/verification/sbom-generator/"
+        "buildkit-syft-scanner-%s.tar.gz" % sbom_generator["version"],
+        sbom_source,
+        "sources/sbom-generator",
+        scope="verification",
+    )
+    add(
+        "verification/sbom-generator/"
+        "buildkit-syft-scanner-%s.tag.json" % sbom_source["tag"],
+        "verification",
+        "signature",
+        "sources/sbom-generator",
+        sbom_source["tag_evidence"]["url"],
+        sbom_source["tag_evidence"]["sha256"],
+        sbom_source["tag_evidence"]["size"],
+    )
+    add_key(
+        add,
+        "sbom-generator",
+        sbom_source["key"],
+        "sources/sbom-generator",
+    )
+
     qemu = release["qemu"]["executor"]
     qemu_source = qemu["source"]["archive"]
     add_source(
@@ -284,6 +311,10 @@ def expected_entries(release, lock, source_commit):
         "metadata/vcpkg-source.json": ("source-manifest", "sources/vcpkg"),
         "metadata/ninja-source.json": ("source-manifest", "sources/ninja"),
         "metadata/nfpm-source.json": ("source-manifest", "sources/nfpm"),
+        "metadata/sbom-generator-source.json": (
+            "source-manifest",
+            "sources/sbom-generator",
+        ),
         "metadata/zstd-source.json": ("source-manifest", "sources/zstd"),
         "metadata/qt-source.json": ("source-manifest", "sources/qt"),
         "metadata/ffmpeg-source.json": ("source-manifest", "sources/ffmpeg"),
@@ -316,7 +347,9 @@ def add_key(add, directory, key, component):
         "verification",
         "public-key",
         component,
-        key.get("retrieval_url", "repository:" + key["file"]),
+        key.get(
+            "retrieval_url", key.get("source_url", "repository:" + key["file"])
+        ),
         key["sha256"],
         key.get("size"),
     )
@@ -381,6 +414,7 @@ def validate_metadata(root, lock, entries):
         "metadata/vcpkg-source.json": "crossforge-vcpkg-source",
         "metadata/ninja-source.json": "crossforge-ninja-source",
         "metadata/nfpm-source.json": "crossforge-nfpm-source",
+        "metadata/sbom-generator-source.json": "crossforge-sbom-generator-source",
         "metadata/zstd-source.json": "crossforge-zstd-source",
         "metadata/qt-source.json": "crossforge-qt-source",
         "metadata/ffmpeg-source.json": "crossforge-ffmpeg-source",
@@ -410,7 +444,7 @@ def assemble(release, lock, root, source_commit, schema):
                 "file": "config/schemas/source-bundle-manifest.schema.json",
                 "canonical_sha256": BUILD["canonical_sha256"](schema),
             },
-            "entries": 384,
+            "entries": 388,
             "includes_qualification_sources": True,
             "project_snapshot": "exact-clean-git-file-set",
             "publication": "same-public-oci-package",
@@ -452,12 +486,12 @@ def assemble(release, lock, root, source_commit, schema):
     STRICT["validate_schema_subset"](schema)
     STRICT["validate"](document, schema, schema, "$")
     require(summary == {
-        "entries": 384,
+        "entries": 388,
         "bytes": summary["bytes"],
         "source_rpms": 333,
-        "source_archives": 18,
-        "verification_materials": 23,
-        "metadata_files": 10,
+        "source_archives": 19,
+        "verification_materials": 26,
+        "metadata_files": 11,
     }, "source bundle summary differs")
     return document
 

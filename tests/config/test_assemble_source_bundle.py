@@ -30,7 +30,7 @@ class AssembleSourceBundleTests(unittest.TestCase):
 
     def test_complete_plan_has_exact_product_qualification_and_evidence_sets(self):
         self.assertEqual(
-            self.release["source_bundle"]["archive"]["entries"], 384
+            self.release["source_bundle"]["archive"]["entries"], 388
         )
         self.assertEqual(
             self.release["source_bundle"]["archive"]["publication"],
@@ -39,15 +39,15 @@ class AssembleSourceBundleTests(unittest.TestCase):
         entries = ASSEMBLER["expected_entries"](
             self.release, self.lock, "1" * 40
         )
-        self.assertEqual(len(entries), 384)
+        self.assertEqual(len(entries), 388)
         self.assertEqual(
             Counter(record["scope"] for record in entries.values()),
             Counter(
                 {
                     "product": 348,
                     "qualification": 3,
-                    "verification": 23,
-                    "metadata": 10,
+                    "verification": 26,
+                    "metadata": 11,
                 }
             ),
         )
@@ -62,6 +62,9 @@ class AssembleSourceBundleTests(unittest.TestCase):
             "sources/product/vcpkg/vcpkg-tool-98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8.tar.gz",
             "sources/qualification/qt/qt-everywhere-opensource-src-6.8.4.tar.xz",
             "verification/cpython/Python-3.14.7.tar.xz.sigstore",
+            "sources/verification/sbom-generator/buildkit-syft-scanner-1.12.0.tar.gz",
+            "verification/sbom-generator/buildkit-syft-scanner-v1.12.0.tag.json",
+            "verification/sbom-generator/CRAZY-MAX-RELEASE-KEY.asc",
         ):
             self.assertIn(path, entries)
         with self.assertRaisesRegex(
@@ -116,6 +119,7 @@ class AssembleSourceBundleTests(unittest.TestCase):
             "crossforge_cmake_source",
             "crossforge_vcpkg_source",
             "crossforge_cpython_cp314",
+            "crossforge_sbom_generator_source",
         ):
             self.assertIn(context, bake)
             self.assertIn("--from=" + context, dockerfile)

@@ -18,6 +18,12 @@ CANDIDATE_MANIFEST_POLICY = {
     },
     "platform": "linux/amd64",
     "registry_resolution": "rehash-index-exact-one-linux-amd64-manifest",
+    "attestations": {
+        "format": "oci-artifact-in-toto-statement-v1",
+        "provenance": "slsa-v1-max-source-and-target-bound",
+        "sbom": "spdx-document-pinned-generator",
+        "visibility": "anonymous-raw-manifest-and-blob-validation",
+    },
     "visibility": "anonymous-public-before-native-qualification",
     "runtime_user": "crossforge:1000:1000",
     "sdk_root": "root-owned-runtime-immutable",

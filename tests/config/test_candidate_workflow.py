@@ -32,7 +32,10 @@ class CandidateWorkflowTests(unittest.TestCase):
             "sdk-candidate.attest=type=provenance,mode=max,version=v1",
             self.workflow,
         )
-        self.assertIn("sdk-candidate.attest+=type=sbom", self.workflow)
+        self.assertIn(
+            "sdk-candidate.attest+=type=sbom,generator=$SBOM_GENERATOR",
+            self.workflow,
+        )
         self.assertNotIn("--provenance=", self.workflow)
         self.assertNotIn("--sbom=", self.workflow)
         self.assertNotIn("sdk-complete-dev.output", self.workflow)
@@ -69,7 +72,10 @@ class CandidateWorkflowTests(unittest.TestCase):
             "source-bundle.attest=type=provenance,mode=max,version=v1",
             self.workflow,
         )
-        self.assertIn("source-bundle.attest+=type=sbom", self.workflow)
+        self.assertIn(
+            "source-bundle.attest+=type=sbom,generator=$SBOM_GENERATOR",
+            self.workflow,
+        )
         self.assertIn("docker buildx bake source-bundle-identity", self.workflow)
         self.assertIn("anonymous-source-index.json", self.workflow)
         self.assertIn(
@@ -169,6 +175,10 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("blobs/$sbom_digest", self.attestations)
         self.assertIn("source-attestations.json", self.workflow)
         self.assertIn("sdk-attestations.json", self.workflow)
+        self.assertIn(".sbom.generator.repository", self.workflow)
+        self.assertIn(".sbom.generator.digest", self.workflow)
+        self.assertIn(".sbom.generator.manifest_digest", self.workflow)
+        self.assertIn("sbom-generator-index.json", self.workflow)
 
     def test_native_arm_gate_consumes_the_exact_candidate_and_pinned_runtime(self):
         self.assertIn("runs-on: ubuntu-24.04-arm", self.workflow)
@@ -270,7 +280,7 @@ class CandidateWorkflowTests(unittest.TestCase):
 
     def test_public_identity_and_signature_artifacts_have_flat_layouts(self):
         for root, count in (
-            ("candidate-identity", 5),
+            ("candidate-identity", 6),
             ("candidate-signature-evidence", 4),
         ):
             with self.subTest(root=root):

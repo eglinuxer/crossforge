@@ -1,0 +1,174 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "sources/sbom-generator",
+  "dependencies": [],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/sbom/generator/digest",
+      "value": "sha256:ae4f3b554449e7e25548e7d8ccc029d17357348e30c6e3df01b92bc93654d6a9"
+    },
+    {
+      "path": "/sbom/generator/index_evidence",
+      "value": "evidence/oci/docker-buildkit-syft-scanner-v1.12.0.index.json.b64"
+    },
+    {
+      "path": "/sbom/generator/index_size",
+      "value": 5445
+    },
+    {
+      "path": "/sbom/generator/manifest_digest",
+      "value": "sha256:187e1892a7752c9384c59aba9517dd8e40610b748c72773e87b63720514463c2"
+    },
+    {
+      "path": "/sbom/generator/manifest_evidence",
+      "value": "evidence/oci/docker-buildkit-syft-scanner-v1.12.0.amd64.manifest.json.b64"
+    },
+    {
+      "path": "/sbom/generator/manifest_size",
+      "value": 481
+    },
+    {
+      "path": "/sbom/generator/provenance/attestation_evidence",
+      "value": "evidence/oci/docker-buildkit-syft-scanner-v1.12.0.amd64.attestation.json.b64"
+    },
+    {
+      "path": "/sbom/generator/provenance/attestation_manifest_digest",
+      "value": "sha256:93ae74bbaad4272dca5e394e49871ab5100730d32af6552650a594947b9184bf"
+    },
+    {
+      "path": "/sbom/generator/provenance/attestation_size",
+      "value": 1110
+    },
+    {
+      "path": "/sbom/generator/provenance/builder_id",
+      "value": "https://github.com/docker/buildkit-syft-scanner/actions/runs/31689026813/attempts/3"
+    },
+    {
+      "path": "/sbom/generator/provenance/predicate_digest",
+      "value": "sha256:9ee9789758db351f0861b7f9f8e7b697f50981718aadf919e4bfaf85faf7bdee"
+    },
+    {
+      "path": "/sbom/generator/provenance/predicate_evidence",
+      "value": "evidence/oci/docker-buildkit-syft-scanner-v1.12.0.amd64.provenance.json.b64"
+    },
+    {
+      "path": "/sbom/generator/provenance/predicate_size",
+      "value": 23633
+    },
+    {
+      "path": "/sbom/generator/repository",
+      "value": "docker.io/docker/buildkit-syft-scanner"
+    },
+    {
+      "path": "/sbom/generator/source/archive_root",
+      "value": "buildkit-syft-scanner-1.12.0"
+    },
+    {
+      "path": "/sbom/generator/source/commit",
+      "value": "aba762345737fbb33224d0670260708bfbaadb99"
+    },
+    {
+      "path": "/sbom/generator/source/key/derivation",
+      "value": "gpg-export-minimal-keep-noreply-email-uid"
+    },
+    {
+      "path": "/sbom/generator/source/key/file",
+      "value": "keys/CRAZY-MAX-RELEASE-KEY.asc"
+    },
+    {
+      "path": "/sbom/generator/source/key/fingerprint",
+      "value": "cb73f06483432e94892fd8e1ade44d8c9d44fbe4"
+    },
+    {
+      "path": "/sbom/generator/source/key/sha256",
+      "value": "64ec29556f77fa7158552f4bc0b20d19fa4fd7de89293c237d544dcbd16f45a5"
+    },
+    {
+      "path": "/sbom/generator/source/key/source_sha256",
+      "value": "ec54da2392e0137bc580d38b30ade40091bb630fb1ef690f20b4c101d6f4c120"
+    },
+    {
+      "path": "/sbom/generator/source/key/source_url",
+      "value": "https://github.com/crazy-max.gpg"
+    },
+    {
+      "path": "/sbom/generator/source/license/expression",
+      "value": "Apache-2.0"
+    },
+    {
+      "path": "/sbom/generator/source/license/file",
+      "value": "LICENSE"
+    },
+    {
+      "path": "/sbom/generator/source/license/sha256",
+      "value": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "/sbom/generator/source/member_count",
+      "value": 12536
+    },
+    {
+      "path": "/sbom/generator/source/sha256",
+      "value": "86b54672d166b74fe12be7e9b0dcab9f7d43adac0d5753abbfb3211d3e204545"
+    },
+    {
+      "path": "/sbom/generator/source/sha512",
+      "value": "32f51fd7c30e9c2ae09bb02f3768da2e3a8f692d13ce2b0a35f0d5d55840bc7833f1bb8ebccb1d98caceff59daf3e2ab3d05db86664fb13b7d054949556c91f1"
+    },
+    {
+      "path": "/sbom/generator/source/size",
+      "value": 43732088
+    },
+    {
+      "path": "/sbom/generator/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/sbom/generator/source/tag",
+      "value": "v1.12.0"
+    },
+    {
+      "path": "/sbom/generator/source/tag_evidence/evidence",
+      "value": "evidence/github/buildkit-syft-scanner-v1.12.0.tag.json.b64"
+    },
+    {
+      "path": "/sbom/generator/source/tag_evidence/sha256",
+      "value": "02733578ac3c784a0940eb898af3c3a5eb187ddf74b832a0cd2faa007ccc0f29"
+    },
+    {
+      "path": "/sbom/generator/source/tag_evidence/size",
+      "value": 2572
+    },
+    {
+      "path": "/sbom/generator/source/tag_evidence/url",
+      "value": "https://api.github.com/repos/docker/buildkit-syft-scanner/git/tags/e131763ad439b53d72810211577e7526bfac5d20"
+    },
+    {
+      "path": "/sbom/generator/source/tag_object",
+      "value": "e131763ad439b53d72810211577e7526bfac5d20"
+    },
+    {
+      "path": "/sbom/generator/source/url",
+      "value": "https://github.com/docker/buildkit-syft-scanner/archive/refs/tags/v1.12.0.tar.gz"
+    },
+    {
+      "path": "/sbom/generator/status",
+      "value": "locked"
+    },
+    {
+      "path": "/sbom/generator/tag",
+      "value": "stable-1"
+    },
+    {
+      "path": "/sbom/generator/version",
+      "value": "1.12.0"
+    },
+    {
+      "path": "/sbom/provenance_version",
+      "value": "v1"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "supply"
+}

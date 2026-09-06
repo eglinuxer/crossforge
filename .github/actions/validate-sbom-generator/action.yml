@@ -1,0 +1,67 @@
+name: Validate locked SBOM generator
+description: Verify the exact generator image, SLSA provenance, and source commit
+inputs:
+  output:
+    description: Destination for the generator image validation report
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        OUTPUT_PATH: ${{ inputs.output }}
+      run: |
+        set -Eeuo pipefail
+        release="$GITHUB_WORKSPACE/config/release.json"
+        repository=$(jq -r .sbom.generator.repository "$release")
+        index_digest=$(jq -r .sbom.generator.digest "$release")
+        manifest_digest=$(jq -r .sbom.generator.manifest_digest "$release")
+        attestation_digest=$(jq -r \
+          .sbom.generator.provenance.attestation_manifest_digest "$release")
+        provenance_digest=$(jq -r \
+          .sbom.generator.provenance.predicate_digest "$release")
+        case "$repository" in
+          docker.io/*) registry_path=${repository#docker.io/} ;;
+          *) echo 'unsupported SBOM generator registry' >&2; exit 1 ;;
+        esac
+        token=$(curl --fail --silent --show-error --location \
+          --retry 5 --retry-all-errors --retry-delay 2 \
+          --connect-timeout 30 --get \
+          --data-urlencode 'service=registry.docker.io' \
+          --data-urlencode "scope=repository:$registry_path:pull" \
+          https://auth.docker.io/token | jq -er .token)
+        evidence_root=$(mktemp -d "$RUNNER_TEMP/sbom-generator.XXXXXXXX")
+        cleanup_generator() {
+          rm -rf "$evidence_root"
+        }
+        trap cleanup_generator EXIT
+        registry_get() {
+          local endpoint=$1
+          local accept=$2
+          local output=$3
+          curl --fail --silent --show-error --location \
+            --retry 5 --retry-all-errors --retry-delay 2 \
+            --connect-timeout 30 \
+            -H "Authorization: Bearer $token" \
+            -H "Accept: $accept" \
+            "https://registry-1.docker.io/v2/$registry_path/$endpoint" \
+            -o "$output"
+        }
+        registry_get "manifests/$index_digest" \
+          'application/vnd.oci.image.index.v1+json' "$evidence_root/index.json"
+        registry_get "manifests/$manifest_digest" \
+          'application/vnd.oci.image.manifest.v1+json' \
+          "$evidence_root/manifest.json"
+        registry_get "manifests/$attestation_digest" \
+          'application/vnd.oci.image.manifest.v1+json' \
+          "$evidence_root/attestation.json"
+        registry_get "blobs/$provenance_digest" \
+          'application/vnd.in-toto+json' "$evidence_root/provenance.json"
+        "$GITHUB_WORKSPACE/scripts/validate-sbom-generator-image.py" \
+          --index "$evidence_root/index.json" \
+          --manifest "$evidence_root/manifest.json" \
+          --attestation-manifest "$evidence_root/attestation.json" \
+          --provenance "$evidence_root/provenance.json" \
+          --output "$OUTPUT_PATH"
+        trap - EXIT
+        cleanup_generator

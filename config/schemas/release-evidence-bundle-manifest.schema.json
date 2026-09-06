@@ -62,8 +62,8 @@
     "promotion_sha256": {"$ref": "#/$defs/sha256"},
     "files": {
       "type": "array",
-      "minItems": 16,
-      "maxItems": 16,
+      "minItems": 17,
+      "maxItems": 17,
       "uniqueItems": true,
       "items": {
         "type": "object",
@@ -82,6 +82,7 @@
               "release-promotion.json",
               "release.json",
               "sdk-attestations.json",
+              "sbom-generator-image.json",
               "sigstore-trusted-root.json",
               "sigstore-verification.json",
               "source-binding.json",

@@ -1632,6 +1632,13 @@ def render(repository):
         targets[name] = {
             "contexts": {"crossforge_qemu": "docker-image://%s" % qemu_image}
         }
+    targets["sbom-generator-source"] = {
+        "args": {
+            "SBOM_GENERATOR_SOURCE_COMPONENT_SHA256": component_arguments[
+                component_argument_name("sources/sbom-generator")
+            ]
+        }
+    }
     render_zstd_graph(config, targets, component_arguments, rocky_amd64_image)
     qt_groups = render_qt_graph(
         config, qt_plan, targets, component_arguments, rocky_amd64_image

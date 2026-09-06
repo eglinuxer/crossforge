@@ -287,6 +287,15 @@ jobs:
             "$RUNNER_TEMP/current-source-attestations.json"
           cmp "$RUNNER_TEMP/candidate-identity/sdk-attestations.json" \
             "$RUNNER_TEMP/current-sdk-attestations.json"
+      - name: Revalidate the locked SBOM generator image and source identity
+        uses: ./.github/actions/validate-sbom-generator
+        with:
+          output: ${{ runner.temp }}/current-sbom-generator-image.json
+      - name: Match the candidate-bound SBOM generator report
+        run: |
+          set -Eeuo pipefail
+          cmp "$RUNNER_TEMP/candidate-identity/sbom-generator-image.json" \
+            "$RUNNER_TEMP/current-sbom-generator-image.json"
       - name: Create reproducible promotion evidence
         env:
           CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
@@ -324,6 +333,7 @@ jobs:
             --promotion "$RUNNER_TEMP/release-promotion.json" \
             --release config/release.json \
             --sdk-attestations "$identity/sdk-attestations.json" \
+            --sbom-generator-image "$identity/sbom-generator-image.json" \
             --trusted-root "$RUNNER_TEMP/trusted_root.json" \
             --sigstore-report "$signature/sigstore-verification.json" \
             --source-attestations "$identity/source-attestations.json" \

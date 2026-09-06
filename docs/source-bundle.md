@@ -5,6 +5,8 @@ Crossforge SDK identified by `MANIFEST.json`.
 
 - `sources/product/` contains corresponding source for shipped components.
 - `sources/qualification/` contains source used only by release qualification.
+- `sources/verification/` contains source for release-only verification tools,
+  including the exact BuildKit Syft scanner used to generate public SBOMs.
 - `verification/` contains detached signatures, checksum manifests, Sigstore
   bundles, and public keys needed to inspect upstream authentication.
 - `metadata/` contains the source-stage reports and the complete Rocky SRPM
@@ -15,6 +17,12 @@ origin in `MANIFEST.json`. The Crossforge project snapshot is bound to the
 candidate source commit. The vcpkg registry snapshot retains its complete Git
 history and version-database objects, but excludes the prebuilt tool injected
 into the SDK copy.
+
+The SBOM generator is not selected through the mutable `stable-1` tag at build
+time. Release configuration pins its OCI index and amd64 manifest, signed
+v1.12.0 tag object, peeled source commit, source archive, Apache-2.0 license and
+maintainer signing key. Its source stage verifies the GitHub tag evidence and
+the same detached OpenPGP payload offline before adding them to this archive.
 
 The SDK's `/opt/crossforge/SOURCES.json` names the public source OCI image by
 digest and records this archive's filename, SHA256 and byte size. Pull that OCI

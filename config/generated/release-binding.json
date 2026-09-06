@@ -44,7 +44,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "af119629684f68b5c0e73f14995de4543623368b946258e3531a822752866362",
+      "canonical_sha256": "823262ab7b2f84a6b1b53e5fa525e89e0570b5f2fa89b8644c882225196f0bb4",
       "component": "implementation/candidate-manifest",
       "path": "config/generated/components/implementation/candidate-manifest.json",
       "scope": "supply"
@@ -182,7 +182,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "ea1159fb30e69296ae3384b87286998276808c5c92ed258f0789de4b245d222c",
+      "canonical_sha256": "ba4f8d05f913d51f11e4e084f755483d33f0b3de6f1ae4de7cfedfe688a9a6e4",
       "component": "product/release",
       "path": "config/generated/components/product/release.json",
       "scope": "supply"
@@ -428,6 +428,12 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "40d6ed19472a8440d22c4ad50f94913c4654ac2d76f20204157d49143a1f2f2c",
+      "component": "sources/sbom-generator",
+      "path": "config/generated/components/sources/sbom-generator.json",
+      "scope": "supply"
+    },
+    {
       "canonical_sha256": "0721e60b7a62dceb9ff1eb6c57349d522293e5e0af6368227d0af12bca1c49ec",
       "component": "sources/vcpkg",
       "path": "config/generated/components/sources/vcpkg.json",
@@ -446,7 +452,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "8838809e0059cd9d592677f22838476cd8ade4d4cd073c3fa736fb5535ba18a8",
+      "canonical_sha256": "fd9e86fef3fcb1b3b7e869f305c43b100df3522dcb3b336646351e9db7ade213",
       "component": "supply/evidence",
       "path": "config/generated/components/supply/evidence.json",
       "scope": "supply"
@@ -532,7 +538,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "c81251302da45de8a73779098abb937d74cb6e8cf388435ab347364bd6d62c97",
+    "canonical_sha256": "b58587eb3c9058ecbb858be68b9ed39817d3340b58ea3e334cfd5c5fec829e29",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

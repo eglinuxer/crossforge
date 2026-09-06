@@ -34,6 +34,7 @@ PAYLOAD_ARGUMENTS = (
     ("release-promotion.json", "promotion"),
     ("release.json", "release"),
     ("sdk-attestations.json", "sdk_attestations"),
+    ("sbom-generator-image.json", "sbom_generator_image"),
     ("sigstore-trusted-root.json", "trusted_root"),
     ("sigstore-verification.json", "sigstore_report"),
     ("source-attestations.json", "source_attestations"),
@@ -216,6 +217,20 @@ def validate_inputs(paths, release, schema):
             and report["source_commit"] == candidate["source_commit"],
             "%s image identity differs" % name,
         )
+    generator_report = STRICT["load_json"](paths["sbom-generator-image.json"])
+    generator_schema = STRICT["load_json"](
+        REPOSITORY / "config/schemas/sbom-generator-image.schema.json"
+    )
+    STRICT["validate_schema_subset"](generator_schema)
+    STRICT["validate"](
+        generator_report, generator_schema, generator_schema, "$"
+    )
+    require(
+        generator_report["index_digest"] == release["sbom"]["generator"]["digest"]
+        and generator_report["manifest_digest"]
+        == release["sbom"]["generator"]["manifest_digest"],
+        "SBOM generator image report differs",
+    )
     trusted_root, _size = regular_file(
         paths["sigstore-trusted-root.json"], "sigstore-trusted-root.json"
     )

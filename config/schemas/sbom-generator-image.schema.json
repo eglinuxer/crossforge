@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/sbom-generator-image.schema.json",
+  "title": "Crossforge locked SBOM generator image evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "version",
+    "repository",
+    "index_digest",
+    "manifest_digest",
+    "attestation_manifest_digest",
+    "provenance_digest",
+    "source",
+    "checks"
+  ],
+  "properties": {
+    "$schema": {"const": "https://crossforge.dev/schemas/sbom-generator-image.schema.json"},
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-sbom-generator-image"},
+    "version": {"const": "1.12.0"},
+    "repository": {"const": "docker.io/docker/buildkit-syft-scanner"},
+    "index_digest": {"$ref": "#/$defs/digest"},
+    "manifest_digest": {"$ref": "#/$defs/digest"},
+    "attestation_manifest_digest": {"$ref": "#/$defs/digest"},
+    "provenance_digest": {"$ref": "#/$defs/digest"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tag", "tag_object", "commit"],
+      "properties": {
+        "tag": {"const": "v1.12.0"},
+        "tag_object": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "platform", "oci_subject", "slsa_v1", "source", "max_provenance"],
+      "properties": {
+        "index": {"const": true},
+        "platform": {"const": true},
+        "oci_subject": {"const": true},
+        "slsa_v1": {"const": true},
+        "source": {"const": true},
+        "max_provenance": {"const": true}
+      }
+    }
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+  }
+}

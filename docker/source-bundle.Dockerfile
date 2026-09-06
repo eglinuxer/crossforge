@@ -65,6 +65,18 @@ COPY --from=crossforge_nfpm_tool /materials/checksums.txt.sigstore.json \
 COPY --from=crossforge_nfpm_tool /source.json \
   /work/bundle/metadata/nfpm-source.json
 
+COPY --from=crossforge_sbom_generator_source \
+  /source/buildkit-syft-scanner-1.12.0.tar.gz \
+  /work/bundle/sources/verification/sbom-generator/buildkit-syft-scanner-1.12.0.tar.gz
+COPY --from=crossforge_sbom_generator_source \
+  /materials/buildkit-syft-scanner-v1.12.0.tag.json \
+  /work/bundle/verification/sbom-generator/buildkit-syft-scanner-v1.12.0.tag.json
+COPY --from=crossforge_sbom_generator_source \
+  /materials/CRAZY-MAX-RELEASE-KEY.asc \
+  /work/bundle/verification/sbom-generator/CRAZY-MAX-RELEASE-KEY.asc
+COPY --from=crossforge_sbom_generator_source /source.json \
+  /work/bundle/metadata/sbom-generator-source.json
+
 COPY --from=crossforge_qemu_source /materials/qemu-10.2.3.tar.xz \
   /work/bundle/sources/product/qemu/qemu-10.2.3.tar.xz
 COPY --from=crossforge_qemu_source /materials/binfmt-e29e7d72c9672c8c8bf846655ab149b50e1a62bd.tar.gz \

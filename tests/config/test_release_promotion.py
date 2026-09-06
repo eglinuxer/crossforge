@@ -328,6 +328,8 @@ class PromotionWorkflowTests(unittest.TestCase):
         self.assertIn("Match candidate-bound attestation reports", self.workflow)
         self.assertIn("current-source-attestations.json", self.workflow)
         self.assertIn("current-sdk-attestations.json", self.workflow)
+        self.assertIn("uses: ./.github/actions/validate-sbom-generator", self.workflow)
+        self.assertIn("current-sbom-generator-image.json", self.workflow)
 
     def test_version_tags_are_immutable_and_channels_move_last(self):
         self.assertIn("refusing to replace immutable version tag", self.workflow)

@@ -585,12 +585,18 @@ $ CROSSFORGE_SOURCE_COMMIT="$(git rev-parse HEAD)" \
     docker buildx bake source-bundle
 ```
 
-Its manifest contains 384 path/role/component/origin identities. The public
+Its manifest contains 388 path/role/component/origin identities. The public
 candidate publishes the archive as a second, unique tag in the same public
 GHCR package; candidate schema v2 binds both OCI digests, both platform
 manifests, and the inner archive SHA256/size. Source and SDK digests are both
 anonymously inspected before native qualification and keyless-signed only
 after the native ARM64 gates pass.
+
+The SBOM generator is fixed to BuildKit Syft scanner v1.12.0 by OCI index and
+amd64 manifest digest; the mutable `stable-1` tag is never used as a build
+input. Its signed tag, peeled source commit, source archive, selected
+maintainer key and Apache-2.0 license are independently verified and included
+in the corresponding source bundle.
 
 Every public candidate image also contains `/opt/crossforge/SOURCES.json` and
 `/opt/crossforge/SOURCE-OFFER`. They name the source OCI by immutable digest,

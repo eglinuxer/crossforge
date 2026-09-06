@@ -1494,6 +1494,19 @@ def validate_evidence(config, repository):
         )
         require(bundle_payload, "CPython Sigstore bundle is empty")
 
+    sbom_generator = config["sbom"]["generator"]
+    sbom_source = sbom_generator["source"]
+    sbom_key_path = (repository / sbom_source["key"]["file"]).resolve()
+    try:
+        sbom_key_path.relative_to(repository.resolve())
+    except ValueError as error:
+        raise EvidenceError("SBOM generator key escaped repository") from error
+    sbom_key = sbom_key_path.read_bytes()
+    require(
+        hashlib.sha256(sbom_key).hexdigest() == sbom_source["key"]["sha256"],
+        "SBOM generator key digest differs",
+    )
+
     return {
         "sigstore_tuf_root_version": tuf["final_root_version"],
         "sigstore_tuf_targets_version": tuf["targets_version"],
@@ -1534,6 +1547,9 @@ def validate_evidence(config, repository):
         "cmake_binary_sha256": cmake_binary["sha256"],
         "cmake_source_sha256": cmake_source["sha256"],
         "cmake_source_signature_status": cmake_signature["verification"]["status"],
+        "sbom_generator_digest": sbom_generator["digest"],
+        "sbom_generator_source_sha256": sbom_source["sha256"],
+        "sbom_generator_key_sha256": sbom_source["key"]["sha256"],
     }
 
 
@@ -1555,7 +1571,7 @@ def main():
         "CPython/nFPM Sigstore bundles %s/%s via Cosign %s; "
         "patches %d; zstd %s; vcpkg %s; "
         "Qt %s + FFmpeg %s + xcb-util-cursor %s; Ninja %s; "
-        "CMake %s + source %s (%s)"
+        "CMake %s + source %s (%s); SBOM generator %s (%s)"
         % (
             result["sigstore_tuf_root_version"],
             result["sigstore_tuf_targets_version"],
@@ -1577,6 +1593,8 @@ def main():
             config["host_tools"]["cmake"]["version"],
             result["cmake_source_sha256"],
             result["cmake_source_signature_status"],
+            config["sbom"]["generator"]["version"],
+            result["sbom_generator_digest"],
         )
     )
     return 0

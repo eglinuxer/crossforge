@@ -189,6 +189,40 @@ class ReleaseEvidenceTests(unittest.TestCase):
                     },
                 },
             )
+        generator = release["sbom"]["generator"]
+        self.write_json(
+            paths["sbom-generator-image.json"],
+            {
+                "$schema": (
+                    "https://crossforge.dev/schemas/"
+                    "sbom-generator-image.schema.json"
+                ),
+                "schema_version": 1,
+                "kind": "crossforge-sbom-generator-image",
+                "version": generator["version"],
+                "repository": generator["repository"],
+                "index_digest": generator["digest"],
+                "manifest_digest": generator["manifest_digest"],
+                "attestation_manifest_digest": generator["provenance"]
+                ["attestation_manifest_digest"],
+                "provenance_digest": generator["provenance"][
+                    "predicate_digest"
+                ],
+                "source": {
+                    "tag": generator["source"]["tag"],
+                    "tag_object": generator["source"]["tag_object"],
+                    "commit": generator["source"]["commit"],
+                },
+                "checks": {
+                    "index": True,
+                    "platform": True,
+                    "oci_subject": True,
+                    "slsa_v1": True,
+                    "source": True,
+                    "max_provenance": True,
+                },
+            },
+        )
         signature = [
             {
                 "critical": {

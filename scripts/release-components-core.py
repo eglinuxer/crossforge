@@ -438,6 +438,8 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             category = "supply"
         elif path and path[0] == "sigstore":
             category = "supply"
+        elif path and path[0] == "sbom":
+            category = "supply"
         elif path and path[0] == "source_bundle":
             category = "supply"
         elif path in {
@@ -747,6 +749,7 @@ def _render_expected_components(release, implemented_rows):
         "sources/binutils", "build", selector(("binutils",), ("trust",))
     )
     add("sources/zstd", "build", selector(("python", "zstd")))
+    add("sources/sbom-generator", "supply", selector(("sbom",)))
     add(
         "sources/qt",
         "build",
@@ -1015,6 +1018,7 @@ def _render_expected_components(release, implemented_rows):
     add(
         "implementation/candidate-manifest",
         "supply",
+        dependencies=("sources/sbom-generator",),
         explicit_materials=policy_materials(
             "/@implementation/candidate-manifest/", CANDIDATE_MANIFEST_POLICY
         ),

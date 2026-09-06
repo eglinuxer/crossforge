@@ -1,9 +1,30 @@
 {
   "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
   "component": "implementation/candidate-manifest",
-  "dependencies": [],
+  "dependencies": [
+    {
+      "canonical_sha256": "40d6ed19472a8440d22c4ad50f94913c4654ac2d76f20204157d49143a1f2f2c",
+      "component": "sources/sbom-generator"
+    }
+  ],
   "kind": "crossforge-release-component",
   "materials": [
+    {
+      "path": "/@implementation/candidate-manifest/attestations/format",
+      "value": "oci-artifact-in-toto-statement-v1"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/attestations/provenance",
+      "value": "slsa-v1-max-source-and-target-bound"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/attestations/sbom",
+      "value": "spdx-document-pinned-generator"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/attestations/visibility",
+      "value": "anonymous-raw-manifest-and-blob-validation"
+    },
     {
       "path": "/@implementation/candidate-manifest/identity",
       "value": "canonical-json-sha256"

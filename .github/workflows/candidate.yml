@@ -26,6 +26,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
       - name: Validate candidate inputs
+        id: release_inputs
         run: |
           set -Eeuo pipefail
           test "$GITHUB_REF" = refs/heads/main
@@ -40,6 +41,22 @@ jobs:
           ./scripts/render-release-components.py --check
           ./scripts/render-vcpkg-integration.py --check
           ./scripts/render-bake.py --check
+          generator_repository=$(jq -r .sbom.generator.repository \
+            config/release.json)
+          generator_digest=$(jq -r .sbom.generator.digest config/release.json)
+          generator_manifest=$(jq -r .sbom.generator.manifest_digest \
+            config/release.json)
+          generator="$generator_repository@$generator_digest"
+          docker buildx imagetools inspect "$generator" --raw \
+            > "$RUNNER_TEMP/sbom-generator-index.json"
+          test "$(./scripts/resolve_candidate_image.py platform-digest \
+            --index "$RUNNER_TEMP/sbom-generator-index.json" \
+            --expected-digest "$generator_digest")" = "$generator_manifest"
+          printf 'sbom_generator=%s\n' "$generator" >> "$GITHUB_OUTPUT"
+      - name: Validate the locked SBOM generator image and source identity
+        uses: ./.github/actions/validate-sbom-generator
+        with:
+          output: ${{ runner.temp }}/sbom-generator-image.json
       - name: Resolve unique public candidate tag
         id: identity
         run: |
@@ -81,6 +98,7 @@ jobs:
       - name: Build once and push the corresponding source bundle
         id: source
         env:
+          SBOM_GENERATOR: ${{ steps.release_inputs.outputs.sbom_generator }}
           SOURCE_REFERENCE: ${{ steps.identity.outputs.source_reference }}
         run: |
           set -Eeuo pipefail
@@ -92,7 +110,7 @@ jobs:
             --set "source-bundle.tags=$SOURCE_REFERENCE" \
             --set "source-bundle.output=type=image,push=true" \
             --set "source-bundle.attest=type=provenance,mode=max,version=v1" \
-            --set "source-bundle.attest+=type=sbom" \
+            --set "source-bundle.attest+=type=sbom,generator=$SBOM_GENERATOR" \
             --metadata-file "$RUNNER_TEMP/source-build-metadata.json" \
             --progress=plain
           docker buildx bake source-bundle-identity \
@@ -170,6 +188,7 @@ jobs:
       - name: Build once and push the source-bound candidate
         env:
           CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
+          SBOM_GENERATOR: ${{ steps.release_inputs.outputs.sbom_generator }}
         run: |
           set -Eeuo pipefail
           python3 ./scripts/run-with-heartbeat.py \
@@ -183,7 +202,7 @@ jobs:
             --set "sdk-candidate.tags=$CANDIDATE_REFERENCE" \
             --set "sdk-candidate.output=type=image,push=true" \
             --set "sdk-candidate.attest=type=provenance,mode=max,version=v1" \
-            --set "sdk-candidate.attest+=type=sbom" \
+            --set "sdk-candidate.attest+=type=sbom,generator=$SBOM_GENERATOR" \
             --metadata-file "$RUNNER_TEMP/build-metadata.json" \
             --progress=plain
       - name: Bind the pushed OCI index and platform manifest
@@ -415,8 +434,10 @@ jobs:
             "$IDENTITY_ROOT/source-attestations.json"
           install -m 0644 "$RUNNER_TEMP/sdk-attestations.json" \
             "$IDENTITY_ROOT/sdk-attestations.json"
+          install -m 0644 "$RUNNER_TEMP/sbom-generator-image.json" \
+            "$IDENTITY_ROOT/sbom-generator-image.json"
           test "$(find "$IDENTITY_ROOT" -mindepth 1 -maxdepth 1 \
-            -type f | wc -l)" -eq 5
+            -type f | wc -l)" -eq 6
       - name: Upload immutable candidate identity
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

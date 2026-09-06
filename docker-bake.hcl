@@ -70,6 +70,7 @@ target "source-bundle" {
     crossforge_ninja_source   = "target:ninja-source"
     crossforge_vcpkg_source   = "target:vcpkg-source"
     crossforge_nfpm_tool      = "target:nfpm-tool"
+    crossforge_sbom_generator_source = "target:sbom-generator-source"
     crossforge_zstd_source    = "target:zstd-source"
     crossforge_qt_source      = "target:qt-source"
     crossforge_ffmpeg_source  = "target:ffmpeg-source"
@@ -80,6 +81,19 @@ target "source-bundle" {
     crossforge_cpython_cp312  = "target:cpython-source-cp312"
     crossforge_cpython_cp313  = "target:cpython-source-cp313"
     crossforge_cpython_cp314  = "target:cpython-source-cp314"
+  }
+  output = ["type=cacheonly"]
+}
+
+target "sbom-generator-source" {
+  context    = "."
+  dockerfile = "docker/sbom.Dockerfile"
+  target     = "sbom-generator-source-output"
+  contexts = {
+    crossforge_host_common = "target:host-build-common-locked"
+  }
+  args = {
+    SBOM_GENERATOR_SOURCE_COMPONENT_SHA256 = ""
   }
   output = ["type=cacheonly"]
 }

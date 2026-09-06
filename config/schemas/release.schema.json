@@ -11,6 +11,7 @@
     "abi",
     "product",
     "sigstore",
+    "sbom",
     "source_bundle",
     "base_image",
     "trust",
@@ -67,6 +68,9 @@
     },
     "sigstore": {
       "$ref": "#/$defs/sigstore"
+    },
+    "sbom": {
+      "$ref": "#/$defs/sbom"
     },
     "source_bundle": {
       "$ref": "#/$defs/source_bundle"
@@ -959,6 +963,123 @@
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
     },
+    "sbom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provenance_version", "generator"],
+      "properties": {
+        "provenance_version": {"const": "v1"},
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "version",
+            "repository",
+            "tag",
+            "digest",
+            "index_evidence",
+            "index_size",
+            "manifest_digest",
+            "manifest_evidence",
+            "manifest_size",
+            "provenance",
+            "source"
+          ],
+          "properties": {
+            "status": {"const": "locked"},
+            "version": {"const": "1.12.0"},
+            "repository": {"const": "docker.io/docker/buildkit-syft-scanner"},
+            "tag": {"const": "stable-1"},
+            "digest": {"const": "sha256:ae4f3b554449e7e25548e7d8ccc029d17357348e30c6e3df01b92bc93654d6a9"},
+            "index_evidence": {"const": "evidence/oci/docker-buildkit-syft-scanner-v1.12.0.index.json.b64"},
+            "index_size": {"const": 5445},
+            "manifest_digest": {"const": "sha256:187e1892a7752c9384c59aba9517dd8e40610b748c72773e87b63720514463c2"},
+            "manifest_evidence": {"const": "evidence/oci/docker-buildkit-syft-scanner-v1.12.0.amd64.manifest.json.b64"},
+            "manifest_size": {"const": 481},
+            "provenance": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["attestation_manifest_digest", "attestation_evidence", "attestation_size", "predicate_digest", "predicate_evidence", "predicate_size", "builder_id"],
+              "properties": {
+                "attestation_manifest_digest": {"const": "sha256:93ae74bbaad4272dca5e394e49871ab5100730d32af6552650a594947b9184bf"},
+                "attestation_evidence": {"const": "evidence/oci/docker-buildkit-syft-scanner-v1.12.0.amd64.attestation.json.b64"},
+                "attestation_size": {"const": 1110},
+                "predicate_digest": {"const": "sha256:9ee9789758db351f0861b7f9f8e7b697f50981718aadf919e4bfaf85faf7bdee"},
+                "predicate_evidence": {"const": "evidence/oci/docker-buildkit-syft-scanner-v1.12.0.amd64.provenance.json.b64"},
+                "predicate_size": {"const": 23633},
+                "builder_id": {"const": "https://github.com/docker/buildkit-syft-scanner/actions/runs/31689026813/attempts/3"}
+              }
+            },
+            "source": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "status",
+                "tag",
+                "tag_object",
+                "commit",
+                "url",
+                "sha256",
+                "sha512",
+                "size",
+                "archive_root",
+                "member_count",
+                "license",
+                "tag_evidence",
+                "key"
+              ],
+              "properties": {
+                "status": {"const": "locked"},
+                "tag": {"const": "v1.12.0"},
+                "tag_object": {"const": "e131763ad439b53d72810211577e7526bfac5d20"},
+                "commit": {"const": "aba762345737fbb33224d0670260708bfbaadb99"},
+                "url": {"const": "https://github.com/docker/buildkit-syft-scanner/archive/refs/tags/v1.12.0.tar.gz"},
+                "sha256": {"const": "86b54672d166b74fe12be7e9b0dcab9f7d43adac0d5753abbfb3211d3e204545"},
+                "sha512": {"const": "32f51fd7c30e9c2ae09bb02f3768da2e3a8f692d13ce2b0a35f0d5d55840bc7833f1bb8ebccb1d98caceff59daf3e2ab3d05db86664fb13b7d054949556c91f1"},
+                "size": {"const": 43732088},
+                "archive_root": {"const": "buildkit-syft-scanner-1.12.0"},
+                "member_count": {"const": 12536},
+                "license": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["expression", "file", "sha256"],
+                  "properties": {
+                    "expression": {"const": "Apache-2.0"},
+                    "file": {"const": "LICENSE"},
+                    "sha256": {"const": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"}
+                  }
+                },
+                "tag_evidence": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["url", "evidence", "sha256", "size"],
+                  "properties": {
+                    "url": {"const": "https://api.github.com/repos/docker/buildkit-syft-scanner/git/tags/e131763ad439b53d72810211577e7526bfac5d20"},
+                    "evidence": {"const": "evidence/github/buildkit-syft-scanner-v1.12.0.tag.json.b64"},
+                    "sha256": {"const": "02733578ac3c784a0940eb898af3c3a5eb187ddf74b832a0cd2faa007ccc0f29"},
+                    "size": {"const": 2572}
+                  }
+                },
+                "key": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["file", "source_url", "source_sha256", "derivation", "sha256", "fingerprint"],
+                  "properties": {
+                    "file": {"const": "keys/CRAZY-MAX-RELEASE-KEY.asc"},
+                    "source_url": {"const": "https://github.com/crazy-max.gpg"},
+                    "source_sha256": {"const": "ec54da2392e0137bc580d38b30ade40091bb630fb1ef690f20b4c101d6f4c120"},
+                    "derivation": {"const": "gpg-export-minimal-keep-noreply-email-uid"},
+                    "sha256": {"const": "64ec29556f77fa7158552f4bc0b20d19fa4fd7de89293c237d544dcbd16f45a5"},
+                    "fingerprint": {"const": "cb73f06483432e94892fd8e1ade44d8c9d44fbe4"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "sigstore": {
       "type": "object",
       "additionalProperties": false,
@@ -1149,7 +1270,7 @@
                 "canonical_sha256": {"$ref": "#/$defs/sha256"}
               }
             },
-            "entries": {"const": 384},
+            "entries": {"const": 388},
             "includes_qualification_sources": {"const": true},
             "project_snapshot": {"const": "exact-clean-git-file-set"},
             "publication": {"const": "same-public-oci-package"}

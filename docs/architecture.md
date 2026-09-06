@@ -456,6 +456,13 @@ Actions OIDC issuer 和 `trusted_root.json` 匿名执行 `cosign verify`，并�
 signature 的 repository/digest。签名证据作为 90 天 workflow artifact 保存；签名失败
 或 native job 未完成时工作流整体失败，且仍不得创建 SemVer/稳定标签。
 
+SBOM generator 固定为 BuildKit Syft scanner v1.12.0 的 OCI index 与 linux/amd64
+manifest digest，candidate/source 构建不得解析 `stable-1`。其 annotated tag object、
+peeled commit、43,732,088 字节源码、12,536 个归档成员、Apache-2.0 license 与固定
+maintainer key 进入独立 supply component；联网 stage 只取得已固定 SHA256/SHA512 的
+source/tag JSON，禁网 stage 同时复核 GitHub verified payload 和 OpenPGP `VALIDSIG`，
+随后把源码、tag evidence、key 和报告加入 corresponding-source archive。
+
 镜像内保留 `SOURCES.json`、`SOURCE-OFFER`、原始许可证文本和严格的 `/opt/crossforge/LICENSES.json`；该文件逐项绑定路径、组件、角色、大小与 SHA256，并明确标为 `file-inventory-not-legal-conclusion`。SPDX SBOM 与 SLSA v1 max-mode provenance 是 OCI attestation，不得误称为镜像内文件，也不得只因 Buildx 参数存在就宣称有效。source 与 SDK index 均必须只有一个指向 linux/amd64 manifest 的 unknown/unknown attestation descriptor；匿名拉取 attestation manifest 和两份 in-toto blob 后，门禁重算全部 descriptor digest/size，约束 OCI artifact subject，要求 provenance 的 Bake target、max LLB definition、完整 request 与 source revision，以及 SPDX document 结构。candidate 必须先生成并公开带 repository/revision OCI 标签的 source OCI，再把其 repository@digest、platform manifest、归档文件名、SHA256、大小、release digest 与 source commit 组成严格 source binding 写入 SDK。SDK 构建前必须退出 registry：不仅匿名解析 source OCI index，还要无凭据拉取实际 source platform、从 scratch 文件系统流式读取完整归档并重算 SHA256；只有 payload 可取得才允许重新登录并继续构建 SDK。匿名拉取 SDK 后必须逐字节比较 source binding、检查人类可读 offer，并重新验收许可证清单的 release digest、条目数量与 host-tools/Python/sysroot/vcpkg/Crossforge 根覆盖。发布门禁必须保证每个二进制组件可映射到长期可取得的准确源码。对外措辞只能表述为 “GTS-derived cross SDK built from Rocky Linux rebuild sources”，不得暗示 Red Hat 或 Rocky 官方支持、认证或背书；首次公开发布前仍需正式法律复核。
 
 source bundle 不能只枚举构建过程中显式下载的 RPM。固定 amd64 Rocky child
@@ -475,7 +482,7 @@ source header 与 Rocky 签名并输出 scratch-only `/source-rpms`。RPM 字节
 组装。最终 `source-bundle` 把它与六个 CPython、zstd、CMake/Ninja、完整 vcpkg Git
 历史与 vcpkg-tool、nFPM、QEMU/binfmt、Qt/FFmpeg/xcb 资格化源码、23 份签名/校验/
 Sigstore/公钥材料、10 份 source-stage metadata，以及与候选 commit 精确同文件集的
-Crossforge 项目快照合并。断网 assembler 对 384 个输入逐项重算 SHA256/大小，输出
+Crossforge 项目快照合并。断网 assembler 对 388 个输入逐项重算 SHA256/大小，输出
 统一 `MANIFEST.json`，再生成可移植 checksum 的单一 `tar.zst`。candidate v2 同时绑定
 SDK OCI、source OCI、两个 platform manifest 与内层 archive SHA256/大小；两套 OCI
 必须匿名可读并在原生 ARM64 门禁之后一同 keyless-sign。实现门禁已经完成，但首次

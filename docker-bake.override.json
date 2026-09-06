@@ -3461,6 +3461,11 @@
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c"
       }
     },
+    "sbom-generator-source": {
+      "args": {
+        "SBOM_GENERATOR_SOURCE_COMPONENT_SHA256": "40d6ed19472a8440d22c4ad50f94913c4654ac2d76f20204157d49143a1f2f2c"
+      }
+    },
     "sdk-candidate": {
       "args": {
         "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd",

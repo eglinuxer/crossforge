@@ -92,6 +92,12 @@ def source_for(config, component, version=None):
         if version is not None:
             raise ValidationError("--version is not valid for binfmt sources")
         source = config["qemu"]["executor"]["provenance"]["builder_source"]
+    elif component == "sbom-generator":
+        if version is not None:
+            raise ValidationError(
+                "--version is not valid for SBOM generator sources"
+            )
+        source = config["sbom"]["generator"]["source"]
     else:
         if version is not None:
             raise ValidationError("--version is only valid for Python or zstd sources")
@@ -162,10 +168,21 @@ def source_for_component(
     version=None,
 ):
     """Read one authenticated source projection without loading release.json."""
-    require(expected_scope == "build", "source component scope must be build")
+    require(
+        expected_scope == ("supply" if source_kind == "sbom-generator" else "build"),
+        "source component scope differs",
+    )
     require(
         source_kind
-        in ("gcc", "binutils", "python", "zstd", "cmake", "vcpkg-tool"),
+        in (
+            "gcc",
+            "binutils",
+            "python",
+            "zstd",
+            "cmake",
+            "vcpkg-tool",
+            "sbom-generator",
+        ),
         "unsupported source kind: %r" % source_kind,
     )
     reader = component_reader()
@@ -270,6 +287,26 @@ def source_for_component(
             "zstd component version differs: expected %s, found %s"
             % (version, component_version),
         )
+    elif source_kind == "sbom-generator":
+        require(
+            version is None,
+            "--version is not valid for SBOM generator sources",
+        )
+        require(
+            expected_component == "sources/sbom-generator",
+            "SBOM generator source requires component sources/sbom-generator",
+        )
+        base = "/sbom/generator"
+        source_base = base + "/source"
+        component_version = _component_material(
+            reader,
+            document,
+            expected_component,
+            expected_scope,
+            expected_sha256,
+            base + "/version",
+            "string",
+        )
     elif source_kind == "cmake":
         require(version is None, "--version is not valid for CMake sources")
         require(
@@ -309,6 +346,11 @@ def source_for_component(
         require(
             component_version == "2026-07-27",
             "vcpkg-tool source version differs",
+        )
+    elif source_kind == "sbom-generator":
+        require(
+            component_version == "1.12.0",
+            "SBOM generator source version differs",
         )
     else:
         require(
@@ -364,6 +406,13 @@ def source_for_component(
             == "https://github.com/microsoft/vcpkg-tool/archive/"
             "98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8.tar.gz",
             "vcpkg-tool source URL differs from commit",
+        )
+    elif source_kind == "sbom-generator":
+        require(
+            source["url"]
+            == "https://github.com/docker/buildkit-syft-scanner/"
+            "archive/refs/tags/v1.12.0.tar.gz",
+            "SBOM generator source URL differs from version",
         )
     return source
 
@@ -588,6 +637,7 @@ def main(argv=None):
             "cmake",
             "vcpkg-tool",
             "binfmt",
+            "sbom-generator",
         ),
     )
     parser.add_argument("--version")
