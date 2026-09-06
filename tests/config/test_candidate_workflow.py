@@ -118,6 +118,17 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn(
             "! grep -F '/opt/crossforge/vcpkg/root/downloads'", self.workflow
         )
+        self.assertIn("cat /opt/crossforge/LICENSES.json", self.workflow)
+        self.assertIn(
+            '"crossforge-license-file-inventory"', self.workflow
+        )
+        self.assertIn(
+            '"file-inventory-not-legal-conclusion"', self.workflow
+        )
+        self.assertIn(
+            'startswith("/opt/crossforge/share/licenses/crossforge/")',
+            self.workflow,
+        )
 
     def test_native_arm_gate_consumes_the_exact_candidate_and_pinned_runtime(self):
         self.assertIn("runs-on: ubuntu-24.04-arm", self.workflow)

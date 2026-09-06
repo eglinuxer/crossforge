@@ -223,7 +223,14 @@ COPY config/generated/components/python/qualification.json \
   /work/config/python-qualification.json
 COPY config/generated/components/product/sdk-qualification.json \
   /work/config/complete-sdk-qualification.json
+COPY config/schemas/release.schema.json \
+  config/schemas/license-file-inventory.schema.json /work/config/schemas/
+COPY config/schemas/license-file-inventory.schema.json \
+  /opt/crossforge/schemas/license-file-inventory.schema.json
+COPY LICENSE-APACHE LICENSE-MIT \
+  /opt/crossforge/share/licenses/crossforge/
 COPY --chmod=0755 scripts/release_component.py \
+  scripts/validate-release.py scripts/license-file-inventory.py \
   scripts/qualify-complete-sdk.py /work/scripts/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-complete-sdk.py \
@@ -245,6 +252,18 @@ RUN --network=none /usr/libexec/platform-python \
         /opt/crossforge/qualification/python-final-sdk.json \
       --crossforge /usr/local/bin/crossforge \
       --output /opt/crossforge/qualification/complete-sdk.json \
+    && /usr/libexec/platform-python /work/scripts/license-file-inventory.py \
+      create --root / \
+      --release /opt/crossforge/release.json \
+      --release-schema /work/config/schemas/release.schema.json \
+      --schema /work/config/schemas/license-file-inventory.schema.json \
+      --output /opt/crossforge/LICENSES.json \
+    && /usr/libexec/platform-python /work/scripts/license-file-inventory.py \
+      validate --root / \
+      --release /opt/crossforge/release.json \
+      --release-schema /work/config/schemas/release.schema.json \
+      --schema /work/config/schemas/license-file-inventory.schema.json \
+      /opt/crossforge/LICENSES.json \
     && rm -rf /work
 WORKDIR /workspace
 

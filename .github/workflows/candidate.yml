@@ -266,6 +266,20 @@ jobs:
             "$RUNNER_TEMP/candidate-source-offer.txt"
           grep -F "${{ steps.source.outputs.archive_sha256 }}" \
             "$RUNNER_TEMP/candidate-source-offer.txt"
+          docker run --rm "$image" cat /opt/crossforge/LICENSES.json \
+            > "$RUNNER_TEMP/candidate-licenses.json"
+          jq -e --slurpfile source "$RUNNER_TEMP/source-binding.json" '
+            .kind == "crossforge-license-file-inventory" and
+            .status == "file-inventory-not-legal-conclusion" and
+            .release_sha256 == $source[0].release_sha256 and
+            .entry_count == (.entries | length) and
+            any(.entries[]; .path | startswith("/usr/share/licenses/")) and
+            any(.entries[]; .path | startswith("/opt/crossforge/host-tools/")) and
+            any(.entries[]; .path | startswith("/opt/crossforge/python/")) and
+            any(.entries[]; .path | startswith("/opt/crossforge/sysroots/")) and
+            any(.entries[]; .path | startswith("/opt/crossforge/vcpkg/")) and
+            any(.entries[]; .path | startswith("/opt/crossforge/share/licenses/crossforge/"))
+          ' "$RUNNER_TEMP/candidate-licenses.json" >/dev/null
           docker run --rm "$image" crossforge --version \
             | grep -E '^crossforge (0|[1-9][0-9]*)\.'
           docker run --rm --read-only \

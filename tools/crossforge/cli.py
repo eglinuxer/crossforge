@@ -96,6 +96,7 @@ def info_document(release, root=Path("/")):
             }
         )
     nfpm = release["nfpm"]
+    license_inventory = Path("/opt/crossforge/LICENSES.json")
     return {
         "schema_version": 1,
         "kind": "crossforge-info",
@@ -118,6 +119,12 @@ def info_document(release, root=Path("/")):
                 / "bin/nfpm"
             ).is_file(),
         },
+        "licenses": {
+            "inventory": str(license_inventory),
+            "installed": (
+                root / str(license_inventory).lstrip("/")
+            ).is_file(),
+        },
     }
 
 
@@ -138,6 +145,7 @@ def print_info(release, as_json):
     )
     print("vcpkg: %s" % document["vcpkg"]["version"])
     print("nFPM: %s" % document["nfpm"]["version"])
+    print("licenses: %s" % document["licenses"]["inventory"])
 
 
 def selected_environment(release, arguments, root=Path("/"), base=None):

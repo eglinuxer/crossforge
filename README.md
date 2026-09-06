@@ -851,8 +851,13 @@ vcpkg port, or publish APT/YUM repositories.
 
 ## License
 
-Crossforge's own code is licensed under either Apache-2.0 or MIT. The eventual
-SDK image will also contain independently licensed upstream components. Every
-public release must ship the corresponding source bundle, license inventory,
-SBOM, provenance, and qualification report described in the architecture
-contract.
+Crossforge's own code is licensed under either Apache-2.0 or MIT. The complete
+SDK embeds both Crossforge license choices and `/opt/crossforge/LICENSES.json`,
+a release-bound inventory of every selected license, notice, authorship, usage,
+and vcpkg port copyright file under the SDK and host license roots. Each entry
+records its in-image path, owning component, role, byte size, and SHA256. The
+inventory explicitly is not a legal conclusion or a substitute for legal
+review. SPDX/CycloneDX SBOM and max-mode provenance are OCI attestations rather
+than files disguised as in-image SBOMs. Every public release must also ship the
+corresponding source bundle and qualification reports described in the
+architecture contract.

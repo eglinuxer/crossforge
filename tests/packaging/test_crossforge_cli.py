@@ -203,12 +203,20 @@ class CrossforgeCliTests(unittest.TestCase):
         self.executable(
             "opt/crossforge/host-tools/nfpm/%s/bin/nfpm" % nfpm["version"]
         )
+        inventory = self.root / "opt/crossforge/LICENSES.json"
+        inventory.parent.mkdir(parents=True, exist_ok=True)
+        inventory.write_text("{}\n", encoding="utf-8")
         document = cli.info_document(self.release, self.root)
         self.assertEqual(document["name"], "crossforge")
         self.assertEqual(document["version"], "0.1.0")
         self.assertEqual(document["targets"], ["aarch64", "x86_64"])
         self.assertTrue(document["vcpkg"]["installed"])
         self.assertTrue(document["nfpm"]["installed"])
+        self.assertEqual(
+            document["licenses"]["inventory"],
+            "/opt/crossforge/LICENSES.json",
+        )
+        self.assertTrue(document["licenses"]["installed"])
         installed_python = {
             item["minor"]: item["installed"] for item in document["python"]
         }

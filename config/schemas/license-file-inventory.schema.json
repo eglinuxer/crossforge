@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/license-file-inventory.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "status",
+    "release_sha256",
+    "roots",
+    "entry_count",
+    "entries"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/license-file-inventory.schema.json"
+    },
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-license-file-inventory"},
+    "status": {"const": "file-inventory-not-legal-conclusion"},
+    "release_sha256": {"$ref": "#/$defs/sha256"},
+    "roots": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {"const": "/opt/crossforge"},
+        {"const": "/usr/share/licenses"}
+      ],
+      "items": false
+    },
+    "entry_count": {"type": "integer", "minimum": 1},
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/entry"}
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "component", "role", "sha256", "size"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/(opt/crossforge|usr/share/licenses)/[^/].*$"
+        },
+        "component": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9+._/-]*$"
+        },
+        "role": {
+          "enum": ["authors", "copyright", "license", "notice", "usage"]
+        },
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}
