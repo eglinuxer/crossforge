@@ -99,6 +99,7 @@ class DockerComponentWiringTests(unittest.TestCase):
         self.assertIn("keys/MICROSOFT-RELEASE-KEY.asc", block)
         self.assertIn("keys/QEMU-RELEASE-KEY.asc", block)
         self.assertIn("keys/CMAKE-RELEASE-KEY.asc", block)
+        self.assertIn("keys/CRAZY-MAX-RELEASE-KEY.asc", block)
         self.assertIn("keys/FFMPEG-RELEASE-KEY.asc", block)
         self.assertIn("keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc", block)
         self.assertIn("COPY licenses/ ./licenses/", block)
