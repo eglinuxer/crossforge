@@ -27,9 +27,11 @@ build-system-independent DEB/RPM packaging.
 > launcher, detached debug packages, dynamic ELF audit, and the complete
 > Python/vcpkg/packaging SDK composition are qualified. The four-suite x86_64
 > GCC full gate now qualifies more than 453,000 PASS occurrences against an
-> exact reviewed baseline. The native ARM release workflow is implemented but
-> still requires its first public-candidate execution; Qt acceptance and the
-> remaining release supply chain are pending.
+> exact reviewed baseline. Qt 6.8.4 source acceptance, host and dual-target
+> builds, clean-Rocky runtime gates, and the explicit-QEMU AArch64 runtime gate
+> are qualified. The native ARM release workflow, including the candidate-bound
+> AArch64 Qt runtime gate, is implemented but still requires its first public
+> candidate execution; the remaining release supply chain is pending.
 > Checked-in Bake outputs remain cache-only; only the manually dispatched
 > public-candidate workflow may emit a user-facing image.
 
@@ -128,9 +130,9 @@ This applies the complete Rocky GCC/binutils SRPM patch sets, builds binutils
 2.44 and GCC 15.2.1 for `x86_64-unknown-linux-gnu`, installs the EL8 shared
 runtime plus RH `libstdc++_nonshared80`, then exercises C, C++20, LTO,
 cross-DSO exceptions, link traces and the frozen ABI contract. The `-dev`
-suffix is intentional: native ARM evidence must still pass for a public
-candidate, while Qt qualification and the complete release supply chain remain
-unfinished. The x86_64 full GCC gate is available separately:
+suffix is intentional: the first public candidate must still supply native ARM
+evidence, and the remaining release supply-chain review is not complete. The
+x86_64 full GCC gate is available separately:
 
 ```console
 $ docker buildx bake gcc-testsuite-full-qualified
@@ -160,11 +162,10 @@ $ ./scripts/validate-qt-qualification.py --require-locked
 
 The plan fixes the eight-module build order, same-version `QT_HOST_PATH`,
 WebEngine host tools and support checks, both target runtimes, and the rule that
-Qt artifacts are qualification-only. The host lock contains 207 RPM payloads;
-the x86_64 and aarch64 target overlays contain 226 and 223 respectively. Their
+Qt artifacts are qualification-only. The host lock contains 191 RPM payloads;
+the x86_64 and aarch64 target overlays contain 205 and 202 respectively. Their
 common package EVRs must match exactly, with only the reviewed x86_64 PCI
-dependency trio allowed to differ. Locked dependencies do not yet mean Qt
-itself is qualified or part of the SDK.
+dependency trio allowed to differ.
 
 The missing Rocky `xcb-util-cursor-devel` input is built from its separately
 signed upstream source for the host and both targets. This gate records the
@@ -174,6 +175,27 @@ only the host runs a `dlopen` probe:
 ```console
 $ docker buildx bake xcb-util-cursor-qualified
 ```
+
+Build and qualify the same Qt source first for the host tools and then for both
+EL8 targets without executing target code during the cross stages:
+
+```console
+$ docker buildx bake qt-host-qualified qt-target-build-qualified
+```
+
+Runtime qualification uses independent 181-package x86_64 and 179-package
+AArch64 closures. It checks the ELF/provider closure and loads the offscreen,
+XCB, Wayland, FFmpeg and Widgets paths on clean Rocky roots. AArch64 runs
+through the pinned explicit QEMU boundary during normal qualification; the
+public-candidate workflow repeats it on a native ARM64 runner.
+
+```console
+$ ./scripts/validate-qt-runtime-qualification.py --require-locked
+$ docker buildx bake qt-target-runtime-qualified
+```
+
+These Qt artifacts and runtime roots remain qualification-only and do not enter
+the SDK or candidate image.
 
 ## Phase 3: reproducible RPM foundation
 
@@ -678,10 +700,12 @@ unique `candidate-v<version>-g<commit>-r<run>-a<attempt>` tag, pushes with max
 provenance and SBOM attestations, reconstructs `candidate.json` from the raw
 OCI index, then logs out of GHCR and proves the digest is anonymously readable.
 It then uses that exact public digest to cross-compile a deterministic,
-SHA256-bound AArch64 probe tar. A separate `ubuntu-24.04-arm` job executes the
-probes without QEMU inside the pinned Rocky Linux 8.10 arm64 manifest and
-uploads the strict native qualification report. It never creates a SemVer or
-stable-channel tag.
+SHA256-bound AArch64 probe tar. In parallel, the publish runner exports the
+qualified AArch64 Qt runtime root without QEMU and binds its digest to the same
+candidate. A separate `ubuntu-24.04-arm` job executes the compiler probes and
+Qt runtime gate without QEMU inside the pinned Rocky Linux 8.10 arm64 manifest,
+then uploads both strict native qualification reports. It never creates a
+SemVer or stable-channel tag.
 
 The public candidate runs as `crossforge` UID/GID 1000 by default. `/opt/crossforge`
 remains root-owned; only the workspace, home, cache and temporary directories are

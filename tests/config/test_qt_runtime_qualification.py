@@ -1,4 +1,5 @@
 import copy
+import json
 import runpy
 import unittest
 from pathlib import Path
@@ -97,6 +98,67 @@ class QtRuntimeQualificationTests(unittest.TestCase):
         self.assertIn("qt-aarch64-native-runtime-root", candidate)
         self.assertIn("--native-release", candidate)
         self.assertIn("--candidate /input/candidate.json", candidate)
+
+    def test_user_documentation_reports_current_qt_qualification_state(self):
+        readme = (REPOSITORY / "README.md").read_text(encoding="utf-8")
+        architecture = (REPOSITORY / "docs/architecture.md").read_text(
+            encoding="utf-8"
+        )
+        normalized = " ".join(
+            (readme + architecture).replace("> ", "").split()
+        )
+        for stale in (
+            "Qt acceptance and the remaining release supply chain are pending",
+            "Locked dependencies do not yet mean Qt itself is qualified",
+            "Qt 双 target 运行时资格及其余发布供应链尚未完成",
+            "只服务未来 Qt qualification",
+        ):
+            with self.subTest(stale=stale):
+                self.assertNotIn(stale, normalized)
+        self.assertIn(
+            "docker buildx bake qt-host-qualified qt-target-build-qualified",
+            readme,
+        )
+        self.assertIn(
+            "docker buildx bake qt-target-runtime-qualified", readme
+        )
+        build_counts = {
+            name: len(
+                json.loads(
+                    (REPOSITORY / "locks" / name).read_text(
+                        encoding="utf-8"
+                    )
+                )["packages"]
+            )
+            for name in (
+                "host-qt-build-el8-x86_64.json",
+                "qt-target-el8-x86_64.json",
+                "qt-target-el8-aarch64.json",
+            )
+        }
+        self.assertIn(
+            "The host lock contains %d RPM payloads"
+            % build_counts["host-qt-build-el8-x86_64.json"],
+            normalized,
+        )
+        self.assertIn(
+            "target overlays contain %d and %d respectively"
+            % (
+                build_counts["qt-target-el8-x86_64.json"],
+                build_counts["qt-target-el8-aarch64.json"],
+            ),
+            normalized,
+        )
+        self.assertIn(
+            "%d-package x86_64 and %d-package AArch64 closures"
+            % (
+                self.contract["runtime_pair"]["x86_64_packages"],
+                self.contract["runtime_pair"]["aarch64_packages"],
+            ),
+            normalized,
+        )
+        self.assertIn("candidate-bound AArch64 Qt runtime gate", normalized)
+        self.assertIn("candidate-bound Qt 运行时", normalized)
 
 
 if __name__ == "__main__":
