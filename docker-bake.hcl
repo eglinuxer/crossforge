@@ -115,6 +115,12 @@ target "rpm-source-lock-validated" {
   output   = ["type=cacheonly"]
 }
 
+target "rpm-source-bundle" {
+  inherits = ["_common"]
+  target   = "rpm-source-bundle-output"
+  output   = ["type=cacheonly"]
+}
+
 target "sdk-skeleton" {
   inherits = ["_common"]
   target   = "sdk-skeleton"

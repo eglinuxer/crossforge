@@ -222,6 +222,28 @@ FROM scratch AS rpm-source-lock-validated-output
 COPY --from=rpm-source-lock-validated /src/locks/rpm-source-el8.json \
   /rpm-source-el8.json
 
+FROM config-validate AS rpm-source-bundle-fetch
+COPY locks/ ./locks/
+COPY keys/RPM-GPG-KEY-rockyofficial ./keys/RPM-GPG-KEY-rockyofficial
+COPY scripts/release_component.py scripts/validate-rpm-lock.py \
+  scripts/build-rpm-source-requirements.py \
+  scripts/resolve-rpm-source-lock.py \
+  scripts/validate-rpm-source-lock.py \
+  scripts/fetch-rpm-source-bundle.py ./scripts/
+RUN /usr/libexec/platform-python ./scripts/fetch-rpm-source-bundle.py fetch \
+      --bundle /source-rpms --jobs 8
+
+FROM rpm-source-bundle-fetch AS rpm-source-bundle-verified
+RUN --network=none rpm --import ./keys/RPM-GPG-KEY-rockyofficial \
+    && /usr/libexec/platform-python \
+      ./scripts/fetch-rpm-source-bundle.py verify \
+      --bundle /source-rpms
+
+FROM scratch AS rpm-source-bundle-output
+COPY --from=rpm-source-bundle-verified /source-rpms/ /source-rpms/
+COPY --from=rpm-source-bundle-verified /src/locks/rpm-source-el8.json \
+  /rpm-source-el8.json
+
 FROM config-validate AS platform-python-check
 COPY scripts/ ./scripts/
 COPY docker/*.py ./docker/

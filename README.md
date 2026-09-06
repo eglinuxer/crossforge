@@ -555,6 +555,19 @@ aliases, sizes, SHA256 values, source-header checks and Rocky signatures for
 networked resolver remains an explicit maintenance-only target. Neither the
 RPMDB nor source material enters the SDK.
 
+`rpm-source-bundle` is the release-side byte materializer. It downloads only
+the 333 reviewed primary URLs from the checked lock, verifies size and SHA256
+during fetch, then rechecks every source header and Rocky signature under
+`--network=none` before exporting a scratch-only `/source-rpms` tree:
+
+```console
+$ docker buildx bake rpm-source-bundle
+```
+
+This target does not query DNF repositories and is intentionally excluded from
+ordinary CI because it transfers about 1.46 GB; the final source-bundle gate
+will consume it when assembling a public candidate.
+
 ## Phase 13: vcpkg source and SDK integration
 
 Crossforge pins the immutable vcpkg `2026.07.29` release at commit

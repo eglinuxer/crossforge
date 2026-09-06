@@ -455,9 +455,11 @@ repository/URL、大小、SHA256、source header 和 Rocky 签名结论，总计
 BaseOS/AppStream 的同名 URL 必须下载两份并证明字节一致。`rpm-source-lock-maintenance`
 是唯一允许重新查询 source repositories 的维护目标，不进入 CI/candidate；正常门禁
 `rpm-source-lock-validated` 只在断网阶段交叉验证 release pin、requirements、333 项、
-别名优先级、Rocky trust 和总字节数。该 content lock 已完成，但在下游实际下载并组装
-所有 SRPM、其他上游源码、补丁、构建脚本与许可证之前，仍不得发布名为完整 source
-bundle 的产物。
+别名优先级、Rocky trust 和总字节数。`rpm-source-bundle` 随后只按 lock 的 primary URL
+下载全部 1.46 GB 字节，下载时核对大小/SHA256，再于 `--network=none` 阶段逐项重验
+source header 与 Rocky 签名并输出 scratch-only `/source-rpms`。RPM 字节闭包因此已可实际
+组装；但在它与其他上游源码、补丁、精确项目快照、构建脚本与许可证合并并生成统一
+manifest 之前，仍不得发布名为完整 source bundle 的产物。
 
 ## 13. 维护与演进规则
 
