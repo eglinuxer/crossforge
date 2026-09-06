@@ -122,6 +122,49 @@ jobs:
           printf 'platform_digest=%s\n' "$source_platform_digest" >> "$GITHUB_OUTPUT"
           printf 'archive_sha256=%s\n' "$source_archive_sha256" >> "$GITHUB_OUTPUT"
           printf 'archive_size=%s\n' "$source_archive_size" >> "$GITHUB_OUTPUT"
+      - name: Prove the complete source payload is anonymously retrievable
+        env:
+          SOURCE_DIGEST: ${{ steps.source.outputs.digest }}
+          SOURCE_PLATFORM_DIGEST: ${{ steps.source.outputs.platform_digest }}
+          SOURCE_ARCHIVE_SHA256: ${{ steps.source.outputs.archive_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          docker logout ghcr.io
+          source_image="$CANDIDATE_REPOSITORY@$SOURCE_DIGEST"
+          docker buildx imagetools inspect "$source_image" --raw \
+            > "$RUNNER_TEMP/anonymous-source-index.json"
+          anonymous_source_platform=$(./scripts/resolve_candidate_image.py \
+            platform-digest --index "$RUNNER_TEMP/anonymous-source-index.json" \
+            --expected-digest "$SOURCE_DIGEST")
+          test "$anonymous_source_platform" = "$SOURCE_PLATFORM_DIGEST"
+          source_identity="$RUNNER_TEMP/source-bundle-identity/source-bundle.json"
+          source_archive_file=$(jq -r .archive.file "$source_identity")
+          test "$source_archive_file" = \
+            "crossforge-source-$GITHUB_SHA.tar.zst"
+          source_container=""
+          cleanup_source_container() {
+            if test -n "$source_container"; then
+              docker rm --force "$source_container" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_source_container EXIT
+          source_container=$(docker create --pull=always \
+            --platform linux/amd64 "$source_image" /bin/true)
+          observed_source_sha256=$(docker export "$source_container" \
+            | tar -xOf - "$source_archive_file" \
+            | sha256sum | awk '{print $1}')
+          test "$observed_source_sha256" = "$SOURCE_ARCHIVE_SHA256"
+          docker rm "$source_container"
+          source_container=""
+          trap - EXIT
+          docker image rm "$source_image" >/dev/null 2>&1 || true
+      - name: Log back in to GHCR for SDK publication
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$GHCR_TOKEN" \
+            | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
       - name: Build once and push the source-bound candidate
         env:
           CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}

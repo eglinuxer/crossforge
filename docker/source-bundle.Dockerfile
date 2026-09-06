@@ -158,7 +158,12 @@ RUN --network=none \
       > "crossforge-source-${CROSSFORGE_SOURCE_COMMIT}.tar.zst.sha256"
 
 FROM scratch AS source-bundle-output
+ARG CROSSFORGE_SOURCE_COMMIT
 COPY --from=source-bundle-assemble /out/ /
+LABEL org.opencontainers.image.title="Crossforge corresponding source" \
+      org.opencontainers.image.description="Complete corresponding source for a Crossforge SDK candidate" \
+      org.opencontainers.image.source="https://github.com/eglinuxer/crossforge" \
+      org.opencontainers.image.revision="${CROSSFORGE_SOURCE_COMMIT}"
 
 FROM source-bundle-assemble AS source-bundle-identity
 ARG CROSSFORGE_SOURCE_COMMIT

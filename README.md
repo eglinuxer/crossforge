@@ -803,7 +803,11 @@ OCI index, builds and pushes the corresponding source archive under a paired
 `source-candidate-*` tag, then logs out of GHCR and proves both digests are
 anonymously readable. The source is built first; its exact OCI/archive identity
 is embedded into the SDK's `SOURCES.json`, and the workflow byte-compares that
-file with the same binding used to construct `candidate.json`.
+file with the same binding used to construct `candidate.json`. Before spending
+the SDK build budget, the workflow logs out, anonymously pulls the source image,
+streams the complete archive from its scratch filesystem, and verifies the
+archive SHA256; a manifest-only visibility check is not accepted as proof that
+downstream users can retrieve the corresponding source payload.
 It then uses that exact public digest to cross-compile a deterministic,
 SHA256-bound AArch64 probe tar. In parallel, the publish runner exports the
 qualified AArch64 Qt runtime root without QEMU and binds its digest to the same

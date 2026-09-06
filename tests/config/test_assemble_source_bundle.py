@@ -135,6 +135,14 @@ class AssembleSourceBundleTests(unittest.TestCase):
             dockerfile,
         )
         self.assertIn("source-bundle-identity.py", dockerfile)
+        self.assertIn(
+            'org.opencontainers.image.source="https://github.com/eglinuxer/crossforge"',
+            dockerfile,
+        )
+        self.assertIn(
+            'org.opencontainers.image.revision="${CROSSFORGE_SOURCE_COMMIT}"',
+            dockerfile,
+        )
 
     def test_archive_identity_requires_a_portable_exact_checksum(self):
         commit = "1" * 40

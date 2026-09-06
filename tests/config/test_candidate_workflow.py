@@ -64,6 +64,24 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("source-bundle.attest+=type=sbom", self.workflow)
         self.assertIn("docker buildx bake source-bundle-identity", self.workflow)
         self.assertIn("anonymous-source-index.json", self.workflow)
+        self.assertIn(
+            "Prove the complete source payload is anonymously retrievable",
+            self.workflow,
+        )
+        self.assertIn("docker create --pull=always", self.workflow)
+        self.assertIn("--platform linux/amd64 \"$source_image\" /bin/true", self.workflow)
+        self.assertIn('tar -xOf - "$source_archive_file"', self.workflow)
+        self.assertIn(
+            'test "$observed_source_sha256" = "$SOURCE_ARCHIVE_SHA256"',
+            self.workflow,
+        )
+        source_proof = self.workflow.index(
+            "Prove the complete source payload is anonymously retrievable"
+        )
+        sdk_build = self.workflow.index(
+            "Build once and push the source-bound candidate"
+        )
+        self.assertLess(source_proof, sdk_build)
         self.assertIn('"$cosign" sign --yes "$source_image"', self.workflow)
         self.assertIn("source-bundle-signature.json", self.workflow)
         self.assertNotIn("source-bundle", self.ci)

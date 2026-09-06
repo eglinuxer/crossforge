@@ -442,7 +442,7 @@ Actions OIDC issuer 和 `trusted_root.json` 匿名执行 `cosign verify`，并�
 signature 的 repository/digest。签名证据作为 90 天 workflow artifact 保存；签名失败
 或 native job 未完成时工作流整体失败，且仍不得创建 SemVer/稳定标签。
 
-镜像内保留 `SOURCES.json`、`SOURCE-OFFER`、SBOM 和第三方许可证。candidate 必须先生成并公开 source OCI，再把其 repository@digest、platform manifest、归档文件名、SHA256、大小、release digest 与 source commit 组成严格 source binding 写入 SDK；匿名拉取 SDK 后必须逐字节比较该 binding 与构造 `candidate.json` 的输入，并检查人类可读 offer 同时包含 source digest 和 archive hash。发布门禁必须保证每个二进制组件可映射到长期可取得的准确源码。对外措辞只能表述为 “GTS-derived cross SDK built from Rocky Linux rebuild sources”，不得暗示 Red Hat 或 Rocky 官方支持、认证或背书；首次公开发布前仍需正式法律复核。
+镜像内保留 `SOURCES.json`、`SOURCE-OFFER`、SBOM 和第三方许可证。candidate 必须先生成并公开带 repository/revision OCI 标签的 source OCI，再把其 repository@digest、platform manifest、归档文件名、SHA256、大小、release digest 与 source commit 组成严格 source binding 写入 SDK。SDK 构建前必须退出 registry：不仅匿名解析 source OCI index，还要无凭据拉取实际 source platform、从 scratch 文件系统流式读取完整归档并重算 SHA256；只有 payload 可取得才允许重新登录并继续构建 SDK。匿名拉取 SDK 后还必须逐字节比较该 binding 与构造 `candidate.json` 的输入，并检查人类可读 offer 同时包含 source digest 和 archive hash。发布门禁必须保证每个二进制组件可映射到长期可取得的准确源码。对外措辞只能表述为 “GTS-derived cross SDK built from Rocky Linux rebuild sources”，不得暗示 Red Hat 或 Rocky 官方支持、认证或背书；首次公开发布前仍需正式法律复核。
 
 source bundle 不能只枚举构建过程中显式下载的 RPM。固定 amd64 Rocky child
 本身含 148 个 base package；`rocky-base-source-map` 在该精确 child 的 RPMDB 中以
