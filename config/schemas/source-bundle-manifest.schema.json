@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/source-bundle-manifest.schema.json",
+  "title": "Crossforge complete source bundle manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "release_sha256",
+    "source_commit",
+    "rpm_source_lock",
+    "entries",
+    "summary"
+  ],
+  "properties": {
+    "$schema": {"const": "https://crossforge.dev/schemas/source-bundle-manifest.schema.json"},
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-source-bundle"},
+    "release_sha256": {"$ref": "#/$defs/sha256"},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "rpm_source_lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "canonical_sha256", "source_rpms", "source_bytes"],
+      "properties": {
+        "file": {"const": "metadata/rpm-source-el8.json"},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "source_rpms": {"const": 333},
+        "source_bytes": {"const": 1456725209}
+      }
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 350,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "scope", "kind", "component", "sha256", "size", "origin"],
+        "properties": {
+          "path": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/+:-]*$"},
+          "scope": {"enum": ["product", "qualification", "verification", "metadata"]},
+          "kind": {"enum": ["source-rpm", "source-archive", "project-snapshot", "registry-snapshot", "signature", "checksum", "sigstore-bundle", "public-key", "source-manifest", "source-lock"]},
+          "component": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]*$"},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "size": {"type": "integer", "minimum": 1},
+          "origin": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entries", "bytes", "source_rpms", "source_archives", "verification_materials", "metadata_files"],
+      "properties": {
+        "entries": {"type": "integer", "minimum": 350},
+        "bytes": {"type": "integer", "minimum": 1456725209},
+        "source_rpms": {"const": 333},
+        "source_archives": {"type": "integer", "minimum": 18},
+        "verification_materials": {"type": "integer", "minimum": 20},
+        "metadata_files": {"type": "integer", "minimum": 8}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

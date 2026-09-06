@@ -229,6 +229,9 @@ class CrosspackComponentTests(unittest.TestCase):
             REPOSITORY / "config/generated/components/sources/nfpm.json",
             RENDERER["canonical_sha256"](component),
         )
+        preparer_source = PREPARER_PATH.read_text(encoding="utf-8")
+        self.assertIn('materials / "checksums.txt"', preparer_source)
+        self.assertIn('materials / "checksums.txt.sigstore.json"', preparer_source)
         tampered = copy.deepcopy(component)
         tampered["materials"].pop()
         with self.assertRaises(PREPARER["PreparationError"]):

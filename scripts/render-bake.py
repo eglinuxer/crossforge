@@ -137,6 +137,13 @@ def main_bake_target_stages(repository):
         hcl,
         re.MULTILINE | re.DOTALL,
     ):
+        dockerfile = re.search(
+            r'^\s*dockerfile\s*=\s*"([^"]+)"\s*$',
+            match.group(2),
+            re.MULTILINE,
+        )
+        if dockerfile is not None and dockerfile.group(1) != "docker/Dockerfile":
+            continue
         target = re.search(
             r'^\s*target\s*=\s*"([^"]+)"\s*$',
             match.group(2),

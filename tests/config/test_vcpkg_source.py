@@ -157,6 +157,9 @@ class VcpkgSourceTests(unittest.TestCase):
             'materials = output.parent / "materials"',
             PREPARER_PATH.read_text(encoding="utf-8"),
         )
+        preparer = PREPARER_PATH.read_text(encoding="utf-8")
+        self.assertIn('materials / "vcpkg-glibc.sig"', preparer)
+        self.assertIn('materials / "MICROSOFT-RELEASE-KEY.asc"', preparer)
         self.assertIn("FROM scratch AS vcpkg-source-export", dockerfile)
         hcl = (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8")
         self.assertIn('target "_vcpkg_common"', hcl)

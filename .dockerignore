@@ -5,4 +5,6 @@ stage/
 cache/
 __pycache__/
 *.py[cod]
+.agents/
+.codex/
 .git/

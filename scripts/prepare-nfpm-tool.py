@@ -504,6 +504,14 @@ def prepare(
         )
         source_output.parent.mkdir(parents=True)
         shutil.copyfile(str(source_archive), str(source_output))
+        materials = temporary / "materials"
+        materials.mkdir()
+        checksums_output = materials / "checksums.txt"
+        sigstore_output = materials / "checksums.txt.sigstore.json"
+        shutil.copyfile(str(checksums), str(checksums_output))
+        shutil.copyfile(str(sigstore), str(sigstore_output))
+        for path in (source_output, checksums_output, sigstore_output):
+            os.chmod(str(path), 0o644)
         version_output_sha256 = verify_binary(installed_binary, identity)
         report = {
             "schema_version": 1,
@@ -531,6 +539,10 @@ def prepare(
                 "records": checksum_records,
             },
             "sigstore": sigstore_result,
+            "verification_materials": {
+                "checksums": "checksums.txt",
+                "sigstore": "checksums.txt.sigstore.json",
+            },
             "license": {
                 "expression": identity["/nfpm/license/expression"],
                 "sha256": identity["/nfpm/license/sha256"],

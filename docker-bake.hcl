@@ -50,6 +50,40 @@ target "_qt_common" {
   platforms  = ["linux/amd64"]
 }
 
+variable "CROSSFORGE_SOURCE_COMMIT" {
+  default = "0000000000000000000000000000000000000000"
+}
+
+target "source-bundle" {
+  context    = "."
+  dockerfile = "docker/source-bundle.Dockerfile"
+  platforms  = ["linux/amd64"]
+  target     = "source-bundle-output"
+  args = {
+    CROSSFORGE_SOURCE_COMMIT = CROSSFORGE_SOURCE_COMMIT
+  }
+  contexts = {
+    crossforge_host_common    = "target:host-build-common-locked"
+    crossforge_rpm_sources    = "target:rpm-source-bundle"
+    crossforge_qemu_source    = "target:qemu-source-qualified"
+    crossforge_cmake_source   = "target:cmake-source"
+    crossforge_ninja_source   = "target:ninja-source"
+    crossforge_vcpkg_source   = "target:vcpkg-source"
+    crossforge_nfpm_tool      = "target:nfpm-tool"
+    crossforge_zstd_source    = "target:zstd-source"
+    crossforge_qt_source      = "target:qt-source"
+    crossforge_ffmpeg_source  = "target:ffmpeg-source"
+    crossforge_xcb_source     = "target:xcb-util-cursor-source"
+    crossforge_cpython_cp39   = "target:cpython-source-cp39"
+    crossforge_cpython_cp310  = "target:cpython-source-cp310"
+    crossforge_cpython_cp311  = "target:cpython-source-cp311"
+    crossforge_cpython_cp312  = "target:cpython-source-cp312"
+    crossforge_cpython_cp313  = "target:cpython-source-cp313"
+    crossforge_cpython_cp314  = "target:cpython-source-cp314"
+  }
+  output = ["type=cacheonly"]
+}
+
 group "default" {
   targets = ["validate"]
 }

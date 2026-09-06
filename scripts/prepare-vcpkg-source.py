@@ -621,6 +621,17 @@ def prepare(
     tool_source_output = materials / tool_source_evidence["file"]
     shutil.copyfile(str(tool_source), str(tool_source_output))
     os.chmod(str(tool_source_output), 0o644)
+    signature_output = materials / "vcpkg-glibc.sig"
+    shutil.copyfile(str(signature), str(signature_output))
+    os.chmod(str(signature_output), 0o644)
+    key = safe_input(
+        input_root,
+        identity["/vcpkg/tool/signature/key/file"],
+        "Microsoft release key",
+    )
+    key_output = materials / "MICROSOFT-RELEASE-KEY.asc"
+    shutil.copyfile(str(key), str(key_output))
+    os.chmod(str(key_output), 0o644)
     manifest = {
         "schema_version": 1,
         "kind": "crossforge-vcpkg-source",
@@ -629,7 +640,14 @@ def prepare(
             "canonical_sha256": component_sha256,
         },
         "registry": repository_evidence,
-        "tool": dict(tool_evidence, source=tool_source_evidence),
+        "tool": dict(
+            tool_evidence,
+            source=tool_source_evidence,
+            verification_materials={
+                "signature": "vcpkg-glibc.sig",
+                "key": "MICROSOFT-RELEASE-KEY.asc",
+            },
+        ),
         "licenses": license_evidence,
     }
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
