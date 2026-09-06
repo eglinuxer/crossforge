@@ -41,7 +41,15 @@ runs:
             echo "GitHub control-plane request failed: $endpoint" >&2
             return 1
           fi
-          test "$status" = 200
+          if test "$status" != 200; then
+            echo "GitHub control-plane request failed: $endpoint returned HTTP $status" >&2
+            case "$endpoint" in
+              immutable-releases|actions/permissions/workflow)
+                echo 'Verify RELEASE_ADMIN_TOKEN has Administration: read for this repository' >&2
+                ;;
+            esac
+            return 1
+          fi
         }
         api_get immutable-releases "$root/immutable-releases.json"
         api_get private-vulnerability-reporting \

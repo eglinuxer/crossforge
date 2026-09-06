@@ -869,7 +869,10 @@ environment secret `RELEASE_ADMIN_TOKEN`; promotion and rollback fail early
 when it is absent, and use it only for the read-only control-plane preflight.
 Private Vulnerability Reporting must also be enabled so
 undisclosed security defects never need a public issue; the workflow verifies
-that setting in the same preflight. The
+that setting in the same preflight. Before the first promotion, dispatch
+`release-control-plane.yml` and approve its `production` deployment to verify
+the environment, reviewer gate, Secret permissions, branch policy, and
+repository settings without creating a tag, release, or package. The
 workflow checks out the candidate run's exact `main` commit, downloads the four
 exact run/attempt artifacts, byte-compares every copy of `candidate.json`, and
 revalidates the source binding, native AArch64 compiler report, native Qt

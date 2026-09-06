@@ -1,0 +1,22 @@
+name: release control-plane audit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Validate the protected release control plane
+        uses: ./.github/actions/validate-release-control-plane
+        with:
+          admin-token: ${{ secrets.RELEASE_ADMIN_TOKEN }}
+          output: ${{ runner.temp }}/release-control-plane.json
+      - name: Report the validated controls
+        run: jq --sort-keys . "$RUNNER_TEMP/release-control-plane.json"

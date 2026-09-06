@@ -160,6 +160,29 @@ class ReleaseControlPlaneTests(unittest.TestCase):
         first_download = promotion.index("uses: actions/download-artifact@")
         self.assertLess(control_plane, first_download)
 
+    def test_manual_control_plane_audit_is_read_only_and_protected(self):
+        audit = (
+            REPOSITORY / ".github/workflows/release-control-plane.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", audit)
+        self.assertNotIn("\n  push:", audit)
+        self.assertNotIn("\n  schedule:", audit)
+        self.assertIn("permissions:\n  contents: read", audit)
+        self.assertIn("environment: production", audit)
+        self.assertIn(
+            "uses: ./.github/actions/validate-release-control-plane", audit
+        )
+        self.assertIn(
+            "admin-token: ${{ secrets.RELEASE_ADMIN_TOKEN }}", audit
+        )
+        for permission in (
+            "contents: write",
+            "packages: write",
+            "id-token: write",
+        ):
+            with self.subTest(permission=permission):
+                self.assertNotIn(permission, audit)
+
     def test_validator_is_python36_compatible(self):
         ast.parse(
             SCRIPT.read_text(encoding="utf-8"),
