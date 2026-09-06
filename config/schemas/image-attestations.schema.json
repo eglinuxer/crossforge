@@ -44,13 +44,13 @@
         "properties": {
           "predicate_type": {
             "enum": [
-              "https://slsa.dev/provenance/v0.2",
+              "https://slsa.dev/provenance/v1",
               "https://spdx.dev/Document"
             ]
           },
           "digest": {"$ref": "#/$defs/oci_digest"},
           "size": {"type": "integer", "minimum": 1, "maximum": 268435456},
-          "statement_type": {"const": "https://in-toto.io/Statement/v0.1"}
+          "statement_type": {"const": "https://in-toto.io/Statement/v1"}
         }
       }
     },

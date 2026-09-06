@@ -815,6 +815,12 @@ the SDK build budget, the workflow logs out, anonymously pulls the source image,
 streams the complete archive from its scratch filesystem, and verifies the
 archive SHA256; a manifest-only visibility check is not accepted as proof that
 downstream users can retrieve the corresponding source payload.
+The same anonymous boundary fetches each OCI attestation manifest and its raw
+blobs, recomputes descriptor sizes and digests, and requires exactly one
+in-toto SLSA v1 max-provenance statement plus one SPDX document for both the
+source and SDK platform manifests. Provenance must name the exact Bake target
+and clean source revision. The resulting strict reports are candidate-bound
+evidence, not a claim inferred from Buildx command-line flags.
 It then uses that exact public digest to cross-compile a deterministic,
 SHA256-bound AArch64 probe tar. In parallel, the publish runner exports the
 qualified AArch64 Qt runtime root without QEMU and binds its digest to the same
@@ -861,7 +867,7 @@ bound source digest. Existing version tags are accepted only when they already
 resolve to the selected digest; a different version-tag digest fails closed.
 The mutable channels move only after both immutable version tags exist, and
 all four references are resolved anonymously again before strict
-`release-promotion.json` evidence is produced. Fourteen original evidence files
+`release-promotion.json` evidence is produced. Sixteen original evidence files
 are also placed in a deterministic USTAR with a strict per-file manifest and
 SHA256 sidecar. The workflow creates a draft GitHub Release, uploads the archive,
 sidecar, candidate identity and promotion identity, moves the OCI channels, and

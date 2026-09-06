@@ -1,0 +1,115 @@
+name: Validate public image attestations
+description: Fetch and validate digest-bound SLSA v1 and SPDX attestations anonymously
+inputs:
+  repository:
+    description: Public OCI repository without a tag or digest
+    required: true
+  index:
+    description: Path to the already fetched raw OCI index
+    required: true
+  index-digest:
+    description: Expected OCI index digest
+    required: true
+  platform-digest:
+    description: Expected linux/amd64 platform manifest digest
+    required: true
+  image-kind:
+    description: sdk-candidate or source-bundle
+    required: true
+  source-commit:
+    description: Full source commit expected in max provenance
+    required: true
+  output:
+    description: Destination for the strict validation report
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        IMAGE_KIND: ${{ inputs.image-kind }}
+        INDEX_DIGEST: ${{ inputs.index-digest }}
+        INDEX_PATH: ${{ inputs.index }}
+        OUTPUT_PATH: ${{ inputs.output }}
+        PLATFORM_DIGEST: ${{ inputs.platform-digest }}
+        PUBLIC_REPOSITORY: ${{ inputs.repository }}
+        SOURCE_COMMIT: ${{ inputs.source-commit }}
+      run: |
+        set -Eeuo pipefail
+        case "$PUBLIC_REPOSITORY:$IMAGE_KIND" in
+          ghcr.io/*:sdk-candidate|ghcr.io/*:source-bundle) ;;
+          *) echo 'invalid public attestation repository or image kind' >&2; exit 1 ;;
+        esac
+        registry_path=${PUBLIC_REPOSITORY#ghcr.io/}
+        registry_token=$(curl --fail --silent --show-error --location \
+          --retry 5 --retry-all-errors --retry-delay 2 \
+          --connect-timeout 30 --get \
+          --data-urlencode 'service=ghcr.io' \
+          --data-urlencode "scope=repository:$registry_path:pull" \
+          https://ghcr.io/token | jq -er '.token // .access_token')
+        evidence_root=$(mktemp -d "$RUNNER_TEMP/public-attestations.XXXXXXXX")
+        cleanup_attestations() {
+          rm -rf "$evidence_root"
+        }
+        trap cleanup_attestations EXIT
+        registry_get() {
+          local endpoint=$1
+          local accept=$2
+          local output=$3
+          local status
+          if ! status=$(curl --silent --show-error --location \
+            --retry 5 --retry-all-errors --retry-delay 2 \
+            --connect-timeout 30 \
+            -H "Authorization: Bearer $registry_token" \
+            -H "Accept: $accept" \
+            -o "$output" -w '%{http_code}' \
+            "https://ghcr.io/v2/$registry_path/$endpoint"); then
+            echo "anonymous registry request failed: $endpoint" >&2
+            return 1
+          fi
+          test "$status" = 200
+        }
+        manifest_digest=$(jq -er --arg platform "$PLATFORM_DIGEST" '
+          [.manifests[] | select(
+            .platform.os == "unknown" and
+            .platform.architecture == "unknown" and
+            .annotations."vnd.docker.reference.type" ==
+              "attestation-manifest" and
+            .annotations."vnd.docker.reference.digest" == $platform
+          )] | if length == 1 then .[0].digest else error(
+            "expected one attestation manifest") end
+        ' "$INDEX_PATH")
+        registry_get "manifests/$manifest_digest" \
+          'application/vnd.oci.image.manifest.v1+json' \
+          "$evidence_root/manifest.json"
+        provenance_digest=$(jq -er '
+          [.layers[] | select(
+            .annotations."in-toto.io/predicate-type" ==
+              "https://slsa.dev/provenance/v1"
+          )] | if length == 1 then .[0].digest else error(
+            "expected one SLSA provenance") end
+        ' "$evidence_root/manifest.json")
+        sbom_digest=$(jq -er '
+          [.layers[] | select(
+            .annotations."in-toto.io/predicate-type" ==
+              "https://spdx.dev/Document"
+          )] | if length == 1 then .[0].digest else error(
+            "expected one SPDX SBOM") end
+        ' "$evidence_root/manifest.json")
+        registry_get "blobs/$provenance_digest" \
+          'application/vnd.in-toto+json' "$evidence_root/provenance.json"
+        registry_get "blobs/$sbom_digest" \
+          'application/vnd.in-toto+json' "$evidence_root/sbom.json"
+        "$GITHUB_WORKSPACE/scripts/image_attestations.py" \
+          --index "$INDEX_PATH" \
+          --expected-index-digest "$INDEX_DIGEST" \
+          --platform-manifest-digest "$PLATFORM_DIGEST" \
+          --attestation-manifest "$evidence_root/manifest.json" \
+          --provenance "$evidence_root/provenance.json" \
+          --sbom "$evidence_root/sbom.json" \
+          --image-kind "$IMAGE_KIND" \
+          --repository "$PUBLIC_REPOSITORY" \
+          --source-commit "$SOURCE_COMMIT" \
+          --output "$OUTPUT_PATH"
+        trap - EXIT
+        cleanup_attestations

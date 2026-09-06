@@ -140,6 +140,55 @@ class ReleaseEvidenceTests(unittest.TestCase):
         self.write_json(paths["release-promotion.json"], promotion)
         self.write_json(paths["release.json"], release)
         self.write_json(paths["sigstore-verification.json"], sigstore)
+        for name, image_kind, selected in (
+            ("sdk-attestations.json", "sdk-candidate", candidate),
+            (
+                "source-attestations.json",
+                "source-bundle",
+                candidate["source_bundle"],
+            ),
+        ):
+            self.write_json(
+                paths[name],
+                {
+                    "$schema": EVIDENCE["IMAGE_ATTESTATIONS"]["SCHEMA_ID"],
+                    "schema_version": 1,
+                    "kind": "crossforge-public-image-attestations",
+                    "image_kind": image_kind,
+                    "source_commit": commit,
+                    "repository": selected["repository"],
+                    "index_digest": selected["digest"],
+                    "platform_manifest_digest": selected[
+                        "platform_manifest_digest"
+                    ],
+                    "attestation_manifest": {
+                        "digest": "sha256:" + "9" * 64,
+                        "size": 123,
+                    },
+                    "attestations": [
+                        {
+                            "predicate_type": "https://slsa.dev/provenance/v1",
+                            "digest": "sha256:" + "a" * 64,
+                            "size": 456,
+                            "statement_type": "https://in-toto.io/Statement/v1",
+                        },
+                        {
+                            "predicate_type": "https://spdx.dev/Document",
+                            "digest": "sha256:" + "b" * 64,
+                            "size": 789,
+                            "statement_type": "https://in-toto.io/Statement/v1",
+                        },
+                    ],
+                    "checks": {
+                        "oci_artifact": True,
+                        "subject_bound": True,
+                        "blob_digests": True,
+                        "max_provenance": True,
+                        "source_revision": True,
+                        "spdx_document": True,
+                    },
+                },
+            )
         signature = [
             {
                 "critical": {

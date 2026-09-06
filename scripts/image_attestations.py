@@ -22,11 +22,14 @@ INDEX_MEDIA_TYPES = {
 OCI_MANIFEST = "application/vnd.oci.image.manifest.v1+json"
 ATTESTATION_ARTIFACT = "application/vnd.docker.attestation.manifest.v1+json"
 IN_TOTO = "application/vnd.in-toto+json"
-PROVENANCE = "https://slsa.dev/provenance/v0.2"
+PROVENANCE = "https://slsa.dev/provenance/v1"
 SPDX = "https://spdx.dev/Document"
-STATEMENT = "https://in-toto.io/Statement/v0.1"
-BUILDKIT = "https://mobyproject.org/buildkit@v1"
-BUILDKIT_METADATA = "https://mobyproject.org/buildkit@v1#metadata"
+STATEMENT = "https://in-toto.io/Statement/v1"
+BUILDKIT = (
+    "https://github.com/moby/buildkit/blob/master/"
+    "docs/attestations/slsa-definitions.md"
+)
+BUILDKIT_METADATA = "buildkit_metadata"
 EMPTY_CONFIG_DIGEST = "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
 MAX_FILE_SIZE = 256 * 1024 * 1024
 DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -128,29 +131,33 @@ def validate_provenance(statement, platform_digest, source_commit, expected_targ
     statement_subject(statement, platform_digest, "provenance")
     predicate = statement.get("predicate")
     require(isinstance(predicate, dict), "provenance predicate is invalid")
-    require(predicate.get("buildType") == BUILDKIT, "provenance build type differs")
-    invocation = predicate.get("invocation")
-    require(isinstance(invocation, dict), "provenance invocation is absent")
-    parameters = invocation.get("parameters")
-    args = parameters.get("args") if isinstance(parameters, dict) else None
+    definition = predicate.get("buildDefinition")
+    require(isinstance(definition, dict), "provenance build definition is absent")
+    require(definition.get("buildType") == BUILDKIT, "provenance build type differs")
+    external = definition.get("externalParameters")
+    request = external.get("request") if isinstance(external, dict) else None
+    args = request.get("args") if isinstance(request, dict) else None
     require(
-        isinstance(args, dict) and args.get("target") == expected_target,
-        "provenance build target differs",
+        isinstance(args, dict)
+        and args.get("target") == expected_target
+        and args.get("build-arg:CROSSFORGE_SOURCE_COMMIT") == source_commit,
+        "provenance build target or source commit argument differs",
     )
-    build_config = predicate.get("buildConfig")
+    internal = definition.get("internalParameters")
+    build_config = internal.get("buildConfig") if isinstance(internal, dict) else None
     require(
         isinstance(build_config, dict)
         and isinstance(build_config.get("llbDefinition"), list)
         and build_config["llbDefinition"],
         "provenance is not max mode",
     )
-    metadata = predicate.get("metadata")
+    run_details = predicate.get("runDetails")
+    metadata = run_details.get("metadata") if isinstance(run_details, dict) else None
     require(isinstance(metadata, dict), "provenance metadata is absent")
-    completeness = metadata.get("completeness")
+    completeness = metadata.get("buildkit_completeness")
     require(
         isinstance(completeness, dict)
-        and completeness.get("parameters") is True
-        and completeness.get("environment") is True,
+        and completeness.get("request") is True,
         "provenance completeness differs",
     )
     buildkit_metadata = metadata.get(BUILDKIT_METADATA)

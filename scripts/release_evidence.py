@@ -33,8 +33,10 @@ PAYLOAD_ARGUMENTS = (
     ("qt-target-build.json", "qt_build_evidence"),
     ("release-promotion.json", "promotion"),
     ("release.json", "release"),
+    ("sdk-attestations.json", "sdk_attestations"),
     ("sigstore-trusted-root.json", "trusted_root"),
     ("sigstore-verification.json", "sigstore_report"),
+    ("source-attestations.json", "source_attestations"),
     ("source-binding.json", "source_binding"),
     ("source-bundle-signature.json", "source_signature"),
     ("source-bundle.json", "source_bundle_identity"),
@@ -46,6 +48,9 @@ CANDIDATE = runpy.run_path(str(REPOSITORY / "scripts/candidate_manifest.py"))
 SOURCE = runpy.run_path(str(REPOSITORY / "scripts/source_binding.py"))
 PROMOTION = runpy.run_path(str(REPOSITORY / "scripts/release_promotion.py"))
 SIGSTORE = runpy.run_path(str(REPOSITORY / "scripts/validate-sigstore-report.py"))
+IMAGE_ATTESTATIONS = runpy.run_path(
+    str(REPOSITORY / "scripts/image_attestations.py")
+)
 if str(REPOSITORY / "scripts") not in sys.path:
     sys.path.insert(0, str(REPOSITORY / "scripts"))
 NATIVE = runpy.run_path(str(REPOSITORY / "scripts/native-aarch64-release.py"))
@@ -182,6 +187,35 @@ def validate_inputs(paths, release, schema):
     SIGSTORE["validate_report_document"](
         sigstore_report, release, sigstore_schema
     )
+    attestation_schema = REPOSITORY / "config/schemas/image-attestations.schema.json"
+    attestation_expectations = {
+        "sdk-attestations.json": (
+            "sdk-candidate",
+            candidate["repository"],
+            candidate["digest"],
+            candidate["platform_manifest_digest"],
+        ),
+        "source-attestations.json": (
+            "source-bundle",
+            candidate["source_bundle"]["repository"],
+            candidate["source_bundle"]["digest"],
+            candidate["source_bundle"]["platform_manifest_digest"],
+        ),
+    }
+    for name, expected in attestation_expectations.items():
+        report = STRICT["load_json"](paths[name])
+        IMAGE_ATTESTATIONS["validate_schema"](report, attestation_schema)
+        require(
+            (
+                report["image_kind"],
+                report["repository"],
+                report["index_digest"],
+                report["platform_manifest_digest"],
+            )
+            == expected
+            and report["source_commit"] == candidate["source_commit"],
+            "%s image identity differs" % name,
+        )
     trusted_root, _size = regular_file(
         paths["sigstore-trusted-root.json"], "sigstore-trusted-root.json"
     )

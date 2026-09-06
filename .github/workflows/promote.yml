@@ -197,6 +197,7 @@ jobs:
           ./scripts/validate-sigstore-report.py \
             "$output/sigstore-verification.json"
       - name: Verify public digests and signatures without credentials
+        id: public_identity
         run: |
           set -Eeuo pipefail
           docker logout ghcr.io >/dev/null 2>&1 || true
@@ -255,6 +256,37 @@ jobs:
                   .critical.image."docker-manifest-digest" == $digest)
               ' "$evidence" >/dev/null
           done
+          printf 'candidate_digest=%s\n' "$candidate_digest" >> "$GITHUB_OUTPUT"
+          printf 'candidate_platform=%s\n' "$candidate_platform" >> "$GITHUB_OUTPUT"
+          printf 'source_digest=%s\n' "$source_digest" >> "$GITHUB_OUTPUT"
+          printf 'source_platform=%s\n' "$source_platform" >> "$GITHUB_OUTPUT"
+      - name: Revalidate public source provenance and SBOM
+        uses: ./.github/actions/validate-public-attestations
+        with:
+          repository: ${{ env.CANDIDATE_REPOSITORY }}
+          index: ${{ runner.temp }}/anonymous-source-index.json
+          index-digest: ${{ steps.public_identity.outputs.source_digest }}
+          platform-digest: ${{ steps.public_identity.outputs.source_platform }}
+          image-kind: source-bundle
+          source-commit: ${{ steps.candidate_run.outputs.head_sha }}
+          output: ${{ runner.temp }}/current-source-attestations.json
+      - name: Revalidate public SDK provenance and SBOM
+        uses: ./.github/actions/validate-public-attestations
+        with:
+          repository: ${{ env.CANDIDATE_REPOSITORY }}
+          index: ${{ runner.temp }}/anonymous-candidate-index.json
+          index-digest: ${{ steps.public_identity.outputs.candidate_digest }}
+          platform-digest: ${{ steps.public_identity.outputs.candidate_platform }}
+          image-kind: sdk-candidate
+          source-commit: ${{ steps.candidate_run.outputs.head_sha }}
+          output: ${{ runner.temp }}/current-sdk-attestations.json
+      - name: Match candidate-bound attestation reports
+        run: |
+          set -Eeuo pipefail
+          cmp "$RUNNER_TEMP/candidate-identity/source-attestations.json" \
+            "$RUNNER_TEMP/current-source-attestations.json"
+          cmp "$RUNNER_TEMP/candidate-identity/sdk-attestations.json" \
+            "$RUNNER_TEMP/current-sdk-attestations.json"
       - name: Create reproducible promotion evidence
         env:
           CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
@@ -291,8 +323,10 @@ jobs:
             --qt-build-evidence "$native/qt-target-build.json" \
             --promotion "$RUNNER_TEMP/release-promotion.json" \
             --release config/release.json \
+            --sdk-attestations "$identity/sdk-attestations.json" \
             --trusted-root "$RUNNER_TEMP/trusted_root.json" \
             --sigstore-report "$signature/sigstore-verification.json" \
+            --source-attestations "$identity/source-attestations.json" \
             --source-binding "$identity/source-binding.json" \
             --source-signature "$signature/source-bundle-signature.json" \
             --source-bundle-identity "$identity/source-bundle.json" \

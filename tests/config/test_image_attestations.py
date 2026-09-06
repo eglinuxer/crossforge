@@ -52,22 +52,34 @@ class ImageAttestationTests(unittest.TestCase):
             "subject": subject,
             "predicateType": ATTESTATIONS["PROVENANCE"],
             "predicate": {
-                "buildType": ATTESTATIONS["BUILDKIT"],
-                "invocation": {
-                    "parameters": {"args": {"target": image_kind}}
-                },
-                "buildConfig": {"llbDefinition": [{"id": "step0"}]},
-                "metadata": {
-                    "completeness": {
-                        "parameters": True,
-                        "environment": True,
-                        "materials": True,
-                    },
-                    ATTESTATIONS["BUILDKIT_METADATA"]: {
-                        "vcs": {
-                            "revision": commit,
-                            "source": "https://github.com/eglinuxer/crossforge",
+                "buildDefinition": {
+                    "buildType": ATTESTATIONS["BUILDKIT"],
+                    "externalParameters": {
+                        "request": {
+                            "args": {
+                                "target": image_kind,
+                                "build-arg:CROSSFORGE_SOURCE_COMMIT": commit,
+                            }
                         }
+                    },
+                    "internalParameters": {
+                        "buildConfig": {
+                            "llbDefinition": [{"id": "step0"}]
+                        }
+                    },
+                },
+                "runDetails": {
+                    "metadata": {
+                        "buildkit_completeness": {
+                            "request": True,
+                            "resolvedDependencies": True,
+                        },
+                        ATTESTATIONS["BUILDKIT_METADATA"]: {
+                            "vcs": {
+                                "revision": commit,
+                                "source": "https://github.com/eglinuxer/crossforge",
+                            }
+                        },
                     },
                 },
             },
@@ -192,10 +204,15 @@ class ImageAttestationTests(unittest.TestCase):
             ("index", lambda value: value["manifests"].append(copy.deepcopy(value["manifests"][1]))),
             ("manifest", lambda value: value["subject"].__setitem__("digest", "sha256:" + "0" * 64)),
             ("manifest", lambda value: value["layers"].pop()),
-            ("provenance", lambda value: value["predicate"].pop("buildConfig")),
             (
                 "provenance",
-                lambda value: value["predicate"]["metadata"][
+                lambda value: value["predicate"]["buildDefinition"][
+                    "internalParameters"
+                ].pop("buildConfig"),
+            ),
+            (
+                "provenance",
+                lambda value: value["predicate"]["runDetails"]["metadata"][
                     ATTESTATIONS["BUILDKIT_METADATA"]
                 ]["vcs"].__setitem__("revision", "0" * 40),
             ),
@@ -215,7 +232,7 @@ class ImageAttestationTests(unittest.TestCase):
             fixture = self.fixture(temporary)
             fixture["arguments"].image_kind = "source-bundle"
             with self.assertRaisesRegex(
-                ATTESTATIONS["AttestationError"], "build target differs"
+                ATTESTATIONS["AttestationError"], "build target or source"
             ):
                 ATTESTATIONS["create_report"](fixture["arguments"])
 
@@ -233,13 +250,15 @@ class ImageAttestationTests(unittest.TestCase):
                 fixture["sbom"], arguments.platform_manifest_digest
             )
             for mutate in (
-                lambda value: value["predicate"].pop("buildConfig"),
-                lambda value: value["predicate"]["metadata"][
+                lambda value: value["predicate"]["buildDefinition"][
+                    "internalParameters"
+                ].pop("buildConfig"),
+                lambda value: value["predicate"]["runDetails"]["metadata"][
                     ATTESTATIONS["BUILDKIT_METADATA"]
                 ]["vcs"].__setitem__("revision", "0" * 40),
-                lambda value: value["predicate"]["invocation"][
-                    "parameters"
-                ]["args"].__setitem__("target", "source-bundle"),
+                lambda value: value["predicate"]["buildDefinition"][
+                    "externalParameters"
+                ]["request"]["args"].__setitem__("target", "source-bundle"),
             ):
                 provenance = copy.deepcopy(fixture["provenance"])
                 mutate(provenance)

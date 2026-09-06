@@ -17,6 +17,10 @@ class CandidateWorkflowTests(unittest.TestCase):
         cls.setup = (
             REPOSITORY / ".github/actions/setup-locked-buildx/action.yml"
         ).read_text(encoding="utf-8")
+        cls.attestations = (
+            REPOSITORY
+            / ".github/actions/validate-public-attestations/action.yml"
+        ).read_text(encoding="utf-8")
 
     def test_candidate_is_manual_public_digest_only_output(self):
         self.assertIn("workflow_dispatch:", self.workflow)
@@ -25,7 +29,8 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("packages: write", self.workflow)
         self.assertIn("sdk-candidate.output=type=image,push=true", self.workflow)
         self.assertIn(
-            "sdk-candidate.attest=type=provenance,mode=max", self.workflow
+            "sdk-candidate.attest=type=provenance,mode=max,version=v1",
+            self.workflow,
         )
         self.assertIn("sdk-candidate.attest+=type=sbom", self.workflow)
         self.assertNotIn("--provenance=", self.workflow)
@@ -60,7 +65,10 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn('source_tag="source-$tag"', self.workflow)
         self.assertIn("docker buildx bake source-bundle", self.workflow)
         self.assertIn("source-bundle.output=type=image,push=true", self.workflow)
-        self.assertIn("source-bundle.attest=type=provenance,mode=max", self.workflow)
+        self.assertIn(
+            "source-bundle.attest=type=provenance,mode=max,version=v1",
+            self.workflow,
+        )
         self.assertIn("source-bundle.attest+=type=sbom", self.workflow)
         self.assertIn("docker buildx bake source-bundle-identity", self.workflow)
         self.assertIn("anonymous-source-index.json", self.workflow)
@@ -144,6 +152,23 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("cmake -S /source -B", self.workflow)
         self.assertIn('cmake --build "$build" --verbose', self.workflow)
         self.assertIn("$triple-readelf", self.workflow)
+
+    def test_public_attestations_are_downloaded_and_semantically_validated(self):
+        self.assertIn("Validate public source provenance and SBOM", self.workflow)
+        self.assertIn("Validate public SDK provenance and SBOM", self.workflow)
+        self.assertEqual(
+            self.workflow.count(
+                "uses: ./.github/actions/validate-public-attestations"
+            ),
+            2,
+        )
+        self.assertIn("https://slsa.dev/provenance/v1", self.attestations)
+        self.assertIn("https://spdx.dev/Document", self.attestations)
+        self.assertIn("scripts/image_attestations.py", self.attestations)
+        self.assertIn("blobs/$provenance_digest", self.attestations)
+        self.assertIn("blobs/$sbom_digest", self.attestations)
+        self.assertIn("source-attestations.json", self.workflow)
+        self.assertIn("sdk-attestations.json", self.workflow)
 
     def test_native_arm_gate_consumes_the_exact_candidate_and_pinned_runtime(self):
         self.assertIn("runs-on: ubuntu-24.04-arm", self.workflow)
@@ -245,7 +270,7 @@ class CandidateWorkflowTests(unittest.TestCase):
 
     def test_public_identity_and_signature_artifacts_have_flat_layouts(self):
         for root, count in (
-            ("candidate-identity", 3),
+            ("candidate-identity", 5),
             ("candidate-signature-evidence", 4),
         ):
             with self.subTest(root=root):

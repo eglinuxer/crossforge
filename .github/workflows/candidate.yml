@@ -91,7 +91,7 @@ jobs:
             --set "source-bundle.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
             --set "source-bundle.tags=$SOURCE_REFERENCE" \
             --set "source-bundle.output=type=image,push=true" \
-            --set "source-bundle.attest=type=provenance,mode=max" \
+            --set "source-bundle.attest=type=provenance,mode=max,version=v1" \
             --set "source-bundle.attest+=type=sbom" \
             --metadata-file "$RUNNER_TEMP/source-build-metadata.json" \
             --progress=plain
@@ -182,7 +182,7 @@ jobs:
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_ARCHIVE_SIZE=${{ steps.source.outputs.archive_size }}" \
             --set "sdk-candidate.tags=$CANDIDATE_REFERENCE" \
             --set "sdk-candidate.output=type=image,push=true" \
-            --set "sdk-candidate.attest=type=provenance,mode=max" \
+            --set "sdk-candidate.attest=type=provenance,mode=max,version=v1" \
             --set "sdk-candidate.attest+=type=sbom" \
             --metadata-file "$RUNNER_TEMP/build-metadata.json" \
             --progress=plain
@@ -249,6 +249,26 @@ jobs:
             --expected-digest "${{ steps.source.outputs.digest }}")
           test "$anonymous_source_platform" = \
             "${{ steps.source.outputs.platform_digest }}"
+      - name: Validate public source provenance and SBOM
+        uses: ./.github/actions/validate-public-attestations
+        with:
+          repository: ${{ env.CANDIDATE_REPOSITORY }}
+          index: ${{ runner.temp }}/anonymous-source-index.json
+          index-digest: ${{ steps.source.outputs.digest }}
+          platform-digest: ${{ steps.source.outputs.platform_digest }}
+          image-kind: source-bundle
+          source-commit: ${{ github.sha }}
+          output: ${{ runner.temp }}/source-attestations.json
+      - name: Validate public SDK provenance and SBOM
+        uses: ./.github/actions/validate-public-attestations
+        with:
+          repository: ${{ env.CANDIDATE_REPOSITORY }}
+          index: ${{ runner.temp }}/anonymous-candidate-index.json
+          index-digest: ${{ steps.digest.outputs.digest }}
+          platform-digest: ${{ steps.digest.outputs.platform_digest }}
+          image-kind: sdk-candidate
+          source-commit: ${{ github.sha }}
+          output: ${{ runner.temp }}/sdk-attestations.json
       - name: Run the anonymous non-root candidate
         env:
           CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
@@ -391,8 +411,12 @@ jobs:
             "$IDENTITY_ROOT/source-bundle.json"
           install -m 0644 "$RUNNER_TEMP/source-binding.json" \
             "$IDENTITY_ROOT/source-binding.json"
+          install -m 0644 "$RUNNER_TEMP/source-attestations.json" \
+            "$IDENTITY_ROOT/source-attestations.json"
+          install -m 0644 "$RUNNER_TEMP/sdk-attestations.json" \
+            "$IDENTITY_ROOT/sdk-attestations.json"
           test "$(find "$IDENTITY_ROOT" -mindepth 1 -maxdepth 1 \
-            -type f | wc -l)" -eq 3
+            -type f | wc -l)" -eq 5
       - name: Upload immutable candidate identity
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

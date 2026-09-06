@@ -62,8 +62,8 @@
     "promotion_sha256": {"$ref": "#/$defs/sha256"},
     "files": {
       "type": "array",
-      "minItems": 14,
-      "maxItems": 14,
+      "minItems": 16,
+      "maxItems": 16,
       "uniqueItems": true,
       "items": {
         "type": "object",
@@ -81,9 +81,11 @@
               "qt-target-build.json",
               "release-promotion.json",
               "release.json",
+              "sdk-attestations.json",
               "sigstore-trusted-root.json",
               "sigstore-verification.json",
               "source-binding.json",
+              "source-attestations.json",
               "source-bundle-signature.json",
               "source-bundle.json"
             ]
