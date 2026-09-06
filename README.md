@@ -873,7 +873,7 @@ bound source digest. Existing version tags are accepted only when they already
 resolve to the selected digest; a different version-tag digest fails closed.
 The mutable channels move only after both immutable version tags exist, and
 all four references are resolved anonymously again before strict
-`release-promotion.json` evidence is produced. Sixteen original evidence files
+`release-promotion.json` evidence is produced. Seventeen original evidence files
 are also placed in a deterministic USTAR with a strict per-file manifest and
 SHA256 sidecar. The workflow creates a draft GitHub Release, uploads the archive,
 sidecar, candidate identity and promotion identity, moves the OCI channels, and

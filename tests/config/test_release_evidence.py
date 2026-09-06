@@ -20,6 +20,24 @@ SIGSTORE = EVIDENCE["SIGSTORE"]
 
 
 class ReleaseEvidenceTests(unittest.TestCase):
+    def test_durable_payload_count_matches_the_strict_schema_and_docs(self):
+        self.assertEqual(len(EVIDENCE["PAYLOAD_NAMES"]), 17)
+        schema = json.loads(
+            (
+                REPOSITORY
+                / "config/schemas/release-evidence-bundle-manifest.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        files = schema["properties"]["files"]
+        self.assertEqual(files["minItems"], 17)
+        self.assertEqual(files["maxItems"], 17)
+        self.assertIn("Seventeen original evidence files", (
+            REPOSITORY / "README.md"
+        ).read_text(encoding="utf-8"))
+        self.assertIn("十七份", (
+            REPOSITORY / "docs/architecture.md"
+        ).read_text(encoding="utf-8"))
+
     def write_json(self, path, document):
         path.write_text(
             json.dumps(document, indent=2, sort_keys=True) + "\n",
