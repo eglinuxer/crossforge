@@ -438,6 +438,56 @@ class GccTestsuiteContractTests(unittest.TestCase):
                 )
         self.assertFalse(process.running)
 
+    def test_installed_libstdcxx_runtime_includes_prefix_bound_libatomic(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runtime_root = root / "runtime-root"
+            prefix = root / "compiler-prefix"
+            output = root / "output"
+            output.mkdir()
+            libgcc = runtime_root / "lib64/libgcc_s.so.1"
+            libstdcxx = runtime_root / "usr/lib64/libstdc++.so.6"
+            libatomic = prefix / "lib64/libatomic.so.1.2.0"
+            for path in (libgcc, libstdcxx, libatomic):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(path.name.encode("ascii"))
+            libatomic_link = libatomic.with_name("libatomic.so.1")
+            libatomic_link.symlink_to(libatomic.name)
+            with mock.patch.dict(
+                RUNNER["prepare_runtime_links"].__globals__,
+                {"command": lambda _arguments: str(libatomic_link)},
+            ):
+                runtime_directory, records = RUNNER["prepare_runtime_links"](
+                    output,
+                    runtime_root,
+                    prefix,
+                    prefix / "bin/x86_64-unknown-linux-gnu-gcc",
+                )
+            self.assertEqual(
+                [record["name"] for record in records],
+                ["libgcc_s.so.1", "libstdc++.so.6", "libatomic.so.1"],
+            )
+            self.assertEqual(
+                (runtime_directory / "libatomic.so.1").resolve(), libatomic
+            )
+            escaped = root / "host/libatomic.so.1"
+            escaped.parent.mkdir()
+            escaped.write_bytes(b"host")
+            (root / "escaped-output").mkdir()
+            with mock.patch.dict(
+                RUNNER["prepare_runtime_links"].__globals__,
+                {"command": lambda _arguments: str(escaped)},
+            ):
+                with self.assertRaisesRegex(
+                    RUNNER["ValidationError"], "escaped the compiler prefix"
+                ):
+                    RUNNER["prepare_runtime_links"](
+                        root / "escaped-output",
+                        runtime_root,
+                        prefix,
+                        prefix / "bin/x86_64-unknown-linux-gnu-gcc",
+                    )
+
     def test_custom_qemu_boards_preserve_dynamic_el8_execution(self):
         boards = REPOSITORY / "tests/gcc/boards"
         native = (boards / "crossforge-x86_64.exp").read_text(

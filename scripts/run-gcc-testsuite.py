@@ -224,17 +224,37 @@ def apply_suite_patches(plan, source, suite_id):
     return records
 
 
-def prepare_runtime_links(output, runtime_root):
+def prepare_runtime_links(output, runtime_root, prefix, compiler):
     directory = output / "runtime-lib"
     directory.mkdir()
-    records = []
-    for name, relative in (
-        ("libgcc_s.so.1", "lib64/libgcc_s.so.1"),
-        ("libstdc++.so.6", "usr/lib64/libstdc++.so.6"),
-    ):
-        source = require_runtime_file(
-            runtime_root, relative, "installed libstdc++ runtime %s" % name
+    libatomic = Path(
+        command([compiler, "-print-file-name=libatomic.so.1"])
+    ).resolve()
+    trusted_prefix = prefix.resolve()
+    if trusted_prefix not in libatomic.parents or not libatomic.is_file():
+        raise ValidationError(
+            "installed libatomic runtime escaped the compiler prefix"
         )
+    records = []
+    for name, source in (
+        (
+            "libgcc_s.so.1",
+            require_runtime_file(
+                runtime_root,
+                "lib64/libgcc_s.so.1",
+                "installed libstdc++ runtime libgcc_s.so.1",
+            ),
+        ),
+        (
+            "libstdc++.so.6",
+            require_runtime_file(
+                runtime_root,
+                "usr/lib64/libstdc++.so.6",
+                "installed libstdc++ runtime libstdc++.so.6",
+            ),
+        ),
+        ("libatomic.so.1", libatomic),
+    ):
         os.symlink(str(source), str(directory / name))
         records.append(
             {"name": name, "path": str(source), "sha256": file_sha256(source)}
@@ -674,7 +694,10 @@ def main():
                 )
                 runtime_root = arguments.runtime_root or arguments.sysroot
                 runtime_directory, runtime_records = prepare_runtime_links(
-                    arguments.output, runtime_root
+                    arguments.output,
+                    runtime_root,
+                    arguments.prefix,
+                    compiler,
                 )
                 inherited_library_path = suite_environment.get(
                     "LD_LIBRARY_PATH", ""
