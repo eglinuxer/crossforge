@@ -173,6 +173,27 @@ def single_header(headers, key):
 
 def validate_evidence(config, repository):
     sigstore_trust = config["sigstore"]["trust"]
+    sigstore_verifier = config["sigstore"]["verifier"]
+    require(
+        sigstore_verifier["status"] == "locked"
+        and sigstore_verifier["policy"]["require_tlog"] is True
+        and sigstore_verifier["policy"]["require_sct"] is True
+        and sigstore_verifier["policy"]["signed_timestamps"]
+        == {
+            "default": True,
+            "exceptions": [
+                {
+                    "artifact": "Python-3.9.25.tar.xz",
+                    "reason": "upstream-bundle-omits-rfc3161",
+                }
+            ],
+        },
+        "Sigstore verifier policy differs",
+    )
+    require(
+        config["nfpm"]["sigstore"]["status"] == "verified",
+        "nFPM Sigstore verification status differs",
+    )
     try:
         tuf = TUF["verify_arguments"](
             argparse.Namespace(
@@ -1052,8 +1073,8 @@ def validate_evidence(config, repository):
         require(python_source["url"] == expected_url, "CPython source URL mismatch")
         sigstore = python_source["sigstore"]
         require(
-            sigstore["verification"] == "archived-unverified",
-            "CPython Sigstore evidence must not claim unimplemented verification",
+            sigstore["verification"] == "verified",
+            "CPython Sigstore verification status differs",
         )
         require(
             sigstore["bundle_url"] == expected_url + ".sigstore",
@@ -1224,6 +1245,8 @@ def validate_evidence(config, repository):
         "sigstore_artifact_key_sha256": hashlib.sha256(
             artifact_key
         ).hexdigest(),
+        "sigstore_verifier_version": sigstore_verifier["version"],
+        "nfpm_sigstore_status": config["nfpm"]["sigstore"]["status"],
         "rocky_index_sha256": sha256(_rocky_payload),
         "qemu_index_sha256": sha256(qemu_index_payload),
         "qemu_manifest_sha256": sha256(qemu_manifest_payload),
@@ -1232,7 +1255,7 @@ def validate_evidence(config, repository):
         "qemu_commit": source["commit"],
         "python_sources": len(config["python"]["versions"]),
         "python_patches": python_patch_count,
-        "python_sigstore_status": "archived-unverified",
+        "python_sigstore_status": "verified",
         "zstd_tag_object": zstd_git["tag_object"],
         "zstd_commit": zstd_git["commit"],
         "zstd_signature_sha256": zstd_signature["sha256"],
@@ -1267,7 +1290,8 @@ def main():
     print(
         "valid supply-chain evidence: Sigstore TUF root %d/targets %d; "
         "Rocky %s; QEMU %s; source %s; "
-        "CPython Sigstore bundles %s; patches %d; zstd %s; vcpkg %s; "
+        "CPython/nFPM Sigstore bundles %s/%s via Cosign %s; "
+        "patches %d; zstd %s; vcpkg %s; "
         "Qt %s + FFmpeg %s + xcb-util-cursor %s; Ninja %s; CMake %s"
         % (
             result["sigstore_tuf_root_version"],
@@ -1276,6 +1300,8 @@ def main():
             result["qemu_manifest_sha256"],
             result["qemu_commit"],
             result["python_sigstore_status"],
+            result["nfpm_sigstore_status"],
+            result["sigstore_verifier_version"],
             result["python_patches"],
             result["zstd_commit"],
             result["vcpkg_commit"],

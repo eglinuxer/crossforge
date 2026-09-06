@@ -294,7 +294,10 @@ class CrosspackComponentTests(unittest.TestCase):
             {
                 "crossforge_gcc_testsuite_full_qualified": (
                     "target:gcc-testsuite-full-qualification-evidence"
-                )
+                ),
+                "crossforge_sigstore_qualified": (
+                    "target:sigstore-sources-qualified"
+                ),
             },
         )
         self.assertEqual(
@@ -343,6 +346,8 @@ class CrosspackComponentTests(unittest.TestCase):
         self.assertIn(
             "target=/tmp/crossforge-gcc-testsuite-full.json", candidate
         )
+        self.assertIn("from=crossforge_sigstore_qualified", candidate)
+        self.assertIn("validate-sigstore-report.py", candidate)
         self.assertNotIn("target=/work/gcc-testsuite-full.json", candidate)
         self.assertIn("verify-gcc-testsuite-report.py", candidate)
         self.assertIn("config/gcc-testsuite-full.json", candidate)

@@ -83,6 +83,7 @@ jobs:
       - name: Locked latest inputs and native build Pythons
         run: |
           docker buildx bake validate platform-python-check \
+            sigstore-sources-qualified \
             host-build-common-locked host-gcc-build-locked \
             host-gcc-test-locked host-python-build-locked qemu-aarch64-validated \
             qt-rpm-locked \

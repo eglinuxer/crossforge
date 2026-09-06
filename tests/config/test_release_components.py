@@ -623,15 +623,21 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 )
             )
 
-    def test_sigstore_trust_rotation_changes_only_supply_identity(self):
-        after = self.render_mutation(
+    def test_sigstore_changes_only_supply_identity(self):
+        mutations = (
             lambda release: release["sigstore"]["trust"].__setitem__(
                 "trusted_root_sha256", "0" * 64
-            )
+            ),
+            lambda release: release["sigstore"]["verifier"][
+                "binary"
+            ].__setitem__("sha256", "0" * 64),
         )
-        self.assertEqual(
-            changed(self.components, after), {"supply/evidence"}
-        )
+        for mutate in mutations:
+            with self.subTest(mutate=mutate):
+                after = self.render_mutation(mutate)
+                self.assertEqual(
+                    changed(self.components, after), {"supply/evidence"}
+                )
 
     def test_product_version_rebinds_only_release_and_final_qualification(self):
         release = copy.deepcopy(self.release)

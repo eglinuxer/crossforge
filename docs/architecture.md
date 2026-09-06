@@ -304,8 +304,10 @@ tree 仅复制到隔离 target scratch root，不启用 binary cache，也不进
 Phase 14 已固定 nFPM 2.47.0 的 tag/commit、Linux amd64 二进制与源码归档、上游
 checksum manifest、Sigstore bundle 和 MIT 许可。联网 stage 仅下载；禁网 stage 重算
 SHA256/SHA512/大小，验证 checksum 对二进制归档的绑定，并检查 bundle message digest
-及证书中归档的 workflow identity、OIDC issuer、commit 与 tag。该 bundle 仍明确标记
-为 `archived-unverified`，不声称完成 Fulcio/Rekor 信任链验证。
+及证书中归档的 workflow identity、OIDC issuer、commit 与 tag。独立的
+`sigstore-sources-qualified` 进一步用 TUF-authenticated Cosign 3.1.3 在断网阶段验证
+该 bundle 的签名、Fulcio 证书链、精确 workflow identity/OIDC issuer、SCT、Rekor
+SET/inclusion proof 与 RFC3161 timestamp；因此 release 状态为 `verified`。
 
 `docker buildx bake packaging-qualified` 为 x86_64/aarch64 分别交叉构建真实 ELF，
 两次生成 runtime/development/tools/debug 的 DEB/RPM 并要求逐字节一致；随后在固定 Debian
@@ -415,7 +417,7 @@ Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单�
 
 Rocky OCI index、QEMU index/manifest/attestation/SLSA predicate、QEMU Git tag/commit，以及 Ninja GitHub tag-ref/release 与 commit 原始字节以 base64 envelope 签入 `evidence/`。离线 validator 必须重算 OCI/GitHub evidence digest 与 Git object ID，并验证 platform child manifest、attestation subject、provenance builder/build arguments 和源码 tag→commit 关系。当前只归档 QEMU annotated tag 内的 OpenPGP 签名，不宣称已建立 QEMU maintainer keyring 信任；Ninja lightweight tag 也无独立签名，因此依赖完整 commit 与多重内容摘要。正式发布前需补齐相应信任根或保留明确的 hash-pinned 风险边界。
 
-Sigstore 公共信任 bootstrap 已进入 release 的 supply identity：仓库保留官方 TUF root 5 到 root 15 的全部 exact-byte envelope、targets 14、其授权的 `trusted_root.json` 与 artifact key。最早的纯 platform-Python gate 用 OLPC canonical JSON 和 P-256 ECDSA 逐代验证旧/新 root threshold、自签 threshold、targets threshold、metadata 有效期及 target length/SHA256；该链已与 Cosign 的 TUF client 和 OpenSSL 结果交叉验证，且根轮换不会污染任何 build/qualification component。CPython 的上游 Sigstore bundle 同样以原始 base64 envelope 归档，并在结构层将 message/Rekor digest 绑定到 tarball SHA256；当前仍明确标记为 `archived-unverified`。配置中的预期 signer 仅是维护策略，尚未由锁定的发布门禁从证书 SAN/issuer 验证。在固定 Cosign 执行真实签名、证书链、身份、SET、SCT、inclusion proof 及可用的 RFC3161 timestamp 验证前，不得把该归档描述为密码学真实性证明。
+Sigstore 公共信任 bootstrap 已进入 release 的 supply identity：仓库保留官方 TUF root 5 到 root 15 的全部 exact-byte envelope、targets 14、其授权的 `trusted_root.json` 与 artifact key。最早的纯 platform-Python gate 用 OLPC canonical JSON 和 P-256 ECDSA 逐代验证旧/新 root threshold、自签 threshold、targets threshold、metadata 有效期及 target length/SHA256；该链已与 Cosign 的 TUF client 和 OpenSSL 结果交叉验证，且根轮换不会污染任何 build/qualification component。Cosign 3.1.3 二进制和 KMS bundle 同样固定 URL、大小与 SHA256；先由上述 artifact key 直接验证二进制签名，再由已认证的 Cosign 用完整 bundle 自验。`sigstore-sources-qualified` 随后在 `--network=none` 阶段对六个 CPython source bundle 执行真实消息签名、Fulcio 证书链、精确 SAN/issuer、SCT、Rekor SET/inclusion proof 与时间校验。3.10–3.14 均强制 RFC3161 timestamp；3.9.25 的上游 bundle 不含该字段，只允许唯一的 `upstream-bundle-omits-rfc3161` 例外并依赖已验证 Rekor integrated time。release 中六行状态因此为 `verified`，资格报告绑定 release、verifier、trust root 和每项 artifact/bundle/identity，且只进入 candidate 的 qualification 目录，不把 Cosign 或源码带入产品镜像。
 
 每个 release 同时提供：
 

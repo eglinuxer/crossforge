@@ -65,6 +65,34 @@
       "trusted_root_sha256": "6494e21ea73fa7ee769f85f57d5a3e6a08725eae1e38c755fc3517c9e6bc0b66",
       "artifact_key_evidence": "evidence/sigstore/tuf/artifact.pub.b64",
       "artifact_key_sha256": "59ebf97a9850aecec4bc39c1f5c1dc46e6490a6b5fd2a6cacdcac0c3a6fc4cbf"
+    },
+    "verifier": {
+      "status": "locked",
+      "version": "3.1.3",
+      "git_commit": "11926fa5bbbbde47e88fc006b625a17769b743b2",
+      "binary": {
+        "url": "https://github.com/sigstore/cosign/releases/download/v3.1.3/cosign-linux-amd64",
+        "sha256": "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71",
+        "size": 141178250
+      },
+      "kms_bundle": {
+        "url": "https://github.com/sigstore/cosign/releases/download/v3.1.3/cosign-linux-amd64-kms.sigstore.json",
+        "sha256": "9c0e569b65883ac5ccf6e079989355832a3ee083b8cb991b3482d963e97896d9",
+        "size": 3618
+      },
+      "policy": {
+        "require_tlog": true,
+        "require_sct": true,
+        "signed_timestamps": {
+          "default": true,
+          "exceptions": [
+            {
+              "artifact": "Python-3.9.25.tar.xz",
+              "reason": "upstream-bundle-omits-rfc3161"
+            }
+          ]
+        }
+      }
     }
   },
   "base_image": {
@@ -495,7 +523,7 @@
           "sha256": "00e07d7c0f2f0cc002432d1ee84d2a40dae404a99303e3f97701c10966c91834",
           "size": 20183236,
           "sigstore": {
-            "verification": "archived-unverified",
+            "verification": "verified",
             "bundle_url": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz.sigstore",
             "bundle_sha256": "09243be5b795dbccf2e3a28b1a478a51ccdc1d2e102122737fc012798a5b17ad",
             "bundle_size": 5079,
@@ -521,7 +549,7 @@
           "sha256": "a0da1e72132e950154eca0f6f47d5db828454700de20e5113667940d81e0db04",
           "size": 19896516,
           "sigstore": {
-            "verification": "archived-unverified",
+            "verification": "verified",
             "bundle_url": "https://www.python.org/ftp/python/3.10.21/Python-3.10.21.tar.xz.sigstore",
             "bundle_sha256": "8b907f7134ea6e0deb5236948be626a0ef1548da10650d2d44efe4547e2f73f3",
             "bundle_size": 7329,
@@ -547,7 +575,7 @@
           "sha256": "91bcdebfdde239a003ae93738a7fce0f9230fee5c4bc2b86f6e6e8c6f98aabe8",
           "size": 20328716,
           "sigstore": {
-            "verification": "archived-unverified",
+            "verification": "verified",
             "bundle_url": "https://www.python.org/ftp/python/3.11.16/Python-3.11.16.tar.xz.sigstore",
             "bundle_sha256": "c2e6222a3d80c6acb99c13d8084bee23802d51ecbfe0e8b74718c0a92274c39e",
             "bundle_size": 7309,
@@ -573,7 +601,7 @@
           "sha256": "5c8462af5790baf43a321a1559dbe0db06d1be4300fb85fb53c40060668e548a",
           "size": 20820300,
           "sigstore": {
-            "verification": "archived-unverified",
+            "verification": "verified",
             "bundle_url": "https://www.python.org/ftp/python/3.12.14/Python-3.12.14.tar.xz.sigstore",
             "bundle_sha256": "0e8c44607a6bee9541cf2ba6bef366a72fe4678053e54f796ea6c0489a3d5dbc",
             "bundle_size": 7391,
@@ -594,7 +622,7 @@
           "sha256": "1e66a7945a48390ee4c2a4268a0e4185884059a13c4aab6d148aa208deea4a76",
           "size": 23160540,
           "sigstore": {
-            "verification": "archived-unverified",
+            "verification": "verified",
             "bundle_url": "https://www.python.org/ftp/python/3.13.15/Python-3.13.15.tar.xz.sigstore",
             "bundle_sha256": "bf4a892d7a8a1d8795ae555960b5838d72202cbd37c28f9e4be10ed084f89ee3",
             "bundle_size": 7121,
@@ -615,7 +643,7 @@
           "sha256": "3b48dac8fb59f62eaa67ac83c1eb12bda1b7a08406dd286e252c11a66be27f81",
           "size": 24053924,
           "sigstore": {
-            "verification": "archived-unverified",
+            "verification": "verified",
             "bundle_url": "https://www.python.org/ftp/python/3.14.7/Python-3.14.7.tar.xz.sigstore",
             "bundle_sha256": "6f41efc358b146b5548dbfc0414e9247441f8524fb6ef59f1c4ca946ffc70701",
             "bundle_size": 7101,
@@ -787,7 +815,7 @@
       "url": "https://github.com/goreleaser/nfpm/releases/download/v2.47.0/checksums.txt.sigstore.json",
       "sha256": "7fff418acc721398fbfed10ba1c70f2a6a9dfedc506208181d4589c59e7ddbdb",
       "size": 10087,
-      "status": "archived-unverified",
+      "status": "verified",
       "signed_asset_sha256": "57145efa88e31a9b471755dad60b4d58a607ea4ef869a33fae902dceaf30b98b",
       "expected_identity": "https://github.com/goreleaser/nfpm/.github/workflows/release.yml@refs/tags/v2.47.0",
       "expected_issuer": "https://token.actions.githubusercontent.com"

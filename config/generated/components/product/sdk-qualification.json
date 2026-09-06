@@ -11,11 +11,11 @@
       "component": "implementation/launcher"
     },
     {
-      "canonical_sha256": "dfae83f61514ef229d401f9917842cc996aec76b42d5076068b76d44535d1f2d",
+      "canonical_sha256": "9a39d24d7a001f710e86a7967538d2c846937aa22408531dbd18b383460f0921",
       "component": "packaging/qualification"
     },
     {
-      "canonical_sha256": "423e22d60fff79ffc18645065160e783faf7fdec1a1d6c7c7f65616762c2748d",
+      "canonical_sha256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
       "component": "python/qualification"
     }
   ],

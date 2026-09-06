@@ -131,7 +131,7 @@
     },
     {
       "path": "/python/versions/0/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/0/support",
@@ -163,7 +163,7 @@
     },
     {
       "path": "/python/versions/1/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/1/support",
@@ -195,7 +195,7 @@
     },
     {
       "path": "/python/versions/2/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/2/support",
@@ -227,7 +227,7 @@
     },
     {
       "path": "/python/versions/3/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/3/support",
@@ -259,7 +259,7 @@
     },
     {
       "path": "/python/versions/4/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/4/support",
@@ -291,7 +291,7 @@
     },
     {
       "path": "/python/versions/5/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/5/support",

@@ -207,7 +207,7 @@ def load_identity(component_path, component_sha256):
     ):
         require(values[path] > 0, "invalid size: %s" % path)
     require(
-        values["/nfpm/sigstore/status"] == "archived-unverified"
+        values["/nfpm/sigstore/status"] == "verified"
         and values["/nfpm/sigstore/signed_asset_sha256"]
         == values["/nfpm/checksums/sha256"]
         and values["/nfpm/sigstore/expected_identity"]

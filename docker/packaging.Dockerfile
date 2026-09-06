@@ -256,6 +256,8 @@ ARG CROSSFORGE_PRODUCT_VERSION
 ARG CROSSFORGE_PRODUCT_IDENTITY_SHA256
 ARG CROSSFORGE_SOURCE_COMMIT
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
+COPY --from=crossforge_sigstore_qualified /sigstore-verification.json \
+  /opt/crossforge/qualification/sigstore.json
 COPY config/generated/components/product/identity.json \
   /work/config/product-identity.json
 COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
@@ -265,7 +267,11 @@ COPY config/gcc-testsuite-full.json \
 COPY tests/gcc/baselines/full/x86_64-host-direct.json \
   /work/config/gcc-testsuite-full-baseline.json
 COPY --chmod=0755 scripts/release_component.py \
-  scripts/verify-gcc-testsuite-report.py /work/scripts/
+  scripts/verify-gcc-testsuite-report.py \
+  scripts/validate-release.py \
+  scripts/validate-sigstore-report.py /work/scripts/
+COPY config/schemas/release.schema.json \
+  config/schemas/sigstore-verification.schema.json /work/config/schemas/
 RUN --network=none \
     --mount=type=bind,from=crossforge_gcc_testsuite_full_qualified,source=/qualification/gcc-testsuite/x86_64-host-direct-full.json,target=/tmp/crossforge-gcc-testsuite-full.json,ro \
       /usr/libexec/platform-python /work/scripts/release_component.py validate \
@@ -287,6 +293,12 @@ RUN --network=none \
         --baseline /work/config/gcc-testsuite-full-baseline.json \
         --component-sha256 \
           "$CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256" \
+    && /usr/libexec/platform-python \
+        /work/scripts/validate-sigstore-report.py \
+        /opt/crossforge/qualification/sigstore.json \
+        --release /opt/crossforge/release.json \
+        --release-schema /work/config/schemas/release.schema.json \
+        --schema /work/config/schemas/sigstore-verification.schema.json \
     && test -n "$CROSSFORGE_PRODUCT_VERSION" \
     && test "$(/usr/libexec/platform-python \
           /work/scripts/release_component.py get \

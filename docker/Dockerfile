@@ -54,6 +54,33 @@ COPY scripts/verify-sigstore-tuf-root.py \
 RUN /usr/libexec/platform-python ./scripts/validate-supply-chain-evidence.py \
       ./config/release.json
 
+FROM release-validate AS sigstore-assets-download
+COPY scripts/fetch-sigstore-assets.py ./scripts/fetch-sigstore-assets.py
+RUN /usr/libexec/platform-python ./scripts/fetch-sigstore-assets.py \
+      --release ./config/release.json \
+      --schema ./config/schemas/release.schema.json \
+      --output /sigstore-downloads
+
+FROM config-validate AS sigstore-assets-qualified
+COPY --from=sigstore-assets-download /sigstore-downloads/ \
+  /sigstore-downloads/
+COPY scripts/fetch-sigstore-assets.py ./scripts/fetch-sigstore-assets.py
+COPY scripts/validate-sigstore-report.py \
+  ./scripts/validate-sigstore-report.py
+COPY scripts/verify-sigstore-assets.py ./scripts/verify-sigstore-assets.py
+COPY config/schemas/sigstore-verification.schema.json \
+  ./config/schemas/sigstore-verification.schema.json
+RUN --network=none \
+    /usr/libexec/platform-python ./scripts/verify-sigstore-assets.py \
+      --release ./config/release.json \
+      --release-schema ./config/schemas/release.schema.json \
+      --downloads /sigstore-downloads \
+      --output /work/sigstore-verification.json
+
+FROM scratch AS sigstore-verification-evidence
+COPY --from=sigstore-assets-qualified /work/sigstore-verification.json \
+  /sigstore-verification.json
+
 FROM config-validate AS platform-python-check
 COPY scripts/ ./scripts/
 COPY docker/*.py ./docker/

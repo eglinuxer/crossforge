@@ -164,13 +164,13 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "dfae83f61514ef229d401f9917842cc996aec76b42d5076068b76d44535d1f2d",
+      "canonical_sha256": "9a39d24d7a001f710e86a7967538d2c846937aa22408531dbd18b383460f0921",
       "component": "packaging/qualification",
       "path": "config/generated/components/packaging/qualification.json",
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "50e58781b258aba20f503d2c248bad4e77bff9851cec222ba03e408e348aaa61",
+      "canonical_sha256": "97b945fbbaff1d77c828d3491e2d8a36b2221f1b29b90e43debf5d819b060140",
       "component": "packaging/sdk-build",
       "path": "config/generated/components/packaging/sdk-build.json",
       "scope": "build"
@@ -188,7 +188,7 @@
       "scope": "supply"
     },
     {
-      "canonical_sha256": "add14a6ce93e9f7fedfb58c9dade20d3465de69b2951935deccf5feefce80b54",
+      "canonical_sha256": "b108bd0a7bbaab69c2fb329dda67a72f47a36f52b769384432a1b3a8417c5b86",
       "component": "product/sdk-qualification",
       "path": "config/generated/components/product/sdk-qualification.json",
       "scope": "qualification"
@@ -338,7 +338,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "423e22d60fff79ffc18645065160e783faf7fdec1a1d6c7c7f65616762c2748d",
+      "canonical_sha256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
       "component": "python/qualification",
       "path": "config/generated/components/python/qualification.json",
       "scope": "qualification"
@@ -410,7 +410,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "384ecd2e12cabedd35ff22c036a75cbd36fefd2499b56f91848a11db7cefeb1e",
+      "canonical_sha256": "18d14160b52862dd57c73338f1df618a5ae8b3a86882654e7ccfbdf23f9d0b6b",
       "component": "sources/nfpm",
       "path": "config/generated/components/sources/nfpm.json",
       "scope": "build"
@@ -446,7 +446,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "538bf83503b590e8b3d3adff13c0c3f09d6496672c85d01b67c8c95510ef7a25",
+      "canonical_sha256": "8a05a0f9ddb81edac729cddf51d16e468d0ad578ae2cef52422d28fb2e432e14",
       "component": "supply/evidence",
       "path": "config/generated/components/supply/evidence.json",
       "scope": "supply"
@@ -532,7 +532,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "2ae90af6259c7725a35a37e1e9670995152108b04d605b909ef5b5c77463add1",
+    "canonical_sha256": "e8c8a8c444499c14d30846ba743c67bf84acf31a2441cd24de018ec5e527cd5e",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

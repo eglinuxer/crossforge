@@ -409,11 +409,11 @@ class ReleaseValidationTests(unittest.TestCase):
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate"](config, self.schema, self.schema, "$")
 
-    def test_python_sigstore_evidence_cannot_claim_unimplemented_verification(self):
+    def test_python_sigstore_evidence_cannot_regress_to_unverified(self):
         config = copy.deepcopy(self.config)
         config["python"]["versions"][4]["source"]["sigstore"][
             "verification"
-        ] = "verified"
+        ] = "archived-unverified"
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate"](config, self.schema, self.schema, "$")
 
@@ -441,7 +441,7 @@ class ReleaseValidationTests(unittest.TestCase):
                 "sha256": "00e07d7c0f2f0cc002432d1ee84d2a40dae404a99303e3f97701c10966c91834",
                 "size": 20183236,
                 "sigstore": {
-                    "verification": "archived-unverified",
+                    "verification": "verified",
                     "bundle_url": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz.sigstore",
                     "bundle_sha256": "09243be5b795dbccf2e3a28b1a478a51ccdc1d2e102122737fc012798a5b17ad",
                     "bundle_size": 5079,
@@ -459,7 +459,9 @@ class ReleaseValidationTests(unittest.TestCase):
             self.config, REPOSITORY
         )
         self.assertEqual(evidence["python_sources"], 6)
-        self.assertEqual(evidence["python_sigstore_status"], "archived-unverified")
+        self.assertEqual(evidence["python_sigstore_status"], "verified")
+        self.assertEqual(evidence["nfpm_sigstore_status"], "verified")
+        self.assertEqual(evidence["sigstore_verifier_version"], "3.1.3")
         self.assertEqual(evidence["sigstore_tuf_root_version"], 15)
         self.assertEqual(evidence["sigstore_tuf_targets_version"], 14)
         self.assertEqual(

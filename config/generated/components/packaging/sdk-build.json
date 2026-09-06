@@ -11,7 +11,7 @@
       "component": "implementation/launcher"
     },
     {
-      "canonical_sha256": "384ecd2e12cabedd35ff22c036a75cbd36fefd2499b56f91848a11db7cefeb1e",
+      "canonical_sha256": "18d14160b52862dd57c73338f1df618a5ae8b3a86882654e7ccfbdf23f9d0b6b",
       "component": "sources/nfpm"
     },
     {

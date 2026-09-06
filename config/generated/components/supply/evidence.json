@@ -34,7 +34,7 @@
     },
     {
       "path": "/python/versions/0/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/1/source/sigstore/bundle_evidence",
@@ -62,7 +62,7 @@
     },
     {
       "path": "/python/versions/1/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/2/source/sigstore/bundle_evidence",
@@ -90,7 +90,7 @@
     },
     {
       "path": "/python/versions/2/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/3/source/sigstore/bundle_evidence",
@@ -118,7 +118,7 @@
     },
     {
       "path": "/python/versions/3/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/4/source/sigstore/bundle_evidence",
@@ -146,7 +146,7 @@
     },
     {
       "path": "/python/versions/4/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/python/versions/5/source/sigstore/bundle_evidence",
@@ -174,7 +174,7 @@
     },
     {
       "path": "/python/versions/5/source/sigstore/verification",
-      "value": "archived-unverified"
+      "value": "verified"
     },
     {
       "path": "/qemu/executor/index_evidence",
@@ -263,6 +263,62 @@
     {
       "path": "/sigstore/trust/trusted_root_sha256",
       "value": "6494e21ea73fa7ee769f85f57d5a3e6a08725eae1e38c755fc3517c9e6bc0b66"
+    },
+    {
+      "path": "/sigstore/verifier/binary/sha256",
+      "value": "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71"
+    },
+    {
+      "path": "/sigstore/verifier/binary/size",
+      "value": 141178250
+    },
+    {
+      "path": "/sigstore/verifier/binary/url",
+      "value": "https://github.com/sigstore/cosign/releases/download/v3.1.3/cosign-linux-amd64"
+    },
+    {
+      "path": "/sigstore/verifier/git_commit",
+      "value": "11926fa5bbbbde47e88fc006b625a17769b743b2"
+    },
+    {
+      "path": "/sigstore/verifier/kms_bundle/sha256",
+      "value": "9c0e569b65883ac5ccf6e079989355832a3ee083b8cb991b3482d963e97896d9"
+    },
+    {
+      "path": "/sigstore/verifier/kms_bundle/size",
+      "value": 3618
+    },
+    {
+      "path": "/sigstore/verifier/kms_bundle/url",
+      "value": "https://github.com/sigstore/cosign/releases/download/v3.1.3/cosign-linux-amd64-kms.sigstore.json"
+    },
+    {
+      "path": "/sigstore/verifier/policy/require_sct",
+      "value": true
+    },
+    {
+      "path": "/sigstore/verifier/policy/require_tlog",
+      "value": true
+    },
+    {
+      "path": "/sigstore/verifier/policy/signed_timestamps/default",
+      "value": true
+    },
+    {
+      "path": "/sigstore/verifier/policy/signed_timestamps/exceptions/0/artifact",
+      "value": "Python-3.9.25.tar.xz"
+    },
+    {
+      "path": "/sigstore/verifier/policy/signed_timestamps/exceptions/0/reason",
+      "value": "upstream-bundle-omits-rfc3161"
+    },
+    {
+      "path": "/sigstore/verifier/status",
+      "value": "locked"
+    },
+    {
+      "path": "/sigstore/verifier/version",
+      "value": "3.1.3"
     }
   ],
   "schema_version": 1,

@@ -669,6 +669,9 @@ def render_packaging_graph(
             "crossforge_gcc_testsuite_full_qualified": (
                 "target:gcc-testsuite-full-qualification-evidence"
             ),
+            "crossforge_sigstore_qualified": (
+                "target:sigstore-sources-qualified"
+            ),
         },
         "output": ["type=cacheonly"],
     }

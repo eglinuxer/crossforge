@@ -76,6 +76,12 @@ target "platform-python-check" {
   output   = ["type=cacheonly"]
 }
 
+target "sigstore-sources-qualified" {
+  inherits = ["_common"]
+  target   = "sigstore-verification-evidence"
+  output   = ["type=cacheonly"]
+}
+
 target "sdk-skeleton" {
   inherits = ["_common"]
   target   = "sdk-skeleton"

@@ -299,10 +299,20 @@ Sigstore bundles are archived and structurally bound to those digests. The
 Sigstore public trust bootstrap is now independently pinned and verified from
 the official threshold-signed TUF root 5 through root 15, targets 14, the
 resulting `trusted_root.json`, and its artifact key; the complete raw metadata
-is retained as exact-byte base64 evidence. The source bundles remain explicitly
-marked `archived-unverified` until the locked Cosign verifier executes their
-Fulcio/Rekor/SCT/time policies, so this phase does not yet claim cryptographic
-source authenticity.
+is retained as exact-byte base64 evidence. A content-locked Cosign 3.1.3 is
+itself authenticated by the TUF artifact key and its KMS bundle, then verifies
+all six source bundles offline against exact certificate identities and OIDC
+issuers, SCTs, Rekor SET/inclusion proofs and RFC3161 timestamps where present.
+The older CPython 3.9.25 bundle has no RFC3161 material and therefore uses its
+verified Rekor integrated time; this is the only explicit timestamp exception.
+
+```console
+$ docker buildx bake sigstore-sources-qualified
+```
+
+The exported report is copied into public candidates at
+`/opt/crossforge/qualification/sigstore.json`; the 10 downloaded verification
+inputs, including Cosign and all source archives, remain outside the image.
 
 ## Phase 6: parameterized CPython rows
 

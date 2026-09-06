@@ -49,6 +49,10 @@ jobs:
           reference="$CANDIDATE_REPOSITORY:$tag"
           printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
           printf 'reference=%s\n' "$reference" >> "$GITHUB_OUTPUT"
+      - name: Qualify Sigstore source signatures offline
+        run: |
+          set -Eeuo pipefail
+          docker buildx bake sigstore-sources-qualified --progress=plain
       - name: Log in to GHCR
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}

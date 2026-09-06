@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/sigstore-verification.schema.json",
+  "title": "Crossforge Sigstore source verification evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "status",
+    "release_sha256",
+    "verifier",
+    "artifacts",
+    "checks"
+  ],
+  "properties": {
+    "$schema": {"const": "https://crossforge.dev/schemas/sigstore-verification.schema.json"},
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-sigstore-source-verification"},
+    "status": {"const": "verified"},
+    "release_sha256": {"$ref": "#/$defs/sha256"},
+    "verifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "git_commit",
+        "binary_sha256",
+        "kms_bundle_sha256",
+        "tuf_root_version",
+        "tuf_targets_version",
+        "trusted_root_sha256",
+        "artifact_key_sha256"
+      ],
+      "properties": {
+        "version": {"const": "3.1.3"},
+        "git_commit": {"const": "11926fa5bbbbde47e88fc006b625a17769b743b2"},
+        "binary_sha256": {"$ref": "#/$defs/sha256"},
+        "kms_bundle_sha256": {"$ref": "#/$defs/sha256"},
+        "tuf_root_version": {"type": "integer", "minimum": 1},
+        "tuf_targets_version": {"type": "integer", "minimum": 1},
+        "trusted_root_sha256": {"$ref": "#/$defs/sha256"},
+        "artifact_key_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "artifact",
+          "artifact_sha256",
+          "bundle_sha256",
+          "identity",
+          "issuer",
+          "signed_timestamp",
+          "verified"
+        ],
+        "properties": {
+          "artifact": {"type": "string", "minLength": 1},
+          "artifact_sha256": {"$ref": "#/$defs/sha256"},
+          "bundle_sha256": {"$ref": "#/$defs/sha256"},
+          "identity": {"type": "string", "minLength": 1},
+          "issuer": {"type": "string", "pattern": "^https://"},
+          "signed_timestamp": {"type": "boolean"},
+          "verified": {"const": true}
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cosign_bootstrap_signature",
+        "cosign_bundle",
+        "certificate_chain",
+        "certificate_identity",
+        "sct",
+        "transparency_log",
+        "inclusion_proof",
+        "signed_timestamps_when_present",
+        "offline"
+      ],
+      "properties": {
+        "cosign_bootstrap_signature": {"const": true},
+        "cosign_bundle": {"const": true},
+        "certificate_chain": {"const": true},
+        "certificate_identity": {"const": true},
+        "sct": {"const": true},
+        "transparency_log": {"const": true},
+        "inclusion_proof": {"const": true},
+        "signed_timestamps_when_present": {"const": true},
+        "offline": {"const": true}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
