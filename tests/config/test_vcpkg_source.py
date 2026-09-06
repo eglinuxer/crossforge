@@ -53,6 +53,10 @@ class VcpkgSourceTests(unittest.TestCase):
             "5b0142bc8cd44e5ac7e7539257245be44ec6d695b863fc090f4e56589fed50dd",
         )
         self.assertEqual(identity["/vcpkg/tool/source/member_count"], 2457)
+        self.assertIn(
+            '"clean_before_tool_injection": True',
+            PREPARER_PATH.read_text(encoding="utf-8"),
+        )
 
     def test_tool_source_layout_and_licenses_are_verified(self):
         with tempfile.TemporaryDirectory() as temporary:

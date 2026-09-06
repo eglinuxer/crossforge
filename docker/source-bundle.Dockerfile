@@ -121,7 +121,9 @@ RUN --network=none \
     && rm -f /work/vcpkg-registry/vcpkg \
       /work/vcpkg-registry/vcpkg.disable-metrics \
     && rm -rf /work/vcpkg-registry/licenses/vcpkg-tool \
-    && test -z "$(git -C /work/vcpkg-registry status --porcelain --untracked-files=all)" \
+    && test ! -e /work/vcpkg-registry/vcpkg \
+    && test ! -e /work/vcpkg-registry/vcpkg.disable-metrics \
+    && test ! -e /work/vcpkg-registry/licenses/vcpkg-tool \
     && mkdir -p /work/vcpkg-root/vcpkg-2026.07.29 \
     && cp -a /work/vcpkg-registry/. /work/vcpkg-root/vcpkg-2026.07.29/ \
     && tar --sort=name --format=posix \

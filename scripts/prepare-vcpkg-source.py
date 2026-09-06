@@ -437,6 +437,7 @@ def verify_git_repository(repository, identity, input_root):
     tree, _stderr = run(["git", "rev-parse", "HEAD^{tree}"], cwd=repository)
     return {
         "commit": commit,
+        "clean_before_tool_injection": True,
         "history_commit_count": history_count,
         "tag": tag,
         "tag_object": tag_object,

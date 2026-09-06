@@ -389,6 +389,12 @@ def validate_metadata(root, lock, entries):
     for path, kind in expected_kinds.items():
         document = STRICT["load_json"](root / path)
         require(document.get("kind") == kind, "source-stage manifest kind differs: %s" % path)
+        if path == "metadata/vcpkg-source.json":
+            require(
+                document.get("registry", {}).get("clean_before_tool_injection")
+                is True,
+                "vcpkg registry source was not clean before tool injection",
+            )
     require(any(entry["kind"] == "source-lock" for entry in entries), "source lock entry is absent")
 
 

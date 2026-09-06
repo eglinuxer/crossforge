@@ -111,6 +111,8 @@ class AssembleSourceBundleTests(unittest.TestCase):
         self.assertIn("assemble-source-bundle.py", dockerfile)
         self.assertIn("--source-commit \"$CROSSFORGE_SOURCE_COMMIT\"", dockerfile)
         self.assertIn("RUN --network=none", dockerfile)
+        self.assertNotIn("$(git ", dockerfile)
+        self.assertIn("clean_before_tool_injection", SCRIPT.read_text(encoding="utf-8"))
         dockerignore = (REPOSITORY / ".dockerignore").read_text(encoding="utf-8")
         self.assertIn(".git/", dockerignore)
         self.assertIn(".agents/", dockerignore)
