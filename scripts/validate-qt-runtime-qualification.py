@@ -202,6 +202,15 @@ def validate_release_contract(release_path):
         REPOSITORY / "config/generated/release-binding.json",
         REPOSITORY / "config/schemas/release-binding.schema.json",
     )
+    require(
+        binding["release"]
+        == {
+            "schema": "./schemas/release.schema.json",
+            "schema_version": 1,
+            "canonical_sha256": canonical_sha256(release),
+        },
+        "Qt runtime release binding differs from selected release",
+    )
     build_record = BUILD["binding_component"](
         binding, "future/qt-qualification"
     )

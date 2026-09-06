@@ -704,8 +704,11 @@ SHA256-bound AArch64 probe tar. In parallel, the publish runner exports the
 qualified AArch64 Qt runtime root without QEMU and binds its digest to the same
 candidate. A separate `ubuntu-24.04-arm` job executes the compiler probes and
 Qt runtime gate without QEMU inside the pinned Rocky Linux 8.10 arm64 manifest,
-then uploads both strict native qualification reports. It never creates a
-SemVer or stable-channel tag.
+then uploads both strict native qualification reports. The Qt artifact also
+retains the exact target-build and runtime-overlay evidence, and
+`validate-qt-native-release.py` revalidates their hashes and candidate/rootfs
+bindings before upload so a later promotion does not have to trust a job status
+alone. The workflow never creates a SemVer or stable-channel tag.
 
 The public candidate runs as `crossforge` UID/GID 1000 by default. `/opt/crossforge`
 remains root-owned; only the workspace, home, cache and temporary directories are

@@ -1,6 +1,7 @@
 import copy
 import json
 import runpy
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -59,6 +60,22 @@ class QtRuntimeQualificationTests(unittest.TestCase):
         aarch64["items"].pop()
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate_runtime_pair"](runtimes)
+
+    def test_release_binding_must_match_the_selected_release(self):
+        release = VALIDATOR["STRICT"]["load_json"](
+            REPOSITORY / "config/release.json"
+        )
+        release["product"]["version"] = "0.1.1"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "release.json"
+            path.write_text(
+                json.dumps(release, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                VALIDATOR["ValidationError"], "release binding differs"
+            ):
+                VALIDATOR["validate_release_contract"](path)
 
     def test_runtime_tiers_keep_qemu_and_native_release_distinct(self):
         self.assertEqual(

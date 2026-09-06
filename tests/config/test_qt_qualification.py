@@ -1,6 +1,8 @@
 import ast
 import copy
+import json
 import runpy
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -82,6 +84,22 @@ class QtQualificationPlanTests(unittest.TestCase):
         aarch64["items"].pop()
         with self.assertRaises(VALIDATOR["ValidationError"]):
             VALIDATOR["validate_target_pair"](targets)
+
+    def test_release_binding_must_match_the_selected_release(self):
+        release = VALIDATOR["STRICT"]["load_json"](
+            REPOSITORY / "config/release.json"
+        )
+        release["product"]["version"] = "0.1.1"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "release.json"
+            path.write_text(
+                json.dumps(release, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                VALIDATOR["ValidationError"], "release binding differs"
+            ):
+                VALIDATOR["validate_release_contract"](path)
 
     def test_semantic_mutations_fail_closed(self):
         plan = self.contract["plan"]

@@ -368,6 +368,15 @@ def validate_release_contract(release_path, require_locked=False):
         REPOSITORY / "config/generated/release-binding.json",
         REPOSITORY / "config/schemas/release-binding.schema.json",
     )
+    require(
+        binding["release"]
+        == {
+            "schema": "./schemas/release.schema.json",
+            "schema_version": 1,
+            "canonical_sha256": canonical_sha256(release),
+        },
+        "Qt release binding differs from selected release",
+    )
     source = binding_component(binding, "sources/qt")
     require(
         plan["source_component"]

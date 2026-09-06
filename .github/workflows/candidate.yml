@@ -344,6 +344,23 @@ jobs:
           qt_image="crossforge-qt-native-runtime:$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           docker image import --platform linux/arm64 "$archive" "$qt_image"
           test "$(docker image inspect --format '{{.Architecture}}' "$qt_image")" = arm64
+          qt_container=""
+          cleanup_qt_container() {
+            if test -n "$qt_container"; then
+              docker rm --force "$qt_container" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_qt_container EXIT
+          qt_container=$(docker create "$qt_image" /bin/true)
+          docker cp \
+            "$qt_container:/opt/crossforge-qualification/qt/evidence/qt-target-build.json" \
+            "$RUNNER_TEMP/native-aarch64-output/qt-target-build.json"
+          docker cp \
+            "$qt_container:/opt/crossforge-qualification/qt/evidence/qt-runtime-overlay.json" \
+            "$RUNNER_TEMP/native-aarch64-output/qt-runtime-overlay.json"
+          docker rm "$qt_container"
+          qt_container=""
+          trap - EXIT
           docker run --rm --pull=never --platform linux/arm64 \
             --network none --read-only \
             --tmpfs /tmp:rw,mode=1777 \
@@ -368,6 +385,16 @@ jobs:
               --input-rootfs-sha256 "$EXPECTED_QT_ROOTFS_SHA256" \
               --output /output/qt-native-aarch64-runtime.json
           test -s "$output"
+          ./scripts/validate-qt-native-release.py \
+            --candidate "$candidate" \
+            --report "$output" \
+            --build-evidence \
+              "$RUNNER_TEMP/native-aarch64-output/qt-target-build.json" \
+            --overlay-evidence \
+              "$RUNNER_TEMP/native-aarch64-output/qt-runtime-overlay.json" \
+            --expected-source-commit "$GITHUB_SHA" \
+            --expected-candidate-digest "$CANDIDATE_DIGEST" \
+            --input-rootfs-sha256 "$EXPECTED_QT_ROOTFS_SHA256"
       - name: Upload native AArch64 release evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -375,6 +402,8 @@ jobs:
           path: |
             ${{ runner.temp }}/native-aarch64-input/candidate.json
             ${{ runner.temp }}/native-aarch64-output/native-aarch64.json
+            ${{ runner.temp }}/native-aarch64-output/qt-target-build.json
+            ${{ runner.temp }}/native-aarch64-output/qt-runtime-overlay.json
             ${{ runner.temp }}/native-aarch64-output/qt-native-aarch64-runtime.json
           if-no-files-found: error
           retention-days: 90

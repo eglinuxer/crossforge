@@ -389,7 +389,7 @@ def validate_candidate_binding(arguments, release):
     }
 
 
-def write_json(path, document):
+def validate_evidence_document(document):
     schema = STRICT["load_json"](
         REPOSITORY / "config/schemas/qt-target-runtime.schema.json"
     )
@@ -455,6 +455,11 @@ def write_json(path, document):
         and document["execution"]["loader_sha256"] == probes[0]["sha256"],
         "runtime consumer loader evidence differs",
     )
+    return document
+
+
+def write_json(path, document):
+    validate_evidence_document(document)
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary_name = tempfile.mkstemp(
         prefix=".%s." % path.name, suffix=".tmp", dir=str(path.parent)
