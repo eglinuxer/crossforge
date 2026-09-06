@@ -488,6 +488,86 @@ def validate_evidence(config, repository):
     )
     git_headers(commit_payload)
 
+    qemu_archive = source["archive"]
+    qemu_signature = qemu_archive["signature"]
+    qemu_key = qemu_signature["key"]
+    require(
+        qemu_archive["status"] == "locked"
+        and qemu_archive["url"]
+        == "https://download.qemu.org/qemu-10.2.3.tar.xz"
+        and qemu_archive["sha256"]
+        == "2aa0e420e4ea89ea34a833f4c4eced96a35b51a9ee8568b232692729b60b064d"
+        and qemu_archive["size"] == 141095748
+        and qemu_archive["layout"]
+        == {
+            "top_directory": "qemu-10.2.3",
+            "member_count": 84628,
+            "version_sha256": (
+                "b9bba35d8e16f369d55d674718b3ce7b0cd86c60681f153bb885a596eeabea4b"
+            ),
+            "license_sha256": (
+                "dd3ce02338c3a48abb6ba59b48809f7108a8bd242cb0cc8be90daafa30707c28"
+            ),
+            "reviewed_external_symlinks": [
+                {
+                    "path": (
+                        "qemu-10.2.3/roms/edk2/EmulatorPkg/Unix/Host/"
+                        "X11IncludeHack"
+                    ),
+                    "target": "/opt/X11/include",
+                }
+            ],
+        },
+        "QEMU official source archive policy differs",
+    )
+    require(
+        qemu_signature["url"]
+        == "https://download.qemu.org/qemu-10.2.3.tar.xz.sig"
+        and qemu_signature["sha256"]
+        == "cdd27f047ef822ce837309c849a07009b21c666689850b04b5d84cdfc08fbbe9"
+        and qemu_signature["size"] == 310
+        and qemu_signature["evidence"]
+        == "evidence/gpg/qemu-10.2.3.tar.xz.sig.b64"
+        and qemu_signature["verification"]
+        == {
+            "status": "cryptographically-valid-expired-key",
+            "signature_time": "2026-05-27T22:12:30Z",
+            "exception": "upstream-release-key-expired-before-signing",
+        },
+        "QEMU official source signature policy differs",
+    )
+    require(
+        qemu_key
+        == {
+            "file": "keys/QEMU-RELEASE-KEY.asc",
+            "retrieval_url": (
+                "https://keys.openpgp.org/vks/v1/by-fingerprint/"
+                "CEACC9E15534EBABB82D3FA03353C9CEF108B584"
+            ),
+            "sha256": (
+                "0ce28d0b02f2e36286be047e1c76558421c8b6324f729462a753cf6cb20fe368"
+            ),
+            "fingerprint": "ceacc9e15534ebabb82d3fa03353c9cef108b584",
+            "expires_at": "2026-05-11T15:13:07Z",
+        }
+        and qemu_signature["verification"]["signature_time"]
+        > qemu_key["expires_at"],
+        "QEMU expired release-key exception is not exact",
+    )
+    qemu_signature_payload = load_evidence(
+        repository, qemu_signature["evidence"]
+    )
+    qemu_key_payload = load_locked_file(
+        repository, qemu_key["file"], "QEMU release key"
+    )
+    require(
+        len(qemu_signature_payload) == qemu_signature["size"]
+        and hashlib.sha256(qemu_signature_payload).hexdigest()
+        == qemu_signature["sha256"]
+        and hashlib.sha256(qemu_key_payload).hexdigest() == qemu_key["sha256"],
+        "QEMU official source signature evidence differs",
+    )
+
     zstd = config["python"]["zstd"]
     zstd_source = zstd["source"]
     zstd_signature = zstd_source["signature"]
@@ -1264,6 +1344,8 @@ def validate_evidence(config, repository):
         "qemu_attestation_sha256": sha256(attestation_payload),
         "qemu_tag_object": source["tag_object"],
         "qemu_commit": source["commit"],
+        "qemu_source_archive_sha256": qemu_archive["sha256"],
+        "qemu_source_signature_status": qemu_signature["verification"]["status"],
         "python_sources": len(config["python"]["versions"]),
         "python_patches": python_patch_count,
         "python_sigstore_status": "verified",
@@ -1300,7 +1382,7 @@ def main():
     result = validate_evidence(config, repository)
     print(
         "valid supply-chain evidence: Sigstore TUF root %d/targets %d; "
-        "Rocky %s; QEMU %s; source %s; "
+        "Rocky %s; QEMU %s; source %s (%s), commit %s; "
         "CPython/nFPM Sigstore bundles %s/%s via Cosign %s; "
         "patches %d; zstd %s; vcpkg %s; "
         "Qt %s + FFmpeg %s + xcb-util-cursor %s; Ninja %s; CMake %s"
@@ -1309,6 +1391,8 @@ def main():
             result["sigstore_tuf_targets_version"],
             result["rocky_index_sha256"],
             result["qemu_manifest_sha256"],
+            result["qemu_source_archive_sha256"],
+            result["qemu_source_signature_status"],
             result["qemu_commit"],
             result["python_sigstore_status"],
             result["nfpm_sigstore_status"],

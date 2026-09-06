@@ -229,6 +229,12 @@ target "qemu-aarch64-validated" {
   output   = ["type=cacheonly"]
 }
 
+target "qemu-source-qualified" {
+  inherits = ["_common"]
+  target   = "qemu-source-qualified-output"
+  output   = ["type=cacheonly"]
+}
+
 # Export only the library roots needed for ABI inventory maintenance. The
 # default is cache-only; opt in to a review archive with
 # `--set abi-export.output=type=tar,dest=...`.

@@ -6,12 +6,17 @@ text editor changes line endings. `scripts/validate-supply-chain-evidence.py`
 decodes each file, recomputes its content identity, and verifies every
 relationship recorded in `config/release.json`.
 
-The QEMU tag envelope archives the signed annotated tag, but Crossforge does
-not yet carry a QEMU maintainer keyring or claim local OpenPGP trust
-verification. The validator does prove that the archived tag object names the
-archived commit and that the pinned binfmt provenance used that tag in its
-checkout step. Refresh evidence only as part of an audited release-input
-update; never edit decoded JSON or Git object bodies by hand.
+The QEMU tag envelope archives the signed annotated tag and the source archive
+has an independent detached signature. Crossforge pins the QEMU download-page
+key by exact bytes and full fingerprint, then requires offline GPG output to
+contain the exact `VALIDSIG` and `EXPKEYSIG` records. The release manager key
+expired on 2026-05-11 and the 10.2.3 signature was made on 2026-05-27, so the
+result is deliberately labeled `cryptographically-valid-expired-key`. This is
+an explicit upstream risk exception, not a claim that the signature was made
+by a current key. The validator also proves that the archived tag object names
+the archived commit and that pinned binfmt provenance used that tag. Refresh
+evidence only as part of an audited release-input update; never edit decoded
+JSON or Git object bodies by hand.
 
 Ninja uses a lightweight tag and its GitHub release is not immutable. The
 `github/` envelopes therefore preserve the exact tag-ref mapping and release
@@ -29,11 +34,13 @@ It also binds the selected BSD-3-Clause license and the upstream `LICENSE` and
 `COPYING` digests. Structural Git evidence is not a substitute for the detached
 tarball signature, and no QEMU OpenPGP claim is implied by the zstd key.
 
-The CPython bundles are content-addressed archival evidence only. The validator
-checks their structure and binds their message/Rekor digests to the selected
-tarballs, but does not yet verify the message signature, Fulcio certificate
-chain or identity, Rekor SET/inclusion proof, or TSA. Accordingly release.json
-must label them `archived-unverified`; changing that label is a schema error.
+The CPython bundles are verified offline by the TUF-authenticated Cosign pinned
+in `release.json`. The gate checks message signatures, Fulcio certificate
+chains and exact identities, SCTs, Rekor SET/inclusion proofs and RFC3161
+timestamps. Python 3.9.25 is the single documented exception because its
+upstream bundle omits RFC3161 material; its verified Rekor integrated time is
+used instead. All six rows are labeled `verified` and the aggregate report is
+part of candidate qualification evidence.
 
 ## ABI evidence
 

@@ -85,7 +85,8 @@ jobs:
           docker buildx bake validate platform-python-check \
             sigstore-sources-qualified rpm-source-lock-validated \
             host-build-common-locked host-gcc-build-locked \
-            host-gcc-test-locked host-python-build-locked qemu-aarch64-validated \
+            host-gcc-test-locked host-python-build-locked \
+            qemu-source-qualified qemu-aarch64-validated \
             qt-rpm-locked \
             host-runtime-qualified \
             ninja-host-tool cmake-host-tool \

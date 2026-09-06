@@ -213,6 +213,94 @@
       "value": 37813
     },
     {
+      "path": "/qemu/executor/source/archive/layout/license_sha256",
+      "value": "dd3ce02338c3a48abb6ba59b48809f7108a8bd242cb0cc8be90daafa30707c28"
+    },
+    {
+      "path": "/qemu/executor/source/archive/layout/member_count",
+      "value": 84628
+    },
+    {
+      "path": "/qemu/executor/source/archive/layout/reviewed_external_symlinks/0/path",
+      "value": "qemu-10.2.3/roms/edk2/EmulatorPkg/Unix/Host/X11IncludeHack"
+    },
+    {
+      "path": "/qemu/executor/source/archive/layout/reviewed_external_symlinks/0/target",
+      "value": "/opt/X11/include"
+    },
+    {
+      "path": "/qemu/executor/source/archive/layout/top_directory",
+      "value": "qemu-10.2.3"
+    },
+    {
+      "path": "/qemu/executor/source/archive/layout/version_sha256",
+      "value": "b9bba35d8e16f369d55d674718b3ce7b0cd86c60681f153bb885a596eeabea4b"
+    },
+    {
+      "path": "/qemu/executor/source/archive/sha256",
+      "value": "2aa0e420e4ea89ea34a833f4c4eced96a35b51a9ee8568b232692729b60b064d"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/evidence",
+      "value": "evidence/gpg/qemu-10.2.3.tar.xz.sig.b64"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/key/expires_at",
+      "value": "2026-05-11T15:13:07Z"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/key/file",
+      "value": "keys/QEMU-RELEASE-KEY.asc"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/key/fingerprint",
+      "value": "ceacc9e15534ebabb82d3fa03353c9cef108b584"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/key/retrieval_url",
+      "value": "https://keys.openpgp.org/vks/v1/by-fingerprint/CEACC9E15534EBABB82D3FA03353C9CEF108B584"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/key/sha256",
+      "value": "0ce28d0b02f2e36286be047e1c76558421c8b6324f729462a753cf6cb20fe368"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/sha256",
+      "value": "cdd27f047ef822ce837309c849a07009b21c666689850b04b5d84cdfc08fbbe9"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/size",
+      "value": 310
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/url",
+      "value": "https://download.qemu.org/qemu-10.2.3.tar.xz.sig"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/verification/exception",
+      "value": "upstream-release-key-expired-before-signing"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/verification/signature_time",
+      "value": "2026-05-27T22:12:30Z"
+    },
+    {
+      "path": "/qemu/executor/source/archive/signature/verification/status",
+      "value": "cryptographically-valid-expired-key"
+    },
+    {
+      "path": "/qemu/executor/source/archive/size",
+      "value": 141095748
+    },
+    {
+      "path": "/qemu/executor/source/archive/status",
+      "value": "locked"
+    },
+    {
+      "path": "/qemu/executor/source/archive/url",
+      "value": "https://download.qemu.org/qemu-10.2.3.tar.xz"
+    },
+    {
       "path": "/qemu/executor/source/commit_evidence",
       "value": "evidence/git/qemu-v10.2.3.commit.b64"
     },

@@ -42,6 +42,7 @@ COPY config/ ./config/
 COPY evidence/ ./evidence/
 COPY keys/ZSTD-RELEASE-KEY.asc ./keys/ZSTD-RELEASE-KEY.asc
 COPY keys/MICROSOFT-RELEASE-KEY.asc ./keys/MICROSOFT-RELEASE-KEY.asc
+COPY keys/QEMU-RELEASE-KEY.asc ./keys/QEMU-RELEASE-KEY.asc
 COPY keys/FFMPEG-RELEASE-KEY.asc ./keys/FFMPEG-RELEASE-KEY.asc
 COPY keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc \
   ./keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc
@@ -53,6 +54,28 @@ COPY scripts/verify-sigstore-tuf-root.py \
   ./scripts/verify-sigstore-tuf-root.py
 RUN /usr/libexec/platform-python ./scripts/validate-supply-chain-evidence.py \
       ./config/release.json
+
+FROM release-validate AS qemu-source-download
+COPY scripts/fetch-release-source.py ./scripts/fetch-release-source.py
+RUN /usr/libexec/platform-python ./scripts/fetch-release-source.py qemu \
+      --config ./config/release.json \
+      --schema ./config/schemas/release.schema.json \
+      --output /qemu-download/qemu-10.2.3.tar.xz
+
+FROM config-validate AS qemu-source-qualified
+COPY --from=qemu-source-download /qemu-download/qemu-10.2.3.tar.xz \
+  /qemu-download/qemu-10.2.3.tar.xz
+COPY config/schemas/qemu-source-manifest.schema.json \
+  ./config/schemas/qemu-source-manifest.schema.json
+COPY --chmod=0755 scripts/prepare-qemu-source.py \
+  ./scripts/prepare-qemu-source.py
+RUN --network=none \
+    /usr/libexec/platform-python ./scripts/prepare-qemu-source.py \
+      --archive /qemu-download/qemu-10.2.3.tar.xz \
+      --output /qemu-source
+
+FROM scratch AS qemu-source-qualified-output
+COPY --from=qemu-source-qualified /qemu-source/ /
 
 FROM release-validate AS sigstore-assets-download
 COPY scripts/fetch-sigstore-assets.py ./scripts/fetch-sigstore-assets.py

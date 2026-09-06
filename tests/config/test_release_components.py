@@ -820,6 +820,16 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             },
         )
 
+    def test_qemu_official_source_archive_changes_only_supply_identity(self):
+        after = self.render_mutation(
+            lambda release: release["qemu"]["executor"]["source"][
+                "archive"
+            ].__setitem__("sha256", "0" * 64)
+        )
+        self.assertEqual(
+            changed(self.components, after), {"supply/evidence"}
+        )
+
     def test_host_python_lock_has_exact_python_host_impact(self):
         after = self.render_mutation(
             lambda release: release["host_locks"]["host-python-build"].__setitem__(

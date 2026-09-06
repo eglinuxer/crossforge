@@ -314,6 +314,20 @@ The exported report is copied into public candidates at
 `/opt/crossforge/qualification/sigstore.json`; the 10 downloaded verification
 inputs, including Cosign and all source archives, remain outside the image.
 
+The QEMU executor now has a separately exportable official source input. Its
+archive, detached signature, release-manager key fingerprint, version,
+license and complete member count are checked offline:
+
+```console
+$ docker buildx bake qemu-source-qualified
+```
+
+The upstream key expired on 2026-05-11, while the QEMU 10.2.3 signature was
+created on 2026-05-27. Crossforge therefore records the cryptographically good
+signature as an explicit expired-key exception rather than presenting it as a
+fully trusted current signature. The archive remains independently pinned by
+HTTPS URL, size and SHA256 for source-bundle assembly.
+
 ## Phase 6: parameterized CPython rows
 
 Build the 3.11 transition row or the fixed-membership two-row Phase 6 snapshot:

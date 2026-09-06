@@ -58,6 +58,14 @@ class ReleaseValidationTests(unittest.TestCase):
             result["qemu_manifest_sha256"],
             self.config["qemu"]["executor"]["manifest_digest"],
         )
+        self.assertEqual(
+            result["qemu_source_archive_sha256"],
+            self.config["qemu"]["executor"]["source"]["archive"]["sha256"],
+        )
+        self.assertEqual(
+            result["qemu_source_signature_status"],
+            "cryptographically-valid-expired-key",
+        )
         self.assertEqual(result["python_patches"], 4)
         self.assertEqual(
             result["qt_source_sha256"],
@@ -79,6 +87,19 @@ class ReleaseValidationTests(unittest.TestCase):
             (("base_image", "manifests", "arm64"), "sha256:" + "0" * 64),
             (("qemu", "executor", "provenance", "builder_commit"), "0" * 40),
             (("qemu", "executor", "source", "commit"), "0" * 40),
+            (("qemu", "executor", "source", "archive", "sha256"), "0" * 64),
+            (
+                (
+                    "qemu",
+                    "executor",
+                    "source",
+                    "archive",
+                    "signature",
+                    "verification",
+                    "status",
+                ),
+                "verified",
+            ),
             (("vcpkg", "release", "commit"), "0" * 40),
             (("vcpkg", "tool", "sha256"), "0" * 64),
             (

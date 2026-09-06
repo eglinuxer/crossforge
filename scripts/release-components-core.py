@@ -226,6 +226,17 @@ def selector(*prefixes):
     return selected
 
 
+def selector_without(excluded_prefixes, *prefixes):
+    included = selector(*prefixes)
+
+    def selected(path):
+        return included(path) and not any(
+            is_under(path, prefix) for prefix in excluded_prefixes
+        )
+
+    return selected
+
+
 def materials_for(leaves, selected):
     records = [
         {"path": json_pointer(path), "value": copy.deepcopy(value)}
@@ -501,6 +512,11 @@ def classify_release_leaves(release, implemented_rows=IMPLEMENTED_ROWS):
             category = (
                 "supply" if path[3].endswith("_evidence") else "qualification"
             )
+        elif (
+            len(path) >= 5
+            and path[:4] == ("qemu", "executor", "source", "archive")
+        ):
+            category = "supply"
         elif (
             len(path) >= 2
             and path[:2]
@@ -783,10 +799,16 @@ def _render_expected_components(release, implemented_rows):
         ]
         if arch == "aarch64":
             qualification_prefixes.append(("qemu",))
+        selected = selector(*qualification_prefixes)
+        if arch == "aarch64":
+            selected = selector_without(
+                (("qemu", "executor", "source", "archive"),),
+                *qualification_prefixes
+            )
         add(
             qualification_component,
             "qualification",
-            selector(*qualification_prefixes),
+            selected,
             (build_component, abi_baseline_components[arch]),
         )
 
@@ -949,7 +971,10 @@ def _render_expected_components(release, implemented_rows):
     add(
         "python/qualification",
         "qualification",
-        selector(*qualification_material_prefixes),
+        selector_without(
+            (("qemu", "executor", "source", "archive"),),
+            *qualification_material_prefixes
+        ),
         python_qualification_dependencies,
     )
 

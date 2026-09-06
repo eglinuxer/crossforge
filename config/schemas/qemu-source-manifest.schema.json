@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/qemu-source-manifest.schema.json",
+  "title": "Crossforge authenticated QEMU source manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "release_sha256",
+    "source"
+  ],
+  "properties": {
+    "$schema": {"const": "https://crossforge.dev/schemas/qemu-source-manifest.schema.json"},
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-qemu-source"},
+    "release_sha256": {"$ref": "#/$defs/sha256"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "tag",
+        "commit",
+        "archive",
+        "signature",
+        "key",
+        "layout"
+      ],
+      "properties": {
+        "version": {"const": "10.2.3"},
+        "tag": {"const": "v10.2.3"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "archive": {"$ref": "#/$defs/file_identity"},
+        "signature": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file",
+            "sha256",
+            "size",
+            "verification",
+            "signature_time",
+            "exception"
+          ],
+          "properties": {
+            "file": {"const": "qemu-10.2.3.tar.xz.sig"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "size": {"const": 310},
+            "verification": {"const": "cryptographically-valid-expired-key"},
+            "signature_time": {"const": "2026-05-27T22:12:30Z"},
+            "exception": {"const": "upstream-release-key-expired-before-signing"}
+          }
+        },
+        "key": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "sha256", "fingerprint", "expires_at"],
+          "properties": {
+            "file": {"const": "QEMU-RELEASE-KEY.asc"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "fingerprint": {"const": "ceacc9e15534ebabb82d3fa03353c9cef108b584"},
+            "expires_at": {"const": "2026-05-11T15:13:07Z"}
+          }
+        },
+        "layout": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "top_directory",
+            "member_count",
+            "version_sha256",
+            "license_sha256",
+            "reviewed_external_symlinks"
+          ],
+          "properties": {
+            "top_directory": {"const": "qemu-10.2.3"},
+            "member_count": {"const": 84628},
+            "version_sha256": {"$ref": "#/$defs/sha256"},
+            "license_sha256": {"$ref": "#/$defs/sha256"},
+            "reviewed_external_symlinks": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["path", "target"],
+                "properties": {
+                  "path": {"const": "qemu-10.2.3/roms/edk2/EmulatorPkg/Unix/Host/X11IncludeHack"},
+                  "target": {"const": "/opt/X11/include"}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "file_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "sha256", "size"],
+      "properties": {
+        "file": {"const": "qemu-10.2.3.tar.xz"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"const": 141095748}
+      }
+    }
+  }
+}

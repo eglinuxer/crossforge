@@ -136,6 +136,33 @@ class ComponentSourceFetcherTests(unittest.TestCase):
                 self.assertGreater(source["size"], 0)
                 self.assertRegex(source["sha256"], r"^[0-9a-f]{64}$")
 
+    def test_qemu_official_archive_is_available_only_in_release_mode(self):
+        source = FETCHER["load_maintenance_source"](
+            REPOSITORY / "config/release.json",
+            REPOSITORY / "config/schemas/release.schema.json",
+            "qemu",
+            None,
+        )
+        self.assertEqual(
+            source,
+            self.configured_qemu_source(),
+        )
+        with self.assertRaisesRegex(FETCHER["ValidationError"], "unsupported"):
+            FETCHER["source_for_component"](
+                self.path,
+                "python/cp312-source",
+                "build",
+                self.digest,
+                "qemu",
+            )
+
+    @staticmethod
+    def configured_qemu_source():
+        release = json.loads(
+            (REPOSITORY / "config/release.json").read_text(encoding="utf-8")
+        )
+        return release["qemu"]["executor"]["source"]["archive"]
+
     def test_wrong_component_digest_scope_kind_version_and_row_are_rejected(self):
         wrong_digest = ("0" if self.digest[0] != "0" else "1") + self.digest[1:]
         cases = (

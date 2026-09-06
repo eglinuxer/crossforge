@@ -73,6 +73,10 @@ def source_for(config, component, version=None):
         if version is not None and selected["version"] != version:
             raise ValidationError("zstd source version differs: %s" % version)
         source = selected["source"]
+    elif component == "qemu":
+        if version is not None:
+            raise ValidationError("--version is not valid for QEMU sources")
+        source = config["qemu"]["executor"]["source"]["archive"]
     else:
         if version is not None:
             raise ValidationError("--version is only valid for Python or zstd sources")
@@ -469,7 +473,7 @@ def fetch(source, output):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "source_kind", choices=("gcc", "binutils", "python", "zstd")
+        "source_kind", choices=("gcc", "binutils", "python", "zstd", "qemu")
     )
     parser.add_argument("--version")
     parser.add_argument("--output", type=Path, required=True)
