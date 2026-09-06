@@ -18,6 +18,9 @@ CANDIDATE_WORKFLOW = ".github/workflows/candidate.yml"
 GIT_SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
 GITHUB_REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 OCI_TAG_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$")
+STABLE_VERSION_RE = re.compile(
+    r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$"
+)
 
 STRICT = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
 CANDIDATE = runpy.run_path(str(REPOSITORY / "scripts/candidate_manifest.py"))
@@ -97,7 +100,11 @@ def validate_candidate_run(document, expected_repository, expected_run_id):
 
 
 def version_tag(version):
-    tag = "v" + version.replace("+", "_")
+    require(
+        STABLE_VERSION_RE.match(version or ""),
+        "stable promotion requires a release SemVer without prerelease or build metadata",
+    )
+    tag = "v" + version
     require(OCI_TAG_RE.match(tag), "release version cannot form an OCI tag")
     return tag
 

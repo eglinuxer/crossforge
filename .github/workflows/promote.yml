@@ -15,10 +15,15 @@ on:
         description: Enter PROMOTE-v<version> from config/release.json
         required: true
         type: string
+      immutable_releases_enabled:
+        description: Confirm repository release immutability is enabled
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   actions: read
-  contents: read
+  contents: write
   packages: write
 
 env:
@@ -72,12 +77,14 @@ jobs:
         env:
           CANDIDATE_HEAD_SHA: ${{ steps.candidate_run.outputs.head_sha }}
           CONFIRMATION: ${{ inputs.confirmation }}
+          IMMUTABLE_RELEASES_ENABLED: ${{ inputs.immutable_releases_enabled }}
         run: |
           set -Eeuo pipefail
           test "$(git rev-parse HEAD)" = "$CANDIDATE_HEAD_SHA"
           test -z "$(git status --porcelain --untracked-files=all)"
           expected_confirmation="PROMOTE-v$(jq -r .product.version config/release.json)"
           test "$CONFIRMATION" = "$expected_confirmation"
+          test "$IMMUTABLE_RELEASES_ENABLED" = true
           test "$(jq -r .product.image_repository config/release.json)" = \
             "$CANDIDATE_REPOSITORY"
           ./scripts/validate-release.py --require-locked
@@ -248,9 +255,238 @@ jobs:
                   .critical.image."docker-manifest-digest" == $digest)
               ' "$evidence" >/dev/null
           done
-      - name: Promote only the verified digests
+      - name: Create reproducible promotion evidence
         env:
           CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+        run: |
+          set -Eeuo pipefail
+          ./scripts/release_promotion.py create \
+            --candidate "$RUNNER_TEMP/candidate-identity/candidate.json" \
+            --candidate-run "$RUNNER_TEMP/candidate-run.json" \
+            --expected-github-repository "$GITHUB_REPOSITORY" \
+            --expected-candidate-run-id "$CANDIDATE_RUN_ID" \
+            --output "$RUNNER_TEMP/release-promotion.json"
+          ./scripts/release_promotion.py validate \
+            "$RUNNER_TEMP/release-promotion.json"
+      - name: Assemble deterministic durable release evidence
+        id: release_evidence
+        run: |
+          set -Eeuo pipefail
+          identity="$RUNNER_TEMP/candidate-identity"
+          probes="$RUNNER_TEMP/native-aarch64-probes"
+          native="$RUNNER_TEMP/native-aarch64-evidence"
+          signature="$RUNNER_TEMP/candidate-signature"
+          assets="$RUNNER_TEMP/release-assets"
+          version=$(jq -r .product.version config/release.json)
+          archive="$assets/crossforge-v$version-release-evidence.tar"
+          checksum="$archive.sha256"
+          install -d -m 0755 "$assets"
+          ./scripts/release_evidence.py create \
+            --candidate-signature "$signature/candidate-signature.json" \
+            --candidate "$identity/candidate.json" \
+            --native-probe-bundle "$probes/native-aarch64-probes.tar" \
+            --native-report "$native/native-aarch64.json" \
+            --qt-native-report "$native/qt-native-aarch64-runtime.json" \
+            --qt-overlay-evidence "$native/qt-runtime-overlay.json" \
+            --qt-build-evidence "$native/qt-target-build.json" \
+            --promotion "$RUNNER_TEMP/release-promotion.json" \
+            --release config/release.json \
+            --trusted-root "$RUNNER_TEMP/trusted_root.json" \
+            --sigstore-report "$signature/sigstore-verification.json" \
+            --source-binding "$identity/source-binding.json" \
+            --source-signature "$signature/source-bundle-signature.json" \
+            --source-bundle-identity "$identity/source-bundle.json" \
+            --output "$archive" \
+            --sha256-output "$checksum"
+          ./scripts/release_evidence.py validate "$archive" \
+            --sha256 "$checksum"
+          install -m 0644 "$identity/candidate.json" "$assets/candidate.json"
+          install -m 0644 "$RUNNER_TEMP/release-promotion.json" \
+            "$assets/release-promotion.json"
+          printf 'archive=%s\n' "$archive" >> "$GITHUB_OUTPUT"
+          printf 'checksum=%s\n' "$checksum" >> "$GITHUB_OUTPUT"
+          printf 'assets=%s\n' "$assets" >> "$GITHUB_OUTPUT"
+      - name: Preflight the immutable GitHub release
+        id: github_release
+        env:
+          CANDIDATE_HEAD_SHA: ${{ steps.candidate_run.outputs.head_sha }}
+          GH_TOKEN: ${{ secrets.RELEASE_ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          api_status() {
+            local endpoint=$1
+            local output=$2
+            local status
+            if ! status=$(curl --silent --show-error --location \
+              --retry 5 --retry-all-errors --retry-delay 2 \
+              --connect-timeout 30 \
+              -H 'Accept: application/vnd.github+json' \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'X-GitHub-Api-Version: 2026-03-10' \
+              -o "$output" -w '%{http_code}' \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/$endpoint"); then
+              echo "GitHub API request failed: $endpoint" >&2
+              return 1
+            fi
+            printf '%s\n' "$status"
+          }
+          immutable="$RUNNER_TEMP/immutable-releases.json"
+          immutable_status=$(api_status immutable-releases "$immutable")
+          test "$immutable_status" = 200
+          jq -e '.enabled == true' "$immutable" >/dev/null
+          version=$(jq -r .product.version config/release.json)
+          tag="v$version"
+          ref="$RUNNER_TEMP/release-tag.json"
+          ref_status=$(api_status "git/ref/tags/$tag" "$ref")
+          case "$ref_status" in
+            200)
+              object_type=$(jq -r .object.type "$ref")
+              object_sha=$(jq -r .object.sha "$ref")
+              if test "$object_type" = tag; then
+                annotated="$RUNNER_TEMP/annotated-release-tag.json"
+                test "$(api_status "git/tags/$object_sha" "$annotated")" = 200
+                test "$(jq -r .object.type "$annotated")" = commit
+                object_sha=$(jq -r .object.sha "$annotated")
+              else
+                test "$object_type" = commit
+              fi
+              test "$object_sha" = "$CANDIDATE_HEAD_SHA"
+              tag_exists=true
+              ;;
+            404) tag_exists=false ;;
+            *) echo "unexpected Git tag status: $ref_status" >&2; exit 1 ;;
+          esac
+          release="$RUNNER_TEMP/github-release.json"
+          release_status=$(api_status "releases/tags/$tag" "$release")
+          case "$release_status" in
+            200)
+              jq -e --arg tag "$tag" --arg head "$CANDIDATE_HEAD_SHA" '
+                .tag_name == $tag and
+                .target_commitish == $head and
+                .prerelease == false and
+                ((.draft == true and .immutable == false) or
+                 (.draft == false and .immutable == true))
+              ' "$release" >/dev/null
+              if test "$(jq -r .draft "$release")" = true; then
+                release_state=draft
+              else
+                test "$tag_exists" = true
+                release_state=published
+              fi
+              ;;
+            404)
+              release_state=absent
+              ;;
+            *) echo "unexpected GitHub release status: $release_status" >&2; exit 1 ;;
+          esac
+          printf 'state=%s\n' "$release_state" >> "$GITHUB_OUTPUT"
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          printf 'tag_exists=%s\n' "$tag_exists" >> "$GITHUB_OUTPUT"
+      - name: Create or resume the immutable release draft
+        env:
+          CANDIDATE_HEAD_SHA: ${{ steps.candidate_run.outputs.head_sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_STATE: ${{ steps.github_release.outputs.state }}
+          RELEASE_TAG: ${{ steps.github_release.outputs.tag }}
+          RELEASE_TAG_EXISTS: ${{ steps.github_release.outputs.tag_exists }}
+        run: |
+          set -Eeuo pipefail
+          assets="$RUNNER_TEMP/release-assets"
+          candidate="$assets/candidate.json"
+          promotion="$assets/release-promotion.json"
+          archive="${{ steps.release_evidence.outputs.archive }}"
+          checksum="${{ steps.release_evidence.outputs.checksum }}"
+          notes="$RUNNER_TEMP/release-notes.md"
+          candidate_digest=$(jq -r .digest "$candidate")
+          source_repository=$(jq -r .source_bundle.repository "$candidate")
+          source_digest=$(jq -r .source_bundle.digest "$candidate")
+          candidate_run=$(jq -r .candidate_run.url "$promotion")
+          {
+            echo "# Crossforge $RELEASE_TAG"
+            echo
+            echo 'GTS-derived cross SDK built from Rocky Linux rebuild sources.'
+            echo
+            echo "- SDK: \`$CANDIDATE_REPOSITORY@$candidate_digest\`"
+            echo "- Source: \`$source_repository@$source_digest\`"
+            echo "- Qualified candidate run: $candidate_run"
+            echo
+            echo 'The SDK and source OCI digests were natively qualified on AArch64,'
+            echo 'verified with the pinned Sigstore trust root, and promoted without rebuilding.'
+            echo 'Download the evidence archive and run `sha256sum -c` against its sidecar.'
+            echo 'The archive `MANIFEST.json` binds every included evidence file.'
+          } > "$notes"
+          if test "$RELEASE_STATE" = absent; then
+            create_arguments=(
+              "$RELEASE_TAG"
+              --draft
+              --target "$CANDIDATE_HEAD_SHA"
+              --title "Crossforge $RELEASE_TAG"
+              --notes-file "$notes"
+            )
+            if test "$RELEASE_TAG_EXISTS" = true; then
+              create_arguments+=(--verify-tag)
+            fi
+            gh release create "${create_arguments[@]}"
+          fi
+          gh api -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "/repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
+            > "$RUNNER_TEMP/github-release-current.json"
+          release="$RUNNER_TEMP/github-release-current.json"
+          jq -e --arg tag "$RELEASE_TAG" \
+            '.tag_name == $tag and .prerelease == false' "$release" >/dev/null
+          if test "$RELEASE_STATE" != published; then
+            test "$(jq -r .draft "$release")" = true
+          fi
+          allowed=$(jq -cn --args '$ARGS.positional | sort' \
+            "$(basename "$archive")" \
+            "$(basename "$checksum")" \
+            "$(basename "$candidate")" \
+            "$(basename "$promotion")")
+          test "$(jq --argjson allowed "$allowed" \
+            '[.assets[].name] - $allowed | length' "$release")" -eq 0
+          ensure_asset() {
+            local path=$1
+            local name
+            local expected_digest
+            local expected_size
+            local matches
+            name=$(basename "$path")
+            expected_digest="sha256:$(sha256sum "$path" | awk '{print $1}')"
+            expected_size=$(stat -c '%s' "$path")
+            gh api -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2026-03-10' \
+              "/repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
+              > "$release"
+            matches=$(jq --arg name "$name" \
+              '[.assets[] | select(.name == $name)] | length' "$release")
+            case "$matches" in
+              0)
+                test "$(jq -r .draft "$release")" = true
+                gh release upload "$RELEASE_TAG" "$path"
+                ;;
+              1)
+                jq -e --arg name "$name" \
+                  --arg digest "$expected_digest" \
+                  --argjson size "$expected_size" '
+                    any(.assets[];
+                      .name == $name and .state == "uploaded" and
+                      .digest == $digest and .size == $size)
+                  ' "$release" >/dev/null
+                ;;
+              *) echo "duplicate release asset: $name" >&2; return 1 ;;
+            esac
+          }
+          for path in "$archive" "$checksum" "$candidate" "$promotion"; do
+            ensure_asset "$path"
+          done
+          gh api -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "/repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
+            > "$release"
+          test "$(jq -c '[.assets[].name] | sort' "$release")" = "$allowed"
+      - name: Promote only the verified digests
+        env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -Eeuo pipefail
@@ -345,14 +581,37 @@ jobs:
             expected=${reference_digest##*@}
             test "$(public_tag_digest "$reference")" = "$expected"
           done
-          ./scripts/release_promotion.py create \
-            --candidate "$candidate" \
-            --candidate-run "$RUNNER_TEMP/candidate-run.json" \
-            --expected-github-repository "$GITHUB_REPOSITORY" \
-            --expected-candidate-run-id "$CANDIDATE_RUN_ID" \
-            --output "$RUNNER_TEMP/release-promotion.json"
-          ./scripts/release_promotion.py validate \
-            "$RUNNER_TEMP/release-promotion.json"
+      - name: Publish and verify the immutable GitHub release
+        id: published_release
+        env:
+          CANDIDATE_HEAD_SHA: ${{ steps.candidate_run.outputs.head_sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_STATE: ${{ steps.github_release.outputs.state }}
+          RELEASE_TAG: ${{ steps.github_release.outputs.tag }}
+        run: |
+          set -Eeuo pipefail
+          if test "$RELEASE_STATE" != published; then
+            gh release edit "$RELEASE_TAG" --draft=false --latest
+          fi
+          release="$RUNNER_TEMP/github-release-published.json"
+          gh api -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "/repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
+            > "$release"
+          jq -e --arg tag "$RELEASE_TAG" --arg head "$CANDIDATE_HEAD_SHA" '
+            .tag_name == $tag and
+            .target_commitish == $head and
+            .draft == false and
+            .prerelease == false and
+            .immutable == true and
+            (.assets | length) == 4 and
+            all(.assets[];
+              .state == "uploaded" and
+              (.digest | test("^sha256:[0-9a-f]{64}$")) and
+              .size > 0)
+          ' "$release" >/dev/null
+          printf 'release_url=%s\n' "$(jq -r .html_url "$release")" \
+            >> "$GITHUB_OUTPUT"
       - name: Upload stable promotion evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -373,5 +632,6 @@ jobs:
             echo "- OCI digest: \`$(jq -r .candidate.digest "$evidence")\`"
             echo "- Source: \`$(jq -r .source_bundle.version_reference "$evidence")\`"
             echo "- Candidate run: $(jq -r .candidate_run.url "$evidence")"
+            echo "- Immutable release: ${{ steps.published_release.outputs.release_url }}"
             echo '- Status: exact signed digest promoted without rebuilding'
           } >> "$GITHUB_STEP_SUMMARY"

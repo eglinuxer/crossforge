@@ -161,6 +161,13 @@ class ReleasePromotionTests(unittest.TestCase):
                 validated_run,
             )
 
+    def test_prerelease_and_build_metadata_cannot_enter_the_stable_channel(self):
+        for version in ("0.1.0-rc.1", "0.1.0+build.1"):
+            with self.subTest(version=version), self.assertRaisesRegex(
+                PROMOTION["PromotionError"], "stable promotion requires"
+            ):
+                PROMOTION["version_tag"](version)
+
     def test_schema_and_semantics_reject_tag_or_artifact_drift(self):
         mutations = (
             lambda value: value["candidate"].__setitem__(
@@ -253,11 +260,34 @@ class PromotionWorkflowTests(unittest.TestCase):
         self.assertIn("group: stable-promotion", self.workflow)
         self.assertIn("cancel-in-progress: false", self.workflow)
         self.assertIn("environment: production", self.workflow)
+        self.assertIn("immutable_releases_enabled:", self.workflow)
+        self.assertIn("contents: write", self.workflow)
         self.assertNotIn("docker buildx bake sdk-candidate", self.workflow)
         self.assertNotIn("docker buildx bake source-bundle", self.workflow)
         self.assertNotIn("id-token: write", self.workflow)
         self.assertNotIn('"$cosign" sign', self.workflow)
         self.assertIn("docker buildx imagetools create", self.workflow)
+
+    def test_release_evidence_is_durable_deterministic_and_immutable(self):
+        for value in (
+            "release_evidence.py create",
+            "release_evidence.py validate",
+            "crossforge-v$version-release-evidence.tar",
+            "immutable_status=$(api_status immutable-releases",
+            "jq -e '.enabled == true'",
+            'gh release create "${create_arguments[@]}"',
+            "gh release upload",
+            'gh release edit "$RELEASE_TAG" --draft=false --latest',
+            ".immutable == true",
+            ".digest == $digest",
+        ):
+            with self.subTest(value=value):
+                self.assertIn(value, self.workflow)
+        draft = self.workflow.index("gh release create")
+        promotion = self.workflow.index("docker buildx imagetools create")
+        publish = self.workflow.index("gh release edit")
+        self.assertLess(draft, promotion)
+        self.assertLess(promotion, publish)
 
     def test_exact_successful_candidate_run_and_artifacts_are_required(self):
         for value in (

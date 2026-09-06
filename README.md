@@ -829,11 +829,18 @@ promotion workflow with that run ID and the release-specific confirmation:
 ```console
 $ gh workflow run promote.yml \
     -f candidate_run_id="$CANDIDATE_RUN_ID" \
-    -f confirmation="PROMOTE-v0.1.0"
+    -f confirmation="PROMOTE-v0.1.0" \
+    -f immutable_releases_enabled=true
 ```
 
 The `production` GitHub environment is the operator-approval boundary and
-should have required reviewers configured before the first promotion. The
+should have required reviewers configured before the first promotion. GitHub
+release immutability must also be enabled in repository settings; the workflow
+queries that setting and fails before creating tags or a release when it is
+disabled. If the automatic `GITHUB_TOKEN` cannot read the administration-level
+setting, add a fine-grained, administration-read-only token as the protected
+`production` environment secret `RELEASE_ADMIN_TOKEN`; it is used only for that
+read-only preflight. The
 workflow checks out the candidate run's exact `main` commit, downloads the four
 exact run/attempt artifacts, byte-compares every copy of `candidate.json`, and
 revalidates the source binding, native AArch64 compiler report, native Qt
@@ -847,8 +854,14 @@ bound source digest. Existing version tags are accepted only when they already
 resolve to the selected digest; a different version-tag digest fails closed.
 The mutable channels move only after both immutable version tags exist, and
 all four references are resolved anonymously again before strict
-`release-promotion.json` evidence is uploaded. The workflow never rebuilds or
-signs a release during promotion.
+`release-promotion.json` evidence is produced. Fourteen original evidence files
+are also placed in a deterministic USTAR with a strict per-file manifest and
+SHA256 sidecar. The workflow creates a draft GitHub Release, uploads the archive,
+sidecar, candidate identity and promotion identity, moves the OCI channels, and
+only then publishes the release. It requires GitHub to report the published
+release as immutable, so its tag and assets become the durable evidence after
+the 90-day Actions artifacts expire. The workflow never rebuilds or signs a
+release during promotion.
 
 The public candidate runs as `crossforge` UID/GID 1000 by default. `/opt/crossforge`
 remains root-owned; only the workspace, home, cache and temporary directories are
