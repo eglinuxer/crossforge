@@ -209,6 +209,25 @@ class CandidateWorkflowTests(unittest.TestCase):
             self.workflow,
         )
 
+    def test_native_release_evidence_is_staged_under_one_artifact_root(self):
+        self.assertIn(
+            'EVIDENCE_ROOT: ${{ runner.temp }}/native-aarch64-release-evidence',
+            self.workflow,
+        )
+        self.assertIn(
+            'install -m 0644 "$file" "$EVIDENCE_ROOT/$(basename "$file")"',
+            self.workflow,
+        )
+        self.assertIn(
+            "path: ${{ runner.temp }}/native-aarch64-release-evidence/",
+            self.workflow,
+        )
+        upload = self.workflow.split(
+            "- name: Upload native AArch64 release evidence", 1
+        )[1].split("- name: Report native AArch64 qualification", 1)[0]
+        self.assertNotIn("native-aarch64-input/candidate.json", upload)
+        self.assertNotIn("native-aarch64-output/native-aarch64.json", upload)
+
     def test_every_ci_and_candidate_job_uses_the_locked_buildx_setup(self):
         local_action = "uses: ./.github/actions/setup-locked-buildx"
         self.assertEqual(self.ci.count(local_action), 2)

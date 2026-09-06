@@ -561,16 +561,30 @@ jobs:
             --expected-source-commit "$GITHUB_SHA" \
             --expected-candidate-digest "$CANDIDATE_DIGEST" \
             --input-rootfs-sha256 "$EXPECTED_QT_ROOTFS_SHA256"
+      - name: Stage native AArch64 release evidence
+        env:
+          CANDIDATE_INPUT: ${{ runner.temp }}/native-aarch64-input/candidate.json
+          NATIVE_OUTPUT: ${{ runner.temp }}/native-aarch64-output
+          EVIDENCE_ROOT: ${{ runner.temp }}/native-aarch64-release-evidence
+        run: |
+          set -Eeuo pipefail
+          install -d -m 0755 "$EVIDENCE_ROOT"
+          for file in \
+            "$CANDIDATE_INPUT" \
+            "$NATIVE_OUTPUT/native-aarch64.json" \
+            "$NATIVE_OUTPUT/qt-target-build.json" \
+            "$NATIVE_OUTPUT/qt-runtime-overlay.json" \
+            "$NATIVE_OUTPUT/qt-native-aarch64-runtime.json"; do
+            test -f "$file" && test ! -L "$file"
+            install -m 0644 "$file" "$EVIDENCE_ROOT/$(basename "$file")"
+          done
+          test "$(find "$EVIDENCE_ROOT" -mindepth 1 -maxdepth 1 \
+            -type f | wc -l)" -eq 5
       - name: Upload native AArch64 release evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: native-aarch64-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/native-aarch64-input/candidate.json
-            ${{ runner.temp }}/native-aarch64-output/native-aarch64.json
-            ${{ runner.temp }}/native-aarch64-output/qt-target-build.json
-            ${{ runner.temp }}/native-aarch64-output/qt-runtime-overlay.json
-            ${{ runner.temp }}/native-aarch64-output/qt-native-aarch64-runtime.json
+          path: ${{ runner.temp }}/native-aarch64-release-evidence/
           if-no-files-found: error
           retention-days: 90
       - name: Report native AArch64 qualification
