@@ -233,7 +233,12 @@ GitHub tag-ref/release 原始证据、GitHub SHA256、vcpkg SHA512、解包后 E
 且不得覆盖 `/usr/bin/ninja`。
 
 CMake 资产绑定 vcpkg SHA512、独立 SHA256/大小、`cmake`/`ctest`/`cpack` 三个 ELF
-摘要及 BSD-3-Clause 许可。离线资格化要求其最高 GLIBC 版本不超过 2.17，无
+摘要及 BSD-3-Clause 许可。对应的 4.4.0 官方源码归档、21 项 SHA-256 清单及其分离
+签名也进入同一 source component；断网门禁验证 33,033 个成员、构建入口、README、
+源码许可，并证明签名清单同时绑定源码和实际交付的 Linux binary。该签名使用的
+subkey 已于 2024-08-12 到期，却在 2026-07-09 签发，因此只能作为明确的
+`upstream-signing-subkey-expired-before-signing` 例外，不能宣传为当前有效签名。
+二进制离线资格化要求其最高 GLIBC 版本不超过 2.17，无
 RPATH/TEXTREL、动态依赖闭合，并实际运行 CMake/Ninja、CTest 与 CPack；
 `/usr/bin/cmake` 不得被覆盖。SDK 还要求 `vcpkg fetch cmake` 返回该绝对路径。
 

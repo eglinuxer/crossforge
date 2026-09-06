@@ -81,6 +81,14 @@ class ReleaseValidationTests(unittest.TestCase):
                 "sha256"
             ],
         )
+        self.assertEqual(
+            result["cmake_source_sha256"],
+            self.config["host_tools"]["cmake"]["source"]["sha256"],
+        )
+        self.assertEqual(
+            result["cmake_source_signature_status"],
+            "cryptographically-valid-expired-key",
+        )
 
     def test_supply_chain_identity_tampering_is_rejected(self):
         mutations = (
@@ -120,6 +128,19 @@ class ReleaseValidationTests(unittest.TestCase):
             (("python", "versions", 2, "patches", 0, "sha256"), "0" * 64),
             (("python", "versions", 3, "patches", 0, "sha256"), "0" * 64),
             (("qt", "source", "checksum", "sha256"), "0" * 64),
+            (("host_tools", "cmake", "source", "sha256"), "0" * 64),
+            (
+                (
+                    "host_tools",
+                    "cmake",
+                    "source",
+                    "checksums",
+                    "signature",
+                    "verification",
+                    "status",
+                ),
+                "verified",
+            ),
             (
                 (
                     "qt",

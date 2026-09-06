@@ -121,6 +121,7 @@ class NinjaHostToolTests(unittest.TestCase):
                 "host-runtime-qualified",
                 "ninja-source",
                 "ninja-host-tool",
+                "cmake-source",
                 "cmake-host-tool",
             ],
         )

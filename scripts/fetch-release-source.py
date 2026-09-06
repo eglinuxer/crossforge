@@ -80,6 +80,10 @@ def source_for(config, component, version=None):
         if version is not None:
             raise ValidationError("--version is not valid for QEMU sources")
         source = config["qemu"]["executor"]["source"]["archive"]
+    elif component == "cmake":
+        if version is not None:
+            raise ValidationError("--version is not valid for CMake sources")
+        source = config["host_tools"]["cmake"]["source"]
     else:
         if version is not None:
             raise ValidationError("--version is only valid for Python or zstd sources")
@@ -152,7 +156,7 @@ def source_for_component(
     """Read one authenticated source projection without loading release.json."""
     require(expected_scope == "build", "source component scope must be build")
     require(
-        source_kind in ("gcc", "binutils", "python", "zstd"),
+        source_kind in ("gcc", "binutils", "python", "zstd", "cmake"),
         "unsupported source kind: %r" % source_kind,
     )
     reader = component_reader()
@@ -231,7 +235,7 @@ def source_for_component(
             "Python component version differs: expected %s, found %s"
             % (version, component_version),
         )
-    else:
+    elif source_kind == "zstd":
         require(version is not None, "zstd source fetch requires --version")
         require(
             expected_component == "sources/zstd",
@@ -256,6 +260,23 @@ def source_for_component(
             component_version == version,
             "zstd component version differs: expected %s, found %s"
             % (version, component_version),
+        )
+    else:
+        require(version is None, "--version is not valid for CMake sources")
+        require(
+            expected_component == "sources/cmake",
+            "CMake source requires component sources/cmake",
+        )
+        base = "/host_tools/cmake"
+        source_base = base + "/source"
+        component_version = _component_material(
+            reader,
+            document,
+            expected_component,
+            expected_scope,
+            expected_sha256,
+            base + "/version",
+            "string",
         )
 
     require(
@@ -296,6 +317,14 @@ def source_for_component(
         require(
             source["url"] == expected_url,
             "zstd source URL differs from version %s" % version,
+        )
+    elif source_kind == "cmake":
+        require(component_version == "4.4.0", "CMake source version differs")
+        require(
+            source["url"]
+            == "https://github.com/Kitware/CMake/releases/download/v4.4.0/"
+            "cmake-4.4.0.tar.gz",
+            "CMake source URL differs from version",
         )
     return source
 
@@ -510,7 +539,8 @@ def fetch(source, output, attempts=5, retry_delay=2):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "source_kind", choices=("gcc", "binutils", "python", "zstd", "qemu")
+        "source_kind",
+        choices=("gcc", "binutils", "python", "zstd", "qemu", "cmake"),
     )
     parser.add_argument("--version")
     parser.add_argument("--output", type=Path, required=True)

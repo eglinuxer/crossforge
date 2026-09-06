@@ -12,6 +12,41 @@ RUN test -n "$CMAKE_BINARY_URL" \
     && curl --fail --location --retry 3 "$CMAKE_BINARY_URL" \
       --output /work/cmake-linux-x86_64.tar.gz
 
+FROM crossforge_host_runtime AS cmake-source-fetch
+ARG CMAKE_SOURCE_COMPONENT_SHA256
+WORKDIR /work
+COPY config/generated/components/sources/cmake.json \
+  /work/config/sources-cmake.json
+COPY --chmod=0755 scripts/release_component.py \
+  scripts/fetch-release-source.py /work/scripts/
+RUN /usr/libexec/platform-python /work/scripts/fetch-release-source.py cmake \
+      --component-file /work/config/sources-cmake.json \
+      --expected-component sources/cmake \
+      --expected-scope build \
+      --expected-sha256 "$CMAKE_SOURCE_COMPONENT_SHA256" \
+      --output /work/input/cmake-4.4.0.tar.gz
+
+FROM cmake-source-fetch AS cmake-source
+ARG CMAKE_SOURCE_COMPONENT_SHA256
+COPY config/schemas/cmake-source-manifest.schema.json \
+  /work/config/schemas/cmake-source-manifest.schema.json
+COPY keys/CMAKE-RELEASE-KEY.asc /work/keys/CMAKE-RELEASE-KEY.asc
+COPY evidence/checksums/cmake-4.4.0-SHA-256.txt.b64 \
+  /work/evidence/checksums/cmake-4.4.0-SHA-256.txt.b64
+COPY evidence/gpg/cmake-4.4.0-SHA-256.txt.asc.b64 \
+  /work/evidence/gpg/cmake-4.4.0-SHA-256.txt.asc.b64
+COPY --chmod=0755 scripts/validate-release.py \
+  scripts/source_signature.py scripts/prepare-cmake-source.py /work/scripts/
+RUN --network=none /usr/libexec/platform-python \
+      /work/scripts/prepare-cmake-source.py \
+      --component /work/config/sources-cmake.json \
+      --component-sha256 "$CMAKE_SOURCE_COMPONENT_SHA256" \
+      --archive /work/input/cmake-4.4.0.tar.gz \
+      --output /out
+
+FROM scratch AS cmake-source-export
+COPY --from=cmake-source /out/ /
+
 FROM crossforge_host_runtime AS cmake-host-tool
 ARG CMAKE_VERSION
 ARG CMAKE_SOURCE_COMPONENT_SHA256
@@ -24,6 +59,8 @@ COPY --from=crossforge_ninja_host_tool \
 COPY --from=crossforge_ninja_host_tool \
   /opt/crossforge/qualification/host-tools/ninja.json \
   /opt/crossforge/qualification/host-tools/ninja.json
+COPY --from=crossforge_cmake_source /source-manifest.json \
+  /work/cmake-source-manifest.json
 COPY config/generated/components/sources/cmake.json \
   /work/config/sources-cmake.json
 COPY config/generated/components/implementation/cmake-host-tool.json \

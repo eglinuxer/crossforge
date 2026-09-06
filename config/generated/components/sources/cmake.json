@@ -93,6 +93,118 @@
       "value": 22892448
     },
     {
+      "path": "/host_tools/cmake/source/checksums/entries",
+      "value": 21
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/evidence",
+      "value": "evidence/checksums/cmake-4.4.0-SHA-256.txt.b64"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/sha256",
+      "value": "90b67ae9ab545d351bff676b4318e5d52d315fe6b9c62e49ca2b6a219f92052d"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/evidence",
+      "value": "evidence/gpg/cmake-4.4.0-SHA-256.txt.asc.b64"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/key/file",
+      "value": "keys/CMAKE-RELEASE-KEY.asc"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/key/primary_fingerprint",
+      "value": "cba23971357c2e6590d9efd3ec8fef3a7bfb4eda"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/key/retrieval_url",
+      "value": "https://keys.openpgp.org/vks/v1/by-fingerprint/C6C265324BBEBDC350B513D02D2CEF1034921684"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/key/sha256",
+      "value": "ba1517003c9dbee2139dcaea10e5db2792c8a7372a350f90b578c83805d923c9"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/key/signing_fingerprint",
+      "value": "c6c265324bbebdc350b513d02d2cef1034921684"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/key/signing_key_expires_at",
+      "value": "2024-08-12T16:30:38Z"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/key/size",
+      "value": 25388
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/sha256",
+      "value": "792e7895c2fa618363bc0e3c9ee7b5a97fd03995630ae386270c27f9576f0589"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/size",
+      "value": 833
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/url",
+      "value": "https://github.com/Kitware/CMake/releases/download/v4.4.0/cmake-4.4.0-SHA-256.txt.asc"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/verification/exception",
+      "value": "upstream-signing-subkey-expired-before-signing"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/verification/signature_time",
+      "value": "2026-07-09T18:21:38Z"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/signature/verification/status",
+      "value": "cryptographically-valid-expired-key"
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/size",
+      "value": 2015
+    },
+    {
+      "path": "/host_tools/cmake/source/checksums/url",
+      "value": "https://github.com/Kitware/CMake/releases/download/v4.4.0/cmake-4.4.0-SHA-256.txt"
+    },
+    {
+      "path": "/host_tools/cmake/source/layout/cmakelists_sha256",
+      "value": "90a565ebddf9e0f8cac5484032580260a4a2b57d455f61d8afedbedf8b48c731"
+    },
+    {
+      "path": "/host_tools/cmake/source/layout/license_sha256",
+      "value": "4382e7c1879ac90e3f101a395d23846fa4dbcaa1eed7265b43681e348754825d"
+    },
+    {
+      "path": "/host_tools/cmake/source/layout/member_count",
+      "value": 33033
+    },
+    {
+      "path": "/host_tools/cmake/source/layout/readme_sha256",
+      "value": "2877e91220f07dc5ce53fefb23789066c1801c8b06bcc9aedb30787cc12ba7b9"
+    },
+    {
+      "path": "/host_tools/cmake/source/layout/top_directory",
+      "value": "cmake-4.4.0"
+    },
+    {
+      "path": "/host_tools/cmake/source/sha256",
+      "value": "65757f442fdd242e27f1728fc26dc0cba4164f7a0791a5c788631c00080369bc"
+    },
+    {
+      "path": "/host_tools/cmake/source/size",
+      "value": 13275398
+    },
+    {
+      "path": "/host_tools/cmake/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/host_tools/cmake/source/url",
+      "value": "https://github.com/Kitware/CMake/releases/download/v4.4.0/cmake-4.4.0.tar.gz"
+    },
+    {
       "path": "/host_tools/cmake/version",
       "value": "4.4.0"
     }

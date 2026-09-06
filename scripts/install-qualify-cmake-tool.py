@@ -138,7 +138,45 @@ def load_identity(component):
         for index in range(3)
         for field in ("path", "sha256", "sha512", "size")
     }
-    expected_paths = payload_paths | {
+    source_paths = {
+        "/host_tools/cmake/source/%s" % field
+        for field in ("status", "url", "sha256", "size")
+    }
+    source_paths.update(
+        "/host_tools/cmake/source/layout/%s" % field
+        for field in (
+            "top_directory",
+            "member_count",
+            "license_sha256",
+            "readme_sha256",
+            "cmakelists_sha256",
+        )
+    )
+    source_paths.update(
+        "/host_tools/cmake/source/checksums/%s" % field
+        for field in ("url", "sha256", "size", "entries", "evidence")
+    )
+    source_paths.update(
+        "/host_tools/cmake/source/checksums/signature/%s" % field
+        for field in ("url", "sha256", "size", "evidence")
+    )
+    source_paths.update(
+        "/host_tools/cmake/source/checksums/signature/key/%s" % field
+        for field in (
+            "file",
+            "retrieval_url",
+            "sha256",
+            "size",
+            "primary_fingerprint",
+            "signing_fingerprint",
+            "signing_key_expires_at",
+        )
+    )
+    source_paths.update(
+        "/host_tools/cmake/source/checksums/signature/verification/%s" % field
+        for field in ("status", "signature_time", "exception")
+    )
+    expected_paths = payload_paths | source_paths | {
         "/host_tools/cmake/version",
         "/host_tools/cmake/binary/status",
         "/host_tools/cmake/binary/url",
@@ -157,6 +195,9 @@ def load_identity(component):
         and materials["/host_tools/cmake/binary/status"] == "locked"
         and materials["/host_tools/cmake/binary/archive_root"]
         == "cmake-4.4.0-linux-x86_64"
+        and materials["/host_tools/cmake/source/status"] == "locked"
+        and materials["/host_tools/cmake/source/sha256"]
+        == "65757f442fdd242e27f1728fc26dc0cba4164f7a0791a5c788631c00080369bc"
         and materials["/host_tools/cmake/license/expression"] == "BSD-3-Clause",
         "CMake locked release policy differs",
     )

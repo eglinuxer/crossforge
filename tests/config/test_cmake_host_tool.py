@@ -94,6 +94,7 @@ class CmakeHostToolTests(unittest.TestCase):
         self.assertEqual(
             target["contexts"],
             {
+                "crossforge_cmake_source": "target:cmake-source",
                 "crossforge_host_runtime": "target:host-runtime-qualified",
                 "crossforge_ninja_host_tool": "target:ninja-host-tool",
             },

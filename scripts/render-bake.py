@@ -304,6 +304,18 @@ def render_ninja_graph(config, targets, component_arguments):
         "contexts": {
             "crossforge_host_runtime": "target:host-runtime-qualified",
             "crossforge_ninja_host_tool": "target:ninja-host-tool",
+            "crossforge_cmake_source": "target:cmake-source",
+        },
+        "output": ["type=cacheonly"],
+    }
+    targets["cmake-source"] = {
+        "inherits": ["_host_tools_common"],
+        "target": "cmake-source-export",
+        "args": {
+            "CMAKE_SOURCE_COMPONENT_SHA256": digest("sources/cmake"),
+        },
+        "contexts": {
+            "crossforge_host_runtime": "target:host-runtime-qualified",
         },
         "output": ["type=cacheonly"],
     }
@@ -314,6 +326,7 @@ def render_ninja_graph(config, targets, component_arguments):
                 "host-runtime-qualified",
                 "ninja-source",
                 "ninja-host-tool",
+                "cmake-source",
                 "cmake-host-tool",
             ]
         }

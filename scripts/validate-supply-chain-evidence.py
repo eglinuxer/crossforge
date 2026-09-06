@@ -1116,6 +1116,110 @@ def validate_evidence(config, repository):
         },
         "CMake locked material identity mismatch",
     )
+    cmake_source = cmake["source"]
+    cmake_checksums = cmake_source["checksums"]
+    cmake_signature = cmake_checksums["signature"]
+    cmake_key = cmake_signature["key"]
+    require(
+        cmake_source["status"] == "locked"
+        and cmake_source["url"]
+        == "https://github.com/Kitware/CMake/releases/download/v4.4.0/"
+        "cmake-4.4.0.tar.gz"
+        and cmake_source["sha256"]
+        == "65757f442fdd242e27f1728fc26dc0cba4164f7a0791a5c788631c00080369bc"
+        and cmake_source["size"] == 13275398
+        and cmake_source["layout"]
+        == {
+            "top_directory": "cmake-4.4.0",
+            "member_count": 33033,
+            "license_sha256": cmake["license"]["sha256"],
+            "readme_sha256": (
+                "2877e91220f07dc5ce53fefb23789066c1801c8b06bcc9aedb30787cc12ba7b9"
+            ),
+            "cmakelists_sha256": (
+                "90a565ebddf9e0f8cac5484032580260a4a2b57d455f61d8afedbedf8b48c731"
+            ),
+        },
+        "CMake corresponding source identity differs",
+    )
+    require(
+        cmake_checksums["url"]
+        == "https://github.com/Kitware/CMake/releases/download/v4.4.0/"
+        "cmake-4.4.0-SHA-256.txt"
+        and cmake_checksums["sha256"]
+        == "90b67ae9ab545d351bff676b4318e5d52d315fe6b9c62e49ca2b6a219f92052d"
+        and cmake_checksums["size"] == 2015
+        and cmake_checksums["entries"] == 21
+        and cmake_checksums["evidence"]
+        == "evidence/checksums/cmake-4.4.0-SHA-256.txt.b64",
+        "CMake checksum manifest identity differs",
+    )
+    require(
+        cmake_signature["url"]
+        == "https://github.com/Kitware/CMake/releases/download/v4.4.0/"
+        "cmake-4.4.0-SHA-256.txt.asc"
+        and cmake_signature["sha256"]
+        == "792e7895c2fa618363bc0e3c9ee7b5a97fd03995630ae386270c27f9576f0589"
+        and cmake_signature["size"] == 833
+        and cmake_signature["evidence"]
+        == "evidence/gpg/cmake-4.4.0-SHA-256.txt.asc.b64"
+        and cmake_signature["verification"]
+        == {
+            "status": "cryptographically-valid-expired-key",
+            "signature_time": "2026-07-09T18:21:38Z",
+            "exception": "upstream-signing-subkey-expired-before-signing",
+        },
+        "CMake checksum signature policy differs",
+    )
+    require(
+        cmake_key
+        == {
+            "file": "keys/CMAKE-RELEASE-KEY.asc",
+            "retrieval_url": (
+                "https://keys.openpgp.org/vks/v1/by-fingerprint/"
+                "C6C265324BBEBDC350B513D02D2CEF1034921684"
+            ),
+            "sha256": (
+                "ba1517003c9dbee2139dcaea10e5db2792c8a7372a350f90b578c83805d923c9"
+            ),
+            "size": 25388,
+            "primary_fingerprint": "cba23971357c2e6590d9efd3ec8fef3a7bfb4eda",
+            "signing_fingerprint": "c6c265324bbebdc350b513d02d2cef1034921684",
+            "signing_key_expires_at": "2024-08-12T16:30:38Z",
+        }
+        and cmake_signature["verification"]["signature_time"]
+        > cmake_key["signing_key_expires_at"],
+        "CMake expired signing-subkey exception is not exact",
+    )
+    cmake_checksum_payload = load_evidence(
+        repository, cmake_checksums["evidence"]
+    )
+    cmake_signature_payload = load_evidence(
+        repository, cmake_signature["evidence"]
+    )
+    cmake_key_payload = load_locked_file(
+        repository, cmake_key["file"], "CMake release key"
+    )
+    require(
+        len(cmake_checksum_payload) == cmake_checksums["size"]
+        and hashlib.sha256(cmake_checksum_payload).hexdigest()
+        == cmake_checksums["sha256"]
+        and len(cmake_signature_payload) == cmake_signature["size"]
+        and hashlib.sha256(cmake_signature_payload).hexdigest()
+        == cmake_signature["sha256"]
+        and len(cmake_key_payload) == cmake_key["size"]
+        and hashlib.sha256(cmake_key_payload).hexdigest() == cmake_key["sha256"]
+        and (
+            cmake_source["sha256"] + "  cmake-4.4.0.tar.gz\n"
+        ).encode("ascii")
+        in cmake_checksum_payload
+        and (
+            cmake_binary["sha256"]
+            + "  cmake-4.4.0-linux-x86_64.tar.gz\n"
+        ).encode("ascii")
+        in cmake_checksum_payload,
+        "CMake corresponding source evidence differs",
+    )
 
     python_signers = {
         "3.9": ("lukasz@langa.pl", "https://github.com/login/oauth"),
@@ -1365,6 +1469,8 @@ def validate_evidence(config, repository):
         "ninja_commit": ninja["commit"],
         "ninja_binary_sha256": ninja_binary["sha256"],
         "cmake_binary_sha256": cmake_binary["sha256"],
+        "cmake_source_sha256": cmake_source["sha256"],
+        "cmake_source_signature_status": cmake_signature["verification"]["status"],
     }
 
 
@@ -1385,7 +1491,8 @@ def main():
         "Rocky %s; QEMU %s; source %s (%s), commit %s; "
         "CPython/nFPM Sigstore bundles %s/%s via Cosign %s; "
         "patches %d; zstd %s; vcpkg %s; "
-        "Qt %s + FFmpeg %s + xcb-util-cursor %s; Ninja %s; CMake %s"
+        "Qt %s + FFmpeg %s + xcb-util-cursor %s; Ninja %s; "
+        "CMake %s + source %s (%s)"
         % (
             result["sigstore_tuf_root_version"],
             result["sigstore_tuf_targets_version"],
@@ -1405,6 +1512,8 @@ def main():
             config["qt"]["dependencies"]["xcb_util_cursor"]["version"],
             result["ninja_commit"],
             config["host_tools"]["cmake"]["version"],
+            result["cmake_source_sha256"],
+            result["cmake_source_signature_status"],
         )
     )
     return 0

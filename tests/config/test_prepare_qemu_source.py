@@ -51,60 +51,50 @@ class PrepareQEMUSourceTests(unittest.TestCase):
             },
         )
         self.assertGreater(
-            PREPARER["timestamp_epoch"](
+            PREPARER["SIGNATURE"]["timestamp_epoch"](
                 signature["verification"]["signature_time"]
             ),
-            PREPARER["timestamp_epoch"](signature["key"]["expires_at"]),
+            PREPARER["SIGNATURE"]["timestamp_epoch"](
+                signature["key"]["expires_at"]
+            ),
         )
 
-    def test_signature_requires_exact_valid_and_expired_status_records(self):
+    def test_signature_wrapper_passes_the_exact_expired_key_policy(self):
         function = PREPARER["verify_signature"]
-        globals_ = function.__globals__
-        original = {
-            name: globals_[name]
-            for name in ("file_identity", "key_fingerprints", "gpg_status")
-        }
+        signature_tools = PREPARER["SIGNATURE"]
+        original = signature_tools["verify_expired_key_signature"]
         policy = self.policy["signature"]
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            archive = root / "archive"
-            signature = root / "signature"
-            key = root / "key"
-            for path in (archive, signature, key):
-                path.write_bytes(b"fixture")
+        calls = []
 
-            status = (
-                "[GNUPG:] EXPKEYSIG 3353C9CEF108B584 Michael Roth\n"
-                "[GNUPG:] VALIDSIG CEACC9E15534EBABB82D3FA03353C9CEF108B584 "
-                "2026-05-27 1779919950 0 4 0 1 10 00 "
-                "CEACC9E15534EBABB82D3FA03353C9CEF108B584\n"
+        def verify(gpg, archive, signature, key, selected):
+            calls.append((gpg, archive, signature, key, selected))
+            return {"status": selected["status"]}
+
+        signature_tools["verify_expired_key_signature"] = verify
+        try:
+            result = function(
+                Path("gpg"),
+                Path("archive"),
+                Path("signature"),
+                Path("key"),
+                policy,
             )
-            globals_["file_identity"] = lambda _path: {
-                "sha256": policy["key"]["sha256"],
-                "size": key.stat().st_size,
-            }
-            globals_["key_fingerprints"] = lambda _gpg, _key, _home: [
-                policy["key"]["fingerprint"]
-            ]
-            globals_["gpg_status"] = lambda command, _home: (
-                (status, "") if "--verify" in command else ("", "")
-            )
-            try:
-                function(Path("gpg"), archive, signature, key, policy)
-                for bad_status in (
-                    status.replace("[GNUPG:] EXPKEYSIG 3353C9CEF108B584 Michael Roth\n", ""),
-                    "[GNUPG:] BADSIG 3353C9CEF108B584 Michael Roth\n" + status,
-                ):
-                    with self.subTest(status=bad_status):
-                        globals_["gpg_status"] = lambda command, _home: (
-                            (bad_status, "")
-                            if "--verify" in command
-                            else ("", "")
-                        )
-                        with self.assertRaises(PREPARER["ValidationError"]):
-                            function(Path("gpg"), archive, signature, key, policy)
-            finally:
-                globals_.update(original)
+        finally:
+            signature_tools["verify_expired_key_signature"] = original
+        self.assertEqual(result, {"status": "cryptographically-valid-expired-key"})
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(
+            calls[0][-1],
+            {
+                "key_sha256": policy["key"]["sha256"],
+                "primary_fingerprint": policy["key"]["fingerprint"],
+                "signing_fingerprint": policy["key"]["fingerprint"],
+                "signing_key_expires_at": policy["key"]["expires_at"],
+                "signature_time": policy["verification"]["signature_time"],
+                "status": policy["verification"]["status"],
+                "exception": policy["verification"]["exception"],
+            },
+        )
 
     def test_archive_layout_and_reviewed_external_symlink_are_exact(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -159,6 +149,7 @@ class PrepareQEMUSourceTests(unittest.TestCase):
         self.assertNotIn("--network=none", download)
         self.assertIn("RUN --network=none", qualified)
         self.assertIn("prepare-qemu-source.py", qualified)
+        self.assertIn("source_signature.py", qualified)
         self.assertIn(
             'target "qemu-source-qualified"',
             (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8"),
@@ -171,11 +162,12 @@ class PrepareQEMUSourceTests(unittest.TestCase):
         )
 
     def test_preparer_is_python36_compatible(self):
-        ast.parse(
-            SCRIPT.read_text(encoding="utf-8"),
-            filename=str(SCRIPT),
-            feature_version=(3, 6),
-        )
+        for path in (SCRIPT, REPOSITORY / "scripts/source_signature.py"):
+            ast.parse(
+                path.read_text(encoding="utf-8"),
+                filename=str(path),
+                feature_version=(3, 6),
+            )
 
 
 if __name__ == "__main__":

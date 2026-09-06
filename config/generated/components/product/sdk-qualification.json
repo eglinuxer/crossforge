@@ -11,7 +11,7 @@
       "component": "implementation/launcher"
     },
     {
-      "canonical_sha256": "9a39d24d7a001f710e86a7967538d2c846937aa22408531dbd18b383460f0921",
+      "canonical_sha256": "b6531acd79745dd6bfa9a732f8a16a1bf1bf63dc8c22f118c3c87df1b8f424a8",
       "component": "packaging/qualification"
     },
     {

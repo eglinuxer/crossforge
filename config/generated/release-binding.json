@@ -32,7 +32,7 @@
       "scope": "future"
     },
     {
-      "canonical_sha256": "f14d24f806b4d270d2455ade0ec8a0e3b7c7904188e5b93f900f41ad44a652a4",
+      "canonical_sha256": "ca2efac648bb12795b3e8e047fed58203397d9109fefcb69096646ec93683325",
       "component": "host-tools/cmake",
       "path": "config/generated/components/host-tools/cmake.json",
       "scope": "build"
@@ -164,13 +164,13 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "9a39d24d7a001f710e86a7967538d2c846937aa22408531dbd18b383460f0921",
+      "canonical_sha256": "b6531acd79745dd6bfa9a732f8a16a1bf1bf63dc8c22f118c3c87df1b8f424a8",
       "component": "packaging/qualification",
       "path": "config/generated/components/packaging/qualification.json",
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "97b945fbbaff1d77c828d3491e2d8a36b2221f1b29b90e43debf5d819b060140",
+      "canonical_sha256": "9df93a040fad274656933f2d0ff32a9d14ebf3e2be244428ec05b5dee6d386f1",
       "component": "packaging/sdk-build",
       "path": "config/generated/components/packaging/sdk-build.json",
       "scope": "build"
@@ -188,7 +188,7 @@
       "scope": "supply"
     },
     {
-      "canonical_sha256": "b108bd0a7bbaab69c2fb329dda67a72f47a36f52b769384432a1b3a8417c5b86",
+      "canonical_sha256": "7efb00fe5e19ec04bdc9355248d13b891395a46b730842b4b8dca9d2f4c2e213",
       "component": "product/sdk-qualification",
       "path": "config/generated/components/product/sdk-qualification.json",
       "scope": "qualification"
@@ -392,7 +392,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "3cd71ce835ac42fcdc86570d5557491e372de9e1e13e4c3970ab86c35990591e",
+      "canonical_sha256": "824dc4d1d83760cc432745c883b2966c73f870f0531705cf9a12ed9f7a3c4355",
       "component": "sources/cmake",
       "path": "config/generated/components/sources/cmake.json",
       "scope": "build"
@@ -482,31 +482,31 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "4b77524b4f5f369cd70ecc60d5da0f3f18aaf50d69df01429565902ea10333f1",
+      "canonical_sha256": "7726b73753a218b06cb16b48ae8307f52cd1b51584317392110c7601f9224b26",
       "component": "vcpkg/contract-qualification",
       "path": "config/generated/components/vcpkg/contract-qualification.json",
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "d9a2454538d62570ca6b67a19c08452a521bd46f191043f415297df8f5f0011e",
+      "canonical_sha256": "287b78653a05ea5ba2f8c81211ab5a7e1ce3a8aa14fd7bcac8ea20c3ade245ad",
       "component": "vcpkg/sdk-build",
       "path": "config/generated/components/vcpkg/sdk-build.json",
       "scope": "build"
     },
     {
-      "canonical_sha256": "6792e7af3598cd212be93b65f3dbe7d1241d9064b47cb1042172b6cd958af003",
+      "canonical_sha256": "614b69f0651786aee99ccee178c0614c6452d62b06da3e72c718ca89bcbd6095",
       "component": "vcpkg/upstream-tier1-qualification",
       "path": "config/generated/components/vcpkg/upstream-tier1-qualification.json",
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "4dab9af44a82b75706b6b9ea07bc7e71beba4e187c56687a54fee175e3dfe3b1",
+      "canonical_sha256": "390ffbf965276f26a6854f14892d5f967c78e4adbbf9e23c1126332067ba9781",
       "component": "vcpkg/upstream-tier2-qualification",
       "path": "config/generated/components/vcpkg/upstream-tier2-qualification.json",
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "4a5fbda19924199b68eac20e96198ff07cb97997bf8e15bf2028ca055c3c764c",
+      "canonical_sha256": "0d5039b1eebac6f1c43549f9cd4a9ad807682305c267e0ea48c3271982145792",
       "component": "vcpkg/upstream-tier3-qualification",
       "path": "config/generated/components/vcpkg/upstream-tier3-qualification.json",
       "scope": "qualification"
@@ -532,7 +532,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "4285631a5c6fbad8cf57315dfeea1b46948b1f245dc6652c023dacb12f753bd5",
+    "canonical_sha256": "6f3585ca6e8fa725bff20270e489dc5a52ec1b2b55c9345ff22e02cd8ab01484",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

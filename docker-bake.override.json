@@ -51,6 +51,7 @@
         "host-runtime-qualified",
         "ninja-source",
         "ninja-host-tool",
+        "cmake-source",
         "cmake-host-tool"
       ]
     },
@@ -445,11 +446,12 @@
       "args": {
         "CMAKE_BINARY_URL": "https://github.com/Kitware/CMake/releases/download/v4.4.0/cmake-4.4.0-linux-x86_64.tar.gz",
         "CMAKE_POLICY_COMPONENT_SHA256": "c7fe36f8a0e743c8179db499f84ba0bae8d1e11c806ea42e121cacb811d01f60",
-        "CMAKE_SOURCE_COMPONENT_SHA256": "3cd71ce835ac42fcdc86570d5557491e372de9e1e13e4c3970ab86c35990591e",
-        "CMAKE_TOOL_COMPONENT_SHA256": "f14d24f806b4d270d2455ade0ec8a0e3b7c7904188e5b93f900f41ad44a652a4",
+        "CMAKE_SOURCE_COMPONENT_SHA256": "824dc4d1d83760cc432745c883b2966c73f870f0531705cf9a12ed9f7a3c4355",
+        "CMAKE_TOOL_COMPONENT_SHA256": "ca2efac648bb12795b3e8e047fed58203397d9109fefcb69096646ec93683325",
         "CMAKE_VERSION": "4.4.0"
       },
       "contexts": {
+        "crossforge_cmake_source": "target:cmake-source",
         "crossforge_host_runtime": "target:host-runtime-qualified",
         "crossforge_ninja_host_tool": "target:ninja-host-tool"
       },
@@ -460,6 +462,21 @@
         "type=cacheonly"
       ],
       "target": "cmake-host-tool-export"
+    },
+    "cmake-source": {
+      "args": {
+        "CMAKE_SOURCE_COMPONENT_SHA256": "824dc4d1d83760cc432745c883b2966c73f870f0531705cf9a12ed9f7a3c4355"
+      },
+      "contexts": {
+        "crossforge_host_runtime": "target:host-runtime-qualified"
+      },
+      "inherits": [
+        "_host_tools_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cmake-source-export"
     },
     "cpython-build-cp310": {
       "args": {
@@ -2247,9 +2264,9 @@
       "args": {
         "CROSSFORGE_LAUNCHER_COMPONENT_SHA256": "4ebad4d58edea9fc4a3d4d9e2ed1b3b29a64b5c0a5dbde279c68537652b57d29",
         "CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256": "230f73c5b1555fb694ed77f0637460f76a1f5076adb846af327d65f0d5fc5728",
-        "CROSSPACK_QUALIFICATION_COMPONENT_SHA256": "9a39d24d7a001f710e86a7967538d2c846937aa22408531dbd18b383460f0921",
+        "CROSSPACK_QUALIFICATION_COMPONENT_SHA256": "b6531acd79745dd6bfa9a732f8a16a1bf1bf63dc8c22f118c3c87df1b8f424a8",
         "CROSSPACK_QUALIFICATION_POLICY_COMPONENT_SHA256": "a456bde9e3586d9591e404224c33e82a6e6db2d3a98ea65debbb497735f6f812",
-        "CROSSPACK_SDK_COMPONENT_SHA256": "97b945fbbaff1d77c828d3491e2d8a36b2221f1b29b90e43debf5d819b060140",
+        "CROSSPACK_SDK_COMPONENT_SHA256": "9df93a040fad274656933f2d0ff32a9d14ebf3e2be244428ec05b5dee6d386f1",
         "NFPM_SOURCE_COMPONENT_SHA256": "18d14160b52862dd57c73338f1df618a5ae8b3a86882654e7ccfbdf23f9d0b6b"
       },
       "contexts": {
@@ -2268,7 +2285,7 @@
       "args": {
         "CROSSFORGE_LAUNCHER_COMPONENT_SHA256": "4ebad4d58edea9fc4a3d4d9e2ed1b3b29a64b5c0a5dbde279c68537652b57d29",
         "CROSSPACK_IMPLEMENTATION_COMPONENT_SHA256": "230f73c5b1555fb694ed77f0637460f76a1f5076adb846af327d65f0d5fc5728",
-        "CROSSPACK_SDK_COMPONENT_SHA256": "97b945fbbaff1d77c828d3491e2d8a36b2221f1b29b90e43debf5d819b060140",
+        "CROSSPACK_SDK_COMPONENT_SHA256": "9df93a040fad274656933f2d0ff32a9d14ebf3e2be244428ec05b5dee6d386f1",
         "NFPM_BINARY_SHA256": "17133a2467ffb7cec851c2d7bae0c6098d09d7ed7d3d101a9605f6a473323936",
         "NFPM_SOURCE_COMPONENT_SHA256": "18d14160b52862dd57c73338f1df618a5ae8b3a86882654e7ccfbdf23f9d0b6b",
         "NFPM_VERSION": "2.47.0"
@@ -3465,9 +3482,9 @@
     "sdk-complete-dev": {
       "args": {
         "COMPLETE_SDK_POLICY_COMPONENT_SHA256": "4d8d5ef5c62a6294a5ba97fde2ae5f56fc0d1a92a37919d83b26fcf9069ba4e8",
-        "COMPLETE_SDK_QUALIFICATION_COMPONENT_SHA256": "b108bd0a7bbaab69c2fb329dda67a72f47a36f52b769384432a1b3a8417c5b86",
+        "COMPLETE_SDK_QUALIFICATION_COMPONENT_SHA256": "7efb00fe5e19ec04bdc9355248d13b891395a46b730842b4b8dca9d2f4c2e213",
         "CROSSFORGE_LAUNCHER_COMPONENT_SHA256": "4ebad4d58edea9fc4a3d4d9e2ed1b3b29a64b5c0a5dbde279c68537652b57d29",
-        "CROSSPACK_QUALIFICATION_COMPONENT_SHA256": "9a39d24d7a001f710e86a7967538d2c846937aa22408531dbd18b383460f0921",
+        "CROSSPACK_QUALIFICATION_COMPONENT_SHA256": "b6531acd79745dd6bfa9a732f8a16a1bf1bf63dc8c22f118c3c87df1b8f424a8",
         "PYTHON_QUALIFICATION_COMPONENT_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981"
       },
       "contexts": {
@@ -3484,10 +3501,10 @@
     },
     "sdk-phase13-base": {
       "args": {
-        "CMAKE_TOOL_COMPONENT_SHA256": "f14d24f806b4d270d2455ade0ec8a0e3b7c7904188e5b93f900f41ad44a652a4",
+        "CMAKE_TOOL_COMPONENT_SHA256": "ca2efac648bb12795b3e8e047fed58203397d9109fefcb69096646ec93683325",
         "NINJA_TOOL_COMPONENT_SHA256": "d083d530430bac2b26d229f11083450f68405c9aa0c3b84a867983bd82b5b640",
         "VCPKG_INTEGRATION_COMPONENT_SHA256": "9e79c71089e00c2fac15d4e8ecedd47b3405fe0d240baa9d964ab2aeffb5e411",
-        "VCPKG_SDK_COMPONENT_SHA256": "d9a2454538d62570ca6b67a19c08452a521bd46f191043f415297df8f5f0011e",
+        "VCPKG_SDK_COMPONENT_SHA256": "287b78653a05ea5ba2f8c81211ab5a7e1ce3a8aa14fd7bcac8ea20c3ade245ad",
         "VCPKG_SOURCE_COMPONENT_SHA256": "32decc4331f2b02cb83fc96a08b622d7302c346eac55ff74e3cb3345c2fc36da"
       },
       "contexts": {
@@ -3616,7 +3633,7 @@
     "vcpkg-contract-qualified": {
       "args": {
         "VCPKG_CONTRACT_POLICY_COMPONENT_SHA256": "822fe461d134b6f2c5841d9658763d4880640111019da485dd4b9c9beecb1961",
-        "VCPKG_CONTRACT_QUALIFICATION_COMPONENT_SHA256": "4b77524b4f5f369cd70ecc60d5da0f3f18aaf50d69df01429565902ea10333f1"
+        "VCPKG_CONTRACT_QUALIFICATION_COMPONENT_SHA256": "7726b73753a218b06cb16b48ae8307f52cd1b51584317392110c7601f9224b26"
       },
       "contexts": {
         "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
@@ -3669,7 +3686,7 @@
     "vcpkg-upstream-tier1-qualified": {
       "args": {
         "VCPKG_UPSTREAM_TIER1_POLICY_COMPONENT_SHA256": "507e2e46735c7c5427bf35b699798f2106a4529c3d3133d062e57d0925d0e9b9",
-        "VCPKG_UPSTREAM_TIER1_QUALIFICATION_COMPONENT_SHA256": "6792e7af3598cd212be93b65f3dbe7d1241d9064b47cb1042172b6cd958af003"
+        "VCPKG_UPSTREAM_TIER1_QUALIFICATION_COMPONENT_SHA256": "614b69f0651786aee99ccee178c0614c6452d62b06da3e72c718ca89bcbd6095"
       },
       "contexts": {
         "crossforge_vcpkg_contract": "target:vcpkg-contract-qualified",
@@ -3702,7 +3719,7 @@
     "vcpkg-upstream-tier2-qualified": {
       "args": {
         "VCPKG_UPSTREAM_TIER2_POLICY_COMPONENT_SHA256": "c59274ff500531dcda1e40f83bb2692743fcce69adc646fee100bc00e1bbc01f",
-        "VCPKG_UPSTREAM_TIER2_QUALIFICATION_COMPONENT_SHA256": "4dab9af44a82b75706b6b9ea07bc7e71beba4e187c56687a54fee175e3dfe3b1"
+        "VCPKG_UPSTREAM_TIER2_QUALIFICATION_COMPONENT_SHA256": "390ffbf965276f26a6854f14892d5f967c78e4adbbf9e23c1126332067ba9781"
       },
       "contexts": {
         "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",
@@ -3735,7 +3752,7 @@
     "vcpkg-upstream-tier3-qualified": {
       "args": {
         "VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256": "0a93b3ea8179e2b596e0e4eb5d55e0810269f8ac47c2b7322b6fe6451c8e7344",
-        "VCPKG_UPSTREAM_TIER3_QUALIFICATION_COMPONENT_SHA256": "4a5fbda19924199b68eac20e96198ff07cb97997bf8e15bf2028ca055c3c764c"
+        "VCPKG_UPSTREAM_TIER3_QUALIFICATION_COMPONENT_SHA256": "0d5039b1eebac6f1c43549f9cd4a9ad807682305c267e0ea48c3271982145792"
       },
       "contexts": {
         "crossforge_vcpkg_contract_assets": "target:vcpkg-contract-assets",

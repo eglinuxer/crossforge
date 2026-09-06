@@ -24,6 +24,15 @@ asset metadata, while `git/` preserves the commit object. Crossforge treats
 the full commit plus independent archive and extracted-binary hashes as the
 trust boundary; it does not claim that Ninja 1.13.2 is upstream-signed.
 
+CMake 4.4.0 preserves the exact upstream SHA-256 manifest and its detached
+signature. The manifest binds both the corresponding source archive and the
+Linux x86_64 binary shipped in the SDK. Offline preparation checks the full
+primary/signing-subkey fingerprints and GPG status before inspecting the
+source layout and license. The signing subkey expired on 2024-08-12, before
+the 2026-07-09 signature, so this evidence is labeled
+`cryptographically-valid-expired-key` with a dedicated exception. It must not
+be described as a signature made by a current key.
+
 The zstd release input has a separate, locked trust boundary. The checked-in
 release key is content- and fingerprint-locked, `gpg/` preserves the detached
 signature over the selected tarball, and normal source preparation must verify

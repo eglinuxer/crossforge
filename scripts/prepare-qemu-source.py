@@ -3,26 +3,23 @@
 
 import argparse
 import base64
-import calendar
 import hashlib
 import json
 import os
 import posixpath
 import runpy
 import shutil
-import subprocess
 import sys
 import tarfile
 import tempfile
-import time
 from pathlib import Path
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 STRICT = runpy.run_path(str(REPOSITORY / "scripts/validate-release.py"))
+SIGNATURE = runpy.run_path(str(REPOSITORY / "scripts/source_signature.py"))
 ValidationError = STRICT["ValidationError"]
 SCHEMA_ID = "https://crossforge.dev/schemas/qemu-source-manifest.schema.json"
-REJECTED_GPG_STATUS = {"BADSIG", "ERRSIG", "NO_PUBKEY", "REVKEYSIG"}
 
 
 def require(condition, message):
@@ -73,118 +70,10 @@ def safe_repository_file(repository, relative, label):
     return path
 
 
-def timestamp_epoch(value):
-    try:
-        return calendar.timegm(time.strptime(value, "%Y-%m-%dT%H:%M:%SZ"))
-    except ValueError:
-        raise ValidationError("QEMU signature timestamp is invalid")
-
-
-def gpg_status(command, home):
-    environment = os.environ.copy()
-    environment.update({"GNUPGHOME": str(home), "LANG": "C", "LC_ALL": "C"})
-    process = subprocess.run(
-        [str(value) for value in command],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-        env=environment,
-    )
-    require(
-        process.returncode == 0,
-        "QEMU GPG operation failed: %s" % (process.stdout + process.stderr)[-4000:],
-    )
-    return process.stdout, process.stderr
-
-
-def key_fingerprints(gpg, key, home):
-    output, _error = gpg_status(
-        [
-            gpg,
-            "--no-options",
-            "--batch",
-            "--no-autostart",
-            "--show-keys",
-            "--with-colons",
-            "--fingerprint",
-            key,
-        ],
-        home,
-    )
-    return [
-        fields[9].lower()
-        for fields in (line.split(":") for line in output.splitlines())
-        if fields[0] == "fpr" and len(fields) > 9
-    ]
-
-
 def verify_signature(gpg, archive, signature, key, policy):
     fingerprint = policy["key"]["fingerprint"]
     require(
-        file_identity(key)
-        == {"sha256": policy["key"]["sha256"], "size": key.stat().st_size},
-        "QEMU release key digest differs",
-    )
-    with tempfile.TemporaryDirectory(prefix="crossforge-qemu-gpg-") as temporary:
-        home = Path(temporary)
-        os.chmod(str(home), 0o700)
-        fingerprints = key_fingerprints(gpg, key, home)
-        require(
-            fingerprints and fingerprints[0] == fingerprint,
-            "QEMU release key fingerprint differs",
-        )
-        gpg_status(
-            [
-                gpg,
-                "--no-options",
-                "--batch",
-                "--no-autostart",
-                "--no-auto-key-retrieve",
-                "--import",
-                key,
-            ],
-            home,
-        )
-        output, _error = gpg_status(
-            [
-                gpg,
-                "--no-options",
-                "--batch",
-                "--no-autostart",
-                "--no-auto-key-retrieve",
-                "--status-fd",
-                "1",
-                "--verify",
-                signature,
-                archive,
-            ],
-            home,
-        )
-    statuses = []
-    for line in output.splitlines():
-        if line.startswith("[GNUPG:] "):
-            statuses.append(line[len("[GNUPG:] ") :].split())
-    require(
-        not any(fields and fields[0] in REJECTED_GPG_STATUS for fields in statuses),
-        "QEMU source signature was rejected",
-    )
-    signature_epoch = timestamp_epoch(policy["verification"]["signature_time"])
-    expiration_epoch = timestamp_epoch(policy["key"]["expires_at"])
-    valid = [fields for fields in statuses if fields and fields[0] == "VALIDSIG"]
-    expired = [fields for fields in statuses if fields and fields[0] == "EXPKEYSIG"]
-    require(
-        len(valid) == 1
-        and len(valid[0]) > 3
-        and valid[0][1].lower() == fingerprint
-        and int(valid[0][3]) == signature_epoch,
-        "QEMU source VALIDSIG identity differs",
-    )
-    require(
-        len(expired) == 1
-        and len(expired[0]) > 1
-        and expired[0][1].lower() == fingerprint[-16:]
-        and expiration_epoch < signature_epoch
-        and policy["verification"]
+        policy["verification"]
         == {
             "status": "cryptographically-valid-expired-key",
             "signature_time": "2026-05-27T22:12:30Z",
@@ -192,6 +81,24 @@ def verify_signature(gpg, archive, signature, key, policy):
         },
         "QEMU expired-key exception differs",
     )
+    try:
+        return SIGNATURE["verify_expired_key_signature"](
+            gpg,
+            archive,
+            signature,
+            key,
+            {
+                "key_sha256": policy["key"]["sha256"],
+                "primary_fingerprint": fingerprint,
+                "signing_fingerprint": fingerprint,
+                "signing_key_expires_at": policy["key"]["expires_at"],
+                "signature_time": policy["verification"]["signature_time"],
+                "status": policy["verification"]["status"],
+                "exception": policy["verification"]["exception"],
+            },
+        )
+    except SIGNATURE["SignatureError"] as error:
+        raise ValidationError("QEMU source signature: %s" % error)
 
 
 def verify_archive(archive_path, policy):

@@ -43,6 +43,7 @@ COPY evidence/ ./evidence/
 COPY keys/ZSTD-RELEASE-KEY.asc ./keys/ZSTD-RELEASE-KEY.asc
 COPY keys/MICROSOFT-RELEASE-KEY.asc ./keys/MICROSOFT-RELEASE-KEY.asc
 COPY keys/QEMU-RELEASE-KEY.asc ./keys/QEMU-RELEASE-KEY.asc
+COPY keys/CMAKE-RELEASE-KEY.asc ./keys/CMAKE-RELEASE-KEY.asc
 COPY keys/FFMPEG-RELEASE-KEY.asc ./keys/FFMPEG-RELEASE-KEY.asc
 COPY keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc \
   ./keys/XCB-UTIL-CURSOR-RELEASE-KEY.asc
@@ -68,7 +69,7 @@ COPY --from=qemu-source-download /qemu-download/qemu-10.2.3.tar.xz \
 COPY config/schemas/qemu-source-manifest.schema.json \
   ./config/schemas/qemu-source-manifest.schema.json
 COPY --chmod=0755 scripts/prepare-qemu-source.py \
-  ./scripts/prepare-qemu-source.py
+  scripts/source_signature.py ./scripts/
 RUN --network=none \
     /usr/libexec/platform-python ./scripts/prepare-qemu-source.py \
       --archive /qemu-download/qemu-10.2.3.tar.xz \

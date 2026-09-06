@@ -89,7 +89,7 @@ jobs:
             qemu-source-qualified qemu-aarch64-validated \
             qt-rpm-locked \
             host-runtime-qualified \
-            ninja-host-tool cmake-host-tool \
+            ninja-host-tool cmake-source cmake-host-tool \
             xcb-util-cursor-qualified \
             vcpkg-source \
             sysroot-x86_64 sysroot-aarch64 python-native-latest \

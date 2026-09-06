@@ -15,7 +15,7 @@
       "component": "rpm/host-runtime"
     },
     {
-      "canonical_sha256": "3cd71ce835ac42fcdc86570d5557491e372de9e1e13e4c3970ab86c35990591e",
+      "canonical_sha256": "824dc4d1d83760cc432745c883b2966c73f870f0531705cf9a12ed9f7a3c4355",
       "component": "sources/cmake"
     }
   ],

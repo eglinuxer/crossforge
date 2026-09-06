@@ -561,6 +561,7 @@ Microsoft's detached PGP signature and exact LICENSE/NOTICE files:
 ```console
 $ ./scripts/validate-supply-chain-evidence.py
 $ docker buildx bake ninja-host-tool
+$ docker buildx bake cmake-source
 $ docker buildx bake cmake-host-tool
 $ docker buildx bake vcpkg-source
 $ ./scripts/render-vcpkg-integration.py --check
@@ -578,7 +579,13 @@ dependencies, then runs direct Ninja, CMake/Ninja and Meson/Ninja builds.
 CMake 4.4.0 is the exact Linux tool selected by the pinned vcpkg tool database;
 its archive, `cmake`/`ctest`/`cpack` ELF payloads and license are independently
 bound. Its offline gate enforces a glibc 2.17 ceiling and runs CMake/Ninja,
-CTest and CPack without replacing the RPM-owned CMake.
+CTest and CPack without replacing the RPM-owned CMake. `cmake-source` also
+downloads the corresponding official source archive and verifies its complete
+layout and BSD-3-Clause license against the signed upstream SHA-256 manifest;
+the same manifest binds the shipped Linux binary. The manifest signature is
+cryptographically valid, but its signing subkey expired before the 4.4.0
+signature was created, so the release records the same explicit expired-key
+exception as a risk boundary rather than claiming current-key authentication.
 
 The source target clones the complete commit history and fetches the 22 fixed
 port trees referenced by the version database but not reachable from the tag.
