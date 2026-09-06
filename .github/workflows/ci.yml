@@ -133,7 +133,11 @@ jobs:
       - name: Qualify both Qt target runtimes
         run: |
           set -Eeuo pipefail
-          docker buildx bake qt-x86_64-runtime-qualified \
-            --progress=plain
-          docker buildx bake qt-aarch64-runtime-qualified \
-            --progress=plain
+          python3 ./scripts/run-with-heartbeat.py \
+            --label qt-x86_64-runtime --interval 60 -- \
+            docker buildx bake qt-x86_64-runtime-qualified \
+              --progress=plain
+          python3 ./scripts/run-with-heartbeat.py \
+            --label qt-aarch64-runtime --interval 60 -- \
+            docker buildx bake qt-aarch64-runtime-qualified \
+              --progress=plain

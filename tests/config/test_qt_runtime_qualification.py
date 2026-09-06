@@ -103,6 +103,9 @@ class QtRuntimeQualificationTests(unittest.TestCase):
         self.assertIn("./scripts/validate-qt-runtime-qualification.py", ci)
         self.assertIn("qt-x86_64-runtime-qualified", ci)
         self.assertIn("qt-aarch64-runtime-qualified", ci)
+        self.assertIn("--label qt-x86_64-runtime --interval 60", ci)
+        self.assertIn("--label qt-aarch64-runtime --interval 60", ci)
+        self.assertEqual(ci.count("scripts/run-with-heartbeat.py"), 5)
         self.assertNotIn(
             "docker buildx bake qt-target-runtime-qualified", ci
         )
