@@ -88,6 +88,12 @@ target "cosign-host-tool" {
   output   = ["type=cacheonly"]
 }
 
+target "rocky-base-source-map" {
+  inherits = ["_common"]
+  target   = "rocky-base-source-map-evidence"
+  output   = ["type=cacheonly"]
+}
+
 target "sdk-skeleton" {
   inherits = ["_common"]
   target   = "sdk-skeleton"

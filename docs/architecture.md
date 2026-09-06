@@ -437,6 +437,15 @@ signature 的 repository/digest。签名证据作为 90 天 workflow artifact �
 
 镜像内保留 `SOURCES.json`、`SOURCE-OFFER`、SBOM 和第三方许可证。发布门禁必须保证每个二进制组件可映射到长期可取得的准确源码。对外措辞只能表述为 “GTS-derived cross SDK built from Rocky Linux rebuild sources”，不得暗示 Red Hat 或 Rocky 官方支持、认证或背书；首次公开发布前仍需正式法律复核。
 
+source bundle 不能只枚举构建过程中显式下载的 RPM。固定 amd64 Rocky child
+本身含 148 个 base package；`rocky-base-source-map` 在该精确 child 的 RPMDB 中以
+`--network=none` 读取 NEVRA→SOURCERPM，并与 host-runtime transaction 的完整 base
+manifest 逐项比较后输出 scratch 证据。该基础闭包含 110 个唯一 SRPM，其中 54 个未在
+其他锁中出现；当前 12 份 RPM lock 另含 1,433 个受签 binary payload、279 个唯一
+SRPM 名称，合并后总需求为 333 个。下一层 source lock 必须合并基础映射与这些 lock
+记录，为每个唯一 SRPM 增加 repository URL、大小、SHA256 与 Rocky 签名验证；在该
+content lock 完成前，不得生成或发布名为完整 source bundle 的产物。
+
 ## 13. 维护与演进规则
 
 安全修复、CPython patch、GTS patch、vcpkg commit 和 Rocky errata 更新必须通过自动差异报告与相应资格化；自动化可以开 PR，但不得自动合并。差异至少覆盖 RPM NEVRA、source hash、ABI exports、Python modules、vcpkg ports、镜像大小和 GCC baseline。

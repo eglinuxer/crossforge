@@ -86,6 +86,28 @@ COPY --from=sigstore-assets-qualified /sigstore-downloads/cosign /cosign
 COPY --from=sigstore-assets-qualified /work/sigstore-verification.json \
   /sigstore-verification.json
 
+FROM config-validate AS rocky-base-source-map
+COPY locks/host-runtime-el8-x86_64.json \
+  ./locks/host-runtime-el8-x86_64.json
+COPY locks/transactions/host-runtime-el8-x86_64.json \
+  ./locks/transactions/host-runtime-el8-x86_64.json
+COPY config/schemas/rpm-lock.schema.json \
+  config/schemas/rpm-transaction.schema.json ./config/schemas/
+COPY scripts/release_component.py scripts/validate-rpm-lock.py \
+  scripts/capture-rpm-source-map.py ./scripts/
+COPY config/schemas/rpm-source-map.schema.json \
+  ./config/schemas/rpm-source-map.schema.json
+RUN --network=none \
+    rpm -qa --qf '%{NAME}-%{EPOCHNUM}:%{VERSION}-%{RELEASE}.%{ARCH}\t%{SOURCERPM}\n' \
+      | LC_ALL=C sort > /tmp/rocky-rpm-sources.tsv \
+    && /usr/libexec/platform-python ./scripts/capture-rpm-source-map.py \
+      --rpmdb /tmp/rocky-rpm-sources.tsv \
+      --output /work/rocky-base-rpm-sources.json
+
+FROM scratch AS rocky-base-source-map-evidence
+COPY --from=rocky-base-source-map /work/rocky-base-rpm-sources.json \
+  /rocky-base-rpm-sources.json
+
 FROM config-validate AS platform-python-check
 COPY scripts/ ./scripts/
 COPY docker/*.py ./docker/

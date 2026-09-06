@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/rpm-source-map.schema.json",
+  "title": "Crossforge fixed OCI RPM to source RPM map",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "base_image",
+    "arch",
+    "host_runtime_lock_sha256",
+    "packages"
+  ],
+  "properties": {
+    "$schema": {"const": "https://crossforge.dev/schemas/rpm-source-map.schema.json"},
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-rpm-source-map"},
+    "base_image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index_digest", "manifest_digest"],
+      "properties": {
+        "index_digest": {"$ref": "#/$defs/oci_digest"},
+        "manifest_digest": {"$ref": "#/$defs/oci_digest"}
+      }
+    },
+    "arch": {"const": "x86_64"},
+    "host_runtime_lock_sha256": {"$ref": "#/$defs/sha256"},
+    "packages": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["nevra", "source_rpm"],
+        "properties": {
+          "nevra": {"type": "string", "minLength": 1},
+          "source_rpm": {"type": "string", "pattern": "^[^/\\r\\n]+\\.src\\.rpm$"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "oci_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+  }
+}

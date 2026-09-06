@@ -504,6 +504,7 @@ not a delta from any compiler or CPython build image:
 $ ./scripts/validate-rpm-lock.py \
     locks/host-runtime-el8-x86_64.json --require-lock
 $ docker buildx bake host-runtime-qualified
+$ docker buildx bake rocky-base-source-map
 $ docker buildx bake python-phase10-dev
 ```
 
@@ -523,6 +524,11 @@ Its networkless final gate rehashes the RPMDB/marker, prior toolchain reports,
 sysroot locks, every build/target Python tree and QEMU; it also builds and runs
 C, C++ and LTO probes for both targets. Build-only roots and markers are absent
 from the resulting cache-only image.
+
+`rocky-base-source-map` separately reads the unmodified, digest-pinned amd64
+base image RPMDB and binds all 148 installed NEVRAs to 110 source RPM names.
+The result is scratch evidence for the future source bundle; it does not copy
+RPM databases or source material into the SDK.
 
 ## Phase 13: vcpkg source and SDK integration
 
