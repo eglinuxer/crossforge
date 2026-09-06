@@ -442,9 +442,15 @@ source bundle 不能只枚举构建过程中显式下载的 RPM。固定 amd64 R
 `--network=none` 读取 NEVRA→SOURCERPM，并与 host-runtime transaction 的完整 base
 manifest 逐项比较后输出 scratch 证据。该基础闭包含 110 个唯一 SRPM，其中 54 个未在
 其他锁中出现；当前 12 份 RPM lock 另含 1,433 个受签 binary payload、279 个唯一
-SRPM 名称，合并后总需求为 333 个。下一层 source lock 必须合并基础映射与这些 lock
-记录，为每个唯一 SRPM 增加 repository URL、大小、SHA256 与 Rocky 签名验证；在该
-content lock 完成前，不得生成或发布名为完整 source bundle 的产物。
+SRPM 名称，合并后总需求为 333 个。`locks/rpm-source-el8.json` 已为全部需求固定
+repository/URL、大小、SHA256、source header 和 Rocky 签名结论，总计
+1,456,725,209 字节；BaseOS/AppStream/PowerTools 分别选择 229/99/5 项，七个跨
+BaseOS/AppStream 的同名 URL 必须下载两份并证明字节一致。`rpm-source-lock-maintenance`
+是唯一允许重新查询 source repositories 的维护目标，不进入 CI/candidate；正常门禁
+`rpm-source-lock-validated` 只在断网阶段交叉验证 release pin、requirements、333 项、
+别名优先级、Rocky trust 和总字节数。该 content lock 已完成，但在下游实际下载并组装
+所有 SRPM、其他上游源码、补丁、构建脚本与许可证之前，仍不得发布名为完整 source
+bundle 的产物。
 
 ## 13. 维护与演进规则
 

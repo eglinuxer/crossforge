@@ -11,6 +11,7 @@
     "abi",
     "product",
     "sigstore",
+    "source_bundle",
     "base_image",
     "trust",
     "platforms",
@@ -66,6 +67,9 @@
     },
     "sigstore": {
       "$ref": "#/$defs/sigstore"
+    },
+    "source_bundle": {
+      "$ref": "#/$defs/source_bundle"
     },
     "base_image": {
       "type": "object",
@@ -975,6 +979,47 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "source_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rpm"],
+      "properties": {
+        "rpm": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "requirements",
+            "lock",
+            "source_rpms",
+            "source_bytes"
+          ],
+          "properties": {
+            "status": {"const": "locked"},
+            "requirements": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["file", "canonical_sha256"],
+              "properties": {
+                "file": {"const": "evidence/sources/rpm-source-requirements.json"},
+                "canonical_sha256": {"$ref": "#/$defs/sha256"}
+              }
+            },
+            "lock": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["file", "canonical_sha256"],
+              "properties": {
+                "file": {"const": "locks/rpm-source-el8.json"},
+                "canonical_sha256": {"$ref": "#/$defs/sha256"}
+              }
+            },
+            "source_rpms": {"const": 333},
+            "source_bytes": {"type": "integer", "minimum": 1}
           }
         }
       }

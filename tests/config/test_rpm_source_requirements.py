@@ -145,7 +145,7 @@ class RPMSourceRequirementsTests(unittest.TestCase):
         ci = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("rpm-source-requirements", ci)
+        self.assertIn("rpm-source-lock-validated", ci)
 
     def test_builder_is_python36_compatible(self):
         ast.parse(

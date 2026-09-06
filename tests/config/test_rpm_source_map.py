@@ -119,7 +119,7 @@ class RPMSourceMapTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn('target "rocky-base-source-map"', bake)
-        self.assertIn("rpm-source-requirements", ci)
+        self.assertIn("rpm-source-lock-validated", ci)
 
     def test_capture_script_is_python36_compatible(self):
         ast.parse(

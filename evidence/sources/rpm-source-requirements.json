@@ -10,8 +10,8 @@
     "content_lock_complete": false,
     "rpm_lock_mapping_complete": true
   },
+  "input_sha256": "3812ff7de1f57952390402da0bf699dd26d441375188f605204ee7b8a883429a",
   "kind": "crossforge-rpm-source-requirements",
-  "release_sha256": "248067a16b71b2b2f1bb156ace8f310caa1ab23d3fc4f9f912e42741d40433c5",
   "rpm_locks": [
     {
       "canonical_sha256": "d6d1b33772faa48658a30b01f5cc6a254c0b6c7640d52296b2e0f4efe7945c01",

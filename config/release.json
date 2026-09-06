@@ -101,6 +101,21 @@
       "transparency_log": true
     }
   },
+  "source_bundle": {
+    "rpm": {
+      "status": "locked",
+      "requirements": {
+        "file": "evidence/sources/rpm-source-requirements.json",
+        "canonical_sha256": "cfd286fbbc4da50d8f2126d6cc8bfecba64c0031a7a74083489b77157862a4eb"
+      },
+      "lock": {
+        "file": "locks/rpm-source-el8.json",
+        "canonical_sha256": "88195aa18af80cca8df912f30109d4cbec3318dfabc5e33e0d3ae12931ea9e12"
+      },
+      "source_rpms": 333,
+      "source_bytes": 1456725209
+    }
+  },
   "base_image": {
     "repository": "quay.io/rockylinux/rockylinux",
     "tag": "8",

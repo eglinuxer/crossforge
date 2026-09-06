@@ -131,6 +131,64 @@ FROM scratch AS rpm-source-requirements-evidence
 COPY --from=rpm-source-requirements /work/rpm-source-requirements.json \
   /rpm-source-requirements.json
 
+FROM rocky-base AS rpm-source-lock-maintenance
+COPY config/release.json ./config/release.json
+COPY config/schemas/release.schema.json \
+  config/schemas/rpm-source-requirements.schema.json \
+  config/schemas/rpm-source-lock.schema.json ./config/schemas/
+COPY evidence/sources/rpm-source-requirements.json \
+  ./evidence/sources/rpm-source-requirements.json
+COPY keys/RPM-GPG-KEY-rockyofficial ./keys/RPM-GPG-KEY-rockyofficial
+COPY scripts/validate-release.py scripts/resolve-rpm-source-lock.py \
+  ./scripts/
+RUN mkdir -p /work \
+    && rpm --import ./keys/RPM-GPG-KEY-rockyofficial \
+    && dnf -qy repoquery --disablerepo='*' \
+      --repofrompath=crossforge-baseos-src,https://download.rockylinux.org/pub/rocky/8.10/BaseOS/source/tree/ \
+      --repofrompath=crossforge-appstream-src,https://download.rockylinux.org/pub/rocky/8.10/AppStream/source/tree/ \
+      --repofrompath=crossforge-powertools-src,https://download.rockylinux.org/pub/rocky/8.10/PowerTools/source/tree/ \
+      --enablerepo=crossforge-baseos-src \
+      --enablerepo=crossforge-appstream-src \
+      --enablerepo=crossforge-powertools-src \
+      --setopt=crossforge-baseos-src.gpgcheck=1 \
+      --setopt=crossforge-baseos-src.repo_gpgcheck=1 \
+      --setopt=crossforge-baseos-src.gpgkey=file:///src/keys/RPM-GPG-KEY-rockyofficial \
+      --setopt=crossforge-appstream-src.gpgcheck=1 \
+      --setopt=crossforge-appstream-src.repo_gpgcheck=1 \
+      --setopt=crossforge-appstream-src.gpgkey=file:///src/keys/RPM-GPG-KEY-rockyofficial \
+      --setopt=crossforge-powertools-src.gpgcheck=1 \
+      --setopt=crossforge-powertools-src.repo_gpgcheck=1 \
+      --setopt=crossforge-powertools-src.gpgkey=file:///src/keys/RPM-GPG-KEY-rockyofficial \
+      --arch=src --location > /work/rpm-source-locations.txt \
+    && /usr/libexec/platform-python ./scripts/resolve-rpm-source-lock.py \
+      --locations /work/rpm-source-locations.txt \
+      --downloads /work/srpms \
+      --output /work/rpm-source-lock.json \
+      --jobs 8
+
+FROM scratch AS rpm-source-lock-maintenance-output
+COPY --from=rpm-source-lock-maintenance /work/rpm-source-lock.json \
+  /rpm-source-lock.json
+
+FROM config-validate AS rpm-source-lock-validated
+COPY locks/*.json ./locks/
+COPY locks/transactions/ ./locks/transactions/
+COPY evidence/sources/ ./evidence/sources/
+COPY config/schemas/rpm-lock.schema.json \
+  config/schemas/rpm-transaction.schema.json \
+  config/schemas/rpm-source-requirements.schema.json \
+  config/schemas/rpm-source-lock.schema.json ./config/schemas/
+COPY scripts/release_component.py scripts/validate-rpm-lock.py \
+  scripts/build-rpm-source-requirements.py \
+  scripts/resolve-rpm-source-lock.py \
+  scripts/validate-rpm-source-lock.py ./scripts/
+RUN --network=none \
+    /usr/libexec/platform-python ./scripts/validate-rpm-source-lock.py
+
+FROM scratch AS rpm-source-lock-validated-output
+COPY --from=rpm-source-lock-validated /src/locks/rpm-source-el8.json \
+  /rpm-source-el8.json
+
 FROM config-validate AS platform-python-check
 COPY scripts/ ./scripts/
 COPY docker/*.py ./docker/

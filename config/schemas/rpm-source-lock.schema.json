@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/rpm-source-lock.schema.json",
+  "title": "Crossforge Rocky source RPM content lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "status",
+    "input_sha256",
+    "requirements",
+    "repositories",
+    "trust",
+    "sources"
+  ],
+  "properties": {
+    "$schema": {"const": "https://crossforge.dev/schemas/rpm-source-lock.schema.json"},
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-rpm-source-lock"},
+    "status": {"const": "locked"},
+    "input_sha256": {"$ref": "#/$defs/sha256"},
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "canonical_sha256"],
+      "properties": {
+        "file": {"const": "evidence/sources/rpm-source-requirements.json"},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "repositories": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "baseurl"],
+        "properties": {
+          "id": {"enum": ["baseos", "appstream", "powertools"]},
+          "baseurl": {"type": "string", "pattern": "^https://download\\.rockylinux\\.org/pub/rocky/8\\.10/"}
+        }
+      }
+    },
+    "trust": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key_file", "key_sha256", "fingerprint"],
+      "properties": {
+        "key_file": {"const": "keys/RPM-GPG-KEY-rockyofficial"},
+        "key_sha256": {"$ref": "#/$defs/sha256"},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 333,
+      "maxItems": 333,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_rpm",
+          "repository",
+          "url",
+          "aliases",
+          "size",
+          "sha256",
+          "header_verified",
+          "signature_verified"
+        ],
+        "properties": {
+          "source_rpm": {"type": "string", "pattern": "^[^/\\r\\n]+\\.src\\.rpm$"},
+          "repository": {"enum": ["baseos", "appstream", "powertools"]},
+          "url": {"type": "string", "pattern": "^https://download\\.rockylinux\\.org/pub/rocky/8\\.10/"},
+          "aliases": {
+            "type": "array",
+            "maxItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["repository", "url"],
+              "properties": {
+                "repository": {"enum": ["baseos", "appstream", "powertools"]},
+                "url": {"type": "string", "pattern": "^https://download\\.rockylinux\\.org/pub/rocky/8\\.10/"}
+              }
+            }
+          },
+          "size": {"type": "integer", "minimum": 1},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "header_verified": {"const": true},
+          "signature_verified": {"const": true}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

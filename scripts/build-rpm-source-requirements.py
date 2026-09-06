@@ -55,8 +55,7 @@ def load_schema_document(path, schema_path):
     return document
 
 
-def release_context(release_path, release_schema):
-    release = load_schema_document(release_path, release_schema)
+def expected_lock_pins(release):
     expected = {}
     for pin in release["host_locks"].values():
         expected[pin["lock_file"]] = pin["canonical_sha256"]
@@ -89,7 +88,12 @@ def release_context(release_path, release_schema):
         for pin in plan["locks"]:
             expected[pin["lock_file"]] = pin["canonical_sha256"]
     require(set(expected) == EXPECTED_LOCK_PATHS, "RPM source lock set differs")
-    return release, expected
+    return expected
+
+
+def release_context(release_path, release_schema):
+    release = load_schema_document(release_path, release_schema)
+    return release, expected_lock_pins(release)
 
 
 def validate_base_map(base_map, release, expected_lock_sha256):
@@ -134,6 +138,26 @@ def locked_source_content(release):
         }
     require(len(result) == 2, "locked GTS SRPM source set differs")
     return result
+
+
+def source_input_identity(release, expected_locks):
+    return {
+        "base_image": {
+            "index_digest": release["base_image"]["digest"],
+            "manifest_digest": release["base_image"]["manifests"][
+                "amd64"
+            ],
+        },
+        "rocky_rpm_key": release["trust"]["rocky_rpm_key"],
+        "rpm_locks": [
+            {"file": path, "canonical_sha256": digest}
+            for path, digest in sorted(expected_locks.items())
+        ],
+        "gts_sources": {
+            "binutils": release["binutils"]["source"],
+            "gcc": release["gts"]["source"],
+        },
+    }
 
 
 def build_document(release, expected_locks, base_map):
@@ -207,7 +231,9 @@ def build_document(release, expected_locks, base_map):
         "schema_version": 1,
         "kind": "crossforge-rpm-source-requirements",
         "status": "locked" if missing == 0 else "content-lock-pending",
-        "release_sha256": canonical_sha256(release),
+        "input_sha256": canonical_sha256(
+            source_input_identity(release, expected_locks)
+        ),
         "base_source_map": {
             "canonical_sha256": canonical_sha256(base_map),
             "packages": len(base_map["packages"]),

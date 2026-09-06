@@ -335,6 +335,34 @@
     {
       "path": "/sigstore/verifier/version",
       "value": "3.1.3"
+    },
+    {
+      "path": "/source_bundle/rpm/lock/canonical_sha256",
+      "value": "88195aa18af80cca8df912f30109d4cbec3318dfabc5e33e0d3ae12931ea9e12"
+    },
+    {
+      "path": "/source_bundle/rpm/lock/file",
+      "value": "locks/rpm-source-el8.json"
+    },
+    {
+      "path": "/source_bundle/rpm/requirements/canonical_sha256",
+      "value": "cfd286fbbc4da50d8f2126d6cc8bfecba64c0031a7a74083489b77157862a4eb"
+    },
+    {
+      "path": "/source_bundle/rpm/requirements/file",
+      "value": "evidence/sources/rpm-source-requirements.json"
+    },
+    {
+      "path": "/source_bundle/rpm/source_bytes",
+      "value": 1456725209
+    },
+    {
+      "path": "/source_bundle/rpm/source_rpms",
+      "value": 333
+    },
+    {
+      "path": "/source_bundle/rpm/status",
+      "value": "locked"
     }
   ],
   "schema_version": 1,

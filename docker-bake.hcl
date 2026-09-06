@@ -103,6 +103,18 @@ target "rpm-source-requirements" {
   output = ["type=cacheonly"]
 }
 
+target "rpm-source-lock-maintenance" {
+  inherits = ["_common"]
+  target   = "rpm-source-lock-maintenance-output"
+  output   = ["type=cacheonly"]
+}
+
+target "rpm-source-lock-validated" {
+  inherits = ["_common"]
+  target   = "rpm-source-lock-validated-output"
+  output   = ["type=cacheonly"]
+}
+
 target "sdk-skeleton" {
   inherits = ["_common"]
   target   = "sdk-skeleton"

@@ -639,6 +639,16 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                     changed(self.components, after), {"supply/evidence"}
                 )
 
+    def test_rpm_source_bundle_pin_changes_only_supply_identity(self):
+        after = self.render_mutation(
+            lambda release: release["source_bundle"]["rpm"]["lock"].__setitem__(
+                "canonical_sha256", "0" * 64
+            )
+        )
+        self.assertEqual(
+            changed(self.components, after), {"supply/evidence"}
+        )
+
     def test_product_version_rebinds_only_release_and_final_qualification(self):
         release = copy.deepcopy(self.release)
         release["product"]["version"] = "0.1.1"

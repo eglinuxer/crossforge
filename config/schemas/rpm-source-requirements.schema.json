@@ -9,7 +9,7 @@
     "schema_version",
     "kind",
     "status",
-    "release_sha256",
+    "input_sha256",
     "base_source_map",
     "rpm_locks",
     "summary",
@@ -21,7 +21,7 @@
     "schema_version": {"const": 1},
     "kind": {"const": "crossforge-rpm-source-requirements"},
     "status": {"enum": ["content-lock-pending", "locked"]},
-    "release_sha256": {"$ref": "#/$defs/sha256"},
+    "input_sha256": {"$ref": "#/$defs/sha256"},
     "base_source_map": {
       "type": "object",
       "additionalProperties": false,
