@@ -139,8 +139,7 @@ def flatten_policy(value, path=()):
     }
 
 
-def qualify_source(root, manifest_path, source_component):
-    manifest = load_json(manifest_path)
+def source_manifest_contract(manifest, source_component):
     require(
         set(manifest) == {
             "schema_version",
@@ -166,6 +165,7 @@ def qualify_source(root, manifest_path, source_component):
     require(
         set(registry)
         == {
+            "clean_before_tool_injection",
             "commit",
             "history_commit_count",
             "tag",
@@ -173,12 +173,58 @@ def qualify_source(root, manifest_path, source_component):
             "tree",
             "version_database",
         }
+        and registry["clean_before_tool_injection"] is True
         and registry["commit"] == materials["/vcpkg/release/commit"]
         and registry["tag"] == materials["/vcpkg/release/tag"]
         and registry["tag_object"]
         == materials["/vcpkg/release/tag_object"]
         and registry["history_commit_count"] == 30001,
         "vcpkg registry manifest identity differs",
+    )
+    expected_version = "vcpkg package management program version %s-%s" % (
+        materials["/vcpkg/tool/tag"],
+        materials["/vcpkg/tool/commit"],
+    )
+    expected_tool = {
+        "commit": materials["/vcpkg/tool/commit"],
+        "sha256": materials["/vcpkg/tool/sha256"],
+        "sha512": materials["/vcpkg/tool/sha512"],
+        "signature_sha256": materials["/vcpkg/tool/signature/sha256"],
+        "source": {
+            "archive_root": materials["/vcpkg/tool/source/archive_root"],
+            "file": "vcpkg-tool-%s.tar.gz"
+            % materials["/vcpkg/tool/commit"],
+            "member_count": materials["/vcpkg/tool/source/member_count"],
+            "sha256": materials["/vcpkg/tool/source/sha256"],
+            "size": materials["/vcpkg/tool/source/size"],
+        },
+        "verification_materials": {
+            "key": "MICROSOFT-RELEASE-KEY.asc",
+            "signature": "vcpkg-glibc.sig",
+        },
+        "version": expected_version,
+    }
+    require(
+        manifest["tool"] == expected_tool,
+        "vcpkg-tool source manifest identity differs",
+    )
+    expected_licenses = {
+        role + "_sha256": materials[
+            "/vcpkg/tool/license/%s_sha256" % role
+        ]
+        for role in ("license", "notice")
+    }
+    require(
+        manifest["licenses"] == expected_licenses,
+        "vcpkg-tool license manifest differs",
+    )
+    return materials, registry, expected_tool
+
+
+def qualify_source(root, manifest_path, source_component):
+    manifest = load_json(manifest_path)
+    materials, registry, tool_manifest = source_manifest_contract(
+        manifest, source_component
     )
     require(
         root.is_dir() and not root.is_symlink() and (root / ".git").is_dir(),
@@ -273,37 +319,12 @@ def qualify_source(root, manifest_path, source_component):
     tool = root / "vcpkg"
     require(tool.is_file() and not tool.is_symlink(), "vcpkg tool is missing")
     version, _stderr = run([tool, "version", "--disable-metrics"], cwd=root)
-    tool_manifest = manifest["tool"]
-    expected_version = "vcpkg package management program version %s-%s" % (
-        materials["/vcpkg/tool/tag"],
-        materials["/vcpkg/tool/commit"],
-    )
     require(
-        set(tool_manifest)
-        == {"commit", "sha256", "sha512", "signature_sha256", "version"}
-        and tool_manifest
-        == {
-            "commit": materials["/vcpkg/tool/commit"],
-            "sha256": materials["/vcpkg/tool/sha256"],
-            "sha512": materials["/vcpkg/tool/sha512"],
-            "signature_sha256": materials["/vcpkg/tool/signature/sha256"],
-            "version": expected_version,
-        }
-        and sha256_file(tool) == tool_manifest["sha256"]
+        sha256_file(tool) == tool_manifest["sha256"]
         and sha512_file(tool) == tool_manifest["sha512"]
         and version.splitlines()
-        and version.splitlines()[0] == expected_version,
+        and version.splitlines()[0] == tool_manifest["version"],
         "installed vcpkg tool differs",
-    )
-    expected_licenses = {
-        role + "_sha256": materials[
-            "/vcpkg/tool/license/%s_sha256" % role
-        ]
-        for role in ("license", "notice")
-    }
-    require(
-        manifest["licenses"] == expected_licenses,
-        "vcpkg-tool license manifest differs",
     )
     for role in ("license", "notice"):
         path = root / "licenses/vcpkg-tool" / (

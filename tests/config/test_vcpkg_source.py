@@ -13,6 +13,8 @@ from pathlib import Path
 REPOSITORY = Path(__file__).resolve().parents[2]
 PREPARER_PATH = REPOSITORY / "scripts/prepare-vcpkg-source.py"
 PREPARER = runpy.run_path(str(PREPARER_PATH))
+QUALIFIER_PATH = REPOSITORY / "scripts/qualify-vcpkg-sdk.py"
+QUALIFIER = runpy.run_path(str(QUALIFIER_PATH))
 RENDERER = runpy.run_path(str(REPOSITORY / "scripts/render-bake.py"))
 COMPONENT_READER = runpy.run_path(
     str(REPOSITORY / "scripts/release_component.py")
@@ -105,6 +107,98 @@ class VcpkgSourceTests(unittest.TestCase):
             ):
                 PREPARER["verify_tool_source"](archive_path, wrong)
 
+    def test_sdk_qualifier_accepts_complete_source_manifest_contract(self):
+        identity = PREPARER["load_identity"](
+            self.component_path, self.component_sha256
+        )
+        version = "vcpkg package management program version %s-%s" % (
+            identity["/vcpkg/tool/tag"],
+            identity["/vcpkg/tool/commit"],
+        )
+        manifest = {
+            "schema_version": 1,
+            "kind": "crossforge-vcpkg-source",
+            "component": {
+                "name": "sources/vcpkg",
+                "canonical_sha256": self.component_sha256,
+            },
+            "registry": {
+                "clean_before_tool_injection": True,
+                "commit": identity["/vcpkg/release/commit"],
+                "history_commit_count": 30001,
+                "tag": identity["/vcpkg/release/tag"],
+                "tag_object": identity["/vcpkg/release/tag_object"],
+                "tree": "1" * 40,
+                "version_database": {
+                    "files": 3054,
+                    "tree_set_sha256": "2" * 64,
+                    "unique_trees": 39823,
+                },
+            },
+            "tool": {
+                "commit": identity["/vcpkg/tool/commit"],
+                "sha256": identity["/vcpkg/tool/sha256"],
+                "sha512": identity["/vcpkg/tool/sha512"],
+                "signature_sha256": identity[
+                    "/vcpkg/tool/signature/sha256"
+                ],
+                "source": {
+                    "archive_root": identity[
+                        "/vcpkg/tool/source/archive_root"
+                    ],
+                    "file": "vcpkg-tool-%s.tar.gz"
+                    % identity["/vcpkg/tool/commit"],
+                    "member_count": identity[
+                        "/vcpkg/tool/source/member_count"
+                    ],
+                    "sha256": identity["/vcpkg/tool/source/sha256"],
+                    "size": identity["/vcpkg/tool/source/size"],
+                },
+                "verification_materials": {
+                    "key": "MICROSOFT-RELEASE-KEY.asc",
+                    "signature": "vcpkg-glibc.sig",
+                },
+                "version": version,
+            },
+            "licenses": {
+                "license_sha256": identity[
+                    "/vcpkg/tool/license/license_sha256"
+                ],
+                "notice_sha256": identity[
+                    "/vcpkg/tool/license/notice_sha256"
+                ],
+            },
+        }
+        materials, registry, tool = QUALIFIER["source_manifest_contract"](
+            manifest, self.component
+        )
+        self.assertTrue(registry["clean_before_tool_injection"])
+        self.assertEqual(
+            tool["source"]["sha256"],
+            materials["/vcpkg/tool/source/sha256"],
+        )
+        for mutate in (
+            lambda value: value["registry"].pop(
+                "clean_before_tool_injection"
+            ),
+            lambda value: value["registry"].__setitem__(
+                "clean_before_tool_injection", False
+            ),
+            lambda value: value["tool"]["source"].__setitem__(
+                "sha256", "0" * 64
+            ),
+            lambda value: value["tool"]["verification_materials"].__setitem__(
+                "key", "untrusted.asc"
+            ),
+            lambda value: value["tool"].__setitem__("unexpected", True),
+        ):
+            changed = copy.deepcopy(manifest)
+            mutate(changed)
+            with self.assertRaises(QUALIFIER["QualificationError"]):
+                QUALIFIER["source_manifest_contract"](
+                    changed, self.component
+                )
+
     def test_component_tampering_and_incomplete_materials_fail_closed(self):
         for mutate in (
             lambda value: value["materials"].pop(),
@@ -192,6 +286,7 @@ class VcpkgSourceTests(unittest.TestCase):
         for path in (
             PREPARER_PATH,
             REPOSITORY / "scripts/fetch-vcpkg-history.py",
+            QUALIFIER_PATH,
         ):
             ast.parse(
                 path.read_text(encoding="utf-8"),
