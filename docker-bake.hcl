@@ -84,6 +84,12 @@ target "source-bundle" {
   output = ["type=cacheonly"]
 }
 
+target "source-bundle-identity" {
+  inherits = ["source-bundle"]
+  target   = "source-bundle-identity-output"
+  output   = ["type=cacheonly"]
+}
+
 group "default" {
   targets = ["validate"]
 }

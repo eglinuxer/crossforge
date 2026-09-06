@@ -568,6 +568,23 @@ This target does not query DNF repositories and is intentionally excluded from
 ordinary CI because it transfers about 1.46 GB; the final source-bundle gate
 will consume it when assembling a public candidate.
 
+The complete bundle combines product and qualification sources, verification
+materials, source-stage reports, a clean project snapshot and the full vcpkg
+Git history into one candidate-bound archive. Local maintainers must provide a
+full clean commit explicitly:
+
+```console
+$ CROSSFORGE_SOURCE_COMMIT="$(git rev-parse HEAD)" \
+    docker buildx bake source-bundle
+```
+
+Its manifest contains 384 path/role/component/origin identities. The public
+candidate publishes the archive as a second, unique tag in the same public
+GHCR package; candidate schema v2 binds both OCI digests, both platform
+manifests, and the inner archive SHA256/size. Source and SDK digests are both
+anonymously inspected before native qualification and keyless-signed only
+after the native ARM64 gates pass.
+
 ## Phase 13: vcpkg source and SDK integration
 
 Crossforge pins the immutable vcpkg `2026.07.29` release at commit
@@ -768,7 +785,9 @@ output is still cache-only and has no tag, so local commands cannot publish it
 accidentally. The manually dispatched `public candidate` workflow supplies a
 unique `candidate-v<version>-g<commit>-r<run>-a<attempt>` tag, pushes with max
 provenance and SBOM attestations, reconstructs `candidate.json` from the raw
-OCI index, then logs out of GHCR and proves the digest is anonymously readable.
+OCI index, builds and pushes the corresponding source archive under a paired
+`source-candidate-*` tag, then logs out of GHCR and proves both digests are
+anonymously readable.
 It then uses that exact public digest to cross-compile a deterministic,
 SHA256-bound AArch64 probe tar. In parallel, the publish runner exports the
 qualified AArch64 Qt runtime root without QEMU and binds its digest to the same
@@ -780,9 +799,9 @@ retains the exact target-build and runtime-overlay evidence, and
 bindings before upload so a later promotion does not have to trust a job status
 alone. Only after both native gates pass, a final job exports the same
 TUF-authenticated Cosign, revalidates all downloaded evidence, signs the exact
-candidate digest with the workflow's GitHub OIDC identity, logs out, and
-verifies the public signature against the pinned trusted root. The workflow
-never creates a SemVer or stable-channel tag.
+candidate and source digests with the workflow's GitHub OIDC identity, logs
+out, and verifies both public signatures against the pinned trusted root. The
+workflow never creates a SemVer or stable-channel tag.
 
 The public candidate runs as `crossforge` UID/GID 1000 by default. `/opt/crossforge`
 remains root-owned; only the workspace, home, cache and temporary directories are

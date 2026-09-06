@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/source-bundle-identity.schema.json",
+  "title": "Crossforge source bundle file identity",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "source_commit",
+    "release_sha256",
+    "archive"
+  ],
+  "properties": {
+    "$schema": {"const": "https://crossforge.dev/schemas/source-bundle-identity.schema.json"},
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-source-bundle-identity"},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "release_sha256": {"$ref": "#/$defs/sha256"},
+    "archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "sha256", "size"],
+      "properties": {
+        "file": {"type": "string", "pattern": "^crossforge-source-[0-9a-f]{40}\\.tar\\.zst$"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "integer", "minimum": 1456725209}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

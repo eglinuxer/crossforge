@@ -399,6 +399,24 @@ def validate_metadata(root, lock, entries):
 
 
 def assemble(release, lock, root, source_commit, schema):
+    require(
+        release["source_bundle"]["archive"]
+        == {
+            "status": "candidate-bound",
+            "build_target": "source-bundle",
+            "format": "tar.zst",
+            "compression": "zstd-level-1",
+            "manifest": {
+                "file": "config/schemas/source-bundle-manifest.schema.json",
+                "canonical_sha256": BUILD["canonical_sha256"](schema),
+            },
+            "entries": 384,
+            "includes_qualification_sources": True,
+            "project_snapshot": "exact-clean-git-file-set",
+            "publication": "same-public-oci-package",
+        },
+        "source bundle archive policy differs",
+    )
     expected = expected_entries(release, lock, source_commit)
     entries = validate_files(root, expected)
     validate_metadata(root, lock, entries)

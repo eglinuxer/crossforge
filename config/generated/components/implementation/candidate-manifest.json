@@ -102,11 +102,27 @@
     },
     {
       "path": "/@implementation/candidate-manifest/schema_version",
-      "value": 1
+      "value": 2
     },
     {
       "path": "/@implementation/candidate-manifest/sdk_root",
       "value": "root-owned-runtime-immutable"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/source_bundle/contents",
+      "value": "product-and-qualification-sources-with-verification"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/source_bundle/identity",
+      "value": "candidate-manifest-oci-and-archive-digests"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/source_bundle/platform",
+      "value": "linux/amd64"
+    },
+    {
+      "path": "/@implementation/candidate-manifest/source_bundle/repository",
+      "value": "same-public-package"
     },
     {
       "path": "/@implementation/candidate-manifest/source_commit",

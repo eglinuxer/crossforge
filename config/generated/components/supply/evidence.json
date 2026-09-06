@@ -469,6 +469,46 @@
       "value": "3.1.3"
     },
     {
+      "path": "/source_bundle/archive/build_target",
+      "value": "source-bundle"
+    },
+    {
+      "path": "/source_bundle/archive/compression",
+      "value": "zstd-level-1"
+    },
+    {
+      "path": "/source_bundle/archive/entries",
+      "value": 384
+    },
+    {
+      "path": "/source_bundle/archive/format",
+      "value": "tar.zst"
+    },
+    {
+      "path": "/source_bundle/archive/includes_qualification_sources",
+      "value": true
+    },
+    {
+      "path": "/source_bundle/archive/manifest/canonical_sha256",
+      "value": "1b910764f4549112d17f780599dd0458cce7955f8d349782c017345d36ab7fbd"
+    },
+    {
+      "path": "/source_bundle/archive/manifest/file",
+      "value": "config/schemas/source-bundle-manifest.schema.json"
+    },
+    {
+      "path": "/source_bundle/archive/project_snapshot",
+      "value": "exact-clean-git-file-set"
+    },
+    {
+      "path": "/source_bundle/archive/publication",
+      "value": "same-public-oci-package"
+    },
+    {
+      "path": "/source_bundle/archive/status",
+      "value": "candidate-bound"
+    },
+    {
       "path": "/source_bundle/rpm/lock/canonical_sha256",
       "value": "88195aa18af80cca8df912f30109d4cbec3318dfabc5e33e0d3ae12931ea9e12"
     },

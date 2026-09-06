@@ -30,6 +30,7 @@ jobs:
           set -Eeuo pipefail
           test "$GITHUB_REF" = refs/heads/main
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -z "$(git status --porcelain --untracked-files=all)"
           ./scripts/validate-release.py --require-locked
           ./scripts/validate-supply-chain-evidence.py
           ./scripts/validate-rpm-source-lock.py
@@ -48,8 +49,12 @@ jobs:
             --run-id "$GITHUB_RUN_ID" \
             --run-attempt "$GITHUB_RUN_ATTEMPT")
           reference="$CANDIDATE_REPOSITORY:$tag"
+          source_tag="source-$tag"
+          source_reference="$CANDIDATE_REPOSITORY:$source_tag"
           printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
           printf 'reference=%s\n' "$reference" >> "$GITHUB_OUTPUT"
+          printf 'source_tag=%s\n' "$source_tag" >> "$GITHUB_OUTPUT"
+          printf 'source_reference=%s\n' "$source_reference" >> "$GITHUB_OUTPUT"
       - name: Qualify Sigstore source signatures offline
         run: |
           set -Eeuo pipefail
@@ -64,12 +69,15 @@ jobs:
       - name: Reject an existing candidate tag
         env:
           CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
+          SOURCE_REFERENCE: ${{ steps.identity.outputs.source_reference }}
         run: |
           set -Eeuo pipefail
-          if docker buildx imagetools inspect "$CANDIDATE_REFERENCE" >/dev/null 2>&1; then
-            echo "candidate tag already exists: $CANDIDATE_REFERENCE" >&2
-            exit 1
-          fi
+          for reference in "$CANDIDATE_REFERENCE" "$SOURCE_REFERENCE"; do
+            if docker buildx imagetools inspect "$reference" >/dev/null 2>&1; then
+              echo "candidate tag already exists: $reference" >&2
+              exit 1
+            fi
+          done
       - name: Build once and push the candidate
         env:
           CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
@@ -83,6 +91,43 @@ jobs:
             --set "sdk-candidate.attest+=type=sbom" \
             --metadata-file "$RUNNER_TEMP/build-metadata.json" \
             --progress=plain
+      - name: Build once and push the corresponding source bundle
+        id: source
+        env:
+          SOURCE_REFERENCE: ${{ steps.identity.outputs.source_reference }}
+        run: |
+          set -Eeuo pipefail
+          identity_root="$RUNNER_TEMP/source-bundle-identity"
+          docker buildx bake source-bundle \
+            --set "source-bundle.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
+            --set "source-bundle.tags=$SOURCE_REFERENCE" \
+            --set "source-bundle.output=type=image,push=true" \
+            --set "source-bundle.attest=type=provenance,mode=max" \
+            --set "source-bundle.attest+=type=sbom" \
+            --metadata-file "$RUNNER_TEMP/source-build-metadata.json" \
+            --progress=plain
+          docker buildx bake source-bundle-identity \
+            --set "source-bundle-identity.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
+            --set "source-bundle-identity.output=type=local,dest=$identity_root" \
+            --progress=plain
+          source_digest=$(./scripts/resolve_candidate_image.py buildx-digest \
+            --metadata "$RUNNER_TEMP/source-build-metadata.json")
+          docker buildx imagetools inspect \
+            "$CANDIDATE_REPOSITORY@$source_digest" --raw \
+            > "$RUNNER_TEMP/source-index.json"
+          source_platform_digest=$(./scripts/resolve_candidate_image.py \
+            platform-digest --index "$RUNNER_TEMP/source-index.json" \
+            --expected-digest "$source_digest")
+          source_identity="$identity_root/source-bundle.json"
+          test "$(jq -r .source_commit "$source_identity")" = "$GITHUB_SHA"
+          source_archive_sha256=$(jq -r .archive.sha256 "$source_identity")
+          source_archive_size=$(jq -r .archive.size "$source_identity")
+          test "${#source_archive_sha256}" -eq 64
+          test "$source_archive_size" -gt 1456725209
+          printf 'digest=%s\n' "$source_digest" >> "$GITHUB_OUTPUT"
+          printf 'platform_digest=%s\n' "$source_platform_digest" >> "$GITHUB_OUTPUT"
+          printf 'archive_sha256=%s\n' "$source_archive_sha256" >> "$GITHUB_OUTPUT"
+          printf 'archive_size=%s\n' "$source_archive_size" >> "$GITHUB_OUTPUT"
       - name: Bind the pushed OCI index and platform manifest
         id: digest
         env:
@@ -101,6 +146,11 @@ jobs:
             --source-commit "$GITHUB_SHA" \
             --digest "$candidate_digest" \
             --platform-manifest-digest "$platform_digest" \
+            --source-bundle-digest "${{ steps.source.outputs.digest }}" \
+            --source-bundle-platform-manifest-digest \
+              "${{ steps.source.outputs.platform_digest }}" \
+            --source-bundle-identity \
+              "$RUNNER_TEMP/source-bundle-identity/source-bundle.json" \
             --output "$RUNNER_TEMP/candidate.json"
           ./scripts/candidate_manifest.py validate \
             "$RUNNER_TEMP/candidate.json" \
@@ -109,6 +159,8 @@ jobs:
           printf 'platform_digest=%s\n' "$platform_digest" >> "$GITHUB_OUTPUT"
           test "$CANDIDATE_REFERENCE" = \
             "$CANDIDATE_REPOSITORY:${{ steps.identity.outputs.tag }}"
+          test "${{ steps.identity.outputs.source_reference }}" = \
+            "$CANDIDATE_REPOSITORY:${{ steps.identity.outputs.source_tag }}"
       - name: Prove anonymous public availability
         env:
           CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
@@ -123,6 +175,14 @@ jobs:
             --expected-digest "$CANDIDATE_DIGEST")
           test "$anonymous_platform" = \
             "${{ steps.digest.outputs.platform_digest }}"
+          docker buildx imagetools inspect \
+            "$CANDIDATE_REPOSITORY@${{ steps.source.outputs.digest }}" --raw \
+            > "$RUNNER_TEMP/anonymous-source-index.json"
+          anonymous_source_platform=$(./scripts/resolve_candidate_image.py \
+            platform-digest --index "$RUNNER_TEMP/anonymous-source-index.json" \
+            --expected-digest "${{ steps.source.outputs.digest }}")
+          test "$anonymous_source_platform" = \
+            "${{ steps.source.outputs.platform_digest }}"
       - name: Run the anonymous non-root candidate
         env:
           CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
@@ -188,7 +248,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: candidate-identity-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/candidate.json
+          path: |
+            ${{ runner.temp }}/candidate.json
+            ${{ runner.temp }}/source-bundle-identity/source-bundle.json
           if-no-files-found: error
           retention-days: 90
       - name: Upload native AArch64 probe bundle
@@ -205,6 +267,8 @@ jobs:
           CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
           CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
           PLATFORM_DIGEST: ${{ steps.digest.outputs.platform_digest }}
+          SOURCE_DIGEST: ${{ steps.source.outputs.digest }}
+          SOURCE_REFERENCE: ${{ steps.identity.outputs.source_reference }}
         run: |
           set -Eeuo pipefail
           {
@@ -213,6 +277,10 @@ jobs:
             echo "- Tag: \`$CANDIDATE_REFERENCE\`"
             echo "- OCI index: \`$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST\`"
             echo "- linux/amd64 manifest: \`$PLATFORM_DIGEST\`"
+            echo "- Source tag: \`$SOURCE_REFERENCE\`"
+            echo "- Source OCI index: \`$CANDIDATE_REPOSITORY@$SOURCE_DIGEST\`"
+            echo "- Source archive SHA256: \`${{ steps.source.outputs.archive_sha256 }}\`"
+            echo "- Source archive bytes: \`${{ steps.source.outputs.archive_size }}\`"
             echo '- Status: public candidate; no stable or SemVer tag was created'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -496,6 +564,10 @@ jobs:
           set -Eeuo pipefail
           cosign="$RUNNER_TEMP/cosign-tool/cosign"
           image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
+          candidate_manifest="$RUNNER_TEMP/native-aarch64-evidence/candidate.json"
+          source_repository=$(jq -r .source_bundle.repository "$candidate_manifest")
+          source_digest=$(jq -r .source_bundle.digest "$candidate_manifest")
+          source_image="$source_repository@$source_digest"
           identity=$(jq -r .sigstore.signing.identity config/release.json)
           issuer=$(jq -r .sigstore.signing.oidc_issuer config/release.json)
           logged_in=0
@@ -509,6 +581,7 @@ jobs:
             | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
           logged_in=1
           "$cosign" sign --yes "$image"
+          "$cosign" sign --yes "$source_image"
           docker logout ghcr.io
           logged_in=0
           trap - EXIT
@@ -520,12 +593,23 @@ jobs:
             --certificate-identity "$identity" \
             --certificate-oidc-issuer "$issuer" \
             "$image" > "$RUNNER_TEMP/candidate-signature.json"
+          "$cosign" verify \
+            --trusted-root "$RUNNER_TEMP/trusted_root.json" \
+            --certificate-identity "$identity" \
+            --certificate-oidc-issuer "$issuer" \
+            "$source_image" > "$RUNNER_TEMP/source-bundle-signature.json"
           jq -e --arg repository "$CANDIDATE_REPOSITORY" \
             --arg digest "$CANDIDATE_DIGEST" \
             'length >= 1 and all(.[];
               .critical.identity."docker-reference" == $repository and
               .critical.image."docker-manifest-digest" == $digest)' \
             "$RUNNER_TEMP/candidate-signature.json" >/dev/null
+          jq -e --arg repository "$source_repository" \
+            --arg digest "$source_digest" \
+            'length >= 1 and all(.[];
+              .critical.identity."docker-reference" == $repository and
+              .critical.image."docker-manifest-digest" == $digest)' \
+            "$RUNNER_TEMP/source-bundle-signature.json" >/dev/null
       - name: Upload candidate signature evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -533,6 +617,7 @@ jobs:
           path: |
             ${{ runner.temp }}/native-aarch64-evidence/candidate.json
             ${{ runner.temp }}/candidate-signature.json
+            ${{ runner.temp }}/source-bundle-signature.json
             ${{ runner.temp }}/cosign-tool/sigstore-verification.json
           if-no-files-found: error
           retention-days: 90
@@ -545,6 +630,7 @@ jobs:
             echo '### Signed public Crossforge candidate'
             echo
             echo "- Candidate: \`$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST\`"
+            echo '- Source bundle: candidate manifest digest binding verified and signed'
             echo '- Identity: GitHub OIDC candidate workflow on `main`'
             echo '- Status: native-qualified and keyless-signed; no stable tag was created'
           } >> "$GITHUB_STEP_SUMMARY"

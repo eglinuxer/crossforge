@@ -48,6 +48,25 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("candidate_manifest.py validate", self.workflow)
         self.assertIn("resolve_candidate_image.py buildx-digest", self.workflow)
         self.assertIn("resolve_candidate_image.py platform-digest", self.workflow)
+        self.assertIn("--source-bundle-digest", self.workflow)
+        self.assertIn("--source-bundle-platform-manifest-digest", self.workflow)
+        self.assertIn("--source-bundle-identity", self.workflow)
+
+    def test_complete_source_bundle_is_public_bound_and_signed(self):
+        self.assertIn(
+            'test -z "$(git status --porcelain --untracked-files=all)"',
+            self.workflow,
+        )
+        self.assertIn('source_tag="source-$tag"', self.workflow)
+        self.assertIn("docker buildx bake source-bundle", self.workflow)
+        self.assertIn("source-bundle.output=type=image,push=true", self.workflow)
+        self.assertIn("source-bundle.attest=type=provenance,mode=max", self.workflow)
+        self.assertIn("source-bundle.attest+=type=sbom", self.workflow)
+        self.assertIn("docker buildx bake source-bundle-identity", self.workflow)
+        self.assertIn("anonymous-source-index.json", self.workflow)
+        self.assertIn('"$cosign" sign --yes "$source_image"', self.workflow)
+        self.assertIn("source-bundle-signature.json", self.workflow)
+        self.assertNotIn("source-bundle", self.ci)
 
     def test_public_availability_is_checked_without_registry_credentials(self):
         logout = self.workflow.index("docker logout ghcr.io")

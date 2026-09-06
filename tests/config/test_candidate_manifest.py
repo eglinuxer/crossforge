@@ -30,6 +30,20 @@ class CandidateManifestTests(unittest.TestCase):
         cls.source_commit = "1" * 40
         cls.digest = "sha256:" + "2" * 64
         cls.platform_digest = "sha256:" + "3" * 64
+        cls.source_bundle_digest = "sha256:" + "4" * 64
+        cls.source_bundle_platform_digest = "sha256:" + "5" * 64
+        cls.source_bundle_identity = {
+            "$schema": "https://crossforge.dev/schemas/source-bundle-identity.schema.json",
+            "schema_version": 1,
+            "kind": "crossforge-source-bundle-identity",
+            "source_commit": cls.source_commit,
+            "release_sha256": CANDIDATE["canonical_sha256"](cls.release),
+            "archive": {
+                "file": "crossforge-source-%s.tar.zst" % cls.source_commit,
+                "sha256": "6" * 64,
+                "size": 2866173957,
+            },
+        }
 
     def document(self):
         return CANDIDATE["candidate_document"](
@@ -37,6 +51,9 @@ class CandidateManifestTests(unittest.TestCase):
             self.source_commit,
             self.digest,
             self.platform_digest,
+            self.source_bundle_digest,
+            self.source_bundle_platform_digest,
+            self.source_bundle_identity,
         )
 
     def test_document_is_strict_and_release_bound(self):
@@ -57,6 +74,17 @@ class CandidateManifestTests(unittest.TestCase):
             document["repository"], "ghcr.io/eglinuxer/crossforge"
         )
         self.assertNotIn("tag", document)
+        self.assertEqual(document["schema_version"], 2)
+        self.assertEqual(
+            document["source_bundle"],
+            {
+                "repository": "ghcr.io/eglinuxer/crossforge",
+                "digest": self.source_bundle_digest,
+                "platform": "linux/amd64",
+                "platform_manifest_digest": self.source_bundle_platform_digest,
+                "archive": self.source_bundle_identity["archive"],
+            },
+        )
 
     def test_candidate_tag_is_unique_and_not_an_identity(self):
         self.assertEqual(
@@ -143,6 +171,12 @@ class CandidateManifestTests(unittest.TestCase):
                 "modern",
             ],
         )
+        self.assertEqual(
+            COMPONENTS["CANDIDATE_MANIFEST_POLICY"]["source_bundle"][
+                "repository"
+            ],
+            "same-public-package",
+        )
 
     def test_unknown_and_malformed_fields_are_rejected(self):
         unknown = self.document()
@@ -190,9 +224,43 @@ class CandidateManifestTests(unittest.TestCase):
                 self.document(), release, self.schema
             )
 
+    def test_source_bundle_identity_and_embedded_oci_identity_fail_closed(self):
+        for mutate in (
+            lambda value: value["source_bundle"].__setitem__(
+                "repository", "ghcr.io/example/crossforge"
+            ),
+            lambda value: value["source_bundle"]["archive"].__setitem__(
+                "file", "crossforge-source-%s.tar.zst" % ("9" * 40)
+            ),
+        ):
+            document = self.document()
+            mutate(document)
+            with self.assertRaises(CANDIDATE["CandidateError"]):
+                CANDIDATE["validate_candidate"](
+                    document, self.release, self.schema
+                )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "source-bundle.json"
+            wrong = copy.deepcopy(self.source_bundle_identity)
+            wrong["source_commit"] = "9" * 40
+            path.write_text(json.dumps(wrong), encoding="utf-8")
+            with self.assertRaises(CANDIDATE["CandidateError"]):
+                CANDIDATE["load_source_bundle_identity"](
+                    path,
+                    REPOSITORY
+                    / "config/schemas/source-bundle-identity.schema.json",
+                    self.release,
+                    self.source_commit,
+                )
+
     def test_cli_create_is_idempotent_and_refuses_replacement(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "candidate.json"
+            source_identity = Path(temporary) / "source-bundle.json"
+            source_identity.write_text(
+                json.dumps(self.source_bundle_identity), encoding="utf-8"
+            )
             command = [
                 str(SCRIPT),
                 "create",
@@ -202,6 +270,12 @@ class CandidateManifestTests(unittest.TestCase):
                 self.digest,
                 "--platform-manifest-digest",
                 self.platform_digest,
+                "--source-bundle-digest",
+                self.source_bundle_digest,
+                "--source-bundle-platform-manifest-digest",
+                self.source_bundle_platform_digest,
+                "--source-bundle-identity",
+                str(source_identity),
                 "--output",
                 str(output),
             ]

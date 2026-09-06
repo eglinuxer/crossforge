@@ -159,3 +159,19 @@ RUN --network=none \
 
 FROM scratch AS source-bundle-output
 COPY --from=source-bundle-assemble /out/ /
+
+FROM source-bundle-assemble AS source-bundle-identity
+ARG CROSSFORGE_SOURCE_COMMIT
+RUN --network=none mkdir -p /identity \
+    && /usr/libexec/platform-python \
+      /work/project/scripts/source-bundle-identity.py \
+      --archive "/out/crossforge-source-${CROSSFORGE_SOURCE_COMMIT}.tar.zst" \
+      --checksum "/out/crossforge-source-${CROSSFORGE_SOURCE_COMMIT}.tar.zst.sha256" \
+      --manifest \
+        "/work/archive-root/crossforge-source-${CROSSFORGE_SOURCE_COMMIT}/MANIFEST.json" \
+      --source-commit "$CROSSFORGE_SOURCE_COMMIT" \
+      --output /identity/source-bundle.json
+
+FROM scratch AS source-bundle-identity-output
+COPY --from=source-bundle-identity /identity/source-bundle.json \
+  /source-bundle.json

@@ -1,5 +1,6 @@
 import ast
 import hashlib
+import json
 import runpy
 import tempfile
 import unittest
@@ -10,6 +11,8 @@ from pathlib import Path
 REPOSITORY = Path(__file__).resolve().parents[2]
 SCRIPT = REPOSITORY / "scripts/assemble-source-bundle.py"
 ASSEMBLER = runpy.run_path(str(SCRIPT))
+IDENTITY_SCRIPT = REPOSITORY / "scripts/source-bundle-identity.py"
+IDENTITY = runpy.run_path(str(IDENTITY_SCRIPT))
 
 
 class AssembleSourceBundleTests(unittest.TestCase):
@@ -26,6 +29,13 @@ class AssembleSourceBundleTests(unittest.TestCase):
         )
 
     def test_complete_plan_has_exact_product_qualification_and_evidence_sets(self):
+        self.assertEqual(
+            self.release["source_bundle"]["archive"]["entries"], 384
+        )
+        self.assertEqual(
+            self.release["source_bundle"]["archive"]["publication"],
+            "same-public-oci-package",
+        )
         entries = ASSEMBLER["expected_entries"](
             self.release, self.lock, "1" * 40
         )
@@ -96,6 +106,7 @@ class AssembleSourceBundleTests(unittest.TestCase):
         )
         bake = (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8")
         self.assertIn('target "source-bundle"', bake)
+        self.assertIn('target "source-bundle-identity"', bake)
         self.assertIn(
             'default = "0000000000000000000000000000000000000000"', bake
         )
@@ -123,17 +134,55 @@ class AssembleSourceBundleTests(unittest.TestCase):
             'sha256sum "crossforge-source-${CROSSFORGE_SOURCE_COMMIT}.tar.zst"',
             dockerfile,
         )
+        self.assertIn("source-bundle-identity.py", dockerfile)
+
+    def test_archive_identity_requires_a_portable_exact_checksum(self):
+        commit = "1" * 40
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            archive = root / ("crossforge-source-%s.tar.zst" % commit)
+            archive.write_bytes(b"source archive")
+            digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+            checksum = root / (archive.name + ".sha256")
+            checksum.write_text(
+                "%s  %s\n" % (digest, archive.name), encoding="ascii"
+            )
+            manifest = root / "MANIFEST.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "kind": "crossforge-source-bundle",
+                        "source_commit": commit,
+                        "release_sha256": "2" * 64,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            identity = IDENTITY["create_identity"](
+                archive, checksum, manifest, commit
+            )
+            self.assertEqual(identity["archive"]["sha256"], digest)
+            checksum.write_text(
+                "%s  /out/%s\n" % (digest, archive.name), encoding="ascii"
+            )
+            with self.assertRaisesRegex(
+                IDENTITY["ValidationError"], "checksum differs"
+            ):
+                IDENTITY["create_identity"](
+                    archive, checksum, manifest, commit
+                )
 
     def test_manifest_schema_and_assembler_are_python36_compatible(self):
         schema = ASSEMBLER["STRICT"]["load_json"](
             REPOSITORY / "config/schemas/source-bundle-manifest.schema.json"
         )
         ASSEMBLER["STRICT"]["validate_schema_subset"](schema)
-        ast.parse(
-            SCRIPT.read_text(encoding="utf-8"),
-            filename=str(SCRIPT),
-            feature_version=(3, 6),
-        )
+        for path in (SCRIPT, IDENTITY_SCRIPT):
+            ast.parse(
+                path.read_text(encoding="utf-8"),
+                filename=str(path),
+                feature_version=(3, 6),
+            )
 
 
 if __name__ == "__main__":

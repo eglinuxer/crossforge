@@ -14,6 +14,9 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 SCHEMA_ID = "https://crossforge.dev/schemas/candidate.schema.json"
+SOURCE_BUNDLE_IDENTITY_SCHEMA_ID = (
+    "https://crossforge.dev/schemas/source-bundle-identity.schema.json"
+)
 GIT_SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
 RUN_ID_RE = re.compile(r"^[1-9][0-9]*$")
 OCI_TAG_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$")
@@ -61,11 +64,17 @@ def load_candidate_schema(schema_path):
 
 
 def candidate_document(
-    release, source_commit, digest, platform_manifest_digest
+    release,
+    source_commit,
+    digest,
+    platform_manifest_digest,
+    source_bundle_digest,
+    source_bundle_platform_manifest_digest,
+    source_bundle_identity,
 ):
     return {
         "$schema": SCHEMA_ID,
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "crossforge-candidate",
         "version": release["product"]["version"],
         "source_commit": source_commit,
@@ -74,7 +83,37 @@ def candidate_document(
         "digest": digest,
         "platform": release["platforms"]["image"],
         "platform_manifest_digest": platform_manifest_digest,
+        "source_bundle": {
+            "repository": release["product"]["image_repository"],
+            "digest": source_bundle_digest,
+            "platform": release["platforms"]["image"],
+            "platform_manifest_digest": source_bundle_platform_manifest_digest,
+            "archive": source_bundle_identity["archive"],
+        },
     }
+
+
+def load_source_bundle_identity(path, schema_path, release, source_commit):
+    identity = STRICT["load_json"](path)
+    schema = STRICT["load_json"](schema_path)
+    STRICT["validate_schema_subset"](schema)
+    require(
+        schema.get("$id") == SOURCE_BUNDLE_IDENTITY_SCHEMA_ID,
+        "source bundle identity schema differs",
+    )
+    try:
+        STRICT["validate"](identity, schema, schema, "$")
+    except ReleaseValidationError as error:
+        raise CandidateError("source bundle identity is invalid: %s" % error) from error
+    require(
+        identity["source_commit"] == source_commit,
+        "source bundle commit differs from candidate",
+    )
+    require(
+        identity["release_sha256"] == canonical_sha256(release),
+        "source bundle release digest differs from candidate",
+    )
+    return identity
 
 
 def candidate_tag(release, source_commit, run_id, run_attempt):
@@ -117,6 +156,17 @@ def validate_candidate(
     require(
         document["platform"] == release["platforms"]["image"],
         "candidate platform differs from release",
+    )
+    source_bundle = document["source_bundle"]
+    require(
+        source_bundle["repository"] == document["repository"]
+        and source_bundle["platform"] == document["platform"],
+        "candidate source bundle repository or platform differs",
+    )
+    require(
+        source_bundle["archive"]["file"]
+        == "crossforge-source-%s.tar.zst" % document["source_commit"],
+        "candidate source archive filename differs from commit",
     )
     if expected_source_commit is not None:
         require(
@@ -189,6 +239,15 @@ def parser():
     create.add_argument("--source-commit", required=True)
     create.add_argument("--digest", required=True)
     create.add_argument("--platform-manifest-digest", required=True)
+    create.add_argument("--source-bundle-digest", required=True)
+    create.add_argument("--source-bundle-platform-manifest-digest", required=True)
+    create.add_argument("--source-bundle-identity", type=Path, required=True)
+    create.add_argument(
+        "--source-bundle-identity-schema",
+        type=Path,
+        default=REPOSITORY
+        / "config/schemas/source-bundle-identity.schema.json",
+    )
     create.add_argument("--output", type=Path, required=True)
     validate = subparsers.add_parser("validate", allow_abbrev=False)
     add_common_arguments(validate)
@@ -222,11 +281,20 @@ def main(argv=None):
             return 0
         schema = load_candidate_schema(arguments.schema)
         if arguments.command == "create":
+            source_bundle_identity = load_source_bundle_identity(
+                arguments.source_bundle_identity,
+                arguments.source_bundle_identity_schema,
+                release,
+                arguments.source_commit,
+            )
             document = candidate_document(
                 release,
                 arguments.source_commit,
                 arguments.digest,
                 arguments.platform_manifest_digest,
+                arguments.source_bundle_digest,
+                arguments.source_bundle_platform_manifest_digest,
+                source_bundle_identity,
             )
             digest = validate_candidate(document, release, schema)
             state = "wrote" if write_json_once(arguments.output, document) else "current"

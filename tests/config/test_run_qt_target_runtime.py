@@ -15,6 +15,18 @@ CANDIDATE = runpy.run_path(
 )
 
 
+def source_bundle_identity(release, commit):
+    return {
+        "source_commit": commit,
+        "release_sha256": CANDIDATE["canonical_sha256"](release),
+        "archive": {
+            "file": "crossforge-source-%s.tar.zst" % commit,
+            "sha256": "6" * 64,
+            "size": 2866173957,
+        },
+    }
+
+
 class RunQtTargetRuntimeTests(unittest.TestCase):
     def arguments(self, arch):
         return argparse.Namespace(
@@ -168,6 +180,9 @@ class RunQtTargetRuntimeTests(unittest.TestCase):
                 "1" * 40,
                 "sha256:" + "2" * 64,
                 "sha256:" + "3" * 64,
+                "sha256:" + "4" * 64,
+                "sha256:" + "5" * 64,
+                source_bundle_identity(release, "1" * 40),
             )
             candidate_path = root / "candidate.json"
             candidate_path.write_text(

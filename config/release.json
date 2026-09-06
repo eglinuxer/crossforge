@@ -102,6 +102,20 @@
     }
   },
   "source_bundle": {
+    "archive": {
+      "status": "candidate-bound",
+      "build_target": "source-bundle",
+      "format": "tar.zst",
+      "compression": "zstd-level-1",
+      "manifest": {
+        "file": "config/schemas/source-bundle-manifest.schema.json",
+        "canonical_sha256": "1b910764f4549112d17f780599dd0458cce7955f8d349782c017345d36ab7fbd"
+      },
+      "entries": 384,
+      "includes_qualification_sources": true,
+      "project_snapshot": "exact-clean-git-file-set",
+      "publication": "same-public-oci-package"
+    },
     "rpm": {
       "status": "locked",
       "requirements": {

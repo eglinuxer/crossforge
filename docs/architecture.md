@@ -458,8 +458,14 @@ BaseOS/AppStream 的同名 URL 必须下载两份并证明字节一致。`rpm-so
 别名优先级、Rocky trust 和总字节数。`rpm-source-bundle` 随后只按 lock 的 primary URL
 下载全部 1.46 GB 字节，下载时核对大小/SHA256，再于 `--network=none` 阶段逐项重验
 source header 与 Rocky 签名并输出 scratch-only `/source-rpms`。RPM 字节闭包因此已可实际
-组装；但在它与其他上游源码、补丁、精确项目快照、构建脚本与许可证合并并生成统一
-manifest 之前，仍不得发布名为完整 source bundle 的产物。
+组装。最终 `source-bundle` 把它与六个 CPython、zstd、CMake/Ninja、完整 vcpkg Git
+历史与 vcpkg-tool、nFPM、QEMU/binfmt、Qt/FFmpeg/xcb 资格化源码、23 份签名/校验/
+Sigstore/公钥材料、10 份 source-stage metadata，以及与候选 commit 精确同文件集的
+Crossforge 项目快照合并。断网 assembler 对 384 个输入逐项重算 SHA256/大小，输出
+统一 `MANIFEST.json`，再生成可移植 checksum 的单一 `tar.zst`。candidate v2 同时绑定
+SDK OCI、source OCI、两个 platform manifest 与内层 archive SHA256/大小；两套 OCI
+必须匿名可读并在原生 ARM64 门禁之后一同 keyless-sign。实现门禁已经完成，但首次
+成功公开 candidate 及正式法律评审之前仍不得宣称存在稳定 source release。
 
 ## 13. 维护与演进规则
 

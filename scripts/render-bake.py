@@ -131,18 +131,43 @@ def main_docker_stage_contract(repository):
 
 def main_bake_target_stages(repository):
     hcl = (repository / "docker-bake.hcl").read_text(encoding="utf-8")
-    result = {}
-    for match in re.finditer(
-        r'^target\s+"([^"]+)"\s*\{\s*\n(.*?)^\}',
-        hcl,
-        re.MULTILINE | re.DOTALL,
-    ):
+    blocks = list(
+        re.finditer(
+            r'^target\s+"([^"]+)"\s*\{\s*\n(.*?)^\}',
+            hcl,
+            re.MULTILINE | re.DOTALL,
+        )
+    )
+    external = set()
+    inherited = {}
+    for match in blocks:
+        name = match.group(1)
+        body = match.group(2)
         dockerfile = re.search(
-            r'^\s*dockerfile\s*=\s*"([^"]+)"\s*$',
-            match.group(2),
-            re.MULTILINE,
+            r'^\s*dockerfile\s*=\s*"([^"]+)"\s*$', body, re.MULTILINE
         )
         if dockerfile is not None and dockerfile.group(1) != "docker/Dockerfile":
+            external.add(name)
+        inherits = re.search(
+            r'^\s*inherits\s*=\s*\[(.*?)\]\s*$',
+            body,
+            re.MULTILINE | re.DOTALL,
+        )
+        inherited[name] = (
+            set(re.findall(r'"([^"]+)"', inherits.group(1)))
+            if inherits is not None
+            else set()
+        )
+    changed = True
+    while changed:
+        changed = False
+        for name, parents in inherited.items():
+            if name not in external and parents & external:
+                external.add(name)
+                changed = True
+    result = {}
+    for match in blocks:
+        if match.group(1) in external:
             continue
         target = re.search(
             r'^\s*target\s*=\s*"([^"]+)"\s*$',

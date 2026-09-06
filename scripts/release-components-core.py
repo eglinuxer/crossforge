@@ -76,13 +76,19 @@ ZSTD_BUILD_POLICY = {
     "selected_license": "BSD-3-Clause",
 }
 CANDIDATE_MANIFEST_POLICY = {
-    "schema_version": 1,
+    "schema_version": 2,
     "schema": "https://crossforge.dev/schemas/candidate.schema.json",
     "kind": "crossforge-candidate",
     "identity": "canonical-json-sha256",
     "source_commit": "full-lowercase-git-sha1",
     "image_identity": "oci-index-and-platform-manifest-digests",
     "tag_trust": "none-digest-only",
+    "source_bundle": {
+        "identity": "candidate-manifest-oci-and-archive-digests",
+        "repository": "same-public-package",
+        "platform": "linux/amd64",
+        "contents": "product-and-qualification-sources-with-verification",
+    },
     "platform": "linux/amd64",
     "registry_resolution": "rehash-index-exact-one-linux-amd64-manifest",
     "runtime_user": "crossforge:1000:1000",

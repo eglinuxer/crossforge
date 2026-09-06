@@ -1119,8 +1119,42 @@
     "source_bundle": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["rpm"],
+      "required": ["archive", "rpm"],
       "properties": {
+        "archive": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "build_target",
+            "format",
+            "compression",
+            "manifest",
+            "entries",
+            "includes_qualification_sources",
+            "project_snapshot",
+            "publication"
+          ],
+          "properties": {
+            "status": {"const": "candidate-bound"},
+            "build_target": {"const": "source-bundle"},
+            "format": {"const": "tar.zst"},
+            "compression": {"const": "zstd-level-1"},
+            "manifest": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["file", "canonical_sha256"],
+              "properties": {
+                "file": {"const": "config/schemas/source-bundle-manifest.schema.json"},
+                "canonical_sha256": {"$ref": "#/$defs/sha256"}
+              }
+            },
+            "entries": {"const": 384},
+            "includes_qualification_sources": {"const": true},
+            "project_snapshot": {"const": "exact-clean-git-file-set"},
+            "publication": {"const": "same-public-oci-package"}
+          }
+        },
         "rpm": {
           "type": "object",
           "additionalProperties": false,

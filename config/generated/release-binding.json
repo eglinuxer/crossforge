@@ -44,7 +44,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "72a0bf10d25a62e639963650693951fb3d29276b87c64bf1cf97f3aeb0b873a1",
+      "canonical_sha256": "af119629684f68b5c0e73f14995de4543623368b946258e3531a822752866362",
       "component": "implementation/candidate-manifest",
       "path": "config/generated/components/implementation/candidate-manifest.json",
       "scope": "supply"
@@ -182,7 +182,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "0d11254de04013c4525ae5dbe2df60ce89dd11e4f0df4928b1ad31bcd8a2c786",
+      "canonical_sha256": "ea1159fb30e69296ae3384b87286998276808c5c92ed258f0789de4b245d222c",
       "component": "product/release",
       "path": "config/generated/components/product/release.json",
       "scope": "supply"
@@ -446,7 +446,7 @@
       "scope": "build"
     },
     {
-      "canonical_sha256": "87cdc203d816758eb63e7ac015c063fe7da408470986e041bd8a944e0f953dd9",
+      "canonical_sha256": "8838809e0059cd9d592677f22838476cd8ade4d4cd073c3fa736fb5535ba18a8",
       "component": "supply/evidence",
       "path": "config/generated/components/supply/evidence.json",
       "scope": "supply"
@@ -532,7 +532,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "61326e85eb5dfb075ca72228a248aed2f5e6663132dcf3279f5aa4caa84d66aa",
+    "canonical_sha256": "c81251302da45de8a73779098abb937d74cb6e8cf388435ab347364bd6d62c97",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

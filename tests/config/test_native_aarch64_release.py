@@ -21,6 +21,18 @@ NATIVE = runpy.run_path(str(SCRIPT))
 CANDIDATE = runpy.run_path(str(REPOSITORY / "scripts/candidate_manifest.py"))
 
 
+def source_bundle_identity(release, commit):
+    return {
+        "source_commit": commit,
+        "release_sha256": CANDIDATE["canonical_sha256"](release),
+        "archive": {
+            "file": "crossforge-source-%s.tar.zst" % commit,
+            "sha256": "6" * 64,
+            "size": 2866173957,
+        },
+    }
+
+
 class NativeAarch64ReleaseTests(unittest.TestCase):
     def write_json(self, path, document):
         path.write_text(
@@ -38,6 +50,9 @@ class NativeAarch64ReleaseTests(unittest.TestCase):
             "1" * 40,
             "sha256:" + "2" * 64,
             "sha256:" + "3" * 64,
+            "sha256:" + "4" * 64,
+            "sha256:" + "5" * 64,
+            source_bundle_identity(release, "1" * 40),
         )
         candidate_path = root / "candidate.json"
         self.write_json(candidate_path, candidate)
