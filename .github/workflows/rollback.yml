@@ -123,7 +123,7 @@ jobs:
       - name: Validate the protected release control plane
         uses: ./.github/actions/validate-release-control-plane
         with:
-          admin-token: ${{ secrets.RELEASE_ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
+          admin-token: ${{ secrets.RELEASE_ADMIN_TOKEN }}
           output: ${{ runner.temp }}/release-control-plane.json
       - name: Download and verify durable release assets
         id: identity

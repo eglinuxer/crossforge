@@ -102,6 +102,11 @@ jobs:
           ./scripts/render-release-components.py --check
           ./scripts/render-vcpkg-integration.py --check
           ./scripts/render-bake.py --check
+      - name: Validate the protected release control plane
+        uses: ./.github/actions/validate-release-control-plane
+        with:
+          admin-token: ${{ secrets.RELEASE_ADMIN_TOKEN }}
+          output: ${{ runner.temp }}/release-control-plane.json
       - name: Download immutable candidate identity
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -357,11 +362,6 @@ jobs:
           printf 'archive=%s\n' "$archive" >> "$GITHUB_OUTPUT"
           printf 'checksum=%s\n' "$checksum" >> "$GITHUB_OUTPUT"
           printf 'assets=%s\n' "$assets" >> "$GITHUB_OUTPUT"
-      - name: Validate the protected release control plane
-        uses: ./.github/actions/validate-release-control-plane
-        with:
-          admin-token: ${{ secrets.RELEASE_ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
-          output: ${{ runner.temp }}/release-control-plane.json
       - name: Preflight the immutable GitHub release
         id: github_release
         env:

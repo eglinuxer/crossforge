@@ -2,7 +2,7 @@ name: Validate release control plane
 description: Require immutable releases, private reporting, reviewed main-only deployments, and least privilege
 inputs:
   admin-token:
-    description: Fine-grained token with repository administration read access
+    description: RELEASE_ADMIN_TOKEN with repository Administration read access; GITHUB_TOKEN is insufficient
     required: true
   output:
     description: Destination for the strict control-plane report
@@ -16,7 +16,11 @@ runs:
         OUTPUT_PATH: ${{ inputs.output }}
       run: |
         set -Eeuo pipefail
-        test -n "$ADMIN_TOKEN"
+        if test -z "$ADMIN_TOKEN"; then
+          echo 'production environment secret RELEASE_ADMIN_TOKEN is required' >&2
+          echo 'Use a fine-grained token limited to this repository with Administration: read' >&2
+          exit 1
+        fi
         root=$(mktemp -d "$RUNNER_TEMP/release-control-plane.XXXXXXXX")
         cleanup_control_plane() {
           rm -rf "$root"

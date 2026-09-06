@@ -131,6 +131,8 @@ class ReleaseControlPlaneTests(unittest.TestCase):
         ):
             with self.subTest(endpoint=endpoint):
                 self.assertIn(endpoint, action)
+        self.assertIn("RELEASE_ADMIN_TOKEN is required", action)
+        self.assertIn("Administration: read", action)
         for workflow in ("promote.yml", "rollback.yml"):
             content = (REPOSITORY / ".github/workflows" / workflow).read_text(
                 encoding="utf-8"
@@ -141,6 +143,22 @@ class ReleaseControlPlaneTests(unittest.TestCase):
                 ),
                 1,
             )
+            self.assertIn(
+                "admin-token: ${{ secrets.RELEASE_ADMIN_TOKEN }}", content
+            )
+            self.assertNotIn(
+                "RELEASE_ADMIN_TOKEN || secrets.GITHUB_TOKEN", content
+            )
+
+    def test_promotion_checks_control_plane_before_candidate_downloads(self):
+        promotion = (
+            REPOSITORY / ".github/workflows/promote.yml"
+        ).read_text(encoding="utf-8")
+        control_plane = promotion.index(
+            "uses: ./.github/actions/validate-release-control-plane"
+        )
+        first_download = promotion.index("uses: actions/download-artifact@")
+        self.assertLess(control_plane, first_download)
 
     def test_validator_is_python36_compatible(self):
         ast.parse(

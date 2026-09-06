@@ -862,10 +862,12 @@ self-review, and allow deployments only from `main`. Repository Actions
 defaults must remain read-only and unable to approve pull requests. GitHub
 release immutability must also be enabled in repository settings; the workflow
 queries that setting and fails before creating tags or a release when it is
-disabled. If the automatic `GITHUB_TOKEN` cannot read the administration-level
-setting, add a fine-grained, administration-read-only token as the protected
-`production` environment secret `RELEASE_ADMIN_TOKEN`; it is used only for that
-read-only preflight. Private Vulnerability Reporting must also be enabled so
+disabled. The automatic `GITHUB_TOKEN` cannot request the required repository
+`Administration` permission. Add a fine-grained token scoped only to this
+repository, with `Administration: read`, as the protected `production`
+environment secret `RELEASE_ADMIN_TOKEN`; promotion and rollback fail early
+when it is absent, and use it only for the read-only control-plane preflight.
+Private Vulnerability Reporting must also be enabled so
 undisclosed security defects never need a public issue; the workflow verifies
 that setting in the same preflight. The
 workflow checks out the candidate run's exact `main` commit, downloads the four
