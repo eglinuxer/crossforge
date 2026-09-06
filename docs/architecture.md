@@ -384,6 +384,11 @@ source commit → build once → candidate digest → 原物验收 → registry-
 - nightly/full：双 target 的 `gcc/` 下 `check-gcc` 与 `check-g++`、针对最终 compiler/runtime 的 installed `runtest --tool libstdc++`、`check-target-libgomp`，完整 Python 矩阵，以及 Qt 6.8.4 双 target；语言测试必须直接从 `gcc/` 子目录启动，使 GNU Make 的 jobserver 分片真正分配给对应 DejaGNU worker，禁止从顶层 `check-gcc` 间接重跑全部语言；GCC 15 的顶层 `check-target-libgcc` 是无测试、无 summary 的空目标，不能作为资格化证据；libgcc 由 compiler testsuite 与最终 hybrid runtime 门禁覆盖；
 - release：同一 digest 的原生 aarch64 终检和资格化证明检查。
 
+CI 中可能持续数小时的 Python/vcpkg 与 GCC Bake solve 必须由
+`run-with-heartbeat.py` 直接启动：子进程继续原样继承 stdout/stderr，每 60 秒额外输出
+PID 与 elapsed liveness，退出码保持不变，并把 SIGINT/SIGTERM 转发给 Buildx。心跳只证明
+进程仍由 runner 管理，不替代各资格化脚本自己的超时、结果或证据门禁。
+
 原生 aarch64 release gate 分为两个互不混淆的执行域。`linux/amd64` publish job 先从匿名可拉取的完整 candidate digest 运行镜像内交叉工具链，重新生成 C、C++20、LTO、LTO archive、libgcc wide-division 和跨 DSO exception 探针；compile report、八个 artifact、candidate identity、AArch64 qualification component 与 candidate policy component 被封装为固定顺序、固定 owner/mode/mtime 的 USTAR，并对整包计算 SHA256。随后 `ubuntu-24.04-arm` runner 只下载这份不可变 bundle，在固定 Rocky Linux 8.10 arm64 child manifest 中以 `--platform linux/arm64 --network none --read-only` 原生执行，要求 `RUNNER_ARCH=ARM64`、host/container `uname -m=aarch64`，且不得携带 QEMU。最终 JSON 重新绑定 bundle、candidate OCI index/platform digest、release、runtime manifest、loader/DSO 解析和每个执行结果；任一身份不一致都使整个 public-candidate workflow 失败。Qt native gate 同时从实际执行的 rootfs 保存 target-build 和 runtime-overlay 原始证据；`validate-qt-native-release.py` 在上传前重新验证 schema、自摘要、qualification component、release/base image、candidate/source commit、rootfs 及最终报告对两份输入的 canonical digest，后续晋升不能只信任 GitHub job 的绿色状态。该工作流未实际产生首份公开候选证据前，状态仍是 implemented/unproven，不能宣称 release-qualified。
 
 GCC testsuite 必须指向镜像内最终安装的 compiler，并使用 EL8 shared runtime + Crossforge nonshared/libgcc 的最终 hybrid 组合。GTS 的 Graphite 补丁在运行时加载 `libisl.so.23`，因此工具链在 compiler-private 目录携带由同一锁定 SRPM 构建且校验 SONAME 的 ISL；hybrid `libgcc_s.so` 在 EL8 shared DSO 后以 `libgcc.a` 和 `libgcc_eh.a` 补充 GCC 15 新符号，并以 heap-trampoline 实际运行门禁验证。`libgomp` 只留在 build tree 中供测试。

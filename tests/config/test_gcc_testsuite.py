@@ -412,6 +412,11 @@ class GccTestsuiteContractTests(unittest.TestCase):
         )
         self.assertLess(complete, smoke)
         self.assertLess(smoke, full)
+        self.assertIn("--label python-vcpkg-sdk --interval 60", workflow)
+        self.assertIn("--label gcc-testsuite-smoke --interval 60", workflow)
+        self.assertIn(
+            "--label gcc-testsuite-full-qualified --interval 60", workflow
+        )
 
     def test_progress_watchdog_stops_idle_workers_without_masking_the_error(self):
         class IdleProcess:

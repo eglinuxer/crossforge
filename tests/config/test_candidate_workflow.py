@@ -95,6 +95,20 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("if-no-files-found: error", self.workflow)
         self.assertIn("retention-days: 90", self.workflow)
 
+    def test_long_candidate_builds_emit_process_heartbeats(self):
+        for label in (
+            "source-bundle-publish",
+            "sdk-candidate-publish",
+            "qt-aarch64-native-runtime-root",
+        ):
+            with self.subTest(label=label):
+                self.assertIn(
+                    "--label %s --interval 60" % label, self.workflow
+                )
+        self.assertEqual(
+            self.workflow.count("scripts/run-with-heartbeat.py"), 3
+        )
+
     def test_public_candidate_runs_non_root_with_a_read_only_sdk(self):
         self.assertIn('docker run --rm --pull=always "$image" id -u', self.workflow)
         self.assertIn(')" = 1000', self.workflow)

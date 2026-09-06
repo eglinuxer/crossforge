@@ -15,6 +15,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
@@ -98,17 +99,21 @@ jobs:
       - name: Run the full Python and vcpkg SDK qualification gates
         if: github.event_name != 'pull_request'
         run: |
-          docker buildx bake python-matrix vcpkg-upstream-tier3-qualified \
-            sdk-complete-dev \
-            --progress=plain
+          python3 ./scripts/run-with-heartbeat.py \
+            --label python-vcpkg-sdk --interval 60 -- \
+            docker buildx bake python-matrix vcpkg-upstream-tier3-qualified \
+              sdk-complete-dev \
+              --progress=plain
           # QEMU execution is deliberately isolated from the peak Python/vcpkg
           # build fan-out. Running it in the same Bake solve can exhaust the
           # hosted runner and turn every optimization of a trivial target
           # program into an infrastructure-shaped DejaGNU FAIL.
-          docker buildx bake gcc-testsuite-smoke \
-            --progress=plain
-          docker buildx bake gcc-testsuite-full-qualified \
-            --progress=plain
+          python3 ./scripts/run-with-heartbeat.py \
+            --label gcc-testsuite-smoke --interval 60 -- \
+            docker buildx bake gcc-testsuite-smoke --progress=plain
+          python3 ./scripts/run-with-heartbeat.py \
+            --label gcc-testsuite-full-qualified --interval 60 -- \
+            docker buildx bake gcc-testsuite-full-qualified --progress=plain
 
   qt:
     if: github.event_name != 'pull_request'

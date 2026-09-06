@@ -85,7 +85,9 @@ jobs:
         run: |
           set -Eeuo pipefail
           identity_root="$RUNNER_TEMP/source-bundle-identity"
-          docker buildx bake source-bundle \
+          python3 ./scripts/run-with-heartbeat.py \
+            --label source-bundle-publish --interval 60 -- \
+            docker buildx bake source-bundle \
             --set "source-bundle.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
             --set "source-bundle.tags=$SOURCE_REFERENCE" \
             --set "source-bundle.output=type=image,push=true" \
@@ -170,7 +172,9 @@ jobs:
           CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
         run: |
           set -Eeuo pipefail
-          docker buildx bake sdk-candidate \
+          python3 ./scripts/run-with-heartbeat.py \
+            --label sdk-candidate-publish --interval 60 -- \
+            docker buildx bake sdk-candidate \
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_BUNDLE_DIGEST=${{ steps.source.outputs.digest }}" \
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_BUNDLE_PLATFORM_MANIFEST_DIGEST=${{ steps.source.outputs.platform_digest }}" \
@@ -383,7 +387,9 @@ jobs:
         run: |
           set -Eeuo pipefail
           archive="$RUNNER_TEMP/qt-aarch64-native-runtime.tar"
-          docker buildx bake qt-aarch64-native-runtime-root \
+          python3 ./scripts/run-with-heartbeat.py \
+            --label qt-aarch64-native-runtime-root --interval 60 -- \
+            docker buildx bake qt-aarch64-native-runtime-root \
             --set "qt-aarch64-native-runtime-root.output=type=tar,dest=$archive" \
             --progress=plain
           tar -tf "$archive" > "$RUNNER_TEMP/qt-native-runtime-files.txt"
