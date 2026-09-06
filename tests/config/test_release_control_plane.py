@@ -182,6 +182,12 @@ class ReleaseControlPlaneTests(unittest.TestCase):
         ):
             with self.subTest(permission=permission):
                 self.assertNotIn(permission, audit)
+        readme = (REPOSITORY / "README.md").read_text(encoding="utf-8")
+        self.assertIn(
+            "gh secret set RELEASE_ADMIN_TOKEN --env production", readme
+        )
+        self.assertIn("gh workflow run release-control-plane.yml", readme)
+        self.assertIn("does not enter shell history", readme)
 
     def test_validator_is_python36_compatible(self):
         ast.parse(

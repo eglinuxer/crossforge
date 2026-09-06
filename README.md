@@ -872,7 +872,16 @@ undisclosed security defects never need a public issue; the workflow verifies
 that setting in the same preflight. Before the first promotion, dispatch
 `release-control-plane.yml` and approve its `production` deployment to verify
 the environment, reviewer gate, Secret permissions, branch policy, and
-repository settings without creating a tag, release, or package. The
+repository settings without creating a tag, release, or package. Configure the
+Secret through stdin so the token does not enter shell history, then run the
+audit:
+
+```console
+$ gh secret set RELEASE_ADMIN_TOKEN --env production --repo eglinuxer/crossforge
+$ gh workflow run release-control-plane.yml
+```
+
+The
 workflow checks out the candidate run's exact `main` commit, downloads the four
 exact run/attempt artifacts, byte-compares every copy of `candidate.json`, and
 revalidates the source binding, native AArch64 compiler report, native Qt
