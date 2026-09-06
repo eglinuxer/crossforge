@@ -386,6 +386,10 @@ source commit → build once → candidate digest → 原物验收 → registry-
 
 GitHub repository 必须在首次发布前启用 immutable releases 和 Private Vulnerability Reporting。`production` environment 必须只允许 `main` deployment、要求唯一的 repository-owner reviewer，并在单维护者模型下允许 self-review；仓库默认 `GITHUB_TOKEN` 必须保持 read-only 且不能批准 PR。promotion/rollback 共用的 control-plane action 从只读管理 API 取得上述五份状态并通过严格 schema 验证，缺失 environment 或任一弱化都会在任何 Release/OCI 写入前失败。晋升随后创建或幂等恢复 draft，上传 evidence tar、sidecar、`candidate.json` 与 `release-promotion.json`；只有 OCI 版本/通道 tag 全部精确解析后才发布 draft，并要求 Release API 返回 `immutable:true` 和四份带 SHA256 digest 的完整资产。由此 Git tag 和 release assets 在 Actions 90 天工件过期后仍受 GitHub 不可变发布与 release attestation 保护，未公开的安全报告也有私密入口。该工作流不得构建 SDK/source、不得重新签名，也不能把成功 job status 当作资格证据。首次 public candidate 和首次 stable promotion 尚未实际运行，因此当前仍是 implemented/unproven。
 
+每个 GitHub Actions workflow 必须显式声明顶层最小权限，不能依赖可被管理员修改的
+仓库默认值；普通 CI 固定为 `contents: read`。所有非本地 Action 必须引用完整 40 位
+commit SHA，版本号只能作为便于审计的注释，禁止执行可移动 tag。
+
 长期 rollback 不依赖已经过期的 candidate workflow artifacts。手动 `stable rollback`
 只接受三段稳定 SemVer 和 `ROLLBACK-v<version>`，与 promotion 共用不可取消的
 `stable-promotion` concurrency group。它要求目标 GitHub Release 已 immutable，Git tag
