@@ -117,6 +117,12 @@ class AssembleSourceBundleTests(unittest.TestCase):
         self.assertIn(".git/", dockerignore)
         self.assertIn(".agents/", dockerignore)
         self.assertIn(".codex/", dockerignore)
+        self.assertIn("**/__pycache__/", dockerignore)
+        self.assertIn("**/*.py[cod]", dockerignore)
+        self.assertIn(
+            'sha256sum "crossforge-source-${CROSSFORGE_SOURCE_COMMIT}.tar.zst"',
+            dockerfile,
+        )
 
     def test_manifest_schema_and_assembler_are_python36_compatible(self):
         schema = ASSEMBLER["STRICT"]["load_json"](

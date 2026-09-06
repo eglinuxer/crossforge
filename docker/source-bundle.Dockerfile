@@ -153,8 +153,9 @@ RUN --network=none \
       "crossforge-source-${CROSSFORGE_SOURCE_COMMIT}" \
       | zstd -q -T0 -1 -o \
         "/out/crossforge-source-${CROSSFORGE_SOURCE_COMMIT}.tar.zst" \
-    && sha256sum "/out/crossforge-source-${CROSSFORGE_SOURCE_COMMIT}.tar.zst" \
-      > "/out/crossforge-source-${CROSSFORGE_SOURCE_COMMIT}.tar.zst.sha256"
+    && cd /out \
+    && sha256sum "crossforge-source-${CROSSFORGE_SOURCE_COMMIT}.tar.zst" \
+      > "crossforge-source-${CROSSFORGE_SOURCE_COMMIT}.tar.zst.sha256"
 
 FROM scratch AS source-bundle-output
 COPY --from=source-bundle-assemble /out/ /
