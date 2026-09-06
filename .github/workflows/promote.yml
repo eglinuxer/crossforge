@@ -20,6 +20,11 @@ on:
         required: true
         type: boolean
         default: false
+      private_vulnerability_reporting_enabled:
+        description: Confirm private vulnerability reporting is enabled
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   actions: read
@@ -78,6 +83,7 @@ jobs:
           CANDIDATE_HEAD_SHA: ${{ steps.candidate_run.outputs.head_sha }}
           CONFIRMATION: ${{ inputs.confirmation }}
           IMMUTABLE_RELEASES_ENABLED: ${{ inputs.immutable_releases_enabled }}
+          PRIVATE_REPORTING_ENABLED: ${{ inputs.private_vulnerability_reporting_enabled }}
         run: |
           set -Eeuo pipefail
           test "$(git rev-parse HEAD)" = "$CANDIDATE_HEAD_SHA"
@@ -85,6 +91,7 @@ jobs:
           expected_confirmation="PROMOTE-v$(jq -r .product.version config/release.json)"
           test "$CONFIRMATION" = "$expected_confirmation"
           test "$IMMUTABLE_RELEASES_ENABLED" = true
+          test "$PRIVATE_REPORTING_ENABLED" = true
           test "$(jq -r .product.image_repository config/release.json)" = \
             "$CANDIDATE_REPOSITORY"
           ./scripts/validate-release.py --require-locked
@@ -378,6 +385,11 @@ jobs:
           immutable_status=$(api_status immutable-releases "$immutable")
           test "$immutable_status" = 200
           jq -e '.enabled == true' "$immutable" >/dev/null
+          private_reporting="$RUNNER_TEMP/private-vulnerability-reporting.json"
+          private_reporting_status=$(api_status \
+            private-vulnerability-reporting "$private_reporting")
+          test "$private_reporting_status" = 200
+          jq -e '.enabled == true' "$private_reporting" >/dev/null
           version=$(jq -r .product.version config/release.json)
           tag="v$version"
           ref="$RUNNER_TEMP/release-tag.json"

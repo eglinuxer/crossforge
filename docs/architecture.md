@@ -384,7 +384,7 @@ source commit → build once → candidate digest → 原物验收 → registry-
 
 晋升仅通过 registry-side manifest copy 给 candidate digest 增加 `v<version>` 和 `gts15-el8`，并给其绑定的 source digest 增加 `source-v<version>` 和 `source-gts15-el8`。stable promotion 只接受不含 prerelease/build metadata 的三段 SemVer。版本 tag 不存在时才可创建；已存在时必须已指向完全相同 digest，否则失败，稳定通道在两份版本 tag 就绪后才移动。注销 registry 后必须匿名重新解析四个 tag 的原始 manifest 字节并得到预期 digest，随后生成符合严格 schema、跨重试字节稳定的 `release-promotion.json`。十七份 candidate/source/native ARM/Qt/Sigstore/OCI-attestation/SBOM-generator/promotion 原始证据同时进入固定名称、顺序、owner、mode 和零时间戳的 USTAR，内层严格 manifest 逐文件绑定 SHA256/大小，外层另有 SHA256 sidecar；验证器从归档安全流式解出临时文件并重新运行原始语义门禁，不能只信任内层 manifest。
 
-GitHub repository 必须在首次发布前启用 immutable releases。晋升工作流先通过管理 API 证明设置已启用，再创建或幂等恢复 draft，上传 evidence tar、sidecar、`candidate.json` 与 `release-promotion.json`；只有 OCI 版本/通道 tag 全部精确解析后才发布 draft，并要求 Release API 返回 `immutable:true` 和四份带 SHA256 digest 的完整资产。由此 Git tag 和 release assets 在 Actions 90 天工件过期后仍受 GitHub 不可变发布与 release attestation 保护。该工作流不得构建 SDK/source、不得重新签名，也不能把成功 job status 当作资格证据。首次 public candidate 和首次 stable promotion 尚未实际运行，因此当前仍是 implemented/unproven。
+GitHub repository 必须在首次发布前启用 immutable releases 和 Private Vulnerability Reporting。晋升工作流先通过只读管理 API 证明两个设置均已启用，再创建或幂等恢复 draft，上传 evidence tar、sidecar、`candidate.json` 与 `release-promotion.json`；只有 OCI 版本/通道 tag 全部精确解析后才发布 draft，并要求 Release API 返回 `immutable:true` 和四份带 SHA256 digest 的完整资产。由此 Git tag 和 release assets 在 Actions 90 天工件过期后仍受 GitHub 不可变发布与 release attestation 保护，未公开的安全报告也有私密入口。该工作流不得构建 SDK/source、不得重新签名，也不能把成功 job status 当作资格证据。首次 public candidate 和首次 stable promotion 尚未实际运行，因此当前仍是 implemented/unproven。
 
 测试分层如下：
 

@@ -1,0 +1,77 @@
+name: Reproducible defect
+description: Report a non-sensitive defect against an immutable Crossforge image
+title: "[bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not disclose vulnerabilities or secrets here. Use the private security advisory link in SECURITY.md.
+  - type: input
+    id: digest
+    attributes:
+      label: Crossforge OCI digest
+      description: Provide the complete sha256 digest, not only a mutable channel tag.
+      placeholder: sha256:...
+    validations:
+      required: true
+  - type: textarea
+    id: info
+    attributes:
+      label: crossforge info --json
+      description: Paste the output after removing unrelated sensitive paths.
+      render: json
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target
+      options:
+        - x86_64
+        - aarch64
+        - native host
+        - packaging or release tooling
+    validations:
+      required: true
+  - type: input
+    id: selection
+    attributes:
+      label: Optional Python, vcpkg and package selection
+      description: For example Python 3.14, dynamic vcpkg, RPM.
+  - type: input
+    id: engine
+    attributes:
+      label: Container engine and host
+      description: Include engine version, host OS and host architecture.
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal reproducer
+      description: Provide exact commands or a minimal public repository.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and logs
+      description: Include complete errors and remove credentials, tokens and private source.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I reproduced this against the immutable digest above.
+          required: true
+        - label: This report contains no undisclosed vulnerability or sensitive material.
+          required: true

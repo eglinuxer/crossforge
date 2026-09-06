@@ -46,6 +46,9 @@ Downstream users should start with
 [`docs/getting-started.md`](docs/getting-started.md). It covers image identity,
 UID-safe mounts, real CMake/Ninja builds, Python and vcpkg selection, source
 retrieval, release-evidence verification and common failure modes.
+Operational scope and update guarantees are in [`SUPPORT.md`](SUPPORT.md);
+undisclosed findings must follow [`SECURITY.md`](SECURITY.md), never a public
+issue.
 
 ## Phase 1
 
@@ -849,7 +852,8 @@ promotion workflow with that run ID and the release-specific confirmation:
 $ gh workflow run promote.yml \
     -f candidate_run_id="$CANDIDATE_RUN_ID" \
     -f confirmation="PROMOTE-v0.1.0" \
-    -f immutable_releases_enabled=true
+    -f immutable_releases_enabled=true \
+    -f private_vulnerability_reporting_enabled=true
 ```
 
 The `production` GitHub environment is the operator-approval boundary and
@@ -859,7 +863,9 @@ queries that setting and fails before creating tags or a release when it is
 disabled. If the automatic `GITHUB_TOKEN` cannot read the administration-level
 setting, add a fine-grained, administration-read-only token as the protected
 `production` environment secret `RELEASE_ADMIN_TOKEN`; it is used only for that
-read-only preflight. The
+read-only preflight. Private Vulnerability Reporting must also be enabled so
+undisclosed security defects never need a public issue; the workflow verifies
+that setting in the same preflight. The
 workflow checks out the candidate run's exact `main` commit, downloads the four
 exact run/attempt artifacts, byte-compares every copy of `candidate.json`, and
 revalidates the source binding, native AArch64 compiler report, native Qt

@@ -261,6 +261,7 @@ class PromotionWorkflowTests(unittest.TestCase):
         self.assertIn("cancel-in-progress: false", self.workflow)
         self.assertIn("environment: production", self.workflow)
         self.assertIn("immutable_releases_enabled:", self.workflow)
+        self.assertIn("private_vulnerability_reporting_enabled:", self.workflow)
         self.assertIn("contents: write", self.workflow)
         self.assertNotIn("docker buildx bake sdk-candidate", self.workflow)
         self.assertNotIn("docker buildx bake source-bundle", self.workflow)
@@ -275,6 +276,7 @@ class PromotionWorkflowTests(unittest.TestCase):
             "crossforge-v$version-release-evidence.tar",
             "immutable_status=$(api_status immutable-releases",
             "jq -e '.enabled == true'",
+            "private-vulnerability-reporting",
             'gh release create "${create_arguments[@]}"',
             "gh release upload",
             'gh release edit "$RELEASE_TAG" --draft=false --latest',
