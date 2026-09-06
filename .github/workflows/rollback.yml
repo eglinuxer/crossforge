@@ -101,7 +101,6 @@ jobs:
           PRIVATE_REPORTING_ENABLED: ${{ inputs.private_vulnerability_reporting_enabled }}
           RELEASE_HEAD_SHA: ${{ steps.release.outputs.head_sha }}
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
-          RELEASE_ADMIN_TOKEN: ${{ secrets.RELEASE_ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
           VERSION: ${{ inputs.version }}
         run: |
           set -Eeuo pipefail
@@ -121,26 +120,11 @@ jobs:
           ./scripts/render-release-components.py --check
           ./scripts/render-vcpkg-integration.py --check
           ./scripts/render-bake.py --check
-          check_setting() {
-            local endpoint=$1
-            local output="$RUNNER_TEMP/${endpoint//\//-}.json"
-            local status
-            if ! status=$(curl --silent --show-error --location \
-              --retry 5 --retry-all-errors --retry-delay 2 \
-              --connect-timeout 30 \
-              -H 'Accept: application/vnd.github+json' \
-              -H "Authorization: Bearer $RELEASE_ADMIN_TOKEN" \
-              -H 'X-GitHub-Api-Version: 2026-03-10' \
-              -o "$output" -w '%{http_code}' \
-              "https://api.github.com/repos/$GITHUB_REPOSITORY/$endpoint"); then
-              echo "GitHub setting request failed: $endpoint" >&2
-              return 1
-            fi
-            test "$status" = 200
-            jq -e '.enabled == true' "$output" >/dev/null
-          }
-          check_setting immutable-releases
-          check_setting private-vulnerability-reporting
+      - name: Validate the protected release control plane
+        uses: ./.github/actions/validate-release-control-plane
+        with:
+          admin-token: ${{ secrets.RELEASE_ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
+          output: ${{ runner.temp }}/release-control-plane.json
       - name: Download and verify durable release assets
         id: identity
         env:

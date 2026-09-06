@@ -357,11 +357,16 @@ jobs:
           printf 'archive=%s\n' "$archive" >> "$GITHUB_OUTPUT"
           printf 'checksum=%s\n' "$checksum" >> "$GITHUB_OUTPUT"
           printf 'assets=%s\n' "$assets" >> "$GITHUB_OUTPUT"
+      - name: Validate the protected release control plane
+        uses: ./.github/actions/validate-release-control-plane
+        with:
+          admin-token: ${{ secrets.RELEASE_ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
+          output: ${{ runner.temp }}/release-control-plane.json
       - name: Preflight the immutable GitHub release
         id: github_release
         env:
           CANDIDATE_HEAD_SHA: ${{ steps.candidate_run.outputs.head_sha }}
-          GH_TOKEN: ${{ secrets.RELEASE_ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -Eeuo pipefail
           api_status() {
@@ -381,15 +386,6 @@ jobs:
             fi
             printf '%s\n' "$status"
           }
-          immutable="$RUNNER_TEMP/immutable-releases.json"
-          immutable_status=$(api_status immutable-releases "$immutable")
-          test "$immutable_status" = 200
-          jq -e '.enabled == true' "$immutable" >/dev/null
-          private_reporting="$RUNNER_TEMP/private-vulnerability-reporting.json"
-          private_reporting_status=$(api_status \
-            private-vulnerability-reporting "$private_reporting")
-          test "$private_reporting_status" = 200
-          jq -e '.enabled == true' "$private_reporting" >/dev/null
           version=$(jq -r .product.version config/release.json)
           tag="v$version"
           ref="$RUNNER_TEMP/release-tag.json"

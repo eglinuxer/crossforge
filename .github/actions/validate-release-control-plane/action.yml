@@ -1,0 +1,60 @@
+name: Validate release control plane
+description: Require immutable releases, private reporting, reviewed main-only deployments, and least privilege
+inputs:
+  admin-token:
+    description: Fine-grained token with repository administration read access
+    required: true
+  output:
+    description: Destination for the strict control-plane report
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        ADMIN_TOKEN: ${{ inputs.admin-token }}
+        OUTPUT_PATH: ${{ inputs.output }}
+      run: |
+        set -Eeuo pipefail
+        test -n "$ADMIN_TOKEN"
+        root=$(mktemp -d "$RUNNER_TEMP/release-control-plane.XXXXXXXX")
+        cleanup_control_plane() {
+          rm -rf "$root"
+        }
+        trap cleanup_control_plane EXIT
+        api_get() {
+          local endpoint=$1
+          local output=$2
+          local status
+          if ! status=$(curl --silent --show-error --location \
+            --retry 5 --retry-all-errors --retry-delay 2 \
+            --connect-timeout 30 \
+            -H 'Accept: application/vnd.github+json' \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            -o "$output" -w '%{http_code}' \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/$endpoint"); then
+            echo "GitHub control-plane request failed: $endpoint" >&2
+            return 1
+          fi
+          test "$status" = 200
+        }
+        api_get immutable-releases "$root/immutable-releases.json"
+        api_get private-vulnerability-reporting \
+          "$root/private-vulnerability-reporting.json"
+        api_get environments/production "$root/environment.json"
+        api_get environments/production/deployment-branch-policies \
+          "$root/deployment-branch-policies.json"
+        api_get actions/permissions/workflow "$root/actions-permissions.json"
+        "$GITHUB_WORKSPACE/scripts/validate-release-control-plane.py" \
+          --immutable-releases "$root/immutable-releases.json" \
+          --private-vulnerability-reporting \
+            "$root/private-vulnerability-reporting.json" \
+          --environment "$root/environment.json" \
+          --deployment-branch-policies "$root/deployment-branch-policies.json" \
+          --actions-permissions "$root/actions-permissions.json" \
+          --repository "$GITHUB_REPOSITORY" \
+          --required-reviewer "$GITHUB_REPOSITORY_OWNER" \
+          --output "$OUTPUT_PATH"
+        trap - EXIT
+        cleanup_control_plane

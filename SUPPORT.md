@@ -60,6 +60,12 @@ Rollback consumes the durable Release assets, so it remains available after
 the originating Actions artifacts expire. A release never rebuilds an existing
 version or overwrites its bytes.
 
+Promotion and rollback additionally require the protected `production`
+environment: exactly one repository-owner review, deployments restricted to
+`main`, immutable releases, private vulnerability reporting, and read-only
+default Actions token permissions. The workflows re-read and validate those
+controls before any GitHub Release or OCI channel mutation.
+
 Security fixes, CPython patch releases, GTS patches, vcpkg revisions and Rocky
 errata require explicit lock/evidence changes and requalification. ABI,
 package, source, license, SBOM/provenance and known-failure differences remain

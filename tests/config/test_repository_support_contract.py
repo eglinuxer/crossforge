@@ -63,7 +63,9 @@ class RepositorySupportContractTests(unittest.TestCase):
         self.assertIn(
             "private_vulnerability_reporting_enabled:", self.promotion
         )
-        check = self.promotion.index("private-vulnerability-reporting")
+        check = self.promotion.index(
+            "uses: ./.github/actions/validate-release-control-plane"
+        )
         draft = self.promotion.index("gh release create")
         registry = self.promotion.index("docker buildx imagetools create")
         self.assertLess(check, draft)

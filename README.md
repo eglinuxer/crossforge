@@ -857,7 +857,9 @@ $ gh workflow run promote.yml \
 ```
 
 The `production` GitHub environment is the operator-approval boundary and
-should have required reviewers configured before the first promotion. GitHub
+must require the repository owner as reviewer, permit single-maintainer
+self-review, and allow deployments only from `main`. Repository Actions
+defaults must remain read-only and unable to approve pull requests. GitHub
 release immutability must also be enabled in repository settings; the workflow
 queries that setting and fails before creating tags or a release when it is
 disabled. If the automatic `GITHUB_TOKEN` cannot read the administration-level

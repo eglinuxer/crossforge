@@ -274,9 +274,7 @@ class PromotionWorkflowTests(unittest.TestCase):
             "release_evidence.py create",
             "release_evidence.py validate",
             "crossforge-v$version-release-evidence.tar",
-            "immutable_status=$(api_status immutable-releases",
-            "jq -e '.enabled == true'",
-            "private-vulnerability-reporting",
+            "uses: ./.github/actions/validate-release-control-plane",
             'gh release create "${create_arguments[@]}"',
             "gh release upload",
             'gh release edit "$RELEASE_TAG" --draft=false --latest',
@@ -286,8 +284,12 @@ class PromotionWorkflowTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertIn(value, self.workflow)
         draft = self.workflow.index("gh release create")
+        controls = self.workflow.index(
+            "uses: ./.github/actions/validate-release-control-plane"
+        )
         promotion = self.workflow.index("docker buildx imagetools create")
         publish = self.workflow.index("gh release edit")
+        self.assertLess(controls, draft)
         self.assertLess(draft, promotion)
         self.assertLess(promotion, publish)
 

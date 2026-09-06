@@ -61,15 +61,12 @@ class RollbackWorkflowTests(unittest.TestCase):
                 self.assertIn(value, self.workflow)
 
     def test_protections_precede_and_only_channels_are_moved(self):
-        for setting in (
-            "immutable-releases",
-            "private-vulnerability-reporting",
-        ):
-            with self.subTest(setting=setting):
-                self.assertLess(
-                    self.workflow.index("check_setting " + setting),
-                    self.workflow.index("docker buildx imagetools create"),
-                )
+        controls = self.workflow.index(
+            "uses: ./.github/actions/validate-release-control-plane"
+        )
+        self.assertLess(
+            controls, self.workflow.index("docker buildx imagetools create")
+        )
         self.assertNotIn('--tag "$candidate_version"', self.workflow)
         self.assertNotIn('--tag "$source_version"', self.workflow)
         source = self.workflow.index('--tag "$source_channel"')
