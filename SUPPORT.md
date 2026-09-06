@@ -54,9 +54,11 @@ source or undisclosed security impact must not be posted publicly; follow
 ## Compatibility and updates
 
 Version tags are immutable. The stable channel may advance to a newly
-qualified version or be moved back to a previously published immutable version
-through the same evidence-verifying promotion path. A release never rebuilds
-an existing version or overwrites its bytes.
+qualified version through promotion or be moved back to a previously published
+immutable version through the dedicated evidence-verifying rollback workflow.
+Rollback consumes the durable Release assets, so it remains available after
+the originating Actions artifacts expire. A release never rebuilds an existing
+version or overwrites its bytes.
 
 Security fixes, CPython patch releases, GTS patches, vcpkg revisions and Rocky
 errata require explicit lock/evidence changes and requalification. ABI,

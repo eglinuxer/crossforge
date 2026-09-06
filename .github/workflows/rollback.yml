@@ -1,0 +1,362 @@
+name: stable rollback
+
+concurrency:
+  group: stable-promotion
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Published stable version without the v prefix
+        required: true
+        type: string
+      confirmation:
+        description: Enter ROLLBACK-v<version>
+        required: true
+        type: string
+      immutable_releases_enabled:
+        description: Confirm repository release immutability is enabled
+        required: true
+        type: boolean
+        default: false
+      private_vulnerability_reporting_enabled:
+        description: Confirm private vulnerability reporting is enabled
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  CANDIDATE_REPOSITORY: ghcr.io/eglinuxer/crossforge
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    steps:
+      - name: Resolve the immutable release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          tag="v$VERSION"
+          release="$RUNNER_TEMP/github-release.json"
+          gh api -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "/repos/$GITHUB_REPOSITORY/releases/tags/$tag" > "$release"
+          archive="crossforge-$tag-release-evidence.tar"
+          allowed=$(jq -cn --args '$ARGS.positional | sort' \
+            candidate.json release-promotion.json "$archive" "$archive.sha256")
+          jq -e --arg tag "$tag" --argjson allowed "$allowed" '
+            .tag_name == $tag and
+            (.target_commitish | test("^[0-9a-f]{40}$")) and
+            .draft == false and
+            .prerelease == false and
+            .immutable == true and
+            ([.assets[].name] | sort) == $allowed and
+            all(.assets[];
+              .state == "uploaded" and
+              (.digest | test("^sha256:[0-9a-f]{64}$")) and
+              .size > 0)
+          ' "$release" >/dev/null
+          head_sha=$(jq -r .target_commitish "$release")
+          ref="$RUNNER_TEMP/github-release-tag.json"
+          gh api -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "/repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" > "$ref"
+          object_type=$(jq -r .object.type "$ref")
+          object_sha=$(jq -r .object.sha "$ref")
+          if test "$object_type" = tag; then
+            annotated="$RUNNER_TEMP/github-release-annotated-tag.json"
+            gh api -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2026-03-10' \
+              "/repos/$GITHUB_REPOSITORY/git/tags/$object_sha" > "$annotated"
+            test "$(jq -r .object.type "$annotated")" = commit
+            object_sha=$(jq -r .object.sha "$annotated")
+          else
+            test "$object_type" = commit
+          fi
+          test "$object_sha" = "$head_sha"
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          printf 'head_sha=%s\n' "$head_sha" >> "$GITHUB_OUTPUT"
+          printf 'url=%s\n' "$(jq -r .html_url "$release")" \
+            >> "$GITHUB_OUTPUT"
+      - name: Check out the exact immutable release source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ steps.release.outputs.head_sha }}
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Validate rollback policy and repository protections
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          IMMUTABLE_RELEASES_ENABLED: ${{ inputs.immutable_releases_enabled }}
+          PRIVATE_REPORTING_ENABLED: ${{ inputs.private_vulnerability_reporting_enabled }}
+          RELEASE_HEAD_SHA: ${{ steps.release.outputs.head_sha }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_ADMIN_TOKEN: ${{ secrets.RELEASE_ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -Eeuo pipefail
+          test "$(git rev-parse HEAD)" = "$RELEASE_HEAD_SHA"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          test "$CONFIRMATION" = "ROLLBACK-$RELEASE_TAG"
+          test "$IMMUTABLE_RELEASES_ENABLED" = true
+          test "$PRIVATE_REPORTING_ENABLED" = true
+          test "$(jq -r .product.version config/release.json)" = "$VERSION"
+          test "$(jq -r .product.image_repository config/release.json)" = \
+            "$CANDIDATE_REPOSITORY"
+          ./scripts/validate-release.py --require-locked
+          ./scripts/validate-supply-chain-evidence.py
+          ./scripts/validate-frozen-abi.py
+          ./scripts/validate-python-runtime-providers.py
+          ./scripts/validate-qt-runtime-qualification.py
+          ./scripts/render-release-components.py --check
+          ./scripts/render-vcpkg-integration.py --check
+          ./scripts/render-bake.py --check
+          check_setting() {
+            local endpoint=$1
+            local output="$RUNNER_TEMP/${endpoint//\//-}.json"
+            local status
+            if ! status=$(curl --silent --show-error --location \
+              --retry 5 --retry-all-errors --retry-delay 2 \
+              --connect-timeout 30 \
+              -H 'Accept: application/vnd.github+json' \
+              -H "Authorization: Bearer $RELEASE_ADMIN_TOKEN" \
+              -H 'X-GitHub-Api-Version: 2026-03-10' \
+              -o "$output" -w '%{http_code}' \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/$endpoint"); then
+              echo "GitHub setting request failed: $endpoint" >&2
+              return 1
+            fi
+            test "$status" = 200
+            jq -e '.enabled == true' "$output" >/dev/null
+          }
+          check_setting immutable-releases
+          check_setting private-vulnerability-reporting
+      - name: Download and verify durable release assets
+        id: identity
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_HEAD_SHA: ${{ steps.release.outputs.head_sha }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -Eeuo pipefail
+          root="$RUNNER_TEMP/release-assets"
+          install -d -m 0755 "$root"
+          gh release download "$RELEASE_TAG" --dir "$root"
+          test "$(find "$root" -mindepth 1 -maxdepth 1 -type f | wc -l)" -eq 4
+          archive="$root/crossforge-$RELEASE_TAG-release-evidence.tar"
+          checksum="$archive.sha256"
+          candidate="$root/candidate.json"
+          promotion="$root/release-promotion.json"
+          release="$RUNNER_TEMP/github-release-assets.json"
+          gh api -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "/repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > "$release"
+          for path in "$archive" "$checksum" "$candidate" "$promotion"; do
+            name=$(basename "$path")
+            digest="sha256:$(sha256sum "$path" | awk '{print $1}')"
+            size=$(stat -c '%s' "$path")
+            jq -e --arg name "$name" --arg digest "$digest" \
+              --argjson size "$size" '
+                [.assets[] | select(
+                  .name == $name and .digest == $digest and
+                  .size == $size and .state == "uploaded")]
+                | length == 1
+              ' "$release" >/dev/null
+          done
+          (cd "$root" && sha256sum -c "$(basename "$checksum")")
+          ./scripts/release_evidence.py validate "$archive" --sha256 "$checksum"
+          tar -xOf "$archive" candidate.json \
+            > "$RUNNER_TEMP/archive-candidate.json"
+          tar -xOf "$archive" release-promotion.json \
+            > "$RUNNER_TEMP/archive-promotion.json"
+          cmp "$candidate" "$RUNNER_TEMP/archive-candidate.json"
+          cmp "$promotion" "$RUNNER_TEMP/archive-promotion.json"
+          ./scripts/candidate_manifest.py validate "$candidate" \
+            --expected-source-commit "$RELEASE_HEAD_SHA"
+          ./scripts/release_promotion.py validate "$promotion"
+          test "$(jq -r .candidate.version_reference "$promotion")" = \
+            "$CANDIDATE_REPOSITORY:$RELEASE_TAG"
+          candidate_digest=$(jq -r .digest "$candidate")
+          candidate_platform=$(jq -r .platform_manifest_digest "$candidate")
+          source_digest=$(jq -r .source_bundle.digest "$candidate")
+          source_platform=$(jq -r \
+            .source_bundle.platform_manifest_digest "$candidate")
+          printf 'candidate_digest=%s\n' "$candidate_digest" >> "$GITHUB_OUTPUT"
+          printf 'candidate_platform=%s\n' "$candidate_platform" >> "$GITHUB_OUTPUT"
+          printf 'source_digest=%s\n' "$source_digest" >> "$GITHUB_OUTPUT"
+          printf 'source_platform=%s\n' "$source_platform" >> "$GITHUB_OUTPUT"
+          printf 'archive=%s\n' "$archive" >> "$GITHUB_OUTPUT"
+      - name: Revalidate public image digests
+        env:
+          CANDIDATE_DIGEST: ${{ steps.identity.outputs.candidate_digest }}
+          CANDIDATE_PLATFORM: ${{ steps.identity.outputs.candidate_platform }}
+          SOURCE_DIGEST: ${{ steps.identity.outputs.source_digest }}
+          SOURCE_PLATFORM: ${{ steps.identity.outputs.source_platform }}
+        run: |
+          set -Eeuo pipefail
+          docker logout ghcr.io >/dev/null 2>&1 || true
+          docker buildx imagetools inspect \
+            "$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST" --raw \
+            > "$RUNNER_TEMP/anonymous-candidate-index.json"
+          test "$(./scripts/resolve_candidate_image.py platform-digest \
+            --index "$RUNNER_TEMP/anonymous-candidate-index.json" \
+            --expected-digest "$CANDIDATE_DIGEST")" = "$CANDIDATE_PLATFORM"
+          docker buildx imagetools inspect \
+            "$CANDIDATE_REPOSITORY@$SOURCE_DIGEST" --raw \
+            > "$RUNNER_TEMP/anonymous-source-index.json"
+          test "$(./scripts/resolve_candidate_image.py platform-digest \
+            --index "$RUNNER_TEMP/anonymous-source-index.json" \
+            --expected-digest "$SOURCE_DIGEST")" = "$SOURCE_PLATFORM"
+      - name: Revalidate source provenance and SBOM
+        uses: ./.github/actions/validate-public-attestations
+        with:
+          repository: ${{ env.CANDIDATE_REPOSITORY }}
+          index: ${{ runner.temp }}/anonymous-source-index.json
+          index-digest: ${{ steps.identity.outputs.source_digest }}
+          platform-digest: ${{ steps.identity.outputs.source_platform }}
+          image-kind: source-bundle
+          source-commit: ${{ steps.release.outputs.head_sha }}
+          output: ${{ runner.temp }}/current-source-attestations.json
+      - name: Revalidate SDK provenance and SBOM
+        uses: ./.github/actions/validate-public-attestations
+        with:
+          repository: ${{ env.CANDIDATE_REPOSITORY }}
+          index: ${{ runner.temp }}/anonymous-candidate-index.json
+          index-digest: ${{ steps.identity.outputs.candidate_digest }}
+          platform-digest: ${{ steps.identity.outputs.candidate_platform }}
+          image-kind: sdk-candidate
+          source-commit: ${{ steps.release.outputs.head_sha }}
+          output: ${{ runner.temp }}/current-sdk-attestations.json
+      - name: Revalidate the locked SBOM generator
+        uses: ./.github/actions/validate-sbom-generator
+        with:
+          output: ${{ runner.temp }}/current-sbom-generator-image.json
+      - name: Match durable attestation reports
+        env:
+          ARCHIVE: ${{ steps.identity.outputs.archive }}
+        run: |
+          set -Eeuo pipefail
+          for name in source-attestations sdk-attestations \
+            sbom-generator-image; do
+            tar -xOf "$ARCHIVE" "$name.json" \
+              > "$RUNNER_TEMP/archive-$name.json"
+            cmp "$RUNNER_TEMP/archive-$name.json" \
+              "$RUNNER_TEMP/current-$name.json"
+          done
+      - name: Export the TUF-authenticated Cosign verifier
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/cosign-tool"
+          docker buildx bake cosign-host-tool \
+            --set "cosign-host-tool.output=type=local,dest=$output" \
+            --progress=plain
+          expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
+          test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
+          test -x "$output/cosign"
+          ./scripts/validate-sigstore-report.py \
+            "$output/sigstore-verification.json"
+      - name: Verify candidate and source signatures
+        env:
+          CANDIDATE_DIGEST: ${{ steps.identity.outputs.candidate_digest }}
+          SOURCE_DIGEST: ${{ steps.identity.outputs.source_digest }}
+        run: |
+          set -Eeuo pipefail
+          openssl base64 -d -A \
+            -in evidence/sigstore/tuf/trusted_root.json.b64 \
+            -out "$RUNNER_TEMP/trusted_root.json"
+          identity=$(jq -r .sigstore.signing.identity config/release.json)
+          issuer=$(jq -r .sigstore.signing.oidc_issuer config/release.json)
+          cosign="$RUNNER_TEMP/cosign-tool/cosign"
+          "$cosign" verify --trusted-root "$RUNNER_TEMP/trusted_root.json" \
+            --certificate-identity "$identity" \
+            --certificate-oidc-issuer "$issuer" \
+            "$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST" \
+            > "$RUNNER_TEMP/rollback-candidate-signature.json"
+          "$cosign" verify --trusted-root "$RUNNER_TEMP/trusted_root.json" \
+            --certificate-identity "$identity" \
+            --certificate-oidc-issuer "$issuer" \
+            "$CANDIDATE_REPOSITORY@$SOURCE_DIGEST" \
+            > "$RUNNER_TEMP/rollback-source-signature.json"
+      - name: Move only the stable channels
+        env:
+          CANDIDATE_DIGEST: ${{ steps.identity.outputs.candidate_digest }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          SOURCE_DIGEST: ${{ steps.identity.outputs.source_digest }}
+        run: |
+          set -Eeuo pipefail
+          channel=$(jq -r .product.stable_channel config/release.json)
+          candidate_version="$CANDIDATE_REPOSITORY:$RELEASE_TAG"
+          source_version="$CANDIDATE_REPOSITORY:source-$RELEASE_TAG"
+          candidate_channel="$CANDIDATE_REPOSITORY:$channel"
+          source_channel="$CANDIDATE_REPOSITORY:source-$channel"
+          registry_path=${CANDIDATE_REPOSITORY#ghcr.io/}
+          registry_token=$(curl --fail --silent --show-error --location \
+            --retry 5 --retry-all-errors --retry-delay 2 \
+            --connect-timeout 30 --get \
+            --data-urlencode 'service=ghcr.io' \
+            --data-urlencode "scope=repository:$registry_path:pull" \
+            https://ghcr.io/token | jq -er '.token // .access_token')
+          public_tag_digest() {
+            local reference=$1
+            local tag=${reference##*:}
+            local output="$RUNNER_TEMP/rollback-registry-$tag.json"
+            local status
+            status=$(curl --silent --show-error --location \
+              --retry 5 --retry-all-errors --retry-delay 2 \
+              --connect-timeout 30 \
+              -H "Authorization: Bearer $registry_token" \
+              -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json' \
+              -o "$output" -w '%{http_code}' \
+              "https://ghcr.io/v2/$registry_path/manifests/$tag")
+            test "$status" = 200
+            printf 'sha256:%s\n' "$(sha256sum "$output" | awk '{print $1}')"
+          }
+          test "$(public_tag_digest "$candidate_version")" = "$CANDIDATE_DIGEST"
+          test "$(public_tag_digest "$source_version")" = "$SOURCE_DIGEST"
+          previous_candidate=$(public_tag_digest "$candidate_channel")
+          previous_source=$(public_tag_digest "$source_channel")
+          logged_in=0
+          cleanup_registry_login() {
+            if test "$logged_in" = 1; then
+              docker logout ghcr.io >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_registry_login EXIT
+          printf '%s' "$GHCR_TOKEN" \
+            | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          logged_in=1
+          if test "$previous_source" != "$SOURCE_DIGEST"; then
+            docker buildx imagetools create --tag "$source_channel" \
+              "$CANDIDATE_REPOSITORY@$SOURCE_DIGEST"
+          fi
+          if test "$previous_candidate" != "$CANDIDATE_DIGEST"; then
+            docker buildx imagetools create --tag "$candidate_channel" \
+              "$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
+          fi
+          docker logout ghcr.io
+          logged_in=0
+          trap - EXIT
+          test "$(public_tag_digest "$source_channel")" = "$SOURCE_DIGEST"
+          test "$(public_tag_digest "$candidate_channel")" = "$CANDIDATE_DIGEST"
+          {
+            echo '### Stable Crossforge rollback'
+            echo
+            echo "- Release: ${{ steps.release.outputs.url }}"
+            echo "- SDK: \`$candidate_channel@$CANDIDATE_DIGEST\`"
+            echo "- Source: \`$source_channel@$SOURCE_DIGEST\`"
+            echo "- Previous SDK digest: \`$previous_candidate\`"
+            echo "- Previous source digest: \`$previous_source\`"
+            echo '- Status: immutable release evidence revalidated; no rebuild or version-tag mutation'
+          } >> "$GITHUB_STEP_SUMMARY"

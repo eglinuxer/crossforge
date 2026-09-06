@@ -386,6 +386,15 @@ source commit → build once → candidate digest → 原物验收 → registry-
 
 GitHub repository 必须在首次发布前启用 immutable releases 和 Private Vulnerability Reporting。晋升工作流先通过只读管理 API 证明两个设置均已启用，再创建或幂等恢复 draft，上传 evidence tar、sidecar、`candidate.json` 与 `release-promotion.json`；只有 OCI 版本/通道 tag 全部精确解析后才发布 draft，并要求 Release API 返回 `immutable:true` 和四份带 SHA256 digest 的完整资产。由此 Git tag 和 release assets 在 Actions 90 天工件过期后仍受 GitHub 不可变发布与 release attestation 保护，未公开的安全报告也有私密入口。该工作流不得构建 SDK/source、不得重新签名，也不能把成功 job status 当作资格证据。首次 public candidate 和首次 stable promotion 尚未实际运行，因此当前仍是 implemented/unproven。
 
+长期 rollback 不依赖已经过期的 candidate workflow artifacts。手动 `stable rollback`
+只接受三段稳定 SemVer 和 `ROLLBACK-v<version>`，与 promotion 共用不可取消的
+`stable-promotion` concurrency group。它要求目标 GitHub Release 已 immutable，Git tag
+精确 peel 到 release commit，四份 asset 的 API digest/size 与下载字节一致，并从 17 项
+evidence tar 重新验证 native ARM、Qt、source、SLSA/SPDX、SBOM generator 与签名身份；
+随后匿名确认版本 tag 和 OCI digest，只按 source→SDK 顺序移动两个 stable channel。
+rollback 不创建/移动版本 tag、不重建、不重签，失败后的已完成 source-channel 更新可由
+同一幂等 workflow 安全重试。
+
 测试分层如下：
 
 - PR：JSON/Schema、Bash/Python syntax、Python 单测、Docker/Bake 静态检查和相关轻量 smoke；crosspack 实现后加入同层；

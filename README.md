@@ -888,6 +888,25 @@ release as immutable, so its tag and assets become the durable evidence after
 the 90-day Actions artifacts expire. The workflow never rebuilds or signs a
 release during promotion.
 
+After a later stable release, operators can move both stable channels back to
+an earlier immutable version without relying on expired Actions artifacts:
+
+```console
+$ gh workflow run rollback.yml \
+    -f version=0.1.0 \
+    -f confirmation=ROLLBACK-v0.1.0 \
+    -f immutable_releases_enabled=true \
+    -f private_vulnerability_reporting_enabled=true
+```
+
+Rollback downloads the four immutable GitHub Release assets, checks their API
+digests, revalidates the 17-file evidence archive, anonymously resolves the SDK
+and source OCI objects, verifies SLSA/SPDX/SBOM-generator reports and both
+Cosign signatures, and confirms the immutable version tags. It then moves only
+`gts15-el8` and `source-gts15-el8`, source first; it never changes a version
+tag, rebuilds, or signs an artifact. Promotion and rollback share one
+non-cancelling concurrency group so their channel writes cannot interleave.
+
 The public candidate runs as `crossforge` UID/GID 1000 by default. `/opt/crossforge`
 remains root-owned; only the workspace, home, cache and temporary directories are
 writable. `docker run --user <uid>:<gid>` is supported: if the inherited home is
