@@ -426,6 +426,15 @@ Sigstore 公共信任 bootstrap 已进入 release 的 supply identity：仓库�
 - SPDX/CycloneDX SBOM、max-mode provenance 和 qualification report；
 - 通过 GitHub OIDC/Cosign 对镜像 digest 与资格化声明做的 keyless signature。
 
+public-candidate 的 keyless signature 位于所有原生 ARM64 门禁之后。独立
+`sign-candidate` job 重新下载并验证 candidate、compiler probe bundle、native GCC
+report、Qt build/overlay/native report 与 Sigstore source report，再从
+`cosign-host-tool` 导出 TUF-authenticated Cosign；它只对唯一 OCI digest 执行
+`cosign sign --yes`。随后必须退出 GHCR，以 release 固定的 workflow SAN、GitHub
+Actions OIDC issuer 和 `trusted_root.json` 匿名执行 `cosign verify`，并校验输出中每个
+signature 的 repository/digest。签名证据作为 90 天 workflow artifact 保存；签名失败
+或 native job 未完成时工作流整体失败，且仍不得创建 SemVer/稳定标签。
+
 镜像内保留 `SOURCES.json`、`SOURCE-OFFER`、SBOM 和第三方许可证。发布门禁必须保证每个二进制组件可映射到长期可取得的准确源码。对外措辞只能表述为 “GTS-derived cross SDK built from Rocky Linux rebuild sources”，不得暗示 Red Hat 或 Rocky 官方支持、认证或背书；首次公开发布前仍需正式法律复核。
 
 ## 13. 维护与演进规则

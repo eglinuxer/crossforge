@@ -825,7 +825,7 @@
     "sigstore": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["trust", "verifier"],
+      "required": ["trust", "verifier", "signing"],
       "properties": {
         "trust": {
           "type": "object",
@@ -884,6 +884,26 @@
         },
         "verifier": {
           "$ref": "#/$defs/sigstore_verifier"
+        },
+        "signing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "identity",
+            "oidc_issuer",
+            "transparency_log"
+          ],
+          "properties": {
+            "status": {"const": "required"},
+            "identity": {
+              "const": "https://github.com/eglinuxer/crossforge/.github/workflows/candidate.yml@refs/heads/main"
+            },
+            "oidc_issuer": {
+              "const": "https://token.actions.githubusercontent.com"
+            },
+            "transparency_log": {"const": true}
+          }
         }
       }
     },

@@ -424,3 +424,126 @@ jobs:
             echo '- Runtime: pinned Rocky Linux 8.10 arm64 manifest'
             echo '- Status: native C/C++20/LTO/archive/libgcc/cross-DSO and Qt runtime probes passed'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  sign-candidate:
+    needs: [publish, qt-native-input, native-aarch64]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Download immutable native probe bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: native-aarch64-probes-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/native-aarch64-probes
+      - name: Download native release evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: native-aarch64-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/native-aarch64-evidence
+      - name: Export the TUF-authenticated Cosign tool
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/cosign-tool"
+          docker buildx bake cosign-host-tool \
+            --set "cosign-host-tool.output=type=local,dest=$output" \
+            --progress=plain
+          expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
+          test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
+          test -x "$output/cosign"
+          ./scripts/validate-sigstore-report.py \
+            "$output/sigstore-verification.json"
+      - name: Revalidate candidate and native release evidence
+        env:
+          CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
+          EXPECTED_BUNDLE_SHA256: ${{ needs.publish.outputs.probe_bundle_sha256 }}
+          EXPECTED_QT_ROOTFS_SHA256: ${{ needs.qt-native-input.outputs.rootfs_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          probes="$RUNNER_TEMP/native-aarch64-probes"
+          evidence="$RUNNER_TEMP/native-aarch64-evidence"
+          cmp "$probes/candidate.json" "$evidence/candidate.json"
+          ./scripts/candidate_manifest.py validate \
+            "$evidence/candidate.json" \
+            --expected-source-commit "$GITHUB_SHA"
+          test "$(jq -r .digest "$evidence/candidate.json")" = \
+            "$CANDIDATE_DIGEST"
+          ./scripts/native-aarch64-release.py validate \
+            --candidate "$evidence/candidate.json" \
+            --bundle "$probes/native-aarch64-probes.tar" \
+            --expected-bundle-sha256 "$EXPECTED_BUNDLE_SHA256" \
+            --report "$evidence/native-aarch64.json"
+          ./scripts/validate-qt-native-release.py \
+            --candidate "$evidence/candidate.json" \
+            --report "$evidence/qt-native-aarch64-runtime.json" \
+            --build-evidence "$evidence/qt-target-build.json" \
+            --overlay-evidence "$evidence/qt-runtime-overlay.json" \
+            --expected-source-commit "$GITHUB_SHA" \
+            --expected-candidate-digest "$CANDIDATE_DIGEST" \
+            --input-rootfs-sha256 "$EXPECTED_QT_ROOTFS_SHA256"
+      - name: Sign and anonymously verify the qualified candidate
+        env:
+          CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          cosign="$RUNNER_TEMP/cosign-tool/cosign"
+          image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
+          identity=$(jq -r .sigstore.signing.identity config/release.json)
+          issuer=$(jq -r .sigstore.signing.oidc_issuer config/release.json)
+          logged_in=0
+          cleanup_registry_login() {
+            if test "$logged_in" = 1; then
+              docker logout ghcr.io >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_registry_login EXIT
+          printf '%s' "$GHCR_TOKEN" \
+            | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          logged_in=1
+          "$cosign" sign --yes "$image"
+          docker logout ghcr.io
+          logged_in=0
+          trap - EXIT
+          openssl base64 -d -A \
+            -in evidence/sigstore/tuf/trusted_root.json.b64 \
+            -out "$RUNNER_TEMP/trusted_root.json"
+          "$cosign" verify \
+            --trusted-root "$RUNNER_TEMP/trusted_root.json" \
+            --certificate-identity "$identity" \
+            --certificate-oidc-issuer "$issuer" \
+            "$image" > "$RUNNER_TEMP/candidate-signature.json"
+          jq -e --arg repository "$CANDIDATE_REPOSITORY" \
+            --arg digest "$CANDIDATE_DIGEST" \
+            'length >= 1 and all(.[];
+              .critical.identity."docker-reference" == $repository and
+              .critical.image."docker-manifest-digest" == $digest)' \
+            "$RUNNER_TEMP/candidate-signature.json" >/dev/null
+      - name: Upload candidate signature evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-signature-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-aarch64-evidence/candidate.json
+            ${{ runner.temp }}/candidate-signature.json
+            ${{ runner.temp }}/cosign-tool/sigstore-verification.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Report signed public candidate
+        env:
+          CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
+        run: |
+          set -Eeuo pipefail
+          {
+            echo '### Signed public Crossforge candidate'
+            echo
+            echo "- Candidate: \`$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST\`"
+            echo '- Identity: GitHub OIDC candidate workflow on `main`'
+            echo '- Status: native-qualified and keyless-signed; no stable tag was created'
+          } >> "$GITHUB_STEP_SUMMARY"

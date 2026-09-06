@@ -214,8 +214,20 @@ class SigstoreAssetTests(unittest.TestCase):
         self.assertIn("RUN --network=none", qualified)
         self.assertIn("verify-sigstore-assets.py", qualified)
         self.assertIn('target "sigstore-sources-qualified"', bake)
+        self.assertIn('target "cosign-host-tool"', bake)
         self.assertIn("sigstore-sources-qualified", ci)
         self.assertIn("sigstore-sources-qualified", candidate)
+        self.assertIn(
+            "needs: [publish, qt-native-input, native-aarch64]", candidate
+        )
+        self.assertIn("id-token: write", candidate)
+        self.assertIn('"$cosign" sign --yes "$image"', candidate)
+        self.assertIn("--trusted-root", candidate)
+        self.assertIn("candidate-signature-${{ github.run_id }}", candidate)
+        self.assertLess(
+            candidate.index("  native-aarch64:"),
+            candidate.index("  sign-candidate:"),
+        )
         self.assertIn("crossforge_sigstore_qualified", packaging)
         self.assertIn(
             "/opt/crossforge/qualification/sigstore.json", packaging

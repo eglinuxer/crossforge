@@ -82,6 +82,12 @@ target "sigstore-sources-qualified" {
   output   = ["type=cacheonly"]
 }
 
+target "cosign-host-tool" {
+  inherits = ["_common"]
+  target   = "cosign-host-tool"
+  output   = ["type=cacheonly"]
+}
+
 target "sdk-skeleton" {
   inherits = ["_common"]
   target   = "sdk-skeleton"

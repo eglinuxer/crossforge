@@ -221,6 +221,22 @@
       "value": "evidence/git/qemu-v10.2.3.tag.b64"
     },
     {
+      "path": "/sigstore/signing/identity",
+      "value": "https://github.com/eglinuxer/crossforge/.github/workflows/candidate.yml@refs/heads/main"
+    },
+    {
+      "path": "/sigstore/signing/oidc_issuer",
+      "value": "https://token.actions.githubusercontent.com"
+    },
+    {
+      "path": "/sigstore/signing/status",
+      "value": "required"
+    },
+    {
+      "path": "/sigstore/signing/transparency_log",
+      "value": true
+    },
+    {
       "path": "/sigstore/trust/artifact_key_evidence",
       "value": "evidence/sigstore/tuf/artifact.pub.b64"
     },

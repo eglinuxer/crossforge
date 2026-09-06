@@ -723,7 +723,11 @@ then uploads both strict native qualification reports. The Qt artifact also
 retains the exact target-build and runtime-overlay evidence, and
 `validate-qt-native-release.py` revalidates their hashes and candidate/rootfs
 bindings before upload so a later promotion does not have to trust a job status
-alone. The workflow never creates a SemVer or stable-channel tag.
+alone. Only after both native gates pass, a final job exports the same
+TUF-authenticated Cosign, revalidates all downloaded evidence, signs the exact
+candidate digest with the workflow's GitHub OIDC identity, logs out, and
+verifies the public signature against the pinned trusted root. The workflow
+never creates a SemVer or stable-channel tag.
 
 The public candidate runs as `crossforge` UID/GID 1000 by default. `/opt/crossforge`
 remains root-owned; only the workspace, home, cache and temporary directories are

@@ -175,6 +175,17 @@ def validate_evidence(config, repository):
     sigstore_trust = config["sigstore"]["trust"]
     sigstore_verifier = config["sigstore"]["verifier"]
     require(
+        config["sigstore"]["signing"]
+        == {
+            "status": "required",
+            "identity": "https://github.com/eglinuxer/crossforge/"
+            ".github/workflows/candidate.yml@refs/heads/main",
+            "oidc_issuer": "https://token.actions.githubusercontent.com",
+            "transparency_log": True,
+        },
+        "candidate Sigstore signing policy differs",
+    )
+    require(
         sigstore_verifier["status"] == "locked"
         and sigstore_verifier["policy"]["require_tlog"] is True
         and sigstore_verifier["policy"]["require_sct"] is True

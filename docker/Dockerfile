@@ -81,6 +81,11 @@ FROM scratch AS sigstore-verification-evidence
 COPY --from=sigstore-assets-qualified /work/sigstore-verification.json \
   /sigstore-verification.json
 
+FROM scratch AS cosign-host-tool
+COPY --from=sigstore-assets-qualified /sigstore-downloads/cosign /cosign
+COPY --from=sigstore-assets-qualified /work/sigstore-verification.json \
+  /sigstore-verification.json
+
 FROM config-validate AS platform-python-check
 COPY scripts/ ./scripts/
 COPY docker/*.py ./docker/
