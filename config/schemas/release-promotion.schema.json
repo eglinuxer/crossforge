@@ -9,7 +9,6 @@
     "schema_version",
     "kind",
     "candidate_run",
-    "promotion_run",
     "release",
     "candidate_manifest_sha256",
     "candidate",
@@ -48,17 +47,6 @@
           "type": "string",
           "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/actions/runs/[1-9][0-9]*$"
         }
-      }
-    },
-    "promotion_run": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "attempt", "workflow_sha", "repository"],
-      "properties": {
-        "id": {"type": "integer", "minimum": 1},
-        "attempt": {"type": "integer", "minimum": 1},
-        "workflow_sha": {"$ref": "#/$defs/git_sha1"},
-        "repository": {"$ref": "#/$defs/github_repository"}
       }
     },
     "release": {

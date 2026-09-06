@@ -72,14 +72,11 @@ class ReleasePromotionTests(unittest.TestCase):
             candidate,
             candidate_sha256,
             validated_run,
-            "eglinuxer/crossforge",
-            234567,
-            1,
-            "7" * 40,
         )
 
     def test_exact_successful_candidate_run_forms_digest_only_promotion(self):
         document = self.document()
+        self.assertNotIn("promotion_run", document)
         self.assertIs(
             PROMOTION["validate_document"](
                 document, self.release, self.schema
@@ -162,10 +159,6 @@ class ReleasePromotionTests(unittest.TestCase):
                 candidate,
                 CANDIDATE["canonical_sha256"](candidate),
                 validated_run,
-                "eglinuxer/crossforge",
-                234567,
-                1,
-                "7" * 40,
             )
 
     def test_schema_and_semantics_reject_tag_or_artifact_drift(self):
@@ -215,12 +208,6 @@ class ReleasePromotionTests(unittest.TestCase):
                 "eglinuxer/crossforge",
                 "--expected-candidate-run-id",
                 "123456",
-                "--promotion-run-id",
-                "234567",
-                "--promotion-run-attempt",
-                "1",
-                "--promotion-workflow-sha",
-                "7" * 40,
                 "--output",
                 str(output),
             ]

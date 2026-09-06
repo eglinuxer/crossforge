@@ -252,7 +252,6 @@ jobs:
         env:
           CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PROMOTION_WORKFLOW_SHA: ${{ github.sha }}
         run: |
           set -Eeuo pipefail
           candidate="$RUNNER_TEMP/candidate-identity/candidate.json"
@@ -351,9 +350,6 @@ jobs:
             --candidate-run "$RUNNER_TEMP/candidate-run.json" \
             --expected-github-repository "$GITHUB_REPOSITORY" \
             --expected-candidate-run-id "$CANDIDATE_RUN_ID" \
-            --promotion-run-id "$GITHUB_RUN_ID" \
-            --promotion-run-attempt "$GITHUB_RUN_ATTEMPT" \
-            --promotion-workflow-sha "$PROMOTION_WORKFLOW_SHA" \
             --output "$RUNNER_TEMP/release-promotion.json"
           ./scripts/release_promotion.py validate \
             "$RUNNER_TEMP/release-promotion.json"

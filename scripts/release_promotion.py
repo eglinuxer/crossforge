@@ -133,24 +133,10 @@ def promotion_document(
     candidate,
     candidate_sha256,
     candidate_run,
-    promotion_repository,
-    promotion_run_id,
-    promotion_run_attempt,
-    promotion_workflow_sha,
 ):
     require(
         candidate["source_commit"] == candidate_run["head_sha"],
         "candidate source commit differs from candidate run",
-    )
-    require(
-        promotion_repository == candidate_run["repository"],
-        "promotion repository differs from candidate run",
-    )
-    positive_integer(promotion_run_id, "promotion run ID")
-    positive_integer(promotion_run_attempt, "promotion run attempt")
-    require(
-        GIT_SHA1_RE.match(promotion_workflow_sha or ""),
-        "promotion workflow SHA is invalid",
     )
     product = release["product"]
     source = candidate["source_bundle"]
@@ -159,12 +145,6 @@ def promotion_document(
         "schema_version": 1,
         "kind": "crossforge-release-promotion",
         "candidate_run": copy.deepcopy(candidate_run),
-        "promotion_run": {
-            "id": promotion_run_id,
-            "attempt": promotion_run_attempt,
-            "workflow_sha": promotion_workflow_sha,
-            "repository": promotion_repository,
-        },
         "release": {
             "version": product["version"],
             "stable_channel": product["stable_channel"],
@@ -287,9 +267,6 @@ def parser():
     create.add_argument("--candidate-run", type=Path, required=True)
     create.add_argument("--expected-github-repository", required=True)
     create.add_argument("--expected-candidate-run-id", type=int, required=True)
-    create.add_argument("--promotion-run-id", type=int, required=True)
-    create.add_argument("--promotion-run-attempt", type=int, required=True)
-    create.add_argument("--promotion-workflow-sha", required=True)
     create.add_argument("--output", type=Path, required=True)
     validate = commands.add_parser("validate", allow_abbrev=False)
     add_common(validate)
@@ -329,10 +306,6 @@ def main(argv=None):
             candidate,
             candidate_sha256,
             candidate_run,
-            arguments.expected_github_repository,
-            arguments.promotion_run_id,
-            arguments.promotion_run_attempt,
-            arguments.promotion_workflow_sha,
         )
         validate_document(document, release, schema)
         state = "wrote" if write_json_once(arguments.output, document) else "current"
