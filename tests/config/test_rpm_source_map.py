@@ -47,6 +47,25 @@ class RPMSourceMapTests(unittest.TestCase):
             document, schema, schema, "$"
         )
 
+    def test_reviewed_map_matches_the_fixed_rpmdb_capture(self):
+        path = (
+            REPOSITORY
+            / "evidence/sources/rocky-base-rpm-sources.json"
+        )
+        expected = CAPTURE["STRICT"]["load_json"](path)
+        rpmdb = "\n".join(
+            "%s\t%s" % (record["nevra"], record["source_rpm"])
+            for record in expected["packages"]
+        ) + "\n"
+        document = CAPTURE["build_document"](
+            self.release, self.lock, self.transaction, rpmdb
+        )
+        CAPTURE["validate_expected"](
+            document,
+            path,
+            REPOSITORY / "config/schemas/rpm-source-map.schema.json",
+        )
+
     def test_missing_extra_duplicate_and_binary_only_mappings_fail(self):
         lines = self.rpmdb_text().splitlines()
         mutations = (
@@ -91,12 +110,16 @@ class RPMSourceMapTests(unittest.TestCase):
         self.assertIn("rpm -qa --qf", block)
         self.assertIn("%{SOURCERPM}", block)
         self.assertIn("capture-rpm-source-map.py", block)
+        self.assertIn("--expected", block)
+        self.assertIn(
+            "evidence/sources/rocky-base-rpm-sources.json", block
+        )
         bake = (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8")
         ci = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )
         self.assertIn('target "rocky-base-source-map"', bake)
-        self.assertIn("rocky-base-source-map", ci)
+        self.assertIn("rpm-source-requirements", ci)
 
     def test_capture_script_is_python36_compatible(self):
         ast.parse(

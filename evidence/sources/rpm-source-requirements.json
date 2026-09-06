@@ -1,0 +1,5280 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-source-requirements.schema.json",
+  "base_source_map": {
+    "canonical_sha256": "d35c6bc0024eb49fd3885a9529314ff9390ea8d15fb002a316e0fbf0ea8fc7ef",
+    "packages": 148,
+    "source_rpms": 110
+  },
+  "checks": {
+    "base_mapping_complete": true,
+    "content_lock_complete": false,
+    "rpm_lock_mapping_complete": true
+  },
+  "kind": "crossforge-rpm-source-requirements",
+  "release_sha256": "248067a16b71b2b2f1bb156ace8f310caa1ab23d3fc4f9f912e42741d40433c5",
+  "rpm_locks": [
+    {
+      "canonical_sha256": "d6d1b33772faa48658a30b01f5cc6a254c0b6c7640d52296b2e0f4efe7945c01",
+      "file": "locks/host-build-common-el8-x86_64.json",
+      "packages": 128,
+      "source_rpms": 100
+    },
+    {
+      "canonical_sha256": "de271a4ba8a9e4bc31c8fc8a92c05fde4736afbc64b1251e06751a0cb96c2be0",
+      "file": "locks/host-gcc-build-el8-x86_64.json",
+      "packages": 4,
+      "source_rpms": 4
+    },
+    {
+      "canonical_sha256": "41991eb21e976aed7c3c0907b9ecad0ae30f1e91708d7300ac76adfa4ee447ed",
+      "file": "locks/host-gcc-test-el8-x86_64.json",
+      "packages": 8,
+      "source_rpms": 5
+    },
+    {
+      "canonical_sha256": "0c3c32ed8090717bd2275d143fd42f444b16bd8a9b37ea1549154cc018a72091",
+      "file": "locks/host-python-build-el8-x86_64.json",
+      "packages": 27,
+      "source_rpms": 13
+    },
+    {
+      "canonical_sha256": "834f08e29f58c453d80ca84e9b0e3763d591090c383efc6df298bbbbacc5178d",
+      "file": "locks/host-qt-build-el8-x86_64.json",
+      "packages": 191,
+      "source_rpms": 101
+    },
+    {
+      "canonical_sha256": "69e34609d9781ab762fe13704e958672a90b603675b30e77b8152534d56d6bbd",
+      "file": "locks/host-runtime-el8-x86_64.json",
+      "packages": 152,
+      "source_rpms": 113
+    },
+    {
+      "canonical_sha256": "303992cc5f861f91eeb8ff7067556e4cff50ae6beecdb9802291e9c3a3e67f82",
+      "file": "locks/qt-runtime-el8-aarch64.json",
+      "packages": 179,
+      "source_rpms": 130
+    },
+    {
+      "canonical_sha256": "57b964d46f2e7097ec57c84c74a0c773782748eb6ccbefe8f6fa2e2ec6a49f0c",
+      "file": "locks/qt-runtime-el8-x86_64.json",
+      "packages": 181,
+      "source_rpms": 132
+    },
+    {
+      "canonical_sha256": "a07335df834350957a58b801709a2f33b81f013101c8a833ae2668ba654fb5fa",
+      "file": "locks/qt-target-el8-aarch64.json",
+      "packages": 202,
+      "source_rpms": 105
+    },
+    {
+      "canonical_sha256": "43f58bbb5274b2564a6ce21b5cd5d9dd67fe706aaa5c70f981022cdd401f5218",
+      "file": "locks/qt-target-el8-x86_64.json",
+      "packages": 205,
+      "source_rpms": 107
+    },
+    {
+      "canonical_sha256": "70436d94443b019fbe61237bf93b8bb457927f3de09429e6ef7f37598b482b67",
+      "file": "locks/sysroot-el8-aarch64.json",
+      "packages": 78,
+      "source_rpms": 45
+    },
+    {
+      "canonical_sha256": "ffe67b4d7448b02be7db774c8d85fdc8b13da695c0184de444949c641876ef57",
+      "file": "locks/sysroot-el8-x86_64.json",
+      "packages": 78,
+      "source_rpms": 45
+    }
+  ],
+  "schema_version": 1,
+  "sources": [
+    {
+      "binary_nevras": [
+        "acl-0:2.2.53-3.el8.x86_64",
+        "libacl-0:2.2.53-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "acl-2.2.53-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "acl-0:2.4.0-1.el8_10.aarch64",
+        "acl-0:2.4.0-1.el8_10.x86_64",
+        "libacl-0:2.4.0-1.el8_10.aarch64",
+        "libacl-0:2.4.0-1.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "acl-2.4.0-1.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "alsa-lib-0:1.2.10-2.el8.aarch64",
+        "alsa-lib-0:1.2.10-2.el8.x86_64",
+        "alsa-lib-devel-0:1.2.10-2.el8.aarch64",
+        "alsa-lib-devel-0:1.2.10-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "alsa-lib-1.2.10-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "annobin-0:11.13-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-gcc-test-el8-x86_64.json"
+      ],
+      "source_rpm": "annobin-11.13-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "at-spi2-core-0:2.28.0-1.el8.aarch64",
+        "at-spi2-core-0:2.28.0-1.el8.x86_64",
+        "at-spi2-core-devel-0:2.28.0-1.el8.aarch64",
+        "at-spi2-core-devel-0:2.28.0-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "at-spi2-core-2.28.0-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libattr-0:2.4.48-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "attr-2.4.48-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libattr-0:2.6.0-1.el8_10.aarch64",
+        "libattr-0:2.6.0-1.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "attr-2.6.0-1.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "audit-libs-0:3.1.2-1.el8.x86_64",
+        "python3-audit-0:3.1.2-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "audit-3.1.2-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "audit-libs-0:3.1.2-1.el8_10.1.aarch64",
+        "audit-libs-0:3.1.2-1.el8_10.1.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "audit-3.1.2-1.el8_10.1.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "autoconf-0:2.69-29.el8_10.1.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "autoconf-2.69-29.el8_10.1.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "automake-0:1.16.1-8.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "automake-1.16.1-8.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "avahi-libs-0:0.7-27.el8_10.1.aarch64",
+        "avahi-libs-0:0.7-27.el8_10.1.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "avahi-0.7-27.el8_10.1.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libbabeltrace-0:1.5.4-4.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "babeltrace-1.5.4-4.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "basesystem-0:11-5.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "basesystem-11-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "bash-0:4.4.20-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "bash-4.4.20-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "bash-0:4.4.20-6.el8_10.aarch64",
+        "bash-0:4.4.20-6.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "bash-4.4.20-6.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "binutils-0:2.30-123.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "binutils-2.30-123.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "bison-0:3.0.4-10.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-gcc-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "bison-3.0.4-10.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "brotli-0:1.0.6-4.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "brotli-1.0.6-4.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "bzip2-devel-0:1.0.6-26.el8.x86_64",
+        "bzip2-libs-0:1.0.6-26.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "bzip2-1.0.6-26.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "bzip2-0:1.0.6-28.el8_10.x86_64",
+        "bzip2-devel-0:1.0.6-28.el8_10.aarch64",
+        "bzip2-devel-0:1.0.6-28.el8_10.x86_64",
+        "bzip2-libs-0:1.0.6-28.el8_10.aarch64",
+        "bzip2-libs-0:1.0.6-28.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "bzip2-1.0.6-28.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "ca-certificates-0:2023.2.60_v7.0.306-80.0.el8_8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "ca-certificates-2023.2.60_v7.0.306-80.0.el8_8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "ca-certificates-0:2025.2.80_v9.0.304-80.2.el8_10.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "ca-certificates-2025.2.80_v9.0.304-80.2.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "checkpolicy-0:2.9-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "checkpolicy-2.9-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "chkconfig-0:1.19.2-1.el8.aarch64",
+        "chkconfig-0:1.19.2-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "chkconfig-1.19.2-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "cmake-0:3.26.5-2.el8.x86_64",
+        "cmake-data-0:3.26.5-2.el8.noarch",
+        "cmake-filesystem-0:3.26.5-2.el8.aarch64",
+        "cmake-filesystem-0:3.26.5-2.el8.x86_64",
+        "cmake-rpm-macros-0:3.26.5-2.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "cmake-3.26.5-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "coreutils-single-0:8.30-15.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "coreutils-8.30-15.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "coreutils-0:8.30-20.el8_10.aarch64",
+        "coreutils-0:8.30-20.el8_10.x86_64",
+        "coreutils-common-0:8.30-20.el8_10.aarch64",
+        "coreutils-common-0:8.30-20.el8_10.x86_64",
+        "coreutils-single-0:8.30-20.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "coreutils-8.30-20.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "cpio-0:2.12-11.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "cpio-2.12-11.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "cracklib-0:2.9.6-15.el8.aarch64",
+        "cracklib-0:2.9.6-15.el8.x86_64",
+        "cracklib-dicts-0:2.9.6-15.el8.aarch64",
+        "cracklib-dicts-0:2.9.6-15.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "cracklib-2.9.6-15.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "crypto-policies-0:20230731-1.git3177e06.el8.noarch",
+        "crypto-policies-scripts-0:20230731-1.git3177e06.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "crypto-policies-20230731-1.git3177e06.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "cryptsetup-libs-0:2.3.7-7.el8.aarch64",
+        "cryptsetup-libs-0:2.3.7-7.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "cryptsetup-2.3.7-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "cups-devel-1:2.2.6-68.el8_10.aarch64",
+        "cups-devel-1:2.2.6-68.el8_10.x86_64",
+        "cups-libs-1:2.2.6-68.el8_10.aarch64",
+        "cups-libs-1:2.2.6-68.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "cups-2.2.6-68.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "curl-0:7.61.1-34.el8.x86_64",
+        "libcurl-minimal-0:7.61.1-34.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "curl-7.61.1-34.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "curl-0:7.61.1-34.el8_10.13.x86_64",
+        "libcurl-minimal-0:7.61.1-34.el8_10.13.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "curl-7.61.1-34.el8_10.13.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "cyrus-sasl-lib-0:2.1.27-6.el8_5.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "cyrus-sasl-2.1.27-6.el8_5.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "dbus-1:1.12.8-26.el8.x86_64",
+        "dbus-common-1:1.12.8-26.el8.noarch",
+        "dbus-daemon-1:1.12.8-26.el8.x86_64",
+        "dbus-libs-1:1.12.8-26.el8.x86_64",
+        "dbus-tools-1:1.12.8-26.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "dbus-1.12.8-26.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "dbus-1:1.12.8-28.el8_10.aarch64",
+        "dbus-1:1.12.8-28.el8_10.x86_64",
+        "dbus-common-1:1.12.8-28.el8_10.noarch",
+        "dbus-daemon-1:1.12.8-28.el8_10.aarch64",
+        "dbus-daemon-1:1.12.8-28.el8_10.x86_64",
+        "dbus-devel-1:1.12.8-28.el8_10.aarch64",
+        "dbus-devel-1:1.12.8-28.el8_10.x86_64",
+        "dbus-libs-1:1.12.8-28.el8_10.aarch64",
+        "dbus-libs-1:1.12.8-28.el8_10.x86_64",
+        "dbus-tools-1:1.12.8-28.el8_10.aarch64",
+        "dbus-tools-1:1.12.8-28.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "dbus-1.12.8-28.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "dejagnu-1:1.6.1-2.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-gcc-test-el8-x86_64.json"
+      ],
+      "source_rpm": "dejagnu-1.6.1-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "dejavu-fonts-common-0:2.35-7.el8.noarch",
+        "dejavu-sans-fonts-0:2.35-7.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "dejavu-fonts-2.35-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "diffutils-0:3.6-6.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "diffutils-3.6-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "dnf-0:4.7.0-20.el8.noarch",
+        "dnf-data-0:4.7.0-20.el8.noarch",
+        "python3-dnf-0:4.7.0-20.el8.noarch",
+        "yum-0:4.7.0-20.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "dnf-4.7.0-20.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "dwz-0:0.12-10.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "dwz-0.12-10.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libcom_err-0:1.45.6-5.el8.x86_64",
+        "libcom_err-devel-0:1.45.6-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "e2fsprogs-1.45.6-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libcom_err-0:1.45.6-7.el8_10.aarch64",
+        "libcom_err-0:1.45.6-7.el8_10.x86_64",
+        "libcom_err-devel-0:1.45.6-7.el8_10.aarch64",
+        "libcom_err-devel-0:1.45.6-7.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "e2fsprogs-1.45.6-7.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "efi-srpm-macros-0:3-3.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "efi-rpm-macros-3-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "elfutils-0:0.190-2.el8.x86_64",
+        "elfutils-debuginfod-client-0:0.190-2.el8.x86_64",
+        "elfutils-default-yama-scope-0:0.190-2.el8.noarch",
+        "elfutils-libelf-0:0.190-2.el8.aarch64",
+        "elfutils-libelf-0:0.190-2.el8.x86_64",
+        "elfutils-libs-0:0.190-2.el8.aarch64",
+        "elfutils-libs-0:0.190-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "elfutils-0.190-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "emacs-filesystem-1:26.1-15.el8_10.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "emacs-26.1-15.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "environment-modules-0:4.5.2-4.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "environment-modules-4.5.2-4.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "expat-0:2.2.5-13.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "expat-2.2.5-13.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "expat-0:2.5.0-2.el8_10.aarch64",
+        "expat-0:2.5.0-2.el8_10.x86_64",
+        "expat-devel-0:2.5.0-2.el8_10.aarch64",
+        "expat-devel-0:2.5.0-2.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "expat-2.5.0-2.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "expect-0:5.45.4-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-gcc-test-el8-x86_64.json"
+      ],
+      "source_rpm": "expect-5.45.4-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "file-libs-0:5.33-26.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "file-5.33-26.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "file-0:5.33-27.el8_10.x86_64",
+        "file-libs-0:5.33-27.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "file-5.33-27.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "filesystem-0:3.8-6.el8.aarch64",
+        "filesystem-0:3.8-6.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "filesystem-3.8-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "findutils-1:4.6.0-24.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "findutils-4.6.0-24.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "flac-libs-0:1.3.2-11.el8.aarch64",
+        "flac-libs-0:1.3.2-11.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "flac-1.3.2-11.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "flex-0:2.6.1-9.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-gcc-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "flex-2.6.1-9.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "fontconfig-0:2.13.1-4.el8.aarch64",
+        "fontconfig-0:2.13.1-4.el8.x86_64",
+        "fontconfig-devel-0:2.13.1-4.el8.aarch64",
+        "fontconfig-devel-0:2.13.1-4.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "fontconfig-2.13.1-4.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "fontpackages-filesystem-0:1.44-22.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "fontpackages-1.44-22.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "freetype-0:2.9.1-10.el8_10.aarch64",
+        "freetype-0:2.9.1-10.el8_10.x86_64",
+        "freetype-devel-0:2.9.1-10.el8_10.aarch64",
+        "freetype-devel-0:2.9.1-10.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "freetype-2.9.1-10.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gawk-0:4.2.1-4.el8.aarch64",
+        "gawk-0:4.2.1-4.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "gawk-4.2.1-4.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gc-0:7.6.4-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "gc-7.6.4-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "cpp-0:8.5.0-22.el8_10.x86_64",
+        "gcc-0:8.5.0-22.el8_10.x86_64",
+        "libgcc-0:8.5.0-22.el8_10.x86_64",
+        "libgomp-0:8.5.0-22.el8_10.x86_64",
+        "libstdc++-0:8.5.0-22.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "gcc-8.5.0-22.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "cpp-0:8.5.0-28.el8_10.x86_64",
+        "gcc-0:8.5.0-28.el8_10.x86_64",
+        "gcc-plugin-annobin-0:8.5.0-28.el8_10.x86_64",
+        "libatomic-0:8.5.0-28.el8_10.aarch64",
+        "libatomic-0:8.5.0-28.el8_10.x86_64",
+        "libgcc-0:8.5.0-28.el8_10.aarch64",
+        "libgcc-0:8.5.0-28.el8_10.x86_64",
+        "libgomp-0:8.5.0-28.el8_10.aarch64",
+        "libgomp-0:8.5.0-28.el8_10.x86_64",
+        "libstdc++-0:8.5.0-28.el8_10.aarch64",
+        "libstdc++-0:8.5.0-28.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-gcc-test-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "gcc-8.5.0-28.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gcc-toolset-15-runtime-0:15.0-9.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "gcc-toolset-15-15.0-9.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gcc-toolset-15-binutils-0:2.44-3.el8.x86_64"
+      ],
+      "content": {
+        "sha256": "d47b3f86eb62be337ffb6110c7513a63a62ac4bcf280ad1e80055c1af8b17117",
+        "signature": {
+          "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60",
+          "key_sha256": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab"
+        },
+        "size": 28611047,
+        "status": "locked",
+        "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/source/tree/Packages/g/gcc-toolset-15-binutils-2.44-3.el8.src.rpm"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "gcc-toolset-15-binutils-2.44-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gcc-toolset-15-gcc-0:15.2.1-7.1.el8_10.x86_64",
+        "gcc-toolset-15-gcc-c++-0:15.2.1-7.1.el8_10.x86_64",
+        "gcc-toolset-15-libatomic-devel-0:15.2.1-7.1.el8_10.x86_64",
+        "gcc-toolset-15-libstdc++-devel-0:15.2.1-7.1.el8_10.x86_64"
+      ],
+      "content": {
+        "sha256": "b7245477ce388b9c9758a4e0b0610af495da6a1961bf5bab9305d8560cfbbd82",
+        "signature": {
+          "fingerprint": "7051c470a929f454cebe37b715af5dac6d745a60",
+          "key_sha256": "ef1ca99bba38bb2869a06fbf46860fcdaeece796be98f8dfb0160b84bdbc69ab"
+        },
+        "size": 97511212,
+        "status": "locked",
+        "url": "https://download.rockylinux.org/pub/rocky/8.10/AppStream/source/tree/Packages/g/gcc-toolset-15-gcc-15.2.1-7.1.el8_10.src.rpm"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "gcc-toolset-15-gcc-15.2.1-7.1.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gdb-headless-0:8.2-20.el8.0.1.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "gdb-8.2-20.el8.0.1.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gdbm-1:1.18-2.el8.aarch64",
+        "gdbm-1:1.18-2.el8.x86_64",
+        "gdbm-libs-1:1.18-2.el8.aarch64",
+        "gdbm-libs-1:1.18-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "gdbm-1.18-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gettext-0:0.19.8.1-17.el8.aarch64",
+        "gettext-0:0.19.8.1-17.el8.x86_64",
+        "gettext-libs-0:0.19.8.1-17.el8.aarch64",
+        "gettext-libs-0:0.19.8.1-17.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "gettext-0.19.8.1-17.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "ghc-srpm-macros-0:1.4.2-7.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "ghc-srpm-macros-1.4.2-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "git-core-0:2.43.7-1.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "git-2.43.7-1.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "glib2-0:2.56.4-164.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "glib2-2.56.4-164.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "glib2-0:2.56.4-177.el8_10.aarch64",
+        "glib2-0:2.56.4-177.el8_10.x86_64",
+        "glib2-devel-0:2.56.4-177.el8_10.aarch64",
+        "glib2-devel-0:2.56.4-177.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "glib2-2.56.4-177.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "glibc-0:2.28-251.el8_10.2.x86_64",
+        "glibc-common-0:2.28-251.el8_10.2.x86_64",
+        "glibc-minimal-langpack-0:2.28-251.el8_10.2.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "glibc-2.28-251.el8_10.2.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "glibc-0:2.28-251.el8_10.40.aarch64",
+        "glibc-0:2.28-251.el8_10.40.x86_64",
+        "glibc-all-langpacks-0:2.28-251.el8_10.40.aarch64",
+        "glibc-all-langpacks-0:2.28-251.el8_10.40.x86_64",
+        "glibc-common-0:2.28-251.el8_10.40.aarch64",
+        "glibc-common-0:2.28-251.el8_10.40.x86_64",
+        "glibc-devel-0:2.28-251.el8_10.40.aarch64",
+        "glibc-devel-0:2.28-251.el8_10.40.x86_64",
+        "glibc-gconv-extra-0:2.28-251.el8_10.40.x86_64",
+        "glibc-headers-0:2.28-251.el8_10.40.aarch64",
+        "glibc-headers-0:2.28-251.el8_10.40.x86_64",
+        "glibc-minimal-langpack-0:2.28-251.el8_10.40.aarch64",
+        "glibc-minimal-langpack-0:2.28-251.el8_10.40.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "glibc-2.28-251.el8_10.40.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gmp-1:6.1.2-12.el8.aarch64",
+        "gmp-1:6.1.2-12.el8.x86_64",
+        "gmp-c++-1:6.1.2-12.el8.aarch64",
+        "gmp-c++-1:6.1.2-12.el8.x86_64",
+        "gmp-devel-1:6.1.2-12.el8.aarch64",
+        "gmp-devel-1:6.1.2-12.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "gmp-6.1.2-12.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gnupg2-0:2.2.20-3.el8_6.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "gnupg2-2.2.20-3.el8_6.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gnutls-0:3.6.16-8.el8_10.2.x86_64",
+        "gnutls-c++-0:3.6.16-8.el8_10.2.x86_64",
+        "gnutls-dane-0:3.6.16-8.el8_10.2.x86_64",
+        "gnutls-devel-0:3.6.16-8.el8_10.2.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "gnutls-3.6.16-8.el8_10.2.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gnutls-0:3.6.16-8.el8_10.6.aarch64",
+        "gnutls-0:3.6.16-8.el8_10.6.x86_64",
+        "gnutls-c++-0:3.6.16-8.el8_10.6.aarch64",
+        "gnutls-c++-0:3.6.16-8.el8_10.6.x86_64",
+        "gnutls-dane-0:3.6.16-8.el8_10.6.aarch64",
+        "gnutls-dane-0:3.6.16-8.el8_10.6.x86_64",
+        "gnutls-devel-0:3.6.16-8.el8_10.6.aarch64",
+        "gnutls-devel-0:3.6.16-8.el8_10.6.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "gnutls-3.6.16-8.el8_10.6.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "go-srpm-macros-0:2-17.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "go-srpm-macros-2-17.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gperf-0:3.1-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "gperf-3.1-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gpgme-0:1.13.1-12.el8.x86_64",
+        "python3-gpg-0:1.13.1-12.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "gpgme-1.13.1-12.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "grep-0:3.1-6.el8.aarch64",
+        "grep-0:3.1-6.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "grep-3.1-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "groff-base-0:1.22.3-18.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "groff-1.22.3-18.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gsm-0:1.0.17-5.el8.aarch64",
+        "gsm-0:1.0.17-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "gsm-1.0.17-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "guile-5:2.0.14-7.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "guile-2.0.14-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "gzip-0:1.9-13.el8_5.aarch64",
+        "gzip-0:1.9-13.el8_5.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "gzip-1.9-13.el8_5.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "hostname-0:3.20-6.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "hostname-3.20-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "hwdata-0:0.314-8.22.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "hwdata-0.314-8.22.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "ima-evm-utils-0:1.3.2-12.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "ima-evm-utils-1.3.2-12.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "iputils-0:20180629-11.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "iputils-20180629-11.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "isl-0:0.16.1-6.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-gcc-test-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "isl-0.16.1-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "iso-codes-0:3.79-2.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "iso-codes-3.79-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "jansson-0:2.14-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "jansson-2.14-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "json-c-0:0.13.1-3.el8.aarch64",
+        "json-c-0:0.13.1-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "json-c-0.13.1-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "kernel-headers-0:4.18.0-553.158.1.el8_10.aarch64",
+        "kernel-headers-0:4.18.0-553.158.1.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "kernel-4.18.0-553.158.1.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "keyutils-libs-0:1.5.10-9.el8.aarch64",
+        "keyutils-libs-0:1.5.10-9.el8.x86_64",
+        "keyutils-libs-devel-0:1.5.10-9.el8.aarch64",
+        "keyutils-libs-devel-0:1.5.10-9.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "keyutils-1.5.10-9.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "kmod-libs-0:25-20.el8.aarch64",
+        "kmod-libs-0:25-20.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "kmod-25-20.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "krb5-devel-0:1.18.2-27.el8_10.x86_64",
+        "krb5-libs-0:1.18.2-27.el8_10.x86_64",
+        "libkadm5-0:1.18.2-27.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "krb5-1.18.2-27.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "krb5-devel-0:1.18.2-34.el8_10.aarch64",
+        "krb5-devel-0:1.18.2-34.el8_10.x86_64",
+        "krb5-libs-0:1.18.2-34.el8_10.aarch64",
+        "krb5-libs-0:1.18.2-34.el8_10.x86_64",
+        "libkadm5-0:1.18.2-34.el8_10.aarch64",
+        "libkadm5-0:1.18.2-34.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "krb5-1.18.2-34.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "langpacks-en-0:1.0-12.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "langpacks-1.0-12.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "less-0:530-2.el8_9.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "less-530-2.el8_9.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libICE-0:1.0.9-15.el8.aarch64",
+        "libICE-0:1.0.9-15.el8.x86_64",
+        "libICE-devel-0:1.0.9-15.el8.aarch64",
+        "libICE-devel-0:1.0.9-15.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libICE-1.0.9-15.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libSM-0:1.2.3-1.el8.aarch64",
+        "libSM-0:1.2.3-1.el8.x86_64",
+        "libSM-devel-0:1.2.3-1.el8.aarch64",
+        "libSM-devel-0:1.2.3-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libSM-1.2.3-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libX11-0:1.6.8-9.el8_10.aarch64",
+        "libX11-0:1.6.8-9.el8_10.x86_64",
+        "libX11-common-0:1.6.8-9.el8_10.noarch",
+        "libX11-devel-0:1.6.8-9.el8_10.aarch64",
+        "libX11-devel-0:1.6.8-9.el8_10.x86_64",
+        "libX11-xcb-0:1.6.8-9.el8_10.aarch64",
+        "libX11-xcb-0:1.6.8-9.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libX11-1.6.8-9.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXau-0:1.0.9-3.el8.aarch64",
+        "libXau-0:1.0.9-3.el8.x86_64",
+        "libXau-devel-0:1.0.9-3.el8.aarch64",
+        "libXau-devel-0:1.0.9-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXau-1.0.9-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXcomposite-0:0.4.4-14.el8.aarch64",
+        "libXcomposite-0:0.4.4-14.el8.x86_64",
+        "libXcomposite-devel-0:0.4.4-14.el8.aarch64",
+        "libXcomposite-devel-0:0.4.4-14.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXcomposite-0.4.4-14.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXcursor-0:1.1.15-3.el8.aarch64",
+        "libXcursor-0:1.1.15-3.el8.x86_64",
+        "libXcursor-devel-0:1.1.15-3.el8.aarch64",
+        "libXcursor-devel-0:1.1.15-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXcursor-1.1.15-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXdamage-0:1.1.4-14.el8.aarch64",
+        "libXdamage-0:1.1.4-14.el8.x86_64",
+        "libXdamage-devel-0:1.1.4-14.el8.aarch64",
+        "libXdamage-devel-0:1.1.4-14.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXdamage-1.1.4-14.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXext-0:1.3.4-1.el8.aarch64",
+        "libXext-0:1.3.4-1.el8.x86_64",
+        "libXext-devel-0:1.3.4-1.el8.aarch64",
+        "libXext-devel-0:1.3.4-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXext-1.3.4-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXfixes-0:5.0.3-7.el8.aarch64",
+        "libXfixes-0:5.0.3-7.el8.x86_64",
+        "libXfixes-devel-0:5.0.3-7.el8.aarch64",
+        "libXfixes-devel-0:5.0.3-7.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXfixes-5.0.3-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXi-0:1.7.10-1.el8.aarch64",
+        "libXi-0:1.7.10-1.el8.x86_64",
+        "libXi-devel-0:1.7.10-1.el8.aarch64",
+        "libXi-devel-0:1.7.10-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXi-1.7.10-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXrandr-0:1.5.2-1.el8.aarch64",
+        "libXrandr-0:1.5.2-1.el8.x86_64",
+        "libXrandr-devel-0:1.5.2-1.el8.aarch64",
+        "libXrandr-devel-0:1.5.2-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXrandr-1.5.2-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXrender-0:0.9.10-7.el8.aarch64",
+        "libXrender-0:0.9.10-7.el8.x86_64",
+        "libXrender-devel-0:0.9.10-7.el8.aarch64",
+        "libXrender-devel-0:0.9.10-7.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXrender-0.9.10-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXtst-0:1.2.3-7.el8.aarch64",
+        "libXtst-0:1.2.3-7.el8.x86_64",
+        "libXtst-devel-0:1.2.3-7.el8.aarch64",
+        "libXtst-devel-0:1.2.3-7.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXtst-1.2.3-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libXxf86vm-0:1.1.4-9.el8.aarch64",
+        "libXxf86vm-0:1.1.4-9.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libXxf86vm-1.1.4-9.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libarchive-0:3.3.3-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libarchive-3.3.3-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libassuan-0:2.5.1-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libassuan-2.5.1-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libasyncns-0:0.8-14.el8.aarch64",
+        "libasyncns-0:0.8-14.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libasyncns-0.8-14.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libatomic_ops-0:7.6.2-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "libatomic_ops-7.6.2-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libcap-0:2.48-6.el8_10.1.aarch64",
+        "libcap-0:2.48-6.el8_10.1.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "libcap-2.48-6.el8_10.1.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libcap-0:2.48-6.el8_9.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libcap-2.48-6.el8_9.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libcap-ng-0:0.7.11-1.el8.aarch64",
+        "libcap-ng-0:0.7.11-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libcap-ng-0.7.11-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libcomps-0:0.1.18-1.el8.x86_64",
+        "python3-libcomps-0:0.1.18-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libcomps-0.1.18-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libcroco-0:0.6.12-4.el8_2.1.aarch64",
+        "libcroco-0:0.6.12-4.el8_2.1.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libcroco-0.6.12-4.el8_2.1.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libdb-0:5.3.28-42.el8_4.aarch64",
+        "libdb-0:5.3.28-42.el8_4.x86_64",
+        "libdb-utils-0:5.3.28-42.el8_4.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libdb-5.3.28-42.el8_4.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libdnf-0:0.63.0-19.el8.x86_64",
+        "python3-hawkey-0:0.63.0-19.el8.x86_64",
+        "python3-libdnf-0:0.63.0-19.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libdnf-0.63.0-19.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libdrm-0:2.4.115-2.el8.aarch64",
+        "libdrm-0:2.4.115-2.el8.x86_64",
+        "libdrm-devel-0:2.4.115-2.el8.aarch64",
+        "libdrm-devel-0:2.4.115-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libdrm-2.4.115-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libedit-0:3.1-23.20170329cvs.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "libedit-3.1-23.20170329cvs.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libevdev-0:1.10.0-1.el8.aarch64",
+        "libevdev-0:1.10.0-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libevdev-1.10.0-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libevent-0:2.1.8-5.el8.aarch64",
+        "libevent-0:2.1.8-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libevent-2.1.8-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libffi-0:3.1-24.el8.aarch64",
+        "libffi-0:3.1-24.el8.x86_64",
+        "libffi-devel-0:3.1-24.el8.aarch64",
+        "libffi-devel-0:3.1-24.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "libffi-3.1-24.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libgcrypt-0:1.8.5-7.el8_6.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libgcrypt-1.8.5-7.el8_6.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libgcrypt-0:1.8.5-8.el8_10.aarch64",
+        "libgcrypt-0:1.8.5-8.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libgcrypt-1.8.5-8.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libglvnd-1:1.3.4-2.el8.aarch64",
+        "libglvnd-1:1.3.4-2.el8.x86_64",
+        "libglvnd-core-devel-1:1.3.4-2.el8.aarch64",
+        "libglvnd-core-devel-1:1.3.4-2.el8.x86_64",
+        "libglvnd-devel-1:1.3.4-2.el8.aarch64",
+        "libglvnd-devel-1:1.3.4-2.el8.x86_64",
+        "libglvnd-egl-1:1.3.4-2.el8.aarch64",
+        "libglvnd-egl-1:1.3.4-2.el8.x86_64",
+        "libglvnd-gles-1:1.3.4-2.el8.aarch64",
+        "libglvnd-gles-1:1.3.4-2.el8.x86_64",
+        "libglvnd-glx-1:1.3.4-2.el8.aarch64",
+        "libglvnd-glx-1:1.3.4-2.el8.x86_64",
+        "libglvnd-opengl-1:1.3.4-2.el8.aarch64",
+        "libglvnd-opengl-1:1.3.4-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libglvnd-1.3.4-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libgpg-error-0:1.31-1.el8.aarch64",
+        "libgpg-error-0:1.31-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libgpg-error-1.31-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libgudev-0:232-4.el8.aarch64",
+        "libgudev-0:232-4.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libgudev-232-4.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libidn2-0:2.2.0-1.el8.aarch64",
+        "libidn2-0:2.2.0-1.el8.x86_64",
+        "libidn2-devel-0:2.2.0-1.el8.aarch64",
+        "libidn2-devel-0:2.2.0-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libidn2-2.2.0-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libinput-0:1.16.3-3.el8_6.aarch64",
+        "libinput-0:1.16.3-3.el8_6.x86_64",
+        "libinput-devel-0:1.16.3-3.el8_6.aarch64",
+        "libinput-devel-0:1.16.3-3.el8_6.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libinput-1.16.3-3.el8_6.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libipt-0:1.6.1-8.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "libipt-1.6.1-8.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libjpeg-turbo-0:1.5.3-14.el8_10.aarch64",
+        "libjpeg-turbo-0:1.5.3-14.el8_10.x86_64",
+        "libjpeg-turbo-devel-0:1.5.3-14.el8_10.aarch64",
+        "libjpeg-turbo-devel-0:1.5.3-14.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libjpeg-turbo-1.5.3-14.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libksba-0:1.3.5-9.el8_7.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libksba-1.3.5-9.el8_7.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libmodulemd-0:2.13.0-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libmodulemd-2.13.0-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libmpc-0:1.1.0-9.1.el8.x86_64",
+        "libmpc-devel-0:1.1.0-9.1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "libmpc-1.1.0-9.1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libnsl2-0:1.2.0-2.20180605git4a062cf.el8.aarch64",
+        "libnsl2-0:1.2.0-2.20180605git4a062cf.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libnsl2-1.2.0-2.20180605git4a062cf.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libogg-2:1.3.2-10.el8.aarch64",
+        "libogg-2:1.3.2-10.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libogg-1.3.2-10.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libpciaccess-0:0.14-1.el8.x86_64",
+        "libpciaccess-devel-0:0.14-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libpciaccess-0.14-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libpipeline-0:1.5.0-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "libpipeline-1.5.0-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libpng-2:1.6.34-11.el8_10.aarch64",
+        "libpng-2:1.6.34-11.el8_10.x86_64",
+        "libpng-devel-2:1.6.34-11.el8_10.aarch64",
+        "libpng-devel-2:1.6.34-11.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libpng-1.6.34-11.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libpwquality-0:1.4.4-6.el8.aarch64",
+        "libpwquality-0:1.4.4-6.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libpwquality-1.4.4-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "librepo-0:1.14.2-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "librepo-1.14.2-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libreport-filesystem-0:2.9.5-15.el8.rocky.6.3.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libreport-2.9.5-15.el8.rocky.6.3.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libseccomp-0:2.5.2-1.el8.aarch64",
+        "libseccomp-0:2.5.2-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libseccomp-2.5.2-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libselinux-0:2.9-11.el8_10.aarch64",
+        "libselinux-0:2.9-11.el8_10.x86_64",
+        "libselinux-devel-0:2.9-11.el8_10.aarch64",
+        "libselinux-devel-0:2.9-11.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "libselinux-2.9-11.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libselinux-0:2.9-8.el8.x86_64",
+        "libselinux-devel-0:2.9-8.el8.x86_64",
+        "libselinux-utils-0:2.9-8.el8.x86_64",
+        "python3-libselinux-0:2.9-8.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "libselinux-2.9-8.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libsemanage-0:2.9-12.el8_10.aarch64",
+        "libsemanage-0:2.9-12.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libsemanage-2.9-12.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libsemanage-0:2.9-9.el8_6.x86_64",
+        "python3-libsemanage-0:2.9-9.el8_6.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "libsemanage-2.9-9.el8_6.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libsepol-0:2.9-3.el8.aarch64",
+        "libsepol-0:2.9-3.el8.x86_64",
+        "libsepol-devel-0:2.9-3.el8.aarch64",
+        "libsepol-devel-0:2.9-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "libsepol-2.9-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libsigsegv-0:2.11-5.el8.aarch64",
+        "libsigsegv-0:2.11-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "libsigsegv-2.11-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libsndfile-0:1.0.28-17.el8_10.aarch64",
+        "libsndfile-0:1.0.28-17.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libsndfile-1.0.28-17.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libsolv-0:0.7.20-6.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libsolv-0.7.20-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libtasn1-0:4.13-4.el8_7.x86_64",
+        "libtasn1-devel-0:4.13-4.el8_7.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "libtasn1-4.13-4.el8_7.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libtasn1-0:4.13-6.el8_10.aarch64",
+        "libtasn1-0:4.13-6.el8_10.x86_64",
+        "libtasn1-devel-0:4.13-6.el8_10.aarch64",
+        "libtasn1-devel-0:4.13-6.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "libtasn1-4.13-6.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libtirpc-0:1.1.4-11.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libtirpc-1.1.4-11.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libtirpc-0:1.1.4-12.el8_10.aarch64",
+        "libtirpc-0:1.1.4-12.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libtirpc-1.1.4-12.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libtool-0:2.4.6-25.el8.x86_64",
+        "libtool-ltdl-0:2.4.6-25.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "libtool-2.4.6-25.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libunistring-0:0.9.9-3.el8.aarch64",
+        "libunistring-0:0.9.9-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libunistring-0.9.9-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libusbx-0:1.0.23-4.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libusbx-1.0.23-4.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libutempter-0:1.1.6-14.el8.aarch64",
+        "libutempter-0:1.1.6-14.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libutempter-1.1.6-14.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libuv-1:1.41.1-2.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "libuv-1.41.1-2.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libverto-0:0.3.2-2.el8.aarch64",
+        "libverto-0:0.3.2-2.el8.x86_64",
+        "libverto-devel-0:0.3.2-2.el8.aarch64",
+        "libverto-devel-0:0.3.2-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "libverto-0.3.2-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libvorbis-1:1.3.6-2.el8.aarch64",
+        "libvorbis-1:1.3.6-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libvorbis-1.3.6-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libwacom-0:1.6-3.el8.aarch64",
+        "libwacom-0:1.6-3.el8.x86_64",
+        "libwacom-data-0:1.6-3.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libwacom-1.6-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libxcb-0:1.13.1-1.el8.aarch64",
+        "libxcb-0:1.13.1-1.el8.x86_64",
+        "libxcb-devel-0:1.13.1-1.el8.aarch64",
+        "libxcb-devel-0:1.13.1-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libxcb-1.13.1-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libxcrypt-0:4.1.1-6.el8.aarch64",
+        "libxcrypt-0:4.1.1-6.el8.x86_64",
+        "libxcrypt-devel-0:4.1.1-6.el8.aarch64",
+        "libxcrypt-devel-0:4.1.1-6.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "libxcrypt-4.1.1-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libxkbcommon-0:0.9.1-1.el8.aarch64",
+        "libxkbcommon-0:0.9.1-1.el8.x86_64",
+        "libxkbcommon-devel-0:0.9.1-1.el8.aarch64",
+        "libxkbcommon-devel-0:0.9.1-1.el8.x86_64",
+        "libxkbcommon-x11-0:0.9.1-1.el8.aarch64",
+        "libxkbcommon-x11-0:0.9.1-1.el8.x86_64",
+        "libxkbcommon-x11-devel-0:0.9.1-1.el8.aarch64",
+        "libxkbcommon-x11-devel-0:0.9.1-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libxkbcommon-0.9.1-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libxkbfile-0:1.1.0-1.el8.aarch64",
+        "libxkbfile-0:1.1.0-1.el8.x86_64",
+        "libxkbfile-devel-0:1.1.0-1.el8.aarch64",
+        "libxkbfile-devel-0:1.1.0-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libxkbfile-1.1.0-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libxml2-0:2.9.7-18.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libxml2-2.9.7-18.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libxml2-0:2.9.7-21.el8_10.7.aarch64",
+        "libxml2-0:2.9.7-21.el8_10.7.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libxml2-2.9.7-21.el8_10.7.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libxshmfence-0:1.3-2.el8.aarch64",
+        "libxshmfence-0:1.3-2.el8.x86_64",
+        "libxshmfence-devel-0:1.3-2.el8.aarch64",
+        "libxshmfence-devel-0:1.3-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "libxshmfence-1.3-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libyaml-0:0.1.7-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "libyaml-0.1.7-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "lua-libs-0:5.3.4-12.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "lua-5.3.4-12.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "device-mapper-8:1.02.181-14.el8.x86_64",
+        "device-mapper-libs-8:1.02.181-14.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "lvm2-2.03.14-14.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "device-mapper-8:1.02.181-15.el8_10.3.aarch64",
+        "device-mapper-8:1.02.181-15.el8_10.3.x86_64",
+        "device-mapper-libs-8:1.02.181-15.el8_10.3.aarch64",
+        "device-mapper-libs-8:1.02.181-15.el8_10.3.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "lvm2-2.03.14-15.el8_10.3.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "lz4-libs-0:1.8.3-3.el8_4.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "lz4-1.8.3-3.el8_4.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "lz4-libs-0:1.8.3-5.el8_10.aarch64",
+        "lz4-libs-0:1.8.3-5.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "lz4-1.8.3-5.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "m4-0:1.4.18-7.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-gcc-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "m4-1.4.18-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "make-1:4.2.1-11.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "make-4.2.1-11.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "man-db-0:2.7.6.1-18.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "man-db-2.7.6.1-18.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "mesa-libEGL-0:23.1.4-4.el8_10.aarch64",
+        "mesa-libEGL-0:23.1.4-4.el8_10.x86_64",
+        "mesa-libEGL-devel-0:23.1.4-4.el8_10.aarch64",
+        "mesa-libEGL-devel-0:23.1.4-4.el8_10.x86_64",
+        "mesa-libGL-0:23.1.4-4.el8_10.aarch64",
+        "mesa-libGL-0:23.1.4-4.el8_10.x86_64",
+        "mesa-libGL-devel-0:23.1.4-4.el8_10.aarch64",
+        "mesa-libGL-devel-0:23.1.4-4.el8_10.x86_64",
+        "mesa-libgbm-0:23.1.4-4.el8_10.aarch64",
+        "mesa-libgbm-0:23.1.4-4.el8_10.x86_64",
+        "mesa-libgbm-devel-0:23.1.4-4.el8_10.aarch64",
+        "mesa-libgbm-devel-0:23.1.4-4.el8_10.x86_64",
+        "mesa-libglapi-0:23.1.4-4.el8_10.aarch64",
+        "mesa-libglapi-0:23.1.4-4.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "mesa-23.1.4-4.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "meson-0:0.58.2-2.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "meson-0.58.2-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "mpfr-0:3.1.6-1.el8.aarch64",
+        "mpfr-0:3.1.6-1.el8.x86_64",
+        "mpfr-devel-0:3.1.6-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "mpfr-3.1.6-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "mtdev-0:1.1.5-12.el8.aarch64",
+        "mtdev-0:1.1.5-12.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "mtdev-1.1.5-12.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "ncurses-0:6.1-10.20180224.el8.aarch64",
+        "ncurses-0:6.1-10.20180224.el8.x86_64",
+        "ncurses-base-0:6.1-10.20180224.el8.noarch",
+        "ncurses-libs-0:6.1-10.20180224.el8.aarch64",
+        "ncurses-libs-0:6.1-10.20180224.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "ncurses-6.1-10.20180224.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "nettle-0:3.4.1-7.el8.aarch64",
+        "nettle-0:3.4.1-7.el8.x86_64",
+        "nettle-devel-0:3.4.1-7.el8.aarch64",
+        "nettle-devel-0:3.4.1-7.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "nettle-3.4.1-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libnghttp2-0:1.33.0-5.el8_8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "nghttp2-1.33.0-5.el8_8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "ninja-build-0:1.8.2-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "ninja-build-1.8.2-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "nodejs-1:20.20.2-1.module+el8.10.0+40175+15dc0b4a.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "nodejs-20.20.2-1.module+el8.10.0+40175+15dc0b4a.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "npth-0:1.5-4.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "npth-1.5-4.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "nspr-0:4.36.0-2.el8_10.aarch64",
+        "nspr-0:4.36.0-2.el8_10.x86_64",
+        "nspr-devel-0:4.36.0-2.el8_10.aarch64",
+        "nspr-devel-0:4.36.0-2.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "nspr-4.36.0-2.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "nss-0:3.112.0-8.el8_10.aarch64",
+        "nss-0:3.112.0-8.el8_10.x86_64",
+        "nss-devel-0:3.112.0-8.el8_10.aarch64",
+        "nss-devel-0:3.112.0-8.el8_10.x86_64",
+        "nss-softokn-0:3.112.0-8.el8_10.aarch64",
+        "nss-softokn-0:3.112.0-8.el8_10.x86_64",
+        "nss-softokn-devel-0:3.112.0-8.el8_10.aarch64",
+        "nss-softokn-devel-0:3.112.0-8.el8_10.x86_64",
+        "nss-softokn-freebl-0:3.112.0-8.el8_10.aarch64",
+        "nss-softokn-freebl-0:3.112.0-8.el8_10.x86_64",
+        "nss-softokn-freebl-devel-0:3.112.0-8.el8_10.aarch64",
+        "nss-softokn-freebl-devel-0:3.112.0-8.el8_10.x86_64",
+        "nss-sysinit-0:3.112.0-8.el8_10.aarch64",
+        "nss-sysinit-0:3.112.0-8.el8_10.x86_64",
+        "nss-util-0:3.112.0-8.el8_10.aarch64",
+        "nss-util-0:3.112.0-8.el8_10.x86_64",
+        "nss-util-devel-0:3.112.0-8.el8_10.aarch64",
+        "nss-util-devel-0:3.112.0-8.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "nss-3.112.0-8.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "ocaml-srpm-macros-0:5-4.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "ocaml-srpm-macros-5-4.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "openblas-srpm-macros-0:2-2.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "openblas-srpm-macros-2-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "openldap-0:2.4.46-18.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "openldap-2.4.46-18.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "openssh-0:8.0p1-30.el8_10.x86_64",
+        "openssh-clients-0:8.0p1-30.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "openssh-8.0p1-30.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "openssl-1:1.1.1k-12.el8_9.x86_64",
+        "openssl-libs-1:1.1.1k-12.el8_9.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "openssl-1.1.1k-12.el8_9.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "openssl-1:1.1.1k-17.el8_10.x86_64",
+        "openssl-devel-1:1.1.1k-17.el8_10.aarch64",
+        "openssl-devel-1:1.1.1k-17.el8_10.x86_64",
+        "openssl-libs-1:1.1.1k-17.el8_10.aarch64",
+        "openssl-libs-1:1.1.1k-17.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "openssl-1.1.1k-17.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "p11-kit-0:0.23.22-2.el8.aarch64",
+        "p11-kit-0:0.23.22-2.el8.x86_64",
+        "p11-kit-devel-0:0.23.22-2.el8.aarch64",
+        "p11-kit-devel-0:0.23.22-2.el8.x86_64",
+        "p11-kit-trust-0:0.23.22-2.el8.aarch64",
+        "p11-kit-trust-0:0.23.22-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "p11-kit-0.23.22-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "pam-0:1.3.1-33.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "pam-1.3.1-33.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "pam-0:1.3.1-40.el8_10.aarch64",
+        "pam-0:1.3.1-40.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "pam-1.3.1-40.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "patch-0:2.7.6-11.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "patch-2.7.6-11.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "pciutils-devel-0:3.7.0-3.el8.aarch64",
+        "pciutils-devel-0:3.7.0-3.el8.x86_64",
+        "pciutils-libs-0:3.7.0-3.el8.aarch64",
+        "pciutils-libs-0:3.7.0-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "pciutils-3.7.0-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "pcre-0:8.42-6.el8.aarch64",
+        "pcre-0:8.42-6.el8.x86_64",
+        "pcre-cpp-0:8.42-6.el8.aarch64",
+        "pcre-cpp-0:8.42-6.el8.x86_64",
+        "pcre-devel-0:8.42-6.el8.aarch64",
+        "pcre-devel-0:8.42-6.el8.x86_64",
+        "pcre-utf16-0:8.42-6.el8.aarch64",
+        "pcre-utf16-0:8.42-6.el8.x86_64",
+        "pcre-utf32-0:8.42-6.el8.aarch64",
+        "pcre-utf32-0:8.42-6.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "pcre-8.42-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "pcre2-0:10.32-3.el8_6.aarch64",
+        "pcre2-0:10.32-3.el8_6.x86_64",
+        "pcre2-devel-0:10.32-3.el8_6.aarch64",
+        "pcre2-devel-0:10.32-3.el8_6.x86_64",
+        "pcre2-utf16-0:10.32-3.el8_6.aarch64",
+        "pcre2-utf16-0:10.32-3.el8_6.x86_64",
+        "pcre2-utf32-0:10.32-3.el8_6.aarch64",
+        "pcre2-utf32-0:10.32-3.el8_6.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "pcre2-10.32-3.el8_6.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Errno-0:1.28-423.el8_10.x86_64",
+        "perl-IO-0:1.38-423.el8_10.x86_64",
+        "perl-Locale-Maketext-Simple-1:0.21-423.el8_10.noarch",
+        "perl-Time-Piece-0:1.31-423.el8_10.x86_64",
+        "perl-interpreter-4:5.26.3-423.el8_10.x86_64",
+        "perl-libs-4:5.26.3-423.el8_10.x86_64",
+        "perl-macros-4:5.26.3-423.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-5.26.3-423.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Carp-0:1.42-396.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Carp-1.42-396.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Data-Dumper-0:2.167-399.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Data-Dumper-2.167-399.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Digest-0:1.17-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Digest-1.17-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Digest-MD5-0:2.55-396.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Digest-MD5-2.55-396.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Encode-4:2.97-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Encode-2.97-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Exporter-0:5.72-396.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Exporter-5.72-396.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-ExtUtils-MM-Utils-1:7.34-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-ExtUtils-MakeMaker-7.34-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-File-Path-0:2.15-2.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-File-Path-2.15-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-File-Temp-0:0.230.600-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-File-Temp-0.230.600-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Getopt-Long-1:2.50-4.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Getopt-Long-2.50-4.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-HTTP-Tiny-0:0.074-3.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-HTTP-Tiny-0.074-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-IO-Socket-IP-0:0.39-5.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-IO-Socket-IP-0.39-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-IO-Socket-SSL-0:2.066-4.module+el8.9.0+1517+e71a7a62.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-IO-Socket-SSL-2.066-4.module+el8.9.0+1517+e71a7a62.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-IPC-Cmd-2:1.02-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-IPC-Cmd-1.02-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Locale-Maketext-0:1.28-396.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Locale-Maketext-1.28-396.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-MIME-Base64-0:3.15-396.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-MIME-Base64-3.15-396.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Module-CoreList-1:5.20181130-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Module-CoreList-5.20181130-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Module-Load-1:0.32-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Module-Load-0.32-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Module-Load-Conditional-0:0.68-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Module-Load-Conditional-0.68-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Module-Metadata-0:1.000033-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Module-Metadata-1.000033-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Mozilla-CA-0:20160104-7.module+el8.9.0+1521+0101edce.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Mozilla-CA-20160104-7.module+el8.9.0+1521+0101edce.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Net-SSLeay-0:1.88-2.module+el8.9.0+1517+e71a7a62.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Net-SSLeay-1.88-2.module+el8.9.0+1517+e71a7a62.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Params-Check-1:0.38-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Params-Check-0.38-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-PathTools-0:3.74-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-PathTools-3.74-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Pod-Escapes-1:1.07-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Pod-Escapes-1.07-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Pod-Perldoc-0:3.28-396.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Pod-Perldoc-3.28-396.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Pod-Simple-1:3.35-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Pod-Simple-3.35-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Pod-Usage-4:1.69-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Pod-Usage-1.69-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Scalar-List-Utils-3:1.49-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Scalar-List-Utils-1.49-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Socket-4:2.027-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Socket-2.027-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Storable-1:3.11-3.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Storable-3.11-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Term-ANSIColor-0:4.06-396.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Term-ANSIColor-4.06-396.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Term-Cap-0:1.17-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Term-Cap-1.17-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Text-ParseWords-0:3.30-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Text-ParseWords-3.30-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Text-Tabs+Wrap-0:2013.0523-395.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Text-Tabs+Wrap-2013.0523-395.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Thread-Queue-0:3.13-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Thread-Queue-3.13-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Time-HiRes-4:1.9758-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Time-HiRes-1.9758-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Time-Local-1:1.280-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Time-Local-1.280-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-URI-0:1.73-3.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-URI-1.73-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-Unicode-Normalize-0:1.25-396.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-Unicode-Normalize-1.25-396.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-constant-0:1.33-396.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-constant-1.33-396.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-libnet-0:3.11-3.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-libnet-3.11-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-parent-1:0.237-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-parent-0.237-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-podlators-0:4.11-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-podlators-4.11-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-srpm-macros-0:1-25.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-srpm-macros-1-25.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-threads-1:2.21-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-threads-2.21-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-threads-shared-0:1.58-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-threads-shared-1.58-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "perl-version-6:0.99.24-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "perl-version-0.99.24-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libpkgconf-0:1.4.2-1.el8.aarch64",
+        "libpkgconf-0:1.4.2-1.el8.x86_64",
+        "pkgconf-0:1.4.2-1.el8.aarch64",
+        "pkgconf-0:1.4.2-1.el8.x86_64",
+        "pkgconf-m4-0:1.4.2-1.el8.noarch",
+        "pkgconf-pkg-config-0:1.4.2-1.el8.aarch64",
+        "pkgconf-pkg-config-0:1.4.2-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "pkgconf-1.4.2-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "policycoreutils-0:2.9-26.el8_10.x86_64",
+        "policycoreutils-python-utils-0:2.9-26.el8_10.noarch",
+        "python3-policycoreutils-0:2.9-26.el8_10.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "policycoreutils-2.9-26.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "popt-0:1.18-1.el8.aarch64",
+        "popt-0:1.18-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "popt-1.18-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "procps-ng-0:3.3.15-14.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "procps-ng-3.3.15-14.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "pulseaudio-libs-0:14.0-4.el8.aarch64",
+        "pulseaudio-libs-0:14.0-4.el8.x86_64",
+        "pulseaudio-libs-devel-0:14.0-4.el8.aarch64",
+        "pulseaudio-libs-devel-0:14.0-4.el8.x86_64",
+        "pulseaudio-libs-glib2-0:14.0-4.el8.aarch64",
+        "pulseaudio-libs-glib2-0:14.0-4.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "pulseaudio-14.0-4.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python3-html5lib-1:0.999999999-6.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "python-html5lib-0.999999999-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "platform-python-pip-0:9.0.3-24.el8.rocky.0.noarch",
+        "python3-pip-0:9.0.3-24.el8.rocky.0.noarch",
+        "python3-pip-wheel-0:9.0.3-24.el8.rocky.0.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "python-pip-9.0.3-24.el8.rocky.0.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python3-rpm-generators-0:5-8.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "python-rpm-generators-5-8.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python-rpm-macros-0:3-45.el8.noarch",
+        "python-srpm-macros-0:3-45.el8.noarch",
+        "python3-rpm-macros-0:3-45.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "python-rpm-macros-3-45.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "platform-python-setuptools-0:39.2.0-7.el8.noarch",
+        "python3-setuptools-0:39.2.0-7.el8.noarch",
+        "python3-setuptools-wheel-0:39.2.0-7.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "python-setuptools-39.2.0-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "platform-python-setuptools-0:39.2.0-9.el8_10.noarch",
+        "python3-setuptools-wheel-0:39.2.0-9.el8_10.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "python-setuptools-39.2.0-9.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python3-six-0:1.11.0-8.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "python-six-1.11.0-8.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python3-webencodings-0:0.5.1-6.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "python-webencodings-0.5.1-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "platform-python-0:3.6.8-62.el8_10.rocky.0.x86_64",
+        "python3-libs-0:3.6.8-62.el8_10.rocky.0.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "python3-3.6.8-62.el8_10.rocky.0.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "platform-python-0:3.6.8-78.el8_10.rocky.0.aarch64",
+        "platform-python-0:3.6.8-78.el8_10.rocky.0.x86_64",
+        "platform-python-devel-0:3.6.8-78.el8_10.rocky.0.x86_64",
+        "python3-libs-0:3.6.8-78.el8_10.rocky.0.aarch64",
+        "python3-libs-0:3.6.8-78.el8_10.rocky.0.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "python3-3.6.8-78.el8_10.rocky.0.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python36-0:3.6.8-39.module+el8.10.0+1910+234ad790.x86_64",
+        "python36-devel-0:3.6.8-39.module+el8.10.0+1910+234ad790.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "python36-3.6.8-39.module+el8.10.0+1910+234ad790.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python38-0:3.8.17-2.module+el8.9.0+1418+f0d66789.x86_64",
+        "python38-libs-0:3.8.17-2.module+el8.9.0+1418+f0d66789.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "python38-3.8.17-2.module+el8.9.0+1418+f0d66789.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python38-pip-wheel-0:19.3.1-7.module+el8.9.0+1418+f0d66789.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "python3x-pip-19.3.1-7.module+el8.9.0+1418+f0d66789.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python38-setuptools-wheel-0:41.6.0-5.module+el8.9.0+1418+f0d66789.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "python3x-setuptools-41.6.0-5.module+el8.9.0+1418+f0d66789.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "qt5-srpm-macros-0:5.15.3-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "qt5-5.15.3-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "readline-0:7.0-10.el8.aarch64",
+        "readline-0:7.0-10.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "readline-7.0-10.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "redhat-rpm-config-0:131-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "redhat-rpm-config-131-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "rocky-gpg-keys-0:8.10-1.14.el8.noarch",
+        "rocky-release-0:8.10-1.14.el8.noarch",
+        "rocky-repos-0:8.10-1.14.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "rocky-release-8.10-1.14.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "rocky-gpg-keys-0:8.10-1.7.el8.noarch",
+        "rocky-release-0:8.10-1.7.el8.noarch",
+        "rocky-repos-0:8.10-1.7.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "rocky-release-8.10-1.7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "rootfiles-0:8.1-22.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "rootfiles-8.1-22.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python3-rpm-0:4.14.3-31.el8.x86_64",
+        "rpm-0:4.14.3-31.el8.x86_64",
+        "rpm-build-libs-0:4.14.3-31.el8.x86_64",
+        "rpm-libs-0:4.14.3-31.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "rpm-4.14.3-31.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python3-rpm-0:4.14.3-32.el8_10.x86_64",
+        "rpm-0:4.14.3-32.el8_10.x86_64",
+        "rpm-build-0:4.14.3-32.el8_10.x86_64",
+        "rpm-build-libs-0:4.14.3-32.el8_10.x86_64",
+        "rpm-libs-0:4.14.3-32.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "rpm-4.14.3-32.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "rust-srpm-macros-0:5-2.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json"
+      ],
+      "source_rpm": "rust-srpm-macros-5-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "scl-utils-1:2.0.2-16.el8.x86_64",
+        "scl-utils-build-1:2.0.2-16.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "scl-utils-2.0.2-16.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "sed-0:4.5-5.el8.aarch64",
+        "sed-0:4.5-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "sed-4.5-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "python3-setools-0:4.3.0-5.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "setools-4.3.0-5.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "setup-0:2.12.2-11.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "setup-2.12.2-11.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "xml-common-0:0.6.3-50.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "sgml-common-0.6.3-50.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "shadow-utils-2:4.6-22.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "shadow-utils-4.6-22.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "shadow-utils-2:4.6-23.el8_10.aarch64",
+        "shadow-utils-2:4.6-23.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "shadow-utils-4.6-23.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "sqlite-libs-0:3.26.0-19.el8_9.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "sqlite-3.26.0-19.el8_9.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "sqlite-0:3.26.0-21.el8_10.aarch64",
+        "sqlite-0:3.26.0-21.el8_10.x86_64",
+        "sqlite-devel-0:3.26.0-21.el8_10.aarch64",
+        "sqlite-devel-0:3.26.0-21.el8_10.x86_64",
+        "sqlite-libs-0:3.26.0-21.el8_10.aarch64",
+        "sqlite-libs-0:3.26.0-21.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "sqlite-3.26.0-21.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "systemd-0:239-82.el8.x86_64",
+        "systemd-libs-0:239-82.el8.x86_64",
+        "systemd-pam-0:239-82.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "systemd-239-82.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "systemd-0:239-82.el8_10.17.aarch64",
+        "systemd-0:239-82.el8_10.17.x86_64",
+        "systemd-devel-0:239-82.el8_10.17.aarch64",
+        "systemd-devel-0:239-82.el8_10.17.x86_64",
+        "systemd-libs-0:239-82.el8_10.17.aarch64",
+        "systemd-libs-0:239-82.el8_10.17.x86_64",
+        "systemd-pam-0:239-82.el8_10.17.aarch64",
+        "systemd-pam-0:239-82.el8_10.17.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "systemd-239-82.el8_10.17.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "tar-2:1.30-11.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "tar-1.30-11.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "tar-2:1.30-9.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "tar-1.30-9.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "tcl-1:8.6.8-2.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "tcl-8.6.8-2.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "info-0:6.5-7.el8.aarch64",
+        "info-0:6.5-7.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "texinfo-6.5-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "tpm2-tss-0:2.3.2-6.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "tpm2-tss-2.3.2-6.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "tzdata-0:2024a-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "tzdata-2024a-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "tzdata-0:2026c-1.el8_10.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "tzdata-2026c-1.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "unbound-libs-0:1.16.2-5.14.el8_10.aarch64",
+        "unbound-libs-0:1.16.2-5.14.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "unbound-1.16.2-5.14.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "unzip-0:6.0-48.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "unzip-6.0-48.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libblkid-0:2.32.1-46.el8.x86_64",
+        "libfdisk-0:2.32.1-46.el8.x86_64",
+        "libmount-0:2.32.1-46.el8.x86_64",
+        "libsmartcols-0:2.32.1-46.el8.x86_64",
+        "libuuid-0:2.32.1-46.el8.x86_64",
+        "libuuid-devel-0:2.32.1-46.el8.x86_64",
+        "util-linux-0:2.32.1-46.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "util-linux-2.32.1-46.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libblkid-0:2.32.1-48.el8_10.aarch64",
+        "libblkid-0:2.32.1-48.el8_10.x86_64",
+        "libfdisk-0:2.32.1-48.el8_10.aarch64",
+        "libfdisk-0:2.32.1-48.el8_10.x86_64",
+        "libmount-0:2.32.1-48.el8_10.aarch64",
+        "libmount-0:2.32.1-48.el8_10.x86_64",
+        "libsmartcols-0:2.32.1-48.el8_10.aarch64",
+        "libsmartcols-0:2.32.1-48.el8_10.x86_64",
+        "libuuid-0:2.32.1-48.el8_10.aarch64",
+        "libuuid-0:2.32.1-48.el8_10.x86_64",
+        "libuuid-devel-0:2.32.1-48.el8_10.aarch64",
+        "libuuid-devel-0:2.32.1-48.el8_10.x86_64",
+        "util-linux-0:2.32.1-48.el8_10.aarch64",
+        "util-linux-0:2.32.1-48.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "util-linux-2.32.1-48.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "valgrind-devel-1:3.22.0-4.el8_10.aarch64",
+        "valgrind-devel-1:3.22.0-4.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "valgrind-3.22.0-4.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "vim-minimal-2:8.0.1763-19.el8_6.4.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image"
+      ],
+      "source_rpm": "vim-8.0.1763-19.el8_6.4.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "vim-filesystem-2:8.0.1763-31.el8_10.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "vim-8.0.1763-31.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libwayland-client-0:1.21.0-1.el8.aarch64",
+        "libwayland-client-0:1.21.0-1.el8.x86_64",
+        "libwayland-cursor-0:1.21.0-1.el8.aarch64",
+        "libwayland-cursor-0:1.21.0-1.el8.x86_64",
+        "libwayland-egl-0:1.21.0-1.el8.aarch64",
+        "libwayland-egl-0:1.21.0-1.el8.x86_64",
+        "libwayland-server-0:1.21.0-1.el8.aarch64",
+        "libwayland-server-0:1.21.0-1.el8.x86_64",
+        "wayland-devel-0:1.21.0-1.el8.aarch64",
+        "wayland-devel-0:1.21.0-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "wayland-1.21.0-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "wayland-protocols-devel-0:1.25-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "wayland-protocols-1.25-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "which-0:2.21-21.el8_10.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "which-2.21-21.el8_10.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "xcb-util-0:0.4.0-10.el8.aarch64",
+        "xcb-util-0:0.4.0-10.el8.x86_64",
+        "xcb-util-devel-0:0.4.0-10.el8.aarch64",
+        "xcb-util-devel-0:0.4.0-10.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "xcb-util-0.4.0-10.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "xcb-util-image-0:0.4.0-9.el8.aarch64",
+        "xcb-util-image-0:0.4.0-9.el8.x86_64",
+        "xcb-util-image-devel-0:0.4.0-9.el8.aarch64",
+        "xcb-util-image-devel-0:0.4.0-9.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "xcb-util-image-0.4.0-9.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "xcb-util-keysyms-0:0.4.0-7.el8.aarch64",
+        "xcb-util-keysyms-0:0.4.0-7.el8.x86_64",
+        "xcb-util-keysyms-devel-0:0.4.0-7.el8.aarch64",
+        "xcb-util-keysyms-devel-0:0.4.0-7.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "xcb-util-keysyms-0.4.0-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "xcb-util-renderutil-0:0.3.9-10.el8.aarch64",
+        "xcb-util-renderutil-0:0.3.9-10.el8.x86_64",
+        "xcb-util-renderutil-devel-0:0.3.9-10.el8.aarch64",
+        "xcb-util-renderutil-devel-0:0.3.9-10.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "xcb-util-renderutil-0.3.9-10.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "xcb-util-wm-0:0.4.1-12.el8.aarch64",
+        "xcb-util-wm-0:0.4.1-12.el8.x86_64",
+        "xcb-util-wm-devel-0:0.4.1-12.el8.aarch64",
+        "xcb-util-wm-devel-0:0.4.1-12.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "xcb-util-wm-0.4.1-12.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "xkeyboard-config-0:2.28-1.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "xkeyboard-config-2.28-1.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "xorg-x11-proto-devel-0:2020.1-3.el8.noarch"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "xorg-x11-proto-devel-2020.1-3.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "xz-0:5.2.4-4.el8_6.x86_64",
+        "xz-devel-0:5.2.4-4.el8_6.aarch64",
+        "xz-devel-0:5.2.4-4.el8_6.x86_64",
+        "xz-libs-0:5.2.4-4.el8_6.aarch64",
+        "xz-libs-0:5.2.4-4.el8_6.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-python-build-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "xz-5.2.4-4.el8_6.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "yasm-0:1.3.0-7.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-qt-build-el8-x86_64.json"
+      ],
+      "source_rpm": "yasm-1.3.0-7.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "zip-0:3.0-23.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-runtime-el8-x86_64.json"
+      ],
+      "source_rpm": "zip-3.0-23.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "zlib-0:1.2.11-26.el8.aarch64",
+        "zlib-0:1.2.11-26.el8.x86_64",
+        "zlib-devel-0:1.2.11-26.el8.aarch64",
+        "zlib-devel-0:1.2.11-26.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/sysroot-el8-aarch64.json",
+        "locks/sysroot-el8-x86_64.json"
+      ],
+      "source_rpm": "zlib-1.2.11-26.el8.src.rpm"
+    },
+    {
+      "binary_nevras": [
+        "libzstd-0:1.4.4-1.el8.aarch64",
+        "libzstd-0:1.4.4-1.el8.x86_64",
+        "libzstd-devel-0:1.4.4-1.el8.x86_64",
+        "zstd-0:1.4.4-1.el8.x86_64"
+      ],
+      "content": {
+        "status": "missing"
+      },
+      "origins": [
+        "base-image",
+        "locks/host-build-common-el8-x86_64.json",
+        "locks/host-gcc-build-el8-x86_64.json",
+        "locks/qt-runtime-el8-aarch64.json",
+        "locks/qt-runtime-el8-x86_64.json",
+        "locks/qt-target-el8-aarch64.json",
+        "locks/qt-target-el8-x86_64.json"
+      ],
+      "source_rpm": "zstd-1.4.4-1.el8.src.rpm"
+    }
+  ],
+  "status": "content-lock-pending",
+  "summary": {
+    "base_packages": 148,
+    "base_source_rpms": 110,
+    "combined_source_rpms": 333,
+    "content_locked_source_rpms": 2,
+    "locked_binary_payloads": 1433,
+    "locked_source_rpms": 279,
+    "missing_content_locks": 331
+  }
+}

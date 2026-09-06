@@ -94,6 +94,15 @@ target "rocky-base-source-map" {
   output   = ["type=cacheonly"]
 }
 
+target "rpm-source-requirements" {
+  inherits = ["_common"]
+  target   = "rpm-source-requirements-evidence"
+  contexts = {
+    crossforge_rocky_source_map = "target:rocky-base-source-map"
+  }
+  output = ["type=cacheonly"]
+}
+
 target "sdk-skeleton" {
   inherits = ["_common"]
   target   = "sdk-skeleton"

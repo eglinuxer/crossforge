@@ -504,7 +504,7 @@ not a delta from any compiler or CPython build image:
 $ ./scripts/validate-rpm-lock.py \
     locks/host-runtime-el8-x86_64.json --require-lock
 $ docker buildx bake host-runtime-qualified
-$ docker buildx bake rocky-base-source-map
+$ docker buildx bake rpm-source-requirements
 $ docker buildx bake python-phase10-dev
 ```
 
@@ -525,10 +525,12 @@ sysroot locks, every build/target Python tree and QEMU; it also builds and runs
 C, C++ and LTO probes for both targets. Build-only roots and markers are absent
 from the resulting cache-only image.
 
-`rocky-base-source-map` separately reads the unmodified, digest-pinned amd64
-base image RPMDB and binds all 148 installed NEVRAs to 110 source RPM names.
-The result is scratch evidence for the future source bundle; it does not copy
-RPM databases or source material into the SDK.
+`rpm-source-requirements` first reads the unmodified, digest-pinned amd64 base
+image RPMDB and binds all 148 installed NEVRAs to 110 source RPM names. It then
+merges that evidence with all 12 RPM locks to derive 333 unique SRPM
+requirements. Only the two GTS SRPMs currently have complete URL/size/SHA256
+content locks, so the report remains `content-lock-pending` with 331 explicit
+missing entries. Neither the RPMDB nor source material enters the SDK.
 
 ## Phase 13: vcpkg source and SDK integration
 

@@ -102,11 +102,34 @@ RUN --network=none \
       | LC_ALL=C sort > /tmp/rocky-rpm-sources.tsv \
     && /usr/libexec/platform-python ./scripts/capture-rpm-source-map.py \
       --rpmdb /tmp/rocky-rpm-sources.tsv \
+      --expected ./evidence/sources/rocky-base-rpm-sources.json \
       --output /work/rocky-base-rpm-sources.json
 
 FROM scratch AS rocky-base-source-map-evidence
 COPY --from=rocky-base-source-map /work/rocky-base-rpm-sources.json \
   /rocky-base-rpm-sources.json
+
+FROM config-validate AS rpm-source-requirements
+COPY --from=crossforge_rocky_source_map \
+  /rocky-base-rpm-sources.json /work/rocky-base-rpm-sources.json
+COPY locks/*.json ./locks/
+COPY locks/transactions/ ./locks/transactions/
+COPY config/schemas/rpm-lock.schema.json \
+  config/schemas/rpm-transaction.schema.json \
+  config/schemas/rpm-source-map.schema.json \
+  config/schemas/rpm-source-requirements.schema.json ./config/schemas/
+COPY scripts/release_component.py scripts/validate-rpm-lock.py \
+  scripts/build-rpm-source-requirements.py ./scripts/
+RUN --network=none \
+    /usr/libexec/platform-python \
+      ./scripts/build-rpm-source-requirements.py \
+      --base-source-map /work/rocky-base-rpm-sources.json \
+      --expected ./evidence/sources/rpm-source-requirements.json \
+      --output /work/rpm-source-requirements.json
+
+FROM scratch AS rpm-source-requirements-evidence
+COPY --from=rpm-source-requirements /work/rpm-source-requirements.json \
+  /rpm-source-requirements.json
 
 FROM config-validate AS platform-python-check
 COPY scripts/ ./scripts/

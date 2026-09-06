@@ -138,10 +138,24 @@ def write_document(path, document, schema_path):
         raise
 
 
+def validate_expected(document, expected_path, schema_path):
+    schema = STRICT["load_json"](schema_path)
+    expected = STRICT["load_json"](expected_path)
+    STRICT["validate_schema_subset"](schema)
+    STRICT["validate"](expected, schema, schema, "$")
+    require(expected == document, "reviewed RPM source map differs")
+    payload = json.dumps(document, indent=2, sort_keys=True) + "\n"
+    require(
+        expected_path.read_text(encoding="utf-8") == payload,
+        "reviewed RPM source map bytes are not canonical",
+    )
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--rpmdb", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--expected", type=Path)
     parser.add_argument(
         "--release",
         type=Path,
@@ -172,6 +186,10 @@ def main(argv=None):
         document = build_document(
             release, lock, transaction, rpmdb_text
         )
+        if arguments.expected is not None:
+            validate_expected(
+                document, arguments.expected, arguments.schema
+            )
         write_document(arguments.output, document, arguments.schema)
     except (KeyError, OSError, ValidationError) as error:
         print("error: %s" % error, file=sys.stderr)

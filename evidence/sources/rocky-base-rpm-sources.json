@@ -1,0 +1,605 @@
+{
+  "$schema": "https://crossforge.dev/schemas/rpm-source-map.schema.json",
+  "arch": "x86_64",
+  "base_image": {
+    "index_digest": "sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6",
+    "manifest_digest": "sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+  },
+  "host_runtime_lock_sha256": "69e34609d9781ab762fe13704e958672a90b603675b30e77b8152534d56d6bbd",
+  "kind": "crossforge-rpm-source-map",
+  "packages": [
+    {
+      "nevra": "acl-0:2.2.53-3.el8.x86_64",
+      "source_rpm": "acl-2.2.53-3.el8.src.rpm"
+    },
+    {
+      "nevra": "audit-libs-0:3.1.2-1.el8.x86_64",
+      "source_rpm": "audit-3.1.2-1.el8.src.rpm"
+    },
+    {
+      "nevra": "basesystem-0:11-5.el8.noarch",
+      "source_rpm": "basesystem-11-5.el8.src.rpm"
+    },
+    {
+      "nevra": "bash-0:4.4.20-5.el8.x86_64",
+      "source_rpm": "bash-4.4.20-5.el8.src.rpm"
+    },
+    {
+      "nevra": "binutils-0:2.30-123.el8.x86_64",
+      "source_rpm": "binutils-2.30-123.el8.src.rpm"
+    },
+    {
+      "nevra": "bzip2-libs-0:1.0.6-26.el8.x86_64",
+      "source_rpm": "bzip2-1.0.6-26.el8.src.rpm"
+    },
+    {
+      "nevra": "ca-certificates-0:2023.2.60_v7.0.306-80.0.el8_8.noarch",
+      "source_rpm": "ca-certificates-2023.2.60_v7.0.306-80.0.el8_8.src.rpm"
+    },
+    {
+      "nevra": "chkconfig-0:1.19.2-1.el8.x86_64",
+      "source_rpm": "chkconfig-1.19.2-1.el8.src.rpm"
+    },
+    {
+      "nevra": "coreutils-single-0:8.30-15.el8.x86_64",
+      "source_rpm": "coreutils-8.30-15.el8.src.rpm"
+    },
+    {
+      "nevra": "cracklib-0:2.9.6-15.el8.x86_64",
+      "source_rpm": "cracklib-2.9.6-15.el8.src.rpm"
+    },
+    {
+      "nevra": "cracklib-dicts-0:2.9.6-15.el8.x86_64",
+      "source_rpm": "cracklib-2.9.6-15.el8.src.rpm"
+    },
+    {
+      "nevra": "crypto-policies-0:20230731-1.git3177e06.el8.noarch",
+      "source_rpm": "crypto-policies-20230731-1.git3177e06.el8.src.rpm"
+    },
+    {
+      "nevra": "cryptsetup-libs-0:2.3.7-7.el8.x86_64",
+      "source_rpm": "cryptsetup-2.3.7-7.el8.src.rpm"
+    },
+    {
+      "nevra": "curl-0:7.61.1-34.el8.x86_64",
+      "source_rpm": "curl-7.61.1-34.el8.src.rpm"
+    },
+    {
+      "nevra": "cyrus-sasl-lib-0:2.1.27-6.el8_5.x86_64",
+      "source_rpm": "cyrus-sasl-2.1.27-6.el8_5.src.rpm"
+    },
+    {
+      "nevra": "dbus-1:1.12.8-26.el8.x86_64",
+      "source_rpm": "dbus-1.12.8-26.el8.src.rpm"
+    },
+    {
+      "nevra": "dbus-common-1:1.12.8-26.el8.noarch",
+      "source_rpm": "dbus-1.12.8-26.el8.src.rpm"
+    },
+    {
+      "nevra": "dbus-daemon-1:1.12.8-26.el8.x86_64",
+      "source_rpm": "dbus-1.12.8-26.el8.src.rpm"
+    },
+    {
+      "nevra": "dbus-libs-1:1.12.8-26.el8.x86_64",
+      "source_rpm": "dbus-1.12.8-26.el8.src.rpm"
+    },
+    {
+      "nevra": "dbus-tools-1:1.12.8-26.el8.x86_64",
+      "source_rpm": "dbus-1.12.8-26.el8.src.rpm"
+    },
+    {
+      "nevra": "device-mapper-8:1.02.181-14.el8.x86_64",
+      "source_rpm": "lvm2-2.03.14-14.el8.src.rpm"
+    },
+    {
+      "nevra": "device-mapper-libs-8:1.02.181-14.el8.x86_64",
+      "source_rpm": "lvm2-2.03.14-14.el8.src.rpm"
+    },
+    {
+      "nevra": "dnf-0:4.7.0-20.el8.noarch",
+      "source_rpm": "dnf-4.7.0-20.el8.src.rpm"
+    },
+    {
+      "nevra": "dnf-data-0:4.7.0-20.el8.noarch",
+      "source_rpm": "dnf-4.7.0-20.el8.src.rpm"
+    },
+    {
+      "nevra": "elfutils-default-yama-scope-0:0.190-2.el8.noarch",
+      "source_rpm": "elfutils-0.190-2.el8.src.rpm"
+    },
+    {
+      "nevra": "elfutils-libelf-0:0.190-2.el8.x86_64",
+      "source_rpm": "elfutils-0.190-2.el8.src.rpm"
+    },
+    {
+      "nevra": "elfutils-libs-0:0.190-2.el8.x86_64",
+      "source_rpm": "elfutils-0.190-2.el8.src.rpm"
+    },
+    {
+      "nevra": "expat-0:2.2.5-13.el8_10.x86_64",
+      "source_rpm": "expat-2.2.5-13.el8_10.src.rpm"
+    },
+    {
+      "nevra": "file-libs-0:5.33-26.el8.x86_64",
+      "source_rpm": "file-5.33-26.el8.src.rpm"
+    },
+    {
+      "nevra": "filesystem-0:3.8-6.el8.x86_64",
+      "source_rpm": "filesystem-3.8-6.el8.src.rpm"
+    },
+    {
+      "nevra": "gawk-0:4.2.1-4.el8.x86_64",
+      "source_rpm": "gawk-4.2.1-4.el8.src.rpm"
+    },
+    {
+      "nevra": "gdbm-1:1.18-2.el8.x86_64",
+      "source_rpm": "gdbm-1.18-2.el8.src.rpm"
+    },
+    {
+      "nevra": "gdbm-libs-1:1.18-2.el8.x86_64",
+      "source_rpm": "gdbm-1.18-2.el8.src.rpm"
+    },
+    {
+      "nevra": "glib2-0:2.56.4-164.el8.x86_64",
+      "source_rpm": "glib2-2.56.4-164.el8.src.rpm"
+    },
+    {
+      "nevra": "glibc-0:2.28-251.el8_10.2.x86_64",
+      "source_rpm": "glibc-2.28-251.el8_10.2.src.rpm"
+    },
+    {
+      "nevra": "glibc-common-0:2.28-251.el8_10.2.x86_64",
+      "source_rpm": "glibc-2.28-251.el8_10.2.src.rpm"
+    },
+    {
+      "nevra": "glibc-minimal-langpack-0:2.28-251.el8_10.2.x86_64",
+      "source_rpm": "glibc-2.28-251.el8_10.2.src.rpm"
+    },
+    {
+      "nevra": "gmp-1:6.1.2-12.el8.x86_64",
+      "source_rpm": "gmp-6.1.2-12.el8.src.rpm"
+    },
+    {
+      "nevra": "gnupg2-0:2.2.20-3.el8_6.x86_64",
+      "source_rpm": "gnupg2-2.2.20-3.el8_6.src.rpm"
+    },
+    {
+      "nevra": "gnutls-0:3.6.16-8.el8_10.2.x86_64",
+      "source_rpm": "gnutls-3.6.16-8.el8_10.2.src.rpm"
+    },
+    {
+      "nevra": "gpgme-0:1.13.1-12.el8.x86_64",
+      "source_rpm": "gpgme-1.13.1-12.el8.src.rpm"
+    },
+    {
+      "nevra": "grep-0:3.1-6.el8.x86_64",
+      "source_rpm": "grep-3.1-6.el8.src.rpm"
+    },
+    {
+      "nevra": "gzip-0:1.9-13.el8_5.x86_64",
+      "source_rpm": "gzip-1.9-13.el8_5.src.rpm"
+    },
+    {
+      "nevra": "hostname-0:3.20-6.el8.x86_64",
+      "source_rpm": "hostname-3.20-6.el8.src.rpm"
+    },
+    {
+      "nevra": "ima-evm-utils-0:1.3.2-12.el8.x86_64",
+      "source_rpm": "ima-evm-utils-1.3.2-12.el8.src.rpm"
+    },
+    {
+      "nevra": "info-0:6.5-7.el8.x86_64",
+      "source_rpm": "texinfo-6.5-7.el8.src.rpm"
+    },
+    {
+      "nevra": "iputils-0:20180629-11.el8.x86_64",
+      "source_rpm": "iputils-20180629-11.el8.src.rpm"
+    },
+    {
+      "nevra": "json-c-0:0.13.1-3.el8.x86_64",
+      "source_rpm": "json-c-0.13.1-3.el8.src.rpm"
+    },
+    {
+      "nevra": "keyutils-libs-0:1.5.10-9.el8.x86_64",
+      "source_rpm": "keyutils-1.5.10-9.el8.src.rpm"
+    },
+    {
+      "nevra": "kmod-libs-0:25-20.el8.x86_64",
+      "source_rpm": "kmod-25-20.el8.src.rpm"
+    },
+    {
+      "nevra": "krb5-libs-0:1.18.2-27.el8_10.x86_64",
+      "source_rpm": "krb5-1.18.2-27.el8_10.src.rpm"
+    },
+    {
+      "nevra": "langpacks-en-0:1.0-12.el8.noarch",
+      "source_rpm": "langpacks-1.0-12.el8.src.rpm"
+    },
+    {
+      "nevra": "less-0:530-2.el8_9.x86_64",
+      "source_rpm": "less-530-2.el8_9.src.rpm"
+    },
+    {
+      "nevra": "libacl-0:2.2.53-3.el8.x86_64",
+      "source_rpm": "acl-2.2.53-3.el8.src.rpm"
+    },
+    {
+      "nevra": "libarchive-0:3.3.3-5.el8.x86_64",
+      "source_rpm": "libarchive-3.3.3-5.el8.src.rpm"
+    },
+    {
+      "nevra": "libassuan-0:2.5.1-3.el8.x86_64",
+      "source_rpm": "libassuan-2.5.1-3.el8.src.rpm"
+    },
+    {
+      "nevra": "libattr-0:2.4.48-3.el8.x86_64",
+      "source_rpm": "attr-2.4.48-3.el8.src.rpm"
+    },
+    {
+      "nevra": "libblkid-0:2.32.1-46.el8.x86_64",
+      "source_rpm": "util-linux-2.32.1-46.el8.src.rpm"
+    },
+    {
+      "nevra": "libcap-0:2.48-6.el8_9.x86_64",
+      "source_rpm": "libcap-2.48-6.el8_9.src.rpm"
+    },
+    {
+      "nevra": "libcap-ng-0:0.7.11-1.el8.x86_64",
+      "source_rpm": "libcap-ng-0.7.11-1.el8.src.rpm"
+    },
+    {
+      "nevra": "libcom_err-0:1.45.6-5.el8.x86_64",
+      "source_rpm": "e2fsprogs-1.45.6-5.el8.src.rpm"
+    },
+    {
+      "nevra": "libcomps-0:0.1.18-1.el8.x86_64",
+      "source_rpm": "libcomps-0.1.18-1.el8.src.rpm"
+    },
+    {
+      "nevra": "libcurl-minimal-0:7.61.1-34.el8.x86_64",
+      "source_rpm": "curl-7.61.1-34.el8.src.rpm"
+    },
+    {
+      "nevra": "libdb-0:5.3.28-42.el8_4.x86_64",
+      "source_rpm": "libdb-5.3.28-42.el8_4.src.rpm"
+    },
+    {
+      "nevra": "libdb-utils-0:5.3.28-42.el8_4.x86_64",
+      "source_rpm": "libdb-5.3.28-42.el8_4.src.rpm"
+    },
+    {
+      "nevra": "libdnf-0:0.63.0-19.el8.x86_64",
+      "source_rpm": "libdnf-0.63.0-19.el8.src.rpm"
+    },
+    {
+      "nevra": "libfdisk-0:2.32.1-46.el8.x86_64",
+      "source_rpm": "util-linux-2.32.1-46.el8.src.rpm"
+    },
+    {
+      "nevra": "libffi-0:3.1-24.el8.x86_64",
+      "source_rpm": "libffi-3.1-24.el8.src.rpm"
+    },
+    {
+      "nevra": "libgcc-0:8.5.0-22.el8_10.x86_64",
+      "source_rpm": "gcc-8.5.0-22.el8_10.src.rpm"
+    },
+    {
+      "nevra": "libgcrypt-0:1.8.5-7.el8_6.x86_64",
+      "source_rpm": "libgcrypt-1.8.5-7.el8_6.src.rpm"
+    },
+    {
+      "nevra": "libgpg-error-0:1.31-1.el8.x86_64",
+      "source_rpm": "libgpg-error-1.31-1.el8.src.rpm"
+    },
+    {
+      "nevra": "libidn2-0:2.2.0-1.el8.x86_64",
+      "source_rpm": "libidn2-2.2.0-1.el8.src.rpm"
+    },
+    {
+      "nevra": "libksba-0:1.3.5-9.el8_7.x86_64",
+      "source_rpm": "libksba-1.3.5-9.el8_7.src.rpm"
+    },
+    {
+      "nevra": "libmodulemd-0:2.13.0-1.el8.x86_64",
+      "source_rpm": "libmodulemd-2.13.0-1.el8.src.rpm"
+    },
+    {
+      "nevra": "libmount-0:2.32.1-46.el8.x86_64",
+      "source_rpm": "util-linux-2.32.1-46.el8.src.rpm"
+    },
+    {
+      "nevra": "libnghttp2-0:1.33.0-5.el8_8.x86_64",
+      "source_rpm": "nghttp2-1.33.0-5.el8_8.src.rpm"
+    },
+    {
+      "nevra": "libnsl2-0:1.2.0-2.20180605git4a062cf.el8.x86_64",
+      "source_rpm": "libnsl2-1.2.0-2.20180605git4a062cf.el8.src.rpm"
+    },
+    {
+      "nevra": "libpwquality-0:1.4.4-6.el8.x86_64",
+      "source_rpm": "libpwquality-1.4.4-6.el8.src.rpm"
+    },
+    {
+      "nevra": "librepo-0:1.14.2-5.el8.x86_64",
+      "source_rpm": "librepo-1.14.2-5.el8.src.rpm"
+    },
+    {
+      "nevra": "libreport-filesystem-0:2.9.5-15.el8.rocky.6.3.x86_64",
+      "source_rpm": "libreport-2.9.5-15.el8.rocky.6.3.src.rpm"
+    },
+    {
+      "nevra": "libseccomp-0:2.5.2-1.el8.x86_64",
+      "source_rpm": "libseccomp-2.5.2-1.el8.src.rpm"
+    },
+    {
+      "nevra": "libselinux-0:2.9-8.el8.x86_64",
+      "source_rpm": "libselinux-2.9-8.el8.src.rpm"
+    },
+    {
+      "nevra": "libsemanage-0:2.9-9.el8_6.x86_64",
+      "source_rpm": "libsemanage-2.9-9.el8_6.src.rpm"
+    },
+    {
+      "nevra": "libsepol-0:2.9-3.el8.x86_64",
+      "source_rpm": "libsepol-2.9-3.el8.src.rpm"
+    },
+    {
+      "nevra": "libsigsegv-0:2.11-5.el8.x86_64",
+      "source_rpm": "libsigsegv-2.11-5.el8.src.rpm"
+    },
+    {
+      "nevra": "libsmartcols-0:2.32.1-46.el8.x86_64",
+      "source_rpm": "util-linux-2.32.1-46.el8.src.rpm"
+    },
+    {
+      "nevra": "libsolv-0:0.7.20-6.el8.x86_64",
+      "source_rpm": "libsolv-0.7.20-6.el8.src.rpm"
+    },
+    {
+      "nevra": "libstdc++-0:8.5.0-22.el8_10.x86_64",
+      "source_rpm": "gcc-8.5.0-22.el8_10.src.rpm"
+    },
+    {
+      "nevra": "libtasn1-0:4.13-4.el8_7.x86_64",
+      "source_rpm": "libtasn1-4.13-4.el8_7.src.rpm"
+    },
+    {
+      "nevra": "libtirpc-0:1.1.4-11.el8.x86_64",
+      "source_rpm": "libtirpc-1.1.4-11.el8.src.rpm"
+    },
+    {
+      "nevra": "libunistring-0:0.9.9-3.el8.x86_64",
+      "source_rpm": "libunistring-0.9.9-3.el8.src.rpm"
+    },
+    {
+      "nevra": "libusbx-0:1.0.23-4.el8.x86_64",
+      "source_rpm": "libusbx-1.0.23-4.el8.src.rpm"
+    },
+    {
+      "nevra": "libutempter-0:1.1.6-14.el8.x86_64",
+      "source_rpm": "libutempter-1.1.6-14.el8.src.rpm"
+    },
+    {
+      "nevra": "libuuid-0:2.32.1-46.el8.x86_64",
+      "source_rpm": "util-linux-2.32.1-46.el8.src.rpm"
+    },
+    {
+      "nevra": "libverto-0:0.3.2-2.el8.x86_64",
+      "source_rpm": "libverto-0.3.2-2.el8.src.rpm"
+    },
+    {
+      "nevra": "libxcrypt-0:4.1.1-6.el8.x86_64",
+      "source_rpm": "libxcrypt-4.1.1-6.el8.src.rpm"
+    },
+    {
+      "nevra": "libxml2-0:2.9.7-18.el8.x86_64",
+      "source_rpm": "libxml2-2.9.7-18.el8.src.rpm"
+    },
+    {
+      "nevra": "libyaml-0:0.1.7-5.el8.x86_64",
+      "source_rpm": "libyaml-0.1.7-5.el8.src.rpm"
+    },
+    {
+      "nevra": "libzstd-0:1.4.4-1.el8.x86_64",
+      "source_rpm": "zstd-1.4.4-1.el8.src.rpm"
+    },
+    {
+      "nevra": "lua-libs-0:5.3.4-12.el8.x86_64",
+      "source_rpm": "lua-5.3.4-12.el8.src.rpm"
+    },
+    {
+      "nevra": "lz4-libs-0:1.8.3-3.el8_4.x86_64",
+      "source_rpm": "lz4-1.8.3-3.el8_4.src.rpm"
+    },
+    {
+      "nevra": "mpfr-0:3.1.6-1.el8.x86_64",
+      "source_rpm": "mpfr-3.1.6-1.el8.src.rpm"
+    },
+    {
+      "nevra": "ncurses-base-0:6.1-10.20180224.el8.noarch",
+      "source_rpm": "ncurses-6.1-10.20180224.el8.src.rpm"
+    },
+    {
+      "nevra": "ncurses-libs-0:6.1-10.20180224.el8.x86_64",
+      "source_rpm": "ncurses-6.1-10.20180224.el8.src.rpm"
+    },
+    {
+      "nevra": "nettle-0:3.4.1-7.el8.x86_64",
+      "source_rpm": "nettle-3.4.1-7.el8.src.rpm"
+    },
+    {
+      "nevra": "npth-0:1.5-4.el8.x86_64",
+      "source_rpm": "npth-1.5-4.el8.src.rpm"
+    },
+    {
+      "nevra": "openldap-0:2.4.46-18.el8.x86_64",
+      "source_rpm": "openldap-2.4.46-18.el8.src.rpm"
+    },
+    {
+      "nevra": "openssl-libs-1:1.1.1k-12.el8_9.x86_64",
+      "source_rpm": "openssl-1.1.1k-12.el8_9.src.rpm"
+    },
+    {
+      "nevra": "p11-kit-0:0.23.22-2.el8.x86_64",
+      "source_rpm": "p11-kit-0.23.22-2.el8.src.rpm"
+    },
+    {
+      "nevra": "p11-kit-trust-0:0.23.22-2.el8.x86_64",
+      "source_rpm": "p11-kit-0.23.22-2.el8.src.rpm"
+    },
+    {
+      "nevra": "pam-0:1.3.1-33.el8.x86_64",
+      "source_rpm": "pam-1.3.1-33.el8.src.rpm"
+    },
+    {
+      "nevra": "pcre-0:8.42-6.el8.x86_64",
+      "source_rpm": "pcre-8.42-6.el8.src.rpm"
+    },
+    {
+      "nevra": "pcre2-0:10.32-3.el8_6.x86_64",
+      "source_rpm": "pcre2-10.32-3.el8_6.src.rpm"
+    },
+    {
+      "nevra": "platform-python-0:3.6.8-62.el8_10.rocky.0.x86_64",
+      "source_rpm": "python3-3.6.8-62.el8_10.rocky.0.src.rpm"
+    },
+    {
+      "nevra": "platform-python-setuptools-0:39.2.0-7.el8.noarch",
+      "source_rpm": "python-setuptools-39.2.0-7.el8.src.rpm"
+    },
+    {
+      "nevra": "popt-0:1.18-1.el8.x86_64",
+      "source_rpm": "popt-1.18-1.el8.src.rpm"
+    },
+    {
+      "nevra": "python3-dnf-0:4.7.0-20.el8.noarch",
+      "source_rpm": "dnf-4.7.0-20.el8.src.rpm"
+    },
+    {
+      "nevra": "python3-gpg-0:1.13.1-12.el8.x86_64",
+      "source_rpm": "gpgme-1.13.1-12.el8.src.rpm"
+    },
+    {
+      "nevra": "python3-hawkey-0:0.63.0-19.el8.x86_64",
+      "source_rpm": "libdnf-0.63.0-19.el8.src.rpm"
+    },
+    {
+      "nevra": "python3-libcomps-0:0.1.18-1.el8.x86_64",
+      "source_rpm": "libcomps-0.1.18-1.el8.src.rpm"
+    },
+    {
+      "nevra": "python3-libdnf-0:0.63.0-19.el8.x86_64",
+      "source_rpm": "libdnf-0.63.0-19.el8.src.rpm"
+    },
+    {
+      "nevra": "python3-libs-0:3.6.8-62.el8_10.rocky.0.x86_64",
+      "source_rpm": "python3-3.6.8-62.el8_10.rocky.0.src.rpm"
+    },
+    {
+      "nevra": "python3-pip-wheel-0:9.0.3-24.el8.rocky.0.noarch",
+      "source_rpm": "python-pip-9.0.3-24.el8.rocky.0.src.rpm"
+    },
+    {
+      "nevra": "python3-rpm-0:4.14.3-31.el8.x86_64",
+      "source_rpm": "rpm-4.14.3-31.el8.src.rpm"
+    },
+    {
+      "nevra": "python3-setuptools-wheel-0:39.2.0-7.el8.noarch",
+      "source_rpm": "python-setuptools-39.2.0-7.el8.src.rpm"
+    },
+    {
+      "nevra": "readline-0:7.0-10.el8.x86_64",
+      "source_rpm": "readline-7.0-10.el8.src.rpm"
+    },
+    {
+      "nevra": "rocky-gpg-keys-0:8.10-1.7.el8.noarch",
+      "source_rpm": "rocky-release-8.10-1.7.el8.src.rpm"
+    },
+    {
+      "nevra": "rocky-release-0:8.10-1.7.el8.noarch",
+      "source_rpm": "rocky-release-8.10-1.7.el8.src.rpm"
+    },
+    {
+      "nevra": "rocky-repos-0:8.10-1.7.el8.noarch",
+      "source_rpm": "rocky-release-8.10-1.7.el8.src.rpm"
+    },
+    {
+      "nevra": "rootfiles-0:8.1-22.el8.noarch",
+      "source_rpm": "rootfiles-8.1-22.el8.src.rpm"
+    },
+    {
+      "nevra": "rpm-0:4.14.3-31.el8.x86_64",
+      "source_rpm": "rpm-4.14.3-31.el8.src.rpm"
+    },
+    {
+      "nevra": "rpm-build-libs-0:4.14.3-31.el8.x86_64",
+      "source_rpm": "rpm-4.14.3-31.el8.src.rpm"
+    },
+    {
+      "nevra": "rpm-libs-0:4.14.3-31.el8.x86_64",
+      "source_rpm": "rpm-4.14.3-31.el8.src.rpm"
+    },
+    {
+      "nevra": "sed-0:4.5-5.el8.x86_64",
+      "source_rpm": "sed-4.5-5.el8.src.rpm"
+    },
+    {
+      "nevra": "setup-0:2.12.2-11.el8.noarch",
+      "source_rpm": "setup-2.12.2-11.el8.src.rpm"
+    },
+    {
+      "nevra": "shadow-utils-2:4.6-22.el8.x86_64",
+      "source_rpm": "shadow-utils-4.6-22.el8.src.rpm"
+    },
+    {
+      "nevra": "sqlite-libs-0:3.26.0-19.el8_9.x86_64",
+      "source_rpm": "sqlite-3.26.0-19.el8_9.src.rpm"
+    },
+    {
+      "nevra": "systemd-0:239-82.el8.x86_64",
+      "source_rpm": "systemd-239-82.el8.src.rpm"
+    },
+    {
+      "nevra": "systemd-libs-0:239-82.el8.x86_64",
+      "source_rpm": "systemd-239-82.el8.src.rpm"
+    },
+    {
+      "nevra": "systemd-pam-0:239-82.el8.x86_64",
+      "source_rpm": "systemd-239-82.el8.src.rpm"
+    },
+    {
+      "nevra": "tar-2:1.30-9.el8.x86_64",
+      "source_rpm": "tar-1.30-9.el8.src.rpm"
+    },
+    {
+      "nevra": "tpm2-tss-0:2.3.2-6.el8.x86_64",
+      "source_rpm": "tpm2-tss-2.3.2-6.el8.src.rpm"
+    },
+    {
+      "nevra": "tzdata-0:2024a-1.el8.noarch",
+      "source_rpm": "tzdata-2024a-1.el8.src.rpm"
+    },
+    {
+      "nevra": "util-linux-0:2.32.1-46.el8.x86_64",
+      "source_rpm": "util-linux-2.32.1-46.el8.src.rpm"
+    },
+    {
+      "nevra": "vim-minimal-2:8.0.1763-19.el8_6.4.x86_64",
+      "source_rpm": "vim-8.0.1763-19.el8_6.4.src.rpm"
+    },
+    {
+      "nevra": "xz-libs-0:5.2.4-4.el8_6.x86_64",
+      "source_rpm": "xz-5.2.4-4.el8_6.src.rpm"
+    },
+    {
+      "nevra": "yum-0:4.7.0-20.el8.noarch",
+      "source_rpm": "dnf-4.7.0-20.el8.src.rpm"
+    },
+    {
+      "nevra": "zlib-0:1.2.11-26.el8.x86_64",
+      "source_rpm": "zlib-1.2.11-26.el8.src.rpm"
+    }
+  ],
+  "schema_version": 1
+}

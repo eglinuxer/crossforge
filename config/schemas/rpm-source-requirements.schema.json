@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/rpm-source-requirements.schema.json",
+  "title": "Crossforge RPM source bundle requirements",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "status",
+    "release_sha256",
+    "base_source_map",
+    "rpm_locks",
+    "summary",
+    "sources",
+    "checks"
+  ],
+  "properties": {
+    "$schema": {"const": "https://crossforge.dev/schemas/rpm-source-requirements.schema.json"},
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-rpm-source-requirements"},
+    "status": {"enum": ["content-lock-pending", "locked"]},
+    "release_sha256": {"$ref": "#/$defs/sha256"},
+    "base_source_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical_sha256", "packages", "source_rpms"],
+      "properties": {
+        "canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "packages": {"type": "integer", "minimum": 1},
+        "source_rpms": {"type": "integer", "minimum": 1}
+      }
+    },
+    "rpm_locks": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "canonical_sha256", "packages", "source_rpms"],
+        "properties": {
+          "file": {"type": "string", "pattern": "^locks/[^/]+\\.json$"},
+          "canonical_sha256": {"$ref": "#/$defs/sha256"},
+          "packages": {"type": "integer", "minimum": 1},
+          "source_rpms": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base_packages",
+        "base_source_rpms",
+        "locked_binary_payloads",
+        "locked_source_rpms",
+        "combined_source_rpms",
+        "content_locked_source_rpms",
+        "missing_content_locks"
+      ],
+      "properties": {
+        "base_packages": {"type": "integer", "minimum": 1},
+        "base_source_rpms": {"type": "integer", "minimum": 1},
+        "locked_binary_payloads": {"type": "integer", "minimum": 1},
+        "locked_source_rpms": {"type": "integer", "minimum": 1},
+        "combined_source_rpms": {"type": "integer", "minimum": 1},
+        "content_locked_source_rpms": {"type": "integer", "minimum": 0},
+        "missing_content_locks": {"type": "integer", "minimum": 0}
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_rpm", "binary_nevras", "origins", "content"],
+        "properties": {
+          "source_rpm": {"type": "string", "pattern": "^[^/\\r\\n]+\\.src\\.rpm$"},
+          "binary_nevras": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "origins": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "content": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["status"],
+                "properties": {"status": {"const": "missing"}}
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["status", "url", "sha256", "size", "signature"],
+                "properties": {
+                  "status": {"const": "locked"},
+                  "url": {"type": "string", "pattern": "^https://"},
+                  "sha256": {"$ref": "#/$defs/sha256"},
+                  "size": {"type": "integer", "minimum": 1},
+                  "signature": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["key_sha256", "fingerprint"],
+                    "properties": {
+                      "key_sha256": {"$ref": "#/$defs/sha256"},
+                      "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_mapping_complete", "rpm_lock_mapping_complete", "content_lock_complete"],
+      "properties": {
+        "base_mapping_complete": {"const": true},
+        "rpm_lock_mapping_complete": {"const": true},
+        "content_lock_complete": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
