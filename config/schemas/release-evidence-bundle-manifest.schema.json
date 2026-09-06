@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crossforge.dev/schemas/release-evidence-bundle-manifest.schema.json",
+  "title": "Crossforge durable release evidence bundle manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "kind",
+    "status",
+    "release",
+    "candidate",
+    "source_bundle",
+    "promotion_sha256",
+    "files"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://crossforge.dev/schemas/release-evidence-bundle-manifest.schema.json"
+    },
+    "schema_version": {"const": 1},
+    "kind": {"const": "crossforge-release-evidence-bundle"},
+    "status": {"const": "qualified-signed-promoted"},
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "canonical_sha256"],
+      "properties": {
+        "version": {"$ref": "#/$defs/semver"},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_commit",
+        "repository",
+        "digest",
+        "platform_manifest_digest",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "source_commit": {"$ref": "#/$defs/git_sha1"},
+        "repository": {"$ref": "#/$defs/repository"},
+        "digest": {"$ref": "#/$defs/oci_digest"},
+        "platform_manifest_digest": {"$ref": "#/$defs/oci_digest"},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "source_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "digest", "platform_manifest_digest"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/repository"},
+        "digest": {"$ref": "#/$defs/oci_digest"},
+        "platform_manifest_digest": {"$ref": "#/$defs/oci_digest"}
+      }
+    },
+    "promotion_sha256": {"$ref": "#/$defs/sha256"},
+    "files": {
+      "type": "array",
+      "minItems": 14,
+      "maxItems": 14,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "size"],
+        "properties": {
+          "path": {
+            "enum": [
+              "candidate-signature.json",
+              "candidate.json",
+              "native-aarch64-probes.tar",
+              "native-aarch64.json",
+              "qt-native-aarch64-runtime.json",
+              "qt-runtime-overlay.json",
+              "qt-target-build.json",
+              "release-promotion.json",
+              "release.json",
+              "sigstore-trusted-root.json",
+              "sigstore-verification.json",
+              "source-binding.json",
+              "source-bundle-signature.json",
+              "source-bundle.json"
+            ]
+          },
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "size": {"type": "integer", "minimum": 1, "maximum": 268435456}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "oci_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "git_sha1": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "repository": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*(?::[0-9]+)?(?:/[a-z0-9]+(?:[._-][a-z0-9]+)*)+$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    }
+  }
+}
