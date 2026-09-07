@@ -9,7 +9,7 @@ ARG CMAKE_SOURCE_COMPONENT_SHA256
 WORKDIR /work
 RUN test -n "$CMAKE_BINARY_URL" \
     && test -n "$CMAKE_SOURCE_COMPONENT_SHA256" \
-    && curl --fail --location --retry 3 "$CMAKE_BINARY_URL" \
+    && curl --fail --location --retry 6 --retry-delay 10 --retry-max-time 180 "$CMAKE_BINARY_URL" \
       --output /work/cmake-linux-x86_64.tar.gz
 
 FROM crossforge_host_runtime AS cmake-source-fetch
@@ -108,9 +108,9 @@ RUN test -n "$NINJA_BINARY_URL" \
     && test -n "$NINJA_SOURCE_URL" \
     && test -n "$NINJA_SOURCE_COMPONENT_SHA256" \
     && mkdir -p /work/input \
-    && curl --fail --location --retry 3 "$NINJA_BINARY_URL" \
+    && curl --fail --location --retry 6 --retry-delay 10 --retry-max-time 180 "$NINJA_BINARY_URL" \
       --output /work/input/ninja-linux.zip \
-    && curl --fail --location --retry 3 "$NINJA_SOURCE_URL" \
+    && curl --fail --location --retry 6 --retry-delay 10 --retry-max-time 180 "$NINJA_SOURCE_URL" \
       --output /work/input/ninja-source.tar.gz
 
 FROM ninja-fetch AS ninja-source

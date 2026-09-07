@@ -130,7 +130,12 @@ class NinjaHostToolTests(unittest.TestCase):
         dockerfile = (
             REPOSITORY / "docker/host-tools.Dockerfile"
         ).read_text(encoding="utf-8")
-        self.assertEqual(dockerfile.count("curl --fail --location --retry 3"), 3)
+        self.assertEqual(
+            dockerfile.count(
+                "curl --fail --location --retry 6 --retry-delay 10 --retry-max-time 180"
+            ),
+            3,
+        )
         for stage in ("ninja-source", "ninja-host-tool"):
             block = dockerfile.split(" AS %s" % stage, 1)[1]
             block = block.split("\nFROM ", 1)[0]
