@@ -4,6 +4,8 @@ import os
 import runpy
 import tempfile
 import unittest
+import urllib.error
+from unittest import mock
 from contextlib import redirect_stdout
 from pathlib import Path
 
@@ -46,6 +48,51 @@ def context_for(payload, role="target-sysroot"):
 
 
 class MaterializeSysrootTests(unittest.TestCase):
+    def test_download_restarts_after_midstream_reset_and_removes_partial(self):
+        payload = b"locked-rpm"
+        broken = mock.MagicMock()
+        broken.__enter__.return_value = broken
+        broken.headers = {}
+        broken.read.side_effect = [payload[:3], ConnectionResetError(104, "reset")]
+        good = io.BytesIO(payload)
+        good.headers = {"Content-Length": str(len(payload))}
+        with tempfile.TemporaryDirectory() as temporary, mock.patch(
+            "urllib.request.urlopen", side_effect=[broken, good]
+        ) as fetch, mock.patch("time.sleep") as sleep:
+            directory = Path(temporary)
+            MATERIALIZER["download_package"](package_for(payload), directory)
+            self.assertEqual(fetch.call_count, 2)
+            sleep.assert_called_once_with(2)
+            self.assertEqual([p.name for p in directory.iterdir()], ["fake-1-1.x86_64.rpm"])
+            self.assertEqual((directory / "fake-1-1.x86_64.rpm").read_bytes(), payload)
+
+    def test_download_retry_is_bounded_and_preserves_final_error(self):
+        error = urllib.error.URLError(ConnectionResetError(104, "reset"))
+        with tempfile.TemporaryDirectory() as temporary, mock.patch(
+            "urllib.request.urlopen", side_effect=error
+        ) as fetch, mock.patch("time.sleep") as sleep:
+            with self.assertRaises(urllib.error.URLError) as caught:
+                MATERIALIZER["download_package"](package_for(b"rpm"), Path(temporary))
+            self.assertIs(caught.exception, error)
+            self.assertEqual(fetch.call_count, 3)
+            self.assertEqual(sleep.call_args_list, [mock.call(2), mock.call(4)])
+            self.assertEqual(list(Path(temporary).iterdir()), [])
+
+    def test_download_does_not_retry_content_mismatch_or_permanent_http_error(self):
+        response = io.BytesIO(b"bad")
+        response.headers = {}
+        for failure in (response, urllib.error.HTTPError("https://example.invalid", 404,
+                                                       "missing", {}, None)):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                options = ({"side_effect": failure} if isinstance(failure, Exception)
+                           else {"return_value": failure})
+                with mock.patch("urllib.request.urlopen", **options) as fetch, mock.patch("time.sleep") as sleep:
+                    with self.assertRaises((MATERIALIZER["ValidationError"], urllib.error.HTTPError)):
+                        MATERIALIZER["download_package"](package_for(b"rpm"), Path(temporary))
+                    self.assertEqual(fetch.call_count, 1)
+                    sleep.assert_not_called()
+                    self.assertEqual(list(Path(temporary).iterdir()), [])
+
     def test_bundle_requires_exact_files_and_content(self):
         payload = b"locked-rpm"
         context = context_for(payload)

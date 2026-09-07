@@ -4,14 +4,18 @@
 import argparse
 import concurrent.futures
 import hashlib
+import http.client
 import json
 import os
 import runpy
 import shutil
+import socket
 import stat
 import subprocess
 import sys
 import tempfile
+import time
+import urllib.error
 import urllib.request
 from pathlib import Path, PurePosixPath
 
@@ -272,6 +276,29 @@ def verify_bundle(context, directory):
 
 
 def download_package(package, directory):
+    for attempt in range(3):
+        try:
+            return download_package_once(package, directory)
+        except Exception as error:
+            if attempt == 2 or not retryable_download_error(error):
+                raise
+            print("retrying RPM download %s after transient %s (attempt %d/3)" %
+                  (package_filename(package), type(error).__name__, attempt + 2),
+                  file=sys.stderr, flush=True)
+            time.sleep(2 ** (attempt + 1))
+
+
+def retryable_download_error(error):
+    if isinstance(error, urllib.error.HTTPError):
+        return error.code in (408, 429, 500, 502, 503, 504)
+    if isinstance(error, urllib.error.URLError):
+        return retryable_download_error(error.reason)
+    if isinstance(error, socket.gaierror):
+        return error.errno == socket.EAI_AGAIN
+    return isinstance(error, (ConnectionError, TimeoutError, http.client.IncompleteRead))
+
+
+def download_package_once(package, directory):
     destination = directory / package_filename(package)
     if os.path.lexists(str(destination)):
         if destination.is_symlink():

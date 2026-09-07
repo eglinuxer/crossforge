@@ -156,6 +156,12 @@ must still satisfy the current Bake graph and its existing report validators.
 Cache misses rebuild; they must not skip a required gate. All-failed/cancelled
 and unexpected-skip states remain failures in the summary.
 
+Locked RPM downloads make at most three attempts for transient transport
+failures and HTTP 408, 429, 500, 502, 503 and 504, waiting two then four seconds.
+Each attempt starts a fresh temporary file. Content size/checksum failures,
+permanent HTTP failures and local filesystem errors remain fatal; retries do
+not alter the lock or bypass subsequent signature verification.
+
 ## Candidate and stable delivery
 
 `candidate.yml` first calls the full qualification workflow for the exact
