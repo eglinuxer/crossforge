@@ -82,6 +82,44 @@ class HostedBuildTests(unittest.TestCase):
             self.assertEqual(json.loads((root / "result.json").read_text())["exit_code"], 23)
             self.assertGreaterEqual(len((root / "resources.jsonl").read_text().splitlines()), 2)
 
+    def test_sequential_roots_preserve_gates_and_stop_on_failure(self):
+        function = BUILD["run_stage"]
+        for statuses, expected in (([0, 0], 0), ([19], 19)):
+            calls = []
+
+            def execute(command, *args, **kwargs):
+                calls.append(command)
+                return statuses[len(calls) - 1]
+
+            with self.subTest(statuses=statuses), tempfile.TemporaryDirectory() as directory:
+                with mock.patch.dict(function.__globals__, {
+                    "read_graph": lambda targets: self.graph(),
+                    "cache_catalog": lambda: ["sdk"],
+                    "HEARTBEAT": {"execute": execute},
+                }), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
+                    self.assertEqual(function("sdk", Path(directory), "ghcr.io/test/cache"),
+                                     expected)
+                roots = [command[command.index("--progress=plain") - 1] for command in calls]
+                self.assertEqual(roots, ["evidence", "sdk"][:len(statuses)])
+                for root, command in zip(roots, calls):
+                    self.assertEqual(command[-1], str(Path(directory) / ("metadata-" + root + ".json")))
+
+    def test_stage_budget_does_not_restart_for_each_root(self):
+        function = BUILD["run_stage"]
+        execute = mock.Mock(return_value=0)
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            function.__globals__, {
+                "read_graph": lambda targets: self.graph(),
+                "cache_catalog": lambda: ["sdk"],
+                "HEARTBEAT": {"execute": execute},
+                "time": mock.Mock(time=lambda: 0,
+                                  monotonic=mock.Mock(side_effect=[0, 1, 19801, 19802])),
+            }
+        ), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
+            self.assertEqual(function("sdk", Path(directory), "ghcr.io/test/cache"), 124)
+            self.assertEqual(execute.call_count, 1)
+            self.assertIn("19799s", execute.call_args.args[0])
+
     def test_profiles_fail_open_to_more_testing_for_unknown_or_shared_changes(self):
         select = PLAN["select_profile"]
         self.assertEqual(select(["docs/getting-started.md"]), "none")

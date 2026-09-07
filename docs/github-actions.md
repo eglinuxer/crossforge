@@ -65,7 +65,13 @@ runs at most one build vertex at a time within each runner; compiler jobs keep
 their existing limit of four. Cross stages still cannot execute target code.
 QEMU smoke and heavy compiler builds do not share a runner.
 
-All build jobs have a six-hour timeout; build commands stop after 330 minutes
+Each stage executes its concrete Bake roots sequentially on the same builder,
+preserving linked dependencies and local cache reuse. This limits overlapping
+registry authorization sessions after repeated warm-cache EOF failures in the
+multi-root inputs solve. Hosted runs must verify this mitigation; the precise
+upstream cause remains unconfirmed. A failing root stops the stage immediately.
+
+All build jobs have a six-hour timeout; build commands share a 330-minute budget
 (with a further one-minute forced-stop grace) to leave time for diagnostics.
 This is a ceiling, not evidence that a
 cold stage fits it. Runtime and disk measurements from hosted runs determine
@@ -132,8 +138,9 @@ docker buildx bake -f docker-bake.hcl -f docker-bake.override.json \
 in `build.log` and printing elapsed time/log size every minute. Every 30 seconds
 it records available memory, swap, load and free workspace disk. It records
 exit status, elapsed time and source commit in `result.json`; these are
-operational observations, not release qualification reports. Buildx metadata
-and the resolved graph are retained too. A failure prints the final 100 log
+operational observations, not release qualification reports. Per-root Buildx
+metadata (`metadata-<target>.json`), the resolved graph and BuildKit container
+logs are retained too. A failure prints the final 100 log
 lines without replacing the original failure code.
 
 An `always()` artifact step uploads diagnostics for seven days, named by

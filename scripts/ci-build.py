@@ -136,10 +136,10 @@ def run_stage(stage, directory, repository, write=False, cold=False):
     write_json(directory / "graph.json", graph)
     override = directory / "cache.json"
     write_json(override, cache_override(graph, repository, write, cold, cache_catalog()))
-    # Leave time for final resource samples, BuildKit records and artifact upload.
-    command = ["timeout", "--signal=TERM", "--kill-after=60s", "330m", *BAKE,
-               "-f", str(override), *STAGES[stage], "--progress=plain",
-               "--metadata-file", str(directory / "metadata.json")]
+    # Separate top-level solves to avoid overlapping cache authorization
+    # sessions. Linked dependencies still use Bake's original graph and the
+    # same builder, so completed prerequisites remain available locally.
+    targets = graph_roots(graph)
     stopped = threading.Event()
     monitor = threading.Thread(target=monitor_resources,
                                args=(directory / "resources.jsonl", stopped), daemon=True)
@@ -148,8 +148,21 @@ def run_stage(stage, directory, repository, write=False, cold=False):
     monitor.start()
     try:
         with (directory / "build.log").open("xb") as log:
-            status = HEARTBEAT["execute"](
-                command, stage, 60, output=log, log_path=directory / "build.log")
+            for target in targets:
+                # One budget for the whole stage, including all root solves.
+                remaining = int(330 * 60 - (time.monotonic() - started))
+                if remaining <= 0:
+                    status = 124
+                    break
+                command = ["timeout", "--signal=TERM", "--kill-after=60s",
+                           str(remaining) + "s", *BAKE, "-f", str(override),
+                           target, "--progress=plain", "--metadata-file",
+                           str(directory / ("metadata-" + target + ".json"))]
+                status = HEARTBEAT["execute"](
+                    command, stage + "/" + target, 60, output=log,
+                    log_path=directory / "build.log")
+                if status:
+                    break
         return status
     finally:
         stopped.set()
