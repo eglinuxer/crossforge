@@ -396,27 +396,15 @@ class GccTestsuiteContractTests(unittest.TestCase):
         self.assertIn('Path(resolved_gxx).resolve() != gxx.resolve()', runner)
 
     def test_ci_isolates_qemu_smoke_from_peak_build_fanout(self):
-        workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
-            encoding="utf-8"
-        )
-        self.assertNotIn("sdk-complete-dev gcc-testsuite-smoke", workflow)
-        self.assertEqual(
-            workflow.count("docker buildx bake gcc-testsuite-smoke"), 1
-        )
-        complete = workflow.index(
-            "docker buildx bake python-matrix vcpkg-upstream-tier3-qualified"
-        )
-        smoke = workflow.index("docker buildx bake gcc-testsuite-smoke")
-        full = workflow.index(
-            "docker buildx bake gcc-testsuite-full-qualified"
-        )
-        self.assertLess(complete, smoke)
-        self.assertLess(smoke, full)
-        self.assertIn("--label python-vcpkg-sdk --interval 60", workflow)
-        self.assertIn("--label gcc-testsuite-smoke --interval 60", workflow)
-        self.assertIn(
-            "--label gcc-testsuite-full-qualified --interval 60", workflow
-        )
+        stages = runpy.run_path(str(REPOSITORY / "scripts/ci-build.py"))["STAGES"]
+        self.assertEqual(stages["gcc-smoke"], ["gcc-testsuite-smoke"])
+        self.assertEqual(stages["gcc-full"], ["gcc-testsuite-full-qualified"])
+        self.assertNotIn("gcc-testsuite-smoke", stages["sdk"])
+        workflow = (REPOSITORY / ".github/workflows/verify-builds.yml").read_text()
+        gcc = workflow.split("\n  gcc:\n", 1)[1].split("\n  qt-host:", 1)[0]
+        self.assertIn("stage: [gcc-smoke, gcc-full]", gcc)
+        self.assertIn("runs-on: ubuntu-24.04", gcc)
+        self.assertIn("fail-fast: false", gcc)
 
     def test_progress_watchdog_stops_idle_workers_without_masking_the_error(self):
         class IdleProcess:

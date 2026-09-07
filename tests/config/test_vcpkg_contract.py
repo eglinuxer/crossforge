@@ -155,8 +155,9 @@ class VcpkgContractTests(unittest.TestCase):
             '"X_VCPKG_ASSET_SOURCES": "clear;x-block-origin"',
         ):
             self.assertIn(required, source)
-        workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
-            encoding="utf-8"
+        workflow = (
+            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         self.assertIn("vcpkg-upstream-tier3-qualified", workflow)
         self.assertIn("phase13-contract", workflow)

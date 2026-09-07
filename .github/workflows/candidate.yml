@@ -2,7 +2,7 @@ name: public candidate
 
 concurrency:
   group: candidate-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
@@ -15,8 +15,12 @@ env:
   CANDIDATE_REPOSITORY: ghcr.io/eglinuxer/crossforge
 
 jobs:
+  qualify:
+    uses: ./.github/workflows/qualification.yml
+
   publish:
-    runs-on: ubuntu-latest
+    needs: qualify
+    runs-on: ubuntu-24.04
     timeout-minutes: 360
     outputs:
       candidate_digest: ${{ steps.digest.outputs.digest }}
@@ -25,6 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
+      - uses: ./.github/actions/configure-build-cache
       - name: Validate candidate inputs
         id: release_inputs
         run: |
@@ -477,7 +482,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   qt-native-input:
-    runs-on: ubuntu-latest
+    needs: qualify
+    runs-on: ubuntu-24.04
     timeout-minutes: 360
     permissions:
       contents: read
@@ -487,6 +493,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
+      - uses: ./.github/actions/configure-build-cache
       - name: Validate native Qt runtime inputs
         run: |
           set -Eeuo pipefail
@@ -704,7 +711,7 @@ jobs:
 
   sign-candidate:
     needs: [publish, qt-native-input, native-aarch64]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       actions: read
@@ -714,6 +721,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
+      - uses: ./.github/actions/configure-build-cache
       - name: Download immutable native probe bundle
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:

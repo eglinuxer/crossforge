@@ -216,8 +216,9 @@ class PrepareQEMUSourceTests(unittest.TestCase):
         )
         self.assertIn(
             "qemu-source-qualified",
-            (REPOSITORY / ".github/workflows/ci.yml").read_text(
-                encoding="utf-8"
+            (
+                (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+                + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
             ),
         )
 

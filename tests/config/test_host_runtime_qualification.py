@@ -191,8 +191,9 @@ class HostRuntimeQualificationTests(unittest.TestCase):
         self.assertIn('target "host-runtime-qualified"', bake)
         self.assertIn('target   = "host-runtime-qualified"', bake)
 
-        workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
-            encoding="utf-8"
+        workflow = (
+            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         self.assertGreaterEqual(workflow.count("host-runtime-qualified"), 2)
         self.assertNotIn("phase4 host-runtime-locked", workflow)

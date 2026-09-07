@@ -101,21 +101,13 @@ class QtRuntimeQualificationTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("./scripts/validate-qt-runtime-qualification.py", ci)
-        self.assertIn("qt-x86_64-runtime-qualified", ci)
-        self.assertIn("qt-aarch64-runtime-qualified", ci)
-        self.assertIn("--label qt-x86_64-runtime --interval 60", ci)
-        self.assertIn("--label qt-aarch64-runtime --interval 60", ci)
-        self.assertEqual(ci.count("scripts/run-with-heartbeat.py"), 5)
-        architecture = (REPOSITORY / "docs/architecture.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("Python/vcpkg、GCC 与 Qt Bake solve", architecture)
-        self.assertNotIn(
-            "docker buildx bake qt-target-runtime-qualified", ci
-        )
-        self.assertIn("\n  qt:\n", ci)
-        self.assertIn("timeout-minutes: 360", ci)
-        self.assertIn("if: github.event_name != 'pull_request'", ci)
+        stages = runpy.run_path(str(REPOSITORY / "scripts/ci-build.py"))["STAGES"]
+        self.assertEqual(stages["qt-x86_64"], ["qt-x86_64-runtime-qualified"])
+        self.assertEqual(stages["qt-aarch64"], ["qt-aarch64-runtime-qualified"])
+        builds = (REPOSITORY / ".github/workflows/verify-builds.yml").read_text()
+        self.assertIn("stage: [qt-x86_64, qt-aarch64]", builds)
+        self.assertIn("needs: [plan, qt-host]", builds)
+        self.assertIn("timeout-minutes: 360", builds)
         self.assertIn(
             "./scripts/validate-qt-runtime-qualification.py", candidate
         )

@@ -148,9 +148,11 @@ x86_64 full GCC gate is available separately:
 $ docker buildx bake gcc-testsuite-full-qualified
 ```
 
-The compiler and dual-target Python gates remain heavy candidate checks.
-Regular PR CI validates their graph, locked inputs, clean runtime overlays and
-native build Python without rebuilding both GCC toolchains from scratch.
+PR CI runs fast checks and conservatively selects affected hosted build stages.
+Full qualification runs daily, manually, and before candidate publication.
+Toolchains, Python rows, vcpkg, GCC and Qt use separate GitHub-hosted jobs with
+shared trusted registry caches. See [the Actions operating guide](docs/github-actions.md)
+for stage selection, cold-build measurement, diagnostics and the required check.
 
 The first Qt qualification boundary authenticates and inspects the complete
 Qt 6.8.4 supermodule archive without installing it into the SDK:

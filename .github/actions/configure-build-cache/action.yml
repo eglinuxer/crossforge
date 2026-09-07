@@ -1,0 +1,16 @@
+name: Configure read-only candidate build caches
+description: Import qualified intermediate layers without changing outputs or release evidence
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -Eeuo pipefail
+        python3 scripts/ci-build.py cache \
+          --output "$RUNNER_TEMP/candidate-cache.json" \
+          sdk-candidate source-bundle source-bundle-identity \
+          qt-aarch64-native-runtime-root cosign-host-tool
+        printf 'BUILDX_BAKE_FILE=%s:%s:%s\n' \
+          "$GITHUB_WORKSPACE/docker-bake.hcl" \
+          "$GITHUB_WORKSPACE/docker-bake.override.json" \
+          "$RUNNER_TEMP/candidate-cache.json" >> "$GITHUB_ENV"

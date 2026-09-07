@@ -203,8 +203,9 @@ class SigstoreAssetTests(unittest.TestCase):
             encoding="utf-8"
         )
         bake = (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8")
-        ci = (REPOSITORY / ".github/workflows/ci.yml").read_text(
-            encoding="utf-8"
+        ci = (
+            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         candidate = (REPOSITORY / ".github/workflows/candidate.yml").read_text(
             encoding="utf-8"

@@ -11,12 +11,19 @@ PINNED_ACTION = re.compile(r"^[^@\s]+@[0-9a-f]{40}$")
 
 
 class GitHubActionsSecurityTests(unittest.TestCase):
-    def test_every_workflow_declares_top_level_permissions(self):
+    def test_standalone_workflows_declare_permissions_and_reusable_inherits(self):
         workflows = sorted(WORKFLOWS.glob("*.yml"))
         self.assertTrue(workflows)
         for path in workflows:
             with self.subTest(path=path.name):
                 content = path.read_text(encoding="utf-8")
+                if path.name == "verify-builds.yml":
+                    self.assertIn("workflow_call:", content)
+                    for standalone in ("pull_request:", "push:", "schedule:", "workflow_dispatch:"):
+                        self.assertNotIn(standalone, content)
+                    self.assertNotIn("permissions:", content)
+                    self.assertIn("Permissions intentionally inherit from the caller", content)
+                    continue
                 permissions = content.index("\npermissions:\n")
                 jobs = content.index("\njobs:\n")
                 self.assertLess(permissions, jobs)

@@ -9,18 +9,22 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-  schedule:
-    - cron: '17 4 * * *'
 
 permissions:
   contents: read
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
+  quick:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      profile: ${{ steps.plan.outputs.profile }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/lint-workflows
       - uses: ./.github/actions/setup-locked-buildx
       - name: Release configuration
         run: |
@@ -66,8 +70,9 @@ jobs:
           python3 -m py_compile scripts/*.py
           python3 -m py_compile docker/*.py
           python3 -m py_compile tools/crossforge/*.py
-          bash -n scripts/*.sh
-          bash -n docker/*.sh
+          for script in scripts/*.sh docker/*.sh; do
+            bash -n "$script"
+          done
           gcc -fsyntax-only -fPIC -Wall -Wextra -Werror scripts/deny-target-exec.c
           gcc -fsyntax-only -Wall -Wextra -Werror scripts/target-exec-canary.c
           gcc -fsyntax-only -Wall -Wextra -Werror scripts/target-artifact-canary.c
@@ -84,63 +89,43 @@ jobs:
             phase13-source phase13-host-tools phase13-integration \
             phase13-contract phase13-ports phase14 phase15 phase16 \
             qt-source-qualified qt-target-runtime-qualified candidate >/dev/null
-      - name: Locked latest inputs and native build Pythons
+      - name: Select affected build profile
+        id: plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
         run: |
-          docker buildx bake validate platform-python-check \
-            sigstore-sources-qualified rpm-source-lock-validated \
-            host-build-common-locked host-gcc-build-locked \
-            host-gcc-test-locked host-python-build-locked \
-            qemu-source-qualified qemu-aarch64-validated \
-            qt-rpm-locked \
-            host-runtime-qualified \
-            ninja-host-tool cmake-source cmake-host-tool \
-            xcb-util-cursor-qualified \
-            vcpkg-source \
-            sysroot-x86_64 sysroot-aarch64 python-native-latest \
-            python-runtime-clean-x86_64 python-runtime-clean-aarch64 \
-            --progress=plain
-      - name: Run the full Python and vcpkg SDK qualification gates
-        if: github.event_name != 'pull_request'
-        run: |
-          python3 ./scripts/run-with-heartbeat.py \
-            --label python-vcpkg-sdk --interval 60 -- \
-            docker buildx bake python-matrix vcpkg-upstream-tier3-qualified \
-              sdk-complete-dev \
-              --progress=plain
-          # QEMU execution is deliberately isolated from the peak Python/vcpkg
-          # build fan-out. Running it in the same Bake solve can exhaust the
-          # hosted runner and turn every optimization of a trivial target
-          # program into an infrastructure-shaped DejaGNU FAIL.
-          python3 ./scripts/run-with-heartbeat.py \
-            --label gcc-testsuite-smoke --interval 60 -- \
-            docker buildx bake gcc-testsuite-smoke --progress=plain
-          python3 ./scripts/run-with-heartbeat.py \
-            --label gcc-testsuite-full-qualified --interval 60 -- \
-            docker buildx bake gcc-testsuite-full-qualified --progress=plain
+          set -Eeuo pipefail
+          if test "$EVENT_NAME" = pull_request; then
+            base=$(git merge-base "$PR_BASE" "$GITHUB_SHA")
+          elif test "$EVENT_NAME" = push && git cat-file -e "$PUSH_BASE^{commit}"; then
+            base=$PUSH_BASE
+          else
+            echo 'profile=full' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 scripts/ci-plan.py plan --base "$base" --head "$GITHUB_SHA" \
+            >> "$GITHUB_OUTPUT"
 
-  qt:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
+  builds:
+    needs: quick
+    uses: ./.github/workflows/verify-builds.yml
+    with:
+      profile: ${{ needs.quick.outputs.profile }}
+
+  pr-required:
+    if: always()
+    needs: [quick, builds]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: ./.github/actions/setup-locked-buildx
-      - name: Validate Qt runtime inputs
+        with:
+          persist-credentials: false
+      - name: Require successful checks and selected builds
+        env:
+          RESULTS: ${{ toJSON(needs) }}
         run: |
           set -Eeuo pipefail
-          ./scripts/validate-release.py
-          ./scripts/validate-qt-qualification.py --require-locked
-          ./scripts/validate-qt-runtime-qualification.py
-          ./scripts/render-release-components.py --check
-          ./scripts/render-bake.py --check
-      - name: Qualify both Qt target runtimes
-        run: |
-          set -Eeuo pipefail
-          python3 ./scripts/run-with-heartbeat.py \
-            --label qt-x86_64-runtime --interval 60 -- \
-            docker buildx bake qt-x86_64-runtime-qualified \
-              --progress=plain
-          python3 ./scripts/run-with-heartbeat.py \
-            --label qt-aarch64-runtime --interval 60 -- \
-            docker buildx bake qt-aarch64-runtime-qualified \
-              --progress=plain
+          python3 scripts/ci-plan.py check "$RESULTS"

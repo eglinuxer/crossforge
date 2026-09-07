@@ -341,8 +341,9 @@ class VcpkgUpstreamTests(unittest.TestCase):
         self.assertIn("--tier tier2", block)
         self.assertIn("--tier tier3", block)
         self.assertIn("--expected-component", dockerfile)
-        workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
-            encoding="utf-8"
+        workflow = (
+            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         self.assertIn("vcpkg-upstream-tier3-qualified", workflow)
         self.assertIn("phase13-ports", workflow)

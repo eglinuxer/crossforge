@@ -1,0 +1,326 @@
+name: verify build stages
+
+on:
+  workflow_call:
+    inputs:
+      profile:
+        type: string
+        default: full
+      write-cache:
+        type: boolean
+        default: false
+      cold:
+        type: boolean
+        default: false
+
+# Permissions intentionally inherit from the caller: read-only CI or the
+# trusted qualification wrapper. This workflow has no standalone trigger.
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      active: ${{ steps.plan.outputs.active }}
+      sdk: ${{ steps.plan.outputs.sdk }}
+      gcc: ${{ steps.plan.outputs.gcc }}
+      qt: ${{ steps.plan.outputs.qt }}
+    steps:
+      - name: Validate profile and cache trust boundary
+        id: plan
+        env:
+          PROFILE: ${{ inputs.profile }}
+          WRITE_CACHE: ${{ inputs.write-cache }}
+        run: |
+          set -Eeuo pipefail
+          case "$PROFILE" in none|sdk|python|toolchain|qt|full) ;; *) exit 1 ;; esac
+          if test "$WRITE_CACHE" = true; then
+            test "$GITHUB_REPOSITORY" = eglinuxer/crossforge
+            test "$GITHUB_REF" = refs/heads/main
+            case "$GITHUB_EVENT_NAME" in schedule|workflow_dispatch) ;; *) exit 1 ;; esac
+          fi
+          active=false; sdk=false; gcc=false; qt=false
+          if test "$PROFILE" != none; then active=true; fi
+          case "$PROFILE" in sdk|python|full) sdk=true ;; esac
+          case "$PROFILE" in toolchain|full) gcc=true ;; esac
+          case "$PROFILE" in qt|full) qt=true ;; esac
+          printf 'active=%s\nsdk=%s\ngcc=%s\nqt=%s\n' \
+            "$active" "$sdk" "$gcc" "$qt" >> "$GITHUB_OUTPUT"
+
+  inputs:
+    needs: [plan]
+    if: needs.plan.outputs.active == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Authenticate cache writer
+        if: inputs.write-cache
+        env:
+          CACHE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$CACHE_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: inputs
+          write-cache: ${{ inputs.write-cache }}
+          cold: ${{ inputs.cold }}
+      - name: Log out cache writer
+        if: always() && inputs.write-cache
+        run: docker logout ghcr.io
+
+  toolchains:
+    needs: [plan, inputs]
+    if: needs.plan.outputs.active == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        stage: [toolchain-x86_64, toolchain-aarch64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Authenticate cache writer
+        if: inputs.write-cache
+        env:
+          CACHE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$CACHE_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: ${{ matrix.stage }}
+          write-cache: ${{ inputs.write-cache }}
+          cold: ${{ inputs.cold }}
+      - name: Log out cache writer
+        if: always() && inputs.write-cache
+        run: docker logout ghcr.io
+
+  python:
+    needs: [plan, toolchains]
+    if: needs.plan.outputs.sdk == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        stage: [python-cp39, python-cp310, python-cp311, python-cp312, python-cp313, python-cp314]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Authenticate cache writer
+        if: inputs.write-cache
+        env:
+          CACHE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$CACHE_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: ${{ matrix.stage }}
+          write-cache: ${{ inputs.write-cache }}
+          cold: ${{ inputs.cold }}
+      - name: Log out cache writer
+        if: always() && inputs.write-cache
+        run: docker logout ghcr.io
+
+  vcpkg:
+    needs: [plan, toolchains]
+    if: needs.plan.outputs.sdk == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Authenticate cache writer
+        if: inputs.write-cache
+        env:
+          CACHE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$CACHE_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: vcpkg
+          write-cache: ${{ inputs.write-cache }}
+          cold: ${{ inputs.cold }}
+      - name: Log out cache writer
+        if: always() && inputs.write-cache
+        run: docker logout ghcr.io
+
+  sdk:
+    needs: [plan, python, vcpkg]
+    if: needs.plan.outputs.sdk == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Authenticate cache writer
+        if: inputs.write-cache
+        env:
+          CACHE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$CACHE_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: sdk
+          write-cache: ${{ inputs.write-cache }}
+          cold: ${{ inputs.cold }}
+      - name: Log out cache writer
+        if: always() && inputs.write-cache
+        run: docker logout ghcr.io
+
+  gcc:
+    needs: [plan, toolchains]
+    if: needs.plan.outputs.gcc == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        stage: [gcc-smoke, gcc-full]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Authenticate cache writer
+        if: inputs.write-cache
+        env:
+          CACHE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$CACHE_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: ${{ matrix.stage }}
+          write-cache: ${{ inputs.write-cache }}
+          cold: ${{ inputs.cold }}
+      - name: Log out cache writer
+        if: always() && inputs.write-cache
+        run: docker logout ghcr.io
+
+  qt-inputs:
+    needs: [plan, inputs]
+    if: needs.plan.outputs.qt == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Authenticate cache writer
+        if: inputs.write-cache
+        env:
+          CACHE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$CACHE_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: qt-inputs
+          write-cache: ${{ inputs.write-cache }}
+          cold: ${{ inputs.cold }}
+      - name: Log out cache writer
+        if: always() && inputs.write-cache
+        run: docker logout ghcr.io
+
+  qt-host:
+    needs: [plan, toolchains, qt-inputs]
+    if: needs.plan.outputs.qt == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Authenticate cache writer
+        if: inputs.write-cache
+        env:
+          CACHE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$CACHE_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: qt-host
+          write-cache: ${{ inputs.write-cache }}
+          cold: ${{ inputs.cold }}
+      - name: Log out cache writer
+        if: always() && inputs.write-cache
+        run: docker logout ghcr.io
+
+  qt:
+    needs: [plan, qt-host]
+    if: needs.plan.outputs.qt == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        stage: [qt-x86_64, qt-aarch64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Authenticate cache writer
+        if: inputs.write-cache
+        env:
+          CACHE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$CACHE_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: ${{ matrix.stage }}
+          write-cache: ${{ inputs.write-cache }}
+          cold: ${{ inputs.cold }}
+      - name: Log out cache writer
+        if: always() && inputs.write-cache
+        run: docker logout ghcr.io
+
+  verified:
+    if: always()
+    needs: [plan, inputs, toolchains, python, vcpkg, sdk, gcc, qt-inputs, qt-host, qt]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Reject failures and unexpected skips
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/ci-plan.py check-stages "$RESULTS"

@@ -262,8 +262,9 @@ class VcpkgSourceTests(unittest.TestCase):
         hcl = (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8")
         self.assertIn('target "_vcpkg_common"', hcl)
         self.assertIn('dockerfile = "docker/vcpkg.Dockerfile"', hcl)
-        workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
-            encoding="utf-8"
+        workflow = (
+            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         self.assertEqual(workflow.count("vcpkg-source"), 1)
         self.assertIn("phase13-source", workflow)

@@ -1,0 +1,49 @@
+name: Run a hosted build stage
+description: Cache-only Bake execution with resource measurements and failure diagnostics
+inputs:
+  stage:
+    required: true
+    description: Stage from scripts/ci-build.py
+  write-cache:
+    default: 'false'
+    description: Only trusted main qualification may export registry caches
+  cold:
+    default: 'false'
+    description: Ignore remote caches on this fresh runner
+runs:
+  using: composite
+  steps:
+    - name: Build and measure
+      shell: bash
+      env:
+        BUILD_STAGE: ${{ inputs.stage }}
+        WRITE_CACHE: ${{ inputs.write-cache }}
+        COLD_BUILD: ${{ inputs.cold }}
+      run: |
+        set -Eeuo pipefail
+        options=()
+        if test "$WRITE_CACHE" = true; then options+=(--write-cache); fi
+        if test "$COLD_BUILD" = true; then options+=(--cold); fi
+        python3 scripts/ci-build.py "${options[@]}" run "$BUILD_STAGE" \
+          --directory "$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE"
+    - name: Export BuildKit diagnostics
+      if: always()
+      shell: bash
+      env:
+        BUILD_STAGE: ${{ inputs.stage }}
+      run: |
+        set -Eeuo pipefail
+        root="$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE"
+        mkdir -p "$root"
+        # Best effort on an unhealthy builder; never mask the build failure.
+        timeout 120s docker buildx history export --all --output "$root/build.dockerbuild" \
+          > "$root/history-export.log" 2>&1 || true
+        timeout 30s docker buildx du > "$root/buildkit-disk.txt" 2>&1 || true
+    - name: Preserve build diagnostics
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: build-${{ inputs.stage }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: ${{ runner.temp }}/build-diagnostics/${{ inputs.stage }}/
+        retention-days: 7
+        if-no-files-found: warn

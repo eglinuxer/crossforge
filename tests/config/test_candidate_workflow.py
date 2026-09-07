@@ -291,7 +291,7 @@ class CandidateWorkflowTests(unittest.TestCase):
 
     def test_every_ci_and_candidate_job_uses_the_locked_buildx_setup(self):
         local_action = "uses: ./.github/actions/setup-locked-buildx"
-        self.assertEqual(self.ci.count(local_action), 2)
+        self.assertEqual(self.ci.count(local_action), 1)
         self.assertEqual(self.workflow.count(local_action), 3)
         self.assertIn("buildx-v0.36.1.linux-amd64", self.setup)
         self.assertIn("--retry 5 --retry-all-errors", self.setup)
@@ -314,7 +314,7 @@ class CandidateWorkflowTests(unittest.TestCase):
             "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
             self.ci,
         )
-        self.assertIn("cancel-in-progress: true", self.workflow)
+        self.assertIn("cancel-in-progress: false", self.workflow)
 
     def test_qt_runtime_probe_is_compiled_with_strict_warnings(self):
         self.assertIn(

@@ -399,16 +399,22 @@ evidence tar 重新验证 native ARM、Qt、source、SLSA/SPDX、SBOM generator 
 rollback 不创建/移动版本 tag、不重建、不重签，失败后的已完成 source-channel 更新可由
 同一幂等 workflow 安全重试。
 
+全部构建与测试运行于 GitHub 托管 runner。具体执行图、缓存权限、冷构建测量和
+失败诊断见 [`github-actions.md`](github-actions.md)。受信 main 资格化通过独立 GHCR
+registry cache 复用中间层；PR 只能读缓存。缓存不改变资格化与发布身份，candidate
+必须先通过相同提交的完整分阶段资格化，再沿原有图生成和验证公开 digest。
+
 测试分层如下：
 
-- PR：JSON/Schema、Bash/Python syntax、Python 单测、Docker/Bake 静态检查和相关轻量 smoke；crosspack 实现后加入同层；
+- PR：JSON/Schema、逐文件 Bash/Python syntax、Python 单测、Docker/Bake 与 Actions 静态检查，以及按变更范围保守选择的真实构建；未知或公共输入变化执行 full profile。`pr-required` 汇总必要检查，意外 skip/cancel 不得放行；
 - candidate：双 target C/C++/ABI、代表 Python、vcpkg ports、DEB/RPM 安装测试；
 - nightly/full：双 target 的 `gcc/` 下 `check-gcc` 与 `check-g++`、针对最终 compiler/runtime 的 installed `runtest --tool libstdc++`、`check-target-libgomp`，完整 Python 矩阵，以及 Qt 6.8.4 双 target；语言测试必须直接从 `gcc/` 子目录启动，使 GNU Make 的 jobserver 分片真正分配给对应 DejaGNU worker，禁止从顶层 `check-gcc` 间接重跑全部语言；GCC 15 的顶层 `check-target-libgcc` 是无测试、无 summary 的空目标，不能作为资格化证据；libgcc 由 compiler testsuite 与最终 hybrid runtime 门禁覆盖；
 - release：同一 digest 的原生 aarch64 终检和资格化证明检查。
 
 CI 中可能持续数小时的 Python/vcpkg、GCC 与 Qt Bake solve 必须由
-`run-with-heartbeat.py` 直接启动：子进程继续原样继承 stdout/stderr，每 60 秒额外输出
-PID 与 elapsed liveness，退出码保持不变，并把 SIGINT/SIGTERM 转发给 Buildx。心跳只证明
+`ci-build.py` 调用 `run-with-heartbeat.py` 启动：完整 stdout/stderr 保存为 artifact 日志，
+每 60 秒输出 PID、elapsed 与日志大小，每 30 秒记录资源用量；退出码保持不变，
+SIGINT/SIGTERM 转发给 Buildx。候选发布仍直接使用同一心跳包装器。心跳只证明
 进程仍由 runner 管理，不替代各资格化脚本自己的超时、结果或证据门禁。
 Qt 的内部 Ninja 输出继续完整写入资格证据日志；同一包装器以独占日志模式执行命令，
 每 60 秒额外报告日志字节数，因此长时间步骤可以区分持续编译与内部停滞而不把海量

@@ -142,8 +142,9 @@ class RPMSourceRequirementsTests(unittest.TestCase):
             'crossforge_rocky_source_map = "target:rocky-base-source-map"',
             bake,
         )
-        ci = (REPOSITORY / ".github/workflows/ci.yml").read_text(
-            encoding="utf-8"
+        ci = (
+            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         self.assertIn("rpm-source-lock-validated", ci)
 
