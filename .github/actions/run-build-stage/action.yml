@@ -26,6 +26,16 @@ runs:
         if test "$COLD_BUILD" = true; then options+=(--cold); fi
         python3 scripts/ci-build.py "${options[@]}" run "$BUILD_STAGE" \
           --directory "$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE"
+    - name: Verify anonymous cache access
+      if: success() && inputs.write-cache == 'true'
+      shell: bash
+      env:
+        BUILD_STAGE: ${{ inputs.stage }}
+      run: |
+        set -Eeuo pipefail
+        root="$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE"
+        python3 scripts/check-ci-cache.py \
+          --cache-config "$root/cache.json" --output "$root/cache-access.json"
     - name: Export BuildKit diagnostics
       if: always()
       shell: bash

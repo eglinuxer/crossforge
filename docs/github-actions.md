@@ -83,7 +83,13 @@ also checks the repository, event and ref before allowing an export.
 
 The first cache export creates the GHCR cache package. Configure that package
 as public for anonymous PR/fork cache reads and link it to this repository.
-Until anonymous reads work, readers may fall back to cold builds. Do not grant
+Every successful cache writer now checks each exported manifest using an
+isolated empty Docker config and the pinned Buildx executable. If anonymous
+reads fail, the job fails before dependent stages start and retains
+`cache-access.json`. This distinguishes a successful upload from a cache that
+PRs can actually use. The report checks manifest availability, not a full
+layer download or release qualification. Until anonymous reads work, existing
+read-only CI runs may fall back to cold builds. Do not grant
 PRs registry credentials to work around a private cache. Keep package write
 access limited to trusted qualification. Caches are disposable acceleration;
 no cache reference is a release identity or proof of qualification. They are
