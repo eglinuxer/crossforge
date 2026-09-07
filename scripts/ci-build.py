@@ -35,6 +35,7 @@ STAGES = {
     "gcc-smoke": ["gcc-testsuite-smoke"],
     "gcc-full": ["gcc-testsuite-full-qualified"],
     "qt-inputs": ["qt-rpm-locked", "xcb-util-cursor-host-build"],
+    "qt-host-webengine": ["qt-host-webengine-build"],
     "qt-host": ["qt-host-qualified"],
     "qt-x86_64": ["qt-x86_64-runtime-qualified"],
     "qt-aarch64": ["qt-aarch64-runtime-qualified"],

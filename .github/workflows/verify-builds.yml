@@ -250,8 +250,35 @@ jobs:
         if: always() && inputs.write-cache
         run: docker logout ghcr.io
 
-  qt-host:
+  qt-host-webengine:
     needs: [plan, qt-inputs]
+    if: needs.plan.outputs.qt == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Authenticate cache writer
+        if: inputs.write-cache
+        env:
+          CACHE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$CACHE_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: qt-host-webengine
+          write-cache: ${{ inputs.write-cache }}
+          cold: ${{ inputs.cold }}
+      - name: Log out cache writer
+        if: always() && inputs.write-cache
+        run: docker logout ghcr.io
+
+  qt-host:
+    needs: [plan, qt-host-webengine]
     if: needs.plan.outputs.qt == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 360
@@ -311,7 +338,7 @@ jobs:
 
   verified:
     if: always()
-    needs: [plan, inputs, toolchains, python, vcpkg, sdk, gcc, qt-inputs, qt-host, qt]
+    needs: [plan, inputs, toolchains, python, vcpkg, sdk, gcc, qt-inputs, qt-host-webengine, qt-host, qt]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

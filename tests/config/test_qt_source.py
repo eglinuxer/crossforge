@@ -205,7 +205,8 @@ class QtSourceGraphTests(unittest.TestCase):
         stage = self.dockerfile.split(" AS qt-host-build", 1)[1].split(
             "\nFROM ", 1
         )[0]
-        self.assertIn("FROM qt-host-configure AS qt-host-build", self.dockerfile)
+        self.assertIn("FROM qt-host-webengine-build AS qt-host-build", self.dockerfile)
+        self.assertIn("FROM qt-host-configure AS qt-host-webengine-build", self.dockerfile)
         self.assertIn("RUN --network=none", stage)
         script = (REPOSITORY / "scripts/build-qt-host.sh").read_text(
             encoding="utf-8"
@@ -218,6 +219,9 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertIn("print-build-log-diagnostics.py", script)
         self.assertIn("run-with-heartbeat.py", script)
         self.assertIn("--log \"$log\"", script)
+        self.assertIn("--target WebEngineCore", script)
+        self.assertIn("requires the cached WebEngine phase", script)
+        self.assertIn('cat "$build_root/webengine-build.log" "$build_root/build.log"', script)
         self.assertNotIn("| tee", script)
         self.assertNotIn("libQt6Core", script)
         check = (REPOSITORY / "scripts/check-qt-host-install.sh").read_text(

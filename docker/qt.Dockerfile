@@ -445,7 +445,7 @@ COPY --from=qt-host-configure-qualified /work/build/qt-host/config.summary /
 COPY --from=qt-host-configure-qualified /work/build/qt-host/configure.log /
 COPY --from=qt-host-configure-qualified /work/build/qt-host/qt-host-configure.json /
 
-FROM qt-host-configure AS qt-host-build
+FROM qt-host-configure AS qt-host-webengine-build
 ARG CROSSFORGE_JOBS=4
 COPY --chmod=0755 scripts/build-qt-host.sh \
   scripts/print-build-log-diagnostics.py scripts/run-with-heartbeat.py \
@@ -453,7 +453,14 @@ COPY --chmod=0755 scripts/build-qt-host.sh \
 RUN --network=none /work/scripts/build-qt-host.sh \
       /work/build/qt-host \
       /opt/crossforge/qualification/qt/6.8.4/host \
-      "$CROSSFORGE_JOBS"
+      "$CROSSFORGE_JOBS" webengine
+
+FROM qt-host-webengine-build AS qt-host-build
+ARG CROSSFORGE_JOBS=4
+RUN --network=none /work/scripts/build-qt-host.sh \
+      /work/build/qt-host \
+      /opt/crossforge/qualification/qt/6.8.4/host \
+      "$CROSSFORGE_JOBS" complete
 
 FROM qt-host-build AS qt-host-install-checked
 COPY --chmod=0755 scripts/check-qt-host-install.sh \
@@ -499,6 +506,7 @@ RUN --network=none /work/scripts/qualify-qt-host-build.py \
         /opt/crossforge/qualification/qt/6.8.4/host/qt-host-build.json
 
 FROM scratch AS qt-host-qualification-evidence
+COPY --from=qt-host-qualified /work/build/qt-host/webengine-build.log /
 COPY --from=qt-host-qualified \
   /opt/crossforge/qualification/qt/6.8.4/host/qt-host-build.json /
 COPY --from=qt-host-qualified /work/build/qt-host/build.log /

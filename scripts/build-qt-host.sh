@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-if [[ $# -ne 3 ]]; then
-  echo "usage: $0 BUILD_ROOT PREFIX JOBS" >&2
+if [[ $# -ne 4 ]]; then
+  echo "usage: $0 BUILD_ROOT PREFIX JOBS PHASE" >&2
   exit 2
 fi
 
 build_root=$1
 prefix=$2
 jobs=$3
+phase=$4
+case "$phase" in
+  webengine|complete) ;;
+  *) echo "error: Qt host build phase differs" >&2; exit 1 ;;
+esac
 cmake=/opt/crossforge/host-tools/cmake/4.4.0/bin/cmake
 ninja=/opt/crossforge/host-tools/ninja/1.13.2/bin/ninja
 cxx=/opt/rh/gcc-toolset-15/root/usr/bin/g++
@@ -72,7 +77,25 @@ export PYTHONPATH=/usr/lib/python3.6/site-packages
 export LC_ALL=C.UTF-8
 export SOURCE_DATE_EPOCH=0
 
+if [[ "$phase" == webengine ]]; then
+  run_logged "Qt WebEngine host build" "$build_root/webengine-build.log" \
+    "$cmake" --build "$build_root" --target WebEngineCore --parallel "$jobs"
+  [[ -f "$build_root/qtwebengine/src/core/Release/x86_64/QtWebEngineCore.stamp" ]] || {
+    echo "error: Qt WebEngine host build did not create its completion stamp" >&2
+    exit 1
+  }
+  exit 0
+fi
+
+[[ -f "$build_root/qtwebengine/src/core/Release/x86_64/QtWebEngineCore.stamp" \
+  && -f "$build_root/webengine-build.log" ]] || {
+  echo "error: complete Qt host build requires the cached WebEngine phase" >&2
+  exit 1
+}
 run_logged "Qt host build" "$build_root/build.log" \
   "$cmake" --build "$build_root" --parallel "$jobs"
+cat "$build_root/webengine-build.log" "$build_root/build.log" \
+  > "$build_root/complete-build.log"
+mv "$build_root/complete-build.log" "$build_root/build.log"
 run_logged "Qt host install" "$build_root/install.log" \
   "$cmake" --install "$build_root"

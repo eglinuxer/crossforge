@@ -48,7 +48,7 @@ def stage_results(results):
     flags = plan.get("outputs", {})
     groups = {"inputs": "active", "toolchains": "active", "python": "sdk",
               "vcpkg": "sdk", "sdk": "sdk", "gcc": "gcc",
-              "qt-inputs": "qt", "qt-host": "qt", "qt": "qt"}
+              "qt-inputs": "qt", "qt-host-webengine": "qt", "qt-host": "qt", "qt": "qt"}
     if set(results) != {"plan", *groups} or set(flags) != {"active", "sdk", "gcc", "qt"}:
         return False
     if any(flags.get(flag) not in ("true", "false") for flag in groups.values()):

@@ -3178,6 +3178,25 @@
       ],
       "target": "qt-host-qualified"
     },
+    "qt-host-webengine-build": {
+      "args": {
+        "CROSSFORGE_COMPONENT_FUTURE_QT_QUALIFICATION_SHA256": "fdd2704a2f24685df1e1d4e4897f2d5e98859f2603dcbdb4cb0f97178a31a3c7",
+        "QT_VERSION": "6.8.4"
+      },
+      "contexts": {
+        "crossforge_cmake": "target:cmake-host-tool",
+        "crossforge_ffmpeg_host": "target:ffmpeg-host-build",
+        "crossforge_ninja": "target:ninja-host-tool",
+        "crossforge_qt_source": "target:qt-source"
+      },
+      "inherits": [
+        "_qt_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "qt-host-webengine-build"
+    },
     "qt-source": {
       "args": {
         "CROSSFORGE_COMPONENT_SOURCES_QT_SHA256": "540c01aacded48198436157ab351090990ed06772f82f203563c32422b37a502",

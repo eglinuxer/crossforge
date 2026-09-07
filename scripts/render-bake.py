@@ -1311,6 +1311,13 @@ def render_qt_graph(
         "contexts": dict(targets["qt-host-configure-qualified"]["contexts"]),
         "output": ["type=cacheonly"],
     }
+    targets["qt-host-webengine-build"] = {
+        "inherits": ["_qt_common"],
+        "target": "qt-host-webengine-build",
+        "args": dict(targets["qt-host-configure-qualified"]["args"]),
+        "contexts": dict(targets["qt-host-configure-qualified"]["contexts"]),
+        "output": ["type=cacheonly"],
+    }
     targets["qt-host-build"] = {
         "inherits": ["_qt_common"],
         "target": "qt-host-install-checked",

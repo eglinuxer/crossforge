@@ -51,8 +51,13 @@ prequalification.
 3. Six independent dual-target Python rows, plus a separate vcpkg tier3 job.
 4. Complete Python/packaging/SDK integration after those jobs succeed.
 5. Separate GCC smoke and full jobs after toolchain jobs succeed.
-6. Qt-only RPM/source inputs and host xcb preparation, then host qualification
-   in parallel with toolchain builds. Target runtime jobs wait for both the
+6. Qt-only RPM/source inputs and host xcb preparation, then a host WebEngineCore
+   build job and a separate complete host qualification job, in parallel with
+   toolchain builds. The complete job reuses the WebEngine build cache and
+   still builds all modules, installs and runs all host checks. Both compilation
+   logs are included in the existing build-log evidence. This split gives cache
+   writers a checkpoint before completing the host build; read-only or cold
+   runs without that cache still build the dependency locally. Target runtime jobs wait for both the
    host qualification and toolchains; their Bake graphs still build and verify
    the corresponding target xcb libraries. The all-target xcb group must not
    run before toolchain caches are ready, because it would rebuild both GCCs.

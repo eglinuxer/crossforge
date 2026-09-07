@@ -58,6 +58,15 @@ class HostedBuildTests(unittest.TestCase):
         override = BUILD["cache_override"](self.graph(), "ghcr.io/test/cache")
         self.assertTrue(all(not value["cache-to"] for value in override["target"].values()))
 
+    def test_qt_webengine_is_required_before_host_and_in_final_gate(self):
+        workflow = (ROOT / ".github/workflows/verify-builds.yml").read_text()
+        webengine = workflow.split("\n  qt-host-webengine:\n", 1)[1].split("\n  qt-host:\n", 1)[0]
+        self.assertIn("needs: [plan, qt-inputs]", webengine)
+        self.assertIn("stage: qt-host-webengine", webengine)
+        self.assertEqual(BUILD["STAGES"]["qt-host-webengine"], ["qt-host-webengine-build"])
+        final_gate = workflow.split("\n  verified:\n", 1)[1]
+        self.assertIn("qt-inputs, qt-host-webengine, qt-host, qt]", final_gate)
+
     def test_internal_dockerfile_dependencies_import_shared_caches(self):
         override = BUILD["cache_override"](
             self.graph(), "ghcr.io/test/cache", imports=["host-build-common-locked"])
@@ -159,7 +168,7 @@ class HostedBuildTests(unittest.TestCase):
         results = {"plan": {"result": "success", "outputs": flags}}
         results.update({job: {"result": "success"} for job in
                         ("inputs", "toolchains", "python", "vcpkg", "sdk")})
-        results.update({job: {"result": "skipped"} for job in ("gcc", "qt-inputs", "qt-host", "qt")})
+        results.update({job: {"result": "skipped"} for job in ("gcc", "qt-inputs", "qt-host-webengine", "qt-host", "qt")})
         self.assertTrue(PLAN["stage_results"](results))
         for state in ("skipped", "failure", "cancelled"):
             bad = copy.deepcopy(results)
@@ -199,7 +208,7 @@ class HostedBuildTests(unittest.TestCase):
         self.assertIn("xcb-util-cursor-host-build", graph["target"])
         workflow = (ROOT / ".github/workflows/verify-builds.yml").read_text()
         host = workflow.split("\n  qt-host:\n", 1)[1].split("\n  qt:\n", 1)[0]
-        self.assertIn("needs: [plan, qt-inputs]", host)
+        self.assertIn("needs: [plan, qt-host-webengine]", host)
         self.assertNotIn("toolchains", host)
         target = workflow.split("\n  qt:\n", 1)[1].split("\n  verified:\n", 1)[0]
         self.assertIn("needs: [plan, toolchains, qt-host]", target)
