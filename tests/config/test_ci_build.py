@@ -73,6 +73,24 @@ class HostedBuildTests(unittest.TestCase):
         self.assertEqual(override["target"]["sdk"]["cache-from"], [
             {"type": "registry", "ref": "ghcr.io/test/cache:main-host-build-common-locked"}])
 
+    def test_imports_follow_dockerfile_and_python_row(self):
+        def target(file, row=None):
+            return {"dockerfile": file, "args": {"CPYTHON_ROW": row} if row else {}}
+        graph = {"group": {"default": {"targets": ["sdk"]}}, "target": {
+            "sdk": target("packaging"), "python": target("python", "cp314"),
+            "host": target("host")}}
+        catalog = {"sdk": target("packaging"), "row314": target("python", "cp314"),
+                   "row313": target("python", "cp313"), "aggregate": target("python"),
+                   "internal-host": target("host"), "qt": target("qt")}
+        original = copy.deepcopy(graph)
+        result = BUILD["cache_override"](graph, "ghcr.io/test/cache", imports=catalog)
+        refs = lambda name: [x["ref"].split(":main-")[1]
+                             for x in result["target"][name]["cache-from"]]
+        self.assertEqual(refs("sdk"), ["sdk"])
+        self.assertEqual(refs("python"), ["row314", "aggregate"])
+        self.assertEqual(refs("host"), ["internal-host"])
+        self.assertEqual(graph, original)
+
     def test_cache_writer_rejects_pr_fork_and_non_main_dispatch(self):
         valid = {"GITHUB_REPOSITORY": "eglinuxer/crossforge",
                  "GITHUB_REF": "refs/heads/main", "GITHUB_EVENT_NAME": "workflow_dispatch"}

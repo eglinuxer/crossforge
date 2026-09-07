@@ -81,8 +81,9 @@ def graph_roots(graph):
 def cache_catalog():
     # Includes internal-Dockerfile dependencies and Python row exports which
     # do not appear as linked Bake targets in a downstream solve.
-    return graph_roots(read_graph(sorted({target for targets in STAGES.values()
-                                         for target in targets})))
+    graph = read_graph(sorted({target for targets in STAGES.values()
+                               for target in targets}))
+    return {name: graph["target"][name] for name in graph_roots(graph)}
 
 
 def cache_override(graph, repository, write=False, cold=False, imports=None):
@@ -96,10 +97,20 @@ def cache_override(graph, repository, write=False, cold=False, imports=None):
     names = sorted(graph["target"])
     if not all(re.fullmatch(r"[a-zA-Z0-9_-]+", name) for name in names):
         raise ValueError("invalid Bake target name")
-    sources = [{"type": "registry", "ref": repository + ":main-" + name}
-               for name in (imports if imports is not None else names)] if not cold else []
     result = {}
     for name in names:
+        candidates = imports if imports is not None else names
+        if isinstance(candidates, dict):
+            target = graph["target"][name]
+            row = target.get("args", {}).get("CPYTHON_ROW")
+            # Linked Bake targets import their own Dockerfile's caches. Internal
+            # stages remain covered by exports from that same Dockerfile.
+            candidates = [source for source, config in candidates.items()
+                          if config.get("dockerfile") == target.get("dockerfile")
+                          and (not row or not config.get("args", {}).get("CPYTHON_ROW")
+                               or config["args"]["CPYTHON_ROW"] == row)]
+        sources = [{"type": "registry", "ref": repository + ":main-" + source}
+                   for source in candidates] if not cold else []
         value = {"cache-from": sources, "cache-to": []}
         if write and name in roots:
             value["cache-to"] = [{

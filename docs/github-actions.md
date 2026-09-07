@@ -97,8 +97,11 @@ qualification dependencies still execute; this only limits exported cache
 layers. The first aggregate Python export exhausted the hosted disk with
 `mode=max`. See [Docker's registry cache modes](https://docs.docker.com/build/cache/backends/registry/).
 Different matrix members have different export destinations. Shared
-imports include internal Dockerfile prerequisites and Python row caches, not
-just linked target contexts visible in a downstream Bake graph.
+imports include internal Dockerfile prerequisites and Python row caches. Each
+linked target imports only exports from its own Dockerfile; Python row targets
+exclude exports for other rows. This bounds cache metadata loading instead of
+assigning the entire catalog to every linked solve. Cache misses still execute
+the original build and qualification graph.
 
 Only `qualification.yml`, on a main schedule or main manual dispatch, writes
 these caches. Candidate prequalification calls that same wrapper. Its shared
