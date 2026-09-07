@@ -66,10 +66,12 @@ their existing limit of four. Cross stages still cannot execute target code.
 QEMU smoke and heavy compiler builds do not share a runner.
 
 Each stage executes its concrete Bake roots sequentially on the same builder,
-preserving linked dependencies and local cache reuse. This limits overlapping
-registry authorization sessions after repeated warm-cache EOF failures in the
-multi-root inputs solve. Hosted runs must verify this mitigation; the precise
-upstream cause remains unconfirmed. A failing root stops the stage immediately.
+preserving linked dependencies and local cache reuse. A failing root stops the
+stage immediately. Sequential roots alone cannot prevent session sharing
+between linked Bake targets. BuildKit is pinned to v0.33.0, which includes
+[the upstream registry-cache session rebinding fix](https://github.com/moby/buildkit/pull/7047).
+This addresses the inactive-session lazy-layer fetch seen in hosted inputs and
+vcpkg builds with v0.32.2. Hosted warm-cache runs must verify the fix here.
 
 All build jobs have a six-hour timeout; build commands share a 330-minute budget
 (with a further one-minute forced-stop grace) to leave time for diagnostics.

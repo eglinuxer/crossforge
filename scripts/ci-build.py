@@ -136,8 +136,8 @@ def run_stage(stage, directory, repository, write=False, cold=False):
     write_json(directory / "graph.json", graph)
     override = directory / "cache.json"
     write_json(override, cache_override(graph, repository, write, cold, cache_catalog()))
-    # Separate top-level solves to avoid overlapping cache authorization
-    # sessions. Linked dependencies still use Bake's original graph and the
+    # Bound concurrent top-level solves. Linked dependencies still use Bake's
+    # original graph (and require the BuildKit cache-session fix) and the
     # same builder, so completed prerequisites remain available locally.
     targets = graph_roots(graph)
     stopped = threading.Event()
