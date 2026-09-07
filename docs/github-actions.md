@@ -84,8 +84,14 @@ cache import does not solve final SDK image size or source archive disk needs.
 
 The dedicated registry cache is
 `ghcr.io/eglinuxer/crossforge-buildcache:main-<concrete-bake-target>`.
-Buildx resolves group names to concrete targets before exporting `mode=max`
-caches. Different matrix members have different export destinations. Shared
+Buildx resolves group names to concrete targets before exporting caches.
+Component targets use `mode=max`; the aggregate `python-dev` and
+`sdk-complete-dev` targets use `mode=min` to avoid compressing all intermediate
+compiler and Python build trees again on one hosted runner. All build and
+qualification dependencies still execute; this only limits exported cache
+layers. The first aggregate Python export exhausted the hosted disk with
+`mode=max`. See [Docker's registry cache modes](https://docs.docker.com/build/cache/backends/registry/).
+Different matrix members have different export destinations. Shared
 imports include internal Dockerfile prerequisites and Python row caches, not
 just linked target contexts visible in a downstream Bake graph.
 

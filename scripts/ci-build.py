@@ -41,6 +41,9 @@ STAGES = {
 }
 BAKE = ["docker", "buildx", "bake", "-f", "docker-bake.hcl",
         "-f", "docker-bake.override.json"]
+# Component jobs retain intermediate caches. Aggregate SDK roots must not
+# compress every compiler and Python build tree again on one hosted disk.
+FINAL_STAGE_CACHE_TARGETS = {"python-dev", "sdk-complete-dev"}
 
 
 def require_writer(environment):
@@ -100,7 +103,8 @@ def cache_override(graph, repository, write=False, cold=False, imports=None):
         if write and name in roots:
             value["cache-to"] = [{
                 "type": "registry", "ref": repository + ":main-" + name,
-                "mode": "max", "image-manifest": True, "oci-mediatypes": True,
+                "mode": "min" if name in FINAL_STAGE_CACHE_TARGETS else "max",
+                "image-manifest": True, "oci-mediatypes": True,
             }]
         result[name] = value
     return {"target": result}

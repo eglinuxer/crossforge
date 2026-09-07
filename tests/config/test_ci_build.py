@@ -36,6 +36,21 @@ class HostedBuildTests(unittest.TestCase):
                 references.append(export["ref"])
         self.assertEqual(len(set(references)), 2)
 
+    def test_sdk_aggregates_export_final_layers_without_changing_build_graph(self):
+        names = ["python-dev", "sdk-complete-dev", "python-cp312-dev"]
+        graph = {"group": {"default": {"targets": names}},
+                 "target": {name: {"output": [{"type": "cacheonly"}]}
+                            for name in names}}
+        original = copy.deepcopy(graph)
+        override = BUILD["cache_override"](graph, "ghcr.io/test/cache", write=True)
+        self.assertEqual(graph, original)
+        self.assertEqual(BUILD["STAGES"]["sdk"], ["python-matrix", "sdk-complete-dev"])
+        for name, mode in zip(names, ["min", "min", "max"]):
+            export = override["target"][name]["cache-to"]
+            self.assertEqual(len(export), 1)
+            self.assertEqual(export[0]["mode"], mode)
+            self.assertNotIn("ignore-error", export[0])
+
     def test_read_only_and_cold_modes_cannot_write_cache(self):
         override = BUILD["cache_override"](self.graph(), "ghcr.io/test/cache", cold=True)
         self.assertTrue(all(value == {"cache-from": [], "cache-to": []}
