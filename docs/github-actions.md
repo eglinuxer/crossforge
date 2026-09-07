@@ -79,8 +79,13 @@ just linked target contexts visible in a downstream Bake graph.
 
 Only `qualification.yml`, on a main schedule or main manual dispatch, writes
 these caches. Candidate prequalification calls that same wrapper. Its shared
-concurrency group serializes all writers; GitHub's concurrency queue is not a
-FIFO queue and newer pending runs may replace older pending runs. Running
+concurrency group serializes all writers with `queue: max`, so up to 100
+waiting qualifications/candidates are retained rather than replaced by a
+new scheduled run. Ordering follows entry into the concurrency queue, not
+necessarily workflow dispatch order. See [GitHub's concurrency contract](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency).
+Pinned actionlint 1.7.12 does not yet understand this field; only its specific
+unsupported-queue diagnostic is ignored, and a regression requires this exact
+setting with cancellation disabled on the qualification workflow. Running
 qualification and candidate publication are not automatically cancelled.
 PR/main CI and candidate publication only import caches. The cache writer
 also checks the repository, event and ref before allowing an export.

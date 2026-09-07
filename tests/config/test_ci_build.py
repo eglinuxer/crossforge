@@ -124,6 +124,18 @@ class HostedBuildTests(unittest.TestCase):
         self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", builds)
         self.assertNotIn("github.sha", builds)
 
+    def test_qualification_queue_keeps_waiting_candidates(self):
+        workflow = (ROOT / ".github/workflows/qualification.yml").read_text()
+        concurrency = workflow.split("\nconcurrency:\n", 1)[1].split("\npermissions:", 1)[0]
+        self.assertIn("  group: crossforge-qualified-cache\n", concurrency)
+        self.assertIn("  cancel-in-progress: false\n", concurrency)
+        self.assertIn("  queue: max\n", concurrency)
+        # Bound the pinned linter's unsupported-field exception to the one
+        # documented setting; do not silently accept arbitrary queue syntax.
+        for path in (ROOT / ".github/workflows").glob("*.yml"):
+            lines = [line for line in path.read_text().splitlines() if "queue:" in line]
+            self.assertEqual(lines, ["  queue: max"] if path.name == "qualification.yml" else [])
+
     def test_shell_syntax_checks_the_second_file_too(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         loop = workflow.split("          for script in scripts/*.sh docker/*.sh; do", 1)[1]

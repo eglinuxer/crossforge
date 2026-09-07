@@ -18,4 +18,8 @@ runs:
         tar -xzf "$root/actionlint.tar.gz" -C "$root" actionlint
         # Keep workflow validation independent of the runner's ShellCheck
         # version. Bash syntax is checked separately for every repository script.
-        "$root/actionlint" -shellcheck=''
+        # GitHub supports concurrency.queue; pinned actionlint 1.7.12 does
+        # not yet parse it. The configuration regression requires exactly
+        # queue:max with cancel-in-progress:false on the qualification lock.
+        "$root/actionlint" -shellcheck='' \
+          -ignore 'unexpected key "queue" for "concurrency" section'

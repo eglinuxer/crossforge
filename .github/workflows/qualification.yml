@@ -16,6 +16,7 @@ on:
 concurrency:
   group: crossforge-qualified-cache
   cancel-in-progress: false
+  queue: max
 
 permissions:
   contents: read
