@@ -2,6 +2,7 @@ import argparse
 import ast
 import runpy
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -90,9 +91,53 @@ class RunWithHeartbeatTests(unittest.TestCase):
         )
         self.assertEqual(arguments.interval, 90)
         self.assertEqual(arguments.command, ["docker", "buildx"])
+        self.assertIsNone(arguments.log)
         for value in ("0", "3601", "invalid"):
             with self.assertRaises(argparse.ArgumentTypeError):
                 RUNNER["positive_interval"](value)
+
+    def test_log_mode_preserves_output_and_reports_growth(self):
+        process = FakeProcess(returncode=0)
+        reports = []
+        calls = []
+        clock = iter((10.0, 71.0))
+
+        def popen(command, **options):
+            calls.append((command, options))
+            return process
+
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / "build.log"
+            with log.open("xb") as output:
+                output.write(b"progress")
+                output.flush()
+                returncode = RUNNER["execute"](
+                    ["example"],
+                    "Qt host build",
+                    60,
+                    popen=popen,
+                    clock=lambda: next(clock),
+                    reporter=lambda message, flush=False: reports.append(
+                        (message, flush)
+                    ),
+                    install_signal_handlers=False,
+                    output=output,
+                    log_path=log,
+                )
+        self.assertEqual(returncode, 0)
+        self.assertEqual(calls[0][0], ["example"])
+        self.assertIs(calls[0][1]["stdout"], output)
+        self.assertEqual(calls[0][1]["stderr"], subprocess.STDOUT)
+        self.assertEqual(
+            reports,
+            [
+                (
+                    "heartbeat: Qt host build elapsed=61s pid=1234 "
+                    "status=running log_bytes=8",
+                    True,
+                )
+            ],
+        )
 
     def test_script_remains_python36_syntax_compatible(self):
         ast.parse(

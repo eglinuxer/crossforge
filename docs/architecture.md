@@ -410,6 +410,9 @@ CI 中可能持续数小时的 Python/vcpkg、GCC 与 Qt Bake solve 必须由
 `run-with-heartbeat.py` 直接启动：子进程继续原样继承 stdout/stderr，每 60 秒额外输出
 PID 与 elapsed liveness，退出码保持不变，并把 SIGINT/SIGTERM 转发给 Buildx。心跳只证明
 进程仍由 runner 管理，不替代各资格化脚本自己的超时、结果或证据门禁。
+Qt 的内部 Ninja 输出继续完整写入资格证据日志；同一包装器以独占日志模式执行命令，
+每 60 秒额外报告日志字节数，因此长时间步骤可以区分持续编译与内部停滞而不把海量
+构建输出复制到 Actions 日志。
 
 原生 aarch64 release gate 分为两个互不混淆的执行域。`linux/amd64` publish job 先从匿名可拉取的完整 candidate digest 运行镜像内交叉工具链，重新生成 C、C++20、LTO、LTO archive、libgcc wide-division 和跨 DSO exception 探针；compile report、八个 artifact、candidate identity、AArch64 qualification component 与 candidate policy component 被封装为固定顺序、固定 owner/mode/mtime 的 USTAR，并对整包计算 SHA256。随后 `ubuntu-24.04-arm` runner 只下载这份不可变 bundle，在固定 Rocky Linux 8.10 arm64 child manifest 中以 `--platform linux/arm64 --network none --read-only` 原生执行，要求 `RUNNER_ARCH=ARM64`、host/container `uname -m=aarch64`，且不得携带 QEMU。最终 JSON 重新绑定 bundle、candidate OCI index/platform digest、release、runtime manifest、loader/DSO 解析和每个执行结果；任一身份不一致都使整个 public-candidate workflow 失败。Qt native gate 同时从实际执行的 rootfs 保存 target-build 和 runtime-overlay 原始证据；`validate-qt-native-release.py` 在上传前重新验证 schema、自摘要、qualification component、release/base image、candidate/source commit、rootfs 及最终报告对两份输入的 canonical digest，后续晋升不能只信任 GitHub job 的绿色状态。该工作流未实际产生首份公开候选证据前，状态仍是 implemented/unproven，不能宣称 release-qualified。
 

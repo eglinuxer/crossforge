@@ -448,7 +448,8 @@ COPY --from=qt-host-configure-qualified /work/build/qt-host/qt-host-configure.js
 FROM qt-host-configure AS qt-host-build
 ARG CROSSFORGE_JOBS=4
 COPY --chmod=0755 scripts/build-qt-host.sh \
-  scripts/print-build-log-diagnostics.py /work/scripts/
+  scripts/print-build-log-diagnostics.py scripts/run-with-heartbeat.py \
+  /work/scripts/
 RUN --network=none /work/scripts/build-qt-host.sh \
       /work/build/qt-host \
       /opt/crossforge/qualification/qt/6.8.4/host \
@@ -493,6 +494,7 @@ RUN --network=none /work/scripts/qualify-qt-host-build.py \
       --builder /work/scripts/build-qt-host.sh \
       --install-checker /work/scripts/check-qt-host-install.sh \
       --diagnostics /work/scripts/print-build-log-diagnostics.py \
+      --heartbeat /work/scripts/run-with-heartbeat.py \
       --output \
         /opt/crossforge/qualification/qt/6.8.4/host/qt-host-build.json
 
@@ -628,7 +630,8 @@ ARG QT_TARGET_ARCH
 ARG QT_TARGET_TRIPLE
 ARG CROSSFORGE_JOBS=4
 COPY --chmod=0755 scripts/build-qt-target.sh \
-  scripts/print-build-log-diagnostics.py /work/scripts/
+  scripts/print-build-log-diagnostics.py scripts/run-with-heartbeat.py \
+  /work/scripts/
 RUN --network=none /work/scripts/build-qt-target.sh \
       "/work/build/qt-$QT_TARGET_ARCH" \
       "/opt/crossforge/qualification/qt/6.8.4/targets/$QT_TARGET_TRIPLE" \
@@ -716,6 +719,7 @@ RUN --network=none /work/scripts/qualify-qt-target-build.py \
       --builder /work/scripts/build-qt-target.sh \
       --install-checker /work/scripts/check-qt-target-install.sh \
       --diagnostics /work/scripts/print-build-log-diagnostics.py \
+      --heartbeat /work/scripts/run-with-heartbeat.py \
       --output \
         "/opt/crossforge/qualification/qt/6.8.4/targets/$QT_TARGET_TRIPLE/qt-target-build.json"
 

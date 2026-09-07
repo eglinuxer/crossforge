@@ -216,6 +216,8 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertIn("CMakeCache.txt", script)
         self.assertIn("config.summary", script)
         self.assertIn("print-build-log-diagnostics.py", script)
+        self.assertIn("run-with-heartbeat.py", script)
+        self.assertIn("--log \"$log\"", script)
         self.assertNotIn("| tee", script)
         self.assertNotIn("libQt6Core", script)
         check = (REPOSITORY / "scripts/check-qt-host-install.sh").read_text(
@@ -268,13 +270,14 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertIn("--ffmpeg-prefix", stage)
         self.assertIn("--xcb-prefix", stage)
         self.assertIn("--diagnostics", stage)
+        self.assertIn("--heartbeat", stage)
         schema = json.loads(
             (
                 REPOSITORY / "config/schemas/qt-host-build.schema.json"
             ).read_text(encoding="utf-8")
         )
-        self.assertEqual(schema["properties"]["builders"]["minItems"], 4)
-        self.assertEqual(schema["properties"]["builders"]["maxItems"], 4)
+        self.assertEqual(schema["properties"]["builders"]["minItems"], 5)
+        self.assertEqual(schema["properties"]["builders"]["maxItems"], 5)
 
     def test_target_configure_uses_qualified_host_and_never_executes_target_code(self):
         expected = []
@@ -404,6 +407,8 @@ class QtSourceGraphTests(unittest.TestCase):
         self.assertIn("CMAKE_CROSSCOMPILING_EMULATOR", build_script)
         self.assertIn("--target WebEngineCore", build_script)
         self.assertIn("print-build-log-diagnostics.py", build_script)
+        self.assertIn("run-with-heartbeat.py", build_script)
+        self.assertIn("--log \"$log\"", build_script)
         self.assertNotIn("| tee", build_script)
         self.assertNotIn("libQt6Core", build_script)
         self.assertNotIn("qemu", build_script.lower())
@@ -423,6 +428,14 @@ class QtSourceGraphTests(unittest.TestCase):
         )
         self.assertIn("qualify-qt-target-build.py", stage)
         self.assertIn("qt-target-build.schema.json", stage)
+        self.assertIn("--heartbeat", stage)
+        target_schema = json.loads(
+            (
+                REPOSITORY / "config/schemas/qt-target-build.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(target_schema["properties"]["builders"]["minItems"], 7)
+        self.assertEqual(target_schema["properties"]["builders"]["maxItems"], 7)
         self.assertIn("FROM scratch AS qt-target-qualification-evidence", stage)
         self.assertIn("RUN --network=none", stage)
 

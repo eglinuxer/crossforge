@@ -55,7 +55,8 @@ run_logged() {
   local label=$1
   local log=$2
   shift 2
-  if "$@" >"$log" 2>&1; then
+  if /usr/libexec/platform-python /work/scripts/run-with-heartbeat.py \
+      --label "$label" --interval 60 --log "$log" -- "$@"; then
     echo "$label completed; full log: $log"
     return 0
   fi

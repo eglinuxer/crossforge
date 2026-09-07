@@ -371,6 +371,7 @@ def qualify(arguments):
         ("scripts/build-qt-host.sh", arguments.builder),
         ("scripts/check-qt-host-install.sh", arguments.install_checker),
         ("scripts/print-build-log-diagnostics.py", arguments.diagnostics),
+        ("scripts/run-with-heartbeat.py", arguments.heartbeat),
         ("scripts/qualify-qt-host-build.py", Path(__file__)),
     ):
         builders.append({"file": relative, "sha256": sha256_file(path)[0]})
@@ -446,6 +447,7 @@ def main(argv=None):
     parser.add_argument("--builder", type=Path, required=True)
     parser.add_argument("--install-checker", type=Path, required=True)
     parser.add_argument("--diagnostics", type=Path, required=True)
+    parser.add_argument("--heartbeat", type=Path, required=True)
     parser.add_argument(
         "--schema",
         type=Path,

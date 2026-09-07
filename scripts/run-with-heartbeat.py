@@ -6,6 +6,7 @@ import signal
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 
 class HeartbeatError(ValueError):
@@ -47,10 +48,19 @@ def execute(
     clock=time.monotonic,
     reporter=print,
     install_signal_handlers=True,
+    output=None,
+    log_path=None,
 ):
     if not command:
         raise HeartbeatError("command is required")
-    process = popen(command)
+    if output is None:
+        process = popen(command)
+    else:
+        process = popen(
+            command,
+            stdout=output,
+            stderr=subprocess.STDOUT,
+        )
     started = clock()
     state = {"signal": None}
     previous_handlers = {}
@@ -68,11 +78,19 @@ def execute(
             try:
                 returncode = process.wait(timeout=interval)
             except subprocess.TimeoutExpired:
-                reporter(
-                    "heartbeat: %s elapsed=%ds pid=%d status=running"
-                    % (label, int(clock() - started), process.pid),
-                    flush=True,
+                message = "heartbeat: %s elapsed=%ds pid=%d status=running" % (
+                    label,
+                    int(clock() - started),
+                    process.pid,
                 )
+                if log_path is not None:
+                    try:
+                        size = Path(log_path).stat().st_size
+                    except OSError:
+                        message += " log_bytes=unavailable"
+                    else:
+                        message += " log_bytes=%d" % size
+                reporter(message, flush=True)
                 continue
             if state["signal"] is not None:
                 return 128 + state["signal"]
@@ -86,6 +104,7 @@ def parse_arguments(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--label", required=True)
     parser.add_argument("--interval", type=positive_interval, default=60)
+    parser.add_argument("--log", type=Path)
     parser.add_argument("command", nargs=argparse.REMAINDER)
     arguments = parser.parse_args(argv)
     if arguments.command and arguments.command[0] == "--":
@@ -97,15 +116,23 @@ def parse_arguments(argv=None):
 
 def main(argv=None):
     arguments = parse_arguments(argv)
+    output = None
     try:
+        if arguments.log is not None:
+            output = arguments.log.open("xb")
         return execute(
             arguments.command,
             arguments.label,
             arguments.interval,
+            output=output,
+            log_path=arguments.log,
         )
     except OSError as error:
         print("error: cannot start command: %s" % error, file=sys.stderr)
         return 127
+    finally:
+        if output is not None:
+            output.close()
 
 
 if __name__ == "__main__":

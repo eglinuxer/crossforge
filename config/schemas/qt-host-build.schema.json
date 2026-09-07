@@ -62,8 +62,8 @@
     },
     "builders": {
       "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
+      "minItems": 5,
+      "maxItems": 5,
       "items": {"$ref": "#/$defs/file_digest"}
     },
     "components": {
