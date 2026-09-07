@@ -1,7 +1,9 @@
 name: ci
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # PR updates replace stale checks; distinct main commits can run quick
+  # checks immediately even while an older commit is still compiling.
+  group: ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 on:
@@ -110,6 +112,9 @@ jobs:
 
   builds:
     needs: quick
+    concurrency:
+      group: ci-builds-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     uses: ./.github/workflows/verify-builds.yml
     with:
       profile: ${{ needs.quick.outputs.profile }}

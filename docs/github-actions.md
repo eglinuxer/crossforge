@@ -6,7 +6,11 @@ Crossforge uses GitHub-hosted `ubuntu-24.04` build runners and
 
 ## Required checks and affected builds
 
-`ci.yml` runs on PRs, main pushes and manual dispatch. `quick` validates locks,
+`ci.yml` runs on PRs, main pushes and manual dispatch. Each main commit can
+start its quick checks while an older commit is building. Only the heavy
+`builds` call is serialized per ref; running main builds are preserved, while
+GitHub may replace an older pending build with a newer one. PR updates cancel
+stale runs. `quick` validates locks,
 configuration, generated files, unit tests, every shell script, and the Bake
 and Actions definitions. `scripts/ci-plan.py` selects a build profile from the
 complete Git diff, including deleted paths. Unknown paths and shared inputs
