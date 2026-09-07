@@ -51,8 +51,12 @@ prequalification.
 3. Six independent dual-target Python rows, plus a separate vcpkg tier3 job.
 4. Complete Python/packaging/SDK integration after those jobs succeed.
 5. Separate GCC smoke and full jobs after toolchain jobs succeed.
-6. Qt-only RPM/source inputs and host qualification, followed by independent
-   x86_64/AArch64 runtime jobs. SDK-only changes do not build these Qt inputs.
+6. Qt-only RPM/source inputs and host xcb preparation, then host qualification
+   in parallel with toolchain builds. Target runtime jobs wait for both the
+   host qualification and toolchains; their Bake graphs still build and verify
+   the corresponding target xcb libraries. The all-target xcb group must not
+   run before toolchain caches are ready, because it would rebuild both GCCs.
+   SDK-only changes do not build these Qt inputs.
 
 The SDK profiles select stages 1–4; the Qt profile selects 1, 2 and 6. Full
 qualification selects everything. Matrix jobs use `fail-fast: false` to retain

@@ -106,7 +106,7 @@ class QtRuntimeQualificationTests(unittest.TestCase):
         self.assertEqual(stages["qt-aarch64"], ["qt-aarch64-runtime-qualified"])
         builds = (REPOSITORY / ".github/workflows/verify-builds.yml").read_text()
         self.assertIn("stage: [qt-x86_64, qt-aarch64]", builds)
-        self.assertIn("needs: [plan, qt-host]", builds)
+        self.assertIn("needs: [plan, toolchains, qt-host]", builds)
         self.assertIn("timeout-minutes: 360", builds)
         self.assertIn(
             "./scripts/validate-qt-runtime-qualification.py", candidate

@@ -251,7 +251,7 @@ jobs:
         run: docker logout ghcr.io
 
   qt-host:
-    needs: [plan, toolchains, qt-inputs]
+    needs: [plan, qt-inputs]
     if: needs.plan.outputs.qt == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 360
@@ -278,7 +278,7 @@ jobs:
         run: docker logout ghcr.io
 
   qt:
-    needs: [plan, qt-host]
+    needs: [plan, toolchains, qt-host]
     if: needs.plan.outputs.qt == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 360

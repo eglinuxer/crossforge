@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import runpy
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -135,6 +136,27 @@ class HostedBuildTests(unittest.TestCase):
         for path in (ROOT / ".github/workflows").glob("*.yml"):
             lines = [line for line in path.read_text().splitlines() if "queue:" in line]
             self.assertEqual(lines, ["  queue: max"] if path.name == "qualification.yml" else [])
+
+    @unittest.skipUnless(shutil.which("docker"), "Docker CLI is required for Bake graph checks")
+    def test_qt_host_preparation_does_not_rebuild_cross_compilers(self):
+        graph = json.loads(subprocess.check_output(
+            ["docker", "buildx", "bake", "--print", *BUILD["STAGES"]["qt-inputs"],
+             *BUILD["STAGES"]["qt-host"]], cwd=ROOT, stderr=subprocess.PIPE))
+        self.assertFalse(any(name.startswith("toolchain-") for name in graph["target"]))
+        self.assertIn("xcb-util-cursor-host-build", graph["target"])
+        workflow = (ROOT / ".github/workflows/verify-builds.yml").read_text()
+        host = workflow.split("\n  qt-host:\n", 1)[1].split("\n  qt:\n", 1)[0]
+        self.assertIn("needs: [plan, qt-inputs]", host)
+        self.assertNotIn("toolchains", host)
+        target = workflow.split("\n  qt:\n", 1)[1].split("\n  verified:\n", 1)[0]
+        self.assertIn("needs: [plan, toolchains, qt-host]", target)
+        # Both target runtime graphs still own their target xcb qualification.
+        for arch in ("x86_64", "aarch64"):
+            graph = json.loads(subprocess.check_output(
+                ["docker", "buildx", "bake", "--print", *BUILD["STAGES"]["qt-" + arch]],
+                cwd=ROOT, stderr=subprocess.PIPE))
+            self.assertIn("xcb-util-cursor-" + arch + "-build", graph["target"])
+            self.assertIn("toolchain-" + arch + "-dev", graph["target"])
 
     def test_shell_syntax_checks_the_second_file_too(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
