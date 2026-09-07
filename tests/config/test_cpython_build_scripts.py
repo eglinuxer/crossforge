@@ -1,3 +1,9 @@
+import os
+import re
+import shlex
+import subprocess
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -37,6 +43,22 @@ class CPythonBuildScriptTests(unittest.TestCase):
         self.assertIn("unset HOSTRUNNER", self.cross)
         self.assertIn("export PYTHONDONTWRITEBYTECODE=1", self.cross)
         self.assertNotIn("qemu", self.cross.lower())
+
+    def test_isolated_guard_probes_do_not_modify_imported_python_tree(self):
+        probes = re.findall(r'if "\$build_python" ([^\n]+?) -c', self.cross)
+        self.assertEqual(len(probes), 2)
+        for flags in probes:
+            with self.subTest(flags=flags), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                (directory / "guard_fixture.py").write_text("value = 1\n")
+                subprocess.run(
+                    [sys.executable, *shlex.split(flags), "-c",
+                     "import sys; sys.path.insert(0, sys.argv[1]); import guard_fixture",
+                     str(directory)],
+                    env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+                    check=True,
+                )
+                self.assertFalse((directory / "__pycache__").exists())
 
     def test_build_outputs_must_start_absent(self):
         for script in (self.native, self.cross):

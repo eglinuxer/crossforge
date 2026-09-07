@@ -645,7 +645,16 @@ def main():
             isinstance(compile_build, dict)
             and compile_build.get("sha256") == build_python_sha256
             and compile_build.get("sdk_tree") == build_tree,
-            "%s build Python tree differs from qualification" % arch,
+            "%s build Python tree differs from qualification: %s" % (
+                arch,
+                json.dumps({
+                    "qualified": compile_build,
+                    "exported": {
+                        "sha256": build_python_sha256,
+                        "sdk_tree": build_tree,
+                    },
+                }, sort_keys=True),
+            ),
         )
         revalidate_exported_zstd(
             validated_zstd, build_prefix, target_prefix, arch

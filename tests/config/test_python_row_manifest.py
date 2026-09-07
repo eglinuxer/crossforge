@@ -1231,6 +1231,15 @@ class PythonRowManifestTests(unittest.TestCase):
                 process, unused_output = self.run_finalize(fixture)
                 self.assertNotEqual(process.returncode, 0)
 
+                if kind == "build":
+                    self.assertIn("build Python tree differs from qualification:", process.stderr)
+                    self.assertIn('"qualified":', process.stderr)
+                    self.assertIn('"exported":', process.stderr)
+                    self.assertIn(
+                        FINALIZE["sdk_tree_identity"](root)["canonical_sha256"],
+                        process.stderr,
+                    )
+
     def test_exported_elf_digests_are_recomputed(self):
         fixture = self.fixture("3.13")
         report = fixture["reports"]["x86_64"]["value"]

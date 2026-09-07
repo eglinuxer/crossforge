@@ -246,7 +246,7 @@ grep -Fqx $'execve\t'"$canary" "$auditor_log" || {
   exit 1
 }
 
-if "$build_python" -I -c \
+if "$build_python" -B -I -c \
     'import os,sys; os.execv(sys.argv[1], [sys.argv[1]])' \
     "$canary" >/dev/null 2>&1; then
   echo "error: Python os.execv bypassed the target-artifact guard" >&2
@@ -257,7 +257,7 @@ grep -Fqx $'execv\t'"$canary" "$auditor_log" || {
   exit 1
 }
 
-if "$build_python" -I -c '
+if "$build_python" -B -I -c '
 import os, sys
 try:
     child = os.posix_spawn(sys.argv[1], [sys.argv[1]], os.environ)
