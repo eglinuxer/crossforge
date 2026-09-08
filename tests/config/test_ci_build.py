@@ -108,8 +108,8 @@ class HostedBuildTests(unittest.TestCase):
             graph, "ghcr.io/test/cache", imports=catalog, write=True)["target"]
         refs = lambda name: [x["ref"].split(":main-")[1]
                              for x in result[name]["cache-from"]]
-        self.assertEqual(refs("qt"), ["webengine"])
-        self.assertEqual(refs("compiler"), ["tools", "webengine"])
+        self.assertCountEqual(refs("qt"), ["webengine", "tools", "rpm"])
+        self.assertCountEqual(refs("compiler"), ["tools", "webengine", "rpm"])
         self.assertCountEqual(refs("host"), ["rpm", "tools", "webengine"])
         self.assertEqual(len(refs("host")), 3)
         self.assertEqual(refs("unrelated"), ["python"])
@@ -138,6 +138,25 @@ class HostedBuildTests(unittest.TestCase):
                       [item["ref"] for item in result["host"]["cache-from"]])
         self.assertEqual(result["sdk-complete-dev"]["cache-to"][0]["mode"], "min")
         self.assertEqual(graph, original)
+
+    def test_consumers_import_transitive_dependency_caches(self):
+        graph = {"group": {"default": {"targets": ["qt"]}}, "target": {
+            "qt": {"dockerfile": "qt.Dockerfile", "contexts": {"base": "target:host"}},
+            "host": {"dockerfile": "host.Dockerfile", "contexts": {"rpm": "target:rpm"}},
+            "rpm": {"dockerfile": "rpm.Dockerfile"}}}
+        catalog = {name: dict(value) for name, value in graph["target"].items()}
+        original = copy.deepcopy(graph)
+        result = BUILD["cache_override"](
+            graph, "ghcr.io/test/cache", imports=catalog)["target"]
+        for name in ("qt", "host"):
+            self.assertIn("ghcr.io/test/cache:main-rpm",
+                          [source["ref"] for source in result[name]["cache-from"]])
+        self.assertIn("ghcr.io/test/cache:main-host",
+                      [source["ref"] for source in result["qt"]["cache-from"]])
+        self.assertEqual(graph, original)
+        cold = BUILD["cache_override"](
+            graph, "ghcr.io/test/cache", imports=catalog, cold=True)["target"]
+        self.assertTrue(all(not value["cache-from"] for value in cold.values()))
 
     def test_workflow_plan_accepts_main_push_and_rejects_untrusted_writers(self):
         workflow = (ROOT / ".github/workflows/verify-builds.yml").read_text()

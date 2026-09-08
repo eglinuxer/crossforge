@@ -111,9 +111,12 @@ imports include internal Dockerfile prerequisites and Python row caches. Each
 linked target starts with exports from its own Dockerfile; Python row targets
 exclude direct exports for other rows. Parent imports also flow to their linked
 inputs transitively, because a parent's `mode=max` export contains those input
-layers. This lets Qt's host environment and tools reuse the WebEngine checkpoint
-without assigning unrelated exports to every solve. Cache misses still execute
-the original build and qualification graph.
+layers. Consumers also import their transitive dependencies' own caches so
+shared stages can resolve those records within the consuming solve. This
+addresses the remote-cache pattern described in
+[Buildx issue 414](https://github.com/docker/buildx/issues/414); actual reuse
+must still be confirmed from hosted build logs. Unrelated targets keep their
+own imports. Cache misses execute the original build and qualification graph.
 
 Only `qualification.yml`, on a trusted main push, schedule or manual dispatch, writes
 these caches. Candidate prequalification calls that same wrapper. Its shared

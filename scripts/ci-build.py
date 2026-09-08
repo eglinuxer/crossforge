@@ -138,6 +138,13 @@ def cache_override(graph, repository, write=False, cold=False, imports=None):
             if name in visited:
                 continue
             visited.add(name)
+            # A consuming solve must import the linked dependency's own
+            # caches too; loading them only in the dependency solve can miss
+            # shared stages when remote-cache resolution races across solves.
+            parent_sources = result[parent]["cache-from"]
+            for source in direct_sources[name]:
+                if source not in parent_sources:
+                    parent_sources.append(source)
             sources = result[name]["cache-from"]
             for source in direct_sources[parent]:
                 if source not in sources:
