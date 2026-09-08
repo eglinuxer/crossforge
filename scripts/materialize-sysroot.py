@@ -10,6 +10,7 @@ import os
 import runpy
 import shutil
 import socket
+import ssl
 import stat
 import subprocess
 import sys
@@ -293,6 +294,12 @@ def retryable_download_error(error):
         return error.code in (408, 429, 500, 502, 503, 504)
     if isinstance(error, urllib.error.URLError):
         return retryable_download_error(error.reason)
+    if isinstance(error, ssl.SSLCertVerificationError):
+        return False
+    if isinstance(error, ssl.SSLError):
+        # Retry the observed transport failure with a fresh, verified connection.
+        # Other TLS failures can indicate permanent configuration errors.
+        return getattr(error, "reason", None) == "UNEXPECTED_MESSAGE"
     if isinstance(error, socket.gaierror):
         return error.errno == socket.EAI_AGAIN
     return isinstance(error, (ConnectionError, TimeoutError, http.client.IncompleteRead))

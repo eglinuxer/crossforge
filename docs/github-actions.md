@@ -173,7 +173,10 @@ Cache misses rebuild; they must not skip a required gate. All-failed/cancelled
 and unexpected-skip states remain failures in the summary.
 
 Locked RPM downloads make at most three attempts for transient transport
-failures and HTTP 408, 429, 500, 502, 503 and 504, waiting two then four seconds.
+failures (including TLS `UNEXPECTED_MESSAGE`) and HTTP 408, 429, 500, 502, 503
+and 504, waiting two then four seconds. TLS retries use a fresh connection with
+normal certificate verification; certificate failures and other TLS errors
+remain fatal.
 Each attempt starts a fresh temporary file. Content size/checksum failures,
 permanent HTTP failures and local filesystem errors remain fatal; retries do
 not alter the lock or bypass subsequent signature verification.

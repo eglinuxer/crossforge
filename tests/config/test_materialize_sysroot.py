@@ -2,6 +2,7 @@ import hashlib
 import io
 import os
 import runpy
+import ssl
 import tempfile
 import unittest
 import urllib.error
@@ -48,6 +49,39 @@ def context_for(payload, role="target-sysroot"):
 
 
 class MaterializeSysrootTests(unittest.TestCase):
+    def test_download_recovers_from_unexpected_tls_message(self):
+        payload = b"locked-rpm"
+        error = ssl.SSLError(ssl.SSL_ERROR_SSL, "unexpected message")
+        error.reason = "UNEXPECTED_MESSAGE"
+        for failure in (error, urllib.error.URLError(error)):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                response = io.BytesIO(payload)
+                response.headers = {}
+                with mock.patch("urllib.request.urlopen", side_effect=[failure, response]) as fetch, mock.patch("time.sleep") as sleep:
+                    MATERIALIZER["download_package"](package_for(payload), Path(temporary))
+                    self.assertEqual(fetch.call_count, 2)
+                    sleep.assert_called_once_with(2)
+                    self.assertEqual((Path(temporary) / "fake-1-1.x86_64.rpm").read_bytes(), payload)
+                    self.assertEqual(len(list(Path(temporary).iterdir())), 1)
+
+    def test_tls_retries_are_bounded_and_other_tls_errors_fail_immediately(self):
+        transient = ssl.SSLError(ssl.SSL_ERROR_SSL, "unexpected message")
+        transient.reason = "UNEXPECTED_MESSAGE"
+        certificate = ssl.SSLCertVerificationError(1, "certificate verify failed")
+        protocol = ssl.SSLError(ssl.SSL_ERROR_SSL, "wrong version number")
+        protocol.reason = "WRONG_VERSION_NUMBER"
+        unknown = ssl.SSLError(ssl.SSL_ERROR_SSL, "unknown TLS failure")
+        for error, attempts in ((transient, 3), (certificate, 1), (protocol, 1), (unknown, 1)):
+            with self.subTest(error=error), tempfile.TemporaryDirectory() as temporary:
+                failure = urllib.error.URLError(error)
+                with mock.patch("urllib.request.urlopen", side_effect=failure) as fetch, mock.patch("time.sleep") as sleep:
+                    with self.assertRaises(urllib.error.URLError) as caught:
+                        MATERIALIZER["download_package"](package_for(b"rpm"), Path(temporary))
+                    self.assertIs(caught.exception, failure)
+                    self.assertEqual(fetch.call_count, attempts)
+                    self.assertEqual(sleep.call_args_list, [mock.call(2), mock.call(4)] if attempts == 3 else [])
+                    self.assertEqual(list(Path(temporary).iterdir()), [])
+
     def test_download_restarts_after_midstream_reset_and_removes_partial(self):
         payload = b"locked-rpm"
         broken = mock.MagicMock()
