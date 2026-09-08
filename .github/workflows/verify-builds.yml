@@ -36,7 +36,7 @@ jobs:
           if test "$WRITE_CACHE" = true; then
             test "$GITHUB_REPOSITORY" = eglinuxer/crossforge
             test "$GITHUB_REF" = refs/heads/main
-            case "$GITHUB_EVENT_NAME" in schedule|workflow_dispatch) ;; *) exit 1 ;; esac
+            case "$GITHUB_EVENT_NAME" in push|schedule|workflow_dispatch) ;; *) exit 1 ;; esac
           fi
           active=false; sdk=false; gcc=false; qt=false
           if test "$PROFILE" != none; then active=true; fi

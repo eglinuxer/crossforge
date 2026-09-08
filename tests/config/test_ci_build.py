@@ -139,6 +139,32 @@ class HostedBuildTests(unittest.TestCase):
         self.assertEqual(result["sdk-complete-dev"]["cache-to"][0]["mode"], "min")
         self.assertEqual(graph, original)
 
+    def test_workflow_plan_accepts_main_push_and_rejects_untrusted_writers(self):
+        workflow = (ROOT / ".github/workflows/verify-builds.yml").read_text()
+        block = workflow.split("        run: |\n", 1)[1].split("\n  inputs:", 1)[0]
+        script = "\n".join(line[10:] for line in block.splitlines())
+        valid = {"PROFILE": "full", "WRITE_CACHE": "true",
+                 "GITHUB_REPOSITORY": "eglinuxer/crossforge",
+                 "GITHUB_REF": "refs/heads/main", "GITHUB_EVENT_NAME": "push"}
+        cases = [({"GITHUB_EVENT_NAME": event}, True)
+                 for event in ("push", "schedule", "workflow_dispatch")]
+        cases += [({field: value}, False) for field, value in (
+            ("GITHUB_REPOSITORY", "other/crossforge"),
+            ("GITHUB_REF", "refs/heads/feature"),
+            ("GITHUB_REF", "refs/tags/v0.1.0"),
+            ("GITHUB_EVENT_NAME", "pull_request"),
+            ("GITHUB_EVENT_NAME", "pull_request_target"))]
+        for changes, accepted in cases:
+            with self.subTest(changes=changes), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "outputs"
+                result = subprocess.run(
+                    ["bash", "-c", script], capture_output=True, text=True,
+                    env={**os.environ, **valid, **changes, "GITHUB_OUTPUT": str(output)})
+                self.assertEqual(result.returncode == 0, accepted, result.stderr)
+                if accepted:
+                    self.assertEqual(output.read_text(),
+                                     "active=true\nsdk=true\ngcc=true\nqt=true\n")
+
     def test_cache_writer_rejects_pr_fork_and_non_main_dispatch(self):
         valid = {"GITHUB_REPOSITORY": "eglinuxer/crossforge",
                  "GITHUB_REF": "refs/heads/main", "GITHUB_EVENT_NAME": "workflow_dispatch"}
