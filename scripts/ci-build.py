@@ -109,8 +109,12 @@ def cache_override(graph, repository, write=False, cold=False, imports=None):
                           if config.get("dockerfile") == target.get("dockerfile")
                           and (not row or not config.get("args", {}).get("CPYTHON_ROW")
                                or config["args"]["CPYTHON_ROW"] == row)]
+        # Final aggregates export mode=min, so their cache cannot provide
+        # the intermediate build stages of other targets. Keep only their
+        # own direct import; max-mode component exports cover shared inputs.
         sources = [{"type": "registry", "ref": repository + ":main-" + source}
-                   for source in candidates] if not cold else []
+                   for source in candidates
+                   if source not in FINAL_STAGE_CACHE_TARGETS or source == name] if not cold else []
         value = {"cache-from": sources, "cache-to": []}
         if write and name in roots:
             value["cache-to"] = [{
@@ -122,7 +126,9 @@ def cache_override(graph, repository, write=False, cold=False, imports=None):
     # A parent's max-mode export contains its linked inputs too. Those inputs
     # are separate Bake solves: they must receive that cache themselves, or a
     # rebuilt input can invalidate the expensive parent despite its cache hit.
-    direct_sources = {name: list(value["cache-from"])
+    final_refs = {repository + ":main-" + name for name in FINAL_STAGE_CACHE_TARGETS}
+    direct_sources = {name: [source for source in value["cache-from"]
+                             if source["ref"] not in final_refs]
                       for name, value in result.items()}
     for parent in names:
         pending = [parent]

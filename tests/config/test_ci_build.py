@@ -120,6 +120,25 @@ class HostedBuildTests(unittest.TestCase):
             graph, "ghcr.io/test/cache", imports=catalog, cold=True)["target"]
         self.assertTrue(all(not value["cache-from"] for value in cold.values()))
 
+    def test_min_aggregate_imports_stay_local_while_max_inputs_propagate(self):
+        graph = {"group": {"default": {"targets": ["sdk-complete-dev"]}}, "target": {
+            "sdk-complete-dev": {"dockerfile": "sdk", "contexts": {"python": "target:python-dev"}},
+            "python-dev": {"dockerfile": "python", "contexts": {"row": "target:row"}},
+            "row": {"dockerfile": "python", "contexts": {"host": "target:host"}},
+            "host": {"dockerfile": "host"}}}
+        catalog = {**graph["target"], "python-cp314-dev": {"dockerfile": "python"}}
+        original = copy.deepcopy(graph)
+        result = BUILD["cache_override"](
+            graph, "ghcr.io/test/cache", imports=catalog, write=True)["target"]
+        for name, config in result.items():
+            references = {item["ref"].split(":main-")[1] for item in config["cache-from"]}
+            for aggregate in ("sdk-complete-dev", "python-dev"):
+                self.assertEqual(aggregate in references, name == aggregate)
+        self.assertIn("ghcr.io/test/cache:main-python-cp314-dev",
+                      [item["ref"] for item in result["host"]["cache-from"]])
+        self.assertEqual(result["sdk-complete-dev"]["cache-to"][0]["mode"], "min")
+        self.assertEqual(graph, original)
+
     def test_cache_writer_rejects_pr_fork_and_non_main_dispatch(self):
         valid = {"GITHUB_REPOSITORY": "eglinuxer/crossforge",
                  "GITHUB_REF": "refs/heads/main", "GITHUB_EVENT_NAME": "workflow_dispatch"}
