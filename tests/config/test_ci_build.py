@@ -123,12 +123,13 @@ class HostedBuildTests(unittest.TestCase):
     def test_cache_writer_rejects_pr_fork_and_non_main_dispatch(self):
         valid = {"GITHUB_REPOSITORY": "eglinuxer/crossforge",
                  "GITHUB_REF": "refs/heads/main", "GITHUB_EVENT_NAME": "workflow_dispatch"}
-        BUILD["require_writer"](valid)
+        for event in ("push", "schedule", "workflow_dispatch"):
+            BUILD["require_writer"]({**valid, "GITHUB_EVENT_NAME": event})
         for field, value in (("GITHUB_REPOSITORY", "other/crossforge"),
                              ("GITHUB_REF", "refs/heads/feature"),
                              ("GITHUB_EVENT_NAME", "pull_request"),
                              ("GITHUB_EVENT_NAME", "pull_request_target"),
-                             ("GITHUB_EVENT_NAME", "push")):
+                             ("GITHUB_REF", "refs/tags/v0.1.0")):
             with self.subTest(field=field, value=value), self.assertRaises(ValueError):
                 BUILD["require_writer"]({**valid, field: value})
         with self.assertRaises(ValueError):

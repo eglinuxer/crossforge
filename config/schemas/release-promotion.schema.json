@@ -39,7 +39,7 @@
         "id": {"type": "integer", "minimum": 1},
         "attempt": {"type": "integer", "minimum": 1},
         "workflow_path": {"const": ".github/workflows/candidate.yml"},
-        "event": {"const": "workflow_dispatch"},
+        "event": {"enum": ["push", "workflow_dispatch"]},
         "head_branch": {"const": "main"},
         "head_sha": {"$ref": "#/$defs/git_sha1"},
         "repository": {"$ref": "#/$defs/github_repository"},

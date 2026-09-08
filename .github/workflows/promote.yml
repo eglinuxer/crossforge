@@ -11,6 +11,10 @@ on:
         description: Successful public candidate workflow run ID
         required: true
         type: string
+      release_tag:
+        description: Optional existing version tag; must resolve to the candidate commit
+        required: false
+        type: string
       confirmation:
         description: Enter PROMOTE-v<version> from config/release.json
         required: true
@@ -60,7 +64,7 @@ jobs:
             --arg repository "$GITHUB_REPOSITORY" '
               .id == $run_id and
               .run_attempt >= 1 and
-              .event == "workflow_dispatch" and
+              (.event == "push" or .event == "workflow_dispatch") and
               .status == "completed" and
               .conclusion == "success" and
               .head_branch == "main" and
@@ -77,10 +81,13 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ steps.candidate_run.outputs.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
       - uses: ./.github/actions/setup-locked-buildx
       - name: Validate the promotion contract and confirmation
         env:
           CANDIDATE_HEAD_SHA: ${{ steps.candidate_run.outputs.head_sha }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
           CONFIRMATION: ${{ inputs.confirmation }}
           IMMUTABLE_RELEASES_ENABLED: ${{ inputs.immutable_releases_enabled }}
           PRIVATE_REPORTING_ENABLED: ${{ inputs.private_vulnerability_reporting_enabled }}
@@ -88,6 +95,11 @@ jobs:
           set -Eeuo pipefail
           test "$(git rev-parse HEAD)" = "$CANDIDATE_HEAD_SHA"
           test -z "$(git status --porcelain --untracked-files=all)"
+          if test -n "$RELEASE_TAG"; then
+            test "$RELEASE_TAG" = "v$(jq -r .product.version config/release.json)"
+            test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$CANDIDATE_HEAD_SHA"
+            git merge-base --is-ancestor "$CANDIDATE_HEAD_SHA" origin/main
+          fi
           expected_confirmation="PROMOTE-v$(jq -r .product.version config/release.json)"
           test "$CONFIRMATION" = "$expected_confirmation"
           test "$IMMUTABLE_RELEASES_ENABLED" = true

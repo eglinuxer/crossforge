@@ -34,7 +34,7 @@ build-system-independent DEB/RPM packaging.
 > immutable evidence are implemented but still require their first public
 > execution. Repository protection settings and formal legal review remain
 > pre-release operating gates.
-> Checked-in Bake outputs remain cache-only; only the manually dispatched
+> Checked-in Bake outputs remain cache-only; only the main-push or manually dispatched
 > public-candidate workflow may emit a user-facing image.
 
 The accepted implementation contract is in
@@ -149,7 +149,10 @@ $ docker buildx bake gcc-testsuite-full-qualified
 ```
 
 PR CI runs fast checks and conservatively selects affected hosted build stages.
-Full qualification runs daily, manually, and before candidate publication.
+Every main push performs one full qualification and publishes a candidate.
+Full qualification also runs daily and manually. Version tags request digest-only
+stable promotion of the exact commit's successful candidate, subject to production
+approval; see the Actions operating guide for tag timing and required credentials.
 Toolchains, Python rows, vcpkg, GCC and Qt use separate GitHub-hosted jobs with
 shared trusted registry caches. See [the Actions operating guide](docs/github-actions.md)
 for stage selection, cold-build measurement, diagnostics and the required check.
@@ -814,7 +817,7 @@ The separate `sdk-candidate` target is the only registry-export boundary. It
 inherits the complete SDK, revalidates the product identity, requires the full
 source commit, and adds OCI version/revision annotations. Its checked-in Bake
 output is still cache-only and has no tag, so local commands cannot publish it
-accidentally. The manually dispatched `public candidate` workflow supplies a
+accidentally. The main-push (or manually dispatched) `public candidate` workflow supplies a
 unique `candidate-v<version>-g<commit>-r<run>-a<attempt>` tag, pushes with max
 provenance and SBOM attestations, reconstructs `candidate.json` from the raw
 OCI index, builds and pushes the corresponding source archive under a paired

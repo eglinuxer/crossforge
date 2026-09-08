@@ -6,16 +6,19 @@ Crossforge uses GitHub-hosted `ubuntu-24.04` build runners and
 
 ## Required checks and affected builds
 
-`ci.yml` runs on PRs, main pushes and manual dispatch. Each main commit can
-start its quick checks while an older commit is building. Only the heavy
-`builds` call is serialized per ref; running main builds are preserved, while
-GitHub may replace an older pending build with a newer one. PR updates cancel
-stale runs. `quick` validates locks,
-configuration, generated files, unit tests, every shell script, and the Bake
-and Actions definitions. `scripts/ci-plan.py` selects a build profile from the
-complete Git diff, including deleted paths. Unknown paths and shared inputs
-select `full`; failure to determine a manual/push base also selects `full`.
+`ci.yml` runs on PRs and manual dispatch, and is callable for quick checks.
+PR updates cancel stale runs. `quick` validates locks, configuration,
+generated files, unit tests, every shell script, and the Bake and Actions
+definitions. `scripts/ci-plan.py` selects a build profile from the complete
+Git diff, including deleted paths. Unknown paths and shared inputs select
+`full`; manual dispatch without a diff base also selects `full`.
 A PR uses the merge base against the checked-out merge commit.
+
+Each main push starts only `candidate.yml`: it calls CI with `quick-only: true`
+(the reusable build summary selects no heavy stages), then one full
+qualification, then candidate publication. No separate push CI duplicates
+that qualification. Manual candidate dispatch is a recovery path; do not
+start a second candidate for the same SHA while its automatic run is active.
 
 | Changes | Build profile |
 | --- | --- |
@@ -27,8 +30,8 @@ A PR uses the merge base against the checked-out merge commit.
 
 The first implementation deliberately runs all six Python rows for `sdk` and
 `python`. Narrowing individual rows needs explicit dependency mapping; it must
-not silently miss changes to shared Python logic. Build-affecting main pushes
-use the same selection as PRs. Full qualification also runs daily and manually.
+not silently miss changes to shared Python logic. Main pushes always qualify the full graph before publishing. Full qualification
+also runs daily and manually as a separate replay.
 
 The stable required check is **`pr-required`**. It succeeds only if `quick`
 and the reusable build workflow both succeed. That workflow separately checks
@@ -105,7 +108,7 @@ layers. This lets Qt's host environment and tools reuse the WebEngine checkpoint
 without assigning unrelated exports to every solve. Cache misses still execute
 the original build and qualification graph.
 
-Only `qualification.yml`, on a main schedule or main manual dispatch, writes
+Only `qualification.yml`, on a trusted main push, schedule or manual dispatch, writes
 these caches. Candidate prequalification calls that same wrapper. Its shared
 concurrency group serializes all writers with `queue: max`, so up to 100
 waiting qualifications/candidates are retained rather than replaced by a
@@ -115,7 +118,7 @@ Pinned actionlint 1.7.12 does not yet understand this field; only its specific
 unsupported-queue diagnostic is ignored, and a regression requires this exact
 setting with cancellation disabled on the qualification workflow. Running
 qualification and candidate publication are not automatically cancelled.
-PR/main CI and candidate publication only import caches. The cache writer
+PR/manual CI and candidate publication only import caches. The cache writer
 also checks the repository, event and ref before allowing an export.
 
 The first cache export creates the GHCR cache package. Configure that package
@@ -183,7 +186,8 @@ not alter the lock or bypass subsequent signature verification.
 
 ## Candidate and stable delivery
 
-`candidate.yml` first calls the full qualification workflow for the exact
+`candidate.yml` runs automatically on main pushes, with manual dispatch retained
+for recovery. After quick checks it calls the full qualification workflow for the exact
 candidate checkout. It then imports those caches into its existing source and
 SDK build graph, without changing output, attestation or qualification policy.
 The final SDK still validates its GCC full evidence and all existing contracts.
@@ -193,6 +197,32 @@ After pushing the unique candidate, anonymous consumers, native AArch64 and
 signature checks run as before. Stable promotion and rollback continue to use
 digests without rebuilding. A warm build is not a previously qualified image:
 only the actual published candidate digest can acquire release evidence.
+
+Push a stable `vX.Y.Z` Git tag to request a formal release. The tag must point
+to a commit in main and match `product.version` in that commit's
+`config/release.json`; lightweight and annotated tags are supported.
+`release-request.yml` finds the newest candidate run for that exact commit.
+It accepts only successful upstream main candidates, and does not substitute
+an older success for a newer failed or pending attempt. Missing candidates,
+missing/expired evidence and failed qualification stop release; no fallback
+build is started.
+
+If the candidate is still running, the tag request exits without occupying a
+runner. The candidate's successful completion event checks tags at its commit
+and resumes promotion. When no release tag exists this event does no publishing.
+The coordinator dispatches `promote.yml` on main with the exact candidate run
+and existing tag. Promotion revalidates the tag after production approval,
+checks all immutable candidate evidence, and assigns version/channel tags to
+the same OCI digests without rebuilding SDK or source images. Duplicate
+requests remain subject to the existing serialized, idempotent promotion checks.
+
+Tag triggering retains the production environment's required review and its
+main-only deployment policy. The production secret `RELEASE_ADMIN_TOKEN`
+(repository-scoped fine-grained PAT with Administration read) remains required
+for live control-plane verification; a workflow token cannot replace it.
+Automatic triggering does not remove this approval or secret requirement.
+GitHub permits the coordinator's `GITHUB_TOKEN` to trigger a
+[workflow dispatch](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
 First deployment acceptance requires a successful warm qualification, a
 successful cold qualification, a complete signed candidate run, anonymous

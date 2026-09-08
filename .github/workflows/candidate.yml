@@ -1,10 +1,12 @@
 name: public candidate
 
 concurrency:
-  group: candidate-${{ github.ref }}
+  group: candidate-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,7 +17,15 @@ env:
   CANDIDATE_REPOSITORY: ghcr.io/eglinuxer/crossforge
 
 jobs:
+  quick:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+    with:
+      quick-only: true
+
   qualify:
+    needs: quick
     uses: ./.github/workflows/qualification.yml
 
   publish:

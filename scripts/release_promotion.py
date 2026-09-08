@@ -63,7 +63,8 @@ def validate_candidate_run(document, expected_repository, expected_run_id):
     expected_run_id = positive_integer(expected_run_id, "candidate run ID")
     require(document.get("id") == expected_run_id, "candidate run ID differs")
     attempt = positive_integer(document.get("run_attempt"), "candidate run attempt")
-    require(document.get("event") == "workflow_dispatch", "candidate run was not manual")
+    require(document.get("event") in ("push", "workflow_dispatch"),
+            "candidate run event is not trusted")
     require(document.get("status") == "completed", "candidate run is not complete")
     require(document.get("conclusion") == "success", "candidate run did not succeed")
     require(document.get("head_branch") == "main", "candidate run branch differs")
@@ -91,7 +92,7 @@ def validate_candidate_run(document, expected_repository, expected_run_id):
         "id": expected_run_id,
         "attempt": attempt,
         "workflow_path": CANDIDATE_WORKFLOW,
-        "event": "workflow_dispatch",
+        "event": document["event"],
         "head_branch": "main",
         "head_sha": head_sha,
         "repository": expected_repository,

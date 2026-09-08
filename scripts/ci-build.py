@@ -51,7 +51,7 @@ def require_writer(environment):
     if not (
         environment.get("GITHUB_REPOSITORY") == "eglinuxer/crossforge"
         and environment.get("GITHUB_REF") == "refs/heads/main"
-        and environment.get("GITHUB_EVENT_NAME") in ("schedule", "workflow_dispatch")
+        and environment.get("GITHUB_EVENT_NAME") in ("push", "schedule", "workflow_dispatch")
     ):
         raise ValueError("cache writes require a trusted main qualification run")
 

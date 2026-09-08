@@ -22,10 +22,14 @@ class CandidateWorkflowTests(unittest.TestCase):
             / ".github/actions/validate-public-attestations/action.yml"
         ).read_text(encoding="utf-8")
 
-    def test_candidate_is_manual_public_digest_only_output(self):
+    def test_candidate_publishes_main_and_manual_public_digest_only_output(self):
         self.assertIn("workflow_dispatch:", self.workflow)
         self.assertNotIn("pull_request:", self.workflow)
-        self.assertNotIn("push:\n", self.workflow)
+        self.assertIn("  push:\n    branches: [main]", self.workflow)
+        self.assertNotIn("  push:", self.ci)
+        self.assertIn("quick-only: true", self.workflow)
+        self.assertIn("    needs: quick\n", self.workflow)
+        self.assertIn("inputs.quick-only && 'none'", self.ci)
         self.assertIn("packages: write", self.workflow)
         self.assertIn("sdk-candidate.output=type=image,push=true", self.workflow)
         self.assertIn(

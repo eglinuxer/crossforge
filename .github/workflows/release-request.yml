@@ -1,0 +1,38 @@
+name: tagged release request
+
+on:
+  push:
+    tags: ['v*']
+  workflow_run:
+    workflows: ['public candidate']
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: release-request-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  request:
+    if: >-
+      github.repository == 'eglinuxer/crossforge' &&
+      (github.event_name == 'push' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out trusted release orchestration
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Resolve tag and request exact candidate promotion
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/release-request.py request

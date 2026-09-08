@@ -7,10 +7,14 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 on:
-  push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      quick-only:
+        description: Run static checks without duplicating candidate qualification
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -117,7 +121,7 @@ jobs:
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     uses: ./.github/workflows/verify-builds.yml
     with:
-      profile: ${{ needs.quick.outputs.profile }}
+      profile: ${{ inputs.quick-only && 'none' || needs.quick.outputs.profile }}
 
   pr-required:
     if: always()

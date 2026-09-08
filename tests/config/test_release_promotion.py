@@ -113,11 +113,18 @@ class ReleasePromotionTests(unittest.TestCase):
             ],
         )
 
+    def test_main_push_forms_valid_promotion_evidence(self):
+        run = self.run_metadata()
+        run["event"] = "push"
+        document = self.document(run=run)
+        self.assertEqual(document["candidate_run"]["event"], "push")
+        PROMOTION["validate_document"](document, self.release, self.schema)
+
     def test_run_metadata_fails_closed(self):
         mutations = (
             lambda run: run.__setitem__("id", 123457),
             lambda run: run.__setitem__("run_attempt", 0),
-            lambda run: run.__setitem__("event", "push"),
+            lambda run: run.__setitem__("event", "pull_request"),
             lambda run: run.__setitem__("status", "in_progress"),
             lambda run: run.__setitem__("conclusion", "failure"),
             lambda run: run.__setitem__("head_branch", "feature"),
@@ -253,7 +260,7 @@ class PromotionWorkflowTests(unittest.TestCase):
             REPOSITORY / ".github/workflows/promote.yml"
         ).read_text(encoding="utf-8")
 
-    def test_promotion_is_manual_serial_and_never_rebuilds(self):
+    def test_promotion_is_dispatched_serial_and_never_rebuilds(self):
         self.assertIn("workflow_dispatch:", self.workflow)
         self.assertNotIn("pull_request:", self.workflow)
         self.assertNotIn("push:\n", self.workflow)
