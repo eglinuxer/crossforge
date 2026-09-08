@@ -234,6 +234,7 @@ class HostedBuildTests(unittest.TestCase):
         self.assertIn("group: ci-builds-${{ github.ref }}", builds)
         self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", builds)
         self.assertNotIn("github.sha", builds)
+        self.assertIn("inputs.quick-only && '-quick' || ''", builds)
 
     def test_qualification_queue_keeps_waiting_candidates(self):
         workflow = (ROOT / ".github/workflows/qualification.yml").read_text()

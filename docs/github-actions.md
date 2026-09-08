@@ -15,7 +15,8 @@ Git diff, including deleted paths. Unknown paths and shared inputs select
 A PR uses the merge base against the checked-out merge commit.
 
 Each main push starts only `candidate.yml`: it calls CI with `quick-only: true`
-(the reusable build summary selects no heavy stages), then one full
+(the reusable build summary selects no heavy stages and has a separate
+concurrency lock from selected builds), then one full
 qualification, then candidate publication. No separate push CI duplicates
 that qualification. Manual candidate dispatch is a recovery path; do not
 start a second candidate for the same SHA while its automatic run is active.

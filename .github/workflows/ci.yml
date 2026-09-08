@@ -117,7 +117,7 @@ jobs:
   builds:
     needs: quick
     concurrency:
-      group: ci-builds-${{ github.ref }}
+      group: ci-builds-${{ github.ref }}${{ inputs.quick-only && '-quick' || '' }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     uses: ./.github/workflows/verify-builds.yml
     with:
