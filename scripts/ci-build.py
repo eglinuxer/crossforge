@@ -187,7 +187,8 @@ def run_stage(stage, directory, repository, write=False, cold=False):
     graph = read_graph(STAGES[stage])
     write_json(directory / "graph.json", graph)
     override = directory / "cache.json"
-    write_json(override, cache_override(graph, repository, write, cold, cache_catalog()))
+    cache = cache_override(graph, repository, write, cold, cache_catalog())
+    write_json(override, cache)
     # Bound concurrent top-level solves. Linked dependencies still use Bake's
     # original graph (and require the BuildKit cache-session fix) and the
     # same builder, so completed prerequisites remain available locally.
@@ -201,13 +202,20 @@ def run_stage(stage, directory, repository, write=False, cold=False):
     try:
         with (directory / "build.log").open("xb") as log:
             for target in targets:
+                # Linked roots can be solved again by a later consumer. Export
+                # only the current root, preserving every dependency import.
+                solve_override = directory / ("cache-" + target + ".json")
+                write_json(solve_override, {"target": {
+                    name: {**value, "cache-to": value["cache-to"] if name == target else []}
+                    for name, value in cache["target"].items()
+                }})
                 # One budget for the whole stage, including all root solves.
                 remaining = int(330 * 60 - (time.monotonic() - started))
                 if remaining <= 0:
                     status = 124
                     break
                 command = ["timeout", "--signal=TERM", "--kill-after=60s",
-                           str(remaining) + "s", *BAKE, "-f", str(override),
+                           str(remaining) + "s", *BAKE, "-f", str(solve_override),
                            target, "--progress=plain", "--metadata-file",
                            str(directory / ("metadata-" + target + ".json"))]
                 status = HEARTBEAT["execute"](

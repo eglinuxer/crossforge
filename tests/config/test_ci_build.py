@@ -240,6 +240,31 @@ class HostedBuildTests(unittest.TestCase):
                 for root, command in zip(roots, calls):
                     self.assertEqual(command[-1], str(Path(directory) / ("metadata-" + root + ".json")))
 
+    def test_sequential_consumers_export_only_the_current_root(self):
+        function = BUILD["run_stage"]
+        observed = []
+        graph = self.graph()
+        graph["target"]["sdk"]["contexts"] = {"input": "target:evidence"}
+
+        def execute(command, *args, **kwargs):
+            target = command[command.index("--progress=plain") - 1]
+            override = json.loads(Path(command[command.index("--progress=plain") - 2]).read_text())
+            exports = [name for name, value in override["target"].items() if value["cache-to"]]
+            self.assertEqual(exports, [target])
+            self.assertTrue(override["target"]["evidence"]["cache-from"])
+            observed.append(target)
+            return 0
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            function.__globals__, {
+                "read_graph": lambda targets: graph,
+                "cache_catalog": lambda: ["sdk", "evidence"],
+                "HEARTBEAT": {"execute": execute},
+            }
+        ), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
+            self.assertEqual(function("sdk", Path(directory), "ghcr.io/test/cache", write=True), 0)
+        self.assertEqual(observed, ["evidence", "sdk"])
+
     def test_stage_budget_does_not_restart_for_each_root(self):
         function = BUILD["run_stage"]
         execute = mock.Mock(return_value=0)
