@@ -222,4 +222,41 @@ else
   }
 fi
 
+# make install runs bytecode compilation with -E, so an environment hash seed
+# alone cannot make older CPython marshal output reproducible. Recompile only
+# the installed caches, retaining their source paths and optimization levels.
+# Read the normalizer's imports from source too: loading the old caches can
+# affect marshal's reference encoding even after fixing the hash seed.
+PYTHONHASHSEED=0 "$python" -B -s \
+  -X "pycache_prefix=$build_directory/normalization-cache" \
+  - "$prefix" <<'PYTHON_BYTECODE'
+from pathlib import Path
+import py_compile
+import sys
+
+for cache in sorted(Path(sys.argv[1]).rglob("*.pyc")):
+    # CPython's own tests include dotted names such as __phello__.foo.py,
+    # which source_from_cache rejects on older interpreters.
+    stem, suffix = cache.name.rsplit("." + sys.implementation.cache_tag, 1)
+    if cache.parent.name != "__pycache__" or suffix not in (
+        ".pyc", ".opt-1.pyc", ".opt-2.pyc"
+    ):
+        raise ValueError("unexpected installed bytecode path: " + str(cache))
+    source = str(cache.parent.parent / (stem + ".py"))
+    optimization = 0
+    if ".opt-" in cache.name:
+        optimization = int(cache.name.rsplit(".opt-", 1)[1].split(".", 1)[0])
+    py_compile.compile(
+        source,
+        cfile=str(cache),
+        dfile=source,
+        doraise=True,
+        optimize=optimization,
+        invalidation_mode=py_compile.PycInvalidationMode.CHECKED_HASH,
+    )
+PYTHON_BYTECODE
+
+# ranlib without -D can stamp the archive symbol index with wall-clock time.
+find "$prefix" -type f -name '*.a' -exec "$RANLIB" -D {} +
+
 echo "built native CPython $version at $prefix"

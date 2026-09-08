@@ -1,6 +1,7 @@
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -38,6 +39,66 @@ class CPythonBuildScriptTests(unittest.TestCase):
             for value in required:
                 with self.subTest(script=name, value=value):
                     self.assertIn(value, script)
+
+    def test_native_bytecode_normalization_preserves_optimization_and_file_set(self):
+        block = self.native.split('PYTHONHASHSEED=0 "$python"', 1)[1]
+        block = 'PYTHONHASHSEED=0 "$python"' + block.split(
+            "\nPYTHON_BYTECODE", 1
+        )[0] + "\nPYTHON_BYTECODE\n"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "fixture.with.dots.py"
+            source.write_text('"module docstring"\nvalues = {"one", "two", "three"}\n')
+            import py_compile
+            import marshal
+            caches = []
+            for level in range(3):
+                caches.append(Path(py_compile.compile(
+                    str(source), optimize=level,
+                    invalidation_mode=py_compile.PycInvalidationMode.TIMESTAMP,
+                )))
+            paths = sorted(str(path.relative_to(root)) for path in root.rglob("*"))
+            environment = dict(os.environ, python=sys.executable, prefix=str(root),
+                               build_directory=str(root / "build"),
+                               PYTHONHASHSEED="random")
+            subprocess.run(["bash", "-Eeuo", "pipefail", "-c", block],
+                           env=environment, check=True)
+            first = [cache.read_bytes() for cache in caches]
+            self.assertEqual(paths, sorted(str(path.relative_to(root))
+                                          for path in root.rglob("*")))
+            for level, data in enumerate(first):
+                self.assertEqual(int.from_bytes(data[4:8], "little"), 3)
+                code = marshal.loads(data[16:])
+                self.assertEqual(code.co_filename, str(source))
+                self.assertEqual("module docstring" in code.co_consts, level < 2)
+            os.utime(source, (1234567890, 1234567890))
+            subprocess.run(["bash", "-Eeuo", "pipefail", "-c", block],
+                           env=environment, check=True)
+            self.assertEqual(first, [cache.read_bytes() for cache in caches])
+
+    @unittest.skipUnless(all(shutil.which(tool) for tool in ("cc", "ar", "ranlib")),
+                         "native archive tools are unavailable")
+    def test_native_archive_normalization_removes_symbol_index_timestamp(self):
+        command = next(line for line in self.native.splitlines()
+                       if line.startswith('find "$prefix" -type f -name'))
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            obj = root / "fixture.o"
+            subprocess.run(["cc", "-xc", "-c", "-o", str(obj), "-"],
+                           input="int fixture(void) { return 1; }\n", text=True,
+                           check=True)
+            archive = root / "first.a"
+            subprocess.run(["ar", "rcD", str(archive), str(obj)], check=True)
+            original = archive.read_bytes()
+            self.assertEqual(original[8:24].strip(), b"/")
+            for name, timestamp in (("first.a", b"123"), ("second.a", b"456")):
+                (root / name).write_bytes(original[:24] + timestamp.ljust(12)
+                                         + original[36:])
+            subprocess.run(["bash", "-Eeuo", "pipefail", "-c", command],
+                           env=dict(os.environ, prefix=str(root),
+                                    RANLIB=shutil.which("ranlib")), check=True)
+            self.assertEqual((root / "first.a").read_bytes(), original)
+            self.assertEqual((root / "second.a").read_bytes(), original)
 
     def test_cross_build_has_no_runner_and_suppresses_bytecode_writes(self):
         self.assertIn("unset HOSTRUNNER", self.cross)
