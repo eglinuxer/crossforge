@@ -44,15 +44,7 @@ runs:
       run: |
         set -Eeuo pipefail
         root="$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE"
-        mkdir -p "$root"
-        # Best effort on an unhealthy builder; never mask the build failure.
-        timeout 120s docker buildx history export --all --output "$root/build.dockerbuild" \
-          > "$root/history-export.log" 2>&1 || true
-        timeout 30s docker buildx du > "$root/buildkit-disk.txt" 2>&1 || true
-        while IFS= read -r container; do
-          timeout 30s docker logs --timestamps "$container" \
-            > "$root/buildkit-$container.log" 2>&1 || true
-        done < <(docker ps -aq --filter name=buildx_buildkit)
+        ./scripts/collect-buildkit-diagnostics.sh "$root"
     - name: Preserve build diagnostics
       if: always()
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

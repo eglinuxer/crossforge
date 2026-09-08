@@ -70,7 +70,11 @@ prequalification.
 The SDK profiles select stages 1–4; the Qt profile selects 1, 2 and 6. Full
 qualification selects everything. Matrix jobs use `fail-fast: false` to retain
 both target results, with at most two concurrent members per matrix. BuildKit
-runs at most one build vertex at a time within each runner; compiler jobs keep
+runs at most one build vertex at a time within each runner. Its Go runtime
+uses `GOMEMLIMIT=4GiB` to encourage earlier collection of solver/cache metadata
+and leave headroom on the 16 GiB host; this is a
+[soft GC target](https://go.dev/doc/gc-guide#Memory_limit), not a hard container
+limit or a guarantee against OOM. Compiler jobs keep
 their existing limit of four. Cross stages still cannot execute target code.
 QEMU smoke and heavy compiler builds do not share a runner.
 
@@ -162,7 +166,11 @@ it records available memory, swap, load and free workspace disk. It records
 exit status, elapsed time and source commit in `result.json`; these are
 operational observations, not release qualification reports. Per-root Buildx
 metadata (`metadata-<target>.json`), the resolved graph and BuildKit container
-logs are retained too. A failure prints the final 100 log
+logs are retained too. Diagnostics capture container state and restart count
+before Buildx can restart a stopped daemon, plus available kernel OOM journal
+records. This distinguishes a daemon restart under memory pressure from a
+transport-only EOF; unavailable diagnostics never replace the build failure.
+A failure prints the final 100 log
 lines without replacing the original failure code.
 
 An `always()` artifact step uploads diagnostics for seven days, named by
