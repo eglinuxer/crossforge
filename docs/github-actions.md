@@ -98,9 +98,11 @@ layers. The first aggregate Python export exhausted the hosted disk with
 `mode=max`. See [Docker's registry cache modes](https://docs.docker.com/build/cache/backends/registry/).
 Different matrix members have different export destinations. Shared
 imports include internal Dockerfile prerequisites and Python row caches. Each
-linked target imports only exports from its own Dockerfile; Python row targets
-exclude exports for other rows. This bounds cache metadata loading instead of
-assigning the entire catalog to every linked solve. Cache misses still execute
+linked target starts with exports from its own Dockerfile; Python row targets
+exclude direct exports for other rows. Parent imports also flow to their linked
+inputs transitively, because a parent's `mode=max` export contains those input
+layers. This lets Qt's host environment and tools reuse the WebEngine checkpoint
+without assigning unrelated exports to every solve. Cache misses still execute
 the original build and qualification graph.
 
 Only `qualification.yml`, on a main schedule or main manual dispatch, writes

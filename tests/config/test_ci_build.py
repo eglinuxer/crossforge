@@ -91,6 +91,35 @@ class HostedBuildTests(unittest.TestCase):
         self.assertEqual(refs("host"), ["internal-host"])
         self.assertEqual(graph, original)
 
+    def test_parent_exports_reach_transitive_linked_inputs(self):
+        graph = {"group": {"default": {"targets": ["qt"]}}, "target": {
+            "qt": {"dockerfile": "qt", "contexts": {
+                "ffmpeg": "target:ffmpeg", "compiler": "target:compiler"}},
+            "ffmpeg": {"dockerfile": "qt", "contexts": {"host": "target:host"}},
+            "compiler": {"dockerfile": "tools", "contexts": {"host": "target:host"}},
+            "host": {"dockerfile": "rpm"},
+            "unrelated": {"dockerfile": "python"}}}
+        catalog = {"webengine": {"dockerfile": "qt"},
+                   "tools": {"dockerfile": "tools"},
+                   "rpm": {"dockerfile": "rpm"},
+                   "python": {"dockerfile": "python"}}
+        original = copy.deepcopy(graph)
+        result = BUILD["cache_override"](
+            graph, "ghcr.io/test/cache", imports=catalog, write=True)["target"]
+        refs = lambda name: [x["ref"].split(":main-")[1]
+                             for x in result[name]["cache-from"]]
+        self.assertEqual(refs("qt"), ["webengine"])
+        self.assertEqual(refs("compiler"), ["tools", "webengine"])
+        self.assertCountEqual(refs("host"), ["rpm", "tools", "webengine"])
+        self.assertEqual(len(refs("host")), 3)
+        self.assertEqual(refs("unrelated"), ["python"])
+        self.assertFalse(result["host"]["cache-to"])
+        self.assertTrue(result["qt"]["cache-to"])
+        self.assertEqual(graph, original)
+        cold = BUILD["cache_override"](
+            graph, "ghcr.io/test/cache", imports=catalog, cold=True)["target"]
+        self.assertTrue(all(not value["cache-from"] for value in cold.values()))
+
     def test_cache_writer_rejects_pr_fork_and_non_main_dispatch(self):
         valid = {"GITHUB_REPOSITORY": "eglinuxer/crossforge",
                  "GITHUB_REF": "refs/heads/main", "GITHUB_EVENT_NAME": "workflow_dispatch"}

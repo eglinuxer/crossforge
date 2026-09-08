@@ -119,6 +119,29 @@ def cache_override(graph, repository, write=False, cold=False, imports=None):
                 "image-manifest": True, "oci-mediatypes": True,
             }]
         result[name] = value
+    # A parent's max-mode export contains its linked inputs too. Those inputs
+    # are separate Bake solves: they must receive that cache themselves, or a
+    # rebuilt input can invalidate the expensive parent despite its cache hit.
+    direct_sources = {name: list(value["cache-from"])
+                      for name, value in result.items()}
+    for parent in names:
+        pending = [parent]
+        visited = set()
+        while pending:
+            name = pending.pop()
+            if name in visited:
+                continue
+            visited.add(name)
+            sources = result[name]["cache-from"]
+            for source in direct_sources[parent]:
+                if source not in sources:
+                    sources.append(source)
+            for context in graph["target"][name].get("contexts", {}).values():
+                if isinstance(context, str) and context.startswith("target:"):
+                    dependency = context.removeprefix("target:")
+                    if dependency not in result:
+                        raise ValueError("missing linked Bake target: " + dependency)
+                    pending.append(dependency)
     return {"target": result}
 
 
