@@ -118,6 +118,17 @@ def print_log_diagnostics(path, limit=160):
         content = path.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
         return
+    # Probe commands at the end of a full suite can hide earlier failures.
+    # Keep each failing result with its preceding compiler output, even when
+    # it falls outside the bounded general diagnostic tail.
+    failure_lines = set()
+    for index, line in enumerate(content):
+        if line.startswith(("FAIL:", "UNRESOLVED:", "XPASS:")):
+            failure_lines.update(range(max(0, index - 30), index + 1))
+    if failure_lines:
+        print("--- failing test context: %s ---" % path, file=sys.stderr)
+        for index in sorted(failure_lines):
+            print(content[index], file=sys.stderr)
     needles = (
         "Executing on ",
         "spawn -ignore",

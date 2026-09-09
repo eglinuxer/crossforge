@@ -1,4 +1,6 @@
 import copy
+import contextlib
+import io
 import runpy
 import tempfile
 import unittest
@@ -17,6 +19,22 @@ VERIFIER = runpy.run_path(
 
 
 class GccTestsuiteContractTests(unittest.TestCase):
+    def test_diagnostics_preserve_early_failure_before_later_probes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "gcc.log"
+            path.write_text(
+                "Executing on host: gcc failing.c\n"
+                "cc1: error: invalid architecture\n"
+                "FAIL: gcc.target/i386/example.c (test for excess errors)\n"
+                + "Executing on host: gcc probe.c\n" * 200,
+                encoding="utf-8",
+            )
+            output = io.StringIO()
+            with contextlib.redirect_stderr(output):
+                RUNNER["print_log_diagnostics"](path)
+            self.assertIn("cc1: error: invalid architecture", output.getvalue())
+            self.assertIn("FAIL: gcc.target/i386/example.c", output.getvalue())
+
     @classmethod
     def setUpClass(cls):
         cls.contract = CONTRACT["validate_release_contract"](
