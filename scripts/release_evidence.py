@@ -28,9 +28,6 @@ PAYLOAD_ARGUMENTS = (
     ("candidate.json", "candidate"),
     ("native-aarch64-probes.tar", "native_probe_bundle"),
     ("native-aarch64.json", "native_report"),
-    ("qt-native-aarch64-runtime.json", "qt_native_report"),
-    ("qt-runtime-overlay.json", "qt_overlay_evidence"),
-    ("qt-target-build.json", "qt_build_evidence"),
     ("release-promotion.json", "promotion"),
     ("release.json", "release"),
     ("sdk-attestations.json", "sdk_attestations"),
@@ -55,7 +52,6 @@ IMAGE_ATTESTATIONS = runpy.run_path(
 if str(REPOSITORY / "scripts") not in sys.path:
     sys.path.insert(0, str(REPOSITORY / "scripts"))
 NATIVE = runpy.run_path(str(REPOSITORY / "scripts/native-aarch64-release.py"))
-QT_NATIVE = runpy.run_path(str(REPOSITORY / "scripts/validate-qt-native-release.py"))
 ValidationError = STRICT["ValidationError"]
 CandidateError = CANDIDATE["CandidateError"]
 PromotionError = PROMOTION["PromotionError"]
@@ -286,28 +282,6 @@ def validate_inputs(paths, release, schema):
         ]
     )
     NATIVE["validate_report"](native_arguments)
-    qt_report = STRICT["load_json"](paths["qt-native-aarch64-runtime.json"])
-    qt_arguments = QT_NATIVE["parser"]().parse_args(
-        [
-            "--candidate",
-            str(paths["candidate.json"]),
-            "--report",
-            str(paths["qt-native-aarch64-runtime.json"]),
-            "--build-evidence",
-            str(paths["qt-target-build.json"]),
-            "--overlay-evidence",
-            str(paths["qt-runtime-overlay.json"]),
-            "--expected-source-commit",
-            candidate["source_commit"],
-            "--expected-candidate-digest",
-            candidate["digest"],
-            "--input-rootfs-sha256",
-            qt_report["identity"]["input_rootfs_sha256"],
-            "--release",
-            str(paths["release.json"]),
-        ]
-    )
-    QT_NATIVE["validate"](qt_arguments)
     manifest = {
         "$schema": SCHEMA_ID,
         "schema_version": 1,

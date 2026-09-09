@@ -29,8 +29,8 @@ build-system-independent DEB/RPM packaging.
 > GCC full gate now qualifies more than 453,000 PASS occurrences against an
 > exact reviewed baseline. Qt 6.8.4 source acceptance, host and dual-target
 > builds, clean-Rocky runtime gates, and the explicit-QEMU AArch64 runtime gate
-> are qualified. The native ARM release workflow, including the candidate-bound
-> AArch64 Qt runtime gate and digest-only stable promotion with durable
+> are available as optional compatibility checks. The native ARM compiler release
+> workflow and digest-only stable promotion with durable
 > immutable evidence are implemented but still require their first public
 > execution. Repository protection settings and formal legal review remain
 > pre-release operating gates.
@@ -153,9 +153,21 @@ Every main push performs one full qualification and publishes a candidate.
 Full qualification also runs daily and manually. Version tags request digest-only
 stable promotion of the exact commit's successful candidate, subject to production
 approval; see the Actions operating guide for tag timing and required credentials.
-Toolchains, Python rows, vcpkg, GCC and Qt use separate GitHub-hosted jobs with
+Toolchains, Python rows, vcpkg and GCC use separate GitHub-hosted jobs with
 shared trusted registry caches. See [the Actions operating guide](docs/github-actions.md)
 for stage selection, cold-build measurement, diagnostics and the required check.
+
+Qt checks run locally using the commands below. They are excluded from default
+CI, scheduled SDK qualification, and candidate/release gates. To run them on
+GitHub explicitly, dispatch `qualification.yml` with `profile=qt`:
+
+```sh
+gh workflow run qualification.yml -f profile=qt
+```
+
+A published SDK does not imply Qt qualification. Keep optional Qt results bound
+to their tested inputs; source-built Qt checks alone do not prove compatibility
+with a different published image digest.
 
 The first Qt qualification boundary authenticates and inspects the complete
 Qt 6.8.4 supermodule archive without installing it into the SDK:
@@ -836,15 +848,10 @@ source and SDK platform manifests. Provenance must name the exact Bake target
 and clean source revision. The resulting strict reports are candidate-bound
 evidence, not a claim inferred from Buildx command-line flags.
 It then uses that exact public digest to cross-compile a deterministic,
-SHA256-bound AArch64 probe tar. In parallel, the publish runner exports the
-qualified AArch64 Qt runtime root without QEMU and binds its digest to the same
-candidate. A separate `ubuntu-24.04-arm` job executes the compiler probes and
-Qt runtime gate without QEMU inside the pinned Rocky Linux 8.10 arm64 manifest,
-then uploads both strict native qualification reports. The Qt artifact also
-retains the exact target-build and runtime-overlay evidence, and
-`validate-qt-native-release.py` revalidates their hashes and candidate/rootfs
-bindings before upload so a later promotion does not have to trust a job status
-alone. Only after both native gates pass, a final job exports the same
+SHA256-bound AArch64 probe tar. A separate `ubuntu-24.04-arm` job executes
+these compiler probes without QEMU inside the pinned Rocky Linux 8.10 arm64
+manifest and uploads its strict native report. After this gate passes, a final
+job exports the same
 TUF-authenticated Cosign, revalidates all downloaded evidence, signs the exact
 candidate and source digests with the workflow's GitHub OIDC identity, logs
 out, and verifies both public signatures against the pinned trusted root. The
@@ -889,8 +896,8 @@ $ gh workflow run release-control-plane.yml
 The
 workflow checks out the candidate run's exact `main` commit, downloads the four
 exact run/attempt artifacts, byte-compares every copy of `candidate.json`, and
-revalidates the source binding, native AArch64 compiler report, native Qt
-report and their raw inputs. It then rebuilds only the pinned Cosign verifier,
+revalidates the source binding, native AArch64 compiler report
+and its raw inputs. It then rebuilds only the pinned Cosign verifier,
 not the SDK or source bundle, and anonymously verifies both signed OCI digests
 against the repository's pinned Sigstore trusted root.
 

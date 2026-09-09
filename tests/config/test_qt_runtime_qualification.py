@@ -111,9 +111,8 @@ class QtRuntimeQualificationTests(unittest.TestCase):
         self.assertIn(
             "./scripts/validate-qt-runtime-qualification.py", candidate
         )
-        self.assertIn("qt-aarch64-native-runtime-root", candidate)
-        self.assertIn("--native-release", candidate)
-        self.assertIn("--candidate /input/candidate.json", candidate)
+        self.assertNotIn("qt-aarch64-native-runtime-root", candidate)
+        self.assertIn("native-aarch64-release.py execute", candidate)
 
     def test_user_documentation_reports_current_qt_qualification_state(self):
         readme = (REPOSITORY / "README.md").read_text(encoding="utf-8")
@@ -173,7 +172,7 @@ class QtRuntimeQualificationTests(unittest.TestCase):
             ),
             normalized,
         )
-        self.assertIn("candidate-bound AArch64 Qt runtime gate", normalized)
+        self.assertIn("A published SDK does not imply Qt qualification", normalized)
         self.assertIn("candidate-bound Qt 运行时", normalized)
 
 

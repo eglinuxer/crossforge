@@ -21,7 +21,7 @@ SIGSTORE = EVIDENCE["SIGSTORE"]
 
 class ReleaseEvidenceTests(unittest.TestCase):
     def test_durable_payload_count_matches_the_strict_schema_and_docs(self):
-        self.assertEqual(len(EVIDENCE["PAYLOAD_NAMES"]), 17)
+        self.assertEqual(len(EVIDENCE["PAYLOAD_NAMES"]), 14)
         schema = json.loads(
             (
                 REPOSITORY
@@ -29,8 +29,8 @@ class ReleaseEvidenceTests(unittest.TestCase):
             ).read_text(encoding="utf-8")
         )
         files = schema["properties"]["files"]
-        self.assertEqual(files["minItems"], 17)
-        self.assertEqual(files["maxItems"], 17)
+        self.assertEqual(files["minItems"], 14)
+        self.assertEqual(files["maxItems"], 14)
         self.assertIn("Seventeen original evidence files", (
             REPOSITORY / "README.md"
         ).read_text(encoding="utf-8"))
@@ -265,12 +265,6 @@ class ReleaseEvidenceTests(unittest.TestCase):
         self.write_json(
             paths["native-aarch64.json"], {"bundle_sha256": "7" * 64}
         )
-        self.write_json(
-            paths["qt-native-aarch64-runtime.json"],
-            {"identity": {"input_rootfs_sha256": "8" * 64}},
-        )
-        self.write_json(paths["qt-target-build.json"], {"fixture": "build"})
-        self.write_json(paths["qt-runtime-overlay.json"], {"fixture": "overlay"})
         trusted_root_payload = base64.b64decode(
             (
                 REPOSITORY / release["sigstore"]["trust"]["trusted_root_evidence"]
@@ -290,18 +284,13 @@ class ReleaseEvidenceTests(unittest.TestCase):
         }
 
     def validators(self):
-        return (
-            mock.patch.dict(
-                EVIDENCE["NATIVE"], {"validate_report": lambda _arguments: None}
-            ),
-            mock.patch.dict(
-                EVIDENCE["QT_NATIVE"], {"validate": lambda _arguments: None}
-            ),
+        return mock.patch.dict(
+            EVIDENCE["NATIVE"], {"validate_report": lambda _arguments: None}
         )
 
     def create(self, fixture):
-        native_patch, qt_patch = self.validators()
-        with native_patch, qt_patch:
+        native_patch = self.validators()
+        with native_patch:
             manifest = EVIDENCE["validate_inputs"](
                 fixture["paths"], fixture["release"], fixture["schema"]
             )
@@ -340,8 +329,8 @@ class ReleaseEvidenceTests(unittest.TestCase):
                 )
             )
             arguments = SimpleNamespace(archive=archive, sha256=checksum)
-            native_patch, qt_patch = self.validators()
-            with native_patch, qt_patch:
+            native_patch = self.validators()
+            with native_patch:
                 observed = EVIDENCE["validate_archive"](
                     arguments, fixture["release"], fixture["schema"]
                 )
@@ -362,8 +351,8 @@ class ReleaseEvidenceTests(unittest.TestCase):
             self.write_json(
                 fixture["paths"]["candidate-signature.json"], wrong_signature
             )
-            native_patch, qt_patch = self.validators()
-            with native_patch, qt_patch, self.assertRaisesRegex(
+            native_patch = self.validators()
+            with native_patch, self.assertRaisesRegex(
                 EVIDENCE["ReleaseEvidenceError"], "signature.*identity differs"
             ):
                 EVIDENCE["validate_inputs"](
@@ -374,8 +363,8 @@ class ReleaseEvidenceTests(unittest.TestCase):
             fixture = self.fixture(temporary)
             _manifest, archive, checksum = self.create(fixture)
             checksum.write_text("0" * 64 + "  " + archive.name + "\n")
-            native_patch, qt_patch = self.validators()
-            with native_patch, qt_patch, self.assertRaisesRegex(
+            native_patch = self.validators()
+            with native_patch, self.assertRaisesRegex(
                 EVIDENCE["ReleaseEvidenceError"], "archive checksum differs"
             ):
                 EVIDENCE["validate_archive"](
@@ -390,8 +379,8 @@ class ReleaseEvidenceTests(unittest.TestCase):
             target = fixture["paths"]["candidate-signature.json"]
             target.unlink()
             target.symlink_to(fixture["paths"]["source-bundle-signature.json"])
-            native_patch, qt_patch = self.validators()
-            with native_patch, qt_patch, self.assertRaises(
+            native_patch = self.validators()
+            with native_patch, self.assertRaises(
                 EVIDENCE["ReleaseEvidenceError"]
             ):
                 EVIDENCE["validate_inputs"](

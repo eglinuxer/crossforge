@@ -62,8 +62,8 @@
     "promotion_sha256": {"$ref": "#/$defs/sha256"},
     "files": {
       "type": "array",
-      "minItems": 17,
-      "maxItems": 17,
+      "minItems": 14,
+      "maxItems": 14,
       "uniqueItems": true,
       "items": {
         "type": "object",
@@ -76,9 +76,6 @@
               "candidate.json",
               "native-aarch64-probes.tar",
               "native-aarch64.json",
-              "qt-native-aarch64-runtime.json",
-              "qt-runtime-overlay.json",
-              "qt-target-build.json",
               "release-promotion.json",
               "release.json",
               "sdk-attestations.json",

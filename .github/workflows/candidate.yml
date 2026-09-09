@@ -491,65 +491,8 @@ jobs:
             echo '- Status: public candidate; no stable or SemVer tag was created'
           } >> "$GITHUB_STEP_SUMMARY"
 
-  qt-native-input:
-    needs: qualify
-    runs-on: ubuntu-24.04
-    timeout-minutes: 360
-    permissions:
-      contents: read
-    outputs:
-      rootfs_sha256: ${{ steps.identity.outputs.rootfs_sha256 }}
-      rootfs_size: ${{ steps.identity.outputs.rootfs_size }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: ./.github/actions/setup-locked-buildx
-      - uses: ./.github/actions/configure-build-cache
-      - name: Validate native Qt runtime inputs
-        run: |
-          set -Eeuo pipefail
-          test "$GITHUB_REF" = refs/heads/main
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          ./scripts/validate-release.py --require-locked
-          ./scripts/validate-qt-qualification.py --require-locked
-          ./scripts/validate-qt-runtime-qualification.py
-          ./scripts/render-release-components.py --check
-          ./scripts/render-bake.py --check
-      - name: Export the native AArch64 Qt runtime root
-        id: identity
-        run: |
-          set -Eeuo pipefail
-          archive="$RUNNER_TEMP/qt-aarch64-native-runtime.tar"
-          python3 ./scripts/run-with-heartbeat.py \
-            --label qt-aarch64-native-runtime-root --interval 60 -- \
-            docker buildx bake qt-aarch64-native-runtime-root \
-            --set "qt-aarch64-native-runtime-root.output=type=tar,dest=$archive" \
-            --progress=plain
-          tar -tf "$archive" > "$RUNNER_TEMP/qt-native-runtime-files.txt"
-          grep -E -x \
-            '(\./)?opt/crossforge-qualification/qt/evidence/qt-target-build.json' \
-            "$RUNNER_TEMP/qt-native-runtime-files.txt"
-          grep -E -x \
-            '(\./)?opt/crossforge-qualification/qt/evidence/qt-runtime-overlay.json' \
-            "$RUNNER_TEMP/qt-native-runtime-files.txt"
-          ! grep -E -x '(\./)?\.crossforge/qemu-aarch64' \
-            "$RUNNER_TEMP/qt-native-runtime-files.txt"
-          rootfs_sha256=$(sha256sum "$archive" | awk '{print $1}')
-          rootfs_size=$(stat -c '%s' "$archive")
-          test "${#rootfs_sha256}" -eq 64
-          test "$rootfs_size" -gt 0
-          printf 'rootfs_sha256=%s\n' "$rootfs_sha256" >> "$GITHUB_OUTPUT"
-          printf 'rootfs_size=%s\n' "$rootfs_size" >> "$GITHUB_OUTPUT"
-      - name: Upload native Qt runtime root
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: qt-native-runtime-root-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/qt-aarch64-native-runtime.tar
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 7
-
   native-aarch64:
-    needs: [publish, qt-native-input]
+    needs: [publish]
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
     permissions:
@@ -562,11 +505,6 @@ jobs:
         with:
           name: native-aarch64-probes-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/native-aarch64-input
-      - name: Download native Qt runtime root
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: qt-native-runtime-root-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/qt-native-aarch64-input
       - name: Execute probes in pinned native Rocky AArch64
         env:
           CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
@@ -610,75 +548,6 @@ jobs:
             --bundle "$bundle" \
             --expected-bundle-sha256 "$EXPECTED_BUNDLE_SHA256" \
             --report "$RUNNER_TEMP/native-aarch64-output/native-aarch64.json"
-      - name: Execute the candidate-bound Qt runtime natively
-        env:
-          CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
-          EXPECTED_QT_ROOTFS_SHA256: ${{ needs.qt-native-input.outputs.rootfs_sha256 }}
-          EXPECTED_QT_ROOTFS_SIZE: ${{ needs.qt-native-input.outputs.rootfs_size }}
-        run: |
-          set -Eeuo pipefail
-          candidate="$RUNNER_TEMP/native-aarch64-input/candidate.json"
-          archive="$RUNNER_TEMP/qt-native-aarch64-input/qt-aarch64-native-runtime.tar"
-          output="$RUNNER_TEMP/native-aarch64-output/qt-native-aarch64-runtime.json"
-          observed_sha256=$(sha256sum "$archive" | awk '{print $1}')
-          observed_size=$(stat -c '%s' "$archive")
-          test "$(jq -r .digest "$candidate")" = "$CANDIDATE_DIGEST"
-          test "$observed_sha256" = "$EXPECTED_QT_ROOTFS_SHA256"
-          test "$observed_size" = "$EXPECTED_QT_ROOTFS_SIZE"
-          qt_image="crossforge-qt-native-runtime:$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          docker image import --platform linux/arm64 "$archive" "$qt_image"
-          test "$(docker image inspect --format '{{.Architecture}}' "$qt_image")" = arm64
-          qt_container=""
-          cleanup_qt_container() {
-            if test -n "$qt_container"; then
-              docker rm --force "$qt_container" >/dev/null 2>&1 || true
-            fi
-          }
-          trap cleanup_qt_container EXIT
-          qt_container=$(docker create "$qt_image" /bin/true)
-          docker cp \
-            "$qt_container:/opt/crossforge-qualification/qt/evidence/qt-target-build.json" \
-            "$RUNNER_TEMP/native-aarch64-output/qt-target-build.json"
-          docker cp \
-            "$qt_container:/opt/crossforge-qualification/qt/evidence/qt-runtime-overlay.json" \
-            "$RUNNER_TEMP/native-aarch64-output/qt-runtime-overlay.json"
-          docker rm "$qt_container"
-          qt_container=""
-          trap - EXIT
-          docker run --rm --pull=never --platform linux/arm64 \
-            --network none --read-only \
-            --tmpfs /tmp:rw,mode=1777 \
-            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/src,readonly" \
-            --mount "type=bind,src=$RUNNER_TEMP/native-aarch64-input,dst=/input,readonly" \
-            --mount "type=bind,src=$RUNNER_TEMP/native-aarch64-output,dst=/output" \
-            "$qt_image" \
-            /usr/libexec/platform-python \
-              /src/scripts/run-qt-target-runtime.py \
-              --arch aarch64 \
-              --triple aarch64-unknown-linux-gnu \
-              --runtime-root / \
-              --release /src/config/release.json \
-              --build-evidence \
-                /opt/crossforge-qualification/qt/evidence/qt-target-build.json \
-              --overlay-evidence \
-                /opt/crossforge-qualification/qt/evidence/qt-runtime-overlay.json \
-              --native-release \
-              --candidate /input/candidate.json \
-              --candidate-schema /src/config/schemas/candidate.schema.json \
-              --expected-source-commit "$GITHUB_SHA" \
-              --input-rootfs-sha256 "$EXPECTED_QT_ROOTFS_SHA256" \
-              --output /output/qt-native-aarch64-runtime.json
-          test -s "$output"
-          ./scripts/validate-qt-native-release.py \
-            --candidate "$candidate" \
-            --report "$output" \
-            --build-evidence \
-              "$RUNNER_TEMP/native-aarch64-output/qt-target-build.json" \
-            --overlay-evidence \
-              "$RUNNER_TEMP/native-aarch64-output/qt-runtime-overlay.json" \
-            --expected-source-commit "$GITHUB_SHA" \
-            --expected-candidate-digest "$CANDIDATE_DIGEST" \
-            --input-rootfs-sha256 "$EXPECTED_QT_ROOTFS_SHA256"
       - name: Stage native AArch64 release evidence
         env:
           CANDIDATE_INPUT: ${{ runner.temp }}/native-aarch64-input/candidate.json
@@ -689,15 +558,12 @@ jobs:
           install -d -m 0755 "$EVIDENCE_ROOT"
           for file in \
             "$CANDIDATE_INPUT" \
-            "$NATIVE_OUTPUT/native-aarch64.json" \
-            "$NATIVE_OUTPUT/qt-target-build.json" \
-            "$NATIVE_OUTPUT/qt-runtime-overlay.json" \
-            "$NATIVE_OUTPUT/qt-native-aarch64-runtime.json"; do
+            "$NATIVE_OUTPUT/native-aarch64.json"; do
             test -f "$file" && test ! -L "$file"
             install -m 0644 "$file" "$EVIDENCE_ROOT/$(basename "$file")"
           done
           test "$(find "$EVIDENCE_ROOT" -mindepth 1 -maxdepth 1 \
-            -type f | wc -l)" -eq 5
+            -type f | wc -l)" -eq 2
       - name: Upload native AArch64 release evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -716,11 +582,11 @@ jobs:
             echo "- Candidate: \`$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST\`"
             echo '- Runner: `ubuntu-24.04-arm` (`ARM64`)'
             echo '- Runtime: pinned Rocky Linux 8.10 arm64 manifest'
-            echo '- Status: native C/C++20/LTO/archive/libgcc/cross-DSO and Qt runtime probes passed'
+            echo '- Status: native C/C++20/LTO/archive/libgcc/cross-DSO probes passed'
           } >> "$GITHUB_STEP_SUMMARY"
 
   sign-candidate:
-    needs: [publish, qt-native-input, native-aarch64]
+    needs: [publish, native-aarch64]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -758,7 +624,6 @@ jobs:
         env:
           CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
           EXPECTED_BUNDLE_SHA256: ${{ needs.publish.outputs.probe_bundle_sha256 }}
-          EXPECTED_QT_ROOTFS_SHA256: ${{ needs.qt-native-input.outputs.rootfs_sha256 }}
         run: |
           set -Eeuo pipefail
           probes="$RUNNER_TEMP/native-aarch64-probes"
@@ -774,14 +639,6 @@ jobs:
             --bundle "$probes/native-aarch64-probes.tar" \
             --expected-bundle-sha256 "$EXPECTED_BUNDLE_SHA256" \
             --report "$evidence/native-aarch64.json"
-          ./scripts/validate-qt-native-release.py \
-            --candidate "$evidence/candidate.json" \
-            --report "$evidence/qt-native-aarch64-runtime.json" \
-            --build-evidence "$evidence/qt-target-build.json" \
-            --overlay-evidence "$evidence/qt-runtime-overlay.json" \
-            --expected-source-commit "$GITHUB_SHA" \
-            --expected-candidate-digest "$CANDIDATE_DIGEST" \
-            --input-rootfs-sha256 "$EXPECTED_QT_ROOTFS_SHA256"
       - name: Sign and anonymously verify the qualified candidate
         env:
           CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}

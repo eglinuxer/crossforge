@@ -471,7 +471,7 @@ Sigstore 公共信任 bootstrap 已进入 release 的 supply identity：仓库�
 
 public-candidate 的 keyless signature 位于所有原生 ARM64 门禁之后。独立
 `sign-candidate` job 重新下载并验证 candidate、compiler probe bundle、native GCC
-report、Qt build/overlay/native report 与 Sigstore source report，再从
+report 与 Sigstore source report，再从
 `cosign-host-tool` 导出 TUF-authenticated Cosign；它只对唯一 OCI digest 执行
 `cosign sign --yes`。随后必须退出 GHCR，以 release 固定的 workflow SAN、GitHub
 Actions OIDC issuer 和 `trusted_root.json` 匿名执行 `cosign verify`，并校验输出中每个
@@ -811,3 +811,5 @@ tests/{smoke,gcc,python,qt6,vcpkg,packaging}/
 ```
 
 实现采用纵向切片：独立 host runtime、最终镜像 runtime rebase、双 target compiler/hybrid runtime、冻结 ABI、CPython 3.9–3.14 双 target 行、CMake/Ninja host-tool overlay、vcpkg source lock、五 triplet SDK 集成、真实无下载契约、三层 curated ports、带 debug/ELF 深审计的双格式分包门禁、单一 launcher、完整 SDK 聚合、x86_64 GCC full qualification、digest-bound 原生 ARM release 工作流、Qt source/host/双 target 构建与运行时资格，以及无重建的不可变发布闭环均已实现；后续必须取得首份公开候选/原生 ARM/稳定晋升实证，完成 GitHub 保护设置和正式法律复核。旧 Rust 实现已按用户决定删除，由原型 tag 提供完整历史快照。
+
+Qt 兼容性资格验证为本地或手动按需运行，不属于默认 CI、每日 SDK qualification、candidate 签名或 release 晋升门禁。发布仍要求候选 digest 绑定的原生 ARM 工具链探针。SDK 发布不声明通过 Qt 验证。

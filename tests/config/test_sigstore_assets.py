@@ -219,7 +219,7 @@ class SigstoreAssetTests(unittest.TestCase):
         self.assertIn("sigstore-sources-qualified", ci)
         self.assertIn("sigstore-sources-qualified", candidate)
         self.assertIn(
-            "needs: [publish, qt-native-input, native-aarch64]", candidate
+            "needs: [publish, native-aarch64]", candidate
         )
         self.assertIn("id-token: write", candidate)
         self.assertIn('"$cosign" sign --yes "$image"', candidate)

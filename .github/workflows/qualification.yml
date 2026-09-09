@@ -5,6 +5,11 @@ on:
     - cron: '17 4 * * *'
   workflow_dispatch:
     inputs:
+      profile:
+        description: SDK release gates or optional Qt compatibility checks
+        type: choice
+        options: [full, qt]
+        default: full
       cold:
         description: Ignore remote caches to measure cold hosted builds
         type: boolean
@@ -51,6 +56,6 @@ jobs:
     needs: preflight
     uses: ./.github/workflows/verify-builds.yml
     with:
-      profile: full
+      profile: ${{ inputs.profile || 'full' }}
       write-cache: true
       cold: ${{ inputs.cold == true }}

@@ -178,7 +178,6 @@ def promotion_document(
         "verification": {
             "candidate_evidence": "revalidated",
             "native_aarch64": "revalidated",
-            "qt_native_aarch64": "revalidated",
             "signatures": "verified-with-pinned-trusted-root",
             "registry": "anonymous-exact-digest",
         },

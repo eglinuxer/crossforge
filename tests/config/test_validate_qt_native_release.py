@@ -208,27 +208,13 @@ class ValidateQtNativeReleaseTests(unittest.TestCase):
         with self.assertRaises(RUNTIME["ValidationError"]):
             RUNTIME["validate_evidence_document"](document)
 
-    def test_candidate_workflow_preserves_and_revalidates_qt_inputs(self):
-        workflow = (REPOSITORY / ".github/workflows/candidate.yml").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("scripts/validate-qt-native-release.py", workflow)
-        for evidence in (
-            "qt-target-build.json",
-            "qt-runtime-overlay.json",
-        ):
-            with self.subTest(evidence=evidence):
-                output = "$RUNNER_TEMP/native-aarch64-output/%s" % evidence
-                staged_input = '"$NATIVE_OUTPUT/%s"' % evidence
-                self.assertGreaterEqual(workflow.count(evidence), 4)
-                self.assertIn(output, workflow)
-                self.assertIn(staged_input, workflow)
-        self.assertIn(
-            "path: ${{ runner.temp }}/native-aarch64-release-evidence/",
-            workflow,
-        )
-        self.assertIn("--expected-candidate-digest", workflow)
-        self.assertIn("--input-rootfs-sha256", workflow)
+    def test_candidate_does_not_require_optional_qt_evidence(self):
+        workflow = (REPOSITORY / ".github/workflows/candidate.yml").read_text()
+        for evidence in ("validate-qt-native-release.py", "qt-target-build.json",
+                         "qt-runtime-overlay.json", "qt-native-aarch64-runtime.json"):
+            self.assertNotIn(evidence, workflow)
+        self.assertIn("native-aarch64-release.py validate", workflow)
+        self.assertTrue(SCRIPT.is_file())
 
     def test_validator_is_python36_compatible(self):
         ast.parse(

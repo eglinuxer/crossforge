@@ -22,7 +22,7 @@ def select_profile(paths):
         elif path.startswith("tests/qt6/") or re.match(
             r"(?:scripts/[^/]*qt[^/]*|docker/qt[^/]*)$", path
         ):
-            profiles.add("qt")
+            continue  # Qt compatibility builds are explicitly requested locally or manually.
         elif path.startswith("tests/python/") or re.match(
             r"(?:scripts/[^/]*(?:python|cpython)[^/]*|docker/python[^/]*)$", path
         ):

@@ -196,16 +196,6 @@ jobs:
             --bundle "$probes/native-aarch64-probes.tar" \
             --expected-bundle-sha256 "$expected_bundle_sha256" \
             --report "$native/native-aarch64.json"
-          rootfs_sha256=$(jq -r .identity.input_rootfs_sha256 \
-            "$native/qt-native-aarch64-runtime.json")
-          ./scripts/validate-qt-native-release.py \
-            --candidate "$candidate" \
-            --report "$native/qt-native-aarch64-runtime.json" \
-            --build-evidence "$native/qt-target-build.json" \
-            --overlay-evidence "$native/qt-runtime-overlay.json" \
-            --expected-source-commit "$CANDIDATE_HEAD_SHA" \
-            --expected-candidate-digest "$(jq -r .digest "$candidate")" \
-            --input-rootfs-sha256 "$rootfs_sha256"
           ./scripts/validate-sigstore-report.py \
             "$signature/sigstore-verification.json"
       - name: Export the TUF-authenticated Cosign verifier
@@ -351,9 +341,6 @@ jobs:
             --candidate "$identity/candidate.json" \
             --native-probe-bundle "$probes/native-aarch64-probes.tar" \
             --native-report "$native/native-aarch64.json" \
-            --qt-native-report "$native/qt-native-aarch64-runtime.json" \
-            --qt-overlay-evidence "$native/qt-runtime-overlay.json" \
-            --qt-build-evidence "$native/qt-target-build.json" \
             --promotion "$RUNNER_TEMP/release-promotion.json" \
             --release config/release.json \
             --sdk-attestations "$identity/sdk-attestations.json" \

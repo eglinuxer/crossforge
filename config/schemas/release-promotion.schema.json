@@ -78,14 +78,12 @@
       "required": [
         "candidate_evidence",
         "native_aarch64",
-        "qt_native_aarch64",
         "signatures",
         "registry"
       ],
       "properties": {
         "candidate_evidence": {"const": "revalidated"},
         "native_aarch64": {"const": "revalidated"},
-        "qt_native_aarch64": {"const": "revalidated"},
         "signatures": {"const": "verified-with-pinned-trusted-root"},
         "registry": {"const": "anonymous-exact-digest"}
       }

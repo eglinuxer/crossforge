@@ -167,6 +167,7 @@ class HostedBuildTests(unittest.TestCase):
                  "GITHUB_REF": "refs/heads/main", "GITHUB_EVENT_NAME": "push"}
         cases = [({"GITHUB_EVENT_NAME": event}, True)
                  for event in ("push", "schedule", "workflow_dispatch")]
+        cases.append(({"PROFILE": "qt", "GITHUB_EVENT_NAME": "workflow_dispatch"}, True))
         cases += [({field: value}, False) for field, value in (
             ("GITHUB_REPOSITORY", "other/crossforge"),
             ("GITHUB_REF", "refs/heads/feature"),
@@ -181,8 +182,10 @@ class HostedBuildTests(unittest.TestCase):
                     env={**os.environ, **valid, **changes, "GITHUB_OUTPUT": str(output)})
                 self.assertEqual(result.returncode == 0, accepted, result.stderr)
                 if accepted:
-                    self.assertEqual(output.read_text(),
-                                     "active=true\nsdk=true\ngcc=true\nqt=true\n")
+                    expected = ("active=true\nsdk=false\ngcc=false\nqt=true\n"
+                                if changes.get("PROFILE") == "qt" else
+                                "active=true\nsdk=true\ngcc=true\nqt=false\n")
+                    self.assertEqual(output.read_text(), expected)
 
     def test_cache_writer_rejects_pr_fork_and_non_main_dispatch(self):
         valid = {"GITHUB_REPOSITORY": "eglinuxer/crossforge",
@@ -286,10 +289,11 @@ class HostedBuildTests(unittest.TestCase):
         self.assertEqual(select(["docs/getting-started.md"]), "none")
         self.assertEqual(select(["tools/crossforge/environment.py"]), "sdk")
         self.assertEqual(select(["scripts/build-cpython-cross.sh"]), "python")
-        self.assertEqual(select(["scripts/build-qt-target.sh"]), "qt")
+        self.assertEqual(select(["scripts/build-qt-target.sh"]), "none")
+        self.assertEqual(select(["scripts/build-qt-target.sh",
+                                 "tools/crossforge/environment.py"]), "sdk")
         for paths in (["new-build-system/file"], ["config/release.json"],
-                      [".github/workflows/ci.yml"],
-                      ["scripts/build-qt-target.sh", "tools/crossforge/environment.py"]):
+                      [".github/workflows/ci.yml"]):
             self.assertEqual(select(paths), "full")
 
     def test_required_check_rejects_missing_failed_skipped_or_cancelled_jobs(self):

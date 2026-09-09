@@ -321,7 +321,6 @@ class PromotionWorkflowTests(unittest.TestCase):
             "source_binding.py validate",
             "candidate_manifest.py create",
             "native-aarch64-release.py validate",
-            "validate-qt-native-release.py",
             "validate-sigstore-report.py",
             '"$cosign" verify',
             "--trusted-root",

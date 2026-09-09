@@ -42,7 +42,7 @@ jobs:
           if test "$PROFILE" != none; then active=true; fi
           case "$PROFILE" in sdk|python|full) sdk=true ;; esac
           case "$PROFILE" in toolchain|full) gcc=true ;; esac
-          case "$PROFILE" in qt|full) qt=true ;; esac
+          case "$PROFILE" in qt) qt=true ;; esac
           printf 'active=%s\nsdk=%s\ngcc=%s\nqt=%s\n' \
             "$active" "$sdk" "$gcc" "$qt" >> "$GITHUB_OUTPUT"
 

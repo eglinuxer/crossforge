@@ -26,7 +26,7 @@ start a second candidate for the same SHA while its automatic run is active.
 | Documentation and configuration unit tests only | `none` (quick checks still run) |
 | Launcher, packaging, integration or consumer fixtures | `sdk` |
 | Python implementation or runtime fixtures | `python` |
-| Qt implementation or runtime fixtures | `qt` |
+| Qt implementation or runtime fixtures | `none` (fast checks only; Qt builds are opt-in) |
 | Locks, release policy, workflows, common scripts, unknown or mixed domains | `full` |
 
 The first implementation deliberately runs all six Python rows for `sdk` and
@@ -68,7 +68,8 @@ prequalification.
    SDK-only changes do not build these Qt inputs.
 
 The SDK profiles select stages 1–4; the Qt profile selects 1, 2 and 6. Full
-qualification selects everything. Matrix jobs use `fail-fast: false` to retain
+qualification selects stages 1–5; Qt runs only through an explicit manual
+`qualification.yml` dispatch with `profile=qt`, or local Bake commands. Matrix jobs use `fail-fast: false` to retain
 both target results, with at most two concurrent members per matrix. BuildKit
 runs at most one build vertex at a time within each runner. Its Go runtime
 uses `GOMEMLIMIT=4GiB` to encourage earlier collection of solver/cache metadata
@@ -205,7 +206,8 @@ for recovery. After quick checks it calls the full qualification workflow for th
 candidate checkout. It then imports those caches into its existing source and
 SDK build graph, without changing output, attestation or qualification policy.
 The final SDK still validates its GCC full evidence and all existing contracts.
-Qt native input also waits for full qualification.
+Qt build/runtime evidence is optional and is not required by candidate signing
+or stable promotion. Native AArch64 compiler probes remain mandatory.
 
 After pushing the unique candidate, anonymous consumers, native AArch64 and
 signature checks run as before. Stable promotion and rollback continue to use
