@@ -3,8 +3,10 @@ import json
 import os
 from pathlib import Path
 import runpy
+import select
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -15,6 +17,39 @@ PLAN = runpy.run_path(str(ROOT / "scripts/ci-plan.py"))
 
 
 class HostedBuildTests(unittest.TestCase):
+    def test_timeout_still_terminates_streamed_build(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / "build.log"
+            command = ["timeout", "--signal=TERM", "--kill-after=1s", "1s"]
+            command += BUILD["stream_build_command"](
+                ["bash", "-c", "echo compiling; sleep 30"], log)
+            result = subprocess.run(command, capture_output=True, timeout=5)
+            self.assertEqual(result.returncode, 124)
+            self.assertIn(b"compiling\n", result.stdout)
+            self.assertEqual(log.read_bytes(), result.stdout)
+
+    def test_build_output_streams_before_exit_and_preserves_failure_and_log(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / 'build $(literal) " log.txt'
+            command = BUILD["stream_build_command"]([
+                sys.executable, "-u", "-c",
+                "import sys; print('stdout'); print('stderr', file=sys.stderr); "
+                "sys.stdin.readline(); sys.exit(23)",
+            ], log)
+            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            try:
+                self.assertTrue(select.select([process.stdout], [], [], 10)[0],
+                                "build output must be visible before command completion")
+                first = os.read(process.stdout.fileno(), 4096)
+                self.assertIsNone(process.poll())
+                rest, _ = process.communicate(b"continue\n", timeout=10)
+                self.assertEqual(process.returncode, 23)
+                self.assertEqual(first + rest, b"stdout\nstderr\n")
+                self.assertEqual(log.read_bytes(), first + rest)
+            finally:
+                if process.poll() is None:
+                    process.communicate(b"continue\n", timeout=10)
+
     def graph(self):
         return {"group": {"default": {"targets": ["full"]},
                           "full": {"targets": ["evidence", "sdk"]}},
@@ -208,7 +243,9 @@ class HostedBuildTests(unittest.TestCase):
         heartbeat = dict(BUILD["HEARTBEAT"])
         execute = heartbeat["execute"]
         def fail(command, *args, **kwargs):
-            return execute(["bash", "-c", "echo compiler-failed; exit 23"], *args, **kwargs)
+            prefix = command[:command.index("crossforge-build-log") + 2]
+            command = prefix + ["bash", "-c", "echo compiler-failed; exit 23"]
+            return execute(command, *args, **kwargs)
         heartbeat["execute"] = fail
         with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
             namespace, {"read_graph": lambda targets: self.graph(),

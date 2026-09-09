@@ -182,6 +182,14 @@ def monitor_resources(path, stop):
             return
 
 
+def stream_build_command(command, log_path):
+    # Pass paths and argv as positional arguments, never as shell source.
+    # pipefail retains a failed build's status even when tee succeeds.
+    return ["bash", "-o", "pipefail", "-c",
+            'log_file=$1; shift; "$@" 2>&1 | tee -a "$log_file"',
+            "crossforge-build-log", str(log_path), *command]
+
+
 def run_stage(stage, directory, repository, write=False, cold=False):
     directory.mkdir(parents=True, exist_ok=True)
     graph = read_graph(STAGES[stage])
@@ -200,7 +208,7 @@ def run_stage(stage, directory, repository, write=False, cold=False):
     status = 127
     monitor.start()
     try:
-        with (directory / "build.log").open("xb") as log:
+        with (directory / "build.log").open("xb"):
             for target in targets:
                 # Linked roots can be solved again by a later consumer. Export
                 # only the current root, preserving every dependency import.
@@ -219,7 +227,8 @@ def run_stage(stage, directory, repository, write=False, cold=False):
                            target, "--progress=plain", "--metadata-file",
                            str(directory / ("metadata-" + target + ".json"))]
                 status = HEARTBEAT["execute"](
-                    command, stage + "/" + target, 60, output=log,
+                    command[:4] + stream_build_command(command[4:], directory / "build.log"),
+                    stage + "/" + target, 60,
                     log_path=directory / "build.log")
                 if status:
                     break
