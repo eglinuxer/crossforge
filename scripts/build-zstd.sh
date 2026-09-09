@@ -175,6 +175,9 @@ mkdir -p "$prefix/include" "$prefix/lib/pkgconfig" "$prefix/share/licenses/zstd"
 install -m 0644 "$build_directory/lib/zstd.h" "$build_directory/lib/zstd_errors.h" \
   "$build_directory/lib/zdict.h" "$prefix/include/"
 install -m 0644 "$build_directory/lib/libzstd.a" "$prefix/lib/libzstd.a"
+# The host archiver can stamp the symbol index even with SOURCE_DATE_EPOCH.
+# Normalize before probes and manifest hashes bind the installed archive.
+"$ranlib" -D "$prefix/lib/libzstd.a"
 install -m 0644 "$source_directory/LICENSE" "$source_directory/COPYING" \
   "$prefix/share/licenses/zstd/"
 cat >"$prefix/lib/pkgconfig/libzstd.pc" <<EOF
