@@ -3,6 +3,10 @@ description: Install the repository-qualified Buildx and BuildKit versions
 runs:
   using: composite
   steps:
+    - name: Release unused hosted SDK disk space
+      if: runner.environment == 'github-hosted'
+      shell: bash
+      run: python3 scripts/prepare-hosted-build-disk.py
     - name: Install content-locked Docker Buildx
       shell: bash
       run: |
