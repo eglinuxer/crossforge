@@ -7,7 +7,7 @@ import tempfile
 import unittest
 import urllib.error
 from unittest import mock
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 
@@ -49,6 +49,13 @@ def context_for(payload, role="target-sysroot"):
 
 
 class MaterializeSysrootTests(unittest.TestCase):
+    def setUp(self):
+        # Expected network failures belong to test assertions, not CI download logs.
+        self.download_diagnostics = io.StringIO()
+        capture = redirect_stderr(self.download_diagnostics)
+        capture.__enter__()
+        self.addCleanup(capture.__exit__, None, None, None)
+
     def test_download_recovers_from_unexpected_tls_message(self):
         payload = b"locked-rpm"
         error = ssl.SSLError(ssl.SSL_ERROR_SSL, "unexpected message")
@@ -59,6 +66,7 @@ class MaterializeSysrootTests(unittest.TestCase):
                 response.headers = {}
                 with mock.patch("urllib.request.urlopen", side_effect=[failure, response]) as fetch, mock.patch("time.sleep") as sleep:
                     MATERIALIZER["download_package"](package_for(payload), Path(temporary))
+                    self.assertIn("attempt 2/3", self.download_diagnostics.getvalue())
                     self.assertEqual(fetch.call_count, 2)
                     sleep.assert_called_once_with(2)
                     self.assertEqual((Path(temporary) / "fake-1-1.x86_64.rpm").read_bytes(), payload)
