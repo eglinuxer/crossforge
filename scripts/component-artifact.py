@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 from crossforge_internal import component_artifacts, component_build, component_qualification, qualification_execution, python_components
-from crossforge_internal import python_qualification
+from crossforge_internal import python_qualification, python_sdk
 from crossforge_internal.identity import IdentityError, load_json, require
 from crossforge_internal.oci_layout import inspect
 
@@ -90,6 +90,19 @@ def main(argv=None):
             row.add_argument("--receipt", type=Path, required=True)
             row.add_argument("--receipt-sha256", required=True)
             row.add_argument("--layout", type=Path, required=True)
+    for command in ("bind-python-sdk", "execute-python-sdk"):
+        sdk = commands.add_parser(command, allow_abbrev=False)
+        sdk.add_argument("--source", type=Path, required=True)
+        sdk.add_argument("--graph", type=Path, required=True)
+        sdk.add_argument("--root", choices=sorted(python_sdk.ROOTS), required=True)
+        sdk.add_argument("--execution", type=Path, required=True)
+        sdk.add_argument("--components", type=Path, required=True)
+        sdk.add_argument("--builder", required=True)
+        sdk.add_argument("--docker-config", type=Path)
+        if command == "execute-python-sdk":
+            sdk.add_argument("--output", type=Path, required=True)
+        else:
+            sdk.add_argument("--temporary-parent", type=Path)
     verify = commands.add_parser("verify-local", allow_abbrev=False)
     verify.add_argument("--receipt", type=Path, required=True)
     verify.add_argument("--receipt-sha256", required=True, help="independently trusted canonical receipt SHA256")
@@ -166,6 +179,19 @@ def main(argv=None):
                 if args.command == "verify-python-qualification":
                     value = python_qualification.verify_local(load_json(args.receipt), args.receipt_sha256,
                         value, args.source, args.layout, args.builder, args.docker_config, args.temporary_parent)
+        elif args.command in ("bind-python-sdk", "execute-python-sdk"):
+            graph, execution, components = load_json(args.graph), load_json(args.execution), load_json(args.components)
+            require(qualification_execution.execution_identity(args.builder, args.docker_config) == execution,
+                    "SDK execution environment differs")
+            if args.command == "execute-python-sdk":
+                value = python_sdk.execute(args.source, graph, args.root, execution, components,
+                    args.output, args.builder, args.docker_config)
+            else:
+                resolved, bindings, reused = python_sdk.bind(args.source, graph, args.root, execution,
+                    components, args.builder, args.docker_config, args.temporary_parent)
+                expected = python_sdk.inputs(args.source, resolved, args.root, execution, bindings)
+                value = {"graph": resolved, "bindings": bindings, "inputs": expected, "reused_rows": reused,
+                         "integration": "not executed by binding"}
         elif args.command == "verify-local":
             require(bool(args.consumer_target) == bool(args.context_name),
                     "consumer target and context name must be specified together")

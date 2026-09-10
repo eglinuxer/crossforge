@@ -85,7 +85,7 @@ def _replace(graph, target, context, original, reference):
 
 
 def bind_build(source, graph, settings, execution, subjects, builder, docker_config=None, temporary_parent=None):
-    """Bind only this cross target's toolchain and same-row build Python."""
+    """Bind this target's toolchain, including its private zstd dependency."""
     require(type(subjects) is dict and set(subjects) ==
             (set() if settings["arch"] == "build" else {"toolchain-install", "build-python"}),
             "Python build subject set differs")
@@ -94,6 +94,11 @@ def bind_build(source, graph, settings, execution, subjects, builder, docker_con
         return resolved, bindings
     arch = settings["arch"]
     cross = "cpython-cross-%s-%s" % (settings["row"], arch)
+    rows = runpy.run_path(str(Path(source) / "scripts/python_row_contract.py"))
+    uses_zstd = rows["contract_for_row"](settings["row"])["zstd"]
+    zstd_target = "zstd-%s-build" % arch
+    require(resolved.get("target", {}).get(cross, {}).get("contexts", {}).get("crossforge_zstd") ==
+            "target:" + (zstd_target if uses_zstd else "zstd-empty"), "Python private zstd boundary differs")
     native = spec(source, settings["row"], "build", "install")
     planned = [("crossforge_cpython_build", subjects["build-python"], native["target"], native["role"],
                 inputs(source, graph, native, execution)),
@@ -104,6 +109,9 @@ def bind_build(source, graph, settings, execution, subjects, builder, docker_con
         reference, binding = verify(subject, expected, role, target, builder, docker_config, temporary_parent)
         _replace(resolved, cross, context, target, reference)
         bindings[cross + ":" + context] = binding
+        if uses_zstd and role == "toolchain-install":
+            _replace(resolved, zstd_target, context, target, reference)
+            bindings[zstd_target + ":" + context] = binding
     return resolved, bindings
 
 

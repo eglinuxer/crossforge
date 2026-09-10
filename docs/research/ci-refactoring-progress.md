@@ -7,7 +7,7 @@
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；同 run CI 试点已实现 | GitHub 试点实跑与生产 CI 接入 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、与可信产物可用性及生产消费对接 |
-| 4：整行 Python/SDK 交接 | cp39 双架构正式行资格 receipt 及单行 SDK append 的组件消费通过，无 GCC/CPython 源码编译 | 其余五行及完整 SDK/生产 CI |
+| 4：整行 Python/SDK 交接 | cp39/cp314/cp313/cp312 正式行资格通过；六行 SDK 接口与材料图回归通过 | cp311/cp310 实跑、六行与完整 SDK 集成、生产 CI |
 | 5：资格复用及恢复 | 工具链与 cp39 的本地显式复用、强制执行和原记录保留通过 | 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
 | 6：性能与领域重构 | 待实施对照 | 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
@@ -202,3 +202,11 @@ SDK 与 vcpkg SDK 从完整 release 独立推导策略并核验原报告；vcpkg
 - Docker 全量 config 1057 项、188.846 秒，packaging 40 项、0.779 秒，零失败；分别保留既有的 2/1 项跳过。四项 locked validators、三个 renderer 检查及强制执行的 Rocky 8 platform-python 3.6 门禁通过。
 
 这些结果建立了本地 cp39 的正式资格交接与复用。Python 资格仍依赖完整 release/shared aggregate，其余五行、完整 SDK、生产 CI 的跨 run 信任/保留/恢复和最终候选原生 ARM 验证仍未完成。本地缓存及组件已存在，且部分检查并行运行，因此不把这些数字作为冷构建或 GitHub 性能结论。
+
+## 批次 4：矩阵扩展与完整 SDK 入口
+
+扩展 cp314 时发现，私有 zstd 构建会从另一条 context 回到工具链源码图。`python_components.bind_build` 现在依据实现中的行契约，校验 zstd 目标并将其接到同一份已核验的 target 工具链；其他架构的 zstd 节点保持独立。真实 cp314 五份构建组件和完整行资格通过，source inventory 确认两个 cross 构建没有 GCC 源码输入，资格仍包含 zstd 静态链接和双运行时检查。cp313、cp312 也已完成五份组件及整行资格，cp311/cp310 继续实跑。当前记录见[矩阵交接观测](python-matrix-handoff-2026-09-10.json)。
+
+`python_sdk.py` 提供 `bind-python-sdk` 和 `execute-python-sdk`，支持 `python-dev` 与 `sdk-complete-dev`。它要求全部六行、固定追加顺序和相同的工具链 receipt；对每行重新捕获输入并核验完整资格 artifact，然后替换对应 append context。材料捕获拒绝 GCC/CPython 源码编译，保留现有最终集成、vcpkg SDK、打包和消费者门禁；vcpkg upstream Tier 3 仍是独立候选门禁。六行 Python 消费图为 12 个目标，执行要求 12 条 append RUN 和 1 条 final RUN；完整 SDK 再要求其最终 RUN。绑定命令明确不声明集成已执行，执行命令只导出本地报告并保留原行资格记录。
+
+Docker 回归 config 1062 项、191.733 秒，packaging 40 项、0.760 秒，均零失败（既有 2/1 项跳过）；四项 locked validators、三个 renderer 检查及实际 Rocky 8 platform-python 3.6 门禁通过。缺行、额外行、错序、错版本、错误 context 和混用工具链 receipt 的拒绝分支均覆盖。六行/完整 SDK 的实际执行等待全部 producer 成功后进行，这里的图检查不作资格证明。

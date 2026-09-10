@@ -22,7 +22,7 @@ class PythonComponentsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.graph = json.loads(subprocess.check_output(["docker", "buildx", "bake", "--print",
-            "python-row-cp39", "toolchain-x86_64-build-export", "toolchain-aarch64-build-export"], cwd=ROOT))
+            "python-row-cp39", "python-row-cp314", "toolchain-x86_64-build-export", "toolchain-aarch64-build-export"], cwd=ROOT))
         cls.execution = {"buildkit_image": "moby/buildkit:test@sha256:" + "a" * 64}
 
     def verified(self, subject, expected, role, target, *args):
@@ -80,6 +80,29 @@ class PythonComponentsTests(unittest.TestCase):
                          "docker/finalize-python-row.py", "tests/python/runtime_probe.py", "config/release.json"} <= paths)
         for arch in python.ARCHES:
             self.assertIn("cpython-cp39-%s-qualify" % arch, inputs["parameters"]["recipes"])
+
+    def test_private_zstd_consumes_the_same_verified_toolchain_without_gcc_sources(self):
+        for arch in python.ARCHES:
+            settings = python.spec(ROOT, "cp314", arch, "install")
+            with mock.patch.object(python, "verify", side_effect=self.verified):
+                resolved, bindings = python.bind_build(ROOT, self.graph, settings, self.execution,
+                    {"toolchain-install": {}, "build-python": {}}, "fixture")
+            inputs = python.inputs(ROOT, resolved, settings, self.execution, bindings)
+            paths = {record["path"] for record in inputs["files"]}
+            self.assertIn("scripts/build-zstd.sh", paths)
+            self.assertFalse(paths & {"scripts/build-gcc.sh", "scripts/build-cpython-native.sh"})
+            cross = "cpython-cross-cp314-" + arch
+            zstd = "zstd-%s-build" % arch
+            self.assertEqual(resolved["target"][cross]["contexts"]["crossforge_toolchain"],
+                             resolved["target"][zstd]["contexts"]["crossforge_toolchain"])
+            self.assertEqual(len(inputs["dependencies"]), 2)
+            other = "zstd-%s-build" % ("aarch64" if arch == "x86_64" else "x86_64")
+            self.assertEqual(resolved["target"][other], self.graph["target"][other])
+            bad = copy.deepcopy(self.graph)
+            bad["target"][cross]["contexts"]["crossforge_zstd"] = "target:" + other
+            with self.assertRaisesRegex(IdentityError, "zstd boundary differs"):
+                python.bind_build(ROOT, bad, settings, self.execution,
+                    {"toolchain-install": {}, "build-python": {}}, "fixture")
 
     def test_wrong_subject_set_stage_and_row_fail_before_production(self):
         settings = python.spec(ROOT, "cp39", "x86_64", "install")
