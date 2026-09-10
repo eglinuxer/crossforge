@@ -59,7 +59,7 @@ runs:
         if test -n "$SELECTED_TARGETS"; then selection+=(--targets-json "$SELECTED_TARGETS"); fi
         components=()
         if test "$COMPONENT_READER" = true; then
-          components+=(--component-builder "$COMPONENT_BUILDER" --component-oras "$COMPONENT_ORAS"
+          components+=(--require-components --component-builder "$COMPONENT_BUILDER" --component-oras "$COMPONENT_ORAS"
             --component-cosign "$COMPONENT_COSIGN" --component-directory "$RUNNER_TEMP/component-data/$BUILD_STAGE")
         fi
         python3 scripts/ci-build.py "${options[@]}" run "$BUILD_STAGE" \

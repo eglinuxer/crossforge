@@ -29,9 +29,9 @@ this selection command; `bake --print` resolves the checked graph locally.
 `source_closure` exposes selection-only files and parameters; it has no artifact
 digest or qualification assertion. Existing `capture` identities retain material
 model 2. A selected consumer still needs independent receipt, expected-input and
-digest verification before artifact use. Daily CI currently resolves its original
-source dependencies, while the separate component pilot exercises artifact
-consumption. See [the rollout observations](research/incremental-plan-2026-09-10.json)
+digest verification before artifact use. Trusted main CI prepares missing raw
+toolchains centrally and consumes their verified digests. PRs retain source
+dependencies. See [the rollout observations](research/incremental-plan-2026-09-10.json)
 for the remaining broad qualification dependencies.
 
 ## Identities and roles
@@ -377,10 +377,16 @@ entry nor the exported `authentication.json` observation establishes a passed
 qualification or substitutes for verifying the signature again. New candidates
 still require their own final integration and actual native ARM execution.
 
-The pilot currently catalogs its two x86_64 build artifacts. The signed-catalog
-interface and workflow wiring have local regression coverage; a real GitHub
-signature and cross-run consumption have not yet been exercised. Missing-artifact
-producer dispatch and production CI routing remain to be connected.
+The pilot catalogs its two x86_64 build artifacts with the original schema 1
+policy. Main CI uses schema 2, limited to raw toolchain installation/test-context
+receipts and an exact `produce-toolchain.yml@refs/heads/main` signer, with either
+the push or workflow_dispatch event. Unknown workflows/events, qualification
+roles, mixed producers and schema-policy confusion fail closed. Fulcio derives
+the certificate identity from the actual reusable signing workflow's
+[`job_workflow_ref`](https://github.com/sigstore/fulcio/blob/main/docs/oidc.md).
+Both formats retain exact repository, issuer, ref and original source commit
+verification. The interface and workflow wiring have local regression coverage;
+a real GitHub signature and cross-run consumption have not yet been exercised.
 
 ## Consume prior catalog components in the pilot
 
@@ -446,6 +452,8 @@ each architecture in the selected Bake graph. It resolves each needed artifact
 once and replaces every matching named context only after verification. A missing
 index leaves its original producer reachable and records that producer explicitly
 in `components/binding.json`; authentication and artifact failures stop the stage.
+With `--require-components`, missing producers also stop the stage before Bake
+execution. Main CI enables this strict mode after centralized preparation.
 Existing selected roots and their gates remain required. Small original catalog,
 receipt and input records go into diagnostics; OCI layouts stay outside them.
 Component acquisition is included in the stage's recorded elapsed time.
@@ -453,10 +461,15 @@ Component acquisition is included in the stage's recorded elapsed time.
 `verify-incremental.yml` enables this interface when called by the separate trusted
 main push/dispatch job. The ordinary PR/fork/non-main caller keeps contents:read
 and disables component reading. Shared quick checks use `verify-quick.yml` without
-registry permissions, including candidate and pilot preflight. Production
-publication of missing components remains to be connected; their source producer
-boundaries currently stay reachable in the selected stage. Current PRs receive no
-new registry credentials. A local Docker execution verified the bound
+registry permissions, including candidate and pilot preflight. The main wrapper
+derives needed roles from the canonical graph and calls one producer per selected
+architecture. A producer authenticates existing catalog availability without
+downloading the large OCI payload; actual byte checks remain mandatory in the
+consumer. Only absent indexes trigger build/export/publication. A same-run schema 2
+handoff declares one architecture and only its newly produced roles; the upstream
+job provides an independent SHA256 and immutable Actions artifact ID. Signing and
+catalog storage must finish before selected consumer gates start. Current PRs
+receive no new registry credentials. A local Docker execution verified the bound
 toolchain stage and absence of source GCC dependencies using independently trusted
 local receipts; that execution did not exercise GitHub catalog authentication or
 claim fresh qualification from ordinary cache hits.

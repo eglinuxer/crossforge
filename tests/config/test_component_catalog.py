@@ -101,6 +101,62 @@ class ComponentCatalogTests(unittest.TestCase):
             with self.assertRaises(subprocess.CalledProcessError):
                 self.select()
 
+    def test_main_signer_has_exact_workflow_and_event_without_widening_legacy_policy(self):
+        for event in ("push", "workflow_dispatch"):
+            self.write_catalog(catalog.document(self.producer, [self.entry], {"workflow": catalog.MAIN_WORKFLOW, "event": event}))
+            with mock.patch.object(catalog.subprocess, "run") as run:
+                result = self.select()
+            command = run.call_args[0][0]
+            self.assertEqual(command[command.index("--certificate-identity") + 1],
+                "https://github.com/eglinuxer/crossforge/.github/workflows/produce-toolchain.yml@refs/heads/main")
+            self.assertEqual(command[command.index("--certificate-github-workflow-trigger") + 1], event)
+            self.assertEqual(command[command.index("--certificate-github-workflow-sha") + 1], self.producer["source_commit"])
+            self.assertEqual(result["authentication"]["event"], event)
+            self.assertEqual(result["entry"]["receipt"]["contract"]["producer"], self.producer)
+
+    def test_unknown_signers_events_and_version_policy_confusion_fail_before_verification(self):
+        valid = catalog.document(self.producer, [self.entry], {"workflow": catalog.MAIN_WORKFLOW, "event": "push"})
+        for change in ("legacy-version", "missing-policy", "pilot", "regexp", "pr", "schedule", "unknown", "schema"):
+            value = copy.deepcopy(valid)
+            if change == "legacy-version":
+                value["schema_version"] = 1
+            elif change == "missing-policy":
+                del value["signing"]
+            elif change == "pilot":
+                value["signing"]["workflow"] = catalog.WORKFLOW
+            elif change == "regexp":
+                value["signing"]["workflow"] = ".github/workflows/.*"
+            elif change == "pr":
+                value["signing"]["event"] = "pull_request"
+            elif change == "schedule":
+                value["signing"]["event"] = "schedule"
+            elif change == "unknown":
+                value["signing"]["issuer"] = catalog.ISSUER
+            else:
+                value["schema_version"] = 3
+            self.write_catalog(value)
+            with self.subTest(change=change), mock.patch.object(catalog.subprocess, "run") as run, self.assertRaises(IdentityError):
+                self.verify()
+            run.assert_not_called()
+
+    def test_main_catalog_rejects_other_component_and_target_identities(self):
+        for key, value in (("component", "python/cp39"), ("targets", ["aarch64-unknown-linux-gnu"])):
+            entry = copy.deepcopy(self.entry)
+            entry["receipt"]["contract"]["inputs"][key] = value
+            entry["receipt_sha256"] = content_sha256(entry["receipt"])
+            with self.subTest(key=key), self.assertRaisesRegex(IdentityError, "canonical raw toolchain"):
+                catalog.document(self.producer, [entry], {"workflow": catalog.MAIN_WORKFLOW, "event": "push"})
+
+    def test_main_signer_cannot_authorize_python_or_qualification_receipts(self):
+        for role in ("python-install", "python-row", "qualification"):
+            entry = copy.deepcopy(self.entry)
+            entry["receipt"]["contract"]["role"] = role
+            if role == "qualification":
+                entry["receipt"]["contract"]["inputs"]["scope"] = "qualification"
+            entry["receipt_sha256"] = content_sha256(entry["receipt"])
+            with self.subTest(role=role), self.assertRaisesRegex(IdentityError, "canonical raw toolchain"):
+                catalog.document(self.producer, [entry], {"workflow": catalog.MAIN_WORKFLOW, "event": "push"})
+
     def test_changed_inputs_or_role_are_explicit_misses_after_authentication(self):
         changed = copy.deepcopy(self.expected)
         changed["parameters"]["execution"]["fixture"] = "different environment"

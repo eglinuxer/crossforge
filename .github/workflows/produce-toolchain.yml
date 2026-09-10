@@ -1,0 +1,197 @@
+name: produce missing main toolchain components
+
+on:
+  workflow_call:
+    inputs:
+      architecture:
+        type: string
+        required: true
+      roles:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  ensure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      produced: ${{ steps.ensure.outputs.produced }}
+      handoff-sha256: ${{ steps.ensure.outputs.handoff_sha256 }}
+      artifact-id: ${{ steps.handoff.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Check the original main CI caller before credentials
+        run: |
+          PYTHONPATH=scripts python3 - <<'PY'
+          from pathlib import Path
+          from crossforge_internal.component_ci import checked_source
+          checked_source(Path.cwd(), "main")
+          PY
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - uses: ./.github/actions/setup-component-verifier
+        id: verifier
+      - name: Authenticate the raw component writer
+        env:
+          REGISTRY_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Authenticate availability and produce only missing roles
+        id: ensure
+        env:
+          ARCHITECTURE: ${{ inputs.architecture }}
+          ROLES: ${{ inputs.roles }}
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+          COMPONENT_COSIGN: ${{ steps.verifier.outputs.binary }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/ci-toolchains.py ensure --architecture "$ARCHITECTURE" --roles "$ROLES" \
+            --builder "$COMPONENT_BUILDER" --oras "$COMPONENT_ORAS" --cosign "$COMPONENT_COSIGN" \
+            --output "$RUNNER_TEMP/component-producer"
+          python3 - "$RUNNER_TEMP/component-producer/report/result.json" >> "$GITHUB_OUTPUT" <<'PY'
+          import json, sys
+          value = json.load(open(sys.argv[1]))
+          print("produced=" + ("true" if value["produced"] else "false"))
+          if value["produced"]:
+              print("handoff_sha256=" + value["handoff_sha256"])
+          PY
+      - name: Preserve the new same-run handoff
+        if: steps.ensure.outputs.produced == 'true'
+        id: handoff
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: main-component-handoff-${{ inputs.architecture }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-producer/handoff.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Preserve availability and producer diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: main-component-producer-${{ inputs.architecture }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-producer/report/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Log out the raw component writer
+        if: always()
+        run: docker logout ghcr.io
+
+  sign:
+    needs: ensure
+    if: needs.ensure.outputs.produced == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      artifact-id: ${{ steps.signed.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - uses: ./.github/actions/setup-component-verifier
+        id: verifier
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.ensure.outputs.artifact-id }}
+          path: ${{ runner.temp }}/component-handoff
+          merge-multiple: true
+      - name: Sign the exact new raw receipts without asserting qualification
+        env:
+          HANDOFF_SHA256: ${{ needs.ensure.outputs.handoff-sha256 }}
+          COMPONENT_COSIGN: ${{ steps.verifier.outputs.binary }}
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/component-catalog"
+          mkdir "$output"
+          python3 scripts/component-catalog.py from-handoff --main-ci \
+            --handoff "$RUNNER_TEMP/component-handoff/handoff.json" --handoff-sha256 "$HANDOFF_SHA256" \
+            --output "$output/catalog.json"
+          "$COMPONENT_COSIGN" sign-blob --yes --bundle "$output/catalog.sigstore.json" "$output/catalog.json"
+          python3 scripts/component-catalog.py verify --catalog "$output/catalog.json" \
+            --bundle "$output/catalog.sigstore.json" --cosign "$COMPONENT_COSIGN" > "$output/authentication.json"
+      - name: Preserve the signed catalog
+        id: signed
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: main-component-catalog-${{ inputs.architecture }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-catalog/
+          retention-days: 7
+          if-no-files-found: error
+
+  store:
+    needs: sign
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - uses: ./.github/actions/setup-component-verifier
+        id: verifier
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.sign.outputs.artifact-id }}
+          path: ${{ runner.temp }}/component-catalog
+          merge-multiple: true
+      - name: Authenticate the catalog writer
+        env:
+          REGISTRY_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Reverify the catalog and persist its immutable reference
+        env:
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+          COMPONENT_COSIGN: ${{ steps.verifier.outputs.binary }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/component-catalog.py publish --catalog "$RUNNER_TEMP/component-catalog/catalog.json" \
+            --bundle "$RUNNER_TEMP/component-catalog/catalog.sigstore.json" \
+            --cosign "$COMPONENT_COSIGN" --oras "$COMPONENT_ORAS" \
+            --registry-config "$HOME/.docker/config.json" --output "$RUNNER_TEMP/catalog-store" \
+            > "$RUNNER_TEMP/catalog-store-result.json"
+      - name: Preserve the immutable catalog reference
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: main-component-reference-${{ inputs.architecture }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-store-result.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Log out the catalog writer
+        if: always()
+        run: docker logout ghcr.io
+
+  verified:
+    if: always()
+    needs: [ensure, sign, store]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Require availability or complete publication of new components
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: python3 scripts/ci-toolchains.py check-production "$RESULTS"

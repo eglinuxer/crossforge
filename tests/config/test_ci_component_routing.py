@@ -77,7 +77,10 @@ class ComponentRoutingTests(unittest.TestCase):
             self.assertEqual(result.returncode == 0, allowed, result.stderr)
         self.assertIn('"$REGISTRY_TOKEN" | docker login', action)
         self.assertIn('--password-stdin', action)
-        self.assertIn('validate-sigstore-report.py', action)
+        self.assertIn('uses: ./.github/actions/setup-component-verifier', action)
+        verifier = (ROOT / ".github/actions/setup-component-verifier/action.yml").read_text()
+        self.assertIn('validate-sigstore-report.py', verifier)
+        self.assertIn('sha256sum', verifier)
         self.assertNotIn('sign-blob', action)
 
     def test_ci_permissions_are_split_at_callers_and_quick_preflight_cannot_inherit_packages(self):
@@ -87,9 +90,11 @@ class ComponentRoutingTests(unittest.TestCase):
         self.assertNotIn("packages:", readonly)
         self.assertIn("contents: read", readonly)
         self.assertIn("component-reader: false", readonly)
-        self.assertIn("packages: read", reader)
-        self.assertIn("component-reader: true", reader)
-        self.assertNotIn("packages: write", workflow)
+        self.assertIn("packages: write", reader)
+        self.assertIn("id-token: write", reader)
+        self.assertIn("uses: ./.github/workflows/verify-main-incremental.yml", reader)
+        self.assertNotIn("id-token:", readonly)
+        self.assertNotIn("verify-main-incremental.yml", readonly)
         self.assertNotIn("workflow_call:", workflow)
         # The two job conditions must be exact complements. Independent event
         # tests above exercise the main-only policy and the action guard.
@@ -128,6 +133,45 @@ class ComponentRoutingTests(unittest.TestCase):
         self.assertIn('"$RUNNER_TEMP/component-data/$BUILD_STAGE"', action)
         self.assertIn("if: always() && inputs.component-reader == 'true'", action)
         self.assertIn("docker logout ghcr.io", action)
+        self.assertIn("--require-components", action)
+
+    def test_main_preparation_reduces_consumer_permissions_and_separates_signing_from_publication(self):
+        wrapper = (ROOT / ".github/workflows/verify-main-incremental.yml").read_text()
+        self.assertIn("workflow_call:", wrapper)
+        self.assertNotIn("workflow_dispatch:", wrapper)
+        for arch in ("x86_64", "aarch64"):
+            producer = job(wrapper, arch)
+            self.assertIn("uses: ./.github/workflows/produce-toolchain.yml", producer)
+            self.assertIn("needs.plan.outputs." + arch + "-roles != '[]'", producer)
+        consumer = job(wrapper, "builds")
+        self.assertIn("packages: read", consumer)
+        self.assertNotIn("packages: write", consumer)
+        self.assertNotIn("id-token:", consumer)
+        self.assertIn("needs.ready.result == 'success'", consumer)
+        self.assertIn("component-reader: true", consumer)
+        self.assertIn("check-ready", job(wrapper, "ready"))
+        self.assertIn("if: always()", job(wrapper, "verified"))
+        producer = (ROOT / ".github/workflows/produce-toolchain.yml").read_text()
+        self.assertIn("workflow_call:", producer)
+        self.assertNotIn("workflow_dispatch:", producer)
+        ensure, sign, store = [job(producer, name) for name in ("ensure", "sign", "store")]
+        self.assertLess(ensure.index('checked_source(Path.cwd(), "main")'), ensure.index('docker login'))
+        self.assertIn("packages: write", ensure)
+        self.assertNotIn("id-token:", ensure)
+        self.assertIn("id-token: write", sign)
+        self.assertNotIn("packages:", sign)
+        self.assertIn("from-handoff --main-ci", sign)
+        self.assertIn("needs.ensure.outputs.handoff-sha256", sign)
+        self.assertIn("artifact-ids: ${{ needs.ensure.outputs.artifact-id }}", sign)
+        self.assertIn("packages: write", store)
+        self.assertNotIn("id-token:", store)
+        self.assertIn("component-catalog.py publish", store)
+        self.assertIn("check-production", job(producer, "verified"))
+        for action in re.findall(r"uses: (\S+)", producer + wrapper):
+            self.assertTrue(action.startswith("./") or re.fullmatch(r"[\w-]+/[\w-]+@[0-9a-f]{40}", action), action)
+        for path in re.findall(r"^\s+path: (.+)$", producer, re.M):
+            self.assertNotIn("/oci", path)
+            self.assertNotEqual(path, "${{ runner.temp }}/component-producer/")
 
 
 if __name__ == "__main__":

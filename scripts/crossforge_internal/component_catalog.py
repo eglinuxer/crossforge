@@ -13,7 +13,7 @@ import subprocess
 import sys
 import tempfile
 
-from . import component_artifacts, component_inputs, registry_transfer
+from . import component_artifacts, component_build, component_inputs, registry_transfer
 from .identity import canonical_bytes, content_sha256, digest_value, exact_fields
 from .identity import file_record, load_json, parse_json, require
 
@@ -24,6 +24,15 @@ WORKFLOW = ".github/workflows/component-pilot.yml"
 ISSUER = "https://token.actions.githubusercontent.com"
 SIGNER = "https://github.com/" + GITHUB_REPOSITORY + "/" + WORKFLOW + "@refs/heads/main"
 EVENT = "workflow_dispatch"
+MAIN_WORKFLOW = ".github/workflows/produce-toolchain.yml"
+
+
+def signing_policy(value):
+    """Untrusted documents select only an exact, consumer-owned allowlist pair."""
+    exact_fields(value, ("workflow", "event"), "catalog signing policy")
+    require(value["workflow"] == MAIN_WORKFLOW and value["event"] in ("push", "workflow_dispatch"),
+            "catalog signing workflow or event is not allowed")
+    return value
 
 
 def _key(entry):
@@ -32,9 +41,14 @@ def _key(entry):
 
 
 def validate(value):
-    exact_fields(value, ("schema_version", "kind", "producer", "entries"), "component catalog")
-    require(type(value["schema_version"]) is int and value["schema_version"] == 1 and
+    require(type(value) is dict, "component catalog must be an object")
+    version = value.get("schema_version")
+    exact_fields(value, ("schema_version", "kind", "producer", "entries") +
+                 (("signing",) if type(version) is int and version == 2 else ()), "component catalog")
+    require(type(version) is int and version in (1, 2) and
             value["kind"] == "crossforge-component-catalog", "unsupported component catalog schema")
+    if version == 2:
+        signing_policy(value["signing"])
     producer = component_artifacts.validate_producer(value["producer"])
     require(producer["kind"] == "github-actions" and producer["invocation"].startswith(
         "https://github.com/" + GITHUB_REPOSITORY + "/actions/runs/"), "catalog requires a trusted repository producer")
@@ -42,6 +56,15 @@ def validate(value):
     for entry in value["entries"]:
         exact_fields(entry, ("reference", "receipt_sha256", "receipt"), "catalog entry")
         receipt = component_artifacts.validate_receipt(entry["receipt"])
+        if version == 2:
+            contract = receipt["contract"]
+            # This signer produces raw toolchains only. It cannot authorize
+            # qualification receipts or replace the original pilot policy.
+            allowed = [component_build.toolchain_spec(arch, role) for arch in ("x86_64", "aarch64")
+                       for role in ("toolchain-install", "gcc-test-context") if role == contract["role"]]
+            require(any(contract["inputs"]["component"] == spec["component"] and
+                        contract["inputs"]["targets"] == [spec["triple"]] for spec in allowed),
+                    "main catalog must contain canonical raw toolchain receipts")
         digest_value(entry["receipt_sha256"], "catalog receipt SHA256")
         require(content_sha256(receipt) == entry["receipt_sha256"], "catalog receipt differs from its digest")
         require(receipt["contract"]["producer"] == producer, "catalog cannot relabel another producer's receipt")
@@ -52,10 +75,12 @@ def validate(value):
     return value
 
 
-def document(producer, entries):
+def document(producer, entries, signing=None):
     # Validate before sorting so malformed input always fails at the boundary.
-    value = {"schema_version": 1, "kind": "crossforge-component-catalog",
+    value = {"schema_version": 1 if signing is None else 2, "kind": "crossforge-component-catalog",
              "producer": copy.deepcopy(producer), "entries": copy.deepcopy(entries)}
+    if signing is not None:
+        value["signing"] = copy.deepcopy(signing)
     require(type(value["entries"]) is list, "catalog entries must be an array")
     for entry in value["entries"]:
         exact_fields(entry, ("reference", "receipt_sha256", "receipt"), "catalog entry")
@@ -83,6 +108,8 @@ def verify(source, catalog, bundle, cosign, temporary_parent=None):
     """
     data = regular_bytes(catalog, 64 * 1024 * 1024)
     value = validate(parse_json(data))
+    signing = value.get("signing", {"workflow": WORKFLOW, "event": EVENT})
+    signer = "https://github.com/" + GITHUB_REPOSITORY + "/" + signing["workflow"] + "@refs/heads/main"
     require(data == canonical_bytes(value) + b"\n", "catalog must use the canonical signed encoding")
     bundle_data = regular_bytes(bundle, 16 * 1024 * 1024)
     release = load_json(Path(source) / "config/release.json")
@@ -104,10 +131,10 @@ def verify(source, catalog, bundle, cosign, temporary_parent=None):
         signature.write_bytes(bundle_data)
         trusted_root.write_bytes(root)
         command = [str(cosign), "verify-blob", "--bundle", str(signature), "--trusted-root", str(trusted_root),
-                   "--certificate-identity", SIGNER, "--certificate-oidc-issuer", ISSUER,
+                   "--certificate-identity", signer, "--certificate-oidc-issuer", ISSUER,
                    "--certificate-github-workflow-repository", GITHUB_REPOSITORY,
                    "--certificate-github-workflow-ref", "refs/heads/main",
-                   "--certificate-github-workflow-trigger", EVENT,
+                   "--certificate-github-workflow-trigger", signing["event"],
                    "--certificate-github-workflow-sha", value["producer"]["source_commit"], str(blob)]
         subprocess.run(command, check=True, stdout=sys.stderr, stderr=sys.stderr)
         require(blob.read_bytes() == data and signature.read_bytes() == bundle_data and trusted_root.read_bytes() == root,
@@ -115,8 +142,8 @@ def verify(source, catalog, bundle, cosign, temporary_parent=None):
     require(file_record(cosign.parent, cosign.name) == binary, "catalog verifier changed during verification")
     return value, {"kind": "crossforge-component-catalog-authentication", "schema_version": 1,
         "catalog_sha256": hashlib.sha256(data).hexdigest(), "bundle_sha256": hashlib.sha256(bundle_data).hexdigest(),
-        "producer": copy.deepcopy(value["producer"]), "signer": SIGNER, "issuer": ISSUER,
-        "event": EVENT, "verifier_sha256": binary["sha256"], "trusted_root_sha256": hashlib.sha256(root).hexdigest()}
+        "producer": copy.deepcopy(value["producer"]), "signer": signer, "issuer": ISSUER,
+        "event": signing["event"], "verifier_sha256": binary["sha256"], "trusted_root_sha256": hashlib.sha256(root).hexdigest()}
 
 
 def select(source, catalog, bundle, cosign, expected_inputs, role, temporary_parent=None):

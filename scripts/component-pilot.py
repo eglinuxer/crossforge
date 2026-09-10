@@ -2,7 +2,6 @@
 """Run the trusted-main x86_64 registry handoff pilot through existing gates."""
 
 import argparse
-from datetime import datetime
 import json
 import os
 from pathlib import Path
@@ -10,7 +9,7 @@ import shutil
 import subprocess
 import sys
 
-from crossforge_internal import bake_materials, component_artifacts, component_build, component_handoff
+from crossforge_internal import bake_materials, component_artifacts, component_build, component_ci, component_handoff
 from crossforge_internal import component_inputs, component_qualification, component_resolution
 from crossforge_internal import qualification_execution, registry_transfer
 from crossforge_internal.identity import IdentityError, content_sha256, load_json, require
@@ -20,40 +19,15 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def github_producer(environment, commit, dirty):
-    require(environment.get("GITHUB_REPOSITORY") == "eglinuxer/crossforge" and
-            environment.get("GITHUB_SERVER_URL") == "https://github.com" and
-            environment.get("GITHUB_REF") == "refs/heads/main" and
-            environment.get("GITHUB_EVENT_NAME") == "workflow_dispatch", "component pilot requires trusted main dispatch")
-    require(environment.get("GITHUB_SHA") == commit and not dirty, "component pilot requires the exact clean source")
-    value = {"kind": "github-actions", "source_commit": commit, "source_dirty": False,
-             "invocation": "https://github.com/eglinuxer/crossforge/actions/runs/%s/attempts/%s" %
-                (environment.get("GITHUB_RUN_ID", ""), environment.get("GITHUB_RUN_ATTEMPT", "")),
-             "started_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}
-    return component_artifacts.validate_producer(value)
+    return component_ci.github_producer(environment, commit, dirty)
 
 
 def checked_source():
-    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(ROOT)).decode().strip()
-    dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "-z"], cwd=str(ROOT)))
-    producer = github_producer(os.environ, commit, dirty)
-    for script in ("render-release-components.py", "render-vcpkg-integration.py", "render-bake.py"):
-        subprocess.run([sys.executable, str(ROOT / "scripts" / script), "--check"], cwd=str(ROOT), stdout=sys.stderr, check=True)
-    return producer
+    return component_ci.checked_source(ROOT)
 
 
 def source_graph(targets, directory, builder, docker_config):
-    directory.mkdir(parents=True, exist_ok=False)
-    cache = directory / "cache.json"
-    environment = dict(os.environ)
-    if docker_config:
-        environment["DOCKER_CONFIG"] = str(docker_config)
-    subprocess.run([sys.executable, "scripts/ci-build.py", "cache", "--output", str(cache)] + targets,
-                   cwd=str(ROOT), env=environment, stdout=sys.stderr, check=True)
-    command = component_build.docker_command(docker_config) + ["buildx", "bake", "--builder", builder,
-        "-f", "docker-bake.hcl", "-f", "docker-bake.override.json", "-f", str(cache), "--print"]
-    graph = json.loads(subprocess.check_output(command + targets, cwd=str(ROOT)))
-    component_build.write_json(directory / "graph.json", graph)
-    return graph
+    return component_ci.source_graph(ROOT, targets, directory, builder, docker_config)
 
 
 def producer_run(directory, builder, oras, docker_config=None):

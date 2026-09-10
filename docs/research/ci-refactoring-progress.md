@@ -5,8 +5,8 @@
 | 批次 | 当前状态 | 仍需取得的证据 |
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
-| 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；同 run 试点及 main 只读工具链消费已接线 | GitHub 实跑与缺失组件的集中生产 |
-| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、与可信产物可用性及生产消费对接 |
+| 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；main 缺失工具链集中生产及只读消费已接线 | GitHub 实跑、真实签名与跨 run 验收 |
+| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；组件可用性决定是否生产；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、Python 行生产消费对接 |
 | 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过 | 生产 CI 接入与远程验收 |
 | 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储及跨 run 消费接线本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
@@ -280,3 +280,17 @@ Docker 全量 config 1090 项、147.414 秒，packaging 40 项、0.871 秒通过
 main 的工具链、Python、vcpkg、GCC、SDK 选中阶段启用已有组件绑定 CLI，使用 pinned ORAS/Cosign、签名目录及实际 OCI 核验。登录前再次检查 GitHub server、仓库、main ref 与 push/dispatch 事件；token 经 stdin 传入，阶段结束退出登录。索引缺失仍明确保留源码 producer，认证/传输/产物错误终止；源码 fallback 产物尚未集中封存发布，Python 行组件接线也继续推进。
 
 Docker 最终 config 1113 项、148.309 秒，packaging 40 项、0.853 秒通过，保留既有 2/1 项跳过；四项 locked validators、三个 renderer、实际 Rocky 8 platform-python 3.6 强制门禁和 actionlint 通过。新增事件矩阵执行真实 planner 与 credential guard，覆盖 PR、PR-target、fork、非 main、tag、其他 server、计划失败和分支结果错配。中途修正了一处 action YAML 缩进，以及跟随 quick 抽取/权限继承边界变化的旧测试定位；完整复测零失败。远程 rollout 前仍须由 manual pilot 验证 package 访问及真实签名 build/reuse；本轮未执行远程发布或 dispatch。
+
+## 批次 2/3：集中补齐 main 所需工具链组件
+
+main 的组件分支现经 `verify-main-incremental.yml` 先解析实际选中 Bake 图，再按架构调用 `produce-toolchain.yml`。每个 producer 只处理该图需要的安装/测试上下文角色：验证已有签名目录的可用性；精确索引缺失才构建、封存并上传原始组件。认证或传输错误不能伪装成缺失。已有条目保留原 producer，由下游独立下载并核验实际 OCI，不重新签发为本次生产。
+
+新增 `component_ci.py` 集中可信来源和 Bake 图捕获，原 pilot CLI 保持兼容；`ci_toolchains.py` 负责角色需求、缺失生产和结果检查。schema 2 handoff 显式声明一个架构和非空的新角色子集，仍由上游 job 的独立 SHA256、不可变 Actions artifact ID 和精确 commit/run/attempt 绑定。schema 1 保留原双角色 x86_64 试点契约。main catalog schema 2 只允许原始工具链角色和精确 `produce-toolchain.yml@refs/heads/main` 的 push/dispatch 身份；原 schema 1 的 pilot 身份不放宽，main 签名入口不能签发 Python 或资格 receipt。
+
+主分支 caller 的最大权限只供受控的嵌套工作流使用；实际 raw producer/store job 只有 packages:write，sign job 只有 id-token:write，下游 caller 显式降为 contents:read + packages:read。PR 路径保持 contents:read。主分支源检查还要求原始 `ci.yml@refs/heads/main` caller、workflow/source SHA 一致和 clean checkout。阶段摘要拒绝缺失、未知或无效的计划输出，并分别检查需要执行的架构、是否有新产物，以及签名/保存的准确 success/skipped 结果。下游启用 `--require-components`，集中准备后若索引缺失则在 Bake 执行前失败，保留诊断，避免各下游再次编译。
+
+[本地记录](central-toolchain-production-2026-09-10.json)：Docker 全量 config 1129 项、149.053 秒和 packaging 40 项、0.885 秒通过，保留既有 2/1 项跳过；四项 locked validators、三个 renderer 和 actionlint 通过。随后补充两项签名 CLI/角色边界回归，最终定向 64 项、3.254 秒及 actionlint 通过，最终 renderer 检查通过。实际 Rocky 8 Python 3.6 强制门禁完成递归编译、旧 CLI 和新 `ci-toolchains.py --help` 执行。
+
+断网 Docker 内用固定 Buildx 对十种真实选择范围核对组件需求：文档/单纯输入检查无工具链；单架构工具链只选对应安装组件；cp39、vcpkg、SDK 需要双架构安装组件；GCC smoke 与全量 CI 需要两种角色/双架构；现有 GCC full canonical 目标只需要 x86_64 两种角色。探针最初因输入未排序、随后因误把当前 GCC full 预期设为双架构而失败；修正探针预期后全部通过，生产选择器未为探针修改。这些是依赖图与编排验证，不是新增资格结果或 GitHub 时延测量。
+
+本批未推送代码、执行远程 workflow 或发布 GHCR 内容。仍需由 manual pilot 实测 package 访问与真实 GitHub 签名，再验收 main 新工作流；Python 行组件的生产 CI 消费、资格范围收窄、候选最终集成/原生 ARM、同 digest 恢复及完整性能重放继续推进。组件保留仍不自动删除。

@@ -38,15 +38,15 @@ jobs:
     if: ${{ github.server_url == 'https://github.com' && github.repository == 'eglinuxer/crossforge' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     permissions:
       contents: read
-      packages: read
+      packages: write
+      id-token: write
     concurrency:
       group: ci-builds-${{ github.ref }}-${{ github.event_name }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-    uses: ./.github/workflows/verify-incremental.yml
+    uses: ./.github/workflows/verify-main-incremental.yml
     with:
       profile: ${{ needs.quick.outputs.profile }}
       selection: ${{ needs.quick.outputs.selection }}
-      component-reader: true
 
   builds:
     if: always()

@@ -26,20 +26,8 @@ runs:
         PY
     - uses: ./.github/actions/setup-component-transport
       id: transport
-    - name: Export and check the pinned catalog verifier
+    - uses: ./.github/actions/setup-component-verifier
       id: verifier
-      shell: bash
-      run: |
-        set -Eeuo pipefail
-        output="$RUNNER_TEMP/crossforge-catalog-verifier"
-        docker buildx bake cosign-host-tool \
-          --set "cosign-host-tool.output=type=local,dest=$output" \
-          --progress=plain
-        expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
-        test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
-        test -x "$output/cosign"
-        ./scripts/validate-sigstore-report.py "$output/sigstore-verification.json"
-        printf 'binary=%s\n' "$output/cosign" >> "$GITHUB_OUTPUT"
     - name: Authenticate the component reader
       shell: bash
       env:

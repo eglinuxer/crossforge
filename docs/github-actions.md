@@ -19,7 +19,8 @@ baselines, unsupported material syntax, unknown paths or changed root catalogs
 select the complete existing SDK/GCC stage set. Qt qualification remains opt-in.
 A PR uses the merge base against the checked-out merge commit.
 
-Each main push runs the selected roots and does not publish an image.
+Each main push runs the selected roots and does not publish a public SDK candidate.
+Missing internal toolchain components are produced separately for those roots.
 Dispatch `candidate.yml` on main when preparing a candidate or release:
 it calls `verify-quick.yml` with `plan-components: false`, then full qualification and candidate
 publication. Candidate quick checks, manual CI and push-selected builds have
@@ -40,19 +41,29 @@ identities per root, selected stage targets and any fallback reason. Its compact
 job output drives `verify-incremental.yml`. Toolchain, Python and GCC matrices
 contain only selected stages; each stage may run a subset of its canonical Bake
 roots. Source selection does not authorize component or qualification reuse.
-On original-repository main pushes and main manual CI, a separate caller job
-grants packages:read and enables the authenticated toolchain reader. It captures
-current inputs, verifies the signed catalog and OCI bytes, and substitutes the
-fixed component contexts in selected toolchain, Python, vcpkg, GCC and SDK stages.
-Missing input indexes leave explicit producer boundaries in the build graph;
-authentication, transfer and artifact verification failures stop the stage.
+On original-repository main pushes and main manual CI, `verify-main-incremental.yml`
+finds the raw component boundaries in the selected graph. It calls
+`produce-toolchain.yml` separately for each needed architecture. That workflow
+authenticates current input availability, builds and publishes only missing roles,
+signs their same-run receipts in an OIDC-only job, then persists the signed catalog
+in a separate package-writer job. Existing entries keep their original producer;
+they are not re-signed or claimed as new qualification.
+
+After all planned producers finish, the wrapper explicitly reduces the actual
+consumer jobs to contents:read + packages:read. They capture current inputs,
+verify the signed catalog and OCI bytes, and substitute fixed component contexts
+in selected toolchain, Python, vcpkg, GCC and SDK stages. These jobs require the
+prepared components: a missing index fails with diagnostics instead of compiling
+another copy. Authentication, transfer and artifact verification failures also
+stop the stage. The main caller grants the maximum writer/OIDC permissions only
+to this wrapper; each leaf job receives the permissions for its own operation.
 PRs, forks and non-main dispatches use a separate contents:read-only caller and
 retain the complete source dependency graph without registry credentials.
 
 The current graph retains broad qualification COPY dependencies, including the
 complete `release.json` and GCC baseline directory. The planner preserves those
-dependencies. Narrowing qualification inputs, publishing missing components and
-consuming Python row artifacts in production remain rollout work. Full
+dependencies. Narrowing qualification inputs and consuming Python row artifacts
+in production remain rollout work. Full
 qualification continues daily, manually and for explicitly requested candidates.
 The new dynamic workflow is locally checked but has not yet run on GitHub.
 
@@ -338,7 +349,7 @@ Original component producer details remain separate from this run's new test
 records. This mode has packages:read and skips production, signing and storage;
 the final gate checks the exact expected success/skipped jobs for the chosen
 mode. A missing input index reports that a producer is required and fails this
-read-only pilot; automatic missing-component scheduling remains rollout work.
+read-only pilot. Daily main CI has a separate centralized missing-component path.
 Failed authentication, transfer or artifact verification is never a build miss.
 
 This pilot does not yet supply artifacts to `verify-incremental.yml`,

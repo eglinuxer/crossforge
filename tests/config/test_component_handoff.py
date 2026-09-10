@@ -49,6 +49,24 @@ class ComponentHandoffTests(unittest.TestCase):
     def test_same_run_exact_handoff_is_accepted_with_original_producer(self):
         self.assertEqual(self.verify()["producer"], self.producer)
 
+    def test_partial_main_handoff_requires_explicit_architecture_and_keeps_original_receipts(self):
+        for role in handoff.ROLES:
+            value = handoff.document(self.producer, self.execution, {role: self.components[role]}, "x86_64")
+            verified = self.verify(value, content_sha256(value))
+            self.assertEqual(verified["components"][role], self.components[role])
+            self.assertEqual(verified["schema_version"], 2)
+            with self.assertRaises(IdentityError):
+                handoff.document(self.producer, self.execution, {role: self.components[role]})
+
+    def test_partial_handoff_cannot_omit_all_roles_or_mix_architecture(self):
+        for arch, components in (("aarch64", self.components), ("unknown", self.components), ("x86_64", {})):
+            with self.subTest(arch=arch, roles=list(components)), self.assertRaises(IdentityError):
+                handoff.document(self.producer, self.execution, components, arch)
+        value = handoff.document(self.producer, self.execution, self.components, "x86_64")
+        del value["architecture"]
+        with self.assertRaises(IdentityError):
+            handoff.validate(value)
+
     def test_upstream_job_digest_commit_and_attempt_are_independent_requirements(self):
         for kwargs in ({"digest": "0" * 64}, {"commit": "b" * 40},
                        {"invocation": "https://github.com/eglinuxer/crossforge/actions/runs/123/attempts/3"}):

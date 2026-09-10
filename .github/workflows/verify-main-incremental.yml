@@ -1,0 +1,107 @@
+name: verify main incremental components
+
+on:
+  workflow_call:
+    inputs:
+      profile:
+        type: string
+        required: true
+      selection:
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      selection: ${{ steps.plan.outputs.selection }}
+      x86_64-roles: ${{ steps.plan.outputs.x86_64-roles }}
+      aarch64-roles: ${{ steps.plan.outputs.aarch64-roles }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - name: Find raw component boundaries in the selected canonical graph
+        id: plan
+        env:
+          PROFILE: ${{ inputs.profile }}
+          SELECTION: ${{ inputs.selection }}
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/ci-toolchains.py plan --profile "$PROFILE" --selection "$SELECTION" \
+            --builder "$COMPONENT_BUILDER" --output "$RUNNER_TEMP/component-plan" >> "$GITHUB_OUTPUT"
+
+  x86_64:
+    needs: plan
+    if: needs.plan.outputs.x86_64-roles != '[]'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/produce-toolchain.yml
+    with:
+      architecture: x86_64
+      roles: ${{ needs.plan.outputs.x86_64-roles }}
+
+  aarch64:
+    needs: plan
+    if: needs.plan.outputs.aarch64-roles != '[]'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/produce-toolchain.yml
+    with:
+      architecture: aarch64
+      roles: ${{ needs.plan.outputs.aarch64-roles }}
+
+  ready:
+    if: always()
+    needs: [plan, x86_64, aarch64]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Require all planned component producers to finish
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: python3 scripts/ci-toolchains.py check-ready "$RESULTS"
+
+  builds:
+    needs: [plan, ready]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.ready.result == 'success' }}
+    # Actual consumers cannot publish artifacts or request signing identities.
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/verify-incremental.yml
+    with:
+      profile: ${{ inputs.profile }}
+      selection: ${{ needs.plan.outputs.selection }}
+      component-reader: true
+
+  verified:
+    if: always()
+    needs: [ready, builds]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require component preparation and selected gates to succeed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          results = json.loads(os.environ["RESULTS"])
+          valid = set(results) == {"ready", "builds"} and all(item.get("result") == "success" for item in results.values())
+          sys.exit(0 if valid else 1)
+          PY
