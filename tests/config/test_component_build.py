@@ -93,6 +93,19 @@ class ComponentBuildTests(unittest.TestCase):
                     self.execution, self.producer, directory, "fixture")
         self.assertFalse(directory.exists())
 
+    def test_control_plane_edit_preserves_compiler_identity_but_payload_copy_change_does_not(self):
+        first = build.toolchain_inputs(self.root, self.graph, "x86_64", "toolchain-install", self.execution)
+        (self.root / "scripts/component-artifact.py").write_text("# a transport CLI change\n")
+        second = build.toolchain_inputs(self.root, self.graph, "x86_64", "toolchain-install", self.execution)
+        self.assertEqual(first, second)
+        self.assertEqual(first["parameters"]["material_model"], 2)
+        with mock.patch.object(build, "toolchain_spec", wraps=build.toolchain_spec) as spec:
+            changed = build.toolchain_spec("x86_64", "toolchain-install")
+            changed["copies"] = ["/different/layout/"]
+            spec.return_value = changed
+            self.assertNotEqual(first, build.toolchain_inputs(
+                self.root, self.graph, "x86_64", "toolchain-install", self.execution))
+
     def test_buildx_metadata_uses_exact_component_target_and_digest(self):
         path = self.root / "metadata.json"
         for value in ({}, {"other": {"containerimage.digest": "sha256:" + "a" * 64}},

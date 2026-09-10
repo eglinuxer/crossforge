@@ -3,8 +3,8 @@
 This inventories inputs, not Docker build semantics. BuildKit still executes the
 recipe. Unsupported source syntax fails closed; it cannot silently omit inputs.
 Ignore patterns are deliberately not applied: extra files may invalidate reuse,
-but excluded files cannot hide an input. Selected recipe blocks, all declared
-Bake args, pinned image contexts, and execution identity are part of the key.
+but excluded files cannot hide an input. Selected recipe blocks, their declared
+args, pinned image contexts, and execution identity are part of the key.
 """
 
 from pathlib import Path
@@ -12,13 +12,15 @@ import re
 import shlex
 
 from . import component_inputs
-from .identity import digest_value, relative_path, require
+from .identity import digest_value, exact_fields, relative_path, require
 
 
 FROM = re.compile(r"FROM(?:\s+--platform=\S+)?\s+(\S+)\s+AS\s+([A-Za-z0-9_.-]+)\Z")
 VARIABLE = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))")
 IGNORED_BAKE_FIELDS = {"cache-from", "cache-to", "output", "tags", "attest", "no-cache", "no-cache-filter"}
 SUPPORTED_BAKE_FIELDS = {"context", "dockerfile", "target", "platforms", "args", "contexts"} | IGNORED_BAKE_FIELDS
+PROXY_ARGS = {name for upper in ("HTTP_PROXY", "HTTPS_PROXY", "FTP_PROXY", "NO_PROXY", "ALL_PROXY")
+              for name in (upper, upper.lower())}
 
 
 def instructions(text):
@@ -106,7 +108,7 @@ def _source_files(root, pattern, directories):
     return result
 
 
-def capture(root, graph, target, component, role, targets, execution):
+def capture(root, graph, target, component, role, targets, execution, artifacts=None):
     """Capture a source-build closure; resolved graph must come from checked Bake."""
     root = Path(root).resolve()
     require(type(graph) is dict and type(graph.get("target")) is dict, "expected resolved Bake graph")
@@ -114,6 +116,19 @@ def capture(root, graph, target, component, role, targets, execution):
     require(role in ("toolchain-install", "gcc-test-context", "python-row", "qualification"),
             "unsupported component material role")
     files, directories = {".dockerignore"}, {}
+    artifacts = artifacts if artifacts is not None else {}
+    require(type(artifacts) is dict and all(type(name) is str for name in artifacts),
+            "component context identities must be a named mapping")
+    dependencies, used_artifacts = {}, set()
+    for record in artifacts.values():
+        exact_fields(record, ("component", "inputs_sha256", "artifact_digest"), "component context identity")
+        require(type(record["component"]) is str and
+                component_inputs.COMPONENT_NAME.fullmatch(record["component"]), "invalid component context name")
+        digest_value(record["inputs_sha256"], "component context inputs SHA256")
+        digest_value(record["artifact_digest"], "component context artifact digest", oci=True)
+        require(record["component"] not in dependencies or dependencies[record["component"]] == record,
+                "conflicting identities for the same component")
+        dependencies[record["component"]] = record
     recipes, target_records, visited, visiting = {}, {}, set(), set()
 
     def visit_target(name):
@@ -136,6 +151,7 @@ def capture(root, graph, target, component, role, targets, execution):
         args = dict(definition.get("args", {}))
         require(all(type(k) is str and type(v) is str for k, v in args.items()),
                 "Bake arguments must be explicit strings")
+        require("BUILDKIT_SYNTAX" not in args, "frontend overrides require explicit material support")
         contexts = definition.get("contexts", {})
         require(type(contexts) is dict, "Bake contexts must be an object")
         require(not set(contexts) & set(stages), "named contexts cannot shadow Docker stages")
@@ -172,7 +188,17 @@ def capture(root, graph, target, component, role, targets, execution):
                 context = contexts[source]
                 require(type(context) is str, "context reference must be a string")
                 external[source] = context
-                if context.startswith("target:"):
+                if source in artifacts:
+                    record = artifacts[source]
+                    require(context.startswith(("oci-layout://", "docker-image://")) and
+                            context.count("@") == 1 and
+                            context.rsplit("@", 1)[1] == record["artifact_digest"],
+                            "component context does not use the verified artifact digest")
+                    used_artifacts.add(source)
+                    # Transport location is not part of the subject's identity.
+                    external[source] = {"component": record["component"],
+                                        "artifact_digest": record["artifact_digest"]}
+                elif context.startswith("target:"):
                     visit_target(context[7:])
                 elif context.startswith("docker-image://"):
                     require(context.count("@") == 1, "component base image must be pinned")
@@ -214,19 +240,36 @@ def capture(root, graph, target, component, role, targets, execution):
             selected.add(stage_name)
 
         visit_stage(definition.get("target"))
-        recipes[name] = {"dockerfile": dockerfile, "frontend": frontend, "header": header,
+        declared = {line[4:].split("=", 1)[0] for key in selected
+                    for line in stages[key]["instructions"] if line.startswith("ARG ")}
+        from_args = {match.group(1) or match.group(2) for key in selected
+                     for match in VARIABLE.finditer(stages[key]["instructions"][0])}
+        header_names = declared | from_args
+        while True:
+            used_header = [line for line in header if line[4:].split("=", 1)[0] in header_names]
+            expanded = header_names | {match.group(1) or match.group(2) for line in used_header
+                                       for match in VARIABLE.finditer(line)}
+            if expanded == header_names:
+                break
+            header_names = expanded
+        recipes[name] = {"dockerfile": dockerfile, "frontend": frontend, "header": used_header,
                          "stages": {key: stages[key]["instructions"] for key in sorted(selected)}}
-        target_records[name] = {"args": args, "contexts": external, "target": definition["target"],
+        target_records[name] = {"args": {key: value for key, value in args.items()
+                                         if key in declared | header_names | PROXY_ARGS | {"SOURCE_DATE_EPOCH"}
+                                         or key.startswith("BUILDKIT_")},
+                                "contexts": external, "target": definition["target"],
                                 "platforms": definition["platforms"]}
         visiting.remove(name)
         visited.add(name)
 
     visit_target(target)
-    # The identity implementation itself is part of the material declaration.
-    for name in ("bake_materials.py", "component_inputs.py", "identity.py"):
-        files.add("scripts/crossforge_internal/" + name)
+    require(used_artifacts == set(artifacts), "declared component context is not consumed by the graph")
+    # Version the material contract when its meaning changes. The implementation
+    # of the planner/transport is not a compiler input unless COPY actually uses
+    # it. Consumers independently recapture this complete declaration.
     return component_inputs.capture(root, component, "qualification" if role == "qualification" else "build",
-        sorted(files), targets, parameters={"material_model": 1, "role": role, "root_target": target,
+        sorted(files), targets, parameters={"material_model": 2, "role": role, "root_target": target,
                                             "recipes": recipes, "bake_targets": target_records,
                                             "directories": directories,
-                                            "execution": execution})
+                                            "execution": execution},
+        dependencies=[dependencies[name] for name in sorted(dependencies)])

@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 
 from . import bake_materials, component_artifacts, component_inputs, oci_layout
-from .identity import (content_sha256, digest_value, file_record, load_json, require)
+from .identity import (content_sha256, digest_value, load_json, require)
 
 
 def write_json(path, value):
@@ -43,11 +43,6 @@ def toolchain_inputs(source, graph, arch, role, execution):
             "toolchain artifact must use its canonical Docker stage")
     value = bake_materials.capture(source, graph, spec["target"], spec["component"], role,
                                    [spec["triple"]], execution)
-    paths = {record["path"] for record in value["files"]}
-    for name in ("component_build.py", "component_artifacts.py", "oci_layout.py", "__init__.py"):
-        paths.add("scripts/crossforge_internal/" + name)
-    paths.add("scripts/component-artifact.py")
-    value["files"] = [file_record(source, path) for path in sorted(paths)]
     value["parameters"]["artifact_copies"] = spec["copies"]
     return component_inputs.validate(value)
 

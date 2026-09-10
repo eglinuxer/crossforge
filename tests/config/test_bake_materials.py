@@ -92,6 +92,45 @@ class BakeMaterialsTests(unittest.TestCase):
         graph["target"]["component"]["args"]["ROW"] = "unrelated"
         self.assertNotEqual(identity(self.capture(graph)), baseline)
 
+    def test_unrelated_args_and_global_platform_declarations_do_not_rebuild(self):
+        baseline = identity(self.capture())
+        graph = copy.deepcopy(self.graph)
+        graph["target"]["component"]["args"].update({"CROSSFORGE_SOURCE_COMMIT": "b" * 40,
+                                                    "QEMU_EXECUTOR_CPU": "unused"})
+        self.assertEqual(identity(self.capture(graph)), baseline)
+        self.dockerfile.write_text(self.dockerfile.read_text().replace(
+            "FROM rocky AS common", "ARG OTHER_PLATFORM=linux/arm64\nFROM rocky AS common"))
+        self.assertEqual(identity(self.capture(graph)), baseline)
+        self.dockerfile.write_text(self.dockerfile.read_text().replace(
+            "FROM rocky AS common", "FROM --platform=${OTHER_PLATFORM} rocky AS common"))
+        self.assertNotEqual(identity(self.capture(graph)), baseline)
+
+    def test_transport_implementation_is_bound_only_if_recipe_copies_it(self):
+        path = self.root / "scripts/crossforge_internal/identity.py"
+        baseline = identity(self.capture())
+        path.write_text(path.read_text() + "\n# transport-only edit\n")
+        self.assertEqual(identity(self.capture()), baseline)
+        self.dockerfile.write_text(self.dockerfile.read_text().replace(
+            "RUN /build.sh", "COPY scripts/crossforge_internal/identity.py /identity.py\nRUN /build.sh"))
+        baseline = identity(self.capture())
+        path.write_text(path.read_text() + "\n# now a copied build input\n")
+        self.assertNotEqual(identity(self.capture()), baseline)
+
+    def test_redeclared_global_defaults_and_implicit_frontend_args_are_bound(self):
+        self.dockerfile.write_text(self.dockerfile.read_text().replace(
+            "FROM rocky AS common", "ARG FLAVOR=one\nFROM rocky AS common\nARG FLAVOR"))
+        baseline = identity(self.capture())
+        self.dockerfile.write_text(self.dockerfile.read_text().replace("FLAVOR=one", "FLAVOR=two"))
+        self.assertNotEqual(identity(self.capture()), baseline)
+        baseline = identity(self.capture())
+        for name in ("SOURCE_DATE_EPOCH", "BUILDKIT_SANDBOX_HOSTNAME", "HTTPS_PROXY"):
+            graph = copy.deepcopy(self.graph)
+            graph["target"]["component"]["args"][name] = "changed"
+            self.assertNotEqual(identity(self.capture(graph)), baseline)
+        self.graph["target"]["component"]["args"]["BUILDKIT_SYNTAX"] = "untrusted"
+        with self.assertRaisesRegex(IdentityError, "frontend overrides"):
+            self.capture()
+
     def test_unknown_remote_sources_mounts_and_syntax_fail_closed(self):
         original = self.dockerfile.read_text()
         for changed in (original.replace("RUN /build.sh", "ADD https://example.com/file /file"),
@@ -137,6 +176,34 @@ class BakeMaterialsTests(unittest.TestCase):
         self.graph["target"]["component"]["contexts"]["rocky"] = "docker-image://rocky:8"
         with self.assertRaises(IdentityError):
             self.capture()
+
+    def test_verified_component_cuts_source_closure_and_binds_inputs_and_actual_digest(self):
+        record = {"component": "host/common", "inputs_sha256": "d" * 64,
+                  "artifact_digest": "sha256:" + "e" * 64}
+        graph = copy.deepcopy(self.graph)
+        graph["target"]["component"]["contexts"]["rocky"] = "oci-layout:///first@" + record["artifact_digest"]
+        def capture(bindings=None):
+            return materials.capture(self.root, graph, "component", "toolchain/x86_64", "toolchain-install",
+                ["x86_64-unknown-linux-gnu"], {"builder": "fixture"}, artifacts=bindings or {"rocky": record})
+        value = capture()
+        self.assertEqual(value["dependencies"], [record])
+        graph["target"]["component"]["contexts"]["rocky"] = "oci-layout:///other-location@" + record["artifact_digest"]
+        self.assertEqual(value, capture())
+        changed = dict(record, inputs_sha256="f" * 64)
+        self.assertNotEqual(value, capture({"rocky": changed}))
+        graph["target"]["component"]["contexts"]["rocky"] = "docker-image://image@sha256:" + "f" * 64
+        with self.assertRaisesRegex(IdentityError, "verified artifact digest"):
+            capture()
+        graph["target"]["component"]["contexts"]["rocky"] = "target:source-fallback"
+        with self.assertRaisesRegex(IdentityError, "verified artifact digest"):
+            capture()
+
+    def test_unused_verified_component_is_not_accepted_as_a_tested_dependency(self):
+        with self.assertRaisesRegex(IdentityError, "not consumed"):
+            materials.capture(self.root, self.graph, "component", "toolchain/x86_64", "toolchain-install",
+                ["x86_64-unknown-linux-gnu"], {"builder": "fixture"}, artifacts={"unused": {
+                    "component": "host/common", "inputs_sha256": "d" * 64,
+                    "artifact_digest": "sha256:" + "e" * 64}})
 
 
 if __name__ == "__main__":
