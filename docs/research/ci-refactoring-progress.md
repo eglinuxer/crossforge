@@ -5,7 +5,7 @@
 | 批次 | 当前状态 | 仍需取得的证据 |
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
-| 2：组件契约与工具链交接 | 安装/测试上下文 OCI、cp39 x86_64 构建、x86_64 ABI/运行时及 GCC smoke 交接通过 | GCC full/ARM 交接实跑、正式资格 receipt、远程交接与 CI 接入 |
+| 2：组件契约与工具链交接 | 安装/测试上下文 OCI、cp39 x86_64 构建、x86_64 正式资格 receipt 与独立核验通过 | GCC full 正在执行；ARM、远程交接与 CI 接入 |
 | 3：组件级增量计划 | 待实现 | 依赖传播、完整结果汇总和真实受影响构建 |
 | 4：整行 Python/SDK 交接 | 待实现 | 双架构全 row、SDK 组装无 GCC/CPython 源码重编 |
 | 5：资格复用及恢复 | 待实现 | 显式复用、强制执行、候选集成/ARM 及同 digest 恢复 |
@@ -77,3 +77,24 @@ OCI 模块只校验 root/platform/config/layer 的实际字节，镜像层应用
 - Docker 完整 config 回归 976 项、182.946 秒、零失败、2 项既有 zstd 资源测试跳过；locked release、供应链、冻结 ABI、Python provider 及三个 renderer `--check` 通过。
 
 这里证明了安装组件和原始测试上下文可共同运行既有门禁；尚未证明 GCC full 或 ARM 实跑完成。当前报告与组件 digest 的关联仍是本地观测，不能作为可复用的正式候选资格 receipt。后续继续完成该接口、远程可信交接和 CI 接入。
+
+
+## 批次 2：正式本地资格 receipt 与输入模型 2
+
+`component_qualification.py` 将资格生产和已有报告消费分开。生产端独立重算安装/测试上下文材料、核验可信 receipt 和 OCI，随后按固定 digest 替换命名 context。资格材料闭包在这些产物处停止，绑定其构建输入 SHA256 与实际 platform digest，同时绑定测试实现、策略/baseline、报告校验器和执行环境。
+
+`qualification_execution.py` 观察 Docker/BuildKit、kernel、CPU 特征及 builder 容器资源/安全配置，前后比较环境；生产端按 stage 强制执行，保存 BuildKit raw JSON，并要求每个资格 RUN 都在本次时间范围内成功完成且没有 cache hit。完成报告验证后才生成只含契约、报告和原始日志的 scratch OCI。消费者重新提取、校验字节和报告语义，返回 `verified-prior-execution`，保留原 producer、运行区间和记录，不能把它改写成本次重新执行。
+
+现有 SDK 的工具链报告验证提取到只依赖标准库的 `toolchain_report.py`，SDK 入口保留兼容 wrapper，并补上 x86_64 locked-sysroot 失败状态拒绝；GCC 沿用原 normalizer 的精确 status/suite/test/occurrence 基线比较。规范化 JSON 比较区分布尔与整数，额外检查已执行 suite、site/board、资格组件和 make 日志摘要。
+
+材料模型升级为 2：交接 CLI/基础库不再自动成为编译输入，实际 COPY 的文件仍被绑定；收窄到相关 ARG、继承的全局默认值及隐式 frontend/proxy 参数。资格校验器仍是资格输入。旧 model 1 receipt 不能冒充新身份。此改动还没有把 main 的粗 profile 选择器替换为组件级计划。
+
+实测见 [正式资格交接记录](qualification-handoff-2026-09-10.json)，原始数据在本次工作机 `/tmp/crossforge-qualification-receipt/`：
+
+- 输入模型 2 的安装 OCI、GCC 测试上下文 OCI 生成并通过独立核验。
+- 最终实现的 x86_64 工具链 ABI/locked/clean 门禁生产和封装 13.20 秒，独立消费核验 1.64 秒；GCC smoke 生产和封装 18.15 秒，独立核验 2.71 秒，16 PASS。
+- 两个 profile 各有两个实际执行的 RUN；资格材料图和实际事件均不含 GCC 源码编译。这些数字来自已有组件导入与前置缓存的本地 builder，不是 GitHub 全冷或端到端性能承诺。
+- Docker 完整 config 回归 997 项、186.214 秒、零失败、2 项既有 zstd 资源测试跳过；随后资格模块 11 项回归通过，包含全量之后新增的 3 个凭据拒绝/保留原记录场景。
+- 四项 locked validators 和三个 renderer `--check` 通过；实际 Rocky 8 platform-python 3.6 递归编译、CLI 导入、输入接口和 89 个投影检查通过。
+
+GCC full 正在通过同一正式接口重跑，尚无完成结论。ARM、本地完整 Python row/SDK、远程 registry/trust/retention、CI 动态计划和候选接入仍待完成。通用 receipt 的 `qualification` 角色本身不是资格证明；只有专用校验接口会验证完整执行和覆盖，且本地可信 digest 的来源仍由调用方负责。全目标保持进行中。

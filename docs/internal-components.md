@@ -2,7 +2,8 @@
 
 The local toolchain pilot uses the canonical Docker/Bake build stages and exports
 an OCI layout with an embedded component contract. It supports a single local
-`docker-container` BuildKit node. GitHub registry transport, qualification reuse,
+`docker-container` BuildKit node. Local qualification receipts and explicit prior
+report verification are available. GitHub registry transport, trusted CI reuse,
 and candidate consumption are not enabled by this interface yet.
 
 ## Identities and roles
@@ -125,9 +126,111 @@ current default-escape Dockerfile dialect. Unsupported source syntax, unpinned
 images, shadowed stage names, secret/SSH/cache mounts, and unknown Bake fields
 fail closed. It is an inventory, not a replacement Docker interpreter.
 
-All resolved explicit Bake arguments are currently bound, including some unused
-shared arguments. Ignore patterns are not applied to selected directory copies;
-extra ignored files can therefore invalidate reuse. This is conservative and
-will be narrowed with the component planner. The material model is not yet the
+Material model 2 binds stage-declared arguments, inherited global defaults,
+arguments used by selected FROM instructions, proxy arguments, and implicit
+frontend arguments such as SOURCE_DATE_EPOCH. Frontend overrides are rejected.
+Transport CLI implementation is not a compiler input unless the recipe copies
+it; qualification acceptance code is a qualification input. This intentionally
+changes the keys from model 1; old receipts are not relabeled. Ignore patterns
+are not applied to selected directory copies, so extra ignored files can still
+invalidate reuse. The material model is not yet the
 main/PR task selector. Keep generated files checked before planning, and do not
 provide independently edited graphs to trusted producers.
+
+
+## Fresh qualification and verified prior execution
+
+Use `qualification-execution-identity` to observe the BuildKit policy together
+with Docker/kernel/CPU identity and the builder container's resource and security
+configuration. The producer checks that identity before and after execution.
+CPU features, kernel versions, or runner resource configuration differences
+invalidate this local qualification identity. The environment model supports the
+single local docker-container boundary; it is not a portable claim of equivalent
+native ARM hardware or a substitute for candidate integration.
+
+Supported profiles are `toolchain`, `gcc-smoke`, and x86_64-only `gcc-full`.
+The first needs an installation subject; GCC profiles require the installation
+and its distinct test context. Obtain the checked canonical graph including the
+qualification root and the corresponding subject producer targets:
+
+```sh
+docker buildx bake -f docker-bake.hcl -f docker-bake.override.json \
+  --print gcc-testsuite-x86_64-smoke toolchain-x86_64-build-export \
+  gcc-x86_64-test-context-export > /output/qualification-graph.json
+python3 scripts/component-artifact.py qualification-execution-identity \
+  --builder component-consumer > /output/qualification-execution.json
+```
+
+Create `/output/subjects.json` with exactly the required roles. Replace the
+receipt hashes below with values received through your trusted local handoff:
+
+```json
+{
+  "toolchain-install": {
+    "receipt": "/output/toolchain-install/receipt.json",
+    "receipt_sha256": "<independently trusted canonical SHA256>",
+    "layout": "/output/toolchain-install/oci"
+  },
+  "gcc-test-context": {
+    "receipt": "/output/gcc-test-context/receipt.json",
+    "receipt_sha256": "<independently trusted canonical SHA256>",
+    "layout": "/output/gcc-test-context/oci"
+  }
+}
+```
+
+```sh
+python3 scripts/component-artifact.py produce-qualification \
+  --source /source --graph /output/qualification-graph.json \
+  --arch x86_64 --profile gcc-smoke \
+  --execution /output/qualification-execution.json \
+  --subjects /output/subjects.json --producer /output/producer.json \
+  --output /output/gcc-smoke --builder component-consumer
+```
+
+The command independently recaptures the subject producer inputs and verifies
+both OCI layouts before replacing named contexts. The qualification input
+closure stops at those verified component digests, retaining their input hashes
+as dependencies. It binds test scripts, policy, baselines, report validators,
+report copy paths, and the observed execution environment.
+
+The producer applies stage-specific `no-cache-filter`, preserves raw BuildKit
+JSON progress, and requires every RUN in the selected qualification stages to
+complete without a cache hit or error during the recorded interval. Compiler
+source stages are outside this graph. RUN cache does not establish fresh test
+execution; this behavior follows Docker's documented [cache invalidation rules](https://docs.docker.com/build/cache/invalidation/).
+
+The existing toolchain report validator is shared with final SDK validation
+through `toolchain_report.py`, without importing SDK/Python-row policy into the
+report module. GCC reports are regenerated from raw summaries and the exact
+frozen baseline, then compared using canonical JSON; tested policy and make-log
+bindings are also checked. Unknown/changed execution records fail verification.
+
+Only after those checks does the producer seal a scratch OCI artifact containing
+`component/contract.json`, `component/qualification.json`, the original
+`component/execution.jsonl`, and the explicit reports/logs. The external generic
+receipt binds all these bytes. A role label alone does not assert qualification;
+use the qualification-specific verifier:
+
+```sh
+python3 scripts/component-artifact.py verify-qualification \
+  --source /source --graph /output/qualification-graph.json \
+  --arch x86_64 --profile gcc-smoke \
+  --execution /output/qualification-execution.json \
+  --subjects /output/subjects.json --builder component-consumer \
+  --receipt /output/gcc-smoke/receipt.json \
+  --receipt-sha256 "$TRUSTED_QUALIFICATION_RECEIPT_SHA256" \
+  --layout /output/gcc-smoke/oci --temporary-parent /output
+```
+
+It independently recaptures expected inputs, extracts and verifies all metadata,
+revalidates reports and raw execution events, and returns
+`mode: verified-prior-execution` with the original producer and execution times.
+It does not relabel a prior run as a new execution. `qualification-inputs` performs
+the same subject verification and emits only the expected input document.
+
+The producer always replays the selected tests; prior execution is consumed only
+through the separate verifier. An interrupted attempt retains its own output
+folder for diagnosis and cannot overwrite a previous receipt. Local receipt
+verification does not establish trusted GitHub provenance, registry retention,
+full SDK integration, or the required new-candidate native ARM execution.

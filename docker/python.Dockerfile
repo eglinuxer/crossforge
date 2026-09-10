@@ -497,7 +497,7 @@ COPY --from=crossforge_qemu_validated \
   /usr/local/libexec/crossforge/qemu-aarch64 \
   /usr/local/libexec/crossforge/qemu-aarch64
 COPY config/release.json /opt/crossforge/release.json
-COPY --chmod=0755 scripts/qualify-final-sdk.py \
+COPY --chmod=0755 scripts/qualify-final-sdk.py scripts/toolchain_report.py \
   scripts/loader_evidence.py scripts/python_row_contract.py \
   scripts/python_sdk_identity.py scripts/release-components-core.py \
   scripts/validate-release.py /work/scripts/
