@@ -2,6 +2,7 @@ import ast
 import copy
 import hashlib
 import json
+import pickle
 import runpy
 import sys
 import tempfile
@@ -46,6 +47,16 @@ ZSTD_VERSION = next(
 PYTHON_SHA256 = "1" * 64
 EXTENSION_SHA256 = "2" * 64
 SYSROOT_TRANSACTION_SHA256 = "e" * 64
+
+# Private in-process templates contain only fixture data we created ourselves.
+# Bytes preserve object aliases without sharing mutable graphs across tests.
+FIXTURE_TEMPLATES = {}
+FIXTURE_FIELDS = (
+    "version", "contract", "minor", "compact", "row", "adapter", "release",
+    "abi_context", "sysroot_sha256", "provider_catalog_records",
+    "python_global_record", "compile", "locked", "clean",
+)
+FIXTURE_FILES = ("release_path", "compile_path", "locked_path", "clean_path")
 
 
 def canonical_sha256(value):
@@ -103,6 +114,16 @@ class PythonQualificationTests(unittest.TestCase):
         self.reset_fixture(VERSION)
 
     def reset_fixture(self, version):
+        catalog = REPOSITORY / "evidence/abi/el8-x86_64-python-provider-catalog.json"
+        key = (version, canonical_sha256(RELEASE_CONFIG), canonical_sha256(ABI_CONTEXT),
+               hashlib.sha256(catalog.read_bytes()).hexdigest())
+        if key in FIXTURE_TEMPLATES:
+            digest, payload, files = FIXTURE_TEMPLATES[key]
+            self.assertEqual(hashlib.sha256(payload).hexdigest(), digest)
+            self.__dict__.update(pickle.loads(payload))
+            for field, data in files:
+                getattr(self, field).write_bytes(data)
+            return
         self.version = version
         self.contract = ROW_CONTRACT["contract_for_version"](version)
         self.minor = self.contract["minor"]
@@ -125,6 +146,9 @@ class PythonQualificationTests(unittest.TestCase):
         self.clean = self.valid_runtime("clean-rocky")
         self.write_json(self.locked_path, self.locked)
         self.write_json(self.clean_path, self.clean)
+        payload = pickle.dumps({field: getattr(self, field) for field in FIXTURE_FIELDS}, protocol=4)
+        files = tuple((field, getattr(self, field).read_bytes()) for field in FIXTURE_FILES)
+        FIXTURE_TEMPLATES[key] = (hashlib.sha256(payload).hexdigest(), payload, files)
 
     def tearDown(self):
         self.temporary.cleanup()
@@ -754,6 +778,26 @@ class PythonQualificationTests(unittest.TestCase):
             json.dumps(report, sort_keys=True),
             json.dumps(self.finalize(), sort_keys=True),
         )
+
+    def test_fixture_templates_preserve_aliases_and_isolate_mutations(self):
+        baseline = {field: getattr(self, field).read_bytes() for field in FIXTURE_FILES}
+        old_compile = self.compile
+        self.compile["qualification_components"]["aggregate"]["canonical_sha256"] = "0" * 64
+        self.compile_path.write_text("corrupted fixture file")
+        self.reset_fixture(VERSION)
+        self.assertIsNot(self.compile, old_compile)
+        self.assertIs(self.provider_catalog_records, self.compile["abi"]["provider_catalog"]["records"])
+        self.assertIs(self.python_global_record, self.compile["abi"]["python_global"]["record"])
+        self.assertEqual({field: getattr(self, field).read_bytes() for field in FIXTURE_FILES}, baseline)
+        self.assertNotEqual(self.compile["qualification_components"], old_compile["qualification_components"])
+        # Changing content must select a new template, even at the same paths.
+        product = dict(RELEASE_CONFIG["product"], version="0.1.1")
+        with mock.patch.dict(RELEASE_CONFIG, product=product):
+            self.reset_fixture(VERSION)
+            self.assertEqual(self.compile["release_sha256"], canonical_sha256(RELEASE_CONFIG))
+            self.assertNotEqual(self.release_path.read_bytes(), baseline["release_path"])
+        self.reset_fixture(VERSION)
+        self.assertEqual(self.release_path.read_bytes(), baseline["release_path"])
 
     def test_actual_elf_collection_rejects_paths_outside_target_prefix(self):
         collector = FINALIZER["collect_actual_elf_evidence"]

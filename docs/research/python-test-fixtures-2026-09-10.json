@@ -1,0 +1,133 @@
+{
+  "baseline_full_log_sha256": "55993e5a9bc8726763c5745cff8e31d57899c63fc5b169b637b87a1bb3392a96",
+  "baseline_source_commit": "77eafb727b306becb813044ddff095faacd0b6ac",
+  "date": "2026-09-10",
+  "docker_limits": {
+    "cpus": 4,
+    "memory": "16g",
+    "network": "none",
+    "user": "1000:1000"
+  },
+  "full_regressions": {
+    "baseline": {
+      "config": {
+        "seconds": 191.733,
+        "tests": 1062
+      },
+      "log": "/tmp/crossforge-python-sdk/regressions.log",
+      "packaging": {
+        "seconds": 0.76,
+        "tests": 40
+      }
+    },
+    "optimized": {
+      "config": {
+        "seconds": 140.528,
+        "skipped": 2,
+        "tests": 1063
+      },
+      "failures": 0,
+      "packaging": {
+        "seconds": 0.789,
+        "skipped": 1,
+        "tests": 40
+      }
+    }
+  },
+  "implementation_files": {
+    "tests/config/test_python_qualification.py": "3110b04f777f51cbc381f5cd47f74ca083a043774a296acde5913f50b8649901"
+  },
+  "kind": "crossforge-local-test-profile-observation",
+  "limits": [
+    "cProfile adds substantial overhead; profile timings are used only to locate hotspots",
+    "Before/after suite timings are unprofiled Docker runs; source snapshots differ by the fixture optimization and its new regression",
+    "Other local component work was running; this is not a hosted GitHub or overall qualification benchmark",
+    "Runtime validators still run for every test; only locally constructed, content-keyed immutable fixture snapshots are reused"
+  ],
+  "logs": {
+    "baseline-qualification.log": "e0e50f549c4d1e0272320c0011c61220696aa98730f33f3535b4a6d4d257c9bc",
+    "optimized-full.log": "5a3c7533b78807a94120dfe1c72962b0f741ff3d82074c00f7f94b1c6b36a1b6",
+    "optimized-qualification.log": "87932bcd591c6b716c5b14f87440856865402dc9284dd3e0743a1a7e47de30d6",
+    "run.log": "1a9d303c1dece2006e66ce9b842fc1c749e69d316947145705cdfa5ab50f4f47"
+  },
+  "profile": {
+    "elapsed_seconds": 500.017,
+    "hotspots": [
+      {
+        "calls": 91,
+        "file": "/work/tests/config/test_python_qualification.py",
+        "function": "reset_fixture",
+        "line": 105,
+        "profile_cumulative_seconds": 194.177,
+        "profile_internal_seconds": 0.114
+      },
+      {
+        "calls": 92,
+        "file": "/work/tests/config/test_python_qualification.py",
+        "function": "valid_compile",
+        "line": 291,
+        "profile_cumulative_seconds": 160.702,
+        "profile_internal_seconds": 0.01
+      },
+      {
+        "calls": 1117,
+        "file": "/work/scripts/python_abi_audit.py",
+        "function": "audit_python_elf",
+        "line": 446,
+        "profile_cumulative_seconds": 160.644,
+        "profile_internal_seconds": 0.222
+      },
+      {
+        "calls": 1117,
+        "file": "/work/scripts/python_abi_audit.py",
+        "function": "validate_provider_catalog",
+        "line": 402,
+        "profile_cumulative_seconds": 124.146,
+        "profile_internal_seconds": 0.346
+      },
+      {
+        "calls": 57,
+        "file": "/work/tests/config/test_python_row_manifest.py",
+        "function": "fixture",
+        "line": 339,
+        "profile_cumulative_seconds": 123.669,
+        "profile_internal_seconds": 0.218
+      },
+      {
+        "calls": 320,
+        "file": "/work/tests/config/test_python_row_manifest.py",
+        "function": "write_json",
+        "line": 98,
+        "profile_cumulative_seconds": 69.334,
+        "profile_internal_seconds": 0.257
+      },
+      {
+        "calls": 433,
+        "file": "/work/tests/config/test_python_qualification.py",
+        "function": "write_json",
+        "line": 132,
+        "profile_cumulative_seconds": 30.199,
+        "profile_internal_seconds": 0.144
+      }
+    ],
+    "suites": [
+      "tests.config.test_python_qualification",
+      "tests.config.test_python_row_manifest"
+    ],
+    "tests": 80
+  },
+  "qualification_suite": {
+    "added_test": "nested object/file isolation, original aliases and content-based template selection",
+    "baseline": {
+      "seconds": 100.188,
+      "tests": 51
+    },
+    "optimized": {
+      "seconds": 47.756,
+      "tests": 52
+    }
+  },
+  "raw_directory": "/tmp/crossforge-python-test-profile",
+  "schema_version": 1,
+  "tooling_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42"
+}

@@ -9,7 +9,7 @@
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、与可信产物可用性及生产消费对接 |
 | 4：整行 Python/SDK 交接 | cp39/cp314/cp313/cp312 正式行资格通过；六行 SDK 接口与材料图回归通过 | cp311/cp310 实跑、六行与完整 SDK 集成、生产 CI |
 | 5：资格复用及恢复 | 工具链与 cp39 的本地显式复用、强制执行和原记录保留通过 | 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
-| 6：性能与领域重构 | 待实施对照 | 新基线、三次匹配输入重放和受影响变更、资源实验 |
+| 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
 ## 批次 1 已实现
 
@@ -210,3 +210,11 @@ SDK 与 vcpkg SDK 从完整 release 独立推导策略并核验原报告；vcpkg
 `python_sdk.py` 提供 `bind-python-sdk` 和 `execute-python-sdk`，支持 `python-dev` 与 `sdk-complete-dev`。它要求全部六行、固定追加顺序和相同的工具链 receipt；对每行重新捕获输入并核验完整资格 artifact，然后替换对应 append context。材料捕获拒绝 GCC/CPython 源码编译，保留现有最终集成、vcpkg SDK、打包和消费者门禁；vcpkg upstream Tier 3 仍是独立候选门禁。六行 Python 消费图为 12 个目标，执行要求 12 条 append RUN 和 1 条 final RUN；完整 SDK 再要求其最终 RUN。绑定命令明确不声明集成已执行，执行命令只导出本地报告并保留原行资格记录。
 
 Docker 回归 config 1062 项、191.733 秒，packaging 40 项、0.760 秒，均零失败（既有 2/1 项跳过）；四项 locked validators、三个 renderer 检查及实际 Rocky 8 platform-python 3.6 门禁通过。缺行、额外行、错序、错版本、错误 context 和混用工具链 receipt 的拒绝分支均覆盖。六行/完整 SDK 的实际执行等待全部 producer 成功后进行，这里的图检查不作资格证明。
+
+## 批次 6：快速回归的 fixture 开销
+
+在固定 Docker 工具镜像、4 CPU、16 GiB、断网条件下，用 cProfile 测量 Python qualification 与 row manifest 两组共 80 项测试。画像显示同一 release/ABI 下重复构造 fixture、provider catalog 检查与缩进 JSON 编码占用明显；profile 本身增加了开销，其 500.017 秒只用于定位热点，不作为性能基线。原始 profile 与日志在 `/tmp/crossforge-python-test-profile/`，摘要见[fixture 性能记录](python-test-fixtures-2026-09-10.json)。
+
+`test_python_qualification.py` 现在只复用当前进程自己生成的 fixture 数据快照，key 包含 Python 版本、完整 release/ABI context 内容摘要及实际 provider catalog 字节摘要。快照保存为不可变 bytes，每次恢复生成独立对象图，并保留原先的对象引用关系；原 JSON 字节在独立临时目录恢复。正式 validator 和每个篡改用例照常执行，没有缓存通过/失败判断。新增回归验证嵌套修改、文件破坏、引用关系及同路径输入内容变化不会跨用例污染，也不会命中错误模板。
+
+不带 profiler 的本地对照中，原 qualification suite 51 项为 100.188 秒；优化后包含新增隔离检查的 52 项为 47.756 秒。完整 config 从 1062 项、191.733 秒变为 1063 项、140.528 秒，均零失败且保留 2 项既有跳过；packaging 40 项、0.789 秒通过，保留 1 项既有跳过。两次测试使用相同 Docker 镜像与资源限制，期间存在其他本地组件工作，因此仅记录这一组本地结果，不外推 GitHub 墙钟收益。当前 runner 上的新 CI 基线、Python 并行度 2→3 及完整流水线的三次重放仍待实施。
