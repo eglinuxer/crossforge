@@ -210,7 +210,7 @@ RUN --network=none case "$CROSSFORGE_TARGET_ARCH:$CROSSFORGE_TARGET_TRIPLE" in \
 
 # Static qualification remains host-only. It compiles a target extension and
 # audits every target ELF but has no QEMU input and performs no target execution.
-FROM crossforge_cpython_cross AS cpython-qualify-build
+FROM python-build-host AS cpython-qualify-build
 ARG CPYTHON_ROW
 ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
@@ -218,6 +218,10 @@ ARG CROSSFORGE_TARGET_ARCH
 ARG CROSSFORGE_TARGET_TRIPLE
 ARG CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256
 ARG CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256
+COPY --from=crossforge_toolchain /opt/crossforge/ /opt/crossforge/
+COPY --from=crossforge_cpython_build /opt/crossforge/python/ /opt/crossforge/python/
+COPY --from=crossforge_cpython_install /opt/crossforge/python/ /opt/crossforge/python/
+COPY --from=crossforge_cpython_test_context /work/ /work/
 COPY config/release.json /src/config/release.json
 COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY abi/el8/${CROSSFORGE_TARGET_ARCH}.json /work/config/abi-baseline.json
@@ -228,6 +232,7 @@ COPY evidence/abi/el8-${CROSSFORGE_TARGET_ARCH}-python-provider-catalog.json \
 COPY config/abi-providers.json config/python-runtime-providers.json \
   /work/config/
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
+COPY scripts/release_component.py /work/scripts/release_component.py
 COPY --chmod=0755 scripts/qualify-cpython.py /work/scripts/qualify-cpython.py
 COPY scripts/abi_contract.py scripts/python_abi_audit.py \
   scripts/python_runtime_providers.py scripts/python_sdk_identity.py \
@@ -267,6 +272,27 @@ RUN --network=none minor="${CPYTHON_VERSION%.*}" \
       --qualification-component-sha256 \
         "$CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256" \
       --report "/work/qualification/python/$CPYTHON_ROW/$CROSSFORGE_TARGET_ARCH/compile.json"
+
+# Component exports contain only installation trees and the source/audit
+# evidence needed downstream. Qualification never inherits a compiler stage.
+FROM scratch AS cpython-build-export
+ARG CPYTHON_ROW
+COPY --from=crossforge_cpython_build_output /opt/crossforge/python/${CPYTHON_ROW}/build/ \
+  /opt/crossforge/python/${CPYTHON_ROW}/build/
+COPY --from=crossforge_cpython_build_output /work/source/source-manifest.json /work/source/source-manifest.json
+
+FROM scratch AS cpython-cross-export
+ARG CPYTHON_ROW
+ARG CROSSFORGE_TARGET_TRIPLE
+COPY --from=crossforge_cpython_cross_output /opt/crossforge/python/${CPYTHON_ROW}/targets/${CROSSFORGE_TARGET_TRIPLE}/ \
+  /opt/crossforge/python/${CPYTHON_ROW}/targets/${CROSSFORGE_TARGET_TRIPLE}/
+
+FROM scratch AS cpython-test-context-export
+ARG CPYTHON_ROW
+ARG CROSSFORGE_TARGET_ARCH
+COPY --from=crossforge_cpython_cross_output /work/build/cpython-${CPYTHON_ROW}-${CROSSFORGE_TARGET_ARCH}/target-artifact-audit.log \
+  /work/build/cpython-${CPYTHON_ROW}-${CROSSFORGE_TARGET_ARCH}/target-artifact-audit.log
+COPY --from=crossforge_cpython_cross_output /work/source/source-manifest.json /work/source/source-manifest.json
 
 FROM python-host AS cpython-runtime-input
 ARG CPYTHON_ROW

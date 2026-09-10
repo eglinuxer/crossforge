@@ -924,6 +924,7 @@ def render_python_graph(config, targets, component_arguments):
         source_name = "cpython-source-%s" % row_name
         prepared_name = "cpython-prepared-%s" % row_name
         build_name = "cpython-build-%s" % row_name
+        build_export_name = build_name + "-export"
         export_name = "python-row-%s" % row_name
         dev_name = "python-%s-dev" % row_name
 
@@ -956,6 +957,8 @@ def render_python_graph(config, targets, component_arguments):
         )
 
         qualification_names = []
+        targets[build_export_name] = cacheonly_python_target(
+            "cpython-build-export", row, {"crossforge_cpython_build_output": "target:" + build_name})
         final_qualification = {}
         for arch, triple in PYTHON_TARGETS.items():
             cross_name = "cpython-cross-%s-%s" % (row_name, arch)
@@ -974,7 +977,7 @@ def render_python_graph(config, targets, component_arguments):
                 {
                     "crossforge_host_python": "target:host-python-build-locked",
                     "crossforge_cpython_prepared": "target:%s" % prepared_name,
-                    "crossforge_cpython_build": "target:%s" % build_name,
+                    "crossforge_cpython_build": "target:%s" % build_export_name,
                     "crossforge_toolchain": (
                         "target:toolchain-%s-build-export" % arch
                     ),
@@ -989,10 +992,20 @@ def render_python_graph(config, targets, component_arguments):
                     CPYTHON_ZSTD_VERSION=row["zstd_version"],
                 ),
             )
+            install_name = cross_name + "-export"
+            test_context_name = "cpython-%s-%s-test-context-export" % (row_name, arch)
+            for name, stage in ((install_name, "cpython-cross-export"),
+                                (test_context_name, "cpython-test-context-export")):
+                targets[name] = cacheonly_python_target(stage, row,
+                    {"crossforge_cpython_cross_output": "target:" + cross_name}, target_args)
             targets[qualify_build_name] = cacheonly_python_target(
                 "cpython-qualify-build",
                 row,
-                {"crossforge_cpython_cross": "target:%s" % cross_name},
+                {"crossforge_host_python": "target:host-python-build-locked",
+                 "crossforge_toolchain": "target:toolchain-%s-build-export" % arch,
+                 "crossforge_cpython_build": "target:" + build_export_name,
+                 "crossforge_cpython_install": "target:" + install_name,
+                 "crossforge_cpython_test_context": "target:" + test_context_name},
                 dict(target_args, **qualification_arguments),
             )
             runtime_contexts = {
@@ -1023,7 +1036,7 @@ def render_python_graph(config, targets, component_arguments):
             row,
             {
                 "crossforge_host_python": "target:host-python-build-locked",
-                "crossforge_cpython_build": "target:%s" % build_name,
+                "crossforge_cpython_build": "target:%s" % build_export_name,
                 "crossforge_cpython_x86_64": (
                     "target:%s" % final_qualification["x86_64"]
                 ),

@@ -5,9 +5,9 @@
 | 批次 | 当前状态 | 仍需取得的证据 |
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
-| 2：组件契约与工具链交接 | 本地 OCI/registry 往返、x86_64 GCC full/正式资格与 cp39 消费通过；同 run CI 试点已实现 | ARM、GitHub 试点实跑与生产 CI 接入 |
+| 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；同 run CI 试点已实现 | GitHub 试点实跑与生产 CI 接入 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、与可信产物可用性及生产消费对接 |
-| 4：整行 Python/SDK 交接 | 待实现 | 双架构全 row、SDK 组装无 GCC/CPython 源码重编 |
+| 4：整行 Python/SDK 交接 | cp39 双架构完整行及单行 SDK append 的组件消费通过，无 GCC/CPython 源码编译 | 正式 row 资格 receipt、其余五行及完整 SDK/生产 CI |
 | 5：资格复用及恢复 | 待实现 | 显式复用、强制执行、候选集成/ARM 及同 digest 恢复 |
 | 6：性能与领域重构 | 待实施对照 | 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
@@ -169,3 +169,20 @@ SDK 与 vcpkg SDK 从完整 release 独立推导策略并核验原报告；vcpkg
 原始源快照、OCI、receipt 与日志保留在本机 `/tmp/crossforge-arm-components/` 和 `/tmp/crossforge-toolchain-policy/`，大文件不入库。这里的时长来自已有组件与前置缓存，不作为 GitHub 端到端加速比例。生产 CI 的可信组件消费、完整 Python row/SDK 交接、跨 run 信任与失败恢复、并行度实测等剩余目标继续推进。
 
 本批最终验证：Docker 全量 config 1044 项、186.021 秒，packaging 40 项、0.770 秒，均零失败（分别 2 项既有 zstd 与 1 项既有 nFPM 跳过）；四项 locked validators 和三个 renderer `--check` 通过。真实 Rocky 8 platform-python 3.6 门禁强制执行，完成递归编译、组件 CLI 导入与 89 个投影检查。未修改任何版本 pin、冻结 ABI 或 GCC baseline，也未发布镜像或触发远程工作流。
+
+
+## 批次 4：完整 cp39 行与 SDK append 的组件消费
+
+新增 `python_components.py` 和 `python-inputs`、`produce-python`、`bind-python-row` CLI，使用同一份实际 Bake 材料模型及严格 OCI receipt 校验。build Python、两套 target 安装目录、两份 target-artifact guard 日志与 source manifest 共五份构建组件分别封装。安装产物不携带编译树、工具链或测试扩展；构建审计记录单独交接，不能充当资格通过证明。
+
+`cpython-qualify-build` 从锁定 Python build host 出发，显式复制同一行 build Python、当前 target 安装产物、构建审计记录及工具链。原静态 ELF/ABI/ownership 检查和 target-execution guard 验证保持；两个运行时 tier 及 row finalizer 保持原资格契约。默认 Bake 仍由源码 export 提供 context；组件 CLI 核验后替换为固定 OCI digest。材料模块新增按 Bake target 限定的 context 身份，避免双架构使用同名 `crossforge_toolchain` 时混淆主体；既有非 scoped 输入身份保持兼容。
+
+实跑与报告见 [Python 组件交接观测](python-component-handoff-2026-09-10.json)，源快照、五份构建 receipt、OCI、日志与完整行报告位于本机 `/tmp/crossforge-python-components/`：
+
+- 五份正式 build receipt 均完成生产与核验；build Python producer 37.05 秒，x86_64 安装/审计 34.72/28.71 秒，ARM 安装/审计 74.93/29.66 秒。它们包含已有缓存、组件核验及导出成本，不是冷编译基线。
+- 独立 consumer 核验上述五份产物及既有两套工具链后，完成 cp39 双架构静态资格、locked-sysroot/clean-Rocky 执行和整行组装。总计 166.45 秒；7 条要求重放的 RUN 都成功完成且未命中缓存，两份 schema 4 报告及四个 runtime tier 全部 passed。
+- 整行消费图只有 9 个目标，材料和实际执行均不含 GCC/CPython 源码编译；导出行 OCI digest 为 `sha256:4d44e45677eedb2b9ba8c0571910eed8a1af25343b35fcf99d010dfae2f6ce06`，压缩层 169,238,411 字节。
+- SDK 消费前独立重算相同 row inputs，重验 OCI root/platform/config digest 与两份工具链 receipt，再执行 `python-sdk-append`。68.01 秒完成，消费图只有 5 个目标；SDK 内重新生成 row manifest，并与原 manifest 逐字节一致。该步骤没有 GCC/CPython 源码编译节点，是单行 append 验证，尚非六行最终 SDK 集成。
+- Docker 完整 config 1049 项、186.211 秒，packaging 40 项、0.790 秒，零失败；分别有 2 项既有 zstd 和 1 项既有 nFPM 跳过。四项 locked validators、三个 renderer `--check` 和实际 Rocky 8 platform-python 3.6 门禁通过。
+
+本批五份构建组件具有通用 receipt；完整行资格仍是本地执行观测，尚未封装成可复用的正式资格 receipt。Python 报告仍绑定完整 release 与共享 aggregate，剩余五行、正式 row 资格交接、完整 SDK、生产 CI 接入和跨 run 信任/恢复继续推进。没有更改版本、ABI 或 GCC baseline，也没有发布任何镜像。

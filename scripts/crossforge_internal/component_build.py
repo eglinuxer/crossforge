@@ -49,10 +49,14 @@ def toolchain_inputs(source, graph, arch, role, execution):
 
 def plan_toolchain(source, graph, arch, role, execution, producer, directory):
     """Create an isolated local OCI export; no tags or registry outputs survive."""
+    return plan_artifact(source, graph, toolchain_spec(arch, role), role,
+                         toolchain_inputs(source, graph, arch, role, execution), producer, directory)
+
+
+def plan_artifact(source, graph, spec, role, inputs, producer, directory):
+    """Shared export mechanism; each domain supplies its checked spec/inputs."""
     source, directory = Path(source).resolve(), Path(directory).resolve()
     require(not directory.exists(), "component output directory must be new")
-    spec = toolchain_spec(arch, role)
-    inputs = toolchain_inputs(source, graph, arch, role, execution)
     contract = component_artifacts.contract(role, inputs, producer)
     frontend = inputs["parameters"]["recipes"][spec["target"]]["frontend"]
     metadata = directory / "metadata"
@@ -129,20 +133,29 @@ def _build_digest(path):
 def produce_toolchain(source, graph, arch, role, execution, producer, directory,
                       builder, docker_config=None):
     """Build, recheck materials, extract metadata with BuildKit, and seal locally."""
+    return produce_artifact(source, graph, toolchain_spec(arch, role), role, execution,
+        lambda: toolchain_inputs(source, graph, arch, role, execution), producer, directory, builder, docker_config)
+
+
+def produce_artifact(source, graph, spec, role, execution, capture_inputs, producer,
+                     directory, builder, docker_config=None):
+    """Produce a domain-planned artifact, recapturing inputs after the build."""
     directory, source = Path(directory).resolve(), Path(source).resolve()
     require(execution_identity(builder, docker_config) == execution,
             "running component execution environment differs from planned identity")
-    contract = plan_toolchain(source, graph, arch, role, execution, producer, directory)
+    contract = plan_artifact(source, graph, spec, role, capture_inputs(), producer, directory)
     metadata_file = directory / "buildx-metadata.json"
     subprocess.run(docker_command(docker_config) + ["buildx", "bake", "--builder", builder,
         "--allow=fs.read=" + str(directory / "metadata"), "--allow=fs.write=" + str(directory),
         "-f", str(directory / "producer.bake.json"), "component-artifact", "--progress=plain",
         "--metadata-file", str(metadata_file)], cwd=str(source), check=True)
-    expected = toolchain_inputs(source, graph, arch, role, execution)
+    require(execution_identity(builder, docker_config) == execution,
+            "component execution environment changed during build")
+    expected = capture_inputs()
     component_inputs.require_match(contract["inputs"], expected)
     observation = oci_layout.inspect(directory / "oci", _build_digest(metadata_file))
     paths = [component_artifacts.CONTRACT_PATH]
-    frontend = expected["parameters"]["recipes"][toolchain_spec(arch, role)["target"]]["frontend"]
+    frontend = expected["parameters"]["recipes"][spec["target"]]["frontend"]
     extracted = extract_metadata(directory / "oci", observation, paths, frontend,
                                  directory / "extracted", builder, docker_config)
     receipt = component_artifacts.receipt(contract, observation, extracted, paths)

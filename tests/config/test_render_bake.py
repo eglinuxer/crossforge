@@ -465,7 +465,7 @@ class RenderBakeTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         cross["contexts"]["crossforge_cpython_build"],
-                        "target:cpython-build-%s" % row,
+                        "target:cpython-build-%s-export" % row,
                     )
                     self.assertEqual(
                         cross["args"]["CROSSFORGE_TARGET_TRIPLE"], triple
@@ -483,6 +483,14 @@ class RenderBakeTests(unittest.TestCase):
                         qualify["contexts"]["crossforge_cpython_qualify_build"],
                         "target:cpython-%s-%s-qualify-build" % (row, arch),
                     )
+                    compile_gate = self.targets["cpython-%s-%s-qualify-build" % (row, arch)]
+                    self.assertEqual(compile_gate["contexts"], {
+                        "crossforge_host_python": "target:host-python-build-locked",
+                        "crossforge_toolchain": "target:toolchain-%s-build-export" % arch,
+                        "crossforge_cpython_build": "target:cpython-build-%s-export" % row,
+                        "crossforge_cpython_install": "target:cpython-cross-%s-%s-export" % (row, arch),
+                        "crossforge_cpython_test_context": "target:cpython-%s-%s-test-context-export" % (row, arch),
+                    })
 
     def test_source_fetch_is_independent_and_prepare_uses_locked_host(self):
         source = self.targets["cpython-source-cp311"]
@@ -579,7 +587,7 @@ class RenderBakeTests(unittest.TestCase):
                 )
         cross_block = self.python_dockerfile.split(
             "FROM python-build-host AS cpython-cross", 1
-        )[1].split("FROM crossforge_cpython_cross AS cpython-qualify-build", 1)[0]
+        )[1].split("FROM python-build-host AS cpython-qualify-build", 1)[0]
         self.assertNotIn("crossforge_qemu", cross_block)
         self.assertNotIn("qemu-aarch64", cross_block)
         self.assertNotIn("HOSTRUNNER", cross_block)

@@ -214,6 +214,8 @@
           "enum": [
             "toolchain-install",
             "gcc-test-context",
+            "python-install",
+            "python-test-context",
             "python-row",
             "qualification"
           ]

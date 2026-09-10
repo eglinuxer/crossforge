@@ -177,6 +177,31 @@ class BakeMaterialsTests(unittest.TestCase):
         with self.assertRaises(IdentityError):
             self.capture()
 
+    def test_target_scoped_contexts_cannot_confuse_two_architecture_subjects(self):
+        self.dockerfile.write_text(self.dockerfile.read_text() +
+            "FROM scratch AS merged\nCOPY --from=left /out/ /left/\nCOPY --from=right /out/ /right/\n")
+        graph = copy.deepcopy(self.graph)
+        graph["target"]["left"] = copy.deepcopy(self.graph["target"]["component"])
+        graph["target"]["right"] = copy.deepcopy(self.graph["target"]["component"])
+        graph["target"]["component"]["target"] = "merged"
+        graph["target"]["component"]["contexts"] = {"left": "target:left", "right": "target:right"}
+        bindings = {}
+        for name, byte in (("left", "c"), ("right", "d")):
+            digest = "sha256:" + byte * 64
+            graph["target"][name]["contexts"]["rocky"] = "oci-layout:///" + name + "@" + digest
+            bindings[name + ":rocky"] = {"component": "host/" + name, "inputs_sha256": "e" * 64, "artifact_digest": digest}
+        def capture():
+            return materials.capture(self.root, graph, "component", "qualification/row", "qualification",
+                                     ["x86_64-unknown-linux-gnu"], {"builder": "fixture"}, artifacts=bindings)
+        self.assertEqual(len(capture()["dependencies"]), 2)
+        bindings["rocky"] = bindings["left:rocky"]
+        with self.assertRaisesRegex(IdentityError, "ambiguous"):
+            capture()
+        bindings.pop("rocky")
+        graph["target"]["right"]["contexts"]["rocky"] = graph["target"]["left"]["contexts"]["rocky"]
+        with self.assertRaisesRegex(IdentityError, "verified artifact digest"):
+            capture()
+
     def test_verified_component_cuts_source_closure_and_binds_inputs_and_actual_digest(self):
         record = {"component": "host/common", "inputs_sha256": "d" * 64,
                   "artifact_digest": "sha256:" + "e" * 64}

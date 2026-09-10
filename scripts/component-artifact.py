@@ -8,7 +8,7 @@ import re
 import subprocess
 import sys
 
-from crossforge_internal import component_build, component_qualification, qualification_execution
+from crossforge_internal import component_artifacts, component_build, component_qualification, qualification_execution, python_components
 from crossforge_internal.identity import IdentityError, load_json, require
 from crossforge_internal.oci_layout import inspect
 
@@ -55,11 +55,27 @@ def main(argv=None):
         if command == "produce-toolchain":
             plan.add_argument("--builder", required=True)
             plan.add_argument("--docker-config", type=Path)
+    for command in ("python-inputs", "produce-python", "bind-python-row"):
+        python = commands.add_parser(command, allow_abbrev=False)
+        python.add_argument("--source", type=Path, required=True)
+        python.add_argument("--graph", type=Path, required=True)
+        python.add_argument("--row", required=True)
+        python.add_argument("--execution", type=Path, required=True)
+        python.add_argument("--subjects", type=Path, required=True)
+        python.add_argument("--builder", required=True)
+        python.add_argument("--docker-config", type=Path)
+        python.add_argument("--temporary-parent", type=Path)
+        if command != "bind-python-row":
+            python.add_argument("--arch", choices=("build", "x86_64", "aarch64"), required=True)
+            python.add_argument("--kind", choices=("install", "test-context"), required=True)
+        if command == "produce-python":
+            python.add_argument("--producer", type=Path, required=True)
+            python.add_argument("--output", type=Path, required=True)
     verify = commands.add_parser("verify-local", allow_abbrev=False)
     verify.add_argument("--receipt", type=Path, required=True)
     verify.add_argument("--receipt-sha256", required=True, help="independently trusted canonical receipt SHA256")
     verify.add_argument("--expected-inputs", type=Path, required=True, help="independently captured current inputs")
-    verify.add_argument("--role", choices=("toolchain-install", "gcc-test-context", "python-row", "qualification"), required=True)
+    verify.add_argument("--role", choices=sorted(component_artifacts.ROLES), required=True)
     verify.add_argument("--layout", type=Path, required=True)
     verify.add_argument("--frontend", required=True)
     verify.add_argument("--builder", required=True)
@@ -100,6 +116,22 @@ def main(argv=None):
                     value = component_build.plan_toolchain(*values)
                 else:
                     value = component_build.produce_toolchain(*values, builder=args.builder, docker_config=args.docker_config)
+        elif args.command in ("python-inputs", "produce-python", "bind-python-row"):
+            graph, execution, subjects = load_json(args.graph), load_json(args.execution), load_json(args.subjects)
+            require(component_build.execution_identity(args.builder, args.docker_config) == execution,
+                    "Python component execution environment differs")
+            if args.command == "produce-python":
+                value = python_components.produce(args.source, graph, args.row, args.arch, args.kind, execution,
+                    load_json(args.producer), subjects, args.output, args.builder, args.docker_config)
+            elif args.command == "bind-python-row":
+                resolved, bindings = python_components.bind_row(args.source, graph, args.row, execution, subjects,
+                    args.builder, args.docker_config, args.temporary_parent)
+                value = {"graph": resolved, "bindings": bindings, "qualification": "not executed by binding"}
+            else:
+                settings = python_components.spec(args.source, args.row, args.arch, args.kind)
+                resolved, bindings = python_components.bind_build(args.source, graph, settings, execution, subjects,
+                    args.builder, args.docker_config, args.temporary_parent)
+                value = python_components.inputs(args.source, resolved, settings, execution, bindings)
         elif args.command == "verify-local":
             require(bool(args.consumer_target) == bool(args.context_name),
                     "consumer target and context name must be specified together")
@@ -116,7 +148,7 @@ def main(argv=None):
             parser.error("a command is required")
         print(json.dumps(value, sort_keys=True, indent=2))
         return 0
-    except (IdentityError, RuntimeError, OSError, subprocess.CalledProcessError) as error:
+    except (IdentityError, RuntimeError, ValueError, OSError, subprocess.CalledProcessError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1
 

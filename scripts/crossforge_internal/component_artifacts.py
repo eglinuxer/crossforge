@@ -18,7 +18,7 @@ from .identity import (IdentityError, content_sha256, digest_value, exact_fields
 CONTRACT_SCHEMA = "https://crossforge.dev/schemas/component-artifact.schema.json"
 RECEIPT_SCHEMA = "https://crossforge.dev/schemas/component-receipt.schema.json"
 CONTRACT_PATH = "component/contract.json"
-ROLES = {"toolchain-install", "gcc-test-context", "python-row", "qualification"}
+ROLES = {"toolchain-install", "gcc-test-context", "python-install", "python-test-context", "python-row", "qualification"}
 
 
 def _timestamp(value):
@@ -61,7 +61,7 @@ def validate_contract(value):
     require(inputs["scope"] == ("qualification" if value["role"] == "qualification" else "build"),
             "artifact role and input scope differ")
     require(inputs["targets"], "artifact must declare its target triples")
-    if value["role"] in ("toolchain-install", "gcc-test-context"):
+    if value["role"] in ("toolchain-install", "gcc-test-context", "python-test-context"):
         require(len(inputs["targets"]) == 1, "toolchain artifact must contain exactly one target")
     validate_producer(value["producer"])
     return value

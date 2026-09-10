@@ -1,0 +1,343 @@
+{
+  "build_components": {
+    "aarch64-install": {
+      "artifact": {
+        "config_digest": "sha256:b0cf0e724c975448df011697843004b3f4151c811e126b1432e5cd8a7294bb96",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:093f4383500220c4ae9d70709ed96e8a60dd3244c7509f3fbffd02702422dff2",
+        "root_digest": "sha256:093f4383500220c4ae9d70709ed96e8a60dd3244c7509f3fbffd02702422dff2"
+      },
+      "inputs_sha256": "9bc3d223df615a6d2b8a414074e5f85c592f50aadb92cb67fd029e8a35d13a9d",
+      "receipt_sha256": "1b22e48f2e973700b97b26276f091e77104575745fa055268d0c2a26972f0327",
+      "seconds": 74.93
+    },
+    "aarch64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:a888c208d74f787002064e0a3ab114ede91aed9eb0304e418efa9d8f963e5d02",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:b6644375469b6c820965b7bd3f4713ff11b68f00911892d38f45b4617a2a26aa",
+        "root_digest": "sha256:b6644375469b6c820965b7bd3f4713ff11b68f00911892d38f45b4617a2a26aa"
+      },
+      "inputs_sha256": "21a38d0c020960b10b98aea72b0c33cdb2bdb74b7b681905b518095e79ca4b2b",
+      "receipt_sha256": "26effbba4e53dd40e6011a0f2d64681bb4918dab5cff0ba48944d30d53e4c74a",
+      "seconds": 29.66
+    },
+    "build": {
+      "artifact": {
+        "config_digest": "sha256:d54e2cd7f5bed5cc9222dd73c534b444748884f13717d2a14f50c791ad3d9dc6",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:3a99c04fc60fa6c6025b4f9cdba134d9cb590866604527927f751a6a9ed6726e",
+        "root_digest": "sha256:3a99c04fc60fa6c6025b4f9cdba134d9cb590866604527927f751a6a9ed6726e"
+      },
+      "inputs_sha256": "1d30c507d1c2925b38111cae8c09d0c68e577a35cfee5adab9f4d9c69aa56dcc",
+      "receipt_sha256": "eb29db44dfe0284204f0c7c9591b93d0d1cf727f26f6f26f316075fa84735091",
+      "seconds": 37.05
+    },
+    "x86_64-install": {
+      "artifact": {
+        "config_digest": "sha256:460232faff26bb3adde0d4296d24e6cbaa2d68d8cef86c81b36fb86be28d967f",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:0c2b8ef3888fa7e54d2e2f971b49124eaffd49564f8a1587044c70dddf70ef25",
+        "root_digest": "sha256:0c2b8ef3888fa7e54d2e2f971b49124eaffd49564f8a1587044c70dddf70ef25"
+      },
+      "inputs_sha256": "03634fa4d5ef6bb65e2400bd8c61a6df2cc673ea93234f822233d00c758dea91",
+      "receipt_sha256": "e22a31988880075870151b21532670aef53868de09b47f547f6c9148d04c5eef",
+      "seconds": 34.72
+    },
+    "x86_64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:909cda894e75d3a1b061f4fa8002d07f57d00405b0397aecd47d1083df81e8a5",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:6c20c7f028cfb6bee67bcf9f4c736074af4aeeaf915f29b1561758c160eb3cc0",
+        "root_digest": "sha256:6c20c7f028cfb6bee67bcf9f4c736074af4aeeaf915f29b1561758c160eb3cc0"
+      },
+      "inputs_sha256": "fe99507c65c948db9d45e87900a5d8b69f4f3988660f42e3b0c838b73d306b81",
+      "receipt_sha256": "98925be0f21d15ad5b4e9c1c7fd8de09a6306ae9e076fe50e89d0a444e7b8d3d",
+      "seconds": 28.71
+    }
+  },
+  "date": "2026-09-10",
+  "execution_environment": {
+    "build": {
+      "buildkit_config_sha256": "2bc5c1722ec69771690d68328915a0b80f5d936134f910285b8a960c85fc2b23",
+      "buildkit_image": "moby/buildkit:v0.33.0@sha256:6c2fa84a6b61ccd72899dde4239f8d5717f05f9a8ca6f3cad185fb1a95a94de3",
+      "buildx_version": "github.com/docker/buildx v0.36.1 1d8dde89b8aba914e05e45366770736fea1fd690",
+      "gomemlimit": "4GiB"
+    },
+    "host": {
+      "Architecture": "x86_64",
+      "CgroupDriver": "systemd",
+      "CgroupVersion": "2",
+      "Driver": "overlayfs",
+      "KernelVersion": "6.12.107+deb13-amd64",
+      "MemTotal": 134738935808,
+      "NCPU": 32,
+      "OSType": "linux",
+      "OperatingSystem": "Debian GNU/Linux 13 (trixie)",
+      "ServerVersion": "29.8.0",
+      "buildkit_host_config": {
+        "CapAdd": null,
+        "CapDrop": null,
+        "CgroupnsMode": "private",
+        "CpuPeriod": 0,
+        "CpuQuota": 0,
+        "CpuShares": 0,
+        "CpusetCpus": "",
+        "CpusetMems": "",
+        "Memory": 0,
+        "MemoryReservation": 0,
+        "MemorySwap": 0,
+        "NanoCpus": 0,
+        "PidsLimit": null,
+        "Privileged": true,
+        "ReadonlyRootfs": false,
+        "SecurityOpt": [
+          "label=disable"
+        ],
+        "ShmSize": 67108864,
+        "Ulimits": null,
+        "UsernsMode": ""
+      },
+      "cpu_identity_sha256": "1b73692be6f50a2328135559b46e0641fb6bac2f9015b31cc358a3bbc3414273"
+    }
+  },
+  "implementation_files": {
+    "docker-bake.override.json": "4e32e0918012cd489d5563d5692f7b4dd0b42e0647c955f90ac09ac324a978b7",
+    "docker/python.Dockerfile": "7646ea2c420ce9f5ad43b6d2ba446f8d74f92d90e22549aa6febe8fe3215ffad",
+    "scripts/component-artifact.py": "aa7b77b79a9aa4c4bb77fbc6c55c3d9f2202f036056016b1a17a31dec76a91d2",
+    "scripts/crossforge_internal/bake_materials.py": "6a308d9a6a65f9c63f61b566b9ff638cd0ded9f63ea48a4584e2a82ac88e11c8",
+    "scripts/crossforge_internal/component_artifacts.py": "803a81a601ab436576b3a38c711713d6e106eb0d15e4ae41fa280da50c97f7fc",
+    "scripts/crossforge_internal/component_build.py": "1200a17ea3a4d9dba3240a6f1ec62eab29b8f49c1520771da3812ad9c6f5974e",
+    "scripts/crossforge_internal/python_components.py": "51bed46a9f4ca268d76ddf3ba582e96c8d6f214b369d92c40f1484256cf0aa1f",
+    "scripts/render-bake.py": "0c30c909b6d845456ae3129856a3799e5d528cb357d738bab3c3d98dc3428165"
+  },
+  "kind": "crossforge-local-python-component-observation",
+  "limits": [
+    "Five installation/audit artifacts have formal build receipts; complete row qualification is still a local execution observation, not a sealed reusable qualification receipt",
+    "Python qualification still binds the complete release and shared aggregate; unrelated row policy changes can require qualification again",
+    "The SDK trial appends cp39 only; it does not establish complete six-row SDK integration or candidate/native ARM release qualification",
+    "BuildKit prerequisite/cache imports and verified components are already present locally; timings are not a cold-build or GitHub performance claim",
+    "No public output, registry upload or remote workflow dispatch; production CI consumption and cross-run trust/recovery remain pending"
+  ],
+  "logs": {
+    "platform-python.log": "16d1f572d86783733fdfd648933a648d88bddd94b88eb0d96d7410025fe393c1",
+    "regressions-final.log": "e5623c43f54a96e117b65221a138a6672faefb3fc6ff20eeb6b1129e7e9fa244",
+    "report-extract.log": "0453deed4d1a3963794d62efd52362837b154d6f0559c47f3f6a1dadb2cc501f",
+    "row-execution.jsonl": "5964b38431e5f3df4a52009ec55b95cb698187ca352496644e3209a642ba85fe",
+    "sdk-build.log": "6286143054225834bb5ccc087a5cae02e660a349da1235942a4ef3359a3e8d1b"
+  },
+  "raw_directory": "/tmp/crossforge-python-components",
+  "row_qualification": {
+    "artifact": {
+      "compressed_layer_bytes": 169238411,
+      "config_digest": "sha256:69e3f8a60d7da4564a8c442b66e97c4c846f8b1b764ca5015dd74170df70b8aa",
+      "kind": "crossforge-oci-layout-observation",
+      "layer_digests": [
+        "sha256:a3be4fdd1fe8af5bfbffaef0fba205040dba61430347a8c27ac7808f684b8c39"
+      ],
+      "platform": "linux/amd64",
+      "platform_digest": "sha256:4d44e45677eedb2b9ba8c0571910eed8a1af25343b35fcf99d010dfae2f6ce06",
+      "root_digest": "sha256:4d44e45677eedb2b9ba8c0571910eed8a1af25343b35fcf99d010dfae2f6ce06",
+      "schema_version": 1
+    },
+    "completed_at": "2026-09-10T20:14:25Z",
+    "dependencies": [
+      {
+        "artifact_digest": "sha256:093f4383500220c4ae9d70709ed96e8a60dd3244c7509f3fbffd02702422dff2",
+        "component": "python/cp39-aarch64-install",
+        "inputs_sha256": "9bc3d223df615a6d2b8a414074e5f85c592f50aadb92cb67fd029e8a35d13a9d"
+      },
+      {
+        "artifact_digest": "sha256:b6644375469b6c820965b7bd3f4713ff11b68f00911892d38f45b4617a2a26aa",
+        "component": "python/cp39-aarch64-test-context",
+        "inputs_sha256": "21a38d0c020960b10b98aea72b0c33cdb2bdb74b7b681905b518095e79ca4b2b"
+      },
+      {
+        "artifact_digest": "sha256:3a99c04fc60fa6c6025b4f9cdba134d9cb590866604527927f751a6a9ed6726e",
+        "component": "python/cp39-build-install",
+        "inputs_sha256": "1d30c507d1c2925b38111cae8c09d0c68e577a35cfee5adab9f4d9c69aa56dcc"
+      },
+      {
+        "artifact_digest": "sha256:0c2b8ef3888fa7e54d2e2f971b49124eaffd49564f8a1587044c70dddf70ef25",
+        "component": "python/cp39-x86_64-install",
+        "inputs_sha256": "03634fa4d5ef6bb65e2400bd8c61a6df2cc673ea93234f822233d00c758dea91"
+      },
+      {
+        "artifact_digest": "sha256:6c20c7f028cfb6bee67bcf9f4c736074af4aeeaf915f29b1561758c160eb3cc0",
+        "component": "python/cp39-x86_64-test-context",
+        "inputs_sha256": "fe99507c65c948db9d45e87900a5d8b69f4f3988660f42e3b0c838b73d306b81"
+      },
+      {
+        "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+        "component": "toolchain/aarch64-install",
+        "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+      },
+      {
+        "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+        "component": "toolchain/x86_64-install",
+        "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+      }
+    ],
+    "fresh_runs": [
+      {
+        "cached": false,
+        "completed": "2026-09-10T20:13:36.192535503Z",
+        "digest": "sha256:40e79ce46fbba9136962747af79ac09fee6b80fcae5ae1defc6048d495e7a931",
+        "stage": "cpython-qualify-aarch64",
+        "started": "2026-09-10T20:13:19.749129626Z"
+      },
+      {
+        "cached": false,
+        "completed": "2026-09-10T20:13:00.959592074Z",
+        "digest": "sha256:450d6d4f566413a6e497cf7adfe378fda4305aa8b98b8f8c059bf9581962c8da",
+        "stage": "cpython-qualify-build",
+        "started": "2026-09-10T20:13:00.71788285Z"
+      },
+      {
+        "cached": false,
+        "completed": "2026-09-10T20:13:17.058062034Z",
+        "digest": "sha256:683624e2ec325428de19f9a73c6a1a379202cfc73e5445c3d17be8284db3eb5a",
+        "stage": "cpython-qualify-build",
+        "started": "2026-09-10T20:13:08.905127519Z"
+      },
+      {
+        "cached": false,
+        "completed": "2026-09-10T20:13:00.717820277Z",
+        "digest": "sha256:f5eae96b85a8bf48c535b87d2081f72c24c7ef1444d480cb7c218e7285aa6172",
+        "stage": "cpython-qualify-build",
+        "started": "2026-09-10T20:13:00.499592727Z"
+      },
+      {
+        "cached": false,
+        "completed": "2026-09-10T20:13:08.904908056Z",
+        "digest": "sha256:fb3c1206c5172433c4dfae05b0913d7ab7ce19119e6bdbd75a701ef9269fb896",
+        "stage": "cpython-qualify-build",
+        "started": "2026-09-10T20:13:00.959512804Z"
+      },
+      {
+        "cached": false,
+        "completed": "2026-09-10T20:13:51.259202775Z",
+        "digest": "sha256:f88c7dd431bc4c65ca0530b9ccae263ff09537c9f7c3a3012efbe020f74a233c",
+        "stage": "cpython-qualify-x86_64",
+        "started": "2026-09-10T20:13:36.192406055Z"
+      },
+      {
+        "cached": false,
+        "completed": "2026-09-10T20:14:09.950821625Z",
+        "digest": "sha256:ea59a5623c11e3311829213312c0a6a220b2e4706d41f163a56ea432d5bac66b",
+        "stage": "cpython-row-assemble",
+        "started": "2026-09-10T20:13:52.903463875Z"
+      }
+    ],
+    "graph_targets": [
+      "cpython-cp39-aarch64-qualify",
+      "cpython-cp39-aarch64-qualify-build",
+      "cpython-cp39-x86_64-qualify",
+      "cpython-cp39-x86_64-qualify-build",
+      "host-python-build-locked",
+      "python-row-cp39",
+      "python-runtime-clean-aarch64",
+      "python-runtime-clean-x86_64",
+      "qemu-aarch64-validated"
+    ],
+    "inputs_sha256": "e3cb294b9f2b205b216cf97d8bb834c3aa3adb4eae45529ec30d6814caebbb7f",
+    "material_file_count": 65,
+    "reports": {
+      "aarch64": {
+        "runtime_tiers": {
+          "clean-rocky": "passed",
+          "locked-sysroot": "passed"
+        },
+        "schema_version": 4,
+        "sha256": "1d1d4fb43c79ae0b5bf7403ea4bbb8f7620a0e40ad6a8f8cd0867ed3a3deccc4",
+        "status": "passed"
+      },
+      "x86_64": {
+        "runtime_tiers": {
+          "clean-rocky": "passed",
+          "locked-sysroot": "passed"
+        },
+        "schema_version": 4,
+        "sha256": "088400b412360bf4b4d4b88d3e9c89f6922e4876e8a1a1242a41829a9822a8b3",
+        "status": "passed"
+      }
+    },
+    "row_manifest": {
+      "build_python_sdk_tree": {
+        "canonical_sha256": "6ae0762f0beb07fcb3ce319392fa4312d5708cccb97a60da154a8643e79f1552",
+        "entries": 7652
+      },
+      "sha256": "97d9240825a0db61721723a1d7dd4a81e11465e5950ddfd06806f54ce743041e",
+      "source_manifest_sha256": "8ec9378f887ea16ec0f00ba1648224c9ce65f697f76deca0f0282dbd2387ee1b"
+    },
+    "seconds": 166.45,
+    "source_compiler_scripts": [],
+    "started_at": "2026-09-10T20:11:53Z"
+  },
+  "schema_version": 1,
+  "sdk_append": {
+    "dependencies": [
+      {
+        "artifact_digest": "sha256:4d44e45677eedb2b9ba8c0571910eed8a1af25343b35fcf99d010dfae2f6ce06",
+        "component": "qualification/python-cp39",
+        "inputs_sha256": "e3cb294b9f2b205b216cf97d8bb834c3aa3adb4eae45529ec30d6814caebbb7f"
+      },
+      {
+        "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+        "component": "toolchain/aarch64-install",
+        "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+      },
+      {
+        "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+        "component": "toolchain/x86_64-install",
+        "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+      }
+    ],
+    "forced_stage": "python-sdk-append",
+    "graph_targets": [
+      "host-runtime-qualified",
+      "python-cp39-dev",
+      "sdk-toolchains-dev",
+      "toolchain-aarch64-dev",
+      "toolchain-x86_64-dev"
+    ],
+    "inputs_sha256": "7ce323921ea47fd01eaa3881b7881e9602f9759331a5e5d7b6d3fc4be920fa6f",
+    "material_file_count": 69,
+    "row_digest": "sha256:4d44e45677eedb2b9ba8c0571910eed8a1af25343b35fcf99d010dfae2f6ce06",
+    "scope": "single-row SDK append; not full six-row SDK integration or a candidate",
+    "seconds": 68.01,
+    "source_compiler_scripts": [],
+    "target": "python-cp39-dev"
+  },
+  "source_dirty": true,
+  "source_parent": "08afe8d00208aa2688763f54c28a19eae4056225",
+  "source_snapshot": "/tmp/crossforge-python-components/source",
+  "validation": {
+    "actual_rocky_platform_python_36": "passed",
+    "config": {
+      "errors": 0,
+      "failures": 0,
+      "seconds": 186.211,
+      "skipped": 2,
+      "tests": 1049
+    },
+    "locked_validators": [
+      "release",
+      "supply-chain-evidence",
+      "frozen-abi",
+      "python-runtime-providers"
+    ],
+    "packaging": {
+      "errors": 0,
+      "failures": 0,
+      "seconds": 0.79,
+      "skipped": 1,
+      "tests": 40
+    },
+    "renderer_checks": [
+      "release-components",
+      "vcpkg-integration",
+      "bake"
+    ]
+  }
+}

@@ -185,13 +185,16 @@ def _inventory(root, graph, target, execution, artifacts=None):
                 context = contexts[source]
                 require(type(context) is str, "context reference must be a string")
                 external[source] = context
-                if source in artifacts:
-                    record = artifacts[source]
+                scoped = name + ":" + source
+                require(not (source in artifacts and scoped in artifacts), "ambiguous scoped component context")
+                artifact_key = scoped if scoped in artifacts else source
+                if artifact_key in artifacts:
+                    record = artifacts[artifact_key]
                     require(context.startswith(("oci-layout://", "docker-image://")) and
                             context.count("@") == 1 and
                             context.rsplit("@", 1)[1] == record["artifact_digest"],
                             "component context does not use the verified artifact digest")
-                    used_artifacts.add(source)
+                    used_artifacts.add(artifact_key)
                     # Transport location is not part of the subject's identity.
                     external[source] = {"component": record["component"],
                                         "artifact_digest": record["artifact_digest"]}
@@ -279,7 +282,7 @@ def source_closure(root, graph, target, execution):
 
 def capture(root, graph, target, component, role, targets, execution, artifacts=None):
     """Capture a source-build closure; resolved graph must come from checked Bake."""
-    require(role in ("toolchain-install", "gcc-test-context", "python-row", "qualification"),
+    require(role in ("toolchain-install", "gcc-test-context", "python-install", "python-test-context", "python-row", "qualification"),
             "unsupported component material role")
     paths, parameters, dependencies = _inventory(root, graph, target, execution, artifacts)
     parameters["role"] = role
