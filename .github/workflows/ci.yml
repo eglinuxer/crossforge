@@ -75,9 +75,7 @@ jobs:
         run: python3 -m unittest discover -s tests/packaging -p 'test_*.py'
       - name: Script syntax
         run: |
-          python3 -m py_compile scripts/*.py
-          python3 -m py_compile docker/*.py
-          python3 -m py_compile tools/crossforge/*.py
+          python3 -m compileall -q scripts docker tools/crossforge
           for script in scripts/*.sh docker/*.sh; do
             bash -n "$script"
           done

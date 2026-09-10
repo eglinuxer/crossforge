@@ -2,7 +2,7 @@
 
 Crossforge 已有相当完整的工具链、ABI、Python 和供应链校验实现，但从日常提交到可信交付的路径仍不稳定。当前最值得重构的是 CI 调度、组件交接与资格验证的组织方式。现有证据不足以支持再做一次全项目语言重写。
 
-六项核心路线已完成逐项讨论并确认。落地依赖、批次范围和验收条件已整理为[分批实施方案](/home/eg/workspace/github/eglinux/crossforge/docs/research/ci-refactoring-plan-2026-09-10.md)。本文保留现状分析和实测依据；生产改造尚未实施。
+六项核心路线已完成逐项讨论并确认。落地依赖、批次范围和验收条件已整理为[分批实施方案](/home/eg/workspace/github/eglinux/crossforge/docs/research/ci-refactoring-plan-2026-09-10.md)。本文保留分析基线与当时的实测依据；后续代码改造状态见[实施进度](/home/eg/workspace/github/eglinux/crossforge/docs/research/ci-refactoring-progress.md)。
 
 分析以 `cf736eab8aa53b851874509d66676e5bac98dc27` 为代码基线，结合 2026 年 9 月 8–10 日的 GitHub Actions 记录。该提交对应的新候选流程在最后一次查询时仍为 pending，不能把较早提交的成功或失败当作它的结果。完整测量口径、运行链接、job 数据、日志摘要和校验结果保存在[观测数据](/home/eg/workspace/github/eglinux/crossforge/docs/research/ci-architecture-observations-2026-09-10.json)。这些是分析资料，不是发布资格证据。
 
