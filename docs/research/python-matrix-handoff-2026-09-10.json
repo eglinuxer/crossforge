@@ -989,7 +989,7 @@
   "date": "2026-09-10",
   "kind": "crossforge-local-python-matrix-handoff-observation",
   "limits": [
-    "All six rows and the six-row Python SDK passed; complete SDK integration is still running",
+    "All six rows, six-row Python SDK and complete SDK passed locally; production CI and candidate qualification remain pending",
     "Local tooling/builders and warm prerequisite/component caches; not a cold or GitHub performance comparison",
     "No remote workflow dispatch or publication, and no candidate/native ARM evidence"
   ],
@@ -1018,9 +1018,9 @@
       "sdk-complete-dev"
     ],
     "source": "/tmp/crossforge-python-sdk/source",
-    "status": "six-row Python SDK actual execution passed; complete SDK running"
+    "status": "six-row Python SDK and complete SDK actual execution passed"
   },
   "source_commit": "a128c3c5b0d9c8b9a2c07b2e25204f24b8e64d53",
   "source_dirty": true,
-  "status": "in-progress"
+  "status": "all-rows-and-local-sdk-integration-passed"
 }

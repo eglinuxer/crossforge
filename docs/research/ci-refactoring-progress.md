@@ -7,7 +7,7 @@
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；同 run CI 试点已实现 | GitHub 试点实跑与生产 CI 接入 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、与可信产物可用性及生产消费对接 |
-| 4：整行 Python/SDK 交接 | 全部六行正式资格及六行 Python SDK 实跑通过 | 完整 SDK 集成、生产 CI |
+| 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过 | 生产 CI 接入与远程验收 |
 | 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录接口与 CI 接线本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
@@ -238,3 +238,5 @@ cp311、cp310 分别完成五份构建组件及正式行资格，最后的资格
 SDK 修正后的独立重跑已通过，见[六行 SDK 实跑记录](python-sdk-integration-2026-09-10.json)。`python-dev` 完整消费为 380.28 秒，其中 Bake 执行记录区间为 21:48:46–21:52:56 UTC。12 个图目标不包含 GCC/CPython 源码编译；12 条 append RUN 加 1 条 final RUN 均通过所属目标验收，六份导出行 manifest 与原正式资格 coverage SHA256 一致。每行保留原 producer、执行区间与 receipt，不改写为本次行资格。完整 `sdk-complete-dev` 已继续执行，仍未声明通过；本地组件和前置缓存已存在，不将此数字外推为 GitHub 性能。
 
 签名试点工作流也已纳入控制平面路径识别，避免单独修改该手动工作流时被未知路径兜底误选为完整编译。13 项增量计划 Docker 回归、0.070 秒通过；未知路径仍保持全量兜底。
+
+完整 `sdk-complete-dev` 随后通过：总消费 727.27 秒，Bake 记录区间 21:57:39–22:05:03 UTC，14 条规定集成 RUN 均新执行。最终 Python 与 complete SDK 报告均为 passed，六份行 manifest 继续与原正式资格产物一致；输入材料图不包含 GCC/CPython 源码编译。完整结果补充到[SDK 实跑记录](python-sdk-integration-2026-09-10.json)。本地两条组装根均已完成；独立 vcpkg upstream Tier 3、GCC full 等候选领域和真实 native ARM 仍遵循各自门禁，不由这次本地 SDK 集成代替。
