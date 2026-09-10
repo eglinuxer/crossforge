@@ -1,0 +1,51 @@
+{
+  "acceptance": "Select each required RUN from its owning Bake target and row; retain cached/error observations from every alias; preserve time-window, per-target coverage and unique-vertex requirements. Do not reinterpret normalized progress timestamps as precise process wall-clock measurements.",
+  "cause": "Buildx 0.36.1 ResetTime shifts linked-target progress independently. Last-write-by-vertex-digest can retain downstream alias times instead of the owning target times.",
+  "date": "2026-09-10",
+  "diagnostic_recheck": {
+    "mode": "independent-log-recheck",
+    "scope": "Existing raw log checked using an enclosing observed log interval only for diagnosis; this is not a new qualification record or a replacement for the rejected execution result.",
+    "vertices": 13
+  },
+  "example": {
+    "alias_completed": "2026-09-10T21:35:02.803810369Z",
+    "alias_started": "2026-09-10T21:35:02.397194991Z",
+    "bake_started": "2026-09-10T21:35:14.993623564Z",
+    "digest": "sha256:174629067d0b5a6e23a05095ec4ed67b2b63a0889eac62ea56032d9fd62d3b2a",
+    "downstream_alias": "sdk-component-reports",
+    "owning_completed": "2026-09-10T21:36:18.234323271Z",
+    "owning_started": "2026-09-10T21:36:17.827707893Z",
+    "target": "python-dev-append-cp313"
+  },
+  "fresh_replay_directory": "/tmp/crossforge-python-sdk-replay",
+  "kind": "crossforge-local-sdk-progress-observation",
+  "limits": [
+    "The original SDK build and report export succeeded but execution acceptance failed; original outputs and logs remain unchanged",
+    "Fresh six-row and complete SDK executions with the new SDK input identity are still running",
+    "Existing formal Python row receipts remain bound to their original code and producer; the shared qualification parser was not changed",
+    "No GitHub event, publication, candidate/native ARM qualification or cold-build performance claim"
+  ],
+  "original_execution_log": {
+    "path": "/tmp/crossforge-python-sdk/python-dev/execution.jsonl",
+    "sha256": "723849c9027734f6f6e34c1ebc552f607c97086296afb83ef9df9646f35d1e62"
+  },
+  "schema_version": 1,
+  "source_files": {
+    "scripts/crossforge_internal/python_sdk.py": "847ed3dbc239aa470de1f275af428a22db2e56cd03737f5d011fb71c5095fc09",
+    "tests/config/test_python_component_sdk.py": "33eb1405cbf8b1a53529f487efbb63e353df7c281b96b9d5bbfb85ea253ab5a5"
+  },
+  "sources": [
+    "https://github.com/docker/buildx/blob/v0.36.1/util/progress/reset.go",
+    "https://github.com/docker/buildx/blob/v0.36.1/build/build.go#L542"
+  ],
+  "status": "reader-regressions-passed-fresh-sdk-replay-in-progress",
+  "validation": {
+    "logs": {
+      "/tmp/crossforge-component-catalog/sdk-progress-regressions.log": "527396ef51ed103773d55f88cf52c2e63ac24ad87da0920f67e467b46096fd7d",
+      "/tmp/crossforge-sdk-progress-check/platform-python.log": "80747d749868768bb1b468eebb05af81bc56c30f14e8ea998e1b798e1cab7c70"
+    },
+    "platform_python": "actual Rocky 8 Python 3.6 forced gate passed",
+    "sdk_regressions": 9,
+    "seconds": 2.176
+  }
+}

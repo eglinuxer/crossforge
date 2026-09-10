@@ -4,12 +4,14 @@ import copy
 from datetime import datetime
 import json
 from pathlib import Path
+import re
 import runpy
 import subprocess
+import tempfile
 
 from . import bake_materials, component_build, component_inputs, component_qualification
 from . import python_components, python_qualification, qualification_execution
-from .identity import exact_fields, file_record, load_json, require
+from .identity import digest_value, exact_fields, file_record, load_json, parse_json, require
 
 
 ROOTS = {"python-dev": ("docker/python.Dockerfile", "python-sdk-final"),
@@ -106,6 +108,59 @@ def inputs(source, graph, root, execution, bindings):
     return component_inputs.validate(value)
 
 
+def fresh_vertices(path, expected, started, completed):
+    """Use each RUN's owning Bake target, retaining failures from all aliases.
+
+    Buildx 0.36.1 ResetTime shifts each target's progress separately, including
+    inherited vertices. A downstream alias can therefore carry a different
+    timestamp for the same digest. It must not overwrite its owner's evidence.
+    https://github.com/docker/buildx/blob/v0.36.1/util/progress/reset.go
+    """
+    replay = expected["parameters"]["replay"]
+    owned = {target: [] for target in replay}
+    bad = set()
+    pattern = re.compile(r"^\[(\S+) (\S+) \d+/\d+\] RUN ")
+    with Path(path).open(encoding="utf-8") as stream:
+        for line in stream:
+            if not line.strip():
+                continue
+            event = parse_json(line)
+            require(type(event) is dict and type(event.get("vertexes", [])) is list,
+                    "SDK BuildKit progress event is invalid")
+            for vertex in event.get("vertexes", []):
+                require(type(vertex) is dict, "SDK BuildKit vertex must be an object")
+                digest = digest_value(vertex.get("digest"), "SDK BuildKit vertex digest", oci=True)
+                if vertex.get("cached") or vertex.get("error"):
+                    bad.add(digest)
+                name = vertex.get("name", "")
+                require(type(name) is str, "SDK BuildKit vertex name must be a string")
+                match = pattern.match(name)
+                if not match or replay.get(match[1]) != match[2]:
+                    continue
+                target = match[1]
+                if target.startswith("python-dev-append-"):
+                    row = target[len("python-dev-append-"):]
+                    # The same append stage also appears for preceding rows.
+                    if '--row "' + row + '"' not in name:
+                        continue
+                owned[target].append(vertex)
+    result = []
+    with tempfile.TemporaryDirectory(prefix="sdk-owning-progress-") as temporary:
+        for target, stage in sorted(replay.items()):
+            vertices = owned[target]
+            require(not {vertex["digest"] for vertex in vertices} & bad,
+                    "SDK qualification RUN was cached or failed through a Bake alias: " + target)
+            instructions = expected["parameters"]["recipes"][target]["stages"][stage]
+            count = sum(line.startswith("RUN ") for line in instructions)
+            filtered = Path(temporary) / "progress.jsonl"
+            with filtered.open("w", encoding="utf-8") as stream:
+                for vertex in vertices:
+                    stream.write(json.dumps({"vertexes": [vertex]}) + "\n")
+            result.extend(qualification_execution.fresh_vertices(filtered, {stage: count}, started, completed))
+    require(len({vertex["digest"] for vertex in result}) == len(result), "SDK RUN belongs to multiple targets")
+    return result
+
+
 def execute(source, graph, root, execution, components, directory, builder, docker_config=None):
     """Reverify every row, then freshly execute SDK integration without publishing."""
     source, directory = Path(source).resolve(), Path(directory).resolve()
@@ -146,8 +201,7 @@ def execute(source, graph, root, execution, components, directory, builder, dock
     completed = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     require(qualification_execution.execution_identity(builder, docker_config) == execution, "SDK execution environment changed")
     component_inputs.require_match(expected, inputs(source, resolved, root, execution, bindings))
-    vertices = qualification_execution.fresh_vertices(directory / "execution.jsonl",
-        expected["parameters"]["required_runs"], started, completed)
+    vertices = fresh_vertices(directory / "execution.jsonl", expected, started, completed)
     for row, prior in reused.items():
         require(file_record(payload, "reports/%s.json" % row)["sha256"] == prior["qualification"]["coverage"]["manifest_sha256"],
                 "assembled SDK row manifest differs from its qualified artifact: " + row)

@@ -226,3 +226,11 @@ Docker 回归 config 1062 项、191.733 秒，packaging 40 项、0.760 秒，均
 同 run pilot 新增消费者门禁之后的签名 job，只有该 job 获得 `id-token:write`，不具备 registry 写权限；签名前再次核验 handoff SHA256 和精确 clean commit/run/attempt，签名后立即调用同一消费者验证接口。最终 required gate 包含签名结果。目录与 bundle 目前保存在七天 Actions pilot artifact 中；永久引用保留、发现、缺失产物调度和生产消费尚未完成，也尚无真实 GitHub 身份签名或跨 run 运行结果。
 
 [本地验证记录](component-catalog-2026-09-10.json)：Docker config 1075 项、166.620 秒，packaging 40 项、0.873 秒通过，分别保留既有 2/1 项跳过。四项 locked validators、三个 renderer、实际 Rocky 8 platform-python 3.6 强制门禁和 actionlint 通过。actionlint 首次调用的既有 `concurrency.queue` 例外模式不准确；仅修正调用模式后独立重跑静态检查通过，未修改该配置或重复运行已通过单测。真实固定 Cosign 的参数检查与无效 bundle 拒绝通过；单元回归中的模拟仅用于核验委托参数和拒绝路径，不作正向密码学证明。
+
+## 批次 4：六行资格完成及 SDK 进度记录修正
+
+cp311、cp310 分别完成五份构建组件及正式行资格，最后的资格生产/封装为 188.87 秒与 165.39 秒；各自 7 条规定 RUN 均新执行，两个架构的 locked/clean runtime tier 通过。连同此前 cp39/cp312/cp313/cp314，六行正式组件全部完成。完整记录补充到[矩阵交接观测](python-matrix-handoff-2026-09-10.json)。
+
+首次六行 SDK 构建与报告导出完成，但执行证据读取器按 digest 保留最后一条事件，接收了下游 Bake 别名平移后的时间，导致一条 RUN 落到执行区间外并拒绝结果。核对固定 Buildx 0.36.1 的 `ResetTime` 与每目标 writer 调用后，SDK 读取器改为使用每条规定 RUN 所属的 Bake 目标和行，仍拒绝任何别名上的 cache/error，仍要求本次区间、每目标准确 RUN 数与唯一 digest。没有放宽共享资格读取器或重新绑定旧行 receipt。
+
+[进度诊断记录](sdk-progress-2026-09-10.json)保留原始日志 SHA256、同一 vertex 的原目标/别名时间及上游来源。9 项 SDK 回归、2.176 秒通过，覆盖下游覆盖、缺少原目标、区间外原目标、别名缓存/失败、重复与漏执行；实际 Rocky 8/Python 3.6 强制门禁通过。旧日志复查只用于诊断，不将失败执行改写为通过；新输入身份下的六行与完整 SDK 已另开目录重跑，原日志和产物保留。

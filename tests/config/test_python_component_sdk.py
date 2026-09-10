@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -100,6 +101,68 @@ class PythonComponentSdkTests(unittest.TestCase):
             graph["target"][target][field][key] = value
             with self.subTest(target=target, key=key), self.assertRaises(IdentityError):
                 self.bind(graph=graph)
+
+
+class PythonSDKProgressTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.path = Path(temporary.name) / "execution.jsonl"
+        self.start = "2026-09-10T21:35:14Z"
+        self.end = "2026-09-10T21:39:10Z"
+        self.owner = "python-dev-append-cp313"
+        self.stage = "python-sdk-append"
+        self.expected = {"parameters": {"replay": {self.owner: self.stage},
+            "recipes": {self.owner: {"stages": {self.stage: ['RUN verify --row "$ROW"']}}}}}
+        self.vertex = {"digest": "sha256:" + "a" * 64,
+            "name": '[' + self.owner + ' python-sdk-append 17/21] RUN verify --row "cp313"',
+            "started": "2026-09-10T21:36:17.827707893Z", "completed": "2026-09-10T21:36:18.234323271Z"}
+
+    def check(self, vertices):
+        self.path.write_text("\n".join(json.dumps({"vertexes": [v]}) for v in vertices) + "\n")
+        return sdk.fresh_vertices(self.path, self.expected, self.start, self.end)
+
+    def test_downstream_retiming_cannot_overwrite_owning_target_evidence(self):
+        alias = dict(self.vertex, name=self.vertex["name"].replace(self.owner, "sdk-component-reports"),
+            started="2026-09-10T21:35:02.397194991Z", completed="2026-09-10T21:35:02.803810369Z")
+        for sequence in ([self.vertex, alias], [alias, self.vertex]):
+            result = self.check(sequence)
+            self.assertEqual(len(result), 1)
+            self.assertEqual(result[0]["name"], self.vertex["name"])
+            self.assertEqual(result[0]["started"], self.vertex["started"])
+
+    def test_alias_cannot_substitute_for_missing_or_out_of_window_owner(self):
+        alias = dict(self.vertex, name=self.vertex["name"].replace(self.owner, "sdk-component-reports"))
+        old = dict(self.vertex, started="2026-09-10T21:30:00Z", completed="2026-09-10T21:30:01Z")
+        for sequence in ([alias], [alias, old], [old, alias]):
+            with self.subTest(sequence=sequence), self.assertRaises(IdentityError):
+                self.check(sequence)
+
+    def test_cached_or_failed_alias_is_still_fatal_in_either_order(self):
+        for changes in ({"cached": True}, {"error": "failed"}):
+            alias = dict(self.vertex, name=self.vertex["name"].replace(self.owner, "sdk-component-reports"), **changes)
+            for sequence in ([alias, self.vertex], [self.vertex, alias]):
+                with self.subTest(changes=changes), self.assertRaisesRegex(IdentityError, "cached or failed"):
+                    self.check(sequence)
+
+    def test_inherited_row_and_duplicate_events_cannot_fill_missing_coverage(self):
+        inherited = dict(self.vertex, digest="sha256:" + "b" * 64,
+            name=self.vertex["name"].replace('--row "cp313"', '--row "cp312"'))
+        self.assertEqual(len(self.check([inherited, self.vertex])), 1)
+        self.expected["parameters"]["recipes"][self.owner]["stages"][self.stage].append("RUN another-required-check")
+        with self.assertRaisesRegex(IdentityError, "coverage differs"):
+            self.check([self.vertex, self.vertex, inherited])
+
+    def test_owning_target_cannot_omit_required_run_or_hide_a_failure(self):
+        self.expected["parameters"]["replay"]["python-dev"] = "python-sdk-final"
+        self.expected["parameters"]["recipes"]["python-dev"] = {"stages": {"python-sdk-final": ["RUN final"]}}
+        with self.assertRaisesRegex(IdentityError, "coverage differs"):
+            self.check([self.vertex])
+        final = dict(self.vertex, digest="sha256:" + "b" * 64,
+            name="[python-dev python-sdk-final 1/1] RUN final")
+        self.assertEqual(len(self.check([self.vertex, final])), 2)
+        with self.assertRaisesRegex(IdentityError, "cached or failed"):
+            self.check([self.vertex, dict(final, error="failed"), final])
 
 
 if __name__ == "__main__":

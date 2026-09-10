@@ -1,5 +1,399 @@
 {
   "completed_rows": {
+    "cp310": {
+      "components": {
+        "aarch64-install": {
+          "artifact": {
+            "config_digest": "sha256:726eaf596e629456bcec5be27fe32baba1956d8038a7108c3e5613dcebe0dbfa",
+            "platform": "linux/amd64",
+            "platform_digest": "sha256:8c3c466c1d371ef1e25c70ce1fa2ed10c71bb0df1e0948c0c141e7cce2420c90",
+            "root_digest": "sha256:8c3c466c1d371ef1e25c70ce1fa2ed10c71bb0df1e0948c0c141e7cce2420c90"
+          },
+          "inputs_sha256": "30e02382ddf5fd990efe0e54b55ccbe53963b23c2dee479d9a45d21fc0938821",
+          "receipt_sha256": "1b3bcd54b177821eda02ad09262287122409139311b396ad411a4f6d1c689794",
+          "seconds": 70.13,
+          "source_compilers": [
+            "scripts/build-cpython-cross.sh"
+          ]
+        },
+        "aarch64-test-context": {
+          "artifact": {
+            "config_digest": "sha256:de732e215cb924bbbbd2879c824a7146b3c6c793dead32f97c908d785bd90da2",
+            "platform": "linux/amd64",
+            "platform_digest": "sha256:68305d44a27de92efbfd1d9ec914fb7fd9a7e0dc52563b003bf0701c7ed8503a",
+            "root_digest": "sha256:68305d44a27de92efbfd1d9ec914fb7fd9a7e0dc52563b003bf0701c7ed8503a"
+          },
+          "inputs_sha256": "58c48b160b1c13756e648db820787800ff97eab405ee487266d81ea1bc083e03",
+          "receipt_sha256": "93b756d278e53342d356becc5f4d6c4b229da4e610de8592015211e583f277b6",
+          "seconds": 34.09,
+          "source_compilers": [
+            "scripts/build-cpython-cross.sh"
+          ]
+        },
+        "build": {
+          "artifact": {
+            "config_digest": "sha256:b30526475487b940b49d3aa8f9e1da7e2a98f26193cf2b879aee4eb27676dfc9",
+            "platform": "linux/amd64",
+            "platform_digest": "sha256:832fcdf13f64332760a3fa201653d1f907158cfab4ce6a72675f1e53209dda50",
+            "root_digest": "sha256:832fcdf13f64332760a3fa201653d1f907158cfab4ce6a72675f1e53209dda50"
+          },
+          "inputs_sha256": "64c3e739eea1fc4c73de595fab086bf42f898154aec8ff192d3271717b5da6d5",
+          "receipt_sha256": "ebab234dbf73009d121b15e6ef46e81aa50a225559f3acbedd81225bbcec21a9",
+          "seconds": 69.33,
+          "source_compilers": [
+            "scripts/build-cpython-native.sh"
+          ]
+        },
+        "x86_64-install": {
+          "artifact": {
+            "config_digest": "sha256:d9e7250dd9412c15df3d6477c3352815a2a59b89b12d15c44df8311cbcb3b647",
+            "platform": "linux/amd64",
+            "platform_digest": "sha256:cba3c8aeb6a7a5b3598018dc97f8efe9f2c012c7fb06b44791994e772bc7b28e",
+            "root_digest": "sha256:cba3c8aeb6a7a5b3598018dc97f8efe9f2c012c7fb06b44791994e772bc7b28e"
+          },
+          "inputs_sha256": "e483e046a1ad82f79b93a84ad02ab0e95633d4f96f3801b860899493a1c204d9",
+          "receipt_sha256": "a4c2faceca1d060d4a5fdcac1d3b791d8e097811a86936cdd2c2cc104a491745",
+          "seconds": 72.59,
+          "source_compilers": [
+            "scripts/build-cpython-cross.sh"
+          ]
+        },
+        "x86_64-test-context": {
+          "artifact": {
+            "config_digest": "sha256:d6285b689af120961272a18d85fe773e6963bfa0974b41a4c82ec2b633bbe6fa",
+            "platform": "linux/amd64",
+            "platform_digest": "sha256:bc8ed7726f02976ab4f98385bb2ec6b5f8c5248d348387f97af506585137b7f6",
+            "root_digest": "sha256:bc8ed7726f02976ab4f98385bb2ec6b5f8c5248d348387f97af506585137b7f6"
+          },
+          "inputs_sha256": "1edb990704012d28467087406a3a111821cf3607732e1291e69879371f5f16b0",
+          "receipt_sha256": "df2360eb9f84e5c0b4e2bce3a3ae7a41c65d1860a672a33d524d36d2ddf511d2",
+          "seconds": 30.97,
+          "source_compilers": [
+            "scripts/build-cpython-cross.sh"
+          ]
+        }
+      },
+      "qualification": {
+        "artifact": {
+          "config_digest": "sha256:17a3bebac37287166372cfb9c9897bcfd61c1a80941d9edfeff97513618030b7",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:ed7af9c1994bf071b9409b9da29ceeb2df62165b32c34f5dc8a1f0e99b35e244",
+          "root_digest": "sha256:ed7af9c1994bf071b9409b9da29ceeb2df62165b32c34f5dc8a1f0e99b35e244"
+        },
+        "inputs_sha256": "0512ca65d8163348a97f4cdb06914be36dcf42ee8b04a5deb0bcacbd211c73b8",
+        "qualification": {
+          "completed_at": "2026-09-10T21:32:23Z",
+          "coverage": {
+            "build_python_sdk_tree": {
+              "canonical_sha256": "04fe376425a213743bde08182a029c297b9985247ac1f93a6abf0a9acea880a3",
+              "entries": 3272
+            },
+            "manifest_sha256": "643f1a78f4d8477512fb53474d55dced4b5ddb8f1689b9a7b96e6f1cccdba200",
+            "row": "cp310",
+            "runtime_tiers": [
+              "locked-sysroot",
+              "clean-rocky"
+            ],
+            "status": "passed",
+            "targets": {
+              "aarch64": {
+                "python_sha256": "6ea8dfee5813637e2697f085a7021c4c198bf410d5027571d9f89efa31b2208d",
+                "report_sha256": "515d8110d3fcb1d05fcdcf0e9ff8ab3c638616f41eab72fb27e298b36488a970",
+                "sdk_tree": {
+                  "canonical_sha256": "81890c020ec1fad25a127fa27ef6304157d534408bb7797b91c96dae9cee5fa4",
+                  "entries": 3272
+                },
+                "target": "aarch64-unknown-linux-gnu"
+              },
+              "x86_64": {
+                "python_sha256": "6b81027bd4bd1577f9700276c769b4d2b1956f191a21b1641b62cf1c2b1865d1",
+                "report_sha256": "28278e51ca8f513e41a7cf86df7cb17d8a0945c29d1dd91e6f9377af065853ff",
+                "sdk_tree": {
+                  "canonical_sha256": "43069b50b018d2c6686d8040f055e30632d248821c63f7381a8df73cd229e0ab",
+                  "entries": 3272
+                },
+                "target": "x86_64-unknown-linux-gnu"
+              }
+            }
+          },
+          "inputs_sha256": "0512ca65d8163348a97f4cdb06914be36dcf42ee8b04a5deb0bcacbd211c73b8",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:python-matrix-20260910-cp310",
+            "kind": "local",
+            "source_commit": "a128c3c5b0d9c8b9a2c07b2e25204f24b8e64d53",
+            "source_dirty": true,
+            "started_at": "2026-09-10T21:25:34Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-10T21:30:24Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:32:03.494546179Z",
+              "digest": "sha256:bf96806cda8e5200d6ebc5ab8b1d74fa7b1cf9a046215e11163a73214503d709",
+              "stage": "cpython-qualify-aarch64",
+              "started": "2026-09-10T21:31:48.229137565Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:31:17.628024323Z",
+              "digest": "sha256:2b57cf3377a37093e92c805a1104402700032a7fc1cb0dbbc87ed3c644c24f83",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-10T21:31:17.40696032Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:31:24.937260358Z",
+              "digest": "sha256:54b5480950b70b26437aef5abbe475033e5615b74a0e545d43255caacd3ebbe2",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-10T21:31:17.684893605Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:31:32.460302894Z",
+              "digest": "sha256:a8c6c986ec1a618950de30f1bbbde322be5f0dae987bfbcc3c1c844471828414",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-10T21:31:25.293798104Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:31:25.291557667Z",
+              "digest": "sha256:cb1beef0f7d64ff13dd64864fb0d493ed70c4d32a711379cfcce7141dbcb97fd",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-10T21:31:24.937417408Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:31:48.229062267Z",
+              "digest": "sha256:8c7b29e5fbe11aa1539a3c908a420447ca642e8ceb5e4599f648fa1c04e9cb3f",
+              "stage": "cpython-qualify-x86_64",
+              "started": "2026-09-10T21:31:34.637347517Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:32:19.469091324Z",
+              "digest": "sha256:42d9db155aa7c6c0767b97fd1c7a87354241642d673da59665722f9a8d12f225",
+              "stage": "cpython-row-assemble",
+              "started": "2026-09-10T21:32:04.364774148Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-python-matrix/cp310/qualified/receipt.json",
+        "receipt_sha256": "cca9ea8119ac9cc54721074b3c53096a178691005f37a837a9a265f1f3aed020",
+        "seconds": 165.39
+      },
+      "qualification_graph_targets": [
+        "cpython-cp310-aarch64-qualify",
+        "cpython-cp310-aarch64-qualify-build",
+        "cpython-cp310-x86_64-qualify",
+        "cpython-cp310-x86_64-qualify-build",
+        "host-python-build-locked",
+        "python-row-cp310",
+        "python-runtime-clean-aarch64",
+        "python-runtime-clean-x86_64",
+        "qemu-aarch64-validated"
+      ],
+      "zstd_policy": "absent"
+    },
+    "cp311": {
+      "components": {
+        "aarch64-install": {
+          "artifact": {
+            "config_digest": "sha256:e362e2d06d1a752ce491a2c7518b648b889f5a36874f97adb67a7fd1ae641f4a",
+            "platform": "linux/amd64",
+            "platform_digest": "sha256:502b13e673d2d7169c55c56adbf8005017fce1afc2b8fd7fbe9558ba16af653e",
+            "root_digest": "sha256:502b13e673d2d7169c55c56adbf8005017fce1afc2b8fd7fbe9558ba16af653e"
+          },
+          "inputs_sha256": "24a2b01b807a0642c810b640d5367804f6edeaf3572aa121d489bb909cd5f92a",
+          "receipt_sha256": "abfa2a686836f9671f61b1697a2e38489be5bf71f3fe5d608573ade5cff473fa",
+          "seconds": 71.63,
+          "source_compilers": [
+            "scripts/build-cpython-cross.sh"
+          ]
+        },
+        "aarch64-test-context": {
+          "artifact": {
+            "config_digest": "sha256:05405b62a5ced74a792fe1543a1d6cfece11bd5489c892f3597e1269d6affa27",
+            "platform": "linux/amd64",
+            "platform_digest": "sha256:0c6cf484c4ae638e62bc57a8970af755f5e6ab51a7365c6189ca9f1d27fa629e",
+            "root_digest": "sha256:0c6cf484c4ae638e62bc57a8970af755f5e6ab51a7365c6189ca9f1d27fa629e"
+          },
+          "inputs_sha256": "9f283a6ab6be6cb05df7f704e478067f3106e2259d1326235ff4051683dd39f5",
+          "receipt_sha256": "3a641c5bcca1f61e6a1a00c098e54bc1b41de7836606c0df80a98a2101ad8c91",
+          "seconds": 30.6,
+          "source_compilers": [
+            "scripts/build-cpython-cross.sh"
+          ]
+        },
+        "build": {
+          "artifact": {
+            "config_digest": "sha256:cba8fbe389688c202013f961c0faea64adf5ab4a1a7306f7782f6188258c6748",
+            "platform": "linux/amd64",
+            "platform_digest": "sha256:26f19a87c03088498e1e9b94548e752e173201f47b3edb4bca5868f53686a9c5",
+            "root_digest": "sha256:26f19a87c03088498e1e9b94548e752e173201f47b3edb4bca5868f53686a9c5"
+          },
+          "inputs_sha256": "a4e10e108279fdb217fff1c47c014f31d09164cce327f34757c548916655fe68",
+          "receipt_sha256": "90d2551b1bff0d5fb6904d8d561bc50057a4530e04ae84d6924ae7e38a541045",
+          "seconds": 74.05,
+          "source_compilers": [
+            "scripts/build-cpython-native.sh"
+          ]
+        },
+        "x86_64-install": {
+          "artifact": {
+            "config_digest": "sha256:479e21f6a55b847e615014178538221411512f57b814eb6f36ddfa8301573166",
+            "platform": "linux/amd64",
+            "platform_digest": "sha256:fc0c2642ae08c2f1f0c8a76c48990beb59c0a2884da416960a8a8e5b131c4b59",
+            "root_digest": "sha256:fc0c2642ae08c2f1f0c8a76c48990beb59c0a2884da416960a8a8e5b131c4b59"
+          },
+          "inputs_sha256": "44553bdcbd19e8dc22ede4b66a98da444d3dd9ae8397f98c1733c572fa0ffc67",
+          "receipt_sha256": "381b449b4120790cc62acc40852e88595885adfa789b077a15bd1585f9c9b7e2",
+          "seconds": 70.09,
+          "source_compilers": [
+            "scripts/build-cpython-cross.sh"
+          ]
+        },
+        "x86_64-test-context": {
+          "artifact": {
+            "config_digest": "sha256:03d00745ab2266b7e6f04ec9728e9b73f84b664bca0c22bc419c83e383757e03",
+            "platform": "linux/amd64",
+            "platform_digest": "sha256:35dd91be17265ecb4af83f682536d3afb7da1729f1b961a14aa71fedc2fa8a76",
+            "root_digest": "sha256:35dd91be17265ecb4af83f682536d3afb7da1729f1b961a14aa71fedc2fa8a76"
+          },
+          "inputs_sha256": "a101005dd447ccb437a74e729aca6b60d5d3d12c7302e1737c93157eae4d901a",
+          "receipt_sha256": "b363bdd5c1a331361f73d701d2ee96d099ad031f0e8919983dcb45473a102311",
+          "seconds": 32.53,
+          "source_compilers": [
+            "scripts/build-cpython-cross.sh"
+          ]
+        }
+      },
+      "qualification": {
+        "artifact": {
+          "config_digest": "sha256:6243d4f25f1423336173504ebfed5eb4bdaf0b81744f76e43b6d208204b60f2c",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:47e2eaeb95021416cc4e9e68de800a095e144f1d0dc72be4588c1360a8e79edc",
+          "root_digest": "sha256:47e2eaeb95021416cc4e9e68de800a095e144f1d0dc72be4588c1360a8e79edc"
+        },
+        "inputs_sha256": "06cfd444415b42cab3f4a2900a1a3d1bcbec712ca0b232c93550ed361b5994cf",
+        "qualification": {
+          "completed_at": "2026-09-10T21:24:56Z",
+          "coverage": {
+            "build_python_sdk_tree": {
+              "canonical_sha256": "c53d04408a96a69f9ec4ccf94970d883fc1dd2fabdcb044d2d11835d5bccd515",
+              "entries": 3373
+            },
+            "manifest_sha256": "c5f91e432a40c2834b9b707b61b0d509ba6fa2c49fb24a36d3d7faf5ca48c5e0",
+            "row": "cp311",
+            "runtime_tiers": [
+              "locked-sysroot",
+              "clean-rocky"
+            ],
+            "status": "passed",
+            "targets": {
+              "aarch64": {
+                "python_sha256": "be37767c53d7af6bbf249d2020ffd86c9f0fdf6951e975ad65c8db902d71c849",
+                "report_sha256": "be25f49abcd4b2debf9398f258e84ae0443b403a19494bf9fbeb851551220f8c",
+                "sdk_tree": {
+                  "canonical_sha256": "2e5dcb024b15802cd0e9553e4ac83d78f1b90ac6692eb71ed7e4f14229754101",
+                  "entries": 3373
+                },
+                "target": "aarch64-unknown-linux-gnu"
+              },
+              "x86_64": {
+                "python_sha256": "b4bd58fadcc039a7667e5206d7391bda46381a33d0c8154e00866baa89158131",
+                "report_sha256": "d586bd7115dd0f82cb5b4cf7386b9aa9869b672f7afc3630dc426d0f5ab64a4d",
+                "sdk_tree": {
+                  "canonical_sha256": "e39e1a93a631c64891033e4d54dda9cf4693f4e1f87b0deb7dbcbfb5fa58dece",
+                  "entries": 3373
+                },
+                "target": "x86_64-unknown-linux-gnu"
+              }
+            }
+          },
+          "inputs_sha256": "06cfd444415b42cab3f4a2900a1a3d1bcbec712ca0b232c93550ed361b5994cf",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:python-matrix-20260910-cp311",
+            "kind": "local",
+            "source_commit": "a128c3c5b0d9c8b9a2c07b2e25204f24b8e64d53",
+            "source_dirty": true,
+            "started_at": "2026-09-10T21:17:46Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-10T21:22:39Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:24:24.787433251Z",
+              "digest": "sha256:f1f02f2a4201ddcdc1d5fb283f4a869023418d0e6cc6e111f1bc42dfcf9ecc6f",
+              "stage": "cpython-qualify-aarch64",
+              "started": "2026-09-10T21:24:09.420705683Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:23:53.610373693Z",
+              "digest": "sha256:168efd1266bd8406398dd00f0d116bec3b74bee5cdb30e183dafa21a89b5aa12",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-10T21:23:46.141537858Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:23:38.766344381Z",
+              "digest": "sha256:44b7d48b7ad39f5b53ba5ba11bd5e7252629e6b58ef59ee05c7247a29541abf9",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-10T21:23:38.541836529Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:23:38.541756799Z",
+              "digest": "sha256:d6895486329d9b189fa2075a5ab100a977d23df1eaa95754e25d8143a2d9ff25",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-10T21:23:38.33855549Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:23:46.141459893Z",
+              "digest": "sha256:d7e79dac14f8eca39afde5677995813b2385caba1e97e3eafeb80d46c4a47ba9",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-10T21:23:38.766326143Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:24:09.420575212Z",
+              "digest": "sha256:d5912cc475aee0cae394bcc2478e9682fbf016ac4fadb16f08cc6b334d6d1711",
+              "stage": "cpython-qualify-x86_64",
+              "started": "2026-09-10T21:23:55.674103275Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T21:24:41.489094891Z",
+              "digest": "sha256:03c7733b45a8e48d75dba2abf1f5de64d45cfe7f467841230eaca0e7ced735d6",
+              "stage": "cpython-row-assemble",
+              "started": "2026-09-10T21:24:25.737808843Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-python-matrix/cp311/qualified/receipt.json",
+        "receipt_sha256": "3098d98152c441b21f1dd0532947ac9c2a8d917cd15cab839cabf53996f074ef",
+        "seconds": 188.87
+      },
+      "qualification_graph_targets": [
+        "cpython-cp311-aarch64-qualify",
+        "cpython-cp311-aarch64-qualify-build",
+        "cpython-cp311-x86_64-qualify",
+        "cpython-cp311-x86_64-qualify-build",
+        "host-python-build-locked",
+        "python-row-cp311",
+        "python-runtime-clean-aarch64",
+        "python-runtime-clean-x86_64",
+        "qemu-aarch64-validated"
+      ],
+      "zstd_policy": "absent"
+    },
     "cp312": {
       "components": {
         "aarch64-install": {
@@ -595,17 +989,14 @@
   "date": "2026-09-10",
   "kind": "crossforge-local-python-matrix-handoff-observation",
   "limits": [
-    "Remaining producer rows and both SDK integration runs are still in progress or pending, not qualified by graph tests",
+    "All producer rows completed; the first SDK build/export succeeded but its progress acceptance failed on Buildx per-target retiming; replay with the corrected owner-based reader is in progress",
     "Local tooling/builders and warm prerequisite/component caches; not a cold or GitHub performance comparison",
     "No remote workflow dispatch or publication, and no candidate/native ARM evidence"
   ],
   "previous_cp39": "python-qualification-receipt-2026-09-10.json",
   "python_components_sha256": "58f7fc49cdda17cad57efb2cb45792843e4d9cce0e265b4fd9b2a208b5bc19e7",
   "raw_directory": "/tmp/crossforge-python-matrix",
-  "remaining_rows": [
-    "cp311",
-    "cp310"
-  ],
+  "remaining_rows": [],
   "schema_version": 1,
   "sdk_interface": {
     "fresh_complete_sdk_runs": 14,
@@ -620,12 +1011,13 @@
       "packaging_tests": 40
     },
     "renderer_checks": 3,
+    "replay_source": "/tmp/crossforge-python-sdk-replay/source",
     "roots": [
       "python-dev",
       "sdk-complete-dev"
     ],
     "source": "/tmp/crossforge-python-sdk/source",
-    "status": "implemented; actual integration pending all rows"
+    "status": "six rows qualified; original SDK progress rejection diagnosed, fresh integration replay in progress"
   },
   "source_commit": "a128c3c5b0d9c8b9a2c07b2e25204f24b8e64d53",
   "source_dirty": true,
