@@ -9,6 +9,7 @@ import subprocess
 import sys
 
 from crossforge_internal import component_artifacts, component_build, component_qualification, qualification_execution, python_components
+from crossforge_internal import python_qualification
 from crossforge_internal.identity import IdentityError, load_json, require
 from crossforge_internal.oci_layout import inspect
 
@@ -71,6 +72,24 @@ def main(argv=None):
         if command == "produce-python":
             python.add_argument("--producer", type=Path, required=True)
             python.add_argument("--output", type=Path, required=True)
+    for command in ("python-qualification-inputs", "produce-python-qualification", "verify-python-qualification"):
+        row = commands.add_parser(command, allow_abbrev=False)
+        row.add_argument("--source", type=Path, required=True)
+        row.add_argument("--graph", type=Path, required=True)
+        row.add_argument("--row", required=True)
+        row.add_argument("--execution", type=Path, required=True)
+        row.add_argument("--subjects", type=Path, required=True)
+        row.add_argument("--builder", required=True)
+        row.add_argument("--docker-config", type=Path)
+        if command == "produce-python-qualification":
+            row.add_argument("--producer", type=Path, required=True)
+            row.add_argument("--output", type=Path, required=True)
+        else:
+            row.add_argument("--temporary-parent", type=Path)
+        if command == "verify-python-qualification":
+            row.add_argument("--receipt", type=Path, required=True)
+            row.add_argument("--receipt-sha256", required=True)
+            row.add_argument("--layout", type=Path, required=True)
     verify = commands.add_parser("verify-local", allow_abbrev=False)
     verify.add_argument("--receipt", type=Path, required=True)
     verify.add_argument("--receipt-sha256", required=True, help="independently trusted canonical receipt SHA256")
@@ -132,6 +151,21 @@ def main(argv=None):
                 resolved, bindings = python_components.bind_build(args.source, graph, settings, execution, subjects,
                     args.builder, args.docker_config, args.temporary_parent)
                 value = python_components.inputs(args.source, resolved, settings, execution, bindings)
+        elif args.command in ("python-qualification-inputs", "produce-python-qualification", "verify-python-qualification"):
+            graph, execution, subjects = load_json(args.graph), load_json(args.execution), load_json(args.subjects)
+            require(qualification_execution.execution_identity(args.builder, args.docker_config) == execution,
+                    "Python qualification execution environment differs")
+            if args.command == "produce-python-qualification":
+                value = python_qualification.produce(args.source, graph, args.row, execution,
+                    load_json(args.producer), subjects, args.output, args.builder, args.docker_config)
+            else:
+                settings = python_qualification.spec(args.source, args.row)
+                resolved, bindings = python_components.bind_row(args.source, graph, args.row, execution["build"], subjects,
+                    args.builder, args.docker_config, args.temporary_parent)
+                value = python_qualification.inputs(args.source, resolved, settings, execution, bindings)
+                if args.command == "verify-python-qualification":
+                    value = python_qualification.verify_local(load_json(args.receipt), args.receipt_sha256,
+                        value, args.source, args.layout, args.builder, args.docker_config, args.temporary_parent)
         elif args.command == "verify-local":
             require(bool(args.consumer_target) == bool(args.context_name),
                     "consumer target and context name must be specified together")
