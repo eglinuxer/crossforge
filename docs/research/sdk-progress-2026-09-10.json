@@ -17,11 +17,18 @@
     "owning_started": "2026-09-10T21:36:17.827707893Z",
     "target": "python-dev-append-cp313"
   },
+  "fresh_replay": {
+    "fresh_runs": 13,
+    "inputs_sha256": "ac25bc769e6ce1dd35bf7c016597091585f5dac54dfd7d8e01029c49f130391b",
+    "observation": "python-sdk-integration-2026-09-10.json",
+    "seconds": 380.28,
+    "target": "python-dev"
+  },
   "fresh_replay_directory": "/tmp/crossforge-python-sdk-replay",
   "kind": "crossforge-local-sdk-progress-observation",
   "limits": [
     "The original SDK build and report export succeeded but execution acceptance failed; original outputs and logs remain unchanged",
-    "Fresh six-row and complete SDK executions with the new SDK input identity are still running",
+    "Fresh six-row Python SDK passed with 13 RUNs and exact row manifests; complete SDK execution is still running",
     "Existing formal Python row receipts remain bound to their original code and producer; the shared qualification parser was not changed",
     "No GitHub event, publication, candidate/native ARM qualification or cold-build performance claim"
   ],
@@ -38,7 +45,7 @@
     "https://github.com/docker/buildx/blob/v0.36.1/util/progress/reset.go",
     "https://github.com/docker/buildx/blob/v0.36.1/build/build.go#L542"
   ],
-  "status": "reader-regressions-passed-fresh-sdk-replay-in-progress",
+  "status": "fresh-six-row-sdk-replay-passed-complete-sdk-running",
   "validation": {
     "logs": {
       "/tmp/crossforge-component-catalog/sdk-progress-regressions.log": "527396ef51ed103773d55f88cf52c2e63ac24ad87da0920f67e467b46096fd7d",

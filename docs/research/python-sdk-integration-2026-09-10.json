@@ -1,0 +1,275 @@
+{
+  "completed_at": "2026-09-10T21:52:56Z",
+  "date": "2026-09-10",
+  "fresh_runs": 13,
+  "graph_targets": [
+    "host-runtime-qualified",
+    "python-dev",
+    "python-dev-append-cp310",
+    "python-dev-append-cp311",
+    "python-dev-append-cp312",
+    "python-dev-append-cp313",
+    "python-dev-append-cp314",
+    "python-dev-append-cp39",
+    "qemu-aarch64-validated",
+    "sdk-toolchains-dev",
+    "toolchain-aarch64-dev",
+    "toolchain-x86_64-dev"
+  ],
+  "inputs_sha256": "ac25bc769e6ce1dd35bf7c016597091585f5dac54dfd7d8e01029c49f130391b",
+  "kind": "crossforge-local-python-sdk-integration-observation",
+  "limits": [
+    "Local existing components and warm prerequisites; 380.28 seconds includes consumer input/receipt/OCI verification and fresh SDK assembly, not a GitHub or cold-build comparison",
+    "Original SDK attempt remained rejected; this is a separate execution after the owning-target progress fix",
+    "Complete SDK is still running; no candidate, actual native ARM, publication or remote event evidence"
+  ],
+  "logs": {
+    "/tmp/crossforge-python-sdk-replay/python-dev-result.json": "51aad5a39b99ec4716c5a0f69fe5e5c1155df9c6c767335a047e9d3e8ed8cabd",
+    "/tmp/crossforge-python-sdk-replay/python-dev/execution.jsonl": "944a86bd8ef311ae886ebfe8958d97d7778cf5a7b4aabbe9f839a67f126ca5b0",
+    "/tmp/crossforge-python-sdk-replay/python-dev/inputs.json": "bb5865a3ff51dae77fb23ee15e7efeea586e409524ed323ea6075edbe3234e80"
+  },
+  "mode": "executed",
+  "raw_directory": "/tmp/crossforge-python-sdk-replay",
+  "reports": [
+    {
+      "mode": "0644",
+      "path": "reports/cp310.json",
+      "sha256": "643f1a78f4d8477512fb53474d55dced4b5ddb8f1689b9a7b96e6f1cccdba200"
+    },
+    {
+      "mode": "0644",
+      "path": "reports/cp311.json",
+      "sha256": "c5f91e432a40c2834b9b707b61b0d509ba6fa2c49fb24a36d3d7faf5ca48c5e0"
+    },
+    {
+      "mode": "0644",
+      "path": "reports/cp312.json",
+      "sha256": "cca639d99f49194aee99d42ce9cad71c5024c254823629b62e1921561d67530d"
+    },
+    {
+      "mode": "0644",
+      "path": "reports/cp313.json",
+      "sha256": "d53049bac27bee495c768166901f35ed7b6a690f7be0f612df57d57c382b75e3"
+    },
+    {
+      "mode": "0644",
+      "path": "reports/cp314.json",
+      "sha256": "f5b43c87bce7fcfc822bb6a495c04c692d47bbad2f99f209b4ec505288363af9"
+    },
+    {
+      "mode": "0644",
+      "path": "reports/cp39.json",
+      "sha256": "97d9240825a0db61721723a1d7dd4a81e11465e5950ddfd06806f54ce743041e"
+    },
+    {
+      "mode": "0644",
+      "path": "reports/python-final-sdk.json",
+      "sha256": "898e3bbc18f61a7eeea36527895e55c54b425bf36b48cb19156ca2b9c08ebe17"
+    }
+  ],
+  "reused_rows": {
+    "cp310": {
+      "manifest_sha256": "643f1a78f4d8477512fb53474d55dced4b5ddb8f1689b9a7b96e6f1cccdba200",
+      "mode": "verified-prior-execution",
+      "original_completed_at": "2026-09-10T21:32:23Z",
+      "original_producer": {
+        "invocation": "urn:crossforge:local:python-matrix-20260910-cp310",
+        "kind": "local",
+        "source_commit": "a128c3c5b0d9c8b9a2c07b2e25204f24b8e64d53",
+        "source_dirty": true,
+        "started_at": "2026-09-10T21:25:34Z"
+      },
+      "original_started_at": "2026-09-10T21:30:24Z",
+      "receipt_sha256": "cca9ea8119ac9cc54721074b3c53096a178691005f37a837a9a265f1f3aed020",
+      "reference": "oci-layout:///tmp/crossforge-python-matrix/cp310/qualified/oci@sha256:ed7af9c1994bf071b9409b9da29ceeb2df62165b32c34f5dc8a1f0e99b35e244"
+    },
+    "cp311": {
+      "manifest_sha256": "c5f91e432a40c2834b9b707b61b0d509ba6fa2c49fb24a36d3d7faf5ca48c5e0",
+      "mode": "verified-prior-execution",
+      "original_completed_at": "2026-09-10T21:24:56Z",
+      "original_producer": {
+        "invocation": "urn:crossforge:local:python-matrix-20260910-cp311",
+        "kind": "local",
+        "source_commit": "a128c3c5b0d9c8b9a2c07b2e25204f24b8e64d53",
+        "source_dirty": true,
+        "started_at": "2026-09-10T21:17:46Z"
+      },
+      "original_started_at": "2026-09-10T21:22:39Z",
+      "receipt_sha256": "3098d98152c441b21f1dd0532947ac9c2a8d917cd15cab839cabf53996f074ef",
+      "reference": "oci-layout:///tmp/crossforge-python-matrix/cp311/qualified/oci@sha256:47e2eaeb95021416cc4e9e68de800a095e144f1d0dc72be4588c1360a8e79edc"
+    },
+    "cp312": {
+      "manifest_sha256": "cca639d99f49194aee99d42ce9cad71c5024c254823629b62e1921561d67530d",
+      "mode": "verified-prior-execution",
+      "original_completed_at": "2026-09-10T21:17:07Z",
+      "original_producer": {
+        "invocation": "urn:crossforge:local:python-matrix-20260910-cp312",
+        "kind": "local",
+        "source_commit": "a128c3c5b0d9c8b9a2c07b2e25204f24b8e64d53",
+        "source_dirty": true,
+        "started_at": "2026-09-10T21:09:45Z"
+      },
+      "original_started_at": "2026-09-10T21:14:55Z",
+      "receipt_sha256": "b57659658e06d94922e560684f2467a3c636823e4cec56a7fceaa5277a4a9ef5",
+      "reference": "oci-layout:///tmp/crossforge-python-matrix/cp312/qualified/oci@sha256:9b23d7c692b6bb6680e2302c691a8af454e22557132aeef5c1a6caee65d6874f"
+    },
+    "cp313": {
+      "manifest_sha256": "d53049bac27bee495c768166901f35ed7b6a690f7be0f612df57d57c382b75e3",
+      "mode": "verified-prior-execution",
+      "original_completed_at": "2026-09-10T21:09:06Z",
+      "original_producer": {
+        "invocation": "urn:crossforge:local:python-matrix-20260910-cp313",
+        "kind": "local",
+        "source_commit": "a128c3c5b0d9c8b9a2c07b2e25204f24b8e64d53",
+        "source_dirty": true,
+        "started_at": "2026-09-10T21:01:36Z"
+      },
+      "original_started_at": "2026-09-10T21:06:58Z",
+      "receipt_sha256": "dbe9126c240d5b9c5c9aaedd8ca28d8213c8f5640c5c163b588d577b3a164cb8",
+      "reference": "oci-layout:///tmp/crossforge-python-matrix/cp313/qualified/oci@sha256:5a2cf3d5b52858e86886700c61da03460b86eeeb7f8cf892f17899a8f8ac1047"
+    },
+    "cp314": {
+      "manifest_sha256": "f5b43c87bce7fcfc822bb6a495c04c692d47bbad2f99f209b4ec505288363af9",
+      "mode": "verified-prior-execution",
+      "original_completed_at": "2026-09-10T21:00:54Z",
+      "original_producer": {
+        "invocation": "urn:crossforge:local:python-matrix-20260910-cp314",
+        "kind": "local",
+        "source_commit": "a128c3c5b0d9c8b9a2c07b2e25204f24b8e64d53",
+        "source_dirty": true,
+        "started_at": "2026-09-10T20:51:55Z"
+      },
+      "original_started_at": "2026-09-10T20:58:42Z",
+      "receipt_sha256": "605952adbd811b552526dc119725d612f3e75b0bfb4eae81394d53fb144c8d21",
+      "reference": "oci-layout:///tmp/crossforge-python-matrix/cp314/qualified/oci@sha256:482dc5814c0ca1fcd5504a2b4526ae6d1d642dbef122709d8881762129a08022"
+    },
+    "cp39": {
+      "manifest_sha256": "97d9240825a0db61721723a1d7dd4a81e11465e5950ddfd06806f54ce743041e",
+      "mode": "verified-prior-execution",
+      "original_completed_at": "2026-09-10T20:40:57Z",
+      "original_producer": {
+        "invocation": "urn:crossforge:local:python-qualification-20260910",
+        "kind": "local",
+        "source_commit": "f8a3efbb0e0c2beb0781aed7499addfb387890c5",
+        "source_dirty": true,
+        "started_at": "2026-09-10T20:38:44Z"
+      },
+      "original_started_at": "2026-09-10T20:38:54Z",
+      "receipt_sha256": "ea12499fb426bfa383d9d792eabfbb583c22eed34a7d637ddbd2e62eced12c8b",
+      "reference": "oci-layout:///tmp/crossforge-python-qualification/qualified/oci@sha256:3df5fe417de748f6beeaf295a0c6cd2c8944451c988ac149dcba0fa05925b549"
+    }
+  },
+  "schema_version": 1,
+  "scope": "local SDK integration; not candidate or native ARM qualification",
+  "seconds": 380.28,
+  "source_compilers": [],
+  "started_at": "2026-09-10T21:48:46Z",
+  "status": "six-row-python-sdk-passed-complete-sdk-running",
+  "target": "python-dev",
+  "vertices": [
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:52:52.033775131Z",
+      "digest": "sha256:2efabf4d0d61b7272e6ccec405f7325bf54b6e679c04bddc571cc6819e8ba03d",
+      "name": "[python-dev python-sdk-final 4/6] RUN --network=none test ! -e /runtime-locked     && test ! -e /runtime-clean     && expected=0     && for row in cp313 cp311 cp312 cp314 cp310 cp39; do          test -f \"/opt/crossforge/qualification/python/$row/row.json\";          expected=$((expected + 1));        done     && actual=$(find /opt/crossforge/qualification/python          -mindepth 2 -maxdepth 2 -name row.json -type f | wc -l)     && test \"$actual\" -eq \"$expected\"     && /work/scripts/qualify-final-sdk.py       --release /opt/crossforge/release.json       --rows cp313 cp311 cp312 cp314 cp310 cp39       --qemu /usr/local/libexec/crossforge/qemu-aarch64       --output /opt/crossforge/qualification/final-sdk.json     && rm -rf /src /work /sources /out /resolved /row-export /plans       /runtime-root /runtime-locked /runtime-clean /sysroot       /rpm-bundle /rpm-bundle-gcc       /rpm-bundle-python     && mkdir -p /workspace     && test ! -e /src     && test ! -e /work     && test ! -e /sources     && test ! -e /out     && test ! -e /resolved     && test ! -e /row-export     && test ! -e /runtime-root     && test ! -e /sysroot     && test ! -e /rpm-bundle     && test ! -e /rpm-bundle-gcc     && test ! -e /rpm-bundle-python     && test ! -e /opt/crossforge/README.phase1     && ! find /opt/crossforge       ( -name .crossforge-empty -o -name '_crossforge*.so' )       -print -quit | grep -q .",
+      "stage": "python-sdk-final",
+      "started": "2026-09-10T21:52:40.564203794Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:51:52.023439463Z",
+      "digest": "sha256:4a4fd48b7a5fc4b67b42a3ae1d6469101836f4a04e16e9e39d90e2336821d857",
+      "name": "[python-dev-append-cp310 python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp310\"       --version \"3.10.21\"       --adapter \"legacy\"     && test ! -e \"/opt/crossforge/python/cp310\"     && test ! -e \"/opt/crossforge/qualification/python/cp310\"",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:51:51.514678879Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:52:11.880533573Z",
+      "digest": "sha256:876f70d96e482f1f583f9afe66ed790d793ec95b450c67132e5e41366d8b5edf",
+      "name": "[python-dev-append-cp310 python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp310\"       --version \"3.10.21\"       --adapter \"legacy\"       --manifest \"/opt/crossforge/qualification/python/cp310/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp310\"       --version \"3.10.21\"       --adapter \"legacy\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp310/source.json\"       --abi-input-root /work/abi-inputs       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp310/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:51:54.276315214Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:50:56.773894277Z",
+      "digest": "sha256:86ea21df4336fc26b2705d602baf691b28cec6d291fbe2e542891683de6c186e",
+      "name": "[python-dev-append-cp311 python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp311\"       --version \"3.11.16\"       --adapter \"transition\"       --manifest \"/opt/crossforge/qualification/python/cp311/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp311\"       --version \"3.11.16\"       --adapter \"transition\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp311/source.json\"       --abi-input-root /work/abi-inputs       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp311/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:50:36.316839279Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:50:33.772078501Z",
+      "digest": "sha256:ad9e668452663e82cf64b67d94f308280b9b53b614161383388f18721822bf74",
+      "name": "[python-dev-append-cp311 python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp311\"       --version \"3.11.16\"       --adapter \"transition\"     && test ! -e \"/opt/crossforge/python/cp311\"     && test ! -e \"/opt/crossforge/qualification/python/cp311\"",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:50:33.322186925Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:51:00.235522639Z",
+      "digest": "sha256:5cfc7f65ebcf3266e549bdf84db44cd4b8cd7e783187765d4857047ad9599b71",
+      "name": "[python-dev-append-cp312 python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp312\"       --version \"3.12.14\"       --adapter \"modern\"     && test ! -e \"/opt/crossforge/python/cp312\"     && test ! -e \"/opt/crossforge/qualification/python/cp312\"",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:50:59.769172274Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:51:22.597659846Z",
+      "digest": "sha256:74c8f9d3bcbac19cd7888c5d1bf2c93dd77aa3e6e81c525156663e7bc6d74f5d",
+      "name": "[python-dev-append-cp312 python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp312\"       --version \"3.12.14\"       --adapter \"modern\"       --manifest \"/opt/crossforge/qualification/python/cp312/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp312\"       --version \"3.12.14\"       --adapter \"modern\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp312/source.json\"       --abi-input-root /work/abi-inputs       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp312/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:51:02.773131627Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:50:30.273653288Z",
+      "digest": "sha256:8043fde5520973e5a510bef216ba059cbf78932f2fa26ef6f7ed8ff400bd541d",
+      "name": "[python-dev-append-cp313 python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp313\"       --version \"3.13.15\"       --adapter \"modern\"       --manifest \"/opt/crossforge/qualification/python/cp313/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp313\"       --version \"3.13.15\"       --adapter \"modern\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp313/source.json\"       --abi-input-root /work/abi-inputs       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp313/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:50:10.292170698Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:49:48.753477586Z",
+      "digest": "sha256:bc88801331a07cb041d8ba988f6fb35497c863b08c92a25e8d07b267b88e614e",
+      "name": "[python-dev-append-cp313 python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp313\"       --version \"3.13.15\"       --adapter \"modern\"     && test ! -e \"/opt/crossforge/python/cp313\"     && test ! -e \"/opt/crossforge/qualification/python/cp313\"",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:49:48.294693822Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:51:47.071866359Z",
+      "digest": "sha256:9ef5dd60c03a4cebde4d5eb871754e583475c5921d1d91998b9b6ccf30b2116d",
+      "name": "[python-dev-append-cp314 python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp314\"       --version \"3.14.7\"       --adapter \"modern\"       --manifest \"/opt/crossforge/qualification/python/cp314/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp314\"       --version \"3.14.7\"       --adapter \"modern\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp314/source.json\"       --abi-input-root /work/abi-inputs       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp314/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:51:29.308038481Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:51:26.565036715Z",
+      "digest": "sha256:a7b9ef1b1a972cab7a8c6523acbef5ee39c009149754233e56d8b404e98b3dd7",
+      "name": "[python-dev-append-cp314 python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp314\"       --version \"3.14.7\"       --adapter \"modern\"     && test ! -e \"/opt/crossforge/python/cp314\"     && test ! -e \"/opt/crossforge/qualification/python/cp314\"",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:51:26.289337637Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:52:15.072630777Z",
+      "digest": "sha256:6e3758dfebd9ab5e2e79b47c8747a08404de532c273802f1795f03145e3569ad",
+      "name": "[python-dev-append-cp39 python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"     && test ! -e \"/opt/crossforge/python/cp39\"     && test ! -e \"/opt/crossforge/qualification/python/cp39\"",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:52:14.649380771Z"
+    },
+    {
+      "cached": false,
+      "completed": "2026-09-10T21:52:39.802740547Z",
+      "digest": "sha256:7a2444b611a93afcfbb869a64d44fd68bbd1e3223a74761e3c3d91c183c6a7b1",
+      "name": "[python-dev-append-cp39 python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"       --manifest \"/opt/crossforge/qualification/python/cp39/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp39/source.json\"       --abi-input-root /work/abi-inputs       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp39/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+      "stage": "python-sdk-append",
+      "started": "2026-09-10T21:52:19.423298707Z"
+    }
+  ]
+}

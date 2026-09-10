@@ -989,7 +989,7 @@
   "date": "2026-09-10",
   "kind": "crossforge-local-python-matrix-handoff-observation",
   "limits": [
-    "All producer rows completed; the first SDK build/export succeeded but its progress acceptance failed on Buildx per-target retiming; replay with the corrected owner-based reader is in progress",
+    "All six rows and the six-row Python SDK passed; complete SDK integration is still running",
     "Local tooling/builders and warm prerequisite/component caches; not a cold or GitHub performance comparison",
     "No remote workflow dispatch or publication, and no candidate/native ARM evidence"
   ],
@@ -999,6 +999,7 @@
   "remaining_rows": [],
   "schema_version": 1,
   "sdk_interface": {
+    "execution_observation": "python-sdk-integration-2026-09-10.json",
     "fresh_complete_sdk_runs": 14,
     "fresh_python_runs": 13,
     "locked_validators": 4,
@@ -1017,7 +1018,7 @@
       "sdk-complete-dev"
     ],
     "source": "/tmp/crossforge-python-sdk/source",
-    "status": "six rows qualified; original SDK progress rejection diagnosed, fresh integration replay in progress"
+    "status": "six-row Python SDK actual execution passed; complete SDK running"
   },
   "source_commit": "a128c3c5b0d9c8b9a2c07b2e25204f24b8e64d53",
   "source_dirty": true,
