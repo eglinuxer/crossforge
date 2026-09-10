@@ -1437,17 +1437,32 @@ FROM crossforge_toolchain_aarch64_install AS toolchain-aarch64-install-input
 FROM crossforge_toolchain_x86_64_test_context AS gcc-x86_64-test-input
 FROM crossforge_toolchain_aarch64_test_context AS gcc-aarch64-test-input
 
+# Qualification consumes only its authenticated component closure. Product
+# release binding is checked independently when the final SDK is assembled.
+FROM scratch AS toolchain-x86_64-policy
+COPY config/generated/components/toolchain/x86_64-qualification.json \
+  config/generated/components/toolchain/x86_64-build.json /components/toolchain/
+COPY config/generated/components/abi/x86_64-baseline.json /components/abi/
+COPY config/generated/components/sources/gcc.json \
+  config/generated/components/sources/binutils.json /components/sources/
+
+FROM scratch AS toolchain-aarch64-policy
+COPY config/generated/components/toolchain/aarch64-qualification.json \
+  config/generated/components/toolchain/aarch64-build.json /components/toolchain/
+COPY config/generated/components/abi/aarch64-baseline.json /components/abi/
+COPY config/generated/components/sources/gcc.json \
+  config/generated/components/sources/binutils.json /components/sources/
+
 # Real compiler smoke gate. This target remains non-publishable until frozen
 # ABI sets, full tests and the release supply chain exist.
 FROM host-build-common-locked AS toolchain-x86_64-qualify-build
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256
-COPY --from=release-validate /src/config/release.json /src/config/release.json
+COPY --from=toolchain-x86_64-policy /components/ /work/config/components/
 COPY abi/el8/x86_64.json /src/abi/el8/x86_64.json
 COPY --from=toolchain-x86_64-install-input /opt/crossforge/ /opt/crossforge/
 COPY scripts/qualify-toolchain.py /work/scripts/qualify-toolchain.py
 COPY scripts/abi_contract.py /work/scripts/abi_contract.py
-COPY scripts/python_row_contract.py scripts/release-components-core.py \
-  scripts/validate-release.py /work/scripts/
+COPY scripts/toolchain_policy.py scripts/release_component.py /work/scripts/
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY tests/smoke/ /work/tests/smoke/
 RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py \
@@ -1456,20 +1471,19 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
       --target x86_64-unknown-linux-gnu \
       --work /work/qualification/x86_64 \
       --report /work/qualification/x86_64.json \
-      --release /src/config/release.json \
+      --components /work/config/components \
       --abi-baseline /src/abi/el8/x86_64.json \
       --qualification-component-sha256 \
         "$CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256"
 
 FROM host-build-common-locked AS toolchain-aarch64-qualify-build
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256
-COPY --from=release-validate /src/config/release.json /src/config/release.json
+COPY --from=toolchain-aarch64-policy /components/ /work/config/components/
 COPY abi/el8/aarch64.json /src/abi/el8/aarch64.json
 COPY --from=toolchain-aarch64-install-input /opt/crossforge/ /opt/crossforge/
 COPY scripts/qualify-toolchain.py /work/scripts/qualify-toolchain.py
 COPY scripts/abi_contract.py /work/scripts/abi_contract.py
-COPY scripts/python_row_contract.py scripts/release-components-core.py \
-  scripts/validate-release.py /work/scripts/
+COPY scripts/toolchain_policy.py scripts/release_component.py /work/scripts/
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY tests/smoke/ /work/tests/smoke/
 RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py \
@@ -1478,7 +1492,7 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
       --target aarch64-unknown-linux-gnu \
       --work /work/qualification/aarch64 \
       --report /work/qualification/aarch64-compile.json \
-      --release /src/config/release.json \
+      --components /work/config/components \
       --abi-baseline /src/abi/el8/aarch64.json \
       --qualification-component-sha256 \
         "$CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256" \
@@ -1488,9 +1502,10 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
 # root through an explicit, content-locked static QEMU binary. No binfmt
 # registration is used. The finalizer binds both observations into JSON.
 FROM host-build-common-locked AS runtime-smoke-aarch64
+ARG CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256
 ARG QEMU_EXECUTOR_CPU
 ARG QEMU_EXECUTOR_UNAME_RELEASE
-COPY --from=release-validate /src/config/release.json /src/config/release.json
+COPY --from=toolchain-aarch64-policy /components/ /work/config/components/
 COPY --from=rocky-runtime-aarch64-source / /runtime-root/
 COPY --from=toolchain-aarch64-install-input \
   /opt/crossforge/sysroots/el8/aarch64/ /sysroot/
@@ -1503,8 +1518,7 @@ COPY scripts/run-aarch64-smoke.sh /work/scripts/run-aarch64-smoke.sh
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY scripts/finalize-aarch64-qualification.py \
   /work/scripts/finalize-aarch64-qualification.py
-COPY scripts/python_row_contract.py scripts/release-components-core.py \
-  scripts/validate-release.py /work/scripts/
+COPY scripts/toolchain_policy.py scripts/release_component.py /work/scripts/
 RUN mkdir -p \
       /sysroot/.crossforge \
       /sysroot/opt/crossforge-qualification \
@@ -1537,7 +1551,9 @@ RUN --network=none \
     /usr/libexec/platform-python \
       /work/scripts/finalize-aarch64-qualification.py \
       --compile-report /work/qualification/aarch64-compile.json \
-      --release /src/config/release.json \
+      --components /work/config/components \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256" \
       --artifacts /work/qualification/aarch64 \
       --locked-sysroot-result \
         /work/qualification/locked-sysroot-aarch64.result \

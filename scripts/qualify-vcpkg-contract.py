@@ -19,6 +19,7 @@ COMPONENT_READER = runpy.run_path(
 COMMON = runpy.run_path(
     str(SCRIPT_DIRECTORY / "vcpkg_qualification.py")
 )
+TOOLCHAIN_REPORT = runpy.run_path(str(SCRIPT_DIRECTORY / "toolchain_report.py"))
 ComponentError = COMPONENT_READER["ComponentError"]
 QualificationError = COMMON["QualificationError"]
 require = COMMON["require"]
@@ -167,7 +168,7 @@ def validate_component_closure(
     contract_component,
     policy_component_sha256,
     sdk_report,
-    toolchain_reports,
+    toolchain_paths,
 ):
     dependencies = {
         item["component"]: item["canonical_sha256"]
@@ -193,18 +194,20 @@ def validate_component_closure(
         == dependencies["vcpkg/sdk-build"],
         "vcpkg SDK prerequisite qualification differs",
     )
-    for arch, report in toolchain_reports.items():
-        require(
-            report.get("release_sha256") == release_sha256
-            and report.get("qualification_component")
-            == {
-                "component": "toolchain/%s-qualification" % arch,
-                "canonical_sha256": dependencies[
-                    "toolchain/%s-qualification" % arch
-                ],
-            },
-            "%s toolchain prerequisite qualification differs" % arch,
-        )
+    require(set(toolchain_paths) == {"x86_64", "aarch64"}, "toolchain prerequisite targets differ")
+    for arch, path in toolchain_paths.items():
+        targets = [target for target in release["targets"] if target["arch"] == arch]
+        require(len(targets) == 1, "toolchain release target is not unique")
+        identity = {"component": "toolchain/%s-qualification" % arch,
+                    "canonical_sha256": dependencies["toolchain/%s-qualification" % arch]}
+        try:
+            checked = TOOLCHAIN_REPORT["qualify_prior_toolchain_report"](
+                arch, targets[0]["triple"], path, release, release_sha256,
+                targets[0]["sysroot"]["canonical_sha256"], identity)
+        except TOOLCHAIN_REPORT["QualificationError"] as error:
+            raise QualificationError(str(error)) from error
+        require(sdk_report.get("toolchain_report_sha256", {}).get(arch) == checked["report_sha256"],
+                "%s toolchain report differs from the qualified vcpkg SDK" % arch)
     return dependencies
 
 
@@ -436,11 +439,8 @@ def qualify(
     sdk_report = load_json(
         Path("/opt/crossforge/qualification/vcpkg/sdk.json")
     )
-    toolchain_reports = {
-        arch: load_json(
-            Path("/opt/crossforge/qualification/toolchain")
-            / (arch + ".json")
-        )
+    toolchain_paths = {
+        arch: Path("/opt/crossforge/qualification/toolchain") / (arch + ".json")
         for arch in ("x86_64", "aarch64")
     }
     dependencies = validate_component_closure(
@@ -448,7 +448,7 @@ def qualify(
         contract_component,
         policy_sha256,
         sdk_report,
-        toolchain_reports,
+        toolchain_paths,
     )
     require(
         os.environ.get("VCPKG_DEFAULT_HOST_TRIPLET") == HOST_TRIPLET

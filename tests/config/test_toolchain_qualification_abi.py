@@ -177,6 +177,7 @@ class ToolchainQualificationAbiTests(unittest.TestCase):
             (REPOSITORY / "config/release.json").read_text(encoding="utf-8")
         )
         abi = abi_contract.validate_release_abi_identities(release)
+        components = QUALIFIER.release_components()
         for arch in ("x86_64", "aarch64"):
             baseline = abi_contract.load_json(
                 REPOSITORY / ("abi/el8/%s.json" % arch)
@@ -185,17 +186,17 @@ class ToolchainQualificationAbiTests(unittest.TestCase):
                 abi["targets"][arch]["baseline"]["canonical_sha256"],
                 abi_contract.canonical_sha256(baseline),
             )
-            expected = QUALIFIER.RELEASE_COMPONENTS[
+            expected = components[
                 "toolchain_qualification_component"
             ](release, arch)
             self.assertEqual(
-                QUALIFIER.RELEASE_COMPONENTS[
+                components[
                     "bind_toolchain_qualification_component"
                 ](release, arch, expected["canonical_sha256"]),
                 expected,
             )
-            with self.assertRaises(QUALIFIER.ProjectionError):
-                QUALIFIER.RELEASE_COMPONENTS[
+            with self.assertRaises(components["ProjectionError"]):
+                components[
                     "bind_toolchain_qualification_component"
                 ](release, arch, "0" * 64)
 

@@ -151,3 +151,21 @@ GCC full 的既有进程仍在执行；本批不会用 smoke、静态图或传�
 
 
 本批验证：Docker 完整 config 1033 项、185.921 秒、零失败（2 项既有 zstd 跳过），packaging 40 项、0.782 秒、零失败（1 项既有 nFPM 跳过）。完整回归之后进一步收紧 full 模式：必须执行 stage 内全部 canonical 根目标，不能只保持全部 stage 名称却遗漏根；新增回归和最终 CI 41 项、计划 13 项复核通过。四项 locked validators、三个 renderer `--check`、固定 actionlint 1.7.12 均通过；真实 Rocky 8 platform-python 3.6 完成递归编译、CLI 导入与 89 个投影检查。实际 Git base/head archive→renderer→Bake→完整计划 CLI 也已通过。没有修改 release pins、冻结 ABI 或 GCC baseline；实验改动只在 `/tmp` 隔离快照中。
+
+
+## 双架构工具链交接与独立资格策略
+
+ARM 安装组件及 GCC 测试上下文通过正式 producer 构建与封装，随后在 consumer builder 通过原工具链 ABI/locked-sysroot/clean-Rocky 门禁及 GCC smoke。记录见 [工具链策略与 ARM 交接观测](toolchain-policy-2026-09-10.json)。安装 producer 共 487.73 秒，测试上下文 103.51 秒；ARM GCC smoke 在 locked-sysroot 与 clean-Rocky 两层各得到 16 PASS，封装 51.09 秒、独立核验 0.42 秒。这些是 amd64 上显式固定 QEMU 的资格结果，不是原生 ARM 发布证据。
+
+针对上批 cp39 实验发现的完整 release 耦合，新增标准库领域模块 `toolchain_policy.py`。工具链 smoke/runtime 阶段从可信 qualification SHA256 校验五份已有投影及其摘要依赖，读取 target/sysroot、GCC/binutils 来源与版本、ABI 和运行时策略。Docker stage 使用 `--components`，不再复制完整 release 或 release graph 实现。新 schema 2 报告只声明 scoped policy binding；旧 `--release` 路径继续保持完整 release binding，不能将原报告改写成新 release 的执行结果。
+
+SDK 与 vcpkg SDK 从完整 release 独立推导策略并核验原报告；vcpkg 契约使用同一个报告验证器，并核对报告字节与其已资格化 SDK 记录一致。缺少/失败的运行时门禁、错误组件/策略/来源/sysroot、schema 降级、混合 scoped 与完整 release 声明、缺失或不安全的 clean marker 均被拒绝。
+
+- 新接口实跑 x86_64 工具链门禁 17.04 秒、独立核验 0.45 秒；ARM 门禁 14.52 秒、独立核验 0.46 秒。各有 2/5 条本次成功且非缓存的资格 RUN，安装输入仍匹配之前的可信 receipt。资格材料不含完整 `config/release.json` 或 `build-gcc.sh`。
+- 隔离源中修改 cp39 patch、同步 release 中的 SHA 并按顺序再生成后，真实计划不再选中两套 toolchain dev 根；编译材料仍只有 cp39 native/x86_64/aarch64 三项变化。GCC/Python 等其他资格根仍有完整 release 依赖，本批没有宣称它们也已独立。
+- 从修改后的源重新捕获资格材料并核验原 OCI，两套资格输入 SHA256 都保持不变，分别用 1.95/2.05 秒完成主体绑定、材料核对与 prior-execution 消费，原 producer/执行区间/报告保持原值。这不是再次执行测试的声明。
+- 最终 SDK 与 vcpkg SDK 的报告消费函数接受上述实际报告及无关 release 变更；vcpkg 契约兼容性由回归验证。本批尚未重新运行完整 vcpkg/最终 SDK 产品集成。
+
+原始源快照、OCI、receipt 与日志保留在本机 `/tmp/crossforge-arm-components/` 和 `/tmp/crossforge-toolchain-policy/`，大文件不入库。这里的时长来自已有组件与前置缓存，不作为 GitHub 端到端加速比例。生产 CI 的可信组件消费、完整 Python row/SDK 交接、跨 run 信任与失败恢复、并行度实测等剩余目标继续推进。
+
+本批最终验证：Docker 全量 config 1044 项、186.021 秒，packaging 40 项、0.770 秒，均零失败（分别 2 项既有 zstd 与 1 项既有 nFPM 跳过）；四项 locked validators 和三个 renderer `--check` 通过。真实 Rocky 8 platform-python 3.6 门禁强制执行，完成递归编译、组件 CLI 导入与 89 个投影检查。未修改任何版本 pin、冻结 ABI 或 GCC baseline，也未发布镜像或触发远程工作流。

@@ -14,6 +14,7 @@ from pathlib import Path
 
 import abi_contract
 from loader_evidence import normalize_loader_listing
+import toolchain_policy
 
 
 class QualificationError(RuntimeError):
@@ -32,10 +33,26 @@ TARGET_PROFILES = {
 QUALIFIED_ELF_PROFILE = "crossforge-qualified-v1"
 COMPILER_DEFAULT_ELF_PROFILE = "compiler-default-observation"
 HARDENED_LINKER_FLAG = "-Wl,-z,relro,-z,now"
-RELEASE_COMPONENTS = runpy.run_path(
-    str(Path(__file__).with_name("release-components-core.py"))
-)
-ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+
+
+def release_components():
+    # Legacy --release is retained for callers that still provide a complete
+    # product policy. Component-mode Docker stages do not need these modules.
+    return runpy.run_path(str(Path(__file__).with_name("release-components-core.py")))
+
+
+def qualification_policy(arguments, arch):
+    if arguments.components is not None:
+        return toolchain_policy.load(arguments.components, arch, arguments.qualification_component_sha256), None
+    release = toolchain_policy.component.load_json(arguments.release)
+    components = release_components()
+    try:
+        identity = components["bind_toolchain_qualification_component"](
+            release, arch, arguments.qualification_component_sha256)
+    except components["ProjectionError"] as error:
+        raise QualificationError(str(error)) from error
+    abi_contract.validate_release_abi_identities(release)
+    return toolchain_policy.from_release(release, arch, identity), release
 
 
 def run(arguments, cwd=None, env=None):
@@ -109,7 +126,9 @@ def main():
     parser.add_argument("--target", required=True)
     parser.add_argument("--work", type=Path, required=True)
     parser.add_argument("--report", type=Path)
-    parser.add_argument("--release", type=Path, required=True)
+    policy_source = parser.add_mutually_exclusive_group(required=True)
+    policy_source.add_argument("--release", type=Path)
+    policy_source.add_argument("--components", type=Path)
     parser.add_argument("--abi-baseline", type=Path, required=True)
     parser.add_argument(
         "--qualification-component-sha256", required=True
@@ -142,69 +161,53 @@ def main():
     )
     arguments.work.mkdir(parents=True, exist_ok=True)
 
-    release = json.loads(arguments.release.read_text(encoding="utf-8"))
-    release_canonical = json.dumps(
-        release, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-    )
+    policy, release = qualification_policy(arguments, profile["arch"])
     sysroot_lock_path = arguments.sysroot / "usr/share/crossforge/sysroot-lock.json"
-    sysroot_lock = json.loads(sysroot_lock_path.read_text(encoding="utf-8"))
+    sysroot_lock = toolchain_policy.component.load_json(sysroot_lock_path)
     sysroot_canonical = json.dumps(
         sysroot_lock, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     )
     sysroot_digest = hashlib.sha256(sysroot_canonical.encode("utf-8")).hexdigest()
-    release_targets = [
-        target for target in release["targets"] if target["triple"] == arguments.target
-    ]
-    require(len(release_targets) == 1, "target is not unique in release.json")
     require(
-        release_targets[0]["sysroot"]["canonical_sha256"] == sysroot_digest,
-        "qualified sysroot differs from release.json",
+        policy["target"]["sysroot"]["canonical_sha256"] == sysroot_digest,
+        "qualified sysroot differs from toolchain policy",
     )
     abi_baseline, abi_baseline_identity = load_abi_baseline(
         arguments.abi_baseline,
         profile["arch"],
         arguments.target,
     )
-    try:
-        release_abi = abi_contract.validate_release_abi_identities(release)
-        qualification_component = RELEASE_COMPONENTS[
-            "bind_toolchain_qualification_component"
-        ](
-            release,
-            profile["arch"],
-            arguments.qualification_component_sha256,
-        )
-    except (abi_contract.AbiContractError, ProjectionError) as error:
-        raise QualificationError(str(error)) from error
     require(
-        release_abi["targets"][profile["arch"]]["baseline"]
+        policy["abi_baseline"]
         == {
             "file": "abi/el8/%s.json" % profile["arch"],
             "canonical_sha256": abi_baseline_identity[
                 "canonical_sha256"
             ],
         },
-        "qualified ABI baseline differs from release.json",
+        "qualified ABI baseline differs from toolchain policy",
     )
     target_interpreter = abi_contract.TARGETS[profile["arch"]]["interpreter"]
     report = {
         "target": arguments.target,
         "binaries": {},
         "abi_baseline": abi_baseline_identity,
-        "qualification_component": qualification_component,
-        "release_sha256": hashlib.sha256(release_canonical.encode("utf-8")).hexdigest(),
+        "qualification_component": policy["component"],
         "sysroot_sha256": sysroot_digest,
         "sources": {
-            "gcc": release["gts"]["source"],
-            "binutils": release["binutils"]["source"],
+            "gcc": policy["gcc"]["source"],
+            "binutils": policy["binutils"]["source"],
         },
     }
+    if release is None:
+        report.update(input_binding=toolchain_policy.binding(policy), qualification_schema_version=2,
+                      report_kind="crossforge-toolchain-qualification" if profile["arch"] == "x86_64" else "crossforge-toolchain-compile",
+                      runtime_base=policy["runtime_base"])
+    else:
+        report["release_sha256"] = toolchain_policy.component.canonical_sha256(release)
     if arguments.target == "aarch64-unknown-linux-gnu":
-        report["runtime_executor"] = release["qemu"]["executor"]
-        report["runtime_base"] = {
-            "index_digest": release["base_image"]["digest"],
-            "manifest_digest": release["base_image"]["manifests"]["arm64"],
-        }
+        report["runtime_executor"] = policy["runtime_executor"] if release is None else release["qemu"]["executor"]
+        report["runtime_base"] = policy["runtime_base"]
     else:
         report["runtime_executor"] = {"kind": "native"}
     machine, _ = run([gcc, "-dumpmachine"])
@@ -212,7 +215,7 @@ def main():
     full_version, _ = run([gcc, "-dumpfullversion"])
     report["compiler_version"] = full_version.strip()
     require(
-        report["compiler_version"] == release["gts"]["gcc_version"],
+        report["compiler_version"] == policy["gcc"]["version"],
         "compiler version differs from release.json",
     )
     printed_sysroot, _ = run([gcc, "-print-sysroot"])
@@ -229,7 +232,7 @@ def main():
     report["binutils_version"] = ld_version.splitlines()[0]
     require(
         re.search(
-            r"(?<![0-9.])%s(?![0-9.])" % re.escape(release["binutils"]["version"]),
+            r"(?<![0-9.])%s(?![0-9.])" % re.escape(policy["binutils"]["version"]),
             report["binutils_version"],
         ),
         "binutils version differs from release.json",
@@ -580,6 +583,6 @@ def main():
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except (QualificationError, abi_contract.AbiContractError) as error:
+    except (QualificationError, abi_contract.AbiContractError, ValueError, OSError) as error:
         print("error: %s" % error, file=sys.stderr)
         raise SystemExit(1)

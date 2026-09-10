@@ -331,10 +331,11 @@ class DockerComponentWiringTests(unittest.TestCase):
                 "COPY --from=release-validate /src/config/rpm/sysroot-el8-",
                 block,
             )
-        self.assertIn(
-            "COPY --from=release-validate /src/config/release.json",
-            self.stages["runtime-smoke-aarch64"],
-        )
+        for arch in ("x86_64", "aarch64"):
+            for stage in (["toolchain-%s-qualify-build" % arch] +
+                          (["runtime-smoke-aarch64"] if arch == "aarch64" else [])):
+                self.assertIn("COPY --from=toolchain-%s-policy /components/" % arch, self.stages[stage])
+                self.assertNotIn("/src/config/release.json", self.stages[stage])
         self.assertEqual(self.parents["runtime-smoke-x86_64"], "rocky-base")
 
     def test_install_outputs_keep_component_binding_evidence_visible(self):

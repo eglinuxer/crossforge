@@ -3,7 +3,11 @@
 import hashlib
 import json
 import re
+import runpy
 from pathlib import Path
+
+
+POLICY = runpy.run_path(str(Path(__file__).with_name("toolchain_policy.py")))
 
 
 class QualificationError(RuntimeError):
@@ -53,11 +57,29 @@ def qualify_prior_toolchain_report(
         "%s toolchain qualification report is missing or unsafe" % arch,
     )
     report = load_json(report_path)
+    scoped = "input_binding" in report
+    require(scoped or "qualification_schema_version" not in report or
+            (arch == "aarch64" and type(report["qualification_schema_version"]) is int and
+             report["qualification_schema_version"] == 1), "unsupported toolchain qualification schema")
+    if scoped:
+        try:
+            policy = POLICY["from_release"](release, arch, component)
+            POLICY["require_binding"](report, policy)
+        except (ValueError, KeyError, TypeError) as error:
+            raise QualificationError(str(error)) from error
+        require(type(report.get("qualification_schema_version")) is int and
+                report["qualification_schema_version"] == 2 and
+                report.get("report_kind") == "crossforge-toolchain-qualification" and
+                report.get("runtime_executor") == policy["runtime_executor"] and
+                report.get("runtime_base") == policy["runtime_base"] and
+                type(report.get("abi_baseline")) is dict and
+                report["abi_baseline"].get("canonical_sha256") == policy["abi_baseline"]["canonical_sha256"],
+                "scoped toolchain qualification policy differs")
     require(type(report.get("binutils_version")) is str,
             "toolchain binutils version is missing")
     require(
         report.get("target") == target
-        and report.get("release_sha256") == release_sha256
+        and (scoped or report.get("release_sha256") == release_sha256)
         and report.get("sysroot_sha256") == sysroot_sha256
         and report.get("compiler_version") == release["gts"]["gcc_version"]
         and re.search(
@@ -72,22 +94,25 @@ def qualify_prior_toolchain_report(
             "binutils": release["binutils"]["source"],
         }
         and report.get("qualification_component") == component,
-        "%s prior toolchain qualification is not release-bound" % arch,
+        "%s prior toolchain qualification does not match current inputs" % arch,
     )
     if arch == "aarch64":
         require(
             type(report.get("qualification_schema_version")) is int
-            and report["qualification_schema_version"] == 1
+            and report["qualification_schema_version"] == (2 if scoped else 1)
             and report.get("report_kind")
             == "crossforge-toolchain-qualification"
-            and report.get("locked_sysroot_execution", {}).get("status")
+            and type(report.get("locked_sysroot_execution")) is dict
+            and report["locked_sysroot_execution"].get("status")
             == "passed"
-            and report.get("clean_runtime_execution", {}).get("status")
+            and type(report.get("clean_runtime_execution")) is dict
+            and report["clean_runtime_execution"].get("status")
             == "passed",
             "aarch64 prior runtime qualification did not pass",
         )
     else:
-        require(report.get("locked_sysroot_execution", {}).get("status") == "passed",
+        require(type(report.get("locked_sysroot_execution")) is dict and
+                report["locked_sysroot_execution"].get("status") == "passed",
                 "x86_64 locked-sysroot qualification did not pass")
         clean_marker = report_path.with_name("x86_64-clean-runtime.ok")
         require(

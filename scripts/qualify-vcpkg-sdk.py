@@ -787,6 +787,23 @@ def qualify_cmake(root, release, component_path, component_sha256, report_path):
     }
 
 
+def qualify_toolchain_reports(release, release_sha256, directory):
+    components = runpy.run_path(str(SCRIPT_DIRECTORY / "release-components-core.py"))
+    validator = runpy.run_path(str(SCRIPT_DIRECTORY / "toolchain_report.py"))
+    results = {}
+    for arch in TARGETS:
+        targets = [target for target in release["targets"] if target["arch"] == arch]
+        require(len(targets) == 1, "toolchain release target is not unique")
+        try:
+            results[arch] = validator["qualify_prior_toolchain_report"](
+                arch, TARGETS[arch]["triple"], directory / (arch + ".json"), release, release_sha256,
+                targets[0]["sysroot"]["canonical_sha256"],
+                components["toolchain_qualification_component"](release, arch))
+        except (validator["QualificationError"], components["ProjectionError"]) as error:
+            raise QualificationError(str(error)) from error
+    return results
+
+
 def qualify(
     release_path,
     root,
@@ -806,18 +823,7 @@ def qualify(
             release, ensure_ascii=False, sort_keys=True, separators=(",", ":")
         ).encode("utf-8")
     ).hexdigest()
-    toolchain_reports = {
-        arch: load_json(
-            Path("/opt/crossforge/qualification/toolchain") / (arch + ".json")
-        )
-        for arch in ("x86_64", "aarch64")
-    }
-    for arch, report in toolchain_reports.items():
-        require(
-            report.get("release_sha256") == release_sha256
-            and report.get("target") == TARGETS[arch]["triple"],
-            "%s base toolchain qualification is absent or stale" % arch,
-        )
+    qualify_toolchain_reports(release, release_sha256, Path("/opt/crossforge/qualification/toolchain"))
     source_component = load_component(
         component_paths["source"],
         "sources/vcpkg",

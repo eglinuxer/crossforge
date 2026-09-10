@@ -101,7 +101,8 @@ def qualification_inputs(source, graph, settings, execution, bindings):
                   "scripts/crossforge_internal/qualification_execution.py"]
     if settings["profile"] == "toolchain":
         validators += ["scripts/toolchain_report.py", "scripts/release-components-core.py",
-                       "scripts/python_row_contract.py", "scripts/validate-release.py"]
+                       "scripts/python_row_contract.py", "scripts/validate-release.py",
+                       "scripts/toolchain_policy.py", "scripts/release_component.py"]
     else:
         validators += ["scripts/validate-gcc-testsuite.py", "scripts/validate-release.py"]
     files = {record["path"]: record for record in value["files"]}

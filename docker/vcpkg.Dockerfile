@@ -231,7 +231,10 @@ COPY config/generated/components/host-tools/ninja.json \
 COPY config/generated/components/host-tools/cmake.json \
   /work/config/cmake-host-tool.json
 COPY --chmod=0755 scripts/fetch-vcpkg-history.py \
-  scripts/release_component.py scripts/qualify-vcpkg-sdk.py /work/scripts/
+  scripts/release_component.py scripts/qualify-vcpkg-sdk.py \
+  scripts/toolchain_policy.py scripts/toolchain_report.py \
+  scripts/release-components-core.py scripts/python_row_contract.py \
+  scripts/validate-release.py /work/scripts/
 ENV NINJA_ROOT=/opt/crossforge/host-tools/ninja/1.13.2 \
     CROSSFORGE_CMAKE_ROOT=/opt/crossforge/host-tools/cmake/4.4.0 \
     VCPKG_ROOT=/opt/crossforge/vcpkg/root \
@@ -293,6 +296,7 @@ COPY config/generated/components/vcpkg/contract-qualification.json \
   /work/config/vcpkg-contract-qualification.json
 COPY --chmod=0755 scripts/release_component.py \
   scripts/qualify-vcpkg-contract.py scripts/vcpkg_qualification.py \
+  scripts/toolchain_report.py scripts/toolchain_policy.py \
   /work/scripts/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-vcpkg-contract.py \
