@@ -268,3 +268,5 @@ Docker 全量 config 1090 项、147.414 秒，packaging 40 项、0.871 秒通过
 将小型目录、receipt、输入证据的保留逻辑提取为共用函数，原 pilot 继续使用；下载的 OCI 数据必须与上传诊断目录分离。当前只交付 CLI opt-in，自动 main 接入与 PR 凭据隔离、缺失 producer 的生产编排仍待连接，没有向 PR 新增 registry 权限。
 
 [绑定验证记录](ci-component-binding-2026-09-10.json)：Docker 定向回归共 40 项通过（6 项绑定、3 项 catalog consumer、7 项 resolver、24 项 CI build）；三个 renderer 检查与实际 Rocky 8 platform-python 3.6 强制门禁通过。使用不可变源码快照、既有独立可信 receipt 和真实 OCI 校验，在本地替换 resolver 的信任入口后执行实际 `ci-build.run_stage`，工具链阶段成功，重新解析的消费图只有 `toolchain-x86_64-dev`，材料闭包不含 GCC 源码构建。该 cache-only 暖运行记录为 6.2 秒，保留原组件 producer，不宣称 GitHub 签名验证、新执行资格或远程性能收益。
+
+后续核对本地配置时，补齐 resolver 对 `DOCKER_CONFIG` 的支持：显式 `docker_config` 优先，其次使用环境指定目录，再使用默认用户目录，确保 registry 与 Buildx 不会意外读取不同配置。Docker resolver 8 项定向回归通过（0.019 秒），覆盖环境配置与显式覆盖；日志 SHA256 为 `316558a93ba028238bcd514bbec8a07c6b5122f2fa8e4ce8499b5d85bc6111f8`。

@@ -1,6 +1,7 @@
 """Resolution cannot turn a missing index or failed verifier into accepted bytes."""
 
 import copy
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -125,6 +126,16 @@ class ComponentResolutionTests(unittest.TestCase):
         with self.assertRaises(IdentityError):
             self.resolve()
         self.lookup.assert_not_called()
+
+    def test_registry_auth_uses_the_same_docker_config_environment_as_buildx(self):
+        self.lookup.return_value = {"status": "missing", "reason": "catalog-index-absent", "input_tag": "input-fixture"}
+        with mock.patch.dict(os.environ, DOCKER_CONFIG=str(self.root / "environment-config")):
+            resolution.toolchain(self.root, {"target": {}}, "x86_64", "toolchain-install", self.fixture.execution,
+                self.root / "cosign", self.output, "builder", self.root / "oras")
+            self.assertEqual(self.lookup.call_args[0][8], self.root / "environment-config/config.json")
+            shutil.rmtree(str(self.output))
+            self.resolve()
+            self.assertEqual(self.lookup.call_args[0][8], self.root / "docker/config.json")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ neither a catalog signature nor an acquisition result asserts qualification.
 """
 
 import copy
+import os
 from pathlib import Path
 import shutil
 
@@ -23,7 +24,7 @@ def toolchain(source, graph, arch, role, execution, cosign, directory, builder, 
     expected = component_build.toolchain_inputs(source, graph, arch, role, execution)
     component_build.write_json(directory / "inputs.json", expected)
     policy = registry_transfer.validate_tool(load_json(Path(source) / ".github/locked-tools/oras.json"))
-    registry_config = Path(docker_config or Path.home() / ".docker") / "config.json"
+    registry_config = Path(docker_config or os.environ.get("DOCKER_CONFIG") or Path.home() / ".docker") / "config.json"
     selected = catalog_registry.lookup(source, expected, role, cosign, directory / "catalog",
         component_catalog.REPOSITORY, oras, policy, registry_config, catalog_reference=catalog_reference)
     result = {"schema_version": 1, "kind": "crossforge-component-resolution",
