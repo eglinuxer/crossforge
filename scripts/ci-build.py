@@ -202,7 +202,7 @@ def selected_graph(stage, targets=None):
     return read_graph(targets)
 
 
-def run_stage(stage, directory, repository, write=False, cold=False, selected_targets=None):
+def run_stage(stage, directory, repository, write=False, cold=False, selected_targets=None, components=None):
     graph = selected_graph(stage, selected_targets)
     directory.mkdir(parents=True, exist_ok=True)
     write_json(directory / "graph.json", graph)
@@ -220,6 +220,18 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
     status = 127
     monitor.start()
     try:
+        bake = list(BAKE)
+        if components is not None:
+            from crossforge_internal import component_build, component_resolution
+            execution = component_build.execution_identity(components["builder"])
+            resolved, binding = component_resolution.bind_toolchains(ROOT, graph, execution,
+                components["cosign"], components["directory"], directory / "components",
+                components["builder"], components["oras"])
+            resolved_path = directory / "components.bake.json"
+            write_json(resolved_path, resolved)
+            bake += ["--builder", components["builder"], "-f", str(resolved_path)]
+            print("%s: resolved %d toolchain components; %d producer boundaries require build" % (
+                stage, len(binding["components"]), len(binding["required_producers"])), flush=True)
         with (directory / "build.log").open("xb"):
             for target in targets:
                 # Linked roots can be solved again by a later consumer. Export
@@ -235,7 +247,7 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
                     status = 124
                     break
                 command = ["timeout", "--signal=TERM", "--kill-after=60s",
-                           str(remaining) + "s", *BAKE, "-f", str(solve_override),
+                           str(remaining) + "s", *bake, "-f", str(solve_override),
                            target, "--progress=plain", "--metadata-file",
                            str(directory / ("metadata-" + target + ".json"))]
                 status = HEARTBEAT["execute"](
@@ -277,6 +289,10 @@ def main():
     run.add_argument("stage", choices=STAGES)
     run.add_argument("--directory", type=Path, required=True)
     run.add_argument("--targets-json")
+    run.add_argument("--component-builder")
+    run.add_argument("--component-oras", type=Path)
+    run.add_argument("--component-cosign", type=Path)
+    run.add_argument("--component-directory", type=Path)
     cache = commands.add_parser("cache")
     cache.add_argument("--output", type=Path, required=True)
     cache.add_argument("targets", nargs="+")
@@ -285,9 +301,18 @@ def main():
         require_writer(os.environ)
     if args.command == "run":
         from crossforge_internal.identity import parse_json
+        components = None
+        options = (args.component_builder, args.component_oras, args.component_cosign, args.component_directory)
+        if any(value is not None for value in options):
+            if not all(value is not None for value in options):
+                raise ValueError("component consumption requires builder, ORAS, Cosign and a separate OCI directory")
+            if args.cold or args.write_cache:
+                raise ValueError("incremental component consumption cannot be combined with cold or cache-writing qualification")
+            components = {"builder": args.component_builder, "oras": args.component_oras,
+                "cosign": args.component_cosign, "directory": args.component_directory}
         return run_stage(args.stage, args.directory.resolve(), args.repository,
                          args.write_cache, args.cold,
-                         parse_json(args.targets_json) if args.targets_json is not None else None)
+                         parse_json(args.targets_json) if args.targets_json is not None else None, components)
     write_json(args.output, cache_override(read_graph(args.targets), args.repository,
                                           args.write_cache, args.cold, cache_catalog()))
     return 0

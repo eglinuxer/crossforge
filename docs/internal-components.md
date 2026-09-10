@@ -421,6 +421,43 @@ original producer. Diagnostics preserve the original catalog, bundle, manifest,
 inputs and receipts with the new reports, excluding large OCI layouts. This
 pilot does not yet assert a complete Python row or final candidate qualification.
 
+## Bind toolchain components into an incremental CI stage
+
+The existing CI build CLI can opt into the same authenticated reader. Run it
+inside the Docker tooling environment, with its pinned builder, ORAS and Cosign
+available and the registry configuration mounted at the normal Docker location:
+
+```sh
+python3 scripts/ci-build.py run toolchain-x86_64 \
+  --directory /output/ci-diagnostics/toolchain-x86_64 \
+  --component-builder "$COMPONENT_BUILDER" \
+  --component-oras /output/oras-tool/oras \
+  --component-cosign /output/cosign-tool/cosign \
+  --component-directory /output/component-data/toolchain-x86_64
+```
+
+All four component options are required together. This incremental interface
+rejects `--cold` and `--write-cache`; existing qualification workflows retain
+their current execution path. The component data directory must be separate
+from uploaded diagnostics, including its parent/child paths.
+
+The binder identifies the canonical installation and GCC test-context edges for
+each architecture in the selected Bake graph. It resolves each needed artifact
+once and replaces every matching named context only after verification. A missing
+index leaves its original producer reachable and records that producer explicitly
+in `components/binding.json`; authentication and artifact failures stop the stage.
+Existing selected roots and their gates remain required. Small original catalog,
+receipt and input records go into diagnostics; OCI layouts stay outside them.
+Component acquisition is included in the stage's recorded elapsed time.
+
+The CLI interface is implemented; `verify-incremental.yml` does not yet enable it
+automatically. Main/PR credential isolation and production producer scheduling
+must be connected before that switch. Current PRs receive no new registry
+credentials from this change. A local Docker execution verified the bound
+toolchain stage and absence of source GCC dependencies using independently trusted
+local receipts; that execution did not exercise GitHub catalog authentication or
+claim fresh qualification from ordinary cache hits.
+
 ## Durable catalog storage and discovery
 
 `catalog_registry.py` stores the exact catalog and signature bundle together as

@@ -1,0 +1,75 @@
+{
+  "actual_ci_stage": {
+    "graph_targets": [
+      "toolchain-x86_64-dev"
+    ],
+    "inputs_sha256": "e7c804a21665060a1c37b10b5286417637e0e0d6f8ec207ab9133009b75b0c9e",
+    "kind": "crossforge-local-ci-component-binding-observation",
+    "original_producer": {
+      "invocation": "urn:crossforge:local:qualification-receipt-20260910",
+      "kind": "local",
+      "source_commit": "1e50eef37666f5ec861e0ff43fcaec95cc0b7765",
+      "source_dirty": true,
+      "started_at": "2026-09-10T17:48:23Z"
+    },
+    "scope": "Actual cache-only CI stage from verified local OCI; no remote catalog authentication or fresh qualification claim",
+    "source_gcc_build": false,
+    "stage": {
+      "cache_write": false,
+      "cold": false,
+      "elapsed_seconds": 6.2,
+      "exit_code": 0,
+      "kind": "crossforge-ci-build-observation",
+      "source_commit": "",
+      "stage": "toolchain-x86_64",
+      "targets": [
+        "toolchain-x86_64-dev"
+      ]
+    }
+  },
+  "date": "2026-09-10",
+  "files": {
+    "scripts/ci-build.py": "811ff4b3325eadec421d1eefaf9152615c13b93c780728feaf4181a00b118e43",
+    "scripts/component-pilot.py": "f230f5b2788d1ba2414157ae2979ac3f31247a5503d9d11f437d66e7775849e5",
+    "scripts/crossforge_internal/component_resolution.py": "58fbd77582cefa8b1b2e5b1cc6e3d998555c9d15362457c2c03d56e402ef8bd2",
+    "tests/config/test_ci_component_binding.py": "6a5692e0df351a72f9f8ba713d7a6055e97938b186aa1a0d0b7015bfac1345e5"
+  },
+  "kind": "crossforge-local-ci-component-binding-observation",
+  "limits": [
+    "CLI opt-in and graph binding are implemented; automatic main workflow routing and production missing-producer scheduling remain pending",
+    "Current PR workflow permissions and registry authentication were not changed",
+    "The actual stage used a local resolver seam that recaptured current inputs and verified real OCI bytes against an independently trusted existing receipt; no signed GitHub catalog lookup was claimed",
+    "Warm cache-only CI stage completed in 6.2 seconds; its cached gates are not presented as fresh qualification or GitHub performance",
+    "Recent prior full config/packaging suites passed before this binding change; this change received focused 40-test Docker regression coverage, renderer checks and actual platform-python/CI execution"
+  ],
+  "logs": {
+    "/tmp/crossforge-ci-component-binding/platform-python.log": "d1ddae11a1e0678ccf90989fa62e9e0a8d01fee2f767802092d1f47befc6dc7b",
+    "/tmp/crossforge-ci-component-binding/regressions-final.log": "af14dd0448dc1f2fd4d2427cba58ccc77326ed786afbaa00df8036a7f61a241d",
+    "/tmp/crossforge-ci-component-binding/regressions.log": "737c78e5fcf5a7ac52fc933dfa07046abf8f04951591cdde9c9099ebc7a55782",
+    "/tmp/crossforge-ci-component-binding/run.log": "715448da0cd64e8222460fde8c46ad38e45db61643ee91981c07c6da77b1d90c"
+  },
+  "regressions": {
+    "catalog_consumer": {
+      "seconds": 0.009,
+      "tests": 3
+    },
+    "ci_binding": {
+      "seconds": 0.006,
+      "tests": 6
+    },
+    "ci_build": {
+      "seconds": 1.441,
+      "tests": 24
+    },
+    "component_resolution": {
+      "seconds": 0.025,
+      "tests": 7
+    },
+    "platform_python": "actual Rocky 8 Python 3.6 forced stage passed",
+    "renderer_checks": 3
+  },
+  "schema_version": 1,
+  "source_commit": "abb2359a15a2393875df6c18e6eff4c89b377fc3",
+  "source_dirty": true,
+  "status": "local-validation-passed"
+}

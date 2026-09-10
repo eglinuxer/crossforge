@@ -4,7 +4,9 @@ An absent input index requests a producer. All other failures remain errors;
 neither a catalog signature nor an acquisition result asserts qualification.
 """
 
+import copy
 from pathlib import Path
+import shutil
 
 from . import catalog_registry, component_build, component_catalog, component_inputs
 from . import registry_transfer
@@ -49,3 +51,68 @@ def toolchain(source, graph, arch, role, execution, cosign, directory, builder, 
     component_inputs.require_match(expected, component_build.toolchain_inputs(source, graph, arch, role, execution))
     component_build.write_json(directory / "resolution.json", result)
     return result
+
+
+def preserve_evidence(directory, destination):
+    """Keep small original trust records, never the downloaded OCI layout."""
+    directory, destination = Path(directory), Path(destination)
+    require(not destination.exists(), "resolution evidence directory must be new")
+    destination.mkdir(parents=True)
+    for name in ("inputs.json", "resolution.json", "receipt.json"):
+        if (directory / name).exists():
+            shutil.copyfile(str(directory / name), str(destination / name))
+    if (directory / "catalog").exists():
+        shutil.copytree(str(directory / "catalog"), str(destination / "catalog"))
+
+
+def toolchain_edges(graph):
+    """Find canonical installation/test-context boundaries in a resolved graph."""
+    require(type(graph) is dict and type(graph.get("target")) is dict, "resolved Bake graph is required")
+    producers = {"target:" + component_build.toolchain_spec(arch, role)["target"]: (arch, role)
+        for arch in ("x86_64", "aarch64") for role in ("toolchain-install", "gcc-test-context")}
+    edges = {}
+    for target, definition in graph["target"].items():
+        require(type(definition) is dict and type(definition.get("contexts", {})) is dict, "invalid Bake target contexts")
+        for name, reference in definition.get("contexts", {}).items():
+            require(type(reference) is str, "Bake context reference must be a string")
+            if reference in producers:
+                arch, role = producers[reference]
+                spec = component_build.toolchain_spec(arch, role)
+                require(graph["target"].get(spec["target"], {}).get("target") == spec["target"],
+                        "toolchain producer stage differs from canonical boundary")
+                edges.setdefault((arch, role), []).append((target, name))
+    return edges
+
+
+def bind_toolchains(source, graph, execution, cosign, directory, evidence, builder, oras, docker_config=None):
+    """Resolve each needed artifact once; retain explicit producers on a miss.
+
+    This is a build graph binding, not a qualification record. Cache-only CI
+    still executes all its selected roots and preserves their existing gates.
+    """
+    directory, evidence = Path(directory).absolute(), Path(evidence).absolute()
+    require(not directory.exists() and not evidence.exists(), "component binding outputs must be new")
+    require(directory != evidence and directory not in evidence.parents and evidence not in directory.parents,
+            "component OCI data must be outside uploaded evidence")
+    edges = toolchain_edges(graph)
+    resolved, resolutions, required = copy.deepcopy(graph), {}, []
+    for (arch, role), consumers in sorted(edges.items()):
+        name = arch + "-" + role
+        output = directory / name
+        try:
+            result = toolchain(source, graph, arch, role, execution, cosign, output, builder, oras, docker_config)
+        finally:
+            if output.exists():
+                preserve_evidence(output, evidence / name)
+        resolutions[name] = result
+        if result["status"] == "build-required":
+            required.append(component_build.toolchain_spec(arch, role)["target"])
+            continue
+        require(result["status"] == "verified-build-component", "unsupported toolchain resolution result")
+        for target, context in consumers:
+            resolved["target"][target]["contexts"][context] = result["context"]
+    result = {"schema_version": 1, "kind": "crossforge-ci-component-binding",
+        "components": resolutions, "required_producers": sorted(required),
+        "qualification": "not asserted; selected CI roots retain their existing gates"}
+    component_build.write_json(evidence / "binding.json", result)
+    return resolved, result

@@ -124,13 +124,7 @@ def catalog_consumer_run(directory, builder, oras, cosign, docker_config=None, c
         resolution = component_resolution.toolchain(ROOT, graph, "x86_64", role, execution, cosign,
             output, builder, oras, docker_config, catalog_reference)
         resolutions[role] = resolution
-        evidence = report / role
-        evidence.mkdir()
-        for name in ("inputs.json", "resolution.json", "receipt.json"):
-            if (output / name).exists():
-                shutil.copyfile(str(output / name), str(evidence / name))
-        if (output / "catalog").exists():
-            shutil.copytree(str(output / "catalog"), str(evidence / "catalog"))
+        component_resolution.preserve_evidence(output, report / role)
         component_build.write_json(report / (role + "-resolution.json"), resolution)
         require(resolution["status"] == "verified-build-component",
                 "component producer required for %s: %s; run the build pilot to populate this input" % (

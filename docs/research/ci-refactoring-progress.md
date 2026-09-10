@@ -260,3 +260,11 @@ Docker 全量 config 1090 项、147.414 秒，packaging 40 项、0.871 秒通过
 [本地消费验证](catalog-consumer-2026-09-10.json)：Docker 全量 config 1101 项、152.204 秒及 packaging 40 项、0.761 秒通过，保留既有 2/1 项跳过；四项 locked validators、三个 renderer、实际 Rocky 8 platform-python 3.6 强制门禁与 actionlint 通过。回归覆盖信任模式冲突、先认证后传输、运行中输入/环境变化、原 producer 保留、缺失组件不得开始资格化，以及诊断中不得包含大型 OCI。
 
 同一不可变源码快照还从既有 registry roundtrip 的本地 OCI 逐项核验输入和独立 receipt digest，实际重放重构后的共用消费函数：toolchain/runtime 与 GCC smoke 各 2 条规定 RUN 新执行、验收通过，GCC smoke 为 16 PASS；cp39 x86_64 构建通过，材料图无 GCC 源码。共用消费阶段耗时 87.78 秒，原始组件 producer 与本次 local 资格 producer 分开保留。此实跑调用的是已验证本地组件路径，不冒充 GitHub 签名或跨 run 密码学验证；新工作流尚未远程运行。
+
+## 批次 3：CI 工具链组件绑定接口
+
+`ci-build.py run` 增加可选组件 reader 参数，复用已建立的目录/OCI 验证接口。binder 按当前选中 Bake 图中的 canonical producer 边界，分别解析两个架构的安装产物和 GCC 测试上下文，每个角色只取一次；成功后替换所有对应 context。输入索引不存在时保留原 producer 的可达边并在 `components/binding.json` 明确记录；签名、传输与产物错误终止整个 stage。原选中 roots、逐 root 执行及整体超时保持，组件取得时间计入阶段观测。资格化 cold/cache-write 路径不能混用这一增量接口。
+
+将小型目录、receipt、输入证据的保留逻辑提取为共用函数，原 pilot 继续使用；下载的 OCI 数据必须与上传诊断目录分离。当前只交付 CLI opt-in，自动 main 接入与 PR 凭据隔离、缺失 producer 的生产编排仍待连接，没有向 PR 新增 registry 权限。
+
+[绑定验证记录](ci-component-binding-2026-09-10.json)：Docker 定向回归共 40 项通过（6 项绑定、3 项 catalog consumer、7 项 resolver、24 项 CI build）；三个 renderer 检查与实际 Rocky 8 platform-python 3.6 强制门禁通过。使用不可变源码快照、既有独立可信 receipt 和真实 OCI 校验，在本地替换 resolver 的信任入口后执行实际 `ci-build.run_stage`，工具链阶段成功，重新解析的消费图只有 `toolchain-x86_64-dev`，材料闭包不含 GCC 源码构建。该 cache-only 暖运行记录为 6.2 秒，保留原组件 producer，不宣称 GitHub 签名验证、新执行资格或远程性能收益。
