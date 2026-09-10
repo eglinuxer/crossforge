@@ -1,3 +1,8 @@
+import json
+import re
+import shlex
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -103,6 +108,23 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn('"$cosign" sign --yes "$source_image"', self.workflow)
         self.assertIn("source-bundle-signature.json", self.workflow)
         self.assertNotIn("source-bundle", self.ci)
+
+    def test_source_digest_command_resolves_source_bake_metadata(self):
+        command = re.search(r"source_digest=\$\((.*?)\)", self.workflow, re.S)
+        self.assertIsNotNone(command)
+        digest = "sha256:" + "1" * 64
+        with tempfile.TemporaryDirectory() as directory:
+            metadata = Path(directory) / "source-build-metadata.json"
+            metadata.write_text(json.dumps({
+                "source-bundle": {"containerimage.digest": digest}
+            }), encoding="utf-8")
+            arguments = shlex.split(command.group(1).replace("\\\n", ""))
+            arguments = [arg.replace("$RUNNER_TEMP", directory) for arg in arguments]
+            result = subprocess.run(
+                arguments, cwd=REPOSITORY, text=True, capture_output=True
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), digest)
 
     def test_public_availability_is_checked_without_registry_credentials(self):
         logout = self.workflow.index("docker logout ghcr.io")

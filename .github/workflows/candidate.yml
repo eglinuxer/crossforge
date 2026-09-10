@@ -133,6 +133,7 @@ jobs:
             --set "source-bundle-identity.output=type=local,dest=$identity_root" \
             --progress=plain
           source_digest=$(./scripts/resolve_candidate_image.py buildx-digest \
+            --target source-bundle \
             --metadata "$RUNNER_TEMP/source-build-metadata.json")
           docker buildx imagetools inspect \
             "$CANDIDATE_REPOSITORY@$source_digest" --raw \
