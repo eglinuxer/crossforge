@@ -1,0 +1,63 @@
+{
+  "kind": "crossforge-local-component-handoff-observation",
+  "schema_version": 1,
+  "date": "2026-09-10",
+  "producer": {
+    "invocation": "urn:crossforge:local:formal-toolchain-20260910-final",
+    "kind": "local",
+    "source_commit": "4d4472769bb3beba43dc9e997c6c3a12a66954e5",
+    "source_dirty": true,
+    "started_at": "2026-09-10T16:56:06Z"
+  },
+  "artifact": {
+    "config_digest": "sha256:ba91f1b6ddf1dc30fcf155b53141502338589d14a651f62dfc16332f32464a6d",
+    "platform": "linux/amd64",
+    "platform_digest": "sha256:c863f454ac7466c0bbe839453463509d420e9875b983d55ba3f5f0038f22d0ee",
+    "root_digest": "sha256:c863f454ac7466c0bbe839453463509d420e9875b983d55ba3f5f0038f22d0ee"
+  },
+  "inputs_sha256": "1a132d98d0e98de8f02defc1688865273602c0225734ce5e49fa8f52948298ff",
+  "receipt_sha256": "0ac31bf839c3eeefe99aaf9f9c38faaaa120b640f462f6804ff83593b64ea7f4",
+  "material_file_count": 43,
+  "selected_stage_count": 18,
+  "layer_count": 2,
+  "compressed_layer_bytes": 746949165,
+  "execution": {
+    "buildkit_config_sha256": "2bc5c1722ec69771690d68328915a0b80f5d936134f910285b8a960c85fc2b23",
+    "buildkit_image": "moby/buildkit:v0.33.0@sha256:6c2fa84a6b61ccd72899dde4239f8d5717f05f9a8ca6f3cad185fb1a95a94de3",
+    "buildx_version": "github.com/docker/buildx v0.36.1 1d8dde89b8aba914e05e45366770736fea1fd690",
+    "gomemlimit": "4GiB"
+  },
+  "consumer": {
+    "verification_seconds": 11.74,
+    "build_seconds": 132.96,
+    "exit_code": 0,
+    "target_count": 7,
+    "targets": [
+      "cpython-build-cp39",
+      "cpython-cross-cp39-x86_64",
+      "cpython-patches-cp39",
+      "cpython-prepared-cp39",
+      "cpython-source-cp39",
+      "host-python-build-locked",
+      "zstd-empty"
+    ],
+    "has_gcc_source_build": false,
+    "fresh_builder": true,
+    "remote_cache_imports_for_other_dependencies": true,
+    "component_platform_digest": "sha256:c863f454ac7466c0bbe839453463509d420e9875b983d55ba3f5f0038f22d0ee",
+    "qualification_scope": "cp39 x86_64 cross-build only; not complete row or GCC-full qualification"
+  },
+  "validation": {
+    "component_and_material_tests": 54,
+    "existing_component_and_bake_tests": 92,
+    "renderers_checked": 3,
+    "platform_python": "Rocky 8 platform-python 3.6 runtime passed"
+  },
+  "limits": [
+    "Local installation artifact and cp39 x86_64 cross-build only",
+    "GCC test context runtime, toolchain qualification binding, complete Python row, remote registry, and CI integration remain pending",
+    "Fresh consumer allowed read-only remote cache imports for other dependencies",
+    "No release or candidate qualification is asserted by this observation"
+  ],
+  "local_evidence_directory": "/tmp/crossforge-component-formal"
+}

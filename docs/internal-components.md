@@ -1,0 +1,116 @@
+# Internal component handoff
+
+The local toolchain pilot uses the canonical Docker/Bake build stages and exports
+an OCI layout with an embedded component contract. It supports a single local
+`docker-container` BuildKit node. GitHub registry transport, qualification reuse,
+and candidate consumption are not enabled by this interface yet.
+
+## Identities and roles
+
+`scripts/component-artifact.py` keeps three boundaries separate:
+
+- `component-inputs.schema.json` binds source files and modes, selected Docker
+  instructions, resolved Bake arguments and image contexts, and the observed
+  BuildKit execution identity. The source commit is provenance, not a build key.
+- `component-artifact.schema.json` embeds those inputs, the artifact role, and
+  the original producer in `/component/contract.json`.
+- `component-receipt.schema.json` binds that contract and metadata bytes to the
+  actual OCI root, platform manifest, and config digests. The receipt SHA256 is
+  over canonical JSON, not the formatting of `receipt.json`.
+
+`toolchain-install` contains `/opt/crossforge/` from the corresponding build
+export. `gcc-test-context` contains the prepared GCC source and GCC build tree;
+it is a separate component and does not substitute for an installation. Each
+component covers exactly one cross target. The producer strips registry outputs,
+cache exports, and tags, and writes only a new local OCI directory.
+
+A receipt proves byte and input bindings once its provenance is trusted. It
+does not certify ABI, GCC full, Python, or release qualification. Existing
+qualification gates remain required. A consumer must obtain the expected receipt
+SHA256 through its own trusted handoff and independently capture the full current
+input set. Reading a SHA256 from the same untrusted artifact is not that handoff.
+
+## Local Docker workflow
+
+Run the CLI inside the local Docker tooling environment with the Docker CLI,
+pinned Buildx plugin, and access to the task's builder. Keep source mounted read
+only. OCI paths must be visible at the same absolute paths to the producer and
+consumer. Use new output directories so a failed or repeated invocation cannot
+replace the original record.
+
+First run the three release renderers with `--check`, then obtain the resolved
+canonical graph and actual execution identity:
+
+```sh
+docker buildx bake -f docker-bake.hcl -f docker-bake.override.json \
+  --print toolchain-x86_64-build-export > /output/source-graph.json
+python3 scripts/component-artifact.py execution-identity \
+  --builder component-producer > /output/execution.json
+```
+
+Create a producer JSON with `kind: local`, the original `source_commit`, an honest
+`source_dirty` boolean, a unique `urn:crossforge:local:...` invocation, and a UTC
+`started_at` such as `2026-09-10T00:00:00Z`. Source bytes and directory modes must
+stay fixed throughout the build. For CI-like local snapshots, normalize files to
+their Git executable mode and directories to `0755` before capturing inputs.
+
+```sh
+python3 scripts/component-artifact.py produce-toolchain \
+  --source /source --graph /output/source-graph.json \
+  --arch x86_64 --role toolchain-install \
+  --execution /output/execution.json --producer /output/producer.json \
+  --output /output/toolchain-install --builder component-producer
+```
+
+The command validates the running BuildKit environment, builds the component,
+recaptures the source closure, verifies the OCI blobs, and uses a COPY-only
+BuildKit graph to read its embedded contract. It emits the receipt path,
+canonical receipt SHA256, input SHA256, and actual OCI identities. An interrupted
+invocation leaves its directory for diagnosis. `plan-toolchain` emits the inputs,
+contract, and Bake graph without building.
+
+For a GCC test context, use `--role gcc-test-context` and obtain the source graph
+with `--print gcc-x86_64`. ARM uses `--arch aarch64` and the matching target names.
+Consumers must verify each role separately before assembling their test stage.
+
+On the consumer, capture expected inputs from its independently checked source
+graph and the producer execution policy, then verify the trusted receipt:
+
+```sh
+python3 scripts/component-artifact.py toolchain-inputs \
+  --source /source --graph /output/source-graph.json \
+  --arch x86_64 --role toolchain-install \
+  --execution /output/execution.json > /output/expected-inputs.json
+python3 scripts/component-artifact.py verify-local \
+  --receipt /output/toolchain-install/receipt.json \
+  --receipt-sha256 "$TRUSTED_RECEIPT_SHA256" \
+  --expected-inputs /output/expected-inputs.json --role toolchain-install \
+  --layout /output/toolchain-install/oci \
+  --frontend "$PINNED_DOCKERFILE_FRONTEND" --builder component-consumer \
+  --consumer-target cpython-cross-cp39-x86_64 \
+  --context-name crossforge_toolchain > /output/consumer.bake.json
+docker buildx bake -f docker-bake.hcl -f docker-bake.override.json \
+  -f /output/consumer.bake.json cpython-cross-cp39-x86_64
+```
+
+Verification hashes the selected OCI manifest/config/layer blobs and extracts
+metadata with BuildKit; Python does not reimplement tar, whiteout, or symlink
+application. A wrong digest, role, target, recipe, sysroot input, or metadata file
+fails before an override is emitted. The override refers to an immutable platform
+manifest; it has no fallback to a tag or source-build target.
+
+## Material closure limits
+
+The source inventory follows reachable Docker stages and named Bake target
+contexts. Local COPY sources, directory entries and modes, and relevant pinned
+image contexts enter the identity. The implementation supports the repository's
+current default-escape Dockerfile dialect. Unsupported source syntax, unpinned
+images, shadowed stage names, secret/SSH/cache mounts, and unknown Bake fields
+fail closed. It is an inventory, not a replacement Docker interpreter.
+
+All resolved explicit Bake arguments are currently bound, including some unused
+shared arguments. Ignore patterns are not applied to selected directory copies;
+extra ignored files can therefore invalidate reuse. This is conservative and
+will be narrowed with the component planner. The material model is not yet the
+main/PR task selector. Keep generated files checked before planning, and do not
+provide independently edited graphs to trusted producers.

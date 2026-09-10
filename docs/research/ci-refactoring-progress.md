@@ -5,7 +5,7 @@
 | 批次 | 当前状态 | 仍需取得的证据 |
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
-| 2：组件契约与工具链交接 | 输入身份基础模块通过 Docker 验证；交接仍在实现 | 产物清单、完整材料闭包、测试上下文与正式 producer/consumer |
+| 2：组件契约与工具链交接 | 本地 OCI 契约、材料闭包、工具链 producer 与全新 consumer 的 cp39 x86_64 构建通过 | GCC 测试上下文实跑、工具链资格报告绑定、远程交接与 CI 接入 |
 | 3：组件级增量计划 | 待实现 | 依赖传播、完整结果汇总和真实受影响构建 |
 | 4：整行 Python/SDK 交接 | 待实现 | 双架构全 row、SDK 组装无 GCC/CPython 源码重编 |
 | 5：资格复用及恢复 | 待实现 | 显式复用、强制执行、候选集成/ARM 及同 digest 恢复 |
@@ -42,3 +42,24 @@
 验证结果：15 项新增身份回归通过；70 项已有 component/renderer/领域隔离回归通过。实际 Rocky 8 `platform-python-check` 完成递归编译、内部模块导入、材料捕获/复核与摘要计算，并通过 89 个组件投影的 drift check。CI 与 Docker 的语法检查已覆盖嵌套子包。
 
 接下来实现产物清单和 OCI 验证，随后连接真实 producer/consumer、完整输入闭包与 GCC 测试上下文。组件级增量选择与完整 Python/SDK 交接尚未实现。
+
+## 批次 2：正式本地 OCI 接口
+
+新增 [内部组件操作说明](../internal-components.md)。`component-artifact.py` 提供执行环境观察、独立输入捕获、工具链计划/构建及本地 consumer 核验入口。`component_artifacts.py` 管理安装产物、GCC 测试上下文等不同角色的嵌入契约和外部 receipt；receipt 不宣称资格化通过。原始 producer、提交、dirty 状态和 invocation 保留，消费者必须独立取得可信 receipt 摘要及当前完整预期材料。
+
+`bake_materials.py` 对已解析 Bake 图做保守材料盘点。它遍历可达 Docker stage、COPY 与命名 context，绑定相关 recipe、锁定镜像、参数、文件/目录权限及 BuildKit 环境。它支持当前仓库所需的受限语法，遇到未知来源语法、未固定镜像、stage/context 重名或缓存/secret/SSH mount 会失败，不将其当成空依赖。当前所有显式 Bake 参数仍进入身份，目录 COPY 也暂未过滤 ignore 文件；这是保守失效范围，后续组件计划还要收窄。
+
+OCI 模块只校验 root/platform/config/layer 的实际字节，镜像层应用与元数据读取交给固定 frontend 的 BuildKit COPY-only 图。正式 producer 对解析图移除 registry 输出、tags 和 cache exports，只创建新的本地 OCI 目录，并在构建后重新核验源材料。独立 consumer 验证后只输出固定 platform digest 的 context，不提供 latest 或源码回退。
+
+2026-09-10 本地验证：
+
+- 54 项组件/材料回归通过，覆盖错误 digest、角色/target/recipe/sysroot 错配、缺失/损坏/权限改变的元数据、原 producer 被改写、材料漏项、目录新增与权限变化、未知源语法及发布输出清除。
+- 92 项已有组件、领域隔离和 Bake renderer 回归通过；三个 renderer `--check` 通过。
+- 实际 Rocky 8 platform-python 3.6 完成递归编译、新 CLI 加载/参数解析、输入捕获及 89 个投影 drift check。远程缓存导入在断网工具容器中失败，但本次检查依靠已存在的本地输入完成，退出码为 0；没有将 cache importer 警告计为测试失败或远程缓存成功。
+- 旧可行性实验镜像的 751,640,605 字节压缩 blob 全量校验通过；BuildKit 提取的三个原有材料/报告文件摘要与旧记录一致。这不将旧实验升级为正式资格结果。
+- 正式最终工具链安装产物生成成功：platform digest `sha256:c863f454ac7466c0bbe839453463509d420e9875b983d55ba3f5f0038f22d0ee`；input SHA256 `1a132d98d0e98de8f02defc1688865273602c0225734ce5e49fa8f52948298ff`；receipt canonical SHA256 `0ac31bf839c3eeefe99aaf9f9c38faaaa120b640f462f6804ff83593b64ea7f4`。
+- 全新 `crossforge-component-formal-consumer` 在独立重新捕获预期材料后，通过固定 receipt 与 OCI 验证，耗时 11.74 秒；cp39 x86_64 构建通过，耗时 132.96 秒。consumer 图只有 7 个目标，日志不含 `build-gcc.sh`，没有 GCC/binutils/toolchain 源码目标。其他依赖允许只读远程缓存，所以这不是全冷构建对照；也不是完整 Python row 或 GCC full 资格化。
+
+本次发现快照目录权限会干扰缓存：初始新快照目录为 `0775`，旧快照为 `0755`，对应锁定 metadata 目录 COPY 未命中，继而重新编译 GCC。最终快照统一目录 `0755` 后 GCC 步骤命中缓存，OCI layers 导出 36.5 秒。这是本地实验的输入差异，不作为历史 GitHub 缓存失效原因或优化后的端到端耗时结论。
+
+原始日志、OCI、receipt 和不可变源快照位于本次工作机 `/tmp/crossforge-component-formal/`，不入库。GitHub 事件实跑、远程可信传输、GCC full 上下文与报告交接、完整双架构 Python row、SDK 汇总和资格复用仍未完成，全目标保持进行中。
