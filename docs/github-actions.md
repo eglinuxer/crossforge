@@ -250,3 +250,28 @@ First deployment acceptance requires a successful warm qualification, a
 successful cold qualification, a complete signed candidate run, anonymous
 consumer execution, and digest-only stable promotion. Local unit tests,
 actionlint and `bake --print` establish wiring, not those execution results.
+
+
+## Internal component handoff rollout pilot
+
+`component-pilot.yml` is a separate manual main workflow for the first x86_64
+registry handoff. It runs the existing quick preflight, publishes the installation
+and GCC test-context components to `ghcr.io/eglinuxer/crossforge-components`, then
+uses a separate reader job to verify and consume the pinned artifacts. The
+reader runs toolchain/runtime and GCC smoke qualification plus the cp39 x86_64
+cross build. The producer alone has package write permission; the reader has
+package read permission. Both use the pinned BuildKit and ORAS tools.
+
+The producer job supplies an immutable Actions artifact ID and an independent
+canonical handoff SHA256. The reader checks exact source commit, run and attempt,
+then recaptures the expected component inputs. It cannot use another run's
+receipt or a mutable registry tag as qualification evidence. A partial job rerun
+with an older attempt's handoff is currently rejected; explicit recovery and
+cross-run trusted reuse belong to later rollout batches.
+
+This pilot does not yet replace `verify-builds.yml`, the main/PR profile selector,
+or candidate qualification. It covers one cross target, not the complete Python
+row or final SDK. Local registry roundtrip and consumer execution are recorded
+in [the registry pilot observation](research/registry-handoff-pilot-2026-09-10.json);
+the new workflow has not yet been dispatched on GitHub. See
+[internal component commands](internal-components.md) for local Docker operation.

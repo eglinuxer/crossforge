@@ -3,8 +3,9 @@
 The local toolchain pilot uses the canonical Docker/Bake build stages and exports
 an OCI layout with an embedded component contract. It supports a single local
 `docker-container` BuildKit node. Local qualification receipts and explicit prior
-report verification are available. GitHub registry transport, trusted CI reuse,
-and candidate consumption are not enabled by this interface yet.
+report verification are available. Digest-preserving registry transfer and a same-run CI pilot are implemented.
+The GitHub pilot event, cross-run trusted reuse, and candidate consumption still
+require validation or implementation.
 
 ## Identities and roles
 
@@ -234,3 +235,74 @@ through the separate verifier. An interrupted attempt retains its own output
 folder for diagnosis and cannot overwrite a previous receipt. Local receipt
 verification does not establish trusted GitHub provenance, registry retention,
 full SDK integration, or the required new-candidate native ARM execution.
+
+
+## Registry transfer and the CI pilot
+
+`component-registry.py` uses the content-locked ORAS tool in
+`.github/locked-tools/oras.json`. This is CI tooling policy, like the existing
+Buildx/BuildKit action pins; it does not change SDK product version inputs.
+The installer verifies both the release archive and extracted executable hashes,
+and extracts only the expected regular binary. The executable is checked again
+before transfer.
+
+```sh
+python3 scripts/component-registry.py install-tool --output /output/oras-tool
+python3 scripts/component-registry.py publish \
+  --receipt /output/toolchain-install/receipt.json \
+  --receipt-sha256 "$TRUSTED_COMPONENT_RECEIPT_SHA256" \
+  --expected-inputs /output/expected-inputs.json --role toolchain-install \
+  --layout /output/toolchain-install/oci \
+  --repository ghcr.io/eglinuxer/crossforge-components \
+  --oras /output/oras-tool/oras --builder component-producer \
+  --frontend "$PINNED_DOCKERFILE_FRONTEND"
+```
+
+The publisher first verifies the trusted receipt, independently supplied expected
+inputs, OCI bytes and extracted metadata. It then uses upstream
+[ORAS OCI-layout copying](https://oras.land/docs/commands/oras_cp/) to transfer the
+existing graph and verifies the remote root manifest bytes. No Docker build or
+image exporter changes the sealed manifest during transfer. The returned
+`reference` is digest-only; `retention_tag` is derived from the full root digest
+and is used to keep the artifact reachable, not as a consumer identity.
+
+```sh
+python3 scripts/component-registry.py fetch \
+  --receipt /output/toolchain-install/receipt.json \
+  --receipt-sha256 "$TRUSTED_COMPONENT_RECEIPT_SHA256" \
+  --expected-inputs /output/expected-inputs.json --role toolchain-install \
+  --reference "$TRUSTED_COMPONENT_REGISTRY_REFERENCE" \
+  --output /output/downloaded-toolchain \
+  --oras /output/oras-tool/oras --builder component-consumer \
+  --frontend "$PINNED_DOCKERFILE_FRONTEND"
+```
+
+Fetching requires a new local directory and an exact registry digest matching
+the trusted receipt. It verifies the downloaded blobs and metadata before
+returning `local_reference`, suitable for a Bake named context. The registry and
+local references identify the same image bytes. Registry authentication uses
+`--registry-config /path/to/config.json`; tokens are never passed as CLI arguments.
+HTTPS is the normal transport. `--loopback-http` is restricted to localhost or
+127.0.0.1 for local Docker registry experiments.
+
+The generic transfer interface does not establish report qualification. Run
+`verify-qualification` with independently recaptured qualification inputs after
+fetching a qualification artifact. Receipt trust also remains independent from
+the OCI transport path.
+
+`.github/workflows/component-pilot.yml` is a manually dispatched, main-only
+rollout pilot. Its producer publishes x86_64 installation and GCC test-context
+artifacts to the separate internal package repository. It passes the small
+handoff document via an immutable Actions artifact ID and its canonical SHA256
+via a producer job output. The consumer has packages:read, verifies that
+independent digest and the exact clean commit/run/attempt, recaptures component
+inputs, and downloads both OCI artifacts. It freshly executes toolchain/runtime
+and GCC smoke gates, then builds cp39 x86_64 from the verified installation.
+Every selected job must succeed; skipped or cancelled jobs fail the final gate.
+
+The handoff is intentionally limited to the same run and attempt. It has no
+cross-run catalog or signature-based qualification reuse. Component tags are
+retained; this implementation performs no registry garbage collection. Actions
+handoff and diagnostic files follow the existing seven-day pilot/debug retention
+and do not provide permanent candidate/release evidence retention. Referenced
+candidate/release retention must be implemented before production reuse.

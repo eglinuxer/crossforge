@@ -251,7 +251,9 @@ COPY docker/*.py ./docker/
 RUN /usr/libexec/platform-python -m compileall -q ./scripts ./docker
 RUN PYTHONPATH=/src/scripts /usr/libexec/platform-python -c \
     'from crossforge_internal.component_inputs import capture, identity, verify_files; value = capture("/src", "check/platform-python", "build", ["scripts/crossforge_internal/component_inputs.py"]); verify_files(value, "/src"); assert len(identity(value)) == 64'
-RUN /usr/libexec/platform-python ./scripts/component-artifact.py --help
+RUN /usr/libexec/platform-python ./scripts/component-artifact.py --help \
+    && /usr/libexec/platform-python ./scripts/component-registry.py --help \
+    && /usr/libexec/platform-python ./scripts/component-pilot.py --help
 RUN /usr/libexec/platform-python ./scripts/render-release-components.py --check
 
 # Matrix-shaped placeholder used only to verify that Bake expands the two

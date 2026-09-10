@@ -1,0 +1,16 @@
+name: Set up component transport
+description: Install the content-locked ORAS binary used only by CI transport
+outputs:
+  binary:
+    description: Absolute path of the verified ORAS executable
+    value: ${{ steps.install.outputs.binary }}
+runs:
+  using: composite
+  steps:
+    - id: install
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        python3 scripts/component-registry.py install-tool \
+          --output "$RUNNER_TEMP/crossforge-oras"
+        printf 'binary=%s\n' "$RUNNER_TEMP/crossforge-oras/oras" >> "$GITHUB_OUTPUT"

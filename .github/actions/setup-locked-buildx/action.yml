@@ -1,5 +1,9 @@
 name: Set up content-locked Docker Buildx
 description: Install the repository-qualified Buildx and BuildKit versions
+outputs:
+  builder:
+    description: Name of the pinned single-node BuildKit builder
+    value: ${{ steps.buildx.outputs.name }}
 runs:
   using: composite
   steps:
@@ -23,6 +27,7 @@ runs:
           "$HOME/.docker/cli-plugins/docker-buildx"
         docker buildx version | grep -F 'v0.36.1'
     - name: Set up pinned Docker Buildx
+      id: buildx
       uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
       with:
         buildkitd-config-inline: |

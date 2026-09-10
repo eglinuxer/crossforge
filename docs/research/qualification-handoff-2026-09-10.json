@@ -48,11 +48,83 @@
     "Local trusted handoff only; not a signed GitHub/candidate receipt",
     "Existing consumer builder has imported components but has not compiled GCC source",
     "Producer and prerequisite caches are warm; timings are not an end-to-end performance baseline",
-    "GCC full is executing separately; ARM, remote registry, CI reuse and full SDK remain pending"
+    "GCC full local handoff passed; ARM, production CI reuse and full SDK remain pending"
   ],
   "local_evidence_directory": "/tmp/crossforge-qualification-receipt",
   "material_model": 2,
   "qualification": {
+    "gcc-full": {
+      "artifact": {
+        "config_digest": "sha256:b196da3faaf13ff779a2b9f9713259753c47a78e5e10e213ee3e8e2d2c78c417",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:4fcf228a6842d4b39f6553bf20864ae1980ec67aa10e7dad8ebbaa627a950c5b",
+        "root_digest": "sha256:4fcf228a6842d4b39f6553bf20864ae1980ec67aa10e7dad8ebbaa627a950c5b"
+      },
+      "baseline_sha256": "1c1ede9bd00d1e40c7da24ff083f93f15d4e6a16854266da1d1899fba6437866",
+      "builds_gcc_source": false,
+      "coverage": [
+        {
+          "profile": "gcc-full",
+          "report_sha256": "9c9972f174bbf4f304d79d09db154e254cea95e4f541d398fcb698c9c75e822d",
+          "status": "passed",
+          "status_counts": {
+            "FAIL": 87,
+            "PASS": 454050,
+            "UNSUPPORTED": 5902,
+            "XFAIL": 3367
+          },
+          "target": "x86_64-unknown-linux-gnu",
+          "tier": "host-direct"
+        }
+      ],
+      "executed_vertices": [
+        {
+          "cached": false,
+          "completed": "2026-09-10T17:54:27.788675047Z",
+          "digest": "sha256:fbab927ce8421d05eda44ea6ebe2cb400c3ed07d28c1fdca9f095cbf95694558",
+          "name": "[component-qualification-reports gcc-testsuite-x86_64-base 12/12] RUN --network=none     /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc       -O2 -fgraphite-identity       /work/prepared/gcc/gcc/testsuite/gcc.dg/graphite/id-1.c       -S -o /work/gcc-graphite-probe.s     && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc       -O2 -ftrampoline-impl=heap       /work/prepared/gcc/gcc/testsuite/gcc.dg/heap-trampoline-1.c       -o /work/gcc-heap-trampoline-probe     && /work/gcc-heap-trampoline-probe     && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcov       --version",
+          "stage": "gcc-testsuite-x86_64-base",
+          "started": "2026-09-10T17:54:27.60434128Z"
+        },
+        {
+          "cached": false,
+          "completed": "2026-09-10T18:35:10.73030019Z",
+          "digest": "sha256:5b6ecc809ef25ad9b7f5da3793815901b4841e5b9a554152ece6f0c0303d253a",
+          "name": "[component-qualification-reports gcc-testsuite-x86_64-full-qualified 2/2] RUN --network=none /usr/libexec/platform-python       /work/scripts/run-gcc-testsuite.py       --profile full       --release /work/config/release.json       --build /work/build/gcc-x86_64/gcc-build       --source /work/prepared/gcc       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu       --sysroot /opt/crossforge/sysroots/el8/x86_64       --target x86_64-unknown-linux-gnu       --runtime-tier host-direct       --site /work/tests/gcc/full-site.exp       --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json       --qualification-component         /work/config/generated/components/toolchain/gcc-testsuite-qualification.json       --qualification-component-sha256         \"bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd\"       --output /work/qualification/gcc-testsuite/x86_64-host-direct-full       --report         /work/qualification/gcc-testsuite/x86_64-host-direct-full.json",
+          "stage": "gcc-testsuite-x86_64-full-qualified",
+          "started": "2026-09-10T17:54:27.892273489Z"
+        }
+      ],
+      "fresh_runs": 2,
+      "inputs_sha256": "91fc41edbc886858e4f2f62fd84bbe8ef544890f918024690dbefcb7d6191109",
+      "interval": {
+        "completed_at": "2026-09-10T18:35:13Z",
+        "started_at": "2026-09-10T17:54:18Z"
+      },
+      "material_graph_targets": [
+        "gcc-testsuite-x86_64-full-qualified"
+      ],
+      "oci_blob_bytes": 13596572,
+      "plan_sha256": "b81d85e4f176c4e26c1a3062522847664ec853f9e5cee5994c993db2e079f6e7",
+      "producer": {
+        "invocation": "urn:crossforge:local:qualification-receipt-20260910",
+        "kind": "local",
+        "source_commit": "1e50eef37666f5ec861e0ff43fcaec95cc0b7765",
+        "source_dirty": true,
+        "started_at": "2026-09-10T17:48:23Z"
+      },
+      "producer_seconds": 2469.93,
+      "receipt_sha256": "1f0ccf936e783a8f82f37ce5ee31d311a91c0e503b03efed1543b18f0f8059d9",
+      "suites": [
+        "g++.full",
+        "gcc.full",
+        "libgomp.full",
+        "libstdc++.full"
+      ],
+      "unexpected_occurrences": 87,
+      "unexpected_record_count": 87,
+      "verification_seconds": 6.16
+    },
     "gcc-smoke": {
       "artifact": {
         "config_digest": "sha256:e61a6181beb638047324fb8d1ed252df33738c938c990e5f8795081b59d45a74",

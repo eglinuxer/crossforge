@@ -5,7 +5,7 @@
 | 批次 | 当前状态 | 仍需取得的证据 |
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
-| 2：组件契约与工具链交接 | 安装/测试上下文 OCI、cp39 x86_64 构建、x86_64 正式资格 receipt 与独立核验通过 | GCC full 正在执行；ARM、远程交接与 CI 接入 |
+| 2：组件契约与工具链交接 | 本地 OCI/registry 往返、x86_64 GCC full/正式资格与 cp39 消费通过；同 run CI 试点已实现 | ARM、GitHub 试点实跑与生产 CI 接入 |
 | 3：组件级增量计划 | 待实现 | 依赖传播、完整结果汇总和真实受影响构建 |
 | 4：整行 Python/SDK 交接 | 待实现 | 双架构全 row、SDK 组装无 GCC/CPython 源码重编 |
 | 5：资格复用及恢复 | 待实现 | 显式复用、强制执行、候选集成/ARM 及同 digest 恢复 |
@@ -98,3 +98,36 @@ OCI 模块只校验 root/platform/config/layer 的实际字节，镜像层应用
 - 四项 locked validators 和三个 renderer `--check` 通过；实际 Rocky 8 platform-python 3.6 递归编译、CLI 导入、输入接口和 89 个投影检查通过。
 
 GCC full 正在通过同一正式接口重跑，尚无完成结论。ARM、本地完整 Python row/SDK、远程 registry/trust/retention、CI 动态计划和候选接入仍待完成。通用 receipt 的 `qualification` 角色本身不是资格证明；只有专用校验接口会验证完整执行和覆盖，且本地可信 digest 的来源仍由调用方负责。全目标保持进行中。
+
+
+## 批次 2：registry 往返与同 run CI 试点
+
+新增 `component-registry.py` 和领域模块 `registry_transfer.py`，使用上游 ORAS 复制已经封装好的 OCI，而不是再次调用 Docker exporter。CI 工具策略单独固定 ORAS archive、可执行文件 SHA256 和源提交；安装时只读取经过双重摘要核验的常规 binary，传输前再次核验 executable。上传前验证可信 receipt、预期材料和原 OCI，上传后检查远程 manifest 原始字节；下载必须使用与可信 receipt 一致的固定 digest、新输出目录，并检查所有选中平台 blob 和元数据。
+
+本地 Docker registry 往返已完成，见 [registry 交接记录](registry-handoff-pilot-2026-09-10.json)：
+
+- 安装产物、GCC 测试上下文、GCC smoke 资格包的 root/platform/config digest 均保持原值；下载后的元数据与原 receipt 一致。
+- 重新捕获资格输入、核验下载后的资格包，通过 `verified-prior-execution` 保留原 local producer 和运行区间，GCC smoke 仍为 16 PASS。
+- 下载的安装组件进入 cp39 x86_64 构建，完整消费过程 77.65 秒，实际 cross-Python RUN 42.7 秒；消费图只有 7 个目标，不含 GCC 源码目标，日志无 `build-gcc.sh`。
+- 上传/验证安装、上下文和资格包分别为 3.10/2.53/1.10 秒，下载及核验分别 1.67/2.63/0.48 秒。它们是同机 loopback、tmpfs registry 的观测，不代表 GHCR 网络或 GitHub 总耗时。
+- 测试 registry 未向主机发布端口，完成后已停止并删除；OCI、日志和下载结果留在本次工作机 `/tmp/crossforge-registry-pilot/`。
+
+新增 `.github/workflows/component-pilot.yml`，手动 main-only，分开 producer 与 consumer job。producer 向独立内部组件 package 写入，consumer 只有 packages:read。上游 job output 独立提供 canonical handoff SHA256，Actions artifact ID 固定交接文件；`component_handoff.py` 拒绝跨提交、run、attempt、错角色、混合 producer、错 registry、错误/缺失 receipt 和环境错配。consumer 独立重算组件材料，再执行现有 x86_64 工具链/运行时和 GCC smoke 门禁，并构建 cp39 x86_64。最终状态要求全部所选 job 成功，失败、取消或跳过都不能变绿。
+
+该试点尚未在 GitHub dispatch，尚未替换正式 `verify-builds.yml` 或 main 的 profile selector。它不提供跨 run 签名目录、永久候选/发布证据保留或失败恢复；当前对跨 attempt 的部分重试明确拒绝。registry 中以完整 root digest 派生的 tag 保持产物可达，本批未实现删除或 GC。
+
+验证：13 项新增 transport/handoff/workflow 回归通过；Docker 全量 config 1013 项、190.302 秒、零失败、2 项既有 zstd 资源测试跳过；四项 locked validators、三个 renderer `--check` 通过；固定 actionlint 1.7.12 全工作流检查通过（仅既有 `concurrency.queue` 兼容例外）；实际 Rocky 8 platform-python 3.6 完成递归编译、三个组件 CLI 导入/参数解析及 89 个投影检查。
+
+GCC full 的既有进程仍在执行；本批不会用 smoke、静态图或传输成功代替它。后续继续 ARM/完整 Python row、组件增量计划、生产 CI/SDK 接入和可信跨 run 复用，全目标保持进行中。
+
+
+## GCC full 本地正式交接已通过
+
+上述持续运行的 GCC full 已完成，producer 与封装总计 2469.93 秒，独立消费核验 6.16 秒。两条要求重跑的 RUN 均有本次完成且未命中缓存的结构化事件；资格材料图不含 `build-gcc.sh`。原始 GCC full report、所有 suite `.sum`、`.log`、`.make.log` 与执行事件已封装到本地资格 OCI，记录见 [正式资格交接数据](qualification-handoff-2026-09-10.json) 的 `gcc-full`。
+
+- 454,050 PASS、87 FAIL、5,902 UNSUPPORTED、3,367 XFAIL。
+- 87 条 FAIL 对应现有冻结基线的已知记录；原 normalizer 按 status、suite、identity、occurrence 精确核对，未修改 baseline 或放宽新增/消失记录规则。
+- platform/root digest：`sha256:4fcf228a6842d4b39f6553bf20864ae1980ec67aa10e7dad8ebbaa627a950c5b`。
+- 资格 receipt canonical SHA256：`1f0ccf936e783a8f82f37ce5ee31d311a91c0e503b03efed1543b18f0f8059d9`。
+
+这完成了 x86_64 安装组件与原始 GCC 测试上下文的 full 资格实跑及正式本地 report 交接。它是本地固定环境的结果，不代替 GitHub runner 资格或候选的最终集成/native ARM。ARM、完整 Python row/SDK、生产 CI、增量计划和跨 run 信任/恢复等剩余范围保持不变。

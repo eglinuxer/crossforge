@@ -1,0 +1,127 @@
+name: internal component handoff pilot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    uses: ./.github/workflows/ci.yml
+    with:
+      quick-only: true
+
+  produce:
+    needs: preflight
+    if: github.repository == 'eglinuxer/crossforge' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      handoff-sha256: ${{ steps.produce.outputs.handoff_sha256 }}
+      handoff-artifact-id: ${{ steps.handoff.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - name: Authenticate internal component writer
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - name: Build and transfer exact x86_64 component artifacts
+        id: produce
+        env:
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/component-pilot.py produce \
+            --output "$RUNNER_TEMP/component-producer" \
+            --builder "$COMPONENT_BUILDER" --oras "$COMPONENT_ORAS" \
+            > "$RUNNER_TEMP/component-producer-result.json"
+          python3 -c 'import json,sys; print("handoff_sha256=" + json.load(open(sys.argv[1]))["handoff_sha256"])' \
+            "$RUNNER_TEMP/component-producer-result.json" >> "$GITHUB_OUTPUT"
+      - name: Preserve the immutable handoff document
+        id: handoff
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-producer/handoff.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Log out component writer
+        if: always()
+        run: docker logout ghcr.io
+
+  consume:
+    needs: produce
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.produce.outputs.handoff-artifact-id }}
+          path: ${{ runner.temp }}/component-handoff
+          merge-multiple: true
+      - name: Authenticate internal component reader
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - name: Verify transferred subjects and run existing gates
+        env:
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+          HANDOFF_SHA256: ${{ needs.produce.outputs.handoff-sha256 }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/component-pilot.py consume \
+            --handoff "$RUNNER_TEMP/component-handoff/handoff.json" \
+            --handoff-sha256 "$HANDOFF_SHA256" \
+            --output "$RUNNER_TEMP/component-consumer" \
+            --builder "$COMPONENT_BUILDER" --oras "$COMPONENT_ORAS"
+      - name: Preserve report and consumer diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-consumer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-consumer/report/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Log out component reader
+        if: always()
+        run: docker logout ghcr.io
+
+  verified:
+    if: always()
+    needs: [preflight, produce, consume]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every selected pilot job to succeed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 -c 'import json,os,sys; r=json.loads(os.environ["RESULTS"]); sys.exit(0 if set(r)=={"preflight","produce","consume"} and all(v["result"]=="success" for v in r.values()) else 1)'
