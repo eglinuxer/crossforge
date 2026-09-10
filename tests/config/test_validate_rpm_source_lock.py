@@ -84,7 +84,7 @@ class ValidateRPMSourceLockTests(unittest.TestCase):
 
     def test_maintenance_resolution_is_not_a_normal_ci_or_candidate_edge(self):
         ci = (
-            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(encoding="utf-8")
             + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         candidate = (REPOSITORY / ".github/workflows/candidate.yml").read_text(

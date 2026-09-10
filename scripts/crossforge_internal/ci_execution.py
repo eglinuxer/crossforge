@@ -14,6 +14,26 @@ GROUPS = {
 }
 
 
+def component_reader_allowed(environment):
+    return (environment.get("GITHUB_SERVER_URL") == "https://github.com" and
+            environment.get("GITHUB_REPOSITORY") == "eglinuxer/crossforge" and
+            environment.get("GITHUB_REF") == "refs/heads/main" and
+            environment.get("GITHUB_EVENT_NAME") in ("push", "workflow_dispatch"))
+
+
+def check_routes(results, environment):
+    try:
+        exact_fields(results, ("quick", "builds-readonly", "builds-components"), "CI permission routes")
+        require(results["quick"].get("result") == "success", "quick checks did not succeed")
+        selected = "builds-components" if component_reader_allowed(environment) else "builds-readonly"
+        for name in ("builds-readonly", "builds-components"):
+            require(results[name].get("result") == ("success" if name == selected else "skipped"),
+                    "selected CI permission route did not succeed or the other route executed")
+        return True
+    except (IdentityError, AttributeError, KeyError, TypeError):
+        return False
+
+
 def output_values(selection, stages):
     incremental_plan.validate_selection(selection, stages)
     allowed = {stage for members in GROUPS.values() for stage in members}

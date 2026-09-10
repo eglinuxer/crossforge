@@ -18,9 +18,9 @@ permissions:
 
 jobs:
   preflight:
-    uses: ./.github/workflows/ci.yml
+    uses: ./.github/workflows/verify-quick.yml
     with:
-      quick-only: true
+      plan-components: false
 
   produce:
     needs: preflight

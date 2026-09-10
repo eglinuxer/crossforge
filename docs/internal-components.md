@@ -450,10 +450,13 @@ Existing selected roots and their gates remain required. Small original catalog,
 receipt and input records go into diagnostics; OCI layouts stay outside them.
 Component acquisition is included in the stage's recorded elapsed time.
 
-The CLI interface is implemented; `verify-incremental.yml` does not yet enable it
-automatically. Main/PR credential isolation and production producer scheduling
-must be connected before that switch. Current PRs receive no new registry
-credentials from this change. A local Docker execution verified the bound
+`verify-incremental.yml` enables this interface when called by the separate trusted
+main push/dispatch job. The ordinary PR/fork/non-main caller keeps contents:read
+and disables component reading. Shared quick checks use `verify-quick.yml` without
+registry permissions, including candidate and pilot preflight. Production
+publication of missing components remains to be connected; their source producer
+boundaries currently stay reachable in the selected stage. Current PRs receive no
+new registry credentials. A local Docker execution verified the bound
 toolchain stage and absence of source GCC dependencies using independently trusted
 local receipts; that execution did not exercise GitHub catalog authentication or
 claim fresh qualification from ordinary cache hits.

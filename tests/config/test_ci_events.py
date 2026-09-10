@@ -23,7 +23,7 @@ class CIEventSelectionTests(unittest.TestCase):
         (self.repo / "scripts").mkdir()
         shutil.copyfile(ROOT / "scripts/ci-plan.py", self.repo / "scripts/ci-plan.py")
         self.base = self.commit("docs/readme.md")
-        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        workflow = (ROOT / ".github/workflows/verify-quick.yml").read_text()
         selection = workflow.split("      - name: Select affected build profile\n", 1)[1]
         self.command = textwrap.dedent(
             selection.split("        run: |\n", 1)[1].split("\n      - name: Select component roots", 1)[0])

@@ -110,16 +110,23 @@ def main(argv=None):
     execution = commands.add_parser("execution", allow_abbrev=False)
     execution.add_argument("--profile", required=True)
     execution.add_argument("--selection", default="")
+    execution.add_argument("--component-reader", action="store_true")
     check = commands.add_parser("check", allow_abbrev=False)
     check.add_argument("results")
+    routes = commands.add_parser("check-routes", allow_abbrev=False)
+    routes.add_argument("results")
     args = parser.parse_args(argv)
     try:
         if args.command == "execution":
+            require(not args.component_reader or ci_execution.component_reader_allowed(os.environ),
+                    "component reader requires an original-repository main push or dispatch")
             for key, value in ci_execution.prepare(args.selection, args.profile, stage_catalog()).items():
                 print(key + "=" + value)
             return 0
         if args.command == "check":
             return 0 if ci_execution.check_results(parse_json(args.results), stage_catalog()) else 1
+        if args.command == "check-routes":
+            return 0 if ci_execution.check_routes(parse_json(args.results), os.environ) else 1
         require(args.command == "select", "a CI planner command is required")
         with tempfile.TemporaryDirectory(prefix="crossforge-ci-plan-") as directory:
             result = plan(ROOT, args.base, args.head, Path(directory))

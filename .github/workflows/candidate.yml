@@ -18,9 +18,9 @@ jobs:
   quick:
     permissions:
       contents: read
-    uses: ./.github/workflows/ci.yml
+    uses: ./.github/workflows/verify-quick.yml
     with:
-      quick-only: true
+      plan-components: false
 
   qualify:
     needs: quick

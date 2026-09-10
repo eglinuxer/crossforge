@@ -94,7 +94,7 @@ class QtRuntimeQualificationTests(unittest.TestCase):
         )
 
     def test_ci_and_candidate_validate_the_runtime_contract(self):
-        ci = (REPOSITORY / ".github/workflows/ci.yml").read_text(
+        ci = (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(
             encoding="utf-8"
         )
         candidate = (REPOSITORY / ".github/workflows/candidate.yml").read_text(

@@ -112,6 +112,7 @@ class ResolveRPMSourceLockTests(unittest.TestCase):
         self.assertIn('target "rpm-source-lock-maintenance"', bake)
         for workflow in (
             REPOSITORY / ".github/workflows/ci.yml",
+            REPOSITORY / ".github/workflows/verify-quick.yml",
             REPOSITORY / ".github/workflows/candidate.yml",
         ):
             self.assertNotIn(

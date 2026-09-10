@@ -6,7 +6,8 @@ Crossforge uses GitHub-hosted `ubuntu-24.04` build runners and
 
 ## Required checks and affected builds
 
-`ci.yml` runs on main pushes, PRs and manual dispatch, and is callable for quick checks.
+`ci.yml` runs on main pushes, PRs and manual dispatch. Shared quick checks live in
+`verify-quick.yml`, which is reusable with contents:read and no registry permission.
 PR updates cancel stale runs. New main pushes replace outdated selected builds;
 quick checks for distinct commits can run immediately. `quick` validates locks, configuration,
 generated files, unit tests, every shell script, and the Bake and Actions
@@ -20,8 +21,8 @@ A PR uses the merge base against the checked-out merge commit.
 
 Each main push runs the selected roots and does not publish an image.
 Dispatch `candidate.yml` on main when preparing a candidate or release:
-it calls CI with `quick-only: true`, then full qualification and candidate
-publication. Candidate quick summaries, manual CI and push-selected builds have
+it calls `verify-quick.yml` with `plan-components: false`, then full qualification and candidate
+publication. Candidate quick checks, manual CI and push-selected builds have
 separate concurrency groups, so development updates cannot cancel a candidate.
 Avoid starting a second candidate for the same SHA while one is active.
 
@@ -38,19 +39,27 @@ The detailed `component-plan` artifact records changed files and parameter
 identities per root, selected stage targets and any fallback reason. Its compact
 job output drives `verify-incremental.yml`. Toolchain, Python and GCC matrices
 contain only selected stages; each stage may run a subset of its canonical Bake
-roots. Every selected root still resolves its complete source dependency graph.
-This is source selection, not authorization to reuse a component or qualification
-receipt. A missing ordinary cache still causes Bake to build that dependency.
+roots. Source selection does not authorize component or qualification reuse.
+On original-repository main pushes and main manual CI, a separate caller job
+grants packages:read and enables the authenticated toolchain reader. It captures
+current inputs, verifies the signed catalog and OCI bytes, and substitutes the
+fixed component contexts in selected toolchain, Python, vcpkg, GCC and SDK stages.
+Missing input indexes leave explicit producer boundaries in the build graph;
+authentication, transfer and artifact verification failures stop the stage.
+PRs, forks and non-main dispatches use a separate contents:read-only caller and
+retain the complete source dependency graph without registry credentials.
 
 The current graph retains broad qualification COPY dependencies, including the
 complete `release.json` and GCC baseline directory. The planner preserves those
-dependencies. Narrowing qualification inputs and replacing downstream compiler
-solves with verified component consumption remain later rollout work. Full
+dependencies. Narrowing qualification inputs, publishing missing components and
+consuming Python row artifacts in production remain rollout work. Full
 qualification continues daily, manually and for explicitly requested candidates.
 The new dynamic workflow is locally checked but has not yet run on GitHub.
 
 The stable required check is **`pr-required`**. It succeeds only if `quick`
-and the reusable build workflow both succeed. That workflow separately checks
+and the selected reusable build workflow both succeed. An intermediate `builds`
+gate verifies the event's expected permission branch succeeded and the other was
+skipped. The reusable workflow separately checks
 that every selected stage succeeded and every unselected stage was skipped;
 a cancelled or unexpectedly skipped selected job fails the check. Configure
 main branch protection/rulesets to require `pr-required`, require PRs and
@@ -60,7 +69,10 @@ check after the changed workflow has produced that check on GitHub.
 
 ## Build stages
 
-`verify-incremental.yml` serves daily CI with `contents: read`. It preserves
+`verify-incremental.yml` serves daily CI and inherits the caller's permissions for
+build jobs: contents:read on the ordinary path, plus packages:read only on the
+trusted main path. Its plan, input preparation and final summary jobs explicitly
+reduce permissions to contents:read. It preserves
 phase ordering while allowing deliberately unselected dependencies to be skipped.
 Every direct and transitive phase prerequisite is included in `needs`, and a
 failed or cancelled prerequisite blocks dependent work. The final gate recomputes
@@ -72,6 +84,22 @@ the caller's permissions. The trusted qualification wrapper grants cache writes.
 Both workflows use the same bounded `ci-build.py` executor and canonical stage
 catalog; selected targets are validated against that stage's resolved Bake roots.
 The skip/matrix ordering follows [GitHub's job condition semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idif).
+
+The split is at the caller because reusable workflows can only maintain or reduce
+their caller's token permissions, as documented in [GitHub's reusable workflow
+permission rules](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations).
+The shared quick workflow has no nested package-reading jobs, so candidate and
+pilot preflight remain callable with contents:read only. The component reader
+also checks repository, GitHub server, main ref and push/dispatch event before
+registry login; read credentials are supplied through stdin and logged out after
+the stage. Original catalogs and receipts enter the diagnostic artifact, while
+large downloaded OCI layouts stay in a separate temporary directory.
+
+Before enabling this workflow on main, the manual component pilot must establish
+the internal package and its repository access, then demonstrate a signed catalog
+build/reuse cycle. A missing index is recoverable through source producers; a
+registry access error is not an absent index and intentionally fails. This rollout
+has local tests and Docker execution evidence, but no live GitHub acceptance yet.
 
 1. `inputs`: locked RPM/source verification, sysroots and host tools.
 2. Two independent toolchain jobs.

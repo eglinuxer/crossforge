@@ -263,7 +263,7 @@ class VcpkgSourceTests(unittest.TestCase):
         self.assertIn('target "_vcpkg_common"', hcl)
         self.assertIn('dockerfile = "docker/vcpkg.Dockerfile"', hcl)
         workflow = (
-            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(encoding="utf-8")
             + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         self.assertEqual(workflow.count("vcpkg-source"), 1)

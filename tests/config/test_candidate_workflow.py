@@ -19,6 +19,7 @@ class CandidateWorkflowTests(unittest.TestCase):
         cls.ci = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )
+        cls.quick = (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(encoding="utf-8")
         cls.setup = (
             REPOSITORY / ".github/actions/setup-locked-buildx/action.yml"
         ).read_text(encoding="utf-8")
@@ -33,9 +34,11 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertNotIn("  push:", self.workflow)
         self.assertIn("  push:\n    branches: [main]", self.ci)
         self.assertIn('test "$GITHUB_REF" = refs/heads/main', self.workflow)
-        self.assertIn("quick-only: true", self.workflow)
+        self.assertIn("uses: ./.github/workflows/verify-quick.yml", self.workflow)
+        self.assertIn("plan-components: false", self.workflow)
         self.assertIn("    needs: quick\n", self.workflow)
-        self.assertIn("inputs.quick-only && 'none'", self.ci)
+        self.assertIn("uses: ./.github/workflows/verify-quick.yml", self.ci)
+        self.assertNotIn("workflow_call:", self.ci)
         self.assertIn("packages: write", self.workflow)
         self.assertIn("sdk-candidate.output=type=image,push=true", self.workflow)
         self.assertIn(
@@ -283,7 +286,7 @@ class CandidateWorkflowTests(unittest.TestCase):
 
     def test_every_ci_and_candidate_job_uses_the_locked_buildx_setup(self):
         local_action = "uses: ./.github/actions/setup-locked-buildx"
-        self.assertEqual(self.ci.count(local_action), 1)
+        self.assertEqual(self.quick.count(local_action), 1)
         self.assertEqual(self.workflow.count(local_action), 2)
         self.assertIn("buildx-v0.36.1.linux-amd64", self.setup)
         self.assertIn("--retry 5 --retry-all-errors", self.setup)
@@ -313,7 +316,7 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn(
             "gcc -fsyntax-only -Wall -Wextra -Werror "
             "scripts/qt-plugin-probe.c",
-            self.ci,
+            self.quick,
         )
 
 

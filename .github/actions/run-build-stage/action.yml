@@ -13,9 +13,32 @@ inputs:
   targets-json:
     default: ''
     description: Optional selected roots, validated against this stage's canonical Bake graph
+  component-reader:
+    default: 'false'
+    description: Use authenticated toolchain components in trusted main incremental CI
+  component-builder:
+    default: ''
+    description: Pinned builder name required when component-reader is true
 runs:
   using: composite
   steps:
+    - name: Validate component execution mode
+      if: inputs.component-reader == 'true'
+      shell: bash
+      env:
+        COMPONENT_BUILDER: ${{ inputs.component-builder }}
+        WRITE_CACHE: ${{ inputs.write-cache }}
+        COLD_BUILD: ${{ inputs.cold }}
+      run: |
+        set -Eeuo pipefail
+        test -n "$COMPONENT_BUILDER"
+        test "$WRITE_CACHE" = false
+        test "$COLD_BUILD" = false
+    - uses: ./.github/actions/setup-component-reader
+      if: inputs.component-reader == 'true'
+      id: components
+      with:
+        registry-token: ${{ github.token }}
     - name: Build and measure
       shell: bash
       env:
@@ -23,6 +46,10 @@ runs:
         WRITE_CACHE: ${{ inputs.write-cache }}
         COLD_BUILD: ${{ inputs.cold }}
         SELECTED_TARGETS: ${{ inputs.targets-json }}
+        COMPONENT_READER: ${{ inputs.component-reader }}
+        COMPONENT_BUILDER: ${{ inputs.component-builder }}
+        COMPONENT_ORAS: ${{ steps.components.outputs.oras }}
+        COMPONENT_COSIGN: ${{ steps.components.outputs.cosign }}
       run: |
         set -Eeuo pipefail
         options=()
@@ -30,8 +57,13 @@ runs:
         if test "$COLD_BUILD" = true; then options+=(--cold); fi
         selection=()
         if test -n "$SELECTED_TARGETS"; then selection+=(--targets-json "$SELECTED_TARGETS"); fi
+        components=()
+        if test "$COMPONENT_READER" = true; then
+          components+=(--component-builder "$COMPONENT_BUILDER" --component-oras "$COMPONENT_ORAS"
+            --component-cosign "$COMPONENT_COSIGN" --component-directory "$RUNNER_TEMP/component-data/$BUILD_STAGE")
+        fi
         python3 scripts/ci-build.py "${options[@]}" run "$BUILD_STAGE" \
-          --directory "$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE" "${selection[@]}"
+          --directory "$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE" "${selection[@]}" "${components[@]}"
     - name: Verify anonymous cache access
       if: success() && inputs.write-cache == 'true'
       shell: bash
@@ -59,3 +91,7 @@ runs:
         path: ${{ runner.temp }}/build-diagnostics/${{ inputs.stage }}/
         retention-days: 7
         if-no-files-found: warn
+    - name: Log out the component reader
+      if: always() && inputs.component-reader == 'true'
+      shell: bash
+      run: docker logout ghcr.io

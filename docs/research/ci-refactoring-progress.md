@@ -5,7 +5,7 @@
 | 批次 | 当前状态 | 仍需取得的证据 |
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
-| 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；同 run CI 试点已实现 | GitHub 试点实跑与生产 CI 接入 |
+| 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；同 run 试点及 main 只读工具链消费已接线 | GitHub 实跑与缺失组件的集中生产 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、与可信产物可用性及生产消费对接 |
 | 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过 | 生产 CI 接入与远程验收 |
 | 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储及跨 run 消费接线本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
@@ -270,3 +270,13 @@ Docker 全量 config 1090 项、147.414 秒，packaging 40 项、0.871 秒通过
 [绑定验证记录](ci-component-binding-2026-09-10.json)：Docker 定向回归共 40 项通过（6 项绑定、3 项 catalog consumer、7 项 resolver、24 项 CI build）；三个 renderer 检查与实际 Rocky 8 platform-python 3.6 强制门禁通过。使用不可变源码快照、既有独立可信 receipt 和真实 OCI 校验，在本地替换 resolver 的信任入口后执行实际 `ci-build.run_stage`，工具链阶段成功，重新解析的消费图只有 `toolchain-x86_64-dev`，材料闭包不含 GCC 源码构建。该 cache-only 暖运行记录为 6.2 秒，保留原组件 producer，不宣称 GitHub 签名验证、新执行资格或远程性能收益。
 
 后续核对本地配置时，补齐 resolver 对 `DOCKER_CONFIG` 的支持：显式 `docker_config` 优先，其次使用环境指定目录，再使用默认用户目录，确保 registry 与 Buildx 不会意外读取不同配置。Docker resolver 8 项定向回归通过（0.019 秒），覆盖环境配置与显式覆盖；日志 SHA256 为 `316558a93ba028238bcd514bbec8a07c6b5122f2fa8e4ce8499b5d85bc6111f8`。
+
+## 批次 3：main 组件读取与 PR 权限隔离接入
+
+`ci.yml` 现在只负责独立 push/PR/manual 入口，quick 检查抽到 contents:read-only 的 `verify-quick.yml`。候选和 pilot 直接复用该 quick 工作流并关闭日常构建选择，避免低权限 preflight 嵌套到 package reader。抽取前后，从 quick job 定义到全部静态/配置/语法/Bake 检查的主体逐字节相同，摘要记录在[本地验证](main-component-routing-2026-09-10.json)。
+
+两个互斥 caller 分开授予权限：原 GitHub 仓库的 main push/dispatch 进入 `builds-components`（contents:read + packages:read），PR/fork/非 main 进入 `builds-readonly`（仅 contents:read）。可复用增量构建的工作 job 继承对应 caller；计划、输入准备及最终摘要三个 job 显式降为 contents:read。新增 `builds` gate 按真实事件重算预期分支，必须一个 success、另一个 skipped；原 `pr-required` 名称与 quick/builds 成功要求保持。该结构遵循 GitHub 可复用工作流权限只能维持或降低的规则，没有给 PR 新增 registry 凭据。
+
+main 的工具链、Python、vcpkg、GCC、SDK 选中阶段启用已有组件绑定 CLI，使用 pinned ORAS/Cosign、签名目录及实际 OCI 核验。登录前再次检查 GitHub server、仓库、main ref 与 push/dispatch 事件；token 经 stdin 传入，阶段结束退出登录。索引缺失仍明确保留源码 producer，认证/传输/产物错误终止；源码 fallback 产物尚未集中封存发布，Python 行组件接线也继续推进。
+
+Docker 最终 config 1113 项、148.309 秒，packaging 40 项、0.853 秒通过，保留既有 2/1 项跳过；四项 locked validators、三个 renderer、实际 Rocky 8 platform-python 3.6 强制门禁和 actionlint 通过。新增事件矩阵执行真实 planner 与 credential guard，覆盖 PR、PR-target、fork、非 main、tag、其他 server、计划失败和分支结果错配。中途修正了一处 action YAML 缩进，以及跟随 quick 抽取/权限继承边界变化的旧测试定位；完整复测零失败。远程 rollout 前仍须由 manual pilot 验证 package 访问及真实签名 build/reuse；本轮未执行远程发布或 dispatch。

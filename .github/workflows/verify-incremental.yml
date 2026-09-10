@@ -9,12 +9,18 @@ on:
       selection:
         type: string
         default: ''
+      component-reader:
+        description: Trusted main reader; the caller must supply packages:read
+        type: boolean
+        default: false
 
-permissions:
-  contents: read
+# Build jobs inherit the caller's permission boundary. Read-only CI supplies
+# contents:read only; the separate trusted main caller adds packages:read.
 
 jobs:
   plan:
+    permissions:
+      contents: read
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -40,12 +46,17 @@ jobs:
         env:
           PROFILE: ${{ inputs.profile }}
           SELECTION: ${{ inputs.selection }}
+          COMPONENT_READER: ${{ inputs.component-reader }}
         run: |
           set -Eeuo pipefail
+          options=()
+          if test "$COMPONENT_READER" = true; then options+=(--component-reader); fi
           python3 scripts/ci-component-plan.py execution \
-            --profile "$PROFILE" --selection "$SELECTION" >> "$GITHUB_OUTPUT"
+            --profile "$PROFILE" --selection "$SELECTION" "${options[@]}" >> "$GITHUB_OUTPUT"
 
   inputs:
+    permissions:
+      contents: read
     needs: [plan]
     if: >-
       always() && !cancelled() && needs.plan.outputs.inputs == 'true' &&
@@ -79,8 +90,11 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
       - uses: ./.github/actions/run-build-stage
         with:
+          component-reader: ${{ inputs.component-reader }}
+          component-builder: ${{ steps.buildx.outputs.builder }}
           stage: ${{ matrix.stage }}
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
 
@@ -101,8 +115,11 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
       - uses: ./.github/actions/run-build-stage
         with:
+          component-reader: ${{ inputs.component-reader }}
+          component-builder: ${{ steps.buildx.outputs.builder }}
           stage: ${{ matrix.stage }}
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
 
@@ -118,8 +135,11 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
       - uses: ./.github/actions/run-build-stage
         with:
+          component-reader: ${{ inputs.component-reader }}
+          component-builder: ${{ steps.buildx.outputs.builder }}
           stage: vcpkg
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['vcpkg']) }}
 
@@ -140,8 +160,11 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
       - uses: ./.github/actions/run-build-stage
         with:
+          component-reader: ${{ inputs.component-reader }}
+          component-builder: ${{ steps.buildx.outputs.builder }}
           stage: ${{ matrix.stage }}
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
 
@@ -157,12 +180,17 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
       - uses: ./.github/actions/run-build-stage
         with:
+          component-reader: ${{ inputs.component-reader }}
+          component-builder: ${{ steps.buildx.outputs.builder }}
           stage: sdk
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['sdk']) }}
 
   verified:
+    permissions:
+      contents: read
     if: always()
     needs: [plan, inputs, toolchains, python, vcpkg, gcc, sdk]
     runs-on: ubuntu-24.04

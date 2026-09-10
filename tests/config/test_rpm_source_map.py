@@ -116,7 +116,7 @@ class RPMSourceMapTests(unittest.TestCase):
         )
         bake = (REPOSITORY / "docker-bake.hcl").read_text(encoding="utf-8")
         ci = (
-            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(encoding="utf-8")
             + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         self.assertIn('target "rocky-base-source-map"', bake)

@@ -360,11 +360,14 @@ class HostedBuildTests(unittest.TestCase):
         concurrency = workflow.split("\nconcurrency:\n", 1)[1].split("\non:\n", 1)[0]
         self.assertIn("github.sha", concurrency)
         self.assertIn("github.event_name == 'pull_request' && 'pr'", concurrency)
-        builds = workflow.split("\n  builds:\n", 1)[1].split("\n  pr-required:", 1)[0]
-        self.assertIn("group: ci-builds-${{ github.ref }}", builds)
-        self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}", builds)
-        self.assertNotIn("github.sha", builds)
-        self.assertIn("inputs.quick-only && 'quick' || github.event_name", builds)
+        for job in ("builds-readonly", "builds-components"):
+            builds = workflow.split("\n  " + job + ":\n", 1)[1].split("\n  builds", 1)[0]
+            self.assertIn("group: ci-builds-${{ github.ref }}-${{ github.event_name }}", builds)
+            self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}", builds)
+            self.assertNotIn("github.sha", builds)
+        candidate = (ROOT / ".github/workflows/candidate.yml").read_text()
+        self.assertIn("uses: ./.github/workflows/verify-quick.yml", candidate)
+        self.assertNotIn("uses: ./.github/workflows/ci.yml", candidate)
 
     def test_qualification_queue_keeps_waiting_candidates(self):
         workflow = (ROOT / ".github/workflows/qualification.yml").read_text()
@@ -400,7 +403,7 @@ class HostedBuildTests(unittest.TestCase):
             self.assertIn("toolchain-" + arch + "-dev", graph["target"])
 
     def test_shell_syntax_checks_the_second_file_too(self):
-        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        workflow = (ROOT / ".github/workflows/verify-quick.yml").read_text()
         loop = workflow.split("          for script in scripts/*.sh docker/*.sh; do", 1)[1]
         loop = "for script in scripts/*.sh docker/*.sh; do" + loop.split("          done", 1)[0] + "done"
         with tempfile.TemporaryDirectory() as directory:
