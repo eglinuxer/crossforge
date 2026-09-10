@@ -97,6 +97,27 @@ class RenderBakeTests(unittest.TestCase):
         ):
             self.assertNotIn(runtime, self.targets[name]["args"])
 
+    def test_toolchain_consumers_have_scoped_install_and_test_context_inputs(self):
+        bindings = RENDERER["scoped_main_toolchain_contexts"](REPOSITORY)
+        for arch in ("x86_64", "aarch64"):
+            install = "crossforge_toolchain_%s_install" % arch
+            context = "crossforge_toolchain_%s_test_context" % arch
+            self.assertEqual(bindings["toolchain-%s-dev" % arch], {
+                install: "target:toolchain-%s-build-export" % arch})
+            self.assertEqual(bindings["gcc-testsuite-%s-smoke" % arch], {
+                install: "target:toolchain-%s-build-export" % arch,
+                context: "target:gcc-%s-test-context-export" % arch})
+            for producer in ("toolchain-%s-build-export" % arch, "gcc-%s-test-context-export" % arch):
+                self.assertNotIn(producer, bindings, "a producer must not depend on its own component context")
+            for name in ("toolchain-%s-dev" % arch, "gcc-testsuite-%s-smoke" % arch):
+                for key, value in bindings[name].items():
+                    self.assertEqual(self.targets[name]["contexts"][key], value)
+
+    def test_full_gcc_gate_keeps_both_component_inputs(self):
+        self.assertEqual(self.targets["gcc-testsuite-x86_64-full-qualified"]["contexts"], {
+            "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+            "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"})
+
     def test_qt_build_lock_targets_exclude_runtime_component_identity(self):
         qualification = RENDERER["component_argument_name"](
             "future/qt-qualification"

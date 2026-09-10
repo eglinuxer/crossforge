@@ -32,6 +32,7 @@ class ComponentBuildTests(unittest.TestCase):
         (self.root / "source").write_text("source fixture")
         (self.root / "docker/Dockerfile").write_text("# syntax=docker/dockerfile:1@sha256:" + "a" * 64 +
             "\nFROM scratch AS gcc-x86_64\nCOPY source /work/build/gcc-x86_64/input\n"
+            "FROM gcc-x86_64 AS gcc-x86_64-test-context-export\n"
             "FROM scratch AS toolchain-x86_64-build-export\nCOPY --from=gcc-x86_64 / /opt/crossforge/\n")
         self.graph = {"target": {"toolchain-x86_64-build-export": {"context": ".", "dockerfile": "docker/Dockerfile",
             "target": "toolchain-x86_64-build-export", "platforms": ["linux/amd64"],
@@ -67,7 +68,8 @@ class ComponentBuildTests(unittest.TestCase):
             self.plan(directory)
 
     def test_test_context_is_distinct_from_install_artifact(self):
-        graph = {"target": {"gcc-x86_64": dict(self.graph["target"]["toolchain-x86_64-build-export"], target="gcc-x86_64")}}
+        graph = {"target": {"gcc-x86_64-test-context-export": dict(
+            self.graph["target"]["toolchain-x86_64-build-export"], target="gcc-x86_64-test-context-export")}}
         directory = self.root / "test-context"
         contract = self.plan(directory, "gcc-test-context", graph)
         self.assertEqual(contract["inputs"]["component"], "toolchain/x86_64-test-context")

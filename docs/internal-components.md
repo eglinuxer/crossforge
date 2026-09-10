@@ -70,7 +70,7 @@ invocation leaves its directory for diagnosis. `plan-toolchain` emits the inputs
 contract, and Bake graph without building.
 
 For a GCC test context, use `--role gcc-test-context` and obtain the source graph
-with `--print gcc-x86_64`. ARM uses `--arch aarch64` and the matching target names.
+with `--print gcc-x86_64-test-context-export`. ARM uses `--arch aarch64` and the matching target names.
 Consumers must verify each role separately before assembling their test stage.
 
 On the consumer, capture expected inputs from its independently checked source
@@ -98,6 +98,23 @@ metadata with BuildKit; Python does not reimplement tar, whiteout, or symlink
 application. A wrong digest, role, target, recipe, sysroot input, or metadata file
 fails before an override is emitted. The override refers to an immutable platform
 manifest; it has no fallback to a tag or source-build target.
+
+The canonical toolchain and GCC qualification stages now expose these inputs:
+
+| Consumer | Named component contexts |
+|---|---|
+| `toolchain-x86_64-dev`, `runtime-smoke-x86_64` | `crossforge_toolchain_x86_64_install` |
+| `toolchain-aarch64-dev`, `runtime-smoke-aarch64` | `crossforge_toolchain_aarch64_install` |
+| `gcc-testsuite-x86_64-smoke`, `gcc-testsuite-x86_64-full-qualified` | `crossforge_toolchain_x86_64_install` and `crossforge_toolchain_x86_64_test_context` |
+| `gcc-testsuite-aarch64-smoke` | `crossforge_toolchain_aarch64_install` and `crossforge_toolchain_aarch64_test_context` |
+
+Each context defaults to its source-built export. Verify each artifact using the
+corresponding role and generate a consumer override with that exact context name.
+Two override files can be passed to Bake to bind both GCC inputs. The renderer
+adds bindings only to targets that actually reach the contexts, keeping exports
+independent and avoiding producer self-dependencies. Compiler smoke, clean-runtime
+execution, GCC probes, and exact baseline comparisons remain in their existing
+qualification stages; an installation export still has no qualification claim.
 
 ## Material closure limits
 

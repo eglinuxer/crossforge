@@ -26,6 +26,14 @@ COMPONENT_ARGUMENT_RE = re.compile(
     r"^CROSSFORGE_COMPONENT_[A-Z0-9_]+_SHA256\Z"
 )
 SHA256_RE = re.compile(r"^[0-9a-f]{64}\Z")
+TOOLCHAIN_CONTEXT_TARGETS = {
+    "crossforge_toolchain_%s_%s" % (arch, role): target
+    for arch in ("x86_64", "aarch64")
+    for role, target in (
+        ("install", "toolchain-%s-build-export" % arch),
+        ("test_context", "gcc-%s-test-context-export" % arch),
+    )
+}
 
 
 def component_argument_name(component):
@@ -125,6 +133,8 @@ def main_docker_stage_contract(repository):
                 | {match.group(1)}
                 if dependency in {item.group(2) for item in matches}
             },
+            "contexts": (set(re.findall(r"(?:--from=|,from=)([a-zA-Z0-9_.-]+)", block))
+                         | {match.group(1)}) & set(TOOLCHAIN_CONTEXT_TARGETS),
         }
     return stages
 
@@ -206,6 +216,27 @@ def scoped_main_component_arguments(repository, component_arguments):
             result[target] = {
                 name: component_arguments[name] for name in sorted(arguments)
             }
+    return result
+
+
+def scoped_main_toolchain_contexts(repository):
+    """Bind only contexts reached by a target; never add producer self-edges."""
+    stages = main_docker_stage_contract(repository)
+    result = {}
+    for target, root in main_bake_target_stages(repository).items():
+        pending, visited, contexts = [root], set(), set()
+        while pending:
+            stage = pending.pop()
+            if stage in visited:
+                continue
+            if stage not in stages:
+                raise ValueError("unknown Docker stage: %s" % stage)
+            visited.add(stage)
+            contexts.update(stages[stage]["contexts"])
+            pending.extend(stages[stage]["dependencies"])
+        if contexts:
+            result[target] = {name: "target:" + TOOLCHAIN_CONTEXT_TARGETS[name]
+                              for name in sorted(contexts)}
     return result
 
 
@@ -1667,6 +1698,11 @@ def render(repository):
         component_renderer["CROSSPACK_QUALIFICATION_POLICY"],
     )
     python_groups = render_python_graph(config, targets, component_arguments)
+    for name, contexts in scoped_main_toolchain_contexts(repository).items():
+        existing = targets.setdefault(name, {}).setdefault("contexts", {})
+        if set(existing) & set(contexts):
+            raise ValueError("duplicate toolchain context binding: %s" % name)
+        existing.update(contexts)
     for name, scoped_arguments in scoped_main_component_arguments(
         repository, component_arguments
     ).items():

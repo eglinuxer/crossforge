@@ -2058,6 +2058,15 @@
         "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648"
       }
     },
+    "gcc-aarch64-test-context-export": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
+        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
+        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
+        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648"
+      }
+    },
     "gcc-prepared": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
@@ -2069,23 +2078,23 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd"
       },
       "contexts": {
-        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
+        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705",
+        "crossforge_toolchain_aarch64_install": "target:toolchain-aarch64-build-export",
+        "crossforge_toolchain_aarch64_test_context": "target:gcc-aarch64-test-context-export"
       }
     },
     "gcc-testsuite-full-observation-evidence": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648"
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-testsuite-full-qualification-evidence": {
@@ -2093,10 +2102,11 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-testsuite-smoke-evidence": {
@@ -2104,24 +2114,25 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd"
       },
       "contexts": {
-        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
+        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705",
+        "crossforge_toolchain_aarch64_install": "target:toolchain-aarch64-build-export",
+        "crossforge_toolchain_aarch64_test_context": "target:gcc-aarch64-test-context-export",
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-testsuite-x86_64-full-observe": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648"
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-testsuite-x86_64-full-qualified": {
@@ -2129,10 +2140,11 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-testsuite-x86_64-smoke": {
@@ -2140,13 +2152,23 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-x86_64": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
+        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
+        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
+        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648"
+      }
+    },
+    "gcc-x86_64-test-context-export": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
@@ -3460,24 +3482,20 @@
     "runtime-smoke-aarch64": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3"
       },
       "contexts": {
-        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
+        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705",
+        "crossforge_toolchain_aarch64_install": "target:toolchain-aarch64-build-export"
       }
     },
     "runtime-smoke-x86_64": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export"
       }
     },
     "sbom-generator-source": {
@@ -3582,14 +3600,11 @@
     "toolchain-aarch64-dev": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3"
       },
       "contexts": {
-        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
+        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705",
+        "crossforge_toolchain_aarch64_install": "target:toolchain-aarch64-build-export"
       }
     },
     "toolchain-plan-aarch64": {
@@ -3628,11 +3643,10 @@
     "toolchain-x86_64-dev": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export"
       }
     },
     "vcpkg-contract-assets": {

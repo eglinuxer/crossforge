@@ -452,6 +452,18 @@ target "toolchain-aarch64-build-export" {
   output   = ["type=cacheonly"]
 }
 
+target "gcc-x86_64-test-context-export" {
+  inherits = ["_common"]
+  target   = "gcc-x86_64-test-context-export"
+  output   = ["type=cacheonly"]
+}
+
+target "gcc-aarch64-test-context-export" {
+  inherits = ["_common"]
+  target   = "gcc-aarch64-test-context-export"
+  output   = ["type=cacheonly"]
+}
+
 target "toolchain-x86_64-dev" {
   inherits = ["_common"]
   target   = "toolchain-x86_64-dev"

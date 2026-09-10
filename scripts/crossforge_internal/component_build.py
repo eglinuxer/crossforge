@@ -25,7 +25,7 @@ def toolchain_spec(arch, role):
     require(role in ("toolchain-install", "gcc-test-context"), "unsupported toolchain artifact role")
     suffix = "install" if role == "toolchain-install" else "test-context"
     return {"component": "toolchain/%s-%s" % (arch, suffix),
-            "target": "toolchain-%s-build-export" % arch if role == "toolchain-install" else "gcc-%s" % arch,
+            "target": "toolchain-%s-build-export" % arch if role == "toolchain-install" else "gcc-%s-test-context-export" % arch,
             "triple": arch + "-unknown-linux-gnu",
             "copies": ["/opt/crossforge/"] if role == "toolchain-install" else [
                 "/work/prepared/gcc/", "/work/build/gcc-%s/" % arch]}

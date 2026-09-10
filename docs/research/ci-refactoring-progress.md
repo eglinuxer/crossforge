@@ -5,7 +5,7 @@
 | 批次 | 当前状态 | 仍需取得的证据 |
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
-| 2：组件契约与工具链交接 | 本地 OCI 契约、材料闭包、工具链 producer 与全新 consumer 的 cp39 x86_64 构建通过 | GCC 测试上下文实跑、工具链资格报告绑定、远程交接与 CI 接入 |
+| 2：组件契约与工具链交接 | 安装/测试上下文 OCI、cp39 x86_64 构建、x86_64 ABI/运行时及 GCC smoke 交接通过 | GCC full/ARM 交接实跑、正式资格 receipt、远程交接与 CI 接入 |
 | 3：组件级增量计划 | 待实现 | 依赖传播、完整结果汇总和真实受影响构建 |
 | 4：整行 Python/SDK 交接 | 待实现 | 双架构全 row、SDK 组装无 GCC/CPython 源码重编 |
 | 5：资格复用及恢复 | 待实现 | 显式复用、强制执行、候选集成/ARM 及同 digest 恢复 |
@@ -63,3 +63,17 @@ OCI 模块只校验 root/platform/config/layer 的实际字节，镜像层应用
 本次发现快照目录权限会干扰缓存：初始新快照目录为 `0775`，旧快照为 `0755`，对应锁定 metadata 目录 COPY 未命中，继而重新编译 GCC。最终快照统一目录 `0755` 后 GCC 步骤命中缓存，OCI layers 导出 36.5 秒。这是本地实验的输入差异，不作为历史 GitHub 缓存失效原因或优化后的端到端耗时结论。
 
 原始日志、OCI、receipt 和不可变源快照位于本次工作机 `/tmp/crossforge-component-formal/`，不入库。GitHub 事件实跑、远程可信传输、GCC full 上下文与报告交接、完整双架构 Python row、SDK 汇总和资格复用仍未完成，全目标保持进行中。
+
+## 批次 2：工具链资格门禁消费组件
+
+将工具链资格阶段、干净运行时门禁、dev 汇总以及 GCC smoke/full 的输入改为命名的安装/测试上下文入口。默认 Bake 仍提供源码导出的组件；renderer 仅向可达消费者添加上下文，导出节点不依赖自己。`gcc-<arch>-test-context-export` 现在明确导出 prepared source 与 GCC build tree，正式本地 producer 使用该边界。测试命令、目标执行规则与冻结基线保持原样；SDK 仍要求资格化的 dev 汇总，不直接绕过门禁消费 build export。
+
+实测数据见 [门禁交接观测](toolchain-gate-handoff-2026-09-10.json)，原始 OCI、源快照、报告与日志位于本次工作机 `/tmp/crossforge-toolchain-gates/`。
+
+- 安装组件本地 producer 7.51 秒，压缩层共 746,948,386 字节；首次 GCC 测试上下文 producer 90.75 秒，压缩层共 1,310,689,927 字节。这两种产物保持分离，普通 Python 消费者无需接收 GCC build tree。
+- consumer 独立重算材料并核验两份 receipt，耗时 27.52 秒。随后通过固定 OCI digest 执行工具链 ABI/locked-sysroot/clean-Rocky smoke 与 GCC smoke，48.56 秒完成。
+- 使用按 stage 的 `no-cache-filter` 重跑四个实际门禁步骤；原始日志证明它们均执行完成且没有 `CACHED`。consumer Bake 图仅包含两个资格根及报告导出目标，没有 GCC 源码构建目标，日志没有 `build-gcc.sh`。
+- 用现有最终 SDK 的工具链报告验证函数重新检查 release、sysroot、版本、来源、资格组件与 clean-runtime marker；用现有 GCC normalizer 对原始 `.sum` 及冻结 baseline 重新生成报告并逐字段比较，得到 16 PASS，报告一致。
+- Docker 完整 config 回归 976 项、182.946 秒、零失败、2 项既有 zstd 资源测试跳过；locked release、供应链、冻结 ABI、Python provider 及三个 renderer `--check` 通过。
+
+这里证明了安装组件和原始测试上下文可共同运行既有门禁；尚未证明 GCC full 或 ARM 实跑完成。当前报告与组件 digest 的关联仍是本地观测，不能作为可复用的正式候选资格 receipt。后续继续完成该接口、远程可信交接和 CI 接入。
