@@ -7,6 +7,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 on:
+  push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
   workflow_call:
@@ -117,8 +119,10 @@ jobs:
   builds:
     needs: quick
     concurrency:
-      group: ci-builds-${{ github.ref }}${{ inputs.quick-only && '-quick' || '' }}
-      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+      # Supersede development builds without cancelling manual verification
+      # or the candidate's independent quick-only summary.
+      group: ci-builds-${{ github.ref }}-${{ inputs.quick-only && 'quick' || github.event_name }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     uses: ./.github/workflows/verify-builds.yml
     with:
       profile: ${{ inputs.quick-only && 'none' || needs.quick.outputs.profile }}

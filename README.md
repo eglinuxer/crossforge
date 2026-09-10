@@ -34,7 +34,7 @@ build-system-independent DEB/RPM packaging.
 > immutable evidence are implemented but still require their first public
 > execution. Repository protection settings and formal legal review remain
 > pre-release operating gates.
-> Checked-in Bake outputs remain cache-only; only the main-push or manually dispatched
+> Checked-in Bake outputs remain cache-only; only the explicitly dispatched
 > public-candidate workflow may emit a user-facing image.
 
 The accepted implementation contract is in
@@ -148,9 +148,10 @@ x86_64 full GCC gate is available separately:
 $ docker buildx bake gcc-testsuite-full-qualified
 ```
 
-PR CI runs fast checks and conservatively selects affected hosted build stages.
-Every main push performs one full qualification and publishes a candidate.
-Full qualification also runs daily and manually. Version tags request digest-only
+PR and main CI run fast checks and conservatively select affected hosted build stages.
+Manually dispatch `candidate.yml` on main when preparing a candidate or release;
+ordinary pushes do not publish images. Full qualification also runs daily and
+manually. Version tags request digest-only
 stable promotion of the exact commit's successful candidate, subject to production
 approval; see the Actions operating guide for tag timing and required credentials.
 Toolchains, Python rows, vcpkg and GCC use separate GitHub-hosted jobs with

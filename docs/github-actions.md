@@ -6,20 +6,21 @@ Crossforge uses GitHub-hosted `ubuntu-24.04` build runners and
 
 ## Required checks and affected builds
 
-`ci.yml` runs on PRs and manual dispatch, and is callable for quick checks.
-PR updates cancel stale runs. `quick` validates locks, configuration,
+`ci.yml` runs on main pushes, PRs and manual dispatch, and is callable for quick checks.
+PR updates cancel stale runs. New main pushes replace outdated selected builds;
+quick checks for distinct commits can run immediately. `quick` validates locks, configuration,
 generated files, unit tests, every shell script, and the Bake and Actions
 definitions. `scripts/ci-plan.py` selects a build profile from the complete
 Git diff, including deleted paths. Unknown paths and shared inputs select
 `full`; manual dispatch without a diff base also selects `full`.
 A PR uses the merge base against the checked-out merge commit.
 
-Each main push starts only `candidate.yml`: it calls CI with `quick-only: true`
-(the reusable build summary selects no heavy stages and has a separate
-concurrency lock from selected builds), then one full
-qualification, then candidate publication. No separate push CI duplicates
-that qualification. Manual candidate dispatch is a recovery path; do not
-start a second candidate for the same SHA while its automatic run is active.
+Each main push runs the selected CI profile and does not publish an image.
+Dispatch `candidate.yml` on main when preparing a candidate or release:
+it calls CI with `quick-only: true`, then full qualification and candidate
+publication. Candidate quick summaries, manual CI and push-selected builds have
+separate concurrency groups, so development updates cannot cancel a candidate.
+Avoid starting a second candidate for the same SHA while one is active.
 
 | Changes | Build profile |
 | --- | --- |
@@ -31,8 +32,9 @@ start a second candidate for the same SHA while its automatic run is active.
 
 The first implementation deliberately runs all six Python rows for `sdk` and
 `python`. Narrowing individual rows needs explicit dependency mapping; it must
-not silently miss changes to shared Python logic. Main pushes always qualify the full graph before publishing. Full qualification
-also runs daily and manually as a separate replay.
+not silently miss changes to shared Python logic. This is currently conservative
+profile selection, not yet component-level incrementality. Full qualification
+runs daily, manually and for explicitly requested candidates.
 
 The stable required check is **`pr-required`**. It succeeds only if `quick`
 and the reusable build workflow both succeed. That workflow separately checks
@@ -119,7 +121,7 @@ addresses the remote-cache pattern described in
 must still be confirmed from hosted build logs. Unrelated targets keep their
 own imports. Cache misses execute the original build and qualification graph.
 
-Only `qualification.yml`, on a trusted main push, schedule or manual dispatch, writes
+Only `qualification.yml`, on a trusted main schedule or manual dispatch, writes
 these caches. Candidate prequalification calls that same wrapper. Its shared
 concurrency group serializes all writers with `queue: max`, so up to 100
 waiting qualifications/candidates are retained rather than replaced by a
@@ -129,7 +131,7 @@ Pinned actionlint 1.7.12 does not yet understand this field; only its specific
 unsupported-queue diagnostic is ignored, and a regression requires this exact
 setting with cancellation disabled on the qualification workflow. Running
 qualification and candidate publication are not automatically cancelled.
-PR/manual CI and candidate publication only import caches. The cache writer
+Main/PR/manual CI and candidate publication only import caches. The cache writer
 also checks the repository, event and ref before allowing an export.
 
 The first cache export creates the GHCR cache package. Configure that package
@@ -201,8 +203,8 @@ not alter the lock or bypass subsequent signature verification.
 
 ## Candidate and stable delivery
 
-`candidate.yml` runs automatically on main pushes, with manual dispatch retained
-for recovery. After quick checks it calls the full qualification workflow for the exact
+`candidate.yml` is manually dispatched on main when preparing a candidate or release.
+After quick checks it calls the full qualification workflow for the exact
 candidate checkout. It then imports those caches into its existing source and
 SDK build graph, without changing output, attestation or qualification policy.
 The final SDK still validates its GCC full evidence and all existing contracts.
@@ -213,6 +215,10 @@ After pushing the unique candidate, anonymous consumers, native AArch64 and
 signature checks run as before. Stable promotion and rollback continue to use
 digests without rebuilding. A warm build is not a previously qualified image:
 only the actual published candidate digest can acquire release evidence.
+
+Prepare a candidate first with `gh workflow run candidate.yml --ref main`.
+The workflow binds the commit selected at dispatch; later main pushes do not
+change that candidate's source identity.
 
 Push a stable `vX.Y.Z` Git tag to request a formal release. The tag must point
 to a commit in main and match `product.version` in that commit's

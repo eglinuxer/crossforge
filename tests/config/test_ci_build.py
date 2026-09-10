@@ -362,9 +362,9 @@ class HostedBuildTests(unittest.TestCase):
         self.assertIn("github.event_name == 'pull_request' && 'pr'", concurrency)
         builds = workflow.split("\n  builds:\n", 1)[1].split("\n  pr-required:", 1)[0]
         self.assertIn("group: ci-builds-${{ github.ref }}", builds)
-        self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", builds)
+        self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}", builds)
         self.assertNotIn("github.sha", builds)
-        self.assertIn("inputs.quick-only && '-quick' || ''", builds)
+        self.assertIn("inputs.quick-only && 'quick' || github.event_name", builds)
 
     def test_qualification_queue_keeps_waiting_candidates(self):
         workflow = (ROOT / ".github/workflows/qualification.yml").read_text()

@@ -27,11 +27,12 @@ class CandidateWorkflowTests(unittest.TestCase):
             / ".github/actions/validate-public-attestations/action.yml"
         ).read_text(encoding="utf-8")
 
-    def test_candidate_publishes_main_and_manual_public_digest_only_output(self):
+    def test_candidate_is_explicit_and_main_push_runs_incremental_ci(self):
         self.assertIn("workflow_dispatch:", self.workflow)
         self.assertNotIn("pull_request:", self.workflow)
-        self.assertIn("  push:\n    branches: [main]", self.workflow)
-        self.assertNotIn("  push:", self.ci)
+        self.assertNotIn("  push:", self.workflow)
+        self.assertIn("  push:\n    branches: [main]", self.ci)
+        self.assertIn('test "$GITHUB_REF" = refs/heads/main', self.workflow)
         self.assertIn("quick-only: true", self.workflow)
         self.assertIn("    needs: quick\n", self.workflow)
         self.assertIn("inputs.quick-only && 'none'", self.ci)
@@ -109,22 +110,35 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("source-bundle-signature.json", self.workflow)
         self.assertNotIn("source-bundle", self.ci)
 
-    def test_source_digest_command_resolves_source_bake_metadata(self):
-        command = re.search(r"source_digest=\$\((.*?)\)", self.workflow, re.S)
-        self.assertIsNotNone(command)
-        digest = "sha256:" + "1" * 64
+    def test_publish_digest_commands_select_their_own_bake_target(self):
+        digests = {"source-bundle": "sha256:" + "1" * 64,
+                   "sdk-candidate": "sha256:" + "2" * 64}
         with tempfile.TemporaryDirectory() as directory:
-            metadata = Path(directory) / "source-build-metadata.json"
-            metadata.write_text(json.dumps({
-                "source-bundle": {"containerimage.digest": digest}
-            }), encoding="utf-8")
-            arguments = shlex.split(command.group(1).replace("\\\n", ""))
-            arguments = [arg.replace("$RUNNER_TEMP", directory) for arg in arguments]
-            result = subprocess.run(
-                arguments, cwd=REPOSITORY, text=True, capture_output=True
-            )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.strip(), digest)
+            for variable, target in (("source_digest", "source-bundle"),
+                                     ("candidate_digest", "sdk-candidate")):
+                command = re.search(variable + r"=\$\((.*?)\)", self.workflow, re.S)
+                self.assertIsNotNone(command)
+                arguments = shlex.split(command.group(1).replace("\\\n", ""))
+                arguments = [arg.replace("$RUNNER_TEMP", directory) for arg in arguments]
+                metadata = Path(arguments[arguments.index("--metadata") + 1])
+                # Give both targets distinct identities so a wrong/default
+                # target cannot accidentally pass with a shared fixture digest.
+                metadata.write_text(json.dumps({
+                    name: {"containerimage.digest": digest}
+                    for name, digest in digests.items()
+                }), encoding="utf-8")
+                with self.subTest(target=target):
+                    result = subprocess.run(
+                        arguments, cwd=REPOSITORY, text=True, capture_output=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.stdout.strip(), digests[target])
+                    for invalid in ({}, {target: {}},
+                                    {target: {"containerimage.digest": "latest"}}):
+                        metadata.write_text(json.dumps(invalid), encoding="utf-8")
+                        result = subprocess.run(
+                            arguments, cwd=REPOSITORY, text=True, capture_output=True)
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertEqual(result.stdout, "")
 
     def test_public_availability_is_checked_without_registry_credentials(self):
         logout = self.workflow.index("docker logout ghcr.io")
@@ -287,12 +301,13 @@ class CandidateWorkflowTests(unittest.TestCase):
             self.setup,
         )
 
-    def test_main_qualification_is_not_cancelled_by_a_later_push(self):
+    def test_candidate_qualification_is_not_cancelled_by_development_pushes(self):
         self.assertIn(
             "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
             self.ci,
         )
         self.assertIn("cancel-in-progress: false", self.workflow)
+        self.assertIn("group: candidate-${{ github.ref }}-${{ github.sha }}", self.workflow)
 
     def test_qt_runtime_probe_is_compiled_with_strict_warnings(self):
         self.assertIn(
