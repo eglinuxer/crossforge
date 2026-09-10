@@ -830,7 +830,7 @@ The separate `sdk-candidate` target is the only registry-export boundary. It
 inherits the complete SDK, revalidates the product identity, requires the full
 source commit, and adds OCI version/revision annotations. Its checked-in Bake
 output is still cache-only and has no tag, so local commands cannot publish it
-accidentally. The main-push (or manually dispatched) `public candidate` workflow supplies a
+accidentally. The manually dispatched `public candidate` workflow on main supplies a
 unique `candidate-v<version>-g<commit>-r<run>-a<attempt>` tag, pushes with max
 provenance and SBOM attestations, reconstructs `candidate.json` from the raw
 OCI index, builds and pushes the corresponding source archive under a paired

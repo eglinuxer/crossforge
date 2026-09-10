@@ -12,7 +12,7 @@ import re
 import shlex
 
 from . import component_inputs
-from .identity import digest_value, exact_fields, relative_path, require
+from .identity import digest_value, exact_fields, file_record, relative_path, require
 
 
 FROM = re.compile(r"FROM(?:\s+--platform=\S+)?\s+(\S+)\s+AS\s+([A-Za-z0-9_.-]+)\Z")
@@ -108,13 +108,10 @@ def _source_files(root, pattern, directories):
     return result
 
 
-def capture(root, graph, target, component, role, targets, execution, artifacts=None):
-    """Capture a source-build closure; resolved graph must come from checked Bake."""
+def _inventory(root, graph, target, execution, artifacts=None):
     root = Path(root).resolve()
     require(type(graph) is dict and type(graph.get("target")) is dict, "expected resolved Bake graph")
     require(type(execution) is dict and execution, "component execution identity is required")
-    require(role in ("toolchain-install", "gcc-test-context", "python-row", "qualification"),
-            "unsupported component material role")
     files, directories = {".dockerignore"}, {}
     artifacts = artifacts if artifacts is not None else {}
     require(type(artifacts) is dict and all(type(name) is str for name in artifacts),
@@ -267,9 +264,24 @@ def capture(root, graph, target, component, role, targets, execution, artifacts=
     # Version the material contract when its meaning changes. The implementation
     # of the planner/transport is not a compiler input unless COPY actually uses
     # it. Consumers independently recapture this complete declaration.
+    return sorted(files), {"material_model": 2, "root_target": target,
+                           "recipes": recipes, "bake_targets": target_records,
+                           "directories": directories, "execution": execution}, [
+                               dependencies[name] for name in sorted(dependencies)]
+
+
+def source_closure(root, graph, target, execution):
+    """Selection-only source inventory, without artifact or qualification claims."""
+    paths, parameters, dependencies = _inventory(root, graph, target, execution)
+    require(not dependencies, "source inventory cannot declare artifact subjects")
+    return {"parameters": parameters, "files": [file_record(root, path) for path in paths]}
+
+
+def capture(root, graph, target, component, role, targets, execution, artifacts=None):
+    """Capture a source-build closure; resolved graph must come from checked Bake."""
+    require(role in ("toolchain-install", "gcc-test-context", "python-row", "qualification"),
+            "unsupported component material role")
+    paths, parameters, dependencies = _inventory(root, graph, target, execution, artifacts)
+    parameters["role"] = role
     return component_inputs.capture(root, component, "qualification" if role == "qualification" else "build",
-        sorted(files), targets, parameters={"material_model": 2, "role": role, "root_target": target,
-                                            "recipes": recipes, "bake_targets": target_records,
-                                            "directories": directories,
-                                            "execution": execution},
-        dependencies=[dependencies[name] for name in sorted(dependencies)])
+                                    paths, targets, parameters=parameters, dependencies=dependencies)

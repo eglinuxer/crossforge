@@ -7,6 +7,33 @@ report verification are available. Digest-preserving registry transfer and a sam
 The GitHub pilot event, cross-run trusted reuse, and candidate consumption still
 require validation or implementation.
 
+## Selecting changed source work
+
+Inside the local Docker tooling environment, run the planner from the repository
+with full Git commit IDs and the pinned Buildx CLI available:
+
+```sh
+python3 scripts/ci-component-plan.py select \
+  --base "$BASE_COMMIT" --head "$HEAD_COMMIT" \
+  --output /output/component-plan.json
+```
+
+The command exports temporary base/head source snapshots, checks the generators,
+and compares the same material closures used by the component interfaces. It
+prints a compact `plan=...` job output and saves detailed reasons to a new JSON
+file. Omitting the base requests conservative full selection. A source snapshot
+with unsupported materials also selects full work instead of an empty matrix.
+No Docker daemon, registry credentials, or artifact publication is required for
+this selection command; `bake --print` resolves the checked graph locally.
+
+`source_closure` exposes selection-only files and parameters; it has no artifact
+digest or qualification assertion. Existing `capture` identities retain material
+model 2. A selected consumer still needs independent receipt, expected-input and
+digest verification before artifact use. Daily CI currently resolves its original
+source dependencies, while the separate component pilot exercises artifact
+consumption. See [the rollout observations](research/incremental-plan-2026-09-10.json)
+for the remaining broad qualification dependencies.
+
 ## Identities and roles
 
 `scripts/component-artifact.py` keeps three boundaries separate:

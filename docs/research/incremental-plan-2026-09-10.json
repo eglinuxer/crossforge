@@ -1,0 +1,282 @@
+{
+  "affected_build": {
+    "cross_python_run_seconds": 40.6,
+    "forced_stages": [
+      "cpython-cross"
+    ],
+    "graph_targets": [
+      "cpython-build-cp39",
+      "cpython-cross-cp39-x86_64",
+      "cpython-patches-cp39",
+      "cpython-prepared-cp39",
+      "cpython-source-cp39",
+      "host-python-build-locked",
+      "zstd-empty"
+    ],
+    "inputs_sha256": "287a255881b1367f8ea303f4866b87142d2890886516e82de0c0395cbae3e6f7",
+    "retained_toolchain_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+    "retained_toolchain_inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d",
+    "retained_toolchain_receipt_sha256": "6a9df4c724128122f70bab87f19ce1a228d9229e2bbf4613e6df510c619eb5a6",
+    "scope": "modified pinned cp39 patch, x86_64 build only; not complete row qualification",
+    "seconds": 119.15,
+    "source_dirty": true,
+    "source_gcc_build_in_log": false,
+    "source_parent": "a1c2fc6a4c9c33395082485d7d4eb3dff9216f02",
+    "source_snapshot": "/tmp/crossforge-incremental-plan/cases/cp39-patch",
+    "target": "cpython-cross-cp39-x86_64"
+  },
+  "date": "2026-09-10",
+  "implementation_files": {
+    "scripts/ci-component-plan.py": "4bc652630b9fc9312ab0d22b820805bae34da24827ed7875839589ed1859ef78",
+    "scripts/crossforge_internal/bake_materials.py": "e1b5c2c27d20aa6115afd5a84749847b4a4689d7a04c84ca61b21a037e04ed6a",
+    "scripts/crossforge_internal/ci_execution.py": "783b396583e304178a2217fa2fdf1125bb87b643805110b950dc847de2a77911",
+    "scripts/crossforge_internal/incremental_plan.py": "a092eb2fdaaaf404527bdef869ba7d2f9c598d3005eb2f3c758985e3f9e8b35a"
+  },
+  "kind": "crossforge-ci-incremental-observation",
+  "limits": [
+    "Source inventories select work; they do not authorize artifact or qualification reuse",
+    "The cp39 patch fixture updates its release SHA and regenerates all three outputs in order",
+    "The complete release.json still invalidates unrelated qualification roots; the planner preserves those actual COPY dependencies",
+    "GCC smoke still copies the full baseline directory, so a full-baseline byte change selects smoke too",
+    "The affected Docker build validates x86_64 cp39 only, not the complete selected qualification set or native ARM",
+    "Local warm-cache timings are not a GitHub end-to-end performance baseline",
+    "Dynamic GitHub workflow is implemented and locally checked, not dispatched"
+  ],
+  "planner_source_dirty": true,
+  "planner_source_parent": "a1c2fc6a4c9c33395082485d7d4eb3dff9216f02",
+  "results": {
+    "cp39-patch": {
+      "compiler_inputs_changed": [
+        "cpython-build-cp39",
+        "cpython-cross-cp39-aarch64",
+        "cpython-cross-cp39-x86_64"
+      ],
+      "fallback_reasons": [],
+      "mode": "incremental",
+      "seconds": 1.827,
+      "targets": {
+        "gcc-full": [
+          "gcc-testsuite-full-qualification-evidence"
+        ],
+        "gcc-smoke": [
+          "gcc-testsuite-smoke-evidence"
+        ],
+        "inputs": [
+          "platform-python-check",
+          "python-runtime-clean-aarch64",
+          "python-runtime-clean-x86_64",
+          "qemu-source-qualified",
+          "rpm-source-lock-validated",
+          "sigstore-sources-qualified",
+          "validate"
+        ],
+        "python-cp310": [
+          "python-cp310-dev"
+        ],
+        "python-cp311": [
+          "python-cp311-dev"
+        ],
+        "python-cp312": [
+          "python-cp312-dev"
+        ],
+        "python-cp313": [
+          "python-cp313-dev"
+        ],
+        "python-cp314": [
+          "python-cp314-dev"
+        ],
+        "python-cp39": [
+          "python-cp39-dev"
+        ],
+        "sdk": [
+          "python-dev",
+          "sdk-complete-dev"
+        ],
+        "toolchain-aarch64": [
+          "toolchain-aarch64-dev"
+        ],
+        "toolchain-x86_64": [
+          "toolchain-x86_64-dev"
+        ],
+        "vcpkg": [
+          "vcpkg-upstream-tier3-qualified"
+        ]
+      }
+    },
+    "gcc-baseline": {
+      "compiler_inputs_changed": [],
+      "fallback_reasons": [],
+      "mode": "incremental",
+      "seconds": 1.745,
+      "targets": {
+        "gcc-full": [
+          "gcc-testsuite-full-qualification-evidence"
+        ],
+        "gcc-smoke": [
+          "gcc-testsuite-smoke-evidence"
+        ]
+      }
+    },
+    "shared-python": {
+      "compiler_inputs_changed": [
+        "cpython-cross-cp310-aarch64",
+        "cpython-cross-cp310-x86_64",
+        "cpython-cross-cp311-aarch64",
+        "cpython-cross-cp311-x86_64",
+        "cpython-cross-cp312-aarch64",
+        "cpython-cross-cp312-x86_64",
+        "cpython-cross-cp313-aarch64",
+        "cpython-cross-cp313-x86_64",
+        "cpython-cross-cp314-aarch64",
+        "cpython-cross-cp314-x86_64",
+        "cpython-cross-cp39-aarch64",
+        "cpython-cross-cp39-x86_64"
+      ],
+      "fallback_reasons": [],
+      "mode": "incremental",
+      "seconds": 1.787,
+      "targets": {
+        "inputs": [
+          "platform-python-check"
+        ],
+        "python-cp310": [
+          "python-cp310-dev"
+        ],
+        "python-cp311": [
+          "python-cp311-dev"
+        ],
+        "python-cp312": [
+          "python-cp312-dev"
+        ],
+        "python-cp313": [
+          "python-cp313-dev"
+        ],
+        "python-cp314": [
+          "python-cp314-dev"
+        ],
+        "python-cp39": [
+          "python-cp39-dev"
+        ],
+        "sdk": [
+          "python-dev",
+          "sdk-complete-dev"
+        ]
+      }
+    },
+    "supply-policy": {
+      "compiler_inputs_changed": [],
+      "fallback_reasons": [],
+      "mode": "incremental",
+      "seconds": 1.743,
+      "targets": {
+        "inputs": [
+          "platform-python-check",
+          "qemu-source-qualified",
+          "rpm-source-lock-validated",
+          "sigstore-sources-qualified",
+          "validate"
+        ]
+      }
+    },
+    "unknown": {
+      "compiler_inputs_changed": [],
+      "fallback_reasons": [
+        "unrecognized paths: future/build.recipe"
+      ],
+      "mode": "full",
+      "seconds": 1.652,
+      "targets": {
+        "gcc-full": [
+          "gcc-testsuite-full-qualification-evidence"
+        ],
+        "gcc-smoke": [
+          "gcc-testsuite-smoke-evidence"
+        ],
+        "inputs": [
+          "cmake-host-tool",
+          "cmake-source",
+          "host-build-common-locked",
+          "host-gcc-build-locked",
+          "host-gcc-test-locked",
+          "host-python-build-locked",
+          "host-runtime-qualified",
+          "ninja-host-tool",
+          "platform-python-check",
+          "python-runtime-clean-aarch64",
+          "python-runtime-clean-x86_64",
+          "qemu-aarch64-validated",
+          "qemu-source-qualified",
+          "rpm-source-lock-validated",
+          "sigstore-sources-qualified",
+          "sysroot-aarch64",
+          "sysroot-x86_64",
+          "validate",
+          "vcpkg-source"
+        ],
+        "python-cp310": [
+          "python-cp310-dev"
+        ],
+        "python-cp311": [
+          "python-cp311-dev"
+        ],
+        "python-cp312": [
+          "python-cp312-dev"
+        ],
+        "python-cp313": [
+          "python-cp313-dev"
+        ],
+        "python-cp314": [
+          "python-cp314-dev"
+        ],
+        "python-cp39": [
+          "python-cp39-dev"
+        ],
+        "sdk": [
+          "python-dev",
+          "sdk-complete-dev"
+        ],
+        "toolchain-aarch64": [
+          "toolchain-aarch64-dev"
+        ],
+        "toolchain-x86_64": [
+          "toolchain-x86_64-dev"
+        ],
+        "vcpkg": [
+          "vcpkg-upstream-tier3-qualified"
+        ]
+      }
+    }
+  },
+  "schema_version": 1,
+  "source_commit": "a1c2fc6a4c9c33395082485d7d4eb3dff9216f02",
+  "validation": {
+    "actionlint": "1.7.12 passed; existing concurrency.queue parser exception only",
+    "config_suite": {
+      "failures": 0,
+      "seconds": 185.921,
+      "skipped": 2,
+      "tests": 1033
+    },
+    "final_ci_suite": {
+      "failures": 0,
+      "seconds": 1.881,
+      "tests": 41
+    },
+    "final_planner_suite": {
+      "failures": 0,
+      "seconds": 0.068,
+      "tests": 13
+    },
+    "locked_validators": "all four passed",
+    "logs": "/tmp/crossforge-incremental-plan/",
+    "new_full_root_coverage_regression_after_full_suite": 1,
+    "packaging_suite": {
+      "failures": 0,
+      "seconds": 0.782,
+      "skipped": 1,
+      "tests": 40
+    },
+    "renderers_check": "all three passed",
+    "rocky_platform_python": "3.6 compile, component/planner CLI imports and 89 projection checks passed"
+  }
+}

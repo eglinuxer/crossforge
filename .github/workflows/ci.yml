@@ -27,6 +27,7 @@ jobs:
     timeout-minutes: 30
     outputs:
       profile: ${{ steps.plan.outputs.profile }}
+      selection: ${{ steps.components.outputs.plan }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -104,7 +105,10 @@ jobs:
         run: |
           set -Eeuo pipefail
           if test "$EVENT_NAME" = pull_request; then
-            base=$(git merge-base "$PR_BASE" "$GITHUB_SHA")
+            if ! base=$(git merge-base "$PR_BASE" "$GITHUB_SHA"); then
+              echo 'profile=full' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           elif test "$EVENT_NAME" = push && git cat-file -e "$PUSH_BASE^{commit}"; then
             base=$PUSH_BASE
           else
@@ -114,6 +118,33 @@ jobs:
           python3 scripts/ci-plan.py plan --base "$base" --head "$GITHUB_SHA" \
             >> "$GITHUB_OUTPUT"
 
+      - name: Select component roots from checked source inventories
+        id: components
+        if: ${{ !inputs.quick-only }}
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        run: |
+          set -Eeuo pipefail
+          options=()
+          if test "$EVENT_NAME" = pull_request; then
+            if base=$(git merge-base "$PR_BASE" "$GITHUB_SHA"); then options+=(--base "$base"); fi
+          elif test "$EVENT_NAME" = push; then
+            options+=(--base "$PUSH_BASE")
+          fi
+          python3 scripts/ci-component-plan.py select "${options[@]}" \
+            --head "$GITHUB_SHA" --output "$RUNNER_TEMP/component-plan.json" \
+            >> "$GITHUB_OUTPUT"
+      - name: Preserve component selection reasons
+        if: always() && !inputs.quick-only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-plan.json
+          retention-days: 7
+          if-no-files-found: error
+
   builds:
     needs: quick
     concurrency:
@@ -121,9 +152,10 @@ jobs:
       # or the candidate's independent quick-only summary.
       group: ci-builds-${{ github.ref }}-${{ inputs.quick-only && 'quick' || github.event_name }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-    uses: ./.github/workflows/verify-builds.yml
+    uses: ./.github/workflows/verify-incremental.yml
     with:
       profile: ${{ inputs.quick-only && 'none' || needs.quick.outputs.profile }}
+      selection: ${{ !inputs.quick-only && needs.quick.outputs.selection || '' }}
 
   pr-required:
     if: always()

@@ -26,7 +26,7 @@ class CIEventSelectionTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         selection = workflow.split("      - name: Select affected build profile\n", 1)[1]
         self.command = textwrap.dedent(
-            selection.split("        run: |\n", 1)[1].split("\n  builds:\n", 1)[0])
+            selection.split("        run: |\n", 1)[1].split("\n      - name: Select component roots", 1)[0])
 
     def git(self, *args):
         return subprocess.check_output(["git", *args], cwd=self.repo,
@@ -68,6 +68,7 @@ class CIEventSelectionTests(unittest.TestCase):
             with self.subTest(base=base):
                 self.assertEqual(self.select("push", head, push_base=base), "profile=full")
         self.assertEqual(self.select("workflow_dispatch", head), "profile=full")
+        self.assertEqual(self.select("pull_request", head, pr_base="f" * 40), "profile=full")
 
     def test_deleted_source_still_selects_its_build(self):
         base = self.commit("scripts/build-cpython-cross.sh")

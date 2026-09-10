@@ -190,9 +190,21 @@ def stream_build_command(command, log_path):
             "crossforge-build-log", str(log_path), *command]
 
 
-def run_stage(stage, directory, repository, write=False, cold=False):
-    directory.mkdir(parents=True, exist_ok=True)
+def selected_graph(stage, targets=None):
     graph = read_graph(STAGES[stage])
+    if targets is None:
+        return graph
+    if not isinstance(targets, list) or not targets or any(not isinstance(target, str) for target in targets):
+        raise ValueError("selected stage targets must be a nonempty array of strings")
+    if len(set(targets)) != len(targets) or set(targets) - (set(graph_roots(graph)) | set(STAGES[stage])):
+        raise ValueError("selected targets are outside this hosted stage")
+    # Re-resolve through Bake so linked dependencies retain the canonical graph.
+    return read_graph(targets)
+
+
+def run_stage(stage, directory, repository, write=False, cold=False, selected_targets=None):
+    graph = selected_graph(stage, selected_targets)
+    directory.mkdir(parents=True, exist_ok=True)
     write_json(directory / "graph.json", graph)
     override = directory / "cache.json"
     cache = cache_override(graph, repository, write, cold, cache_catalog())
@@ -239,7 +251,7 @@ def run_stage(stage, directory, repository, write=False, cold=False):
         sample_resources(directory / "resources.jsonl")
         elapsed = round(time.monotonic() - started, 1)
         write_json(directory / "result.json", {
-            "stage": stage, "targets": STAGES[stage], "exit_code": status,
+            "stage": stage, "targets": selected_targets if selected_targets is not None else STAGES[stage], "exit_code": status,
             "elapsed_seconds": elapsed, "cold": cold, "cache_write": write,
             "source_commit": os.environ.get("GITHUB_SHA", ""),
             "kind": "crossforge-ci-build-observation",
@@ -264,6 +276,7 @@ def main():
     run = commands.add_parser("run")
     run.add_argument("stage", choices=STAGES)
     run.add_argument("--directory", type=Path, required=True)
+    run.add_argument("--targets-json")
     cache = commands.add_parser("cache")
     cache.add_argument("--output", type=Path, required=True)
     cache.add_argument("targets", nargs="+")
@@ -271,8 +284,10 @@ def main():
     if args.write_cache:
         require_writer(os.environ)
     if args.command == "run":
+        from crossforge_internal.identity import parse_json
         return run_stage(args.stage, args.directory.resolve(), args.repository,
-                         args.write_cache, args.cold)
+                         args.write_cache, args.cold,
+                         parse_json(args.targets_json) if args.targets_json is not None else None)
     write_json(args.output, cache_override(read_graph(args.targets), args.repository,
                                           args.write_cache, args.cold, cache_catalog()))
     return 0

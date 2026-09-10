@@ -10,31 +10,44 @@ Crossforge uses GitHub-hosted `ubuntu-24.04` build runners and
 PR updates cancel stale runs. New main pushes replace outdated selected builds;
 quick checks for distinct commits can run immediately. `quick` validates locks, configuration,
 generated files, unit tests, every shell script, and the Bake and Actions
-definitions. `scripts/ci-plan.py` selects a build profile from the complete
-Git diff, including deleted paths. Unknown paths and shared inputs select
-`full`; manual dispatch without a diff base also selects `full`.
+definitions. `scripts/ci-component-plan.py` compares immutable base/head Git
+snapshots after checking all three generators. It uses the component material
+inventory to compare reachable Docker stages, COPY inputs, arguments and pinned
+contexts. Deleted and renamed paths are read from both sides of the diff. Missing
+baselines, unsupported material syntax, unknown paths or changed root catalogs
+select the complete existing SDK/GCC stage set. Qt qualification remains opt-in.
 A PR uses the merge base against the checked-out merge commit.
 
-Each main push runs the selected CI profile and does not publish an image.
+Each main push runs the selected roots and does not publish an image.
 Dispatch `candidate.yml` on main when preparing a candidate or release:
 it calls CI with `quick-only: true`, then full qualification and candidate
 publication. Candidate quick summaries, manual CI and push-selected builds have
 separate concurrency groups, so development updates cannot cancel a candidate.
 Avoid starting a second candidate for the same SHA while one is active.
 
-| Changes | Build profile |
+| Changes | Selection from the current material graph |
 | --- | --- |
-| Documentation and configuration unit tests only | `none` (quick checks still run) |
-| Launcher, packaging, integration or consumer fixtures | `sdk` |
-| Python implementation or runtime fixtures | `python` |
-| Qt implementation or runtime fixtures | `none` (fast checks only; Qt builds are opt-in) |
-| Locks, release policy, workflows, common scripts, unknown or mixed domains | `full` |
+| Documentation and configuration unit tests only | Quick checks |
+| Full GCC baseline bytes | GCC smoke/full evidence roots; no compiler input changes |
+| Shared cross-Python build script | All cross-Python builds, affected row gates and SDK |
+| Candidate supply policy | Relevant input/policy checks; no compiler input changes |
+| cp39 patch and its release pin | Only cp39 native/cross compiler inputs change; several qualification roots still change because they copy the entire release document |
+| Unknown path or unavailable comparison base | Complete SDK/GCC stage set |
 
-The first implementation deliberately runs all six Python rows for `sdk` and
-`python`. Narrowing individual rows needs explicit dependency mapping; it must
-not silently miss changes to shared Python logic. This is currently conservative
-profile selection, not yet component-level incrementality. Full qualification
-runs daily, manually and for explicitly requested candidates.
+The detailed `component-plan` artifact records changed files and parameter
+identities per root, selected stage targets and any fallback reason. Its compact
+job output drives `verify-incremental.yml`. Toolchain, Python and GCC matrices
+contain only selected stages; each stage may run a subset of its canonical Bake
+roots. Every selected root still resolves its complete source dependency graph.
+This is source selection, not authorization to reuse a component or qualification
+receipt. A missing ordinary cache still causes Bake to build that dependency.
+
+The current graph retains broad qualification COPY dependencies, including the
+complete `release.json` and GCC baseline directory. The planner preserves those
+dependencies. Narrowing qualification inputs and replacing downstream compiler
+solves with verified component consumption remain later rollout work. Full
+qualification continues daily, manually and for explicitly requested candidates.
+The new dynamic workflow is locally checked but has not yet run on GitHub.
 
 The stable required check is **`pr-required`**. It succeeds only if `quick`
 and the reusable build workflow both succeed. That workflow separately checks
@@ -47,10 +60,18 @@ check after the changed workflow has produced that check on GitHub.
 
 ## Build stages
 
-`verify-builds.yml` is callable only by another workflow. It inherits the
-caller's token permissions: CI grants only `contents: read`; the trusted
-qualification wrapper grants cache writes. It is shared by CI and release
-prequalification.
+`verify-incremental.yml` serves daily CI with `contents: read`. It preserves
+phase ordering while allowing deliberately unselected dependencies to be skipped.
+Every direct and transitive phase prerequisite is included in `needs`, and a
+failed or cancelled prerequisite blocks dependent work. The final gate recomputes
+the expected flags and matrices from the selection and rejects missing jobs,
+changed outputs, unexpected skips and unplanned successful jobs.
+
+`verify-builds.yml` retains the complete qualification/manual profiles and inherits
+the caller's permissions. The trusted qualification wrapper grants cache writes.
+Both workflows use the same bounded `ci-build.py` executor and canonical stage
+catalog; selected targets are validated against that stage's resolved Bake roots.
+The skip/matrix ordering follows [GitHub's job condition semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idif).
 
 1. `inputs`: locked RPM/source verification, sysroots and host tools.
 2. Two independent toolchain jobs.
@@ -269,8 +290,8 @@ receipt or a mutable registry tag as qualification evidence. A partial job rerun
 with an older attempt's handoff is currently rejected; explicit recovery and
 cross-run trusted reuse belong to later rollout batches.
 
-This pilot does not yet replace `verify-builds.yml`, the main/PR profile selector,
-or candidate qualification. It covers one cross target, not the complete Python
+This pilot does not yet supply artifacts to `verify-incremental.yml`,
+`verify-builds.yml` or candidate qualification. It covers one cross target, not the complete Python
 row or final SDK. Local registry roundtrip and consumer execution are recorded
 in [the registry pilot observation](research/registry-handoff-pilot-2026-09-10.json);
 the new workflow has not yet been dispatched on GitHub. See

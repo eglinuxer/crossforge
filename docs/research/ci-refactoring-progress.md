@@ -6,7 +6,7 @@
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、x86_64 GCC full/正式资格与 cp39 消费通过；同 run CI 试点已实现 | ARM、GitHub 试点实跑与生产 CI 接入 |
-| 3：组件级增量计划 | 待实现 | 依赖传播、完整结果汇总和真实受影响构建 |
+| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、与可信产物可用性及生产消费对接 |
 | 4：整行 Python/SDK 交接 | 待实现 | 双架构全 row、SDK 组装无 GCC/CPython 源码重编 |
 | 5：资格复用及恢复 | 待实现 | 显式复用、强制执行、候选集成/ARM 及同 digest 恢复 |
 | 6：性能与领域重构 | 待实施对照 | 新基线、三次匹配输入重放和受影响变更、资源实验 |
@@ -131,3 +131,23 @@ GCC full 的既有进程仍在执行；本批不会用 smoke、静态图或传�
 - 资格 receipt canonical SHA256：`1f0ccf936e783a8f82f37ce5ee31d311a91c0e503b03efed1543b18f0f8059d9`。
 
 这完成了 x86_64 安装组件与原始 GCC 测试上下文的 full 资格实跑及正式本地 report 交接。它是本地固定环境的结果，不代替 GitHub runner 资格或候选的最终集成/native ARM。ARM、完整 Python row/SDK、生产 CI、增量计划和跨 run 信任/恢复等剩余范围保持不变。
+
+
+## 批次 3：真实材料计划与动态日常 CI
+
+`incremental_plan.py` 复用组件材料盘点，比较两个不可变 Git 源快照的可达 Docker recipe、COPY 文件/权限、参数和固定 context。每个快照先执行三个 renderer `--check`；未知路径、缺失 base、材料语法不支持或根目标集合变化会明确回退到完整 SDK/GCC 范围。Git archive 仅接收常规文件和目录，不跟随 symlink，不改动当前工作区。
+
+日常 `ci.yml` 接入 `verify-incremental.yml`，原 `verify-builds.yml` 保留资格化/手动 profile。`ci_execution.py` 从同一份紧凑计划生成全部条件和矩阵，最终重新核对完整 job 集合、矩阵与标志；未选中任务可以跳过，选中任务的失败、取消或意外 skip 必须使 required status 失败。每个执行器将所选 root 与该 stage 的实际 Bake 图核对，然后只执行选中的 root；原始 source DAG 及全部实际依赖仍由 Bake 解析。日常矩阵并行度仍为 2，没有提前更改资源实验变量。
+
+真实项目实验见 [增量选择观测](incremental-plan-2026-09-10.json)，原始快照、计划和日志位于本机 `/tmp/crossforge-incremental-plan/`：
+
+- GCC full baseline 文件字节变化选中 GCC full/smoke 两个 evidence 根，编译材料没有变化。smoke 也被选中，因为它真实复制整个 baseline 目录；没有伪造更小的依赖范围。
+- 共享 cross-Python 脚本变化选中 12 个 cross build 输入及 Python/SDK 下游，不改变两套 GCC 工具链输入。
+- candidate supply policy 修改并按顺序再生成后，只选中输入/供应链验证根，不触发编译输入变化。
+- cp39 patch 修改、更新 release 中对应 SHA 并重新生成后，只有 cp39 native/x86_64/aarch64 三个编译输入变化；其他资格阶段仍因 COPY 完整 release 文档失效。这是必须在后续资格接口/整行交接中消除的真实耦合。
+- 修改后的 cp39 x86_64 在 Docker/Bake 实际构建通过：119.15 秒，cross-Python RUN 实际 40.6 秒。它独立重算材料并核验原安装 receipt 后消费相同工具链 digest；输入身份仍为 `2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d`。消费图 7 个目标，日志无 GCC 源码编译。本次正确使用 `no-cache-filter=cpython-cross`。
+
+这里已经实现真实 source selection 与动态任务集合，但尚未将生产工作流切到可信组件消费。普通缓存缺失时，Bake 仍会构建相应源码依赖；计划不授予 artifact/qualification 复用权限。GCC/CPython 安装产物、资格报告和供应链绑定最终彻底分离，以及产物缺失时调度 producer，仍需与批次 4/5 一起完成。新的 GitHub workflow 尚未实跑，不能据此声称端到端耗时已经下降。
+
+
+本批验证：Docker 完整 config 1033 项、185.921 秒、零失败（2 项既有 zstd 跳过），packaging 40 项、0.782 秒、零失败（1 项既有 nFPM 跳过）。完整回归之后进一步收紧 full 模式：必须执行 stage 内全部 canonical 根目标，不能只保持全部 stage 名称却遗漏根；新增回归和最终 CI 41 项、计划 13 项复核通过。四项 locked validators、三个 renderer `--check`、固定 actionlint 1.7.12 均通过；真实 Rocky 8 platform-python 3.6 完成递归编译、CLI 导入与 89 个投影检查。实际 Git base/head archive→renderer→Bake→完整计划 CLI 也已通过。没有修改 release pins、冻结 ABI 或 GCC baseline；实验改动只在 `/tmp` 隔离快照中。

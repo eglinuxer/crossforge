@@ -10,6 +10,9 @@ inputs:
   cold:
     default: 'false'
     description: Ignore remote caches on this fresh runner
+  targets-json:
+    default: ''
+    description: Optional selected roots, validated against this stage's canonical Bake graph
 runs:
   using: composite
   steps:
@@ -19,13 +22,16 @@ runs:
         BUILD_STAGE: ${{ inputs.stage }}
         WRITE_CACHE: ${{ inputs.write-cache }}
         COLD_BUILD: ${{ inputs.cold }}
+        SELECTED_TARGETS: ${{ inputs.targets-json }}
       run: |
         set -Eeuo pipefail
         options=()
         if test "$WRITE_CACHE" = true; then options+=(--write-cache); fi
         if test "$COLD_BUILD" = true; then options+=(--cold); fi
+        selection=()
+        if test -n "$SELECTED_TARGETS"; then selection+=(--targets-json "$SELECTED_TARGETS"); fi
         python3 scripts/ci-build.py "${options[@]}" run "$BUILD_STAGE" \
-          --directory "$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE"
+          --directory "$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE" "${selection[@]}"
     - name: Verify anonymous cache access
       if: success() && inputs.write-cache == 'true'
       shell: bash
