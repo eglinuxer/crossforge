@@ -1,0 +1,193 @@
+{
+  "common_consumer_replay": {
+    "producer": {
+      "invocation": "urn:crossforge:local:catalog-consumer-20260910",
+      "kind": "local",
+      "source_commit": "cfc0006624923dd315958c2907151ca4f6979628",
+      "source_dirty": true,
+      "started_at": "2026-09-10T22:28:52Z"
+    },
+    "python_inputs_sha256": "ba395a956c7bd96606e576edf0779f6ff5019662ac8a92eab060ac49695109bd",
+    "python_target": "cpython-cross-cp39-x86_64",
+    "qualifications": {
+      "gcc-smoke": {
+        "mode": "verified-prior-execution",
+        "qualification": {
+          "completed_at": "2026-09-10T22:29:43Z",
+          "coverage": [
+            {
+              "profile": "gcc-smoke",
+              "report_sha256": "250257302ccbcd0c7f2ec3d335ee4754f688c861c8edca93b07f51aa85157a83",
+              "status": "passed",
+              "status_counts": {
+                "PASS": 16
+              },
+              "target": "x86_64-unknown-linux-gnu",
+              "tier": "host-direct"
+            }
+          ],
+          "inputs_sha256": "f42988ee1c902feb370d7084ef373a228ffa00d77be8220494611181b2091c33",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:catalog-consumer-20260910",
+            "kind": "local",
+            "source_commit": "cfc0006624923dd315958c2907151ca4f6979628",
+            "source_dirty": true,
+            "started_at": "2026-09-10T22:28:52Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-10T22:29:10Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-10T22:29:38.305750169Z",
+              "digest": "sha256:ef41645f987b19507b4cf1777e449f85361d93838f83a5dda96003fc131c8c15",
+              "name": "[component-qualification-reports gcc-testsuite-x86_64-base 12/12] RUN --network=none     /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc       -O2 -fgraphite-identity       /work/prepared/gcc/gcc/testsuite/gcc.dg/graphite/id-1.c       -S -o /work/gcc-graphite-probe.s     && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc       -O2 -ftrampoline-impl=heap       /work/prepared/gcc/gcc/testsuite/gcc.dg/heap-trampoline-1.c       -o /work/gcc-heap-trampoline-probe     && /work/gcc-heap-trampoline-probe     && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcov       --version",
+              "stage": "gcc-testsuite-x86_64-base",
+              "started": "2026-09-10T22:29:38.123012753Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T22:29:42.757859255Z",
+              "digest": "sha256:aa4919d6fe123e85987cc0ac784647fee329464ea40fbd2a038ec4c8dd595df1",
+              "name": "[component-qualification-reports gcc-testsuite-x86_64-smoke 2/2] RUN --network=none /usr/libexec/platform-python       /work/scripts/run-gcc-testsuite.py       --release /work/config/release.json       --build /work/build/gcc-x86_64/gcc-build       --source /work/prepared/gcc       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu       --sysroot /opt/crossforge/sysroots/el8/x86_64       --target x86_64-unknown-linux-gnu       --runtime-tier host-direct       --site /work/tests/gcc/site.exp       --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json       --qualification-component         /work/config/generated/components/toolchain/gcc-testsuite-qualification.json       --qualification-component-sha256         \"bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd\"       --output /work/qualification/gcc-testsuite/x86_64-host-direct       --report         /work/qualification/gcc-testsuite/x86_64-host-direct.json",
+              "stage": "gcc-testsuite-x86_64-smoke",
+              "started": "2026-09-10T22:29:38.397892654Z"
+            }
+          ]
+        },
+        "receipt_sha256": "44045912520482e2e64e47f25080fab29f81d62b9578cf870bbc0a795edd6d53",
+        "reference": "oci-layout:///tmp/crossforge-catalog-consumer/consumer/qualification-gcc-smoke/oci@sha256:39c0507601297583d502afd7043ba9c5f6fc2cae36e9e092f8929f67923003cd"
+      },
+      "toolchain": {
+        "mode": "verified-prior-execution",
+        "qualification": {
+          "completed_at": "2026-09-10T22:29:05Z",
+          "coverage": [
+            {
+              "profile": "toolchain",
+              "report": {
+                "component": {
+                  "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
+                  "component": "toolchain/x86_64-qualification"
+                },
+                "report_sha256": "55fb3fa84c548fce9db2283e20e845df63233e5f0bc144a4484bd458e38dcfd8"
+              },
+              "status": "passed",
+              "target": "x86_64-unknown-linux-gnu"
+            }
+          ],
+          "inputs_sha256": "2caac8f4657f4d4ec90c6fd34b5fd826889645abcbd4f574acfca096825378f1",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:catalog-consumer-20260910",
+            "kind": "local",
+            "source_commit": "cfc0006624923dd315958c2907151ca4f6979628",
+            "source_dirty": true,
+            "started_at": "2026-09-10T22:28:52Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-10T22:28:53Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-10T22:29:05.126357768Z",
+              "digest": "sha256:398badcfc48d5fa62ece624aca8bc5d4b9f06fffbdbc8b814f57f855312b15dd",
+              "name": "[toolchain-x86_64-dev runtime-smoke-x86_64 3/3] RUN --network=none /work/qualification/x86_64/hello     && /work/qualification/x86_64/modern     && /work/qualification/x86_64/lto     && /work/qualification/x86_64/lto-archive     && /work/qualification/x86_64/libgcc-helper     && /work/qualification/x86_64/catch     && printf '%s\\n' 'passed' > /work/qualification/clean-rocky.ok",
+              "stage": "runtime-smoke-x86_64",
+              "started": "2026-09-10T22:29:05.00225138Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-10T22:29:04.874475141Z",
+              "digest": "sha256:4533b49f15940063f059c2ab94b9c1c30d5caef7909083728bb93df55a8d3c28",
+              "name": "[toolchain-x86_64-dev toolchain-x86_64-qualify-build 9/9] RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu       --sysroot /opt/crossforge/sysroots/el8/x86_64       --target x86_64-unknown-linux-gnu       --work /work/qualification/x86_64       --report /work/qualification/x86_64.json       --components /work/config/components       --abi-baseline /src/abi/el8/x86_64.json       --qualification-component-sha256         \"b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c\"",
+              "stage": "toolchain-x86_64-qualify-build",
+              "started": "2026-09-10T22:29:03.295613147Z"
+            }
+          ]
+        },
+        "receipt_sha256": "70db90fcf2c0f52a628ab462a140b5809a89628c7c8ed3ba24199f7783a4e3f8",
+        "reference": "oci-layout:///tmp/crossforge-catalog-consumer/consumer/qualification-toolchain/oci@sha256:538db3e7c08be2e28d33694d1815e0fcf8f3b9521b134b5506fa2b2f36bc7d35"
+      }
+    },
+    "scope": "Local common consumer gate replay from independently verified prior OCI components; no GitHub catalog signature, registry discovery or cross-run authorization claimed",
+    "seconds": 87.78,
+    "subjects": {
+      "gcc-test-context": {
+        "layout": "/tmp/crossforge-registry-pilot/gcc-test-context-download",
+        "receipt": "/tmp/crossforge-qualification-receipt/gcc-test-context/receipt.json",
+        "receipt_sha256": "c6434e2d0a0a3ca8cf6a63e772ff15e6d984f8df96af071849655fd2c32d2514"
+      },
+      "toolchain-install": {
+        "layout": "/tmp/crossforge-registry-pilot/toolchain-install-download",
+        "receipt": "/tmp/crossforge-qualification-receipt/toolchain-install/receipt.json",
+        "receipt_sha256": "6a9df4c724128122f70bab87f19ce1a228d9229e2bbf4613e6df510c619eb5a6"
+      }
+    }
+  },
+  "date": "2026-09-10",
+  "files": {
+    ".github/workflows/component-pilot.yml": "f159305e1b037384cf1e0ad5593591b1c625c03c36e5782957fcfc1f347d0f69",
+    "scripts/component-pilot.py": "1e26a855935f3a814c32dfba6a751527f583250575bc240eefd598893cfee118",
+    "scripts/crossforge_internal/component_resolution.py": "13e9ef184c577d903f41e52acd3cb3ed8304166d1a958bd23703c54eaae912b0",
+    "tests/config/test_component_catalog_consumer.py": "98c669a19da35fe95ec2b1509cec1d17a3b2880ad08985ccb5dcfa2112175ada",
+    "tests/config/test_component_pilot_workflow.py": "a742cd18a8ad976b9e5042fe78f301136eb892d9365a5f7dcee749d4c687d400",
+    "tests/config/test_component_resolution.py": "ee4b6f2447c31315219d91883fc6c7c6b5567e1fa4d208d44203c0d812208edc"
+  },
+  "kind": "crossforge-local-catalog-consumer-observation",
+  "limits": [
+    "The workflow now exposes separate build and read-only reuse modes, but no GitHub workflow dispatch or positive GitHub catalog signature has been exercised",
+    "The actual local replay used independently trusted existing local receipt digests and verified OCI bytes, then called the shared consumer gates; it does not assert signed catalog discovery or cross-run authorization",
+    "Both toolchain and GCC smoke produced two fresh qualification RUNs and were independently verified; original component producers were retained",
+    "The cp39 cross build was successful with no GCC source recipe reachable; its ordinary build cache remained allowed",
+    "An absent catalog index requests a producer; the read-only pilot fails with that reason instead of scheduling it. Production scheduling and daily CI component routing remain pending",
+    "Qualification role resolution, full candidate recovery, actual native ARM, remaining domain scoping and GitHub performance acceptance remain separate work",
+    "Local regression and consumer work overlapped; measured seconds do not predict GitHub performance"
+  ],
+  "logs": {
+    "/tmp/crossforge-catalog-consumer/consumer/qualification-gcc-smoke/extracted/files/component/reports/x86_64-host-direct/gcc.execute.log": "227aab64540f7017b215d6c2d9c950b60c02dc705c77d7e21b505858b9897a4d",
+    "/tmp/crossforge-catalog-consumer/consumer/qualification-gcc-smoke/extracted/files/component/reports/x86_64-host-direct/gcc.execute.make.log": "3b9897dc8325db20901b8146b90a8d3e3c25640f13284727cf4675d1da9280aa",
+    "/tmp/crossforge-catalog-consumer/consumer/qualification-gcc-smoke/payload/component/reports/x86_64-host-direct/gcc.execute.log": "227aab64540f7017b215d6c2d9c950b60c02dc705c77d7e21b505858b9897a4d",
+    "/tmp/crossforge-catalog-consumer/consumer/qualification-gcc-smoke/payload/component/reports/x86_64-host-direct/gcc.execute.make.log": "3b9897dc8325db20901b8146b90a8d3e3c25640f13284727cf4675d1da9280aa",
+    "/tmp/crossforge-catalog-consumer/consumer/report/gcc-smoke/reports/x86_64-host-direct/gcc.execute.log": "227aab64540f7017b215d6c2d9c950b60c02dc705c77d7e21b505858b9897a4d",
+    "/tmp/crossforge-catalog-consumer/consumer/report/gcc-smoke/reports/x86_64-host-direct/gcc.execute.make.log": "3b9897dc8325db20901b8146b90a8d3e3c25640f13284727cf4675d1da9280aa",
+    "/tmp/crossforge-catalog-consumer/consumer/report/python-build.log": "6dff434b1c032d1dfa0f4108ab5795cdb2fe20dfbd91fd1596eb58a8e393018a",
+    "/tmp/crossforge-catalog-consumer/full-regressions.log": "6750e64a09ebebde03128bb6efdcb1c9e72ef8d9b9386c42944ecaf16a00acba",
+    "/tmp/crossforge-catalog-consumer/platform-python.log": "c5ca776d0f8855dddab9f29f753dbd6a0bc115a2f680b1ceee1c102a76908098",
+    "/tmp/crossforge-catalog-consumer/regressions.log": "5a1c39bd5121e2360aadd5946d9029e524894216598182e5307307ab7b5f0ebb",
+    "/tmp/crossforge-catalog-consumer/replay.log": "2dd47d717c96f063981130a4ef9ef200a8efaaecaf244e4e8959f4c40eb4873d"
+  },
+  "python_graph_targets": [
+    "cpython-build-cp39",
+    "cpython-build-cp39-export",
+    "cpython-cross-cp39-x86_64",
+    "cpython-patches-cp39",
+    "cpython-prepared-cp39",
+    "cpython-source-cp39",
+    "host-python-build-locked",
+    "zstd-empty"
+  ],
+  "regressions": {
+    "actionlint": "1.7.12 passed with existing concurrency.queue syntax exception",
+    "config": {
+      "seconds": 152.204,
+      "skipped": 2,
+      "tests": 1101
+    },
+    "locked_validators": 4,
+    "packaging": {
+      "seconds": 0.761,
+      "skipped": 1,
+      "tests": 40
+    },
+    "platform_python": "actual Rocky 8 Python 3.6 forced stage passed",
+    "renderer_checks": 3
+  },
+  "schema_version": 1,
+  "source_commit": "cfc0006624923dd315958c2907151ca4f6979628",
+  "source_dirty": true,
+  "status": "local-validation-passed"
+}

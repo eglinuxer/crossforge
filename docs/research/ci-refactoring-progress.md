@@ -8,7 +8,7 @@
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；同 run CI 试点已实现 | GitHub 试点实跑与生产 CI 接入 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、与可信产物可用性及生产消费对接 |
 | 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过 | 生产 CI 接入与远程验收 |
-| 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储与查找接口本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
+| 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储及跨 run 消费接线本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
 ## 批次 1 已实现
@@ -250,3 +250,13 @@ pilot 新增独立 `catalog-store` job，按签名 job 的不可变 artifact ID 
 [本地存储观测](catalog-storage-2026-09-10.json)：真实 ORAS 在无外网、无 host port 的临时 registry 中完成两份合成目录的上传和按 digest 下载。输入 tag 改指第二份后，第一份仍由原 digest 完整恢复；相同 catalog/bundle 再次封装得到相同 OCI digest。公共 publish 与 lookup 均被真实固定 Cosign 拒绝无效 bundle；低层字节传输用未签名 fixture，不宣称正向 GitHub 信任或组件资格。临时 registry 已清理。
 
 Docker 全量 config 1090 项、147.414 秒，packaging 40 项、0.871 秒通过，保留既有 2/1 项跳过；四项 locked validators、三个 renderer、实际 Rocky 8 platform-python 3.6 强制门禁及 actionlint 通过。生产缺失产物调度、跨 run 消费接线、真实 GitHub 身份签名、候选恢复和 native ARM 仍需推进；没有发布远程内容或改变锁定来源/ABI/baseline。
+
+## 批次 5：只读跨 run 组件消费入口
+
+手动 pilot 增加 `build`/`reuse` 两种模式。默认 build 保留生产、同 run 消费、签名和存储；reuse 只读 registry，使用当前输入查找或显式原 catalog digest，取得并逐项校验原始组件后执行同一套消费者门禁。最终 gate 对每种模式分别要求准确的 success/skipped job 集合，缺失、取消、失败、意外执行和未知模式均拒绝。reuse 没有 packages:write/OIDC，也不会重新签发旧 producer 的 receipt。
+
+`component_resolution.toolchain` 在签名与精确输入校验之后下载固定 OCI，运行已有 receipt/metadata/实际字节校验，再次捕获当前材料与 BuildKit 环境后封存结果。成功返回原 producer、subject、固定 context 与 catalog 证据；索引不存在只返回无 subject/context 的 `build-required`。当前只读试点据此失败并指出需要 producer，生产自动补齐尚未接入。签名、传输、产物校验失败或显式恢复引用缺失均不转成重建请求。
+
+[本地消费验证](catalog-consumer-2026-09-10.json)：Docker 全量 config 1101 项、152.204 秒及 packaging 40 项、0.761 秒通过，保留既有 2/1 项跳过；四项 locked validators、三个 renderer、实际 Rocky 8 platform-python 3.6 强制门禁与 actionlint 通过。回归覆盖信任模式冲突、先认证后传输、运行中输入/环境变化、原 producer 保留、缺失组件不得开始资格化，以及诊断中不得包含大型 OCI。
+
+同一不可变源码快照还从既有 registry roundtrip 的本地 OCI 逐项核验输入和独立 receipt digest，实际重放重构后的共用消费函数：toolchain/runtime 与 GCC smoke 各 2 条规定 RUN 新执行、验收通过，GCC smoke 为 16 PASS；cp39 x86_64 构建通过，材料图无 GCC 源码。共用消费阶段耗时 87.78 秒，原始组件 producer 与本次 local 资格 producer 分开保留。此实跑调用的是已验证本地组件路径，不冒充 GitHub 签名或跨 run 密码学验证；新工作流尚未远程运行。

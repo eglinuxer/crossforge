@@ -318,7 +318,7 @@ fetching a qualification artifact. Receipt trust also remains independent from
 the OCI transport path.
 
 `.github/workflows/component-pilot.yml` is a manually dispatched, main-only
-rollout pilot. Its producer publishes x86_64 installation and GCC test-context
+rollout pilot. Its default `build` mode publishes x86_64 installation and GCC test-context
 artifacts to the separate internal package repository. It passes the small
 handoff document via an immutable Actions artifact ID and its canonical SHA256
 via a producer job output. The consumer has packages:read, verifies that
@@ -335,7 +335,7 @@ rechecks the independent handoff digest and exact clean checkout/run/attempt.
 Every entry must retain the catalog producer, original receipt and exact
 internal registry digest. A catalog cannot reissue another run's receipts as its
 own. The final workflow gate also requires signing and immediate verification
-to succeed.
+to succeed in build mode.
 
 ## Authenticate a catalog from an earlier run
 
@@ -381,6 +381,45 @@ The pilot currently catalogs its two x86_64 build artifacts. The signed-catalog
 interface and workflow wiring have local regression coverage; a real GitHub
 signature and cross-run consumption have not yet been exercised. Missing-artifact
 producer dispatch and production CI routing remain to be connected.
+
+## Consume prior catalog components in the pilot
+
+Dispatch `component-pilot.yml` on main with `mode: reuse` to consume the current
+input indexes. Set its optional `catalog-reference` to a retained immutable
+catalog digest to recover that specific component set. `mode: build` remains the
+default; a recovery reference is rejected in build mode. Reuse only has package
+read permission and does not produce, sign or publish replacement components.
+The final gate validates the exact selected jobs, including the required skips
+for the other mode.
+
+The CI entry point is `component-pilot.py consume-catalog --cosign <pinned-tool>`
+with the existing `--builder`, `--oras`, `--output` and optional `--docker-config`
+arguments. Add `--catalog-reference <digest-only-reference>` for recovery. Like
+the original pilot commands, it requires an exact clean main dispatch checkout;
+local Docker callers can use the domain resolution and qualification commands
+without inventing GitHub provenance.
+
+`component_resolution.toolchain` independently captures the current canonical
+toolchain inputs and observes the build environment, authenticates a matching
+catalog, fetches its exact OCI reference, and verifies receipt metadata and image
+bytes before returning `verified-build-component`. It recaptures the inputs and
+environment before sealing the resolution record. Original producer, receipt,
+catalog digest and authentication evidence are retained. The module only resolves
+toolchain installation/test-context build artifacts; it does not accept a
+qualification role or infer passed tests from a generic receipt.
+
+An absent discovery index returns `build-required` with an input-specific reason
+and no usable subject/context. The read-only pilot reports that reason and fails
+before consumer gates; production producer scheduling is still pending. An
+explicit recovery reference, invalid signature, failed transfer or invalid
+artifact never becomes a request to silently replace the original component.
+
+Both same-run and catalog consumers share the existing fresh toolchain/runtime
+and GCC smoke qualification path, followed by the cp39 x86_64 cross build. The
+new qualification producer belongs to this run; input components keep their
+original producer. Diagnostics preserve the original catalog, bundle, manifest,
+inputs and receipts with the new reports, excluding large OCI layouts. This
+pilot does not yet assert a complete Python row or final candidate qualification.
 
 ## Durable catalog storage and discovery
 

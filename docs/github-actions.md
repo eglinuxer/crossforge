@@ -276,7 +276,7 @@ actionlint and `bake --print` establish wiring, not those execution results.
 ## Internal component handoff rollout pilot
 
 `component-pilot.yml` is a separate manual main workflow for the first x86_64
-registry handoff. It runs the existing quick preflight, publishes the installation
+registry handoff. Its default `mode: build` runs the existing quick preflight, publishes the installation
 and GCC test-context components to `ghcr.io/eglinuxer/crossforge-components`, then
 uses a separate reader job to verify and consume the pinned artifacts. The
 reader runs toolchain/runtime and GCC smoke qualification plus the cp39 x86_64
@@ -300,6 +300,18 @@ The lookup CLI also accepts an explicit catalog digest for recovery. No automati
 deletion or expiry of registry catalogs is introduced; candidate/release references
 must remain protected when a retention policy is added. The seven-day Actions
 artifact is diagnostic output, not the durable catalog store.
+
+Dispatch `mode: reuse` to exercise the catalog consumer in another run. It
+discovers each of the two artifacts by independently captured current inputs,
+or uses the optional digest-only `catalog-reference` for both. It verifies the
+catalog signature, downloads and checks the original component OCI bytes, then
+uses the same fresh toolchain/runtime and GCC smoke gates and cp39 cross build.
+Original component producer details remain separate from this run's new test
+records. This mode has packages:read and skips production, signing and storage;
+the final gate checks the exact expected success/skipped jobs for the chosen
+mode. A missing input index reports that a producer is required and fails this
+read-only pilot; automatic missing-component scheduling remains rollout work.
+Failed authentication, transfer or artifact verification is never a build miss.
 
 This pilot does not yet supply artifacts to `verify-incremental.yml`,
 `verify-builds.yml` or candidate qualification. It covers one cross target, not the complete Python

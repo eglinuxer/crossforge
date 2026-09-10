@@ -2,6 +2,16 @@ name: internal component handoff pilot
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Build and publish pilot components, or consume a previously signed catalog
+        type: choice
+        options: [build, reuse]
+        default: build
+      catalog-reference:
+        description: Optional digest-only catalog for reuse; empty discovers exact current inputs
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -14,7 +24,7 @@ jobs:
 
   produce:
     needs: preflight
-    if: github.repository == 'eglinuxer/crossforge' && github.ref == 'refs/heads/main'
+    if: github.repository == 'eglinuxer/crossforge' && github.ref == 'refs/heads/main' && inputs.mode == 'build'
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     permissions:
@@ -27,6 +37,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Reject recovery inputs in build mode
+        env:
+          CATALOG_REFERENCE: ${{ inputs.catalog-reference }}
+        run: test -z "$CATALOG_REFERENCE"
       - uses: ./.github/actions/setup-locked-buildx
         id: buildx
       - uses: ./.github/actions/setup-component-transport
@@ -232,14 +246,85 @@ jobs:
         if: always()
         run: docker logout ghcr.io
 
+  reuse:
+    needs: preflight
+    if: github.repository == 'eglinuxer/crossforge' && github.ref == 'refs/heads/main' && inputs.mode == 'reuse'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - name: Export the pinned catalog verifier
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/cosign-tool"
+          docker buildx bake cosign-host-tool \
+            --set "cosign-host-tool.output=type=local,dest=$output" \
+            --progress=plain
+          expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
+          test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
+          test -x "$output/cosign"
+          ./scripts/validate-sigstore-report.py "$output/sigstore-verification.json"
+      - name: Authenticate the read-only component consumer
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - name: Authenticate prior components and execute fresh consumer gates
+        env:
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+          CATALOG_REFERENCE: ${{ inputs.catalog-reference }}
+        run: |
+          set -Eeuo pipefail
+          options=()
+          if test -n "$CATALOG_REFERENCE"; then options+=(--catalog-reference "$CATALOG_REFERENCE"); fi
+          python3 scripts/component-pilot.py consume-catalog \
+            --cosign "$RUNNER_TEMP/cosign-tool/cosign" "${options[@]}" \
+            --output "$RUNNER_TEMP/component-reuse" \
+            --builder "$COMPONENT_BUILDER" --oras "$COMPONENT_ORAS"
+      - name: Preserve original catalog evidence and fresh consumer reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-reuse-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-reuse/report/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Log out the component consumer
+        if: always()
+        run: docker logout ghcr.io
+
   verified:
     if: always()
-    needs: [preflight, produce, consume, catalog, catalog-store]
+    needs: [preflight, produce, consume, catalog, catalog-store, reuse]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Require every selected pilot job to succeed
         env:
           RESULTS: ${{ toJSON(needs) }}
+          MODE: ${{ inputs.mode }}
         run: |
-          python3 -c 'import json,os,sys; r=json.loads(os.environ["RESULTS"]); sys.exit(0 if set(r)=={"preflight","produce","consume","catalog","catalog-store"} and all(v["result"]=="success" for v in r.values()) else 1)'
+          python3 - <<'PY'
+          import json, os, sys
+          results = json.loads(os.environ["RESULTS"])
+          modes = {"build": {"produce", "consume", "catalog", "catalog-store"}, "reuse": {"reuse"}}
+          mode = os.environ["MODE"]
+          jobs = {"preflight", "produce", "consume", "catalog", "catalog-store", "reuse"}
+          valid = mode in modes and set(results) == jobs
+          if valid:
+              selected = modes[mode] | {"preflight"}
+              valid = all(results[name].get("result") == ("success" if name in selected else "skipped") for name in jobs)
+          sys.exit(0 if valid else 1)
+          PY
