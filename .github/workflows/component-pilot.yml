@@ -121,6 +121,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    outputs:
+      artifact-id: ${{ steps.signed.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -158,6 +160,7 @@ jobs:
             --catalog "$output/catalog.json" --bundle "$output/catalog.sigstore.json" \
             --cosign "$RUNNER_TEMP/cosign-tool/cosign" > "$output/authentication.json"
       - name: Preserve the signed catalog and verification bundle
+        id: signed
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: component-catalog-${{ github.run_id }}-${{ github.run_attempt }}
@@ -165,9 +168,73 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  catalog-store:
+    needs: catalog
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      reference: ${{ steps.store.outputs.reference }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.catalog.outputs.artifact-id }}
+          path: ${{ runner.temp }}/component-catalog
+          merge-multiple: true
+      - name: Export the pinned catalog verifier
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/cosign-tool"
+          docker buildx bake cosign-host-tool \
+            --set "cosign-host-tool.output=type=local,dest=$output" \
+            --progress=plain
+          expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
+          test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
+          test -x "$output/cosign"
+          ./scripts/validate-sigstore-report.py "$output/sigstore-verification.json"
+      - name: Authenticate the catalog writer
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - name: Reverify and persist the signed catalog before updating input indexes
+        id: store
+        env:
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/component-catalog.py publish \
+            --catalog "$RUNNER_TEMP/component-catalog/catalog.json" \
+            --bundle "$RUNNER_TEMP/component-catalog/catalog.sigstore.json" \
+            --cosign "$RUNNER_TEMP/cosign-tool/cosign" --oras "$COMPONENT_ORAS" \
+            --registry-config "$HOME/.docker/config.json" \
+            --output "$RUNNER_TEMP/catalog-store" > "$RUNNER_TEMP/catalog-store-result.json"
+          python3 -c 'import json,sys; print("reference=" + json.load(open(sys.argv[1]))["reference"])' \
+            "$RUNNER_TEMP/catalog-store-result.json" >> "$GITHUB_OUTPUT"
+      - name: Preserve the immutable catalog reference
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-catalog-reference-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-store-result.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Log out the catalog writer
+        if: always()
+        run: docker logout ghcr.io
+
   verified:
     if: always()
-    needs: [preflight, produce, consume, catalog]
+    needs: [preflight, produce, consume, catalog, catalog-store]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -175,4 +242,4 @@ jobs:
         env:
           RESULTS: ${{ toJSON(needs) }}
         run: |
-          python3 -c 'import json,os,sys; r=json.loads(os.environ["RESULTS"]); sys.exit(0 if set(r)=={"preflight","produce","consume","catalog"} and all(v["result"]=="success" for v in r.values()) else 1)'
+          python3 -c 'import json,os,sys; r=json.loads(os.environ["RESULTS"]); sys.exit(0 if set(r)=={"preflight","produce","consume","catalog","catalog-store"} and all(v["result"]=="success" for v in r.values()) else 1)'

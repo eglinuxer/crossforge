@@ -27,7 +27,7 @@ class ComponentPilotWorkflowTests(unittest.TestCase):
     def test_gate_rejects_skipped_cancelled_failed_or_missing_jobs_even_with_python_optimization(self):
         gate = WORKFLOW.split("  verified:\n", 1)[1]
         command = gate.split("        run: |\n", 1)[1].strip()
-        expected = {name: {"result": "success"} for name in ("preflight", "produce", "consume", "catalog")}
+        expected = {name: {"result": "success"} for name in ("preflight", "produce", "consume", "catalog", "catalog-store")}
         def run(results):
             environment = dict(os.environ, RESULTS=json.dumps(results), PYTHONOPTIMIZE="2")
             return subprocess.run(["bash", "-c", command], env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
@@ -49,7 +49,7 @@ class ComponentPilotWorkflowTests(unittest.TestCase):
         self.assertNotIn("${{ runner.temp }}/component-producer/", paths)
 
     def test_catalog_signer_runs_after_gates_and_has_no_registry_write_permission(self):
-        signer = WORKFLOW.split("  catalog:\n", 1)[1].split("  verified:\n", 1)[0]
+        signer = WORKFLOW.split("  catalog:\n", 1)[1].split("  catalog-store:\n", 1)[0]
         self.assertIn("needs: [produce, consume]", signer)
         self.assertNotIn("if: always()", signer)
         self.assertIn("id-token: write", signer)
@@ -61,6 +61,17 @@ class ComponentPilotWorkflowTests(unittest.TestCase):
         self.assertIn('--bundle "$output/catalog.sigstore.json" "$output/catalog.json"', signer)
         self.assertIn("component-catalog.py verify", signer)
         self.assertIn('validate-sigstore-report.py "$output/sigstore-verification.json"', signer)
+
+    def test_catalog_storage_reverifies_signature_without_oidc_permission(self):
+        storage = WORKFLOW.split("  catalog-store:\n", 1)[1].split("  verified:\n", 1)[0]
+        self.assertIn("needs: catalog", storage)
+        self.assertIn("packages: write", storage)
+        self.assertNotIn("id-token: write", storage)
+        self.assertIn("artifact-ids: ${{ needs.catalog.outputs.artifact-id }}", storage)
+        self.assertIn("component-catalog.py publish", storage)
+        self.assertIn('validate-sigstore-report.py "$output/sigstore-verification.json"', storage)
+        self.assertIn('reference: ${{ steps.store.outputs.reference }}', storage)
+        self.assertIn("docker logout ghcr.io", storage)
 
 
 if __name__ == "__main__":

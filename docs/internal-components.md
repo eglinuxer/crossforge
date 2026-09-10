@@ -379,10 +379,73 @@ still require their own final integration and actual native ARM execution.
 
 The pilot currently catalogs its two x86_64 build artifacts. The signed-catalog
 interface and workflow wiring have local regression coverage; a real GitHub
-signature and cross-run consumption have not yet been exercised. Catalog
-discovery, missing-artifact producer dispatch and production CI routing remain
-to be connected. Component tags are retained and no registry garbage collection
-is implemented. Actions handoff, catalog/bundle and diagnostic files use the
-existing seven-day pilot/debug retention, which is not permanent candidate/
-release evidence storage. Referenced candidate/release retention must be
-implemented before production reuse.
+signature and cross-run consumption have not yet been exercised. Missing-artifact
+producer dispatch and production CI routing remain to be connected.
+
+## Durable catalog storage and discovery
+
+`catalog_registry.py` stores the exact catalog and signature bundle together as
+an OCI artifact in the same internal component repository. It uses the pinned
+ORAS [native file packing](https://oras.land/docs/commands/oras_push/) and
+[OCI-layout copying](https://oras.land/docs/commands/oras_cp/) without a Docker
+build or layer recompression. The envelope has an empty OCI config, a fixed
+artifact type, and exactly two named JSON blobs. Unknown fields, extra blobs,
+unsafe names, remote URLs and unexpected types/sizes are rejected; downloaded
+blobs must match their descriptor digests and sizes. Fetching uses fixed local
+filenames and digest-addressed blob requests, without extracting registry-supplied
+archive paths.
+
+Run these commands in the Docker tooling environment with the checkout, pinned
+tools and desired output directory mounted:
+
+```sh
+python3 scripts/component-catalog.py publish \
+  --catalog /output/signed/catalog.json \
+  --bundle /output/signed/catalog.sigstore.json \
+  --cosign /output/cosign-tool/cosign --oras /output/oras-tool/oras \
+  --registry-config /tooling/config.json --output /output/catalog-store
+```
+
+Publishing first snapshots and authenticates the signed bytes. It retains the
+envelope under `catalog-<full manifest SHA256>` and returns its digest-only
+`reference`. Only after that succeeds does it update `input-<SHA256>` hints keyed
+by component, role and complete input identity. The manifest creation annotation
+uses the original producer time so retrying with the same catalog/bundle bytes
+preserves the envelope digest. The catalog-store CI job has packages:write but
+no OIDC permission; it independently verifies the signer job's bundle before
+publishing. The final workflow gate requires durable storage to succeed.
+
+```sh
+python3 scripts/component-catalog.py lookup \
+  --expected-inputs /output/current-inputs.json --role toolchain-install \
+  --cosign /output/cosign-tool/cosign --oras /output/oras-tool/oras \
+  --registry-config /tooling/config.json --output /output/catalog-download \
+  > /output/selection.json
+```
+
+An input tag is an untrusted hint. Lookup reads its manifest once, fixes that
+manifest digest, fetches and checks both blobs, then runs the signature and exact
+input selection checks described above. A valid catalog under the wrong input
+index is rejected. Only the pinned ORAS manifest-not-found response is a
+`missing` result; authentication, network, malformed response, digest and signature
+failures remain errors. The successful selection includes the original receipt
+and `catalog.reference`, which should be retained with the consumer's evidence.
+
+For recovery, add `--catalog-reference "$ORIGINAL_CATALOG_REFERENCE"` to the
+lookup command. It bypasses mutable input tags and requires that exact envelope
+digest and the same expected inputs. Absence of an explicitly requested recovery
+digest is an error. Updating a hint cannot change or replace that recovery input.
+
+Catalogs, bundles and component artifacts retain their full-digest registry tags;
+these commands do not delete or expire them. The seven-day Actions files are
+diagnostics and handoff conveniences, not the durable copies. No garbage
+collector has been introduced. Any future cleanup must protect every catalog,
+receipt and component referenced by candidates/releases before removing orphaned
+artifacts. Registry capacity measurements and reference-aware cleanup remain
+rollout work.
+
+Local Docker tests exercised actual ORAS packing, registry transfers, moving an
+input hint while recovering its original digest, and identical-digest repacking.
+Those transport fixtures were unsigned. Actual pinned Cosign rejected them at
+both public lookup and publish boundaries; no valid GitHub signature is claimed
+by the transport experiment.

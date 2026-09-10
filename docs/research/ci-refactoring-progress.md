@@ -8,7 +8,7 @@
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；同 run CI 试点已实现 | GitHub 试点实跑与生产 CI 接入 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、与可信产物可用性及生产消费对接 |
 | 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过 | 生产 CI 接入与远程验收 |
-| 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录接口与 CI 接线本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
+| 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储与查找接口本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
 ## 批次 1 已实现
@@ -240,3 +240,13 @@ SDK 修正后的独立重跑已通过，见[六行 SDK 实跑记录](python-sdk-
 签名试点工作流也已纳入控制平面路径识别，避免单独修改该手动工作流时被未知路径兜底误选为完整编译。13 项增量计划 Docker 回归、0.070 秒通过；未知路径仍保持全量兜底。
 
 完整 `sdk-complete-dev` 随后通过：总消费 727.27 秒，Bake 记录区间 21:57:39–22:05:03 UTC，14 条规定集成 RUN 均新执行。最终 Python 与 complete SDK 报告均为 passed，六份行 manifest 继续与原正式资格产物一致；输入材料图不包含 GCC/CPython 源码编译。完整结果补充到[SDK 实跑记录](python-sdk-integration-2026-09-10.json)。本地两条组装根均已完成；独立 vcpkg upstream Tier 3、GCC full 等候选领域和真实 native ARM 仍遵循各自门禁，不由这次本地 SDK 集成代替。
+
+## 批次 5：签名目录的持久存储、发现与固定引用恢复
+
+`catalog_registry.py` 将 canonical catalog 与 Sigstore bundle 封装为固定两文件 OCI artifact。公共发布接口先验证签名，再以完整 manifest digest 建立保留 tag，最后更新精确输入的查找 tag。查找 tag 只提供位置；reader 固定首次取得的 manifest digest，逐 blob 校验文件名、大小与内容摘要，再验证签名和当前完整输入。显式恢复只接受同一内部仓库的 digest 引用，缺失时直接失败；普通发现仅将固定 ORAS 1.3.4 的精确 manifest 404 响应识别为缺失，权限、传输和错误索引均保留为错误。
+
+pilot 新增独立 `catalog-store` job，按签名 job 的不可变 artifact ID 下载目录，使用 pinned Cosign 复核后写入 registry。该 job 具有 packages:write，但没有 OIDC；最终 gate 要求存储成功。七天 Actions artifact 仅留存诊断引用；registry 中保留完整 digest tag，当前不引入自动删除，后续容量与回收策略必须保护候选/发布所引用的目录与组件。
+
+[本地存储观测](catalog-storage-2026-09-10.json)：真实 ORAS 在无外网、无 host port 的临时 registry 中完成两份合成目录的上传和按 digest 下载。输入 tag 改指第二份后，第一份仍由原 digest 完整恢复；相同 catalog/bundle 再次封装得到相同 OCI digest。公共 publish 与 lookup 均被真实固定 Cosign 拒绝无效 bundle；低层字节传输用未签名 fixture，不宣称正向 GitHub 信任或组件资格。临时 registry 已清理。
+
+Docker 全量 config 1090 项、147.414 秒，packaging 40 项、0.871 秒通过，保留既有 2/1 项跳过；四项 locked validators、三个 renderer、实际 Rocky 8 platform-python 3.6 强制门禁及 actionlint 通过。生产缺失产物调度、跨 run 消费接线、真实 GitHub 身份签名、候选恢复和 native ARM 仍需推进；没有发布远程内容或改变锁定来源/ABI/baseline。

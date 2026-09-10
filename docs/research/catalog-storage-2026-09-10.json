@@ -1,0 +1,93 @@
+{
+  "date": "2026-09-10",
+  "files": {
+    ".github/workflows/component-pilot.yml": "f85e636b41621310f9c0a89db497333e870bb3cd65a67b336d60b1c29db32512",
+    "scripts/component-catalog.py": "a90d94cb94a5e7b5c5da519171b722e5b6aac2c9e53548d5fa11f5d0eef7e0f9",
+    "scripts/crossforge_internal/catalog_registry.py": "287f7ddb9668c04f92084d9ec3906cffe45a14a4923a9ac75a210bb2159cdb01",
+    "tests/config/test_catalog_registry.py": "0f1f9119e296117f3fa4c5707faa1133896b77be507a21f88e39e75f44580aad",
+    "tests/config/test_component_pilot_workflow.py": "127ed280dc350ffb355db700a33d1fa7b958a8b4f54c839da3a3c798672b55a5"
+  },
+  "kind": "crossforge-local-catalog-storage-observation",
+  "limits": [
+    "Transport used unsigned synthetic catalog fixtures in a temporary network-none registry shared only with its client, with no host ports; no positive GitHub signature or component qualification claimed",
+    "Public publish and lookup rejected invalid signatures with the real pinned Cosign verifier; positive GitHub catalog signing remains unexecuted",
+    "Mutable tags are discovery hints; consumers still reverify pinned catalog bytes, signature, exact inputs and downstream artifact/domain evidence",
+    "Catalog storage is wired only to the manual component pilot; production component availability scheduling and reuse routing remain pending",
+    "No remote publication, workflow dispatch or automatic registry deletion occurred; temporary local registry removed after the experiment",
+    "All local tests ran in Docker; local times are not GitHub performance measurements"
+  ],
+  "logs": {
+    "/tmp/crossforge-catalog-storage/full-regressions.log": "169a87f51a163b8bb7ffca9c1fbe51d5d7abb74db31a8755387e866435f7c4ac",
+    "/tmp/crossforge-catalog-storage/platform-python.log": "f9489cef1004b58e46c63cfbf001e5f8e95870a9fd54cab482d9761a34719727",
+    "/tmp/crossforge-catalog-storage/regressions.log": "571b673be05bd621042cab0f8d5af92134c3d049b1fa8e2a89f80c679fdfba5b",
+    "/tmp/crossforge-catalog-storage/rejected-lookup.log": "7a3620f5e69fcf6fbdad10d336ae2fde490c4983dce2c668761038439e9ad8ad",
+    "/tmp/crossforge-catalog-storage/rejected-publish.log": "9c9683d5809cef58f5eaf23e3277e15c539b30c5cb2d6e92103ce7f6f1320f4b",
+    "/tmp/crossforge-catalog-storage/repack.log": "d4a86a48f63f2d4e492872817d4bc902efd5d431fccf069466eb27e590706ff6",
+    "/tmp/crossforge-catalog-storage/roundtrip.log": "1c2ac2d47bb32da7e26205c29f6a79e5d9628d2a954d5f486cb0ebe8ef09274a"
+  },
+  "regressions": {
+    "actionlint": "1.7.12 passed with existing concurrency.queue syntax exception",
+    "config": {
+      "seconds": 147.414,
+      "skipped": 2,
+      "tests": 1090
+    },
+    "locked_validators": 4,
+    "packaging": {
+      "seconds": 0.871,
+      "skipped": 1,
+      "tests": 40
+    },
+    "platform_python": "actual Rocky 8 Python 3.6 forced stage passed",
+    "renderer_checks": 3
+  },
+  "schema_version": 1,
+  "source_commit": "965dd6a269f92023056eab2f42594cf7d06a5f32",
+  "source_dirty": true,
+  "status": "local-validation-passed",
+  "tools": {
+    "cosign_sha256": "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71",
+    "oras": {
+      "archive_sha256": "f27adb935022d94df8dc77719c322dda592c78a0d57a6f7dcdd8d900b248c454",
+      "binary_sha256": "246c47e91bf2749a555ffe00a9824844c6df3a26d61974e3ce08f2077d79c556",
+      "git_commit": "db9e29505c3059f2b8fde34ae8cae266c5c765e9",
+      "member": "oras",
+      "name": "oras",
+      "platform": "linux/amd64",
+      "schema_version": 1,
+      "url": "https://github.com/oras-project/oras/releases/download/v1.3.4/oras_1.3.4_linux_amd64.tar.gz",
+      "version": "1.3.4"
+    },
+    "registry": "registry:3@sha256:1be55279f18a2fe1a74edf2664cac61c1bea305b7b4642dab412e7affdcb3e33",
+    "tooling_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42"
+  },
+  "transport": {
+    "index_tag": "input-c0c41254eadd48303c5ff9193d7d99a8dd98fc6b1ce4be21a4e25e06c25cedcd",
+    "invalid_signature_lookup": "rejected by real pinned Cosign",
+    "invalid_signature_publish": "rejected before transport",
+    "kind": "crossforge-local-catalog-transport-observation",
+    "missing": {
+      "entry": null,
+      "input_tag": "input-133e33ab448488f1cf8d4955306aecebf46cc04e1d6e1c130fcc8a40ab939a72",
+      "reason": "catalog-index-absent",
+      "status": "missing"
+    },
+    "records": [
+      {
+        "catalog_sha256": "efc5d5a946fbaa5b12b60b998be836b46c7f1d8e801838eee55c146986b974bf",
+        "retention_tag": "127.0.0.1:5000/crossforge-components:catalog-0ad994745458ecf4675b882e96ffb3acd791114828680e24a62221dc20af5f8b",
+        "transport_reference": "127.0.0.1:5000/crossforge-components@sha256:0ad994745458ecf4675b882e96ffb3acd791114828680e24a62221dc20af5f8b"
+      },
+      {
+        "catalog_sha256": "60cfe6d6cf8029016ef0f70235c6180a75f85751c04b8846ae9637e49baf9706",
+        "retention_tag": "127.0.0.1:5000/crossforge-components:catalog-d3cb9229b3cc28db3ffd7ddcaf8200d5b377317f42fe57c3c1bf0a9ca1e45899",
+        "transport_reference": "127.0.0.1:5000/crossforge-components@sha256:d3cb9229b3cc28db3ffd7ddcaf8200d5b377317f42fe57c3c1bf0a9ca1e45899"
+      }
+    ],
+    "recovered_reference": "127.0.0.1:5000/crossforge-components@sha256:0ad994745458ecf4675b882e96ffb3acd791114828680e24a62221dc20af5f8b",
+    "repeat_pack_digest": "sha256:0ad994745458ecf4675b882e96ffb3acd791114828680e24a62221dc20af5f8b",
+    "schema_version": 1,
+    "scope": "Unsigned synthetic fixtures exercise storage bytes and negative signature boundaries only; no trusted GitHub catalog or component qualification claimed",
+    "seconds": 0.78
+  }
+}

@@ -8,7 +8,7 @@ import runpy
 import subprocess
 import sys
 
-from crossforge_internal import component_catalog, component_handoff
+from crossforge_internal import catalog_registry, component_catalog, component_handoff
 from crossforge_internal.identity import IdentityError, canonical_bytes, load_json, require
 
 
@@ -31,6 +31,21 @@ def main(argv=None):
         if name == "select":
             command.add_argument("--expected-inputs", type=Path, required=True)
             command.add_argument("--role", required=True)
+    for name in ("publish", "lookup"):
+        command = commands.add_parser(name, allow_abbrev=False)
+        command.add_argument("--cosign", type=Path, required=True)
+        command.add_argument("--oras", type=Path, required=True)
+        command.add_argument("--output", type=Path, required=True, help="new local packing or download directory")
+        command.add_argument("--repository", default=component_catalog.REPOSITORY)
+        command.add_argument("--registry-config", type=Path)
+        command.add_argument("--loopback-http", action="store_true", help="local isolated registry experiments only")
+        if name == "publish":
+            command.add_argument("--catalog", type=Path, required=True)
+            command.add_argument("--bundle", type=Path, required=True)
+        else:
+            command.add_argument("--expected-inputs", type=Path, required=True)
+            command.add_argument("--role", required=True)
+            command.add_argument("--catalog-reference", help="exact previously verified catalog digest for recovery; do not consult mutable index")
     args = parser.parse_args(argv)
     try:
         if args.command == "from-handoff":
@@ -48,11 +63,19 @@ def main(argv=None):
         elif args.command == "select":
             result = component_catalog.select(ROOT, args.catalog, args.bundle, args.cosign,
                 load_json(args.expected_inputs), args.role, args.temporary_parent)
+        elif args.command == "publish":
+            result = catalog_registry.publish(ROOT, args.catalog, args.bundle, args.cosign, args.output,
+                args.repository, args.oras, load_json(ROOT / ".github/locked-tools/oras.json"),
+                args.registry_config, args.loopback_http)
+        elif args.command == "lookup":
+            result = catalog_registry.lookup(ROOT, load_json(args.expected_inputs), args.role, args.cosign, args.output,
+                args.repository, args.oras, load_json(ROOT / ".github/locked-tools/oras.json"),
+                args.registry_config, args.loopback_http, args.catalog_reference)
         else:
             parser.error("a command is required")
         print(json.dumps(result, sort_keys=True, indent=2))
         return 0
-    except (IdentityError, ValueError, KeyError, OSError, subprocess.CalledProcessError) as error:
+    except (IdentityError, ValueError, KeyError, OSError, subprocess.SubprocessError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1
 

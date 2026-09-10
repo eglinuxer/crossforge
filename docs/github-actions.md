@@ -280,19 +280,31 @@ registry handoff. It runs the existing quick preflight, publishes the installati
 and GCC test-context components to `ghcr.io/eglinuxer/crossforge-components`, then
 uses a separate reader job to verify and consume the pinned artifacts. The
 reader runs toolchain/runtime and GCC smoke qualification plus the cp39 x86_64
-cross build. The producer alone has package write permission; the reader has
-package read permission. Both use the pinned BuildKit and ORAS tools.
+cross build. The raw producer and the separate catalog storage job have package
+write permission; the reader has package read permission. Only the catalog
+signer has OIDC permission. Transport uses pinned BuildKit and ORAS tools.
 
 The producer job supplies an immutable Actions artifact ID and an independent
 canonical handoff SHA256. The reader checks exact source commit, run and attempt,
 then recaptures the expected component inputs. It cannot use another run's
 receipt or a mutable registry tag as qualification evidence. A partial job rerun
-with an older attempt's handoff is currently rejected; explicit recovery and
-cross-run trusted reuse belong to later rollout batches.
+with an older attempt's handoff is currently rejected by this same-run reader.
+
+After successful consumption, the signer creates a canonical catalog and Sigstore
+bundle. A separate storage job downloads that exact artifact ID, verifies the
+signature with the pinned Cosign verifier and trusted root, and publishes the two
+files as an OCI artifact. A full-digest retention tag preserves the catalog before
+input lookup tags are updated. Those tags only locate a catalog; consumers must
+verify its fixed manifest and blob digests, signature and exact expected inputs.
+The lookup CLI also accepts an explicit catalog digest for recovery. No automatic
+deletion or expiry of registry catalogs is introduced; candidate/release references
+must remain protected when a retention policy is added. The seven-day Actions
+artifact is diagnostic output, not the durable catalog store.
 
 This pilot does not yet supply artifacts to `verify-incremental.yml`,
 `verify-builds.yml` or candidate qualification. It covers one cross target, not the complete Python
-row or final SDK. Local registry roundtrip and consumer execution are recorded
+row or final SDK. Production cross-run routing and a successful GitHub-issued
+signature remain unverified. Local registry roundtrip and consumer execution are recorded
 in [the registry pilot observation](research/registry-handoff-pilot-2026-09-10.json);
 the new workflow has not yet been dispatched on GitHub. See
 [internal component commands](internal-components.md) for local Docker operation.
