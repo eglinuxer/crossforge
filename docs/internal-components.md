@@ -327,9 +327,62 @@ inputs, and downloads both OCI artifacts. It freshly executes toolchain/runtime
 and GCC smoke gates, then builds cp39 x86_64 from the verified installation.
 Every selected job must succeed; skipped or cancelled jobs fail the final gate.
 
-The handoff is intentionally limited to the same run and attempt. It has no
-cross-run catalog or signature-based qualification reuse. Component tags are
-retained; this implementation performs no registry garbage collection. Actions
-handoff and diagnostic files follow the existing seven-day pilot/debug retention
-and do not provide permanent candidate/release evidence retention. Referenced
-candidate/release retention must be implemented before production reuse.
+The job-output handoff remains limited to the same run and attempt. After the
+consumer gates succeed, a separate job signs a canonical component catalog with
+the existing pinned, TUF-authenticated Cosign tool. Only that job has
+`id-token:write`; it has no registry write permission. Catalog construction
+rechecks the independent handoff digest and exact clean checkout/run/attempt.
+Every entry must retain the catalog producer, original receipt and exact
+internal registry digest. A catalog cannot reissue another run's receipts as its
+own. The final workflow gate also requires signing and immediate verification
+to succeed.
+
+## Authenticate a catalog from an earlier run
+
+`component-catalog.py` treats downloaded catalogs and Sigstore bundles as
+untrusted. It invokes the consumer's pinned Cosign executable with its pinned
+trust root, exact pilot workflow/main identity, GitHub issuer, repository,
+dispatch event and original source commit. Cosign performs certificate, SCT,
+transparency-log and signature verification; none of those checks are disabled.
+The flags and their enforcement were checked against the pinned upstream
+[certificate options](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/certificate.go)
+and [bundle verification policy](https://github.com/sigstore/cosign/blob/v3.1.3/pkg/cosign/verify.go).
+Verification uses private snapshots of the catalog, bundle and root. Duplicate
+JSON keys, unknown fields, mixed producers, ambiguous entries, noncanonical
+encoding, wrong executable/root hashes and wrong registry digests fail closed.
+
+Capture current expected inputs independently before selecting a reference:
+
+```sh
+python3 scripts/component-catalog.py select \
+  --catalog /output/prior/catalog.json \
+  --bundle /output/prior/catalog.sigstore.json \
+  --cosign /output/cosign-tool/cosign \
+  --expected-inputs /output/expected-inputs.json --role toolchain-install \
+  > /output/selection.json
+```
+
+`authenticated-reference` returns an entry with `reference`, `receipt_sha256`
+and the full original `receipt`, suitable for the existing registry fetch
+interface. A correctly authenticated catalog without an exact component/role/
+input match returns `missing`; the planner must schedule its producer. Signature
+or structural failures return an error, never a cache miss or an unverified
+fallback. The original source commit may differ from the consumer's checkout;
+the independently captured material identity must match exactly.
+
+Authentication establishes the source of a receipt digest. Consumers still
+verify actual OCI bytes and metadata with `component-registry.py`, and use the
+appropriate domain verifier for any qualification artifact. Neither a catalog
+entry nor the exported `authentication.json` observation establishes a passed
+qualification or substitutes for verifying the signature again. New candidates
+still require their own final integration and actual native ARM execution.
+
+The pilot currently catalogs its two x86_64 build artifacts. The signed-catalog
+interface and workflow wiring have local regression coverage; a real GitHub
+signature and cross-run consumption have not yet been exercised. Catalog
+discovery, missing-artifact producer dispatch and production CI routing remain
+to be connected. Component tags are retained and no registry garbage collection
+is implemented. Actions handoff, catalog/bundle and diagnostic files use the
+existing seven-day pilot/debug retention, which is not permanent candidate/
+release evidence storage. Referenced candidate/release retention must be
+implemented before production reuse.

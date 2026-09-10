@@ -114,9 +114,60 @@ jobs:
         if: always()
         run: docker logout ghcr.io
 
+  catalog:
+    needs: [produce, consume]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.produce.outputs.handoff-artifact-id }}
+          path: ${{ runner.temp }}/component-handoff
+          merge-multiple: true
+      - name: Export the existing TUF-authenticated signing tool
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/cosign-tool"
+          docker buildx bake cosign-host-tool \
+            --set "cosign-host-tool.output=type=local,dest=$output" \
+            --progress=plain
+          expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
+          test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
+          test -x "$output/cosign"
+          ./scripts/validate-sigstore-report.py "$output/sigstore-verification.json"
+      - name: Sign exact producer receipts after consumer gates succeed
+        env:
+          HANDOFF_SHA256: ${{ needs.produce.outputs.handoff-sha256 }}
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/component-catalog"
+          mkdir "$output"
+          python3 scripts/component-catalog.py from-handoff \
+            --handoff "$RUNNER_TEMP/component-handoff/handoff.json" \
+            --handoff-sha256 "$HANDOFF_SHA256" --output "$output/catalog.json"
+          "$RUNNER_TEMP/cosign-tool/cosign" sign-blob --yes \
+            --bundle "$output/catalog.sigstore.json" "$output/catalog.json"
+          python3 scripts/component-catalog.py verify \
+            --catalog "$output/catalog.json" --bundle "$output/catalog.sigstore.json" \
+            --cosign "$RUNNER_TEMP/cosign-tool/cosign" > "$output/authentication.json"
+      - name: Preserve the signed catalog and verification bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-catalog-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-catalog/
+          retention-days: 7
+          if-no-files-found: error
+
   verified:
     if: always()
-    needs: [preflight, produce, consume]
+    needs: [preflight, produce, consume, catalog]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -124,4 +175,4 @@ jobs:
         env:
           RESULTS: ${{ toJSON(needs) }}
         run: |
-          python3 -c 'import json,os,sys; r=json.loads(os.environ["RESULTS"]); sys.exit(0 if set(r)=={"preflight","produce","consume"} and all(v["result"]=="success" for v in r.values()) else 1)'
+          python3 -c 'import json,os,sys; r=json.loads(os.environ["RESULTS"]); sys.exit(0 if set(r)=={"preflight","produce","consume","catalog"} and all(v["result"]=="success" for v in r.values()) else 1)'

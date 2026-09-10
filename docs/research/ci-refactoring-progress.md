@@ -7,8 +7,8 @@
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；同 run CI 试点已实现 | GitHub 试点实跑与生产 CI 接入 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、与可信产物可用性及生产消费对接 |
-| 4：整行 Python/SDK 交接 | cp39/cp314/cp313/cp312 正式行资格通过；六行 SDK 接口与材料图回归通过 | cp311/cp310 实跑、六行与完整 SDK 集成、生产 CI |
-| 5：资格复用及恢复 | 工具链与 cp39 的本地显式复用、强制执行和原记录保留通过 | 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
+| 4：整行 Python/SDK 交接 | 全部六行正式资格通过；六行 SDK 接口与材料图回归通过 | SDK 执行记录验收修正与完整 SDK 集成、生产 CI |
+| 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录接口与 CI 接线本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
 ## 批次 1 已实现
@@ -218,3 +218,11 @@ Docker 回归 config 1062 项、191.733 秒，packaging 40 项、0.760 秒，均
 `test_python_qualification.py` 现在只复用当前进程自己生成的 fixture 数据快照，key 包含 Python 版本、完整 release/ABI context 内容摘要及实际 provider catalog 字节摘要。快照保存为不可变 bytes，每次恢复生成独立对象图，并保留原先的对象引用关系；原 JSON 字节在独立临时目录恢复。正式 validator 和每个篡改用例照常执行，没有缓存通过/失败判断。新增回归验证嵌套修改、文件破坏、引用关系及同路径输入内容变化不会跨用例污染，也不会命中错误模板。
 
 不带 profiler 的本地对照中，原 qualification suite 51 项为 100.188 秒；优化后包含新增隔离检查的 52 项为 47.756 秒。完整 config 从 1062 项、191.733 秒变为 1063 项、140.528 秒，均零失败且保留 2 项既有跳过；packaging 40 项、0.789 秒通过，保留 1 项既有跳过。两次测试使用相同 Docker 镜像与资源限制，期间存在其他本地组件工作，因此仅记录这一组本地结果，不外推 GitHub 墙钟收益。当前 runner 上的新 CI 基线、Python 并行度 2→3 及完整流水线的三次重放仍待实施。
+
+## 批次 5：签名组件目录的信任边界
+
+新增 `component-catalog.py` 与独立 `component_catalog.py` 模块。目录只包含同一原 producer 的 receipt 与固定 registry digest；未知字段、重复/歧义条目、混用 run/attempt/producer、错误 receipt 或 registry 均拒绝。消费者使用自身可信 checkout 中固定的 Cosign 二进制和 Sigstore 根，校验精确工作流/main identity、GitHub issuer/repository、dispatch 事件和原 source commit，再按当前独立输入选择引用。签名错误是错误；正确签名下缺少匹配输入才返回 `missing`，供后续 planner 安排 producer。输出仍需经过现有 OCI 和领域资格验证。
+
+同 run pilot 新增消费者门禁之后的签名 job，只有该 job 获得 `id-token:write`，不具备 registry 写权限；签名前再次核验 handoff SHA256 和精确 clean commit/run/attempt，签名后立即调用同一消费者验证接口。最终 required gate 包含签名结果。目录与 bundle 目前保存在七天 Actions pilot artifact 中；永久引用保留、发现、缺失产物调度和生产消费尚未完成，也尚无真实 GitHub 身份签名或跨 run 运行结果。
+
+[本地验证记录](component-catalog-2026-09-10.json)：Docker config 1075 项、166.620 秒，packaging 40 项、0.873 秒通过，分别保留既有 2/1 项跳过。四项 locked validators、三个 renderer、实际 Rocky 8 platform-python 3.6 强制门禁和 actionlint 通过。actionlint 首次调用的既有 `concurrency.queue` 例外模式不准确；仅修正调用模式后独立重跑静态检查通过，未修改该配置或重复运行已通过单测。真实固定 Cosign 的参数检查与无效 bundle 拒绝通过；单元回归中的模拟仅用于核验委托参数和拒绝路径，不作正向密码学证明。

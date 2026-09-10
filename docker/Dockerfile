@@ -254,6 +254,7 @@ RUN PYTHONPATH=/src/scripts /usr/libexec/platform-python -c \
 RUN /usr/libexec/platform-python ./scripts/component-artifact.py --help \
     && /usr/libexec/platform-python ./scripts/component-registry.py --help \
     && /usr/libexec/platform-python ./scripts/component-pilot.py --help \
+    && /usr/libexec/platform-python ./scripts/component-catalog.py --help \
     && /usr/libexec/platform-python ./scripts/ci-component-plan.py --help
 RUN /usr/libexec/platform-python ./scripts/render-release-components.py --check
 

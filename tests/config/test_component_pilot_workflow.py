@@ -16,7 +16,7 @@ class ComponentPilotWorkflowTests(unittest.TestCase):
         self.assertNotIn("  push:", WORKFLOW)
         self.assertNotIn("  pull_request:", WORKFLOW)
         producer = WORKFLOW.split("  produce:\n", 1)[1].split("  consume:\n", 1)[0]
-        consumer = WORKFLOW.split("  consume:\n", 1)[1].split("  verified:\n", 1)[0]
+        consumer = WORKFLOW.split("  consume:\n", 1)[1].split("  catalog:\n", 1)[0]
         self.assertIn("github.repository == 'eglinuxer/crossforge' && github.ref == 'refs/heads/main'", producer)
         self.assertIn("      packages: write", producer)
         self.assertIn("      packages: read", consumer)
@@ -27,7 +27,7 @@ class ComponentPilotWorkflowTests(unittest.TestCase):
     def test_gate_rejects_skipped_cancelled_failed_or_missing_jobs_even_with_python_optimization(self):
         gate = WORKFLOW.split("  verified:\n", 1)[1]
         command = gate.split("        run: |\n", 1)[1].strip()
-        expected = {name: {"result": "success"} for name in ("preflight", "produce", "consume")}
+        expected = {name: {"result": "success"} for name in ("preflight", "produce", "consume", "catalog")}
         def run(results):
             environment = dict(os.environ, RESULTS=json.dumps(results), PYTHONOPTIMIZE="2")
             return subprocess.run(["bash", "-c", command], env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
@@ -47,6 +47,20 @@ class ComponentPilotWorkflowTests(unittest.TestCase):
         self.assertIn("${{ runner.temp }}/component-consumer/report/", paths)
         self.assertNotIn("${{ runner.temp }}/component-consumer/", paths)
         self.assertNotIn("${{ runner.temp }}/component-producer/", paths)
+
+    def test_catalog_signer_runs_after_gates_and_has_no_registry_write_permission(self):
+        signer = WORKFLOW.split("  catalog:\n", 1)[1].split("  verified:\n", 1)[0]
+        self.assertIn("needs: [produce, consume]", signer)
+        self.assertNotIn("if: always()", signer)
+        self.assertIn("id-token: write", signer)
+        self.assertNotIn("packages: write", signer)
+        self.assertNotIn("id-token: write", WORKFLOW.split("  catalog:\n", 1)[0])
+        self.assertIn("artifact-ids: ${{ needs.produce.outputs.handoff-artifact-id }}", signer)
+        self.assertIn("HANDOFF_SHA256: ${{ needs.produce.outputs.handoff-sha256 }}", signer)
+        self.assertIn("component-catalog.py from-handoff", signer)
+        self.assertIn('--bundle "$output/catalog.sigstore.json" "$output/catalog.json"', signer)
+        self.assertIn("component-catalog.py verify", signer)
+        self.assertIn('validate-sigstore-report.py "$output/sigstore-verification.json"', signer)
 
 
 if __name__ == "__main__":
