@@ -741,3 +741,13 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 受影响变更的五份新 cp39 raw 组件已全部完成。原 receipt/schema、OCI 压缩 blob、当前材料文件/模式、已保存 metadata 和精确依赖在断网 Docker 中核对；原 `verify_local` 对五份旧 cp39 receipt 均以 `component inputs differ` 拒绝，未访问 daemon。新目标组件依赖原架构工具链 digest 和新 build-Python，未替换其他工具链。该离线检查没有冒充新的文件系统解包验收；原行消费者随后重新取得每份组件 metadata 并完整验证实际行。
 
 cp39 新行资格完成，377.433 秒、七条 fresh RUN，原 producer 已执行完整文件/ELF/ABI 验收、OCI 封存后复核和独立完整行消费。新 receipt 为 `650e9f60851377b4af23c5f49a9ccb41accb5a356a60dcd89480db32abf0dd7f`。离线复核原执行、OCI 与记录通过；旧行资格同样被原接口以输入不匹配拒绝，最终选定组件文件中另外五行的全部 subjects/qualification 和两份工具链都与原记录精确相同。随后 cp39 独立安装完成，356.478 秒、两条 fresh RUN、三份依赖，导出 manifest 与新行资格匹配，原校验器复核通过。变更后的两种 SDK 仍在推进，未将局部成功记为端到端完成；未合入 main、推送或发布。
+
+## Docker 验收：当前配方完整 SDK 通过，变更实验保留失败并串行重试（2026-09-11）
+
+当前 append 配方的完整 SDK batch 退出 0，最后一阶段 1,003.656 秒。断网只读 Docker 使用原校验器复核十四条 fresh RUN、八份组件依赖、六份原行 receipt/manifest、全部报告字节及模式，完整执行日志无 GCC/CPython 自身源码编译入口。两种 SDK 与六个独立安装至此全部完成本批验收；这些计时包含共享 builder 等待，不作为 GitHub 基线。
+
+变更 cp39 的组件 batch 在 `python-dev` 执行记录校验处退出 1：cp310 的两个原 digest 只有 owning target 声明，下游别名记录为 cached；同名、不同输入 digest 的两条 RUN 则有 owning target 的新执行时间。原严格校验器以 `SDK qualification RUN was cached or failed through a Bake alias` 拒绝，未将其记为成功。共享 builder 上重叠构建的影响尚是假设；没有放宽验证器或修改配方。其他批次全部退出后，新的串行脚本固定原清单、成功组件结果及失败日志，使用原 SDK executor 重跑两种 SDK。首个断网预检调用漏挂四个原组件目录，未访问 daemon 即失败；补齐只读挂载后预检通过，两个原脚本与所有失败记录保留。
+
+用户已确认：本地 Docker 与真实 PR 检查全部通过后合并并推送 main，再执行 main 专属的签名、候选和原生 ARM 验收。当前分支的真实 PR 验收将按此顺序推进；main 专属信任条件保持原样。
+
+只读核对远程 main 仍为 `cf736ea`。定期资格化 [34581713087](https://github.com/eglinuxer/crossforge/actions/runs/34581713087/job/103218027588) 的 cp312 job 在 AArch64 Rocky runtime 依赖 COPY 时遇到 `short read`：预期 75,189,011 字节，实际 2,097,152，随后 `unexpected EOF`。失败发生在 Python 资格之前；日志不能区分传输、中间缓存或内容存储的根因。另有外部 [PR #2](https://github.com/eglinuxer/crossforge/pull/2) 为旧候选发布 job 增加失败诊断，本分支拆分后的两个发布 job 已保留对应诊断；未改动该 PR。

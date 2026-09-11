@@ -2,7 +2,7 @@
   "schema_version": 1,
   "kind": "crossforge-local-audited-affected-change-acceptance",
   "observed_at": "2026-09-11T14:50:39.773420+00:00",
-  "status": "running",
+  "status": "serial SDK retry running; prior component continuation failed",
   "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
   "source_dirty": true,
   "change": "cp39 patch description, release pin and separately audited supply-chain patch pin; validation rules and patch hunks unchanged",
@@ -343,7 +343,7 @@
       ]
     }
   },
-  "running_at_observation": "component continuation: python-dev",
+  "running_at_observation": "serial python-dev",
   "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
   "builder": "crossforge-ci-review",
   "timing_note": "Concurrent local builder use; not an isolated or GitHub performance baseline. Separate source-cp39 replay may build uncached prerequisites.",
@@ -444,7 +444,7 @@
     "preserved": "Original runner, source snapshots, gate results and failure log remain unchanged."
   },
   "component_continuation": {
-    "status": "running",
+    "status": "failed",
     "manifest": {
       "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/components-manifest.json",
       "sha256": "e47accc0000f78980cafa81efa400c2e734d01231a3e514faf532557afa44e07"
@@ -842,6 +842,53 @@
           "sha256": "ff09bfc676d58f829af6deac19067f8da3451391735ee8bbb316bf00311a7120"
         }
       }
+    },
+    "failure": {
+      "exit_code": 1,
+      "phase": "python-dev",
+      "error": "SDK qualification RUN was cached or failed through a Bake alias: python-dev-append-cp310",
+      "log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/components-runtime.log",
+        "sha256": "1760b9be5319ce835af71d149c1c14f7eb3d4d2dc456fdc3b377fa1f5b77047d"
+      },
+      "execution": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/python-dev/integration/execution.jsonl",
+        "sha256": "6928d29139f7f6e1f289d64f84c56dbab09eb7d94bdfb313e19aa28ec2d4af11"
+      },
+      "observation": "The owning target declared two cp310 RUNs without timestamps; downstream aliases reported those digests cached. Separate digests with the same owner/commands and different input vertices completed freshly. The original verifier rejected the batch. Concurrent shared-builder interference is a hypothesis, not an established root cause. No verifier or recipe was changed."
     }
+  },
+  "sdk_serial_retry": {
+    "status": "running",
+    "manifest": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/sdk-serial-manifest.json",
+      "sha256": "b1861d3555e7eb91be9ac56221525d0a55fb3319c9c830651f1775f891dcd876"
+    },
+    "runner": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/run-sdk-serial.py",
+      "sha256": "a07c909e0094a63adc19f2bd197fc3ac8c8f123c6ab5fd5edc28c260ef2ff0a5"
+    },
+    "wrapper": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/run-sdk-serial.sh",
+      "sha256": "d7fd3fd0535be194588b336f8d4b77916545c384404fa5937e263275ca9aba45"
+    },
+    "preflight": {
+      "exit_code": 0,
+      "network": "none",
+      "socket_mounted": false,
+      "log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/sdk-serial-preflight-with-components.log",
+        "sha256": "a0862e903d865233d243a3da76898c8e5e037f67515588afee6313b58242fb58"
+      },
+      "first_attempt": {
+        "exit_code": 1,
+        "reason": "preflight invocation omitted the original read-only component directories; script and source unchanged",
+        "log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/sdk-serial-preflight.log",
+          "sha256": "fa549643228a65566482533652c4b6ea009794b55125f88bea326b078e29db5f"
+        }
+      }
+    },
+    "scope": "Both prior batches have exited; reverify existing inputs and run both original SDK executors sequentially, with unchanged strict fresh RUN validation. Preserve new cp39 and five prior row receipts. Earlier failed batch remains failed."
   }
 }
