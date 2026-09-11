@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-combined-local-and-pr-observation",
+  "observed_at": "2026-09-11T19:53:45Z",
+  "source_commit": "a6cbfd6b4a1c58707cd16715f17dd39222dbf99b",
+  "status": "combined-local-quick-passed-full-gates-pending",
+  "combined_quick": {
+    "status": "passed",
+    "source_commit": "a6cbfd6b4a1c58707cd16715f17dd39222dbf99b",
+    "source_files": 872,
+    "source_sha256": "92616827783c00d39f8b96f49e325295110837fb4552417e6ff98e47ae1adbf9",
+    "configuration_tests": 1457,
+    "packaging_tests": 40,
+    "skipped": 0,
+    "exact_test_identity_multiset": true,
+    "new_test_ids": [
+      "test_ci_build.HostedBuildTests.test_local_sdk_steps_share_the_stage_timeout_budget",
+      "test_ci_build.HostedBuildTests.test_sdk_uses_local_handoff_and_preserves_its_failure_status",
+      "test_gcc_testsuite.GccTestsuiteContractTests.test_native_diagnostic_fix_still_rejects_excess_errors_and_runtime_failures",
+      "test_local_sdk.LocalSdkTests.test_failed_consumer_stops_and_retains_original_checkpoint",
+      "test_local_sdk.LocalSdkTests.test_invalid_roots_and_broken_consumer_edge_fail_closed",
+      "test_local_sdk.LocalSdkTests.test_missing_wrong_digest_and_tampered_oci_are_rejected",
+      "test_local_sdk.LocalSdkTests.test_python_only_selection_runs_final_gate_without_complete_sdk",
+      "test_local_sdk.LocalSdkTests.test_same_run_handoffs_preserve_all_gates_and_release_old_layouts",
+      "test_local_sdk.LocalSdkTests.test_source_mutation_after_build_prevents_handoff",
+      "test_local_sdk.LocalSdkTests.test_zero_exit_without_metadata_does_not_supply_a_checkpoint"
+    ],
+    "seconds": 159.90561829099897,
+    "workers": [
+      {
+        "worker": 0,
+        "tests": 270,
+        "exit_code": 0
+      },
+      {
+        "worker": 1,
+        "tests": 425,
+        "exit_code": 0
+      },
+      {
+        "worker": 2,
+        "tests": 341,
+        "exit_code": 0
+      },
+      {
+        "worker": 3,
+        "tests": 421,
+        "exit_code": 0
+      }
+    ],
+    "steps": [
+      {
+        "step": "Release configuration",
+        "seconds": 2.034836381993955,
+        "exit_code": 0
+      },
+      {
+        "step": "RPM plans, transactions, and locks",
+        "seconds": 2.2510454499861225,
+        "exit_code": 0
+      },
+      {
+        "step": "Configuration tests",
+        "seconds": 159.9424404950114,
+        "exit_code": 0
+      },
+      {
+        "step": "Packaging planner tests",
+        "seconds": 2.0608924720145296,
+        "exit_code": 0
+      },
+      {
+        "step": "Script syntax",
+        "seconds": 0.2608040820050519,
+        "exit_code": 0
+      },
+      {
+        "step": "Generated Bake definition",
+        "seconds": 1.1672213489946444,
+        "exit_code": 0
+      }
+    ],
+    "evidence": {
+      "all-checks.json": "c2056341ffcda5669e51abd7008ed281346219555de095c7cc21fe465ca7513b",
+      "all-checks.log": "fc72c4dfd66f17dbd56388ff045218718e34f220b7abb99be27e16fd42d3154b",
+      "runtime/config-tests/inventory.json": "25aa3a49f071e93a1c45befc6c05061b4e6ff1da1826f1e50a12d4304b73f848",
+      "runtime/config-tests/result.json": "7f23b8d38155b608176920e9b33c9914fe627175756b66527d0feeecfe5d5586",
+      "runtime/config-tests/source.json": "f345df9536ef14b644097dd0e53db099e145bc814ca0c297a128cdf4f3c1043a",
+      "runtime/config-tests/worker-0-plan.json": "e423625c7b938ef8f23f8194e3c3d378b5d425931bc1d7e9acd5e47dda2b1869",
+      "runtime/config-tests/worker-0.json": "04739f5a01c4f80d2c70cd7ae4c0728221c1af9d6400bb411fd373b3578539b8",
+      "runtime/config-tests/worker-1-plan.json": "a7170376a292d793895b1ba4efd54249d664b950f6466cf7db27634b6b1fd01f",
+      "runtime/config-tests/worker-1.json": "4e40494cdab0139586b89be65aa7d114b6c9a49990970c6758e2047ed1d465eb",
+      "runtime/config-tests/worker-2-plan.json": "23370a4e062c10aeadaea9517593dbb433c193d68c7f9fce03a5f48f7fac8dbf",
+      "runtime/config-tests/worker-2.json": "5d74241eb19349294b25670512116523c1bd5d432553d844c34706a076ae08ec",
+      "runtime/config-tests/worker-3-plan.json": "e707f760ecc0802a805f3a6203191670aafaaf6e0407716db6e983c06cac0063",
+      "runtime/config-tests/worker-3.json": "cb2eca891ba65c9072a3df6158679a4245c9029227f090ed4df5f0d49b1db0ca",
+      "runtime/config-tests/discovery.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "runtime/config-tests/worker-0.log": "02486a7f3bb3209da44d9d74f018f4e95452dfa3aaa67441c8b7a999466c2170",
+      "runtime/config-tests/worker-1.log": "83ef94a12067f476cf2d94b5c0f09583bab8cab6f79c66a2615a4e07d8f2592f",
+      "runtime/config-tests/worker-2.log": "1d167bf3ec890ee81254604f34ca8adfc0f444c85d28acea51e8686eae4cb3ee",
+      "runtime/config-tests/worker-3.log": "059539c06ecf531aca33e3144ca7f6e822442dfcafa891fce5b7b8704f140046"
+    }
+  },
+  "pr4": {
+    "schema_version": 1,
+    "kind": "crossforge-stacked-quick-pr-validation",
+    "status": "all-selected-pr-checks-passed",
+    "pr": "https://github.com/eglinuxer/crossforge/pull/4",
+    "run_id": 34633508089,
+    "head_commit": "0603f062915ceb0aedb5fb8b083f10a4ca45b421",
+    "tested_merge_commit": "d8bccb7ceb294f9b8203f0dd8018ee6f8c2a92a5",
+    "base_commit": "ca4d4297782f1ac996ce143628c765a9d1ecb290",
+    "configuration": {
+      "status": "passed",
+      "tests": 1447,
+      "source_files": 866,
+      "source_sha256": "41ad69cdeb0013a1e8c3196244139b019c16d4d15c7b923b375b620969a2f5a5",
+      "source_matches_commit": "0603f062915ceb0aedb5fb8b083f10a4ca45b421",
+      "exact_test_identity_multiset": true,
+      "skips": [
+        {
+          "reason": "real zstd release assets are unavailable",
+          "test": "test_prepare_zstd_source.PrepareZstdSourceTests.test_real_prepared_source_builds_static_host_archive"
+        },
+        {
+          "reason": "real zstd release assets are unavailable",
+          "test": "test_prepare_zstd_source.PrepareZstdSourceTests.test_tracked_component_prepares_real_signed_source_subset"
+        }
+      ],
+      "seconds": 301.810540015,
+      "targets": {
+        "inputs": [
+          "platform-python-check"
+        ]
+      },
+      "compiler_inputs_changed": []
+    },
+    "packaging": {
+      "tests": 40,
+      "seconds": 28.253,
+      "skips": 1,
+      "reason": "Existing missing real nFPM binary fixture; full local Docker asset-dependent test passed."
+    },
+    "quick_job_seconds": 440,
+    "inputs_job_seconds": 133,
+    "inputs_build_seconds": 14.5,
+    "original_serial_configuration_seconds": 488.207,
+    "limits": "First real GitHub observation with 16 additional executor regressions; different runner instances, not matched-input performance baseline. Same two configuration asset skips as original PR; complete local Docker suite covered them. Four quick workers do not alter Python build matrix parallelism. PR #4 is stacked; do not merge before #3 or without retargeted main checks. Main signing, candidate and native ARM still pending.",
+    "evidence": {
+      "pr4-start.json": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-start.json",
+        "sha256": "0b273e67b460a58e272084e886015368cbab2d56b449d293703f6f5a16e69582"
+      },
+      "pr4-run.json": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-run.json",
+        "sha256": "f6e628db6a4e2d1e2fbcdceb9ac254200cf8e12b8fbf266916dddd80ae566421"
+      },
+      "pr4-jobs.json": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-jobs.json",
+        "sha256": "2632e059834a5f8dd61c2f78262b8647a596e7d1b3e7c5b2d44bc61e07bf1581"
+      },
+      "pr4-quick.log": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-quick.log",
+        "sha256": "9fd93d2eff66ef6174ae2db447a6fd056cb474c24abf081190346fb7c5831613"
+      },
+      "pr4-inputs.log": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-inputs.log",
+        "sha256": "987836617a825479f15ef7d64bca22a86d605ec03f7784b9e64183b9e720e8bf"
+      },
+      "pr4-configuration-tests.zip": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-configuration-tests.zip",
+        "sha256": "199ad3bc6127cbd64d28a01f691ec1811e3a73a2390a5946669e404d0cdb7acb"
+      },
+      "pr4-component-plan.zip": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-component-plan.zip",
+        "sha256": "a21226fcf8fbe3b7c44abf484d33c66ebf357bdcefd39e4233e53f5ec103cdb5"
+      },
+      "pr4-inputs.zip": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-inputs.zip",
+        "sha256": "f0a383a36463da0aaf5c2c082c0283640cbc25657da363d9c86c6bfceb42495a"
+      },
+      "pr4-source.tar": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-source.tar",
+        "sha256": "79ed0857de970d324b79ef0e4de073336d110509a03f2fdea921be813bd7696d"
+      },
+      "verify-pr4-quick.py": {
+        "path": "/tmp/crossforge-quick-parallel-validation/verify-pr4-quick.py",
+        "sha256": "6bb27378cf6f41c451ae3a7bae98368d685823dc40a7b6498adf77eff7642d1e"
+      },
+      "pr4-quick-verification.json": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-quick-verification.json",
+        "sha256": "44eae77aa3e263ccf89f416428b72adba2481996927323a470398bc13c973847"
+      },
+      "pr4-quick-verification-error.log": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-quick-verification-error.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "verify-pr4-inputs.py": {
+        "path": "/tmp/crossforge-quick-parallel-validation/verify-pr4-inputs.py",
+        "sha256": "eeb9813be4f7c2772b86a0e157fb05c0b671d0eacbeb4f6a08422a58dd133c36"
+      },
+      "pr4-inputs-verification.json": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-inputs-verification.json",
+        "sha256": "f9cf5b41adeacffc748271e31abfa35763358c3d80d5210a5575385b66e0a646"
+      },
+      "pr4-inputs-verification-error.log": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-inputs-verification-error.log",
+        "sha256": "a477ddf45472b9e6ae99a6c40639f119ea98692c284a4b4c7ddaf7d45f14c4f4"
+      },
+      "verify-pr4-status.py": {
+        "path": "/tmp/crossforge-quick-parallel-validation/verify-pr4-status.py",
+        "sha256": "e62c0c0679cb74721e95ce549a087202b469206a05d7cb89a56d3376c82fe10e"
+      },
+      "pr4-status-verification.json": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-status-verification.json",
+        "sha256": "ccff16dce69ca9c3a1524b118f5b50073aaa29384c3ee7ed8eaf8f75e70d4a16"
+      },
+      "pr4-status-verification-error.log": {
+        "path": "/tmp/crossforge-quick-parallel-validation/pr4-status-verification-error.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  },
+  "pr3": {
+    "run_id": 34622092599,
+    "head_commit": "ca4d4297782f1ac996ce143628c765a9d1ecb290",
+    "tested_merge_commit": "7b42dc2e5df5c3760f48e88611acc7cb6d6aff24",
+    "status": "failed",
+    "gcc_full": "Eight added native excess-error records; no resolved baseline records.",
+    "sdk": "LLBBridge/Solve message 17158344 bytes exceeds 16777216; failed at python-dev-append-cp310.",
+    "vcpkg": {
+      "status": "passed",
+      "job_seconds": 6924,
+      "build_seconds": 6858.9
+    },
+    "other_successful_stages": [
+      "inputs",
+      "toolchain-x86_64",
+      "toolchain-aarch64",
+      "python-cp39",
+      "python-cp310",
+      "python-cp311",
+      "python-cp312",
+      "python-cp313",
+      "python-cp314",
+      "gcc-smoke"
+    ]
+  },
+  "environment": {
+    "tools_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "quick_cpus": 4,
+    "quick_memory_gib": 16,
+    "quick_network": "none",
+    "bytecode": "enabled",
+    "build_builder": "crossforge-ci-review",
+    "build_worker_parallelism": 1
+  },
+  "pending": [
+    "Local GCC full with new diagnostic expectations",
+    "Local source SDK across six OCI checkpoints and final gates",
+    "Fresh SDK final integration with changed config/release.json; compiler inputs and isolated GCC full closure match combined version",
+    "All real PR checks on combined implementation",
+    "Main-only signing, candidate and native ARM gates",
+    "Remaining six-batch recovery and controlled performance acceptance"
+  ],
+  "limits": "No main merge or push; isolated PR4 success does not accept combined PR3. Current long local gates share one builder, so timings cannot establish a speedup. Original failed attempts remain preserved.",
+  "evidence": {
+    "combined_quick": {
+      "path": "/tmp/crossforge-combined-acceptance/verification.json",
+      "sha256": "2dbf4cf280a6bcfe3c0c1597d4ce43cfcbe97cf1d40595a41601790abd3fabac"
+    },
+    "pr4": {
+      "path": "/tmp/crossforge-quick-parallel-validation/pr4-validation.json",
+      "sha256": "1e368f1af990ef54a0944f883c9d98bd944b98b68a3967475bf61ae60985ae91"
+    },
+    "pr3_gcc_full_failure": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/pr3-gcc-full-failure-observation.json",
+      "sha256": "24e4fc7e5cca0effc369e4d8fab12458cb95bdd2f462c925342d3b928640cbce"
+    },
+    "pr3_sdk_failure": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/pr3-sdk-failure-observation.json",
+      "sha256": "373b09f7b5c4e338f7cacebf0c96b00db3486bc06bd6c5f621e72dcd5237ab64"
+    },
+    "pr3_vcpkg": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/pr3-vcpkg-observation.json",
+      "sha256": "72ab8d6ce2de975af1b06da87c32622db814d7816f1f2b805a91ccfb9c0b895f"
+    },
+    "material_comparison": {
+      "path": "/tmp/crossforge-combined-acceptance/materials/comparison.json",
+      "sha256": "3a275980673f3c2c9ee4fc0c407873e8addc2fbf7bcc0620f284f58e991f1505"
+    }
+  },
+  "materials": {
+    "commits": {
+      "base": "ca4d4297782f1ac996ce143628c765a9d1ecb290",
+      "gcc": "5af7c988eb3173a567985ca5d3aa09808c1631f0",
+      "sdk": "3c75ffca787fa39864a039a426a24ff2b19a6643",
+      "combined": "a6cbfd6b4a1c58707cd16715f17dd39222dbf99b"
+    },
+    "compiler_inputs_changed": [],
+    "gcc_full_isolated_vs_combined_differences": [],
+    "sdk_isolated_vs_combined_differences": {
+      "python-dev": {
+        "before_sha256": "0057596c1620e736af778e57cb1a6b4f68bc21c6d2c4b4939e869673437b1d38",
+        "after_sha256": "2bac49271fc8f57a6c2405c6fbefed4dfdc168d1205bb895aa98dba462b4d177",
+        "files": [
+          "config/release.json"
+        ],
+        "parameters_changed": false
+      },
+      "sdk-complete-dev": {
+        "before_sha256": "58a2c38309bf9acae8fb53eeaca76e9af15f71c63af2db83e806c73412808337",
+        "after_sha256": "1a302f676c983c58cb23d78fb321d415723fdc0fa5231a222acaeeb157d1b6d2",
+        "files": [
+          "config/release.json"
+        ],
+        "parameters_changed": false
+      }
+    },
+    "snapshot_sha256": {
+      "base": "8b43720ddb89e3911e1ef9d0c1e33f7762e5ad292e62fac6955c2b0a230e5682",
+      "gcc": "663eb0bb33744eec73e41adffbdf2e4dac89f8db4d4280acc86e8cf04fc8f754",
+      "sdk": "89f0737d3ee994c4d80a8b7ce986ca5e6cc3aae7f9b50a924346fb3d817991f6",
+      "combined": "96f609b600e6d96747776b5cfb05c43315248f29239c81bbf302e3a47faeeae3"
+    }
+  }
+}

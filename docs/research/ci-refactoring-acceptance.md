@@ -1,6 +1,6 @@
 # CI 重构验收状态
 
-本页是六项已确认方案的验收索引，便于评审；详细历史在[实施进度](ci-refactoring-progress.md)。当前生产实现包含 `5e56bb8` 的 append 输入范围修复，位于 `codex/component-ci-refactor`；`c821303` 已整合远程 main 的外部诊断修复 `e8aa68a`。本页不构成候选或发布资格证据。
+本页是六项已确认方案的验收索引，便于评审；详细历史在[实施进度](ci-refactoring-progress.md)。工作分支 `codex/component-ci-refactor` 的本地实现 `a6cbfd6` 已整合完整配置测试并行、GCC native 预期诊断修复及本地 SDK OCI 交接；远程 main 的外部诊断修复 `e8aa68a` 已包含在其历史中。本地整合版本尚未推送或合并 main。本页不构成候选或发布资格证据。
 
 | 已确认方向 | 当前实现与已取得证据 | 尚待验收 |
 |---|---|---|
@@ -32,3 +32,13 @@
 ## 配置测试并行的补充验收（2026-09-11）
 
 [本地独立分支记录](configuration-test-parallelism-2026-09-11.json)确认完整 1,447 项配置测试、40 项打包测试无跳过通过；原 1,431 项与新增 16 项测试身份逐项对齐。四进程单次本地对照约减少 71% 测试墙钟时间，尚无真实 GitHub 提速或连续三次基线结论。最终小改动以受影响回归、实际 Rocky 8 和原范围原生静态检查分别复验。此优化不调整 Python 构建矩阵上限，不替代下列签名、候选、恢复、原生 ARM 或性能门槛。
+
+## 真实 PR 结果与本地整合验证（2026-09-11）
+
+[本批结构化记录](combined-ci-validation-2026-09-11.json)分别保存各次运行的来源、结果和证据摘要。配置并行的独立 [PR #4](https://github.com/eglinuxer/crossforge/pull/4) 全部已选门禁通过；完整 1,447 项配置测试耗时 301.811 秒，有两个既有 zstd 资产跳过，40 项打包测试有一个既有 nFPM 资产跳过，本地 Docker 已补齐。其 quick job 为 440 秒，inputs job 为 133 秒；材料计划只选择 `platform-python-check`，没有编译器输入变更。这是不同 runner 上的首次观察，不能替代连续匹配输入的性能对照，也不能替代整合后 PR #3 的检查。
+
+旧版本 [PR #3 的完整运行](https://github.com/eglinuxer/crossforge/actions/runs/34622092599)已结束并失败。inputs、两套工具链、六行 Python、GCC smoke 和 vcpkg 均通过；vcpkg job 6,924 秒，内部构建 6,858.9 秒。GCC full 新增八条 native 诊断失败；SDK 在 `LLBBridge/Solve` 发送 17,158,344 字节时超过 16,777,216 字节限制。分别见 [GCC 诊断修复](gcc-native-diagnostics-2026-09-11.md)与 [SDK 交接修复](sdk-llb-handoff-2026-09-11.md)。原失败记录保留，不将它们记为通过。
+
+整合版本 `a6cbfd6` 在固定、断网、4 CPU / 16 GiB Docker 中通过完整 1,457 项配置测试和 40 项打包测试，无跳过。配置测试 159.906 秒；独立复核确认四个进程的实际测试身份与完整清单一致，并核对 872 份输入文件的字节、权限和源码摘要。锁定配置/RPM、生成文件、语法与全部 workflow actionlint 通过。GCC full 与六行源码 SDK 的实际 Docker 构建仍在执行；共享 builder 的排队耗时不用于性能比较。尚未取得整合后的真实 PR 全通过，main 仍未合并。
+
+四个已提交版本在 Docker 中经原材料闭包接口对照：整合未改变任何编译器源码输入，单独 GCC 修复与整合版本的完整 GCC 门禁输入完全相同。两种 SDK 相对单独交接修复的唯一材料差异是 `config/release.json`，配方参数相同；因此仍需用更新的 release 绑定执行 SDK 最终集成，不能直接把旧绑定上的通过记为整合验收。
