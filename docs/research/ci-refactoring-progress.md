@@ -359,3 +359,15 @@ main 的组件分支现经 `verify-main-incremental.yml` 先解析实际选中 B
 12 种真实 Bake 图和源码材料闭包检查通过：单架构工具链各 1 份、GCC smoke 4 份、GCC full/vcpkg 各 2 份、每行 Python 7 份、SDK 32 份原始组件。改变声明的 execution fixture 会使材料身份变化。此项只有无 daemon 的真实图解析，没有组件认证或资格执行。固定 Rocky 8 platform-python 3.6.8 完成三个运行模块编译及合成恢复文档校验。
 
 实际 registry 恢复、GitHub 重放、完整 candidate/source image 恢复与 native ARM 仍待验收；GCC socket 挂载授权仍待答复，本批没有重新尝试或改用间接方式执行。正式 Python 资格跨机器边界未放宽，runner 并行上限仍为 2，组件保留不自动删除。未合入 main、推送或发布。
+
+## 批次 5：候选 ARM/签名部分重试保留原产物
+
+发现现有候选部分重试的明确断点：native/signing 按当前 `github.run_attempt` 拼下载名称，而仅重跑失败 job 时，成功 publisher 的 artifact 仍属于原 attempt；promotion 也把四组 artifact 全部假定为最后一次 attempt。新增 `candidate_recovery.py` 领域模块和 `candidate-recovery.py` CLI，改为传递成功上游的不可变 artifact ID，严格核对完整输出、原 candidate manifest 摘要、原 probe/report 字节摘要和 attempt 顺序。ARM 失败后重跑仍执行真实 native probes；签名失败后重跑引用相同候选和已成功的原 ARM 报告。新候选仍必须执行自己的最终集成和原生验证。
+
+原候选及报告身份在签名前核验，随后 `candidate-recovery.json` 随签名证据保存。promotion 先取得最后成功签名 attempt 的 artifact，核对其记录与 GitHub 当前 run artifact 元数据中的 ID/name、可用性、run、main source 和仓库关系，再下载原 publisher/native 产物并执行已有完整语义及公开签名验证。schema 2 promotion 将来源记录嵌入持久证据；创建/读取归档时再次核对原 probe/report 字节，仍为 14 份严格 payload。旧 schema 1 和没有恢复记录的旧候选保持同 attempt 契约，不查找更早成功结果。同步修正文档遗留的“17 份”和必需 Qt 发布证据描述。
+
+[本批验证](candidate-partial-recovery-2026-09-10.json)：最终无 socket、断网 Docker config 1203 项、163.685 秒及 packaging 40 项、1.220 秒全部通过，无跳过；四项 locked validators、三个 renderer 与 actionlint 通过。44 项定向候选/发布回归和真实 promotion CLI 对合成身份的创建、幂等重试、验证通过：publisher attempt 1、native attempt 2、sign attempt 3 保持同一个 candidate/source identity。固定 Rocky 8 platform-python 3.6.8 完成四个运行模块编译及 11 项新增回归，全部通过。
+
+验证过程中修正了一处测试定位与新增 step 的冲突，并将 native report 摘要绑定到实际上传的 staging 文件。临时兼容性脚本最初命名 `platform.py`，遮蔽同名标准库后只收集到 0 项测试；该结果无效，未作为通过证据。改名并强制要求执行 11 项后重新通过。最终复核还将来源记录创建/校验从签名后移到签名前，避免身份失败发生在签名写入之后，并完整复测。
+
+此批仅完成成功 publisher 之后的同 run 部分重试；publish job 内 source/SDK 推送后的中途失败仍需要分阶段 checkpoint，跨 candidate run 恢复和内部组件进入候选发布图仍待接入。真实 GitHub 部分重试、公开签名与 ARM 执行验收未运行；之前 Docker socket 授权仍待答复，未重试被拒绝操作。整体目标仍未完成，未合入 main、推送或发布。

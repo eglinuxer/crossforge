@@ -276,7 +276,7 @@ class CandidateWorkflowTests(unittest.TestCase):
     def test_public_identity_and_signature_artifacts_have_flat_layouts(self):
         for root, count in (
             ("candidate-identity", 6),
-            ("candidate-signature-evidence", 4),
+            ("candidate-signature-evidence", 5),
         ):
             with self.subTest(root=root):
                 self.assertIn("${{ runner.temp }}/%s/" % root, self.workflow)

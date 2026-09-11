@@ -361,6 +361,40 @@ Prepare a candidate first with `gh workflow run candidate.yml --ref main`.
 The workflow binds the commit selected at dispatch; later main pushes do not
 change that candidate's source identity.
 
+If publishing and the final anonymous consumer checks succeeded but native ARM
+or signing failed, use `gh run rerun RUN_ID --failed`. GitHub preserves the
+original source commit and ref on a partial retry, as described in its
+[rerun documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs?tool=cli).
+Native and signing consumers use the successful upstream jobs' immutable
+artifact IDs. They do not construct names from the new attempt number. A signing
+retry therefore keeps the original candidate/source digests, probe bundle and
+successful native report; a native retry executes the real ARM probes again.
+
+The signature artifact includes `candidate-recovery.json`, binding the candidate
+manifest SHA256, original probe/report byte hashes, run ID and each publishing,
+native and signing attempt. Promotion retrieves the exact latest successful
+signing attempt, checks the selected upstream IDs against
+[GitHub's artifact metadata](https://docs.github.com/en/rest/actions/artifacts),
+then downloads those original artifacts and revalidates all existing semantics
+and public signatures. Missing, expired, duplicated, wrong-run or wrong-source
+artifacts fail. The records use the
+[pinned action's artifact ID support](https://github.com/actions/download-artifact/blob/d3f86a106a0bac45b974a628896c90dbdf5c8093/README.md).
+
+Promotion schema 2 embeds the original producer lineage in
+`release-promotion.json`, so the durable archive preserves it after Actions
+artifacts expire. Legacy schema 1 and candidates without a recovery record
+retain the existing same-attempt contract; no search for an older successful
+artifact is introduced. The byte hashes of native probes and report are also
+revalidated when creating or reading the durable archive. A recovery record does
+not itself establish qualification. Partial retry behavior still needs live
+GitHub acceptance; local fixtures are not native ARM execution evidence.
+
+Failures within the combined `publish` job, including failures after an image
+push but before its final checks complete, still require separate publication
+checkpoints. Rerunning all jobs still starts the publication job again. Recovery
+across different candidate runs and reuse of internal component selections in
+that publication path remain pending.
+
 Push a stable `vX.Y.Z` Git tag to request a formal release. The tag must point
 to a commit in main and match `product.version` in that commit's
 `config/release.json`; lightweight and annotated tags are supported.

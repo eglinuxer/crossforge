@@ -34,6 +34,10 @@ jobs:
       candidate_digest: ${{ steps.digest.outputs.digest }}
       platform_digest: ${{ steps.digest.outputs.platform_digest }}
       probe_bundle_sha256: ${{ steps.native_probe.outputs.bundle_sha256 }}
+      candidate_sha256: ${{ steps.digest.outputs.candidate_sha256 }}
+      publish_attempt: ${{ steps.identity.outputs.attempt }}
+      identity_artifact_id: ${{ steps.identity_artifact.outputs.artifact-id }}
+      probe_artifact_id: ${{ steps.probe_artifact.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
@@ -82,6 +86,7 @@ jobs:
           source_tag="source-$tag"
           source_reference="$CANDIDATE_REPOSITORY:$source_tag"
           printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          printf 'attempt=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
           printf 'reference=%s\n' "$reference" >> "$GITHUB_OUTPUT"
           printf 'source_tag=%s\n' "$source_tag" >> "$GITHUB_OUTPUT"
           printf 'source_reference=%s\n' "$source_reference" >> "$GITHUB_OUTPUT"
@@ -256,6 +261,12 @@ jobs:
             "$RUNNER_TEMP/candidate-source-binding.json"
           printf 'digest=%s\n' "$candidate_digest" >> "$GITHUB_OUTPUT"
           printf 'platform_digest=%s\n' "$platform_digest" >> "$GITHUB_OUTPUT"
+          python3 - "$RUNNER_TEMP/candidate.json" >> "$GITHUB_OUTPUT" <<'PY'
+          import sys
+          sys.path.insert(0, 'scripts')
+          from crossforge_internal.identity import content_sha256, load_json
+          print('candidate_sha256=' + content_sha256(load_json(sys.argv[1])))
+          PY
           test "$CANDIDATE_REFERENCE" = \
             "$CANDIDATE_REPOSITORY:${{ steps.identity.outputs.tag }}"
           test "${{ steps.identity.outputs.source_reference }}" = \
@@ -453,6 +464,7 @@ jobs:
           test "$(find "$IDENTITY_ROOT" -mindepth 1 -maxdepth 1 \
             -type f | wc -l)" -eq 6
       - name: Upload immutable candidate identity
+        id: identity_artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: candidate-identity-${{ github.run_id }}-${{ github.run_attempt }}
@@ -460,6 +472,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Upload native AArch64 probe bundle
+        id: probe_artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: native-aarch64-probes-${{ github.run_id }}-${{ github.run_attempt }}
@@ -494,15 +507,28 @@ jobs:
     needs: [publish]
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
+    outputs:
+      native_attempt: ${{ steps.native_identity.outputs.attempt }}
+      native_report_sha256: ${{ steps.native_identity.outputs.report_sha256 }}
+      native_artifact_id: ${{ steps.native_artifact.outputs.artifact-id }}
     permissions:
+      actions: read
       contents: read
       packages: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Require the original successful publisher
+        env:
+          UPSTREAM_JOBS: ${{ toJSON(needs) }}
+        run: python3 scripts/candidate-recovery.py upstream --stage native --needs-json "$UPSTREAM_JOBS"
       - name: Download immutable native probe bundle
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: native-aarch64-probes-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.publish.outputs.probe_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/native-aarch64-input
       - name: Execute probes in pinned native Rocky AArch64
         env:
@@ -563,7 +589,14 @@ jobs:
           done
           test "$(find "$EVIDENCE_ROOT" -mindepth 1 -maxdepth 1 \
             -type f | wc -l)" -eq 2
+      - name: Preserve the native report producer
+        id: native_identity
+        run: |
+          set -Eeuo pipefail
+          printf 'attempt=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          printf 'report_sha256=%s\n' "$(sha256sum "$RUNNER_TEMP/native-aarch64-release-evidence/native-aarch64.json" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
       - name: Upload native AArch64 release evidence
+        id: native_artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: native-aarch64-evidence-${{ github.run_id }}-${{ github.run_attempt }}
@@ -597,15 +630,27 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
       - uses: ./.github/actions/configure-build-cache
+      - name: Require the original successful candidate producers
+        env:
+          UPSTREAM_JOBS: ${{ toJSON(needs) }}
+        run: python3 scripts/candidate-recovery.py upstream --stage sign --needs-json "$UPSTREAM_JOBS"
       - name: Download immutable native probe bundle
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: native-aarch64-probes-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.publish.outputs.probe_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/native-aarch64-probes
       - name: Download native release evidence
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: native-aarch64-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.native-aarch64.outputs.native_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/native-aarch64-evidence
       - name: Export the TUF-authenticated Cosign tool
         run: |
@@ -623,6 +668,7 @@ jobs:
         env:
           CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
           EXPECTED_BUNDLE_SHA256: ${{ needs.publish.outputs.probe_bundle_sha256 }}
+          UPSTREAM_JOBS: ${{ toJSON(needs) }}
         run: |
           set -Eeuo pipefail
           probes="$RUNNER_TEMP/native-aarch64-probes"
@@ -638,6 +684,11 @@ jobs:
             --bundle "$probes/native-aarch64-probes.tar" \
             --expected-bundle-sha256 "$EXPECTED_BUNDLE_SHA256" \
             --report "$evidence/native-aarch64.json"
+          python3 scripts/candidate-recovery.py create \
+            --needs-json "$UPSTREAM_JOBS" \
+            --candidate "$evidence/candidate.json" \
+            --native-report "$evidence/native-aarch64.json" \
+            --output "$RUNNER_TEMP/candidate-recovery.json"
       - name: Sign and anonymously verify the qualified candidate
         env:
           CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
@@ -700,6 +751,7 @@ jobs:
           install -d -m 0755 "$SIGNATURE_ROOT"
           for file in \
             "$RUNNER_TEMP/native-aarch64-evidence/candidate.json" \
+            "$RUNNER_TEMP/candidate-recovery.json" \
             "$RUNNER_TEMP/candidate-signature.json" \
             "$RUNNER_TEMP/source-bundle-signature.json" \
             "$RUNNER_TEMP/cosign-tool/sigstore-verification.json"; do
@@ -707,7 +759,7 @@ jobs:
             install -m 0644 "$file" "$SIGNATURE_ROOT/$(basename "$file")"
           done
           test "$(find "$SIGNATURE_ROOT" -mindepth 1 -maxdepth 1 \
-            -type f | wc -l)" -eq 4
+            -type f | wc -l)" -eq 5
       - name: Upload candidate signature evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
