@@ -386,7 +386,11 @@ source commit → build once → candidate digest → 原物验收 → registry-
 
 候选的来源镜像发布、SDK 发布和最终匿名消费者检查分别运行。两个发布 job 在推送并绑定身份后保存严格 checkpoint，下游按成功上游的不可变 artifact ID 下载，并验证独立 canonical SHA256、原 source/run/attempt、当前 release、OCI 原始 index、Buildx metadata、来源归档身份及固定 SBOM generator 报告。SDK checkpoint 嵌入原来源 checkpoint，五份来源文件保持原字节。checkpoint 只记录发布身份；SDK 构建前仍匿名验证完整来源归档，最终消费者仍重新验证公开证明与镜像集成，且仅有 packages:read 权限。
 
+候选前置验证现在以固定 `profile: full` 调用组件工作流，覆盖全部 canonical release stages，并集中生产、签名和保存缺失的原始工具链/Python 组件。候选不进入周期性资格缓存 writer 队列。原始组件 producer 的调用者只增加 main 上的明确手动 candidate workflow，仍要求 clean checkout、workflow/source SHA 相同，并保留 raw role 范围和 writer/signer 权限分离。SDK 发布再次认证目录、核对当前输入及实际 OCI，绑定 33 份原始组件后重新解析实际消费图；若仍包含 GCC/CPython 源码编译则失败。发布后重新检查源码、来源归档、图和执行环境。此接口保留既有资格门禁，不是正式行资格 receipt 复用；真实 GitHub 执行和性能尚待验收。
+
 部分重试可复用成功上游的 source/SDK checkpoint 或最终消费者/native artifact。签名 artifact 中的 `candidate-recovery.json` 绑定完整 candidate manifest 摘要、probe/report 字节摘要和原 artifact ID/name/attempt；recovery schema 2 追加来源/SDK 的原 attempt 和 checkpoint SHA256，要求 source ≤ SDK ≤ 最终消费者 ≤ native ≤ signing。promotion schema 2 将恢复记录嵌入 `release-promotion.json`，经 GitHub 同 run/source 元数据和既有语义验证后进入持久归档。旧 promotion schema 1 保持所有 artifact 同 attempt 的严格契约。推送成功但尚未成功封存上传 checkpoint 的失败、跨 candidate run 恢复及实际 GitHub 部分重试验收尚未完成；不能通过 tag 推断缺失的 checkpoint。
+
+SDK checkpoint schema 2 另保存 `component-selection.json`。最终消费者转交其独立 SHA256，签名前按这个摘要和候选 source commit 检查原组件选择，再以 recovery schema 3 将其完整嵌入恢复记录；原 catalog/receipt/OCI digest 与 producer 随 promotion 进入已有十四份 payload 的持久归档。诊断文件过期不会抹去这些原组件引用；记录本身仍不授予资格。旧 checkpoint/recovery schema 保持原严格读取契约。
 
 晋升仅通过 registry-side manifest copy 给 candidate digest 增加 `v<version>` 和 `gts15-el8`，并给其绑定的 source digest 增加 `source-v<version>` 和 `source-gts15-el8`。stable promotion 只接受不含 prerelease/build metadata 的三段 SemVer。版本 tag 不存在时才可创建；已存在时必须已指向完全相同 digest，否则失败，稳定通道在两份版本 tag 就绪后才移动。注销 registry 后必须匿名重新解析四个 tag 的原始 manifest 字节并得到预期 digest，随后生成符合严格 schema、跨重试字节稳定的 `release-promotion.json`。十四份 candidate/source/native ARM/Sigstore/OCI-attestation/SBOM-generator/promotion 原始证据同时进入固定名称、顺序、owner、mode 和零时间戳的 USTAR，内层严格 manifest 逐文件绑定 SHA256/大小，外层另有 SHA256 sidecar；验证器从归档安全流式解出临时文件并重新运行原始语义门禁，不能只信任内层 manifest。
 

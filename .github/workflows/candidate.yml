@@ -24,7 +24,15 @@ jobs:
 
   qualify:
     needs: quick
-    uses: ./.github/workflows/qualification.yml
+    # All canonical release gates still run. Missing raw components are
+    # prepared once; this candidate does not join the shared cache-writer queue.
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/verify-main-incremental.yml
+    with:
+      profile: full
 
   source-publication:
     needs: qualify
@@ -189,6 +197,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
       - uses: ./.github/actions/configure-build-cache
       - name: Require the original source publication
         env:
@@ -273,6 +282,22 @@ jobs:
           set -Eeuo pipefail
           printf '%s' "$GHCR_TOKEN" \
             | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - uses: ./.github/actions/setup-component-verifier
+        id: verifier
+      - name: Bind the complete candidate to authenticated raw components
+        id: components
+        env:
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+          COMPONENT_COSIGN: ${{ steps.verifier.outputs.binary }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-components.py prepare \
+            --source-binding "$RUNNER_TEMP/source-binding.json" \
+            --directory "$RUNNER_TEMP/candidate-components" --data "$RUNNER_TEMP/candidate-component-data" \
+            --builder "$COMPONENT_BUILDER" --oras "$COMPONENT_ORAS" --cosign "$COMPONENT_COSIGN"
       - name: Reject an existing SDK publication tag
         env:
           CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
@@ -286,11 +311,13 @@ jobs:
         env:
           CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
           SBOM_GENERATOR: ${{ steps.source.outputs.sbom_generator }}
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
         run: |
           set -Eeuo pipefail
           python3 ./scripts/run-with-heartbeat.py \
             --label sdk-candidate-publish --interval 60 -- \
-            docker buildx bake sdk-candidate \
+            docker buildx bake --builder "$COMPONENT_BUILDER" \
+            -f "$RUNNER_TEMP/candidate-components/components.bake.json" sdk-candidate \
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_BUNDLE_DIGEST=${{ steps.source.outputs.digest }}" \
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_BUNDLE_PLATFORM_MANIFEST_DIGEST=${{ steps.source.outputs.platform_digest }}" \
@@ -349,6 +376,17 @@ jobs:
             "$CANDIDATE_REPOSITORY:${{ steps.identity.outputs.tag }}"
           test "${{ steps.identity.outputs.source_reference }}" = \
             "$CANDIDATE_REPOSITORY:${{ steps.identity.outputs.source_tag }}"
+      - name: Recheck the exact component binding after publication
+        env:
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          BINDING_SHA256: ${{ steps.components.outputs.binding_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-components.py check \
+            --source-binding "$RUNNER_TEMP/source-binding.json" \
+            --directory "$RUNNER_TEMP/candidate-components" \
+            --builder "$COMPONENT_BUILDER" --sha256 "$BINDING_SHA256"
+          cp "$RUNNER_TEMP/candidate-components/component-selection.json" "$RUNNER_TEMP/component-selection.json"
       - name: Seal sdk publication checkpoint
         id: checkpoint
         env:
@@ -367,6 +405,14 @@ jobs:
           name: sdk-publication-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/sdk-publication-checkpoint/
           if-no-files-found: error
+          retention-days: 90
+      - name: Preserve candidate component identities and diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-component-inputs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/candidate-components/
+          if-no-files-found: warn
           retention-days: 90
       - name: Log out the publication writer
         if: always()
@@ -392,6 +438,7 @@ jobs:
       source_checkpoint_sha256: ${{ steps.inputs.outputs.source_checkpoint_sha256 }}
       sdk_attempt: ${{ steps.inputs.outputs.sdk_attempt }}
       sdk_checkpoint_sha256: ${{ steps.inputs.outputs.sdk_checkpoint_sha256 }}
+      component_selection_sha256: ${{ steps.inputs.outputs.component_selection_sha256 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
@@ -607,8 +654,10 @@ jobs:
             "$IDENTITY_ROOT/sdk-attestations.json"
           install -m 0644 "$RUNNER_TEMP/sbom-generator-image.json" \
             "$IDENTITY_ROOT/sbom-generator-image.json"
+          install -m 0644 "$RUNNER_TEMP/component-selection.json" \
+            "$IDENTITY_ROOT/component-selection.json"
           test "$(find "$IDENTITY_ROOT" -mindepth 1 -maxdepth 1 \
-            -type f | wc -l)" -eq 6
+            -type f | wc -l)" -eq 7
       - name: Upload immutable candidate identity
         id: identity_artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -798,6 +847,15 @@ jobs:
           run-id: ${{ github.run_id }}
           merge-multiple: true
           path: ${{ runner.temp }}/native-aarch64-evidence
+      - name: Download the original candidate component selection
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.publish.outputs.identity_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/candidate-identity
       - name: Export the TUF-authenticated Cosign tool
         run: |
           set -Eeuo pipefail
@@ -820,6 +878,7 @@ jobs:
           probes="$RUNNER_TEMP/native-aarch64-probes"
           evidence="$RUNNER_TEMP/native-aarch64-evidence"
           cmp "$probes/candidate.json" "$evidence/candidate.json"
+          cmp "$RUNNER_TEMP/candidate-identity/candidate.json" "$evidence/candidate.json"
           ./scripts/candidate_manifest.py validate \
             "$evidence/candidate.json" \
             --expected-source-commit "$GITHUB_SHA"
@@ -834,6 +893,7 @@ jobs:
             --needs-json "$UPSTREAM_JOBS" \
             --candidate "$evidence/candidate.json" \
             --native-report "$evidence/native-aarch64.json" \
+            --component-selection "$RUNNER_TEMP/candidate-identity/component-selection.json" \
             --output "$RUNNER_TEMP/candidate-recovery.json"
       - name: Sign and anonymously verify the qualified candidate
         env:

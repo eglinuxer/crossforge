@@ -199,6 +199,38 @@ class CandidateRecoveryTests(unittest.TestCase):
 
 
 class RecoveryDurableEvidenceTests(unittest.TestCase):
+    def test_durable_promotion_embeds_original_component_pins_with_the_existing_fourteen_payloads(self):
+        import tarfile
+        from types import SimpleNamespace
+        import test_component_recovery as components
+        from crossforge_internal import component_recovery
+        helper = evidence_fixtures.ReleaseEvidenceTests()
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = helper.fixture(temporary)
+            paths, original = fixture["paths"], fixture["promotion"]
+            context = {"stage": "candidate-sdk", "targets": ["sdk-candidate"],
+                "source_commit": fixture["candidate"]["source_commit"], "source_inventory_sha256": "0" * 64}
+            selection = component_recovery.document(context, {"x86_64-toolchain-install": components.selection()},
+                {"x86_64-toolchain-install": {"component": "toolchain/x86_64", "role": "toolchain-install"}})
+            selected = needs(fixture["candidate"], native=1)
+            selected["publish"]["outputs"].update(source_attempt="1", sdk_attempt="1", source_checkpoint_sha256="a" * 64,
+                sdk_checkpoint_sha256="b" * 64, component_selection_sha256=content_sha256(selection),
+                probe_bundle_sha256=hashlib.sha256(paths["native-aarch64-probes.tar"].read_bytes()).hexdigest())
+            selected["native-aarch64"]["outputs"]["native_report_sha256"] = hashlib.sha256(paths["native-aarch64.json"].read_bytes()).hexdigest()
+            lineage = recovery.document(fixture["candidate"], selected, 123456, 2, selection)
+            promotion = evidence_fixtures.PROMOTION["promotion_document"](fixture["release"], fixture["candidate"],
+                original["candidate_manifest_sha256"], original["candidate_run"], lineage)
+            helper.write_json(paths["release-promotion.json"], promotion)
+            manifest, archive, checksum = helper.create(fixture)
+            with tarfile.open(str(archive), "r:") as stream:
+                stored = json.load(stream.extractfile("release-promotion.json"))
+            self.assertEqual(stored["candidate_recovery"]["component_selection"], selection)
+            with helper.validators():
+                observed = evidence_fixtures.EVIDENCE["validate_archive"](SimpleNamespace(archive=archive, sha256=checksum),
+                    fixture["release"], fixture["schema"])
+            self.assertEqual(observed, manifest)
+            self.assertEqual(len(evidence_fixtures.EVIDENCE["PAYLOAD_NAMES"]), 14)
+
     def test_durable_evidence_preserves_lineage_and_rejects_changed_native_payloads(self):
         helper = evidence_fixtures.ReleaseEvidenceTests()
         with tempfile.TemporaryDirectory() as temporary:

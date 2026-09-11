@@ -12,16 +12,21 @@ from .identity import require
 
 
 MAIN_CALLER = "eglinuxer/crossforge/.github/workflows/ci.yml@refs/heads/main"
+CANDIDATE_CALLER = "eglinuxer/crossforge/.github/workflows/candidate.yml@refs/heads/main"
+RAW_CALLERS = {MAIN_CALLER: ("push", "workflow_dispatch"), CANDIDATE_CALLER: ("workflow_dispatch",)}
 
 
 def github_producer(environment, commit, dirty, mode="pilot"):
-    require(mode in ("pilot", "main"), "unsupported component CI entry point")
+    require(mode in ("pilot", "main", "candidate"), "unsupported component CI entry point")
     require(ci_execution.component_reader_allowed(environment), "component CI requires trusted main push or dispatch")
     if mode == "pilot":
         require(environment.get("GITHUB_EVENT_NAME") == "workflow_dispatch", "component pilot requires trusted main dispatch")
     else:
-        require(environment.get("GITHUB_WORKFLOW_REF") == MAIN_CALLER and
-                environment.get("GITHUB_WORKFLOW_SHA") == commit, "component production requires the exact main CI caller")
+        caller = environment.get("GITHUB_WORKFLOW_REF")
+        require(environment.get("GITHUB_EVENT_NAME") in RAW_CALLERS.get(caller, ()) and
+                environment.get("GITHUB_WORKFLOW_SHA") == commit, "component production requires an exact trusted main caller")
+        if mode == "candidate":
+            require(caller == CANDIDATE_CALLER, "candidate components require the candidate workflow")
     require(environment.get("GITHUB_SHA") == commit and not dirty, "component CI requires the exact clean source")
     value = {"kind": "github-actions", "source_commit": commit, "source_dirty": False,
              "invocation": "https://github.com/eglinuxer/crossforge/actions/runs/%s/attempts/%s" %

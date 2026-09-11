@@ -12,12 +12,13 @@ from .candidate_recovery import number, positive, REPOSITORY, WORKFLOW
 
 
 SOURCE_FILES = ("source-bundle.json", "source-binding.json", "source-index.json", "source-build-metadata.json", "sbom-generator-image.json")
-SDK_FILES = SOURCE_FILES + ("candidate.json", "candidate-index.json", "build-metadata.json")
+LEGACY_SDK_FILES = SOURCE_FILES + ("candidate.json", "candidate-index.json", "build-metadata.json")
+SDK_FILES = LEGACY_SDK_FILES + ("component-selection.json",)
 
 
-def files_for(phase):
+def files_for(phase, version=2):
     require(phase in ("source", "sdk"), "unsupported publication checkpoint phase")
-    return SOURCE_FILES if phase == "source" else SDK_FILES
+    return SOURCE_FILES if phase == "source" else LEGACY_SDK_FILES if version == 1 else SDK_FILES
 
 
 def file_hash(path):
@@ -47,12 +48,13 @@ def validate_producer(value):
 def validate(value):
     exact_fields(value, ("schema_version", "kind", "repository", "workflow", "producer", "release_sha256", "image", "files", "source"),
                  "publication checkpoint")
-    require(type(value["schema_version"]) is int and value["schema_version"] == 1 and
+    require(type(value["schema_version"]) is int and value["schema_version"] in (1, 2) and
             value["kind"] == "crossforge-candidate-publication", "unsupported publication checkpoint schema")
     require(value["repository"] == REPOSITORY and value["workflow"] == WORKFLOW, "publication checkpoint repository or workflow differs")
     original = validate_producer(value["producer"])
     digest_value(value["release_sha256"], "publication release SHA256")
-    exact_fields(value["files"], files_for(original["phase"]), "publication file set")
+    require(original["phase"] == "sdk" or value["schema_version"] == 1, "source checkpoint schema must remain 1")
+    exact_fields(value["files"], files_for(original["phase"], value["schema_version"]), "publication file set")
     for digest in value["files"].values():
         digest_value(digest, "publication file SHA256")
     exact_fields(value["image"], ("repository", "digest", "platform_manifest_digest", "reference"), "published image")
@@ -109,6 +111,9 @@ def semantics(source, directory, value):
                 "SDK candidate source binding differs")
         require(all(current[key] == value["image"][key] for key in ("repository", "digest", "platform_manifest_digest")), "SDK candidate identity differs")
         check_image(value, "build-metadata.json", "candidate-index.json", "sdk-candidate")
+        if value["schema_version"] == 2:
+            from .candidate_components import validate_selection
+            validate_selection(load_json(directory / "component-selection.json"), original["source_commit"])
     report = load_json(directory / "sbom-generator-image.json")
     candidate["STRICT"]["validate"](report, load_json(source / "config/schemas/sbom-generator-image.schema.json"),
         load_json(source / "config/schemas/sbom-generator-image.schema.json"), "$")
@@ -128,7 +133,7 @@ def seal(source, directory, original, parent=None):
     platform = image_module["platform_manifest_digest"]((directory / index).read_bytes(), digest, "linux/amd64")
     tag = candidate_module["candidate_tag"](release, original["source_commit"], str(original["run_id"]), str(original["attempt"]))
     repository = release["product"]["image_repository"]
-    value = validate({"schema_version": 1, "kind": "crossforge-candidate-publication", "repository": REPOSITORY, "workflow": WORKFLOW,
+    value = validate({"schema_version": 1 if phase == "source" else 2, "kind": "crossforge-candidate-publication", "repository": REPOSITORY, "workflow": WORKFLOW,
         "producer": copy.deepcopy(original), "release_sha256": content_sha256(release),
         "image": {"repository": repository, "digest": digest, "platform_manifest_digest": platform,
                   "reference": repository + ":" + ("source-" if phase == "source" else "") + tag},
@@ -147,8 +152,9 @@ def verify(source, directory, sha256, current, phase):
     original = value["producer"]
     require(original["phase"] == phase and original["run_id"] == current["run_id"] and original["source_commit"] == current["source_commit"] and
             original["attempt"] <= current["attempt"], "publication checkpoint belongs to another producer or source")
-    require({path.name for path in directory.iterdir()} == set(files_for(phase)) | {"checkpoint.json"}, "publication checkpoint payload set differs")
-    require(value["files"] == {name: file_hash(directory / name) for name in files_for(phase)}, "publication payload bytes differ")
+    files = files_for(phase, value["schema_version"])
+    require({path.name for path in directory.iterdir()} == set(files) | {"checkpoint.json"}, "publication checkpoint payload set differs")
+    require(value["files"] == {name: file_hash(directory / name) for name in files}, "publication payload bytes differ")
     semantics(source, directory, value)
     return value
 
@@ -156,7 +162,7 @@ def verify(source, directory, sha256, current, phase):
 def restore(source, directory, sha256, current, phase, output):
     value = verify(source, directory, sha256, current, phase)
     output = Path(output)
-    mapping = {name: name for name in files_for(phase)}
+    mapping = {name: name for name in files_for(phase, value["schema_version"])}
     mapping["source-bundle.json"] = "source-bundle-identity/source-bundle.json"
     require(all(not (output / name).exists() and not (output / name).is_symlink() for name in mapping.values()), "publication restore would replace existing inputs")
     for name, destination in mapping.items():

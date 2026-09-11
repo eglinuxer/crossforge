@@ -8,7 +8,7 @@
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；main 缺失工具链集中生产及只读消费已接线 | GitHub 实跑、真实签名与跨 run 验收 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线 | GitHub 实跑、缩小资格 COPY 范围、正式 Python 行资格复用接入 |
 | 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过；原始 Python 组件 CI 消费已接线 | 正式行资格生产/SDK 复用的 CI 接入与远程验收 |
-| 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储及跨 run 消费接线本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
+| 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储、候选原始组件消费及分阶段恢复接线本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及 producer 部分重试 |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
 ## 批次 1 已实现
@@ -381,3 +381,15 @@ SDK 构建前仍匿名拉取并核对完整来源归档；最终消费者独立�
 [本批验证](candidate-publication-checkpoints-2026-09-10.json)：断网、非 root、无 Docker socket 的 Docker config 1212 项、165.981 秒及 packaging 40 项、1.254 秒全部通过，无跳过；四项 locked validators、三个 renderer 和 actionlint 通过。46 项候选定向测试通过；固定 Rocky 8 platform-python 3.6.8 编译三个运行模块并执行 20 项恢复回归通过。补充核对拆分前后 13 个原构建/验收步骤，除声明的上游输出引用替换外逐字节相同；原 native/sign job 内容完整保留。
 
 这些 checkpoint 是发布身份记录，不是资格报告。只有成功保存检查点的原 producer 才能恢复；推送成功但检查点尚未成功封存上传时失败，仍没有安全自动恢复入口。全量重跑仍重新执行 producer，不通过可变 tag 猜测缺失记录。本批未执行真实 GitHub 部分重试、镜像推送、原生 ARM 或新的 BuildKit solve；之前被自动审批拒绝的 Docker socket 操作未重试。跨 run 候选恢复、候选组件消费、资格复用的 CI 接线和性能重放仍需推进，整体目标未完成，尚未合入 main 或推送。
+
+## 批次 3/4/5：完整候选接入原始组件，持久保留选择来源
+
+候选不再调用串行缓存写入的 `qualification.yml`，改为以不可缩小的 `profile: full` 调用现有组件流程，保留全部 canonical release stages。缺失原始工具链/Python 组件在集中 producer 生产、按既有受限 raw role 目录签名并保存后，下游独立核验消费。producer 的可信入口只从明确 main CI caller 扩展到明确的 main 手动 candidate caller；两者均要求 workflow/source SHA 相同且 checkout clean，candidate 的 push/schedule/其他分支和任意其他 workflow 仍拒绝。周期性资格缓存 writer 及其队列保持原策略，Python matrix 仍为 2。
+
+新增 `candidate_components.py` 和 CLI，在 SDK 发布前认证目录、核对当前材料与实际 OCI，替换 33 份 raw 组件边界，并通过真实 Bake `--print` 重新解析消费图。最终材料盘点拒绝 GCC/native CPython/cross CPython 源码编译，保留 SDK、Python、GCC full 等既有资格路径。缺失、认证失败或不完整的集中生产直接失败，不由 SDK 重走源码 fallback。独立 binding SHA256 绑定当前源码、来源镜像/归档身份、执行环境、实际消费图、材料与原选择；发布后再次核对，成功才封存 SDK checkpoint。大 OCI 数据与可上传的诊断目录分开。
+
+SDK checkpoint schema 2 保存原 `component-selection.json`；最终消费者输出独立摘要并上传同一选择。签名 job 下载原 identity artifact，在外部签名前核对选择摘要及 source commit，以 recovery schema 3 嵌入完整 catalog/receipt/OCI digest 与原 producer。已有 promotion schema 2 将其保存在十四份 payload 的持久归档中，不依赖诊断 artifact 永久可用。旧 checkpoint/recovery schema 继续按原契约读取；选择记录不被解释成资格 receipt。
+
+[本批验证](candidate-components-2026-09-10.json)：断网、非 root、无 Docker socket 的 Docker config 1220 项、169.964 秒及 packaging 40 项、1.185 秒全部通过，无跳过；四项 locked validators、三个 renderer 和 actionlint 通过。53 项候选定向回归通过。固定 Rocky 8 platform-python 3.6.8 编译七个运行文件，24 项兼容性/恢复回归通过。真实 canonical Bake 图使用明确的 resolver fixture 完成 33 份组件替换与重解析，保留 SDK/GCC 验收材料，确认源码编译输入消失；不是实际 OCI 认证或候选构建的证据。新增持久归档回归读取归档中的原组件选择，并重新验证整体归档；native 报告验证边界使用既有 fixture，不宣称原生执行。
+
+初轮新测试有两处 fixture 错误：工具链 spec 的 role 应由调用参数提供，以及篡改测试不能用只写一次的生产 JSON writer 覆盖已有文件；修正 fixture 后定向与全量测试通过。没有降低生产校验条件。正式行资格 receipt 的 CI 复用及环境边界、原始组件 producer 的部分重试、跨 run 候选恢复、实际候选集成/native ARM、真实 GitHub 签名信任和性能重放仍待完成。此前 Docker socket 操作仍待明确授权，未重试被拒绝的操作；没有推送、发布镜像或合入 main，整体目标继续进行。

@@ -57,7 +57,7 @@ class ToolchainPreparationTests(unittest.TestCase):
         for event in ("push", "workflow_dispatch"):
             producer = component_ci.github_producer(dict(self.environment, GITHUB_EVENT_NAME=event), "a" * 40, False, "main")
             self.assertEqual(producer["invocation"], self.producer["invocation"])
-        for key, value in (("GITHUB_WORKFLOW_REF", component_ci.MAIN_CALLER.replace("ci.yml", "candidate.yml")),
+        for key, value in (("GITHUB_WORKFLOW_REF", component_ci.MAIN_CALLER.replace("ci.yml", "other.yml")),
                            ("GITHUB_WORKFLOW_REF", ""), ("GITHUB_WORKFLOW_SHA", "b" * 40),
                            ("GITHUB_EVENT_NAME", "pull_request_target"), ("GITHUB_EVENT_NAME", "schedule"),
                            ("GITHUB_REF", "refs/pull/1/merge"), ("GITHUB_REPOSITORY", "fork/crossforge"),
@@ -66,6 +66,19 @@ class ToolchainPreparationTests(unittest.TestCase):
                 component_ci.github_producer(dict(self.environment, **{key: value}), "a" * 40, False, "main")
         with self.assertRaises(IdentityError):
             component_ci.github_producer(self.environment, "a" * 40, True, "main")
+
+    def test_raw_producers_accept_only_the_exact_manual_candidate_as_an_additional_caller(self):
+        environment = dict(self.environment, GITHUB_EVENT_NAME="workflow_dispatch", GITHUB_WORKFLOW_REF=component_ci.CANDIDATE_CALLER)
+        for mode in ("main", "candidate"):
+            value = component_ci.github_producer(environment, "a" * 40, False, mode)
+            self.assertEqual(value["invocation"], self.producer["invocation"])
+            for field, replacement in (("GITHUB_EVENT_NAME", "push"), ("GITHUB_EVENT_NAME", "schedule"),
+                    ("GITHUB_EVENT_NAME", "pull_request_target"), ("GITHUB_WORKFLOW_SHA", "b" * 40),
+                    ("GITHUB_WORKFLOW_REF", component_ci.CANDIDATE_CALLER.replace("refs/heads/main", "refs/heads/other"))):
+                with self.subTest(mode=mode, field=field), self.assertRaises(IdentityError):
+                    component_ci.github_producer(dict(environment, **{field: replacement}), "a" * 40, False, mode)
+        with self.assertRaises(IdentityError):
+            component_ci.github_producer(self.environment, "a" * 40, False, "candidate")
 
     def run_ensure(self, arch, requested, missing=(), error=None):
         def inputs(source, graph, found_arch, role, execution):

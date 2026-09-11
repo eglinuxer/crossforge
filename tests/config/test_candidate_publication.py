@@ -14,6 +14,7 @@ from unittest import mock
 
 import test_release_evidence as evidence_fixtures
 import test_candidate_recovery as recovery_fixtures
+import test_component_recovery as component_fixtures
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -66,6 +67,12 @@ class PublicationTests(unittest.TestCase):
         candidate = evidence_fixtures.CANDIDATE["candidate_document"](self.release, self.original["source_commit"], digest, platform,
             self.source_digest, self.source_platform, load_json(self.source / "source-bundle.json"))
         self.write(directory / "candidate.json", candidate)
+        from crossforge_internal import component_recovery
+        result = component_fixtures.selection()
+        context = {"stage": "candidate-sdk", "targets": ["sdk-candidate"], "source_commit": self.original["source_commit"],
+                   "source_inventory_sha256": "0" * 64}
+        self.write(directory / "component-selection.json", component_recovery.document(context,
+            {"x86_64-toolchain-install": result}, {"x86_64-toolchain-install": {"component": result["component"], "role": result["role"]}}))
         owner = dict(self.original, phase="sdk", attempt=2)
         return directory, publication.seal(ROOT, directory, owner, self.source_value), candidate
 
@@ -160,6 +167,30 @@ class PublicationTests(unittest.TestCase):
             with self.subTest(mode=mode), self.assertRaises(IdentityError):
                 publication.validate(value)
 
+    def test_sdk_checkpoint_preserves_component_selection_and_accepts_exact_legacy_payloads(self):
+        directory, value, _ = self.sdk()
+        self.assertEqual(value["schema_version"], 2)
+        selection = load_json(directory / "component-selection.json")
+        for commit in ("a" * 40, self.original["source_commit"]):
+            altered = copy.deepcopy(selection)
+            altered["context"]["source_commit"] = commit
+            self.write(directory / "component-selection.json", altered)
+            changed = copy.deepcopy(value)
+            changed["files"]["component-selection.json"] = publication.file_hash(directory / "component-selection.json")
+            self.write(directory / "checkpoint.json", changed)
+            if commit == self.original["source_commit"]:
+                publication.verify(ROOT, directory, content_sha256(changed), dict(self.original, attempt=3), "sdk")
+            else:
+                with self.assertRaisesRegex(IdentityError, "another source or stage"):
+                    publication.verify(ROOT, directory, content_sha256(changed), dict(self.original, attempt=3), "sdk")
+        legacy = copy.deepcopy(value)
+        legacy["schema_version"] = 1
+        del legacy["files"]["component-selection.json"]
+        (directory / "component-selection.json").unlink()
+        self.write(directory / "checkpoint.json", legacy)
+        restored = publication.restore(ROOT, directory, content_sha256(legacy), dict(self.original, attempt=3), "sdk", self.root / "legacy")
+        self.assertEqual(restored, legacy)
+
     def test_cli_restores_original_publication_lineage_into_signing_recovery(self):
         directory, value, candidate = self.sdk()
         environment = self.environment()
@@ -173,6 +204,17 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(document["schema_version"], 2)
         self.assertEqual(document["publication"], {"source": {"attempt": 1, "checkpoint_sha256": content_sha256(self.source_value)},
                                                  "sdk": {"attempt": 2, "checkpoint_sha256": content_sha256(value)}})
+        selection = load_json(directory / "component-selection.json")
+        bound_needs = copy.deepcopy(producer_needs)
+        bound_needs["publish"]["outputs"]["component_selection_sha256"] = restored["component_selection_sha256"]
+        bound = recovery.document(candidate, bound_needs, 123456, 5, selection)
+        self.assertEqual(bound["schema_version"], 3)
+        self.assertEqual(bound["component_selection"], selection)
+        for altered in (None, dict(selection, extra=True)):
+            with self.assertRaisesRegex(IdentityError, "original SDK checkpoint"):
+                recovery.document(candidate, bound_needs, 123456, 5, altered)
+        with self.assertRaisesRegex(IdentityError, "legacy candidate"):
+            recovery.document(candidate, producer_needs, 123456, 5, selection)
         for key, replacement in (("source_attempt", "4"), ("sdk_attempt", "4"), ("sdk_checkpoint_sha256", "tag")):
             wrong = copy.deepcopy(producer_needs)
             wrong["publish"]["outputs"][key] = replacement

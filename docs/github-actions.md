@@ -22,7 +22,7 @@ A PR uses the merge base against the checked-out merge commit.
 Each main push runs the selected roots and does not publish a public SDK candidate.
 Missing internal toolchain components are produced separately for those roots.
 Dispatch `candidate.yml` on main when preparing a candidate or release:
-it calls `verify-quick.yml` with `plan-components: false`, then full qualification and candidate
+it calls `verify-quick.yml` with `plan-components: false`, then the complete component gate selection and candidate
 publication. Candidate quick checks, manual CI and push-selected builds have
 separate concurrency groups, so development updates cannot cancel a candidate.
 Avoid starting a second candidate for the same SHA while one is active.
@@ -345,9 +345,24 @@ not alter the lock or bypass subsequent signature verification.
 ## Candidate and stable delivery
 
 `candidate.yml` is manually dispatched on main when preparing a candidate or release.
-After quick checks it calls the full qualification workflow for the exact
-candidate checkout. It then imports those caches into its existing source and
-SDK build graph, without changing output, attestation or qualification policy.
+After quick checks it calls `verify-main-incremental.yml` with an unconditional
+`profile: full` for the exact candidate checkout. This selects every canonical
+release gate, centrally prepares missing raw toolchain/Python components, and
+uses authenticated readers in the consuming jobs. Candidate preparation no
+longer joins the shared qualification cache-writer queue. Scheduled/manual
+`qualification.yml` cache writers retain their existing serialized policy.
+Raw producers accept only the exact main CI caller or a manual main candidate
+caller with matching workflow/source SHA; package writers and OIDC signers
+remain separate jobs with the existing role-restricted catalog policy.
+
+SDK publication independently authenticates and verifies all required raw
+components, reparses the bound Bake graph, and rejects any remaining GCC or
+CPython source compiler input. Missing components fail before SDK publication;
+they do not trigger a source fallback. `candidate-components.py` binds the
+source bundle, source inventory, graph, execution identity and original component
+selections, then rechecks them after the image build. Ordinary cache imports
+remain available for other dependencies and existing gates. This does not
+replace raw components with qualified-row receipts or change qualification policy.
 The final SDK still validates its GCC full evidence and all existing contracts.
 Qt build/runtime evidence is optional and is not required by candidate signing
 or stable promotion. Native AArch64 compiler probes remain mandatory.
@@ -368,7 +383,9 @@ producer's immutable artifact ID and verify its independently supplied canonical
 SHA256 before restoring inputs. The checkpoint binds the original source commit,
 run/attempt, release, raw OCI index and Buildx metadata, archive identity and
 locked SBOM generator report. The SDK checkpoint embeds the original source
-checkpoint and preserves its files byte for byte. These checkpoints record
+checkpoint and preserves its files byte for byte. SDK checkpoint schema 2 also
+preserves `component-selection.json`, including original catalog, receipt and OCI
+digests and producers. These checkpoints record
 publication identity; qualification and anonymous byte retrieval still run in
 the downstream gates.
 
@@ -405,11 +422,20 @@ revalidated when creating or reading the durable archive. A recovery record does
 not itself establish qualification. Partial retry behavior still needs live
 GitHub acceptance; local fixtures are not native ARM execution evidence.
 
+Recovery schema 3 additionally embeds the complete original component selection.
+Signing checks its independent SHA256 from the SDK checkpoint and its source
+commit before any external signature is made. It travels inside the existing
+promotion record and fourteen-file durable archive, so component pins remain
+available after the diagnostic artifacts expire. Legacy checkpoint/recovery
+schemas remain readable under their original strict contracts.
+
 An image push followed by failure before its producer successfully seals and
 uploads the checkpoint is not recoverable through this path. The workflow does
 not infer a replacement checkpoint from a tag. Rerunning all jobs starts the
-publication jobs again. Recovery across different candidate runs and reuse of
-internal component selections in that publication path remain pending.
+publication jobs again. Recovery across different candidate runs, qualification
+receipt reuse, component-producer partial retry handling and live candidate
+acceptance remain pending. Local graph tests use explicit resolver fixtures;
+they are not proof of a public candidate build or its performance.
 
 Push a stable `vX.Y.Z` Git tag to request a formal release. The tag must point
 to a commit in main and match `product.version` in that commit's

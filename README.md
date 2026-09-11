@@ -842,6 +842,13 @@ the SDK build budget, the workflow logs out, anonymously pulls the source image,
 streams the complete archive from its scratch filesystem, and verifies the
 archive SHA256; a manifest-only visibility check is not accepted as proof that
 downstream users can retrieve the corresponding source payload.
+Candidate prequalification selects the complete component gate set and centrally
+prepares missing raw toolchain/Python artifacts. SDK publication independently
+verifies these artifacts, replaces their exact Bake contexts and rejects any
+remaining GCC/CPython source compilation in its input graph. All existing
+qualification and final consumer checks remain. This candidate path does not
+join the periodic qualification cache-writer queue; its live GitHub execution
+and performance still require acceptance.
 Source publication, SDK publication and final anonymous consumer validation are
 separate jobs. Successful publishers save immutable, digest-checked metadata
 checkpoints; a failed downstream job can reuse the same published image and

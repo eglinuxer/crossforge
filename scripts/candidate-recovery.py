@@ -24,6 +24,7 @@ def main(argv=None):
     create.add_argument("--needs-json", required=True)
     create.add_argument("--candidate", type=Path, required=True)
     create.add_argument("--native-report", type=Path, required=True)
+    create.add_argument("--component-selection", type=Path)
     create.add_argument("--output", type=Path, required=True)
     select = commands.add_parser("select", allow_abbrev=False)
     select.add_argument("--signature-directory", type=Path, required=True)
@@ -45,7 +46,8 @@ def main(argv=None):
                 return 0
             candidate = load_json(args.candidate)
             require(candidate["source_commit"] == os.environ.get("GITHUB_SHA"), "candidate source differs from current run")
-            value = recovery.document(candidate, needs, recovery.number(os.environ.get("GITHUB_RUN_ID"), "run ID"), attempt)
+            selection = load_json(args.component_selection) if args.component_selection is not None else None
+            value = recovery.document(candidate, needs, recovery.number(os.environ.get("GITHUB_RUN_ID"), "run ID"), attempt, selection)
             require(hashlib.sha256(args.native_report.read_bytes()).hexdigest() == value["native_report_sha256"],
                     "native report differs from original successful producer")
             candidate_module = runpy.run_path(str(ROOT / "scripts/candidate_manifest.py"))

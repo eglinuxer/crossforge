@@ -36,6 +36,11 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn('test "$GITHUB_REF" = refs/heads/main', self.workflow)
         self.assertIn("uses: ./.github/workflows/verify-quick.yml", self.workflow)
         self.assertIn("plan-components: false", self.workflow)
+        qualification = self.workflow.split("  qualify:\n", 1)[1].split("  source-publication:\n", 1)[0]
+        self.assertIn("uses: ./.github/workflows/verify-main-incremental.yml", qualification)
+        self.assertIn("profile: full", qualification)
+        self.assertNotIn("selection:", qualification)
+        self.assertNotIn("uses: ./.github/workflows/qualification.yml", self.workflow)
         self.assertIn("    needs: quick\n", self.workflow)
         self.assertIn("uses: ./.github/workflows/verify-quick.yml", self.ci)
         self.assertNotIn("workflow_call:", self.ci)
@@ -275,7 +280,7 @@ class CandidateWorkflowTests(unittest.TestCase):
 
     def test_public_identity_and_signature_artifacts_have_flat_layouts(self):
         for root, count in (
-            ("candidate-identity", 6),
+            ("candidate-identity", 7),
             ("candidate-signature-evidence", 5),
         ):
             with self.subTest(root=root):
