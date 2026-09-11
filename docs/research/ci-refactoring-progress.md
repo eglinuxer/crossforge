@@ -709,3 +709,11 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 固定 a56bb29 batch 的 vcpkg 阶段已完成，外层退出 0、1,355.230 秒。原 replay verifier 确认 contract 与 Tier 1–3 共四条指定资格 RUN 本次执行；五份 SDK/contract/Tier 报告均为 schema 2、passed，并通过原策略绑定检查。每个 upstream tier 包含 host-static 与双目标 static/dynamic 共五种组合。输入图消费两份工具链安装产物，没有 GCC/CPython 源码编译输入；上游 fixture 的锁定源码编译继续执行，不把普通 binary cache 恢复记作新源码资格。
 
 固定、断网、只读 Docker 容器随后独立复核原输入身份、四条 fresh RUN、五份报告的策略绑定及文件摘要，退出 0；[运行记录](runtime-replay-a56bb29-2026-09-11.json)保存原始结果和复核脚本摘要。该阶段是本地强制重放观测，不是新签名资格 receipt、GitHub 性能基线或候选/原生 ARM 证据。顺序 batch 已进入 x86_64 工具链源码重建，cp39 源码重建随后执行；新 append 配方的验收 batch 也仍在推进，未合入 main、推送或发布。
+
+## Docker 验收：x86_64 强制源码与新版 cp39 安装通过（2026-09-11）
+
+固定 a56bb29 batch 的 x86_64 工具链源码重放完成，776.038 秒。原计划指定的 binutils 与 GCC 两条编译 RUN 均本次执行；断网只读 Docker 再次用原 `ci_source_replay.plan` 重算材料计划，并用原 fresh RUN verifier 核对执行记录，退出 0。随后 cp39 源码重放仍在运行，其 AArch64 工具链前置依赖发生普通缓存未命中，确实再次编译 GCC；这个强制源码路径允许未选中前置依赖使用或未命中普通缓存，不把它描述成只编译了 CPython。
+
+新 append 配方的 cp39 独立安装通过，1,304.503 秒包含共享 builder 等待，两条要求本次执行的 RUN 均通过原校验器。安装结果与 a56bb29 原行 manifest 的字节摘要相同，原 producer/receipt 未改，实际捕获输入不再包含完整 `config/release.json`。随后断网 Docker 独立复核输入身份、两条 fresh RUN、manifest 文件模式及摘要和原资格记录，退出 0。其余五行及两种 SDK 尚待此轮实际结果，未拿旧配方成功覆盖新版配方。
+
+[受影响变更验收](cp39-affected-change-acceptance-2026-09-11.json)已启动，使用之前保存的修复后 cp39 补丁说明变更副本，固定运行脚本、51 个输入文件摘要及两个源码清单/文件模式，预检在无网络、无 Docker socket 的固定工具容器中通过。实际流程遵循原 inputs 选择，再做独立源码重放、五份 cp39 原始组件生产、本行七条资格 RUN、独立安装和两种 SDK；后两者使用新 cp39 与另外五行原 receipt，并逐一执行原消费者校验。源码副本明确标为本地 `source_dirty=true`，不会改写仓库正式补丁/版本或冒充 GitHub producer。此 batch 与已有两批共享专用 review builder，当前是功能与增量边界验收，不作为隔离性能基线。尚未合入 main、推送或发布。

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "crossforge-python-append-scope-observation",
-  "observed_at": "2026-09-11T13:41:51.001840+00:00",
+  "observed_at": "2026-09-11T14:01:23.686237+00:00",
   "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
   "status": "regressions checked; actual append and SDK acceptance running",
   "source_sha256": {
@@ -317,7 +317,62 @@
       "python-dev",
       "sdk-complete-dev"
     ],
-    "scope": "original production executors, new output directories, crossforge-ci-review only; not a new row qualification or GitHub/candidate assertion"
+    "scope": "original production executors, new output directories, crossforge-ci-review only; not a new row qualification or GitHub/candidate assertion",
+    "completed": [
+      {
+        "phase": "cp39",
+        "status": "passed",
+        "seconds": 1304.503,
+        "source_dirty": true,
+        "fresh_runs": 2,
+        "inputs_sha256": "8c71245de2f20e13add0556a0ce652c90b8705aae163f2cc8d36419dbe734372",
+        "row_receipt_sha256": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+        },
+        "started_at": "2026-09-11T13:50:35Z",
+        "completed_at": "2026-09-11T13:52:00Z",
+        "full_release_in_inputs": false,
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp39/result.json",
+            "sha256": "81cbc23128e0a8235038e5e9f63d2246c21eef78693bec4a24f8ba30a9bf757d"
+          },
+          "installation/result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp39/installation/result.json",
+            "sha256": "cb49e1dfd85f55860bace97a9b6453e203eabe9c2657c3216f7c180cb91842a3"
+          },
+          "installation/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp39/installation/inputs.json",
+            "sha256": "9e4a24fec2f71f08cd17bfdacd2aa584f8c5892e2f41ddf3ed54ddf8e912bbef"
+          },
+          "installation/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp39/installation/execution.jsonl",
+            "sha256": "6f10e79861594580ce03e106057f179f7008e637933d0d5ca726b84ee10b697d"
+          },
+          "installation/payload/row.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp39/installation/payload/row.json",
+            "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-results.py",
+            "sha256": "dbb511b09318584ead0f53e2863daf605669f7b110f2451b9bb156f11e5f1ca2"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-cp39.log",
+            "sha256": "d26a05eb3691e9105ad6eac395258a82668e389aaf1052166d9aafb4123cfefc"
+          }
+        }
+      }
+    ],
+    "running_at_observation": "cp310",
+    "timing_note": "Shared max-parallelism=1 builder also executes source replays; local elapsed includes queueing and is not an isolated performance baseline."
   },
   "remaining": [
     "Finish new six independent append and both SDK runtime gates",
