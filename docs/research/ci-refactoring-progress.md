@@ -703,3 +703,9 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 [验证记录](python-append-scope-2026-09-11.json)保留完整配置运行 1,423 项 / 525.094 秒、14 个失败观察：它们全部来自三项仍要求旧完整 release 输入、或只允许 producer 携带 row 根摘要的断言，其中一项含十二个子场景。更新这些测试契约后，全部受影响模块 75 项 / 22.490 秒通过；生产代码在这次完整运行后未再修改。打包 40 项 / 1.890 秒、四个锁定验证器、三个 renderer、shell 与全部 workflow actionlint 通过，后者仅保留既有 concurrency.queue 兼容例外。固定 Rocky 8 Python 3.6.8 的 23 项 / 20.988 秒通过，覆盖裁剪后的 append finalizer 导入、六份行策略和 renderer 接线。没有把分开的复验记录写成一次未发生的全绿完整运行。
 
 由于 Docker append 配方变化，另从固定规范化工作副本启动六个独立安装与两种 SDK 的实际验收；明确标为 source_dirty=true，仍保留原 a56bb29 行 receipt/producer，由原接口重新核验，尚未取得本批新的安装成功结果。此前 a56bb29 的完整 SDK 成功记录保留为历史，不能代替新配方验收。旧源码 batch 的 vcpkg Tier 2 已通过，Tier 3 仍在源码执行；二者共享 max-parallelism=1 的本地 builder，会互相等待。未合入 main、推送或发布。
+
+## Docker 验收：vcpkg 锁定源码资格重放通过（2026-09-11）
+
+固定 a56bb29 batch 的 vcpkg 阶段已完成，外层退出 0、1,355.230 秒。原 replay verifier 确认 contract 与 Tier 1–3 共四条指定资格 RUN 本次执行；五份 SDK/contract/Tier 报告均为 schema 2、passed，并通过原策略绑定检查。每个 upstream tier 包含 host-static 与双目标 static/dynamic 共五种组合。输入图消费两份工具链安装产物，没有 GCC/CPython 源码编译输入；上游 fixture 的锁定源码编译继续执行，不把普通 binary cache 恢复记作新源码资格。
+
+固定、断网、只读 Docker 容器随后独立复核原输入身份、四条 fresh RUN、五份报告的策略绑定及文件摘要，退出 0；[运行记录](runtime-replay-a56bb29-2026-09-11.json)保存原始结果和复核脚本摘要。该阶段是本地强制重放观测，不是新签名资格 receipt、GitHub 性能基线或候选/原生 ARM 证据。顺序 batch 已进入 x86_64 工具链源码重建，cp39 源码重建随后执行；新 append 配方的验收 batch 也仍在推进，未合入 main、推送或发布。

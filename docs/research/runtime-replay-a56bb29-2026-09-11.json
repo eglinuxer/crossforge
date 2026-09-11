@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "crossforge-local-runtime-replay-observation",
-  "observed_at": "2026-09-11T13:17:26.406339+00:00",
+  "observed_at": "2026-09-11T13:44:54.032627+00:00",
   "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
   "status": "in-progress",
   "scope": "Original local row qualification and independent append gates; not GitHub, candidate, native ARM or performance acceptance",
@@ -526,9 +526,8 @@
     "Sequential replay on one worker; max-parallelism=1. Outer Docker CPU/memory limits do not constrain external BuildKit worker",
     "No GitHub runner performance comparison or cross-run environment compatibility assertion"
   ],
-  "running_at_observation": "forced vcpkg source qualification; parent sequential batch remains active",
+  "running_at_observation": "source-toolchain-x86_64 forced source replay; parent sequential batch remains active",
   "pending": [
-    "forced vcpkg source qualification",
     "forced x86_64 toolchain and cp39 source compilation"
   ],
   "merged_main": false,
@@ -979,5 +978,159 @@
       "sha256": "bc36a6baf17ed02fbbd95163d0d26046d6406f63e3778f62e8941ddc665338c2"
     },
     "scope": "Read-only offline Docker recheck with original python_sdk.fresh_vertices and component input/report hash validators; 13 and 14 fresh RUNs, eight dependencies and six original row manifests per SDK. No new build or qualification execution."
-  }
+  },
+  "forced_replays": [
+    {
+      "phase": "vcpkg",
+      "status": "passed",
+      "seconds": 1355.23,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "scope": "local forced RUN observation; not reusable qualification receipt, CI, candidate or native ARM evidence",
+      "inputs_sha256": "1213bd098e9c0dda7d82a137e488b7e1b03e74334b9a7fe2798d3662bd6ffd5d",
+      "started_at": "2026-09-11T13:16:01Z",
+      "completed_at": "2026-09-11T13:38:31Z",
+      "fresh_runs": 4,
+      "reports": [
+        {
+          "mode": "0644",
+          "path": "reports/sdk.json",
+          "sha256": "a2efa581269fbd606603a9144a891e66bbab2377ec900f65b7c89f9b8be3ee5e"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/contract.json",
+          "sha256": "c12c806b70f151223beca1c8395c836f3ef2ef9c76d011324fbe34e682c1d74c"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/upstream-tier1.json",
+          "sha256": "6b16e3049b9436871e67452ab8b80c96f6028c259e4ede57183951b7549e31fb"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/upstream-tier2.json",
+          "sha256": "730e229b868f454f94d7518c0f209ce02daf5a8e6b7e2e55cbb6f7612a5ba93e"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/upstream-tier3.json",
+          "sha256": "b45d3945eff4ff410fce22f51813a9f4f9432924ac58cd4bd90d2905c7ac0ad9"
+        }
+      ],
+      "files": {
+        "result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/vcpkg/result.json",
+          "sha256": "15b6cb1a10cb4e2d73f213964a1cfd2f2c787341dbb262449fb17a4e39486cf5"
+        },
+        "inputs.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/vcpkg/inputs.json",
+          "sha256": "c6cb8d53aad15dab9598dbca52addc8eee713a1cbb37a8fc7ff3d6a4e8d95047"
+        },
+        "execution.jsonl": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/vcpkg/execution.jsonl",
+          "sha256": "bc05db8897fdcd29d42f1629cc09c397e922ab80070c980e9b4d00858239f3f5"
+        },
+        "replay-plan.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/vcpkg/replay-plan.json",
+          "sha256": "cc592e7b95d2d93c75e56bd0723622331cf9b2ef4dc4af7f8f81938cae48abe1"
+        },
+        "execution.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/vcpkg/execution.json",
+          "sha256": "e9971aee1f91793e70c6425e4474f38776737ef020644ce82b079923144481a9"
+        }
+      },
+      "independent_recheck": {
+        "status": "passed",
+        "exit_code": 0,
+        "runner": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/verify-vcpkg-result.py",
+          "sha256": "c67f130a632383c19e8266d54a305dcc4b3fb10ded5b00f3b78226b85050e566"
+        },
+        "scope": "Original fresh RUN and five report binding/file validators in offline read-only Docker; no new source build"
+      },
+      "tier_cases": {
+        "tier1": [
+          {
+            "triplet": "crossforge-host-x64-el8",
+            "linkage": "static",
+            "cross_compiling": false
+          },
+          {
+            "triplet": "crossforge-x64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-x64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          }
+        ],
+        "tier2": [
+          {
+            "triplet": "crossforge-host-x64-el8",
+            "linkage": "static",
+            "cross_compiling": false
+          },
+          {
+            "triplet": "crossforge-x64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-x64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          }
+        ],
+        "tier3": [
+          {
+            "triplet": "crossforge-host-x64-el8",
+            "linkage": "static",
+            "cross_compiling": false
+          },
+          {
+            "triplet": "crossforge-x64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-x64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          }
+        ]
+      }
+    }
+  ]
 }
