@@ -56,7 +56,7 @@ COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY scripts/validate-release.py /work/scripts/validate-release.py
 COPY scripts/python_row_contract.py /work/scripts/python_row_contract.py
 COPY scripts/finalize-cpython-qualification.py \
-  scripts/python_sdk_identity.py scripts/python_zstd_evidence.py \
+  scripts/python_sdk_identity.py scripts/python_zstd_evidence.py scripts/python_runtime_overlay.py \
   scripts/target_artifact_audit.py \
   scripts/python_source_release_binding.py \
   scripts/release-components-core.py \
@@ -457,6 +457,7 @@ COPY config/schemas/release.schema.json /src/config/schemas/release.schema.json
 COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 docker/finalize-python-row.py /work/scripts/finalize-python-row.py
 COPY scripts/abi_contract.py scripts/finalize-cpython-qualification.py \
+  scripts/python_runtime_overlay.py \
   scripts/python_abi_audit.py scripts/python_runtime_providers.py \
   scripts/python_sdk_identity.py scripts/python_zstd_evidence.py \
   scripts/target_artifact_audit.py /work/scripts/

@@ -73,7 +73,10 @@ PRs, forks and non-main dispatches use a separate contents:read-only caller and
 retain the complete source dependency graph without registry credentials.
 
 The current graph retains broad Python/vcpkg qualification COPY dependencies,
-including the complete `release.json`. GCC gates now consume authenticated policy
+including the complete `release.json`. Shared clean-Rocky Python runtime roots
+now consume their authenticated sysroot projection, so a product version change
+does not invalidate those roots; the row reports still retain full-release
+bindings. GCC gates now consume authenticated policy
 components, but their aggregate still binds smoke/full and both architectures.
 The planner preserves these remaining dependencies. Further qualification input
 scoping and consuming qualified Python row artifacts in production remain rollout work. Full

@@ -476,6 +476,24 @@ claim fresh qualification from ordinary cache hits.
 
 ## Prepare and consume raw Python components in main CI
 
+The shared clean-Rocky runtime roots use the existing authenticated
+`rpm/sysroot-<arch>` projection. They no longer copy the full release document or
+maintenance RPM plan. `assemble-python-runtime.py` accepts the same
+`--release-component`, `--release-component-name` and independent
+`--release-component-sha256` tuple as the RPM materializer; default invocation
+retains full-release validation. Partial tuples and mixed release/component modes
+fail before runtime mutation. The complete bundle is still verified before
+selecting the seven runtime RPMs; installation and inventory checks are unchanged.
+
+Overlay evidence schema 2 has an `input_binding` instead of `release_sha256`.
+Runtime and final qualification readers independently derive the expected RPM
+component from the current release and continue checking base image, target,
+lock/transaction, selected RPM bytes and actual runtime inventory. Schema 1 keeps
+its original exact full-release contract. This only scopes shared runtime-root
+inputs; the Python compile/runtime/final reports and row qualification aggregate
+still have broader release dependencies. Local graph and regression checks are
+separate from actual new runtime qualification, which remains pending.
+
 The main plan also captures raw Python edges from the actual selected Bake graph.
 Each selected row needs build Python plus its reached target installation and
 build-audit contexts. SDK selection may resolve to individual rows; it does not

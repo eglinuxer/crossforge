@@ -38,6 +38,7 @@ RELEASE_COMPONENTS = runpy.run_path(
     str(Path(__file__).with_name("release-components-core.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+OVERLAY = runpy.run_path(str(Path(__file__).with_name("python_runtime_overlay.py")))
 RUNTIME_PROVIDERS = runpy.run_path(
     str(Path(__file__).with_name("python_runtime_providers.py"))
 )
@@ -141,25 +142,16 @@ def validate_overlay_evidence(
         },
         "clean runtime evidence",
     )
-    require(value["schema_version"] == 1, "clean runtime evidence schema mismatch")
+    try:
+        OVERLAY["validate_identity_binding"](value, release, profile["arch"], RELEASE_COMPONENTS["render_component_documents"])
+    except (OVERLAY["OverlayError"], ProjectionError) as error:
+        raise RuntimeError_(str(error)) from error
     require(
         value["kind"] == "crossforge-python-runtime-overlay"
         and value["qualification_only"] is True,
         "clean runtime evidence kind mismatch",
     )
     identity = value["identity"]
-    require_exact_keys(
-        identity,
-        {
-            "base_image",
-            "release_sha256",
-            "target",
-            "sysroot",
-            "selected_packages",
-            "selected_packages_sha256",
-        },
-        "clean runtime identity",
-    )
     require_exact_keys(
         identity["base_image"],
         {"index_digest", "manifest_digest"},
@@ -173,10 +165,6 @@ def validate_overlay_evidence(
             "manifest_digest": release["base_image"]["manifests"][oci_arch],
         },
         "clean runtime base image differs from release",
-    )
-    require(
-        identity["release_sha256"] == canonical_sha256(release),
-        "clean runtime release digest mismatch",
     )
     require_exact_keys(identity["target"], {"arch", "triple"}, "clean runtime target")
     require(

@@ -316,21 +316,13 @@ class DockerComponentWiringTests(unittest.TestCase):
             "python-runtime-clean-aarch64",
         ):
             block = self.stages[stage]
-            self.assertIn(
-                "COPY --from=release-validate /src/config/release.json", block
-            )
-            self.assertIn(
-                "COPY --from=release-validate /src/config/schemas/release.schema.json",
-                block,
-            )
-            self.assertIn(
-                "COPY --from=release-validate /src/config/schemas/rpm-plan.schema.json",
-                block,
-            )
-            self.assertIn(
-                "COPY --from=release-validate /src/config/rpm/sysroot-el8-",
-                block,
-            )
+            arch = stage[len("python-runtime-clean-"):]
+            self.assertIn("COPY config/generated/components/rpm/sysroot-%s.json" % arch, block)
+            self.assertIn("--release-component-name rpm/sysroot-%s" % arch, block)
+            self.assertIn("--release-component-sha256", block)
+            self.assertNotIn("release-validate", self.dependencies[stage])
+            self.assertNotIn("config/release.json", block)
+            self.assertNotIn("schemas/release.schema.json", block)
         for arch in ("x86_64", "aarch64"):
             for stage in (["toolchain-%s-qualify-build" % arch] +
                           (["runtime-smoke-aarch64"] if arch == "aarch64" else [])):

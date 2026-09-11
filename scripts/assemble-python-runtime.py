@@ -28,6 +28,7 @@ load_json = MATERIALIZER["load_json"]
 path_is_within = MATERIALIZER["path_is_within"]
 reject_symlink_components = MATERIALIZER["reject_symlink_components"]
 sha256_file = MATERIALIZER["sha256_file"]
+OVERLAY = runpy.run_path(str(Path(__file__).with_name("python_runtime_overlay.py")))
 
 RUNTIME_PACKAGE_NAMES = (
     "bzip2-libs",
@@ -285,7 +286,8 @@ def verify_inventory_transition(before, after, selected):
 
 
 def build_evidence(
-    context, release, manifest_digest, selected, before, after, os_release_sha256
+    context, release, manifest_digest, selected, before, after, os_release_sha256,
+    component_base=None,
 ):
     selected_packages = [
         {
@@ -297,11 +299,10 @@ def build_evidence(
     ]
     installed_nevras = verify_inventory_transition(before, after, selected)
     identity = {
-        "base_image": {
+        "base_image": component_base if component_base is not None else {
             "index_digest": release["base_image"]["digest"],
             "manifest_digest": manifest_digest,
         },
-        "release_sha256": canonical_sha256(release),
         "target": {
             "arch": context["arch"],
             "triple": context["transaction"]["identity"]["target_triple"],
@@ -313,10 +314,17 @@ def build_evidence(
         "selected_packages": selected_packages,
         "selected_packages_sha256": canonical_sha256(selected_packages),
     }
+    if component_base is not None:
+        require(release is None, "component runtime overlay cannot claim a complete release binding")
+        require(component_base.get("manifest_digest") == manifest_digest,
+                "runtime overlay manifest differs from the authenticated component")
+        identity["input_binding"] = OVERLAY["validate_binding"](context.get("release_binding"), context["arch"])
+    else:
+        identity["release_sha256"] = canonical_sha256(release)
     before_nevras = [row[2] for row in before]
     after_nevras = [row[2] for row in after]
     return {
-        "schema_version": 1,
+        "schema_version": 1 if component_base is None else 2,
         "kind": "crossforge-python-runtime-overlay",
         "qualification_only": True,
         "identity": identity,
@@ -334,7 +342,10 @@ def build_evidence(
 
 def validate_evidence(evidence):
     require_exact_keys(evidence, EVIDENCE_KEYS, "evidence")
-    require(evidence["schema_version"] == 1, "unsupported evidence schema")
+    try:
+        identity_keys = OVERLAY["identity_fields"](evidence["schema_version"])
+    except OVERLAY["OverlayError"] as error:
+        raise ValidationError(str(error)) from error
     require(
         evidence["kind"] == "crossforge-python-runtime-overlay",
         "invalid evidence kind",
@@ -344,7 +355,7 @@ def validate_evidence(evidence):
         "runtime overlay is not qualification-only",
     )
     identity = evidence["identity"]
-    require_exact_keys(identity, IDENTITY_KEYS, "evidence.identity")
+    require_exact_keys(identity, identity_keys, "evidence.identity")
     require_exact_keys(
         identity["base_image"], BASE_IMAGE_KEYS, "evidence.identity.base_image"
     )
@@ -355,11 +366,17 @@ def validate_evidence(evidence):
             isinstance(digest, str) and OCI_DIGEST.fullmatch(digest),
             "invalid OCI digest",
         )
-    require(
-        isinstance(identity["release_sha256"], str)
-        and HEX_SHA256.fullmatch(identity["release_sha256"]),
-        "invalid release SHA256",
-    )
+    if evidence["schema_version"] == 1:
+        require(
+            isinstance(identity["release_sha256"], str)
+            and HEX_SHA256.fullmatch(identity["release_sha256"]),
+            "invalid release SHA256",
+        )
+    else:
+        try:
+            OVERLAY["validate_binding"](identity["input_binding"], identity["target"]["arch"])
+        except OVERLAY["OverlayError"] as error:
+            raise ValidationError(str(error)) from error
     require(identity["target"]["arch"] in ARCH_TO_OCI, "invalid target architecture")
     require(
         isinstance(identity["target"]["triple"], str)
@@ -467,20 +484,31 @@ def write_evidence(path, evidence):
         raise
 
 
-def assemble(lock_path, bundle, key, runtime_root, manifest_digest, evidence_path):
+def assemble(lock_path, bundle, key, runtime_root, manifest_digest, evidence_path,
+             release_config=None, release_component=None, release_component_name=None,
+             release_component_sha256=None):
     require(OCI_DIGEST.fullmatch(manifest_digest), "invalid base image manifest digest")
-    context = MATERIALIZER["load_lock"](lock_path)
+    context = MATERIALIZER["load_lock"](lock_path, release_path=release_config,
+        release_component=release_component, release_component_name=release_component_name,
+        release_component_sha256=release_component_sha256)
     require(
         context["role"] == "target-sysroot",
         "runtime overlay requires a target-sysroot lock",
     )
-    release = load_json(REPOSITORY / "config/release.json")
     oci_arch = ARCH_TO_OCI.get(context["arch"])
     require(oci_arch is not None, "unsupported runtime target architecture")
-    expected_manifest = release["base_image"]["manifests"][oci_arch]
+    component_base = None
+    if release_component is not None:
+        release = None
+        component_base = OVERLAY["component_base"](release_component, release_component_name,
+            release_component_sha256, context["arch"])
+        expected_manifest = component_base["manifest_digest"]
+    else:
+        release = load_json(release_config or REPOSITORY / "config/release.json")
+        expected_manifest = release["base_image"]["manifests"][oci_arch]
     require(
         manifest_digest == expected_manifest,
-        "base image manifest digest differs from release",
+        "base image manifest digest differs from bound runtime inputs",
     )
 
     runtime_root = require_runtime_root(runtime_root)
@@ -528,7 +556,8 @@ def assemble(lock_path, bundle, key, runtime_root, manifest_digest, evidence_pat
         "Rocky os-release changed during runtime overlay installation",
     )
     evidence = build_evidence(
-        context, release, manifest_digest, selected, before, after, os_release_sha256
+        context, release, manifest_digest, selected, before, after, os_release_sha256,
+        component_base=component_base,
     )
     write_evidence(evidence_path, evidence)
     print(
@@ -545,6 +574,10 @@ def main():
     parser.add_argument("--runtime-root", type=Path, required=True)
     parser.add_argument("--base-image-manifest-digest", required=True)
     parser.add_argument("--evidence", type=Path, required=True)
+    parser.add_argument("--release-config", type=Path)
+    parser.add_argument("--release-component", type=Path)
+    parser.add_argument("--release-component-name")
+    parser.add_argument("--release-component-sha256")
     arguments = parser.parse_args()
     try:
         assemble(
@@ -554,8 +587,12 @@ def main():
             arguments.runtime_root,
             arguments.base_image_manifest_digest,
             arguments.evidence,
+            release_config=arguments.release_config,
+            release_component=arguments.release_component,
+            release_component_name=arguments.release_component_name,
+            release_component_sha256=arguments.release_component_sha256,
         )
-    except (OSError, ValidationError) as error:
+    except (OSError, ValidationError, OVERLAY["OverlayError"]) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1
     return 0

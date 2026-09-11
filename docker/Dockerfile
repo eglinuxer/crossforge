@@ -905,15 +905,13 @@ RUN --network=none \
 # re-verified before those RPMs are selected.
 FROM host-build-common-locked AS python-runtime-clean-x86_64
 ARG ROCKY_AMD64_MANIFEST_DIGEST
-COPY --from=release-validate /src/config/release.json /src/config/release.json
-COPY --from=release-validate /src/config/schemas/release.schema.json /src/config/schemas/release.schema.json
-COPY --from=release-validate /src/config/schemas/rpm-plan.schema.json /src/config/schemas/rpm-plan.schema.json
-COPY --from=release-validate /src/config/rpm/sysroot-el8-x86_64.plan.json /src/config/rpm/sysroot-el8-x86_64.plan.json
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256
+COPY config/generated/components/rpm/sysroot-x86_64.json ./config/components/rpm-sysroot-x86_64.json
 COPY --from=rocky-runtime-x86_64-source / /runtime-root/
 COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
 COPY locks/transactions/sysroot-el8-x86_64.json ./locks/transactions/sysroot-el8-x86_64.json
 COPY locks/metadata/sysroot-el8-x86_64/ ./locks/metadata/sysroot-el8-x86_64/
-COPY scripts/assemble-python-runtime.py ./scripts/assemble-python-runtime.py
+COPY scripts/assemble-python-runtime.py scripts/python_runtime_overlay.py ./scripts/
 RUN --network=none \
     --mount=type=bind,from=sysroot-rpms-x86_64,source=/rpm-bundle,target=/rpm-bundle,ro \
     /usr/libexec/platform-python ./scripts/assemble-python-runtime.py \
@@ -922,19 +920,20 @@ RUN --network=none \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --runtime-root /runtime-root \
       --base-image-manifest-digest "$ROCKY_AMD64_MANIFEST_DIGEST" \
+      --release-component ./config/components/rpm-sysroot-x86_64.json \
+      --release-component-name rpm/sysroot-x86_64 \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256" \
       --evidence /work/qualification/python/runtime-clean-x86_64.json
 
 FROM host-build-common-locked AS python-runtime-clean-aarch64
 ARG ROCKY_ARM64_MANIFEST_DIGEST
-COPY --from=release-validate /src/config/release.json /src/config/release.json
-COPY --from=release-validate /src/config/schemas/release.schema.json /src/config/schemas/release.schema.json
-COPY --from=release-validate /src/config/schemas/rpm-plan.schema.json /src/config/schemas/rpm-plan.schema.json
-COPY --from=release-validate /src/config/rpm/sysroot-el8-aarch64.plan.json /src/config/rpm/sysroot-el8-aarch64.plan.json
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256
+COPY config/generated/components/rpm/sysroot-aarch64.json ./config/components/rpm-sysroot-aarch64.json
 COPY --from=rocky-runtime-aarch64-source / /runtime-root/
 COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
 COPY locks/transactions/sysroot-el8-aarch64.json ./locks/transactions/sysroot-el8-aarch64.json
 COPY locks/metadata/sysroot-el8-aarch64/ ./locks/metadata/sysroot-el8-aarch64/
-COPY scripts/assemble-python-runtime.py ./scripts/assemble-python-runtime.py
+COPY scripts/assemble-python-runtime.py scripts/python_runtime_overlay.py ./scripts/
 RUN --network=none \
     --mount=type=bind,from=sysroot-rpms-aarch64,source=/rpm-bundle,target=/rpm-bundle,ro \
     /usr/libexec/platform-python ./scripts/assemble-python-runtime.py \
@@ -943,6 +942,9 @@ RUN --network=none \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --runtime-root /runtime-root \
       --base-image-manifest-digest "$ROCKY_ARM64_MANIFEST_DIGEST" \
+      --release-component ./config/components/rpm-sysroot-aarch64.json \
+      --release-component-name rpm/sysroot-aarch64 \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256" \
       --evidence /work/qualification/python/runtime-clean-aarch64.json
 
 # Maintenance-only canonical resolvers. They are not dependencies of normal

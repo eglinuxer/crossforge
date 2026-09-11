@@ -178,6 +178,8 @@ cross build 在 configure 前用目标 ELF canary 实测 `execve`/`execv`、PATH
 
 clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七个精确验签 runtime RPM；因 OCI 与 sysroot errata 版本可不同，该 `--nodeps` overlay 仅验证精确 DSO 字节兼容性，不是可部署的 RPM transaction，也不进入 SDK。两套 runtime tier 都把真实 tmpfs 挂到 `/dev/shm`，并实际执行 `multiprocessing.Lock()` 与 libc unnamed semaphore。aarch64 只使用固定 QEMU，发布前仍需原生 ARM 终检。
 
+两个 `python-runtime-clean-<arch>` 构建阶段只读取已认证的 `rpm/sysroot-<arch>` 投影、原 lock/transaction/metadata 和信任根，不再依赖整份 release、release schema 或维护用 RPM plan。原 materializer 仍核对完整锁事务、全部 RPM 字节及签名，然后选择原七个 runtime RPM，保留两次 transaction 检查和前后 rpmdb/os-release 约束。overlay schema 2 用明确的 `input_binding` 记录组件摘要，不声明完整 release 摘要；runtime reader 和最终行验证器从当前完整 release 独立推导预期组件，再检查原镜像、target、sysroot、包摘要及实际运行时证据。旧 schema 1 继续严格绑定原完整 release。行 compile/runtime/final 报告自身仍绑定完整 release；本批只移除共享运行时根的无关配置依赖，整行资格范围拆分继续推进，实际新 runtime 执行尚待验收。
+
 target SDK 包含解释器、stdlib、headers、`pyconfig.h`、`_sysconfigdata_*`、扩展模块和构建元数据。即使 x86_64 build/target 架构相同，也不得复用。每个 target 必须验证 zlib、bz2、lzma、ctypes、ssl、hashlib、sqlite3、uuid 等约定模块，以及最小 C extension 的编译、ELF 架构和 import；3.14 另验 `compression.zstd`。
 
 Rocky 8 的 zstd 1.4.4 低于 CPython 3.14 `compression.zstd` 所需的 1.4.5。Phase 8 因此从签名和 hash 锁定的上游源构建 PIC 私有静态 zstd 1.5.7，分别产生 host、x86_64 和 aarch64 prefix，并只链接进 `_zstd`；全局不可变 sysroot 未改动。编译资格化绑定精确 zstd build manifest/component identity，确认 `_zstd` 唯一、静态符号完整，且无 zstd `DT_NEEDED`、动态导出、RPATH 或 text relocation。locked-sysroot 与 clean-Rocky 运行时 tier 都实际执行 one-shot、streaming、dictionary、multithreaded、tarfile 和 zipfile zstd 探针。

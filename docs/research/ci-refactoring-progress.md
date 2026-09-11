@@ -6,7 +6,7 @@
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；main 缺失工具链集中生产及只读消费已接线 | GitHub 实跑、真实签名与跨 run 验收 |
-| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线 | GitHub 实跑、缩小资格 COPY 范围、正式 Python 行资格复用接入 |
+| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线；Python 共享运行时根已移除完整 release 依赖 | GitHub 实跑、整行及其他领域资格 COPY 范围、正式 Python 行资格复用接入 |
 | 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过；原始 Python 组件 CI 消费已接线 | 正式行资格生产/SDK 复用的 CI 接入与远程验收 |
 | 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储、候选组件消费及分阶段恢复、raw producer 部分重试接线本地验证通过 | 真实 GitHub 跨 run 信任和 producer 重试、其他资格领域、候选集成/原生 ARM |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
@@ -417,3 +417,19 @@ SDK checkpoint schema 2 保存原 `component-selection.json`；最终消费者�
 临时图检查脚本最初使用 `inspect.py` 命名，遮蔽标准库导致定向测试加载失败；改名后 34 项定向回归通过，随后新增 composite 回归进入上述最终全量验证。Rocky shell fixture 初次因没有 `python3` 命令而失败，最终驱动只为该 fixture 将 `python3` 临时链接到 platform-python 后通过，没有改动生产工作流或放宽断言。图与合成事件均不是实际编译证据。
 
 尚未执行新的强制源码编译、GitHub 手动入口或性能对照；此前 Docker socket 授权仍待答复，未重试被拒绝的操作。正式 Python 行资格 CI 复用与环境边界、跨 run 恢复、真实候选/原生 ARM、runner 性能与保留容量仍待推进。整体未完成，未合入 main 或推送远程。
+
+## 批次 3/4：Python clean-Rocky 共享运行时输入组件化
+
+分析确认 Python 行 compile/runtime/final 报告和共享 clean-Rocky overlay 均绑定整份 release。此批先移除共享运行时根的耦合，作为后续整行资格输入拆分的前置：两个 `python-runtime-clean-<arch>` 阶段改为独立读取已认证的 `rpm/sysroot-<arch>` 投影，不再复制完整 release、release schema 或维护用 RPM plan。沿用原 materializer 的组件接口和完整 lock/transaction/metadata/trust 校验；完整 bundle 字节及 RPM 验签仍先于七个 runtime RPM 的选择，原两次 transaction、rpmdb 和 os-release 检查保持。
+
+新增标准库模块 `python_runtime_overlay.py`，把 overlay schema 2 的 `input_binding` 明确绑定到目标 sysroot 组件，不冒充完整 release SHA256。runtime reader 和原行 finalizer 从当前完整 release 独立计算预期组件，继续检查固定镜像、目标、sysroot/transaction、精确 package/NEVRA/digest 和实际 rpmdb/os-release。schema 1 按原完整 release 摘要验证，不能被当作跨 release 复用证据。现有 compile/runtime/final 报告和 Python qualification aggregate 的完整 release 依赖尚未移除；最终 SDK 的完整绑定、资格环境边界与原生 ARM 门禁不变。
+
+[本批记录](python-runtime-inputs-2026-09-10.json)：
+
+- 断网、非 root、无 Docker socket 的 Docker config 1248 项、179.259 秒与 packaging 40 项、1.215 秒全部通过，无跳过。四项 locked validators、三个 renderer 和 actionlint 通过；三个 renderer 按规定顺序生成后没有 generated 文件差异。
+- 32 项定向回归通过。新增十项覆盖双架构真实 lock/component 校验、无 release/plan 的裁剪目录、完整 bundle 校验调用顺序、混合/缺失输入、组件与镜像/target/sysroot/包摘要篡改、runtime 实物清单核对、新旧 overlay 的最终报告验证。裁剪目录的 RPM 校验/安装调用及 runtime rpmdb 使用明确 fixture，未宣称进行了新 RPM 安装或目标执行。
+- 固定 Rocky 8 platform-python 3.6.8 编译四个运行文件，并执行九项新契约与消费者回归通过；真实 Bake 图检查在普通工具容器中进行。
+- 对照规范化的原提交 `8eb2ec0` 与当前源码快照，34 份原始编译组件（双架构工具链安装/GCC 测试上下文，以及六行 Python 的全部安装/审计组件）材料闭包全部不变。两个运行时根的材料按本批契约变化。
+- 分别在旧版和新版隔离源中只将产品版本改为 `0.1.1`，依次生成三个输出后重新解析真实 Bake 图：旧版两个运行时根均失效，新版均保持原材料身份。此项没有实际 BuildKit solve，不作为耗时、产物认证或资格执行证明。
+
+初轮新增 fixture 使用了错误的最终报告字段 `runtime_results`，并遗漏裁剪目录所需 Rocky RPM 公钥；修正为原 `executions` 字段并补齐信任根后，定向和全量均通过，没有降低生产检查。实际新 clean-Rocky 安装/Python 双目标 runtime 重放、整行资格投影、正式行 CI 复用、GitHub 信任/恢复及性能验收仍待推进。此前 Docker socket 授权仍待答复，没有重新尝试被拒绝的操作；未合入 main、推送或发布。

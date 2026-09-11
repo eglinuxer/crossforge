@@ -28,6 +28,7 @@ RELEASE_COMPONENTS = runpy.run_path(
     str(Path(__file__).with_name("release-components-core.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+OVERLAY = runpy.run_path(str(Path(__file__).with_name("python_runtime_overlay.py")))
 ZSTD_EVIDENCE = runpy.run_path(
     str(Path(__file__).with_name("python_zstd_evidence.py"))
 )
@@ -1165,7 +1166,13 @@ def validate_overlay_evidence(
         },
         path,
     )
-    require(value["schema_version"] == 1, "%s schema mismatch" % path)
+    expected_arch = TARGETS[target]
+    target_arch = "x86_64" if expected_arch == "amd64" else "aarch64"
+    release = context["release"]
+    try:
+        OVERLAY["validate_identity_binding"](value, release, target_arch, RELEASE_COMPONENTS["render_component_documents"])
+    except (OVERLAY["OverlayError"], ProjectionError) as error:
+        raise FinalizationError("%s: %s" % (path, error)) from error
     require(
         value["kind"] == "crossforge-python-runtime-overlay"
         and value["qualification_only"] is True,
@@ -1173,24 +1180,10 @@ def validate_overlay_evidence(
     )
     identity = value["identity"]
     require_exact_keys(
-        identity,
-        {
-            "base_image",
-            "release_sha256",
-            "target",
-            "sysroot",
-            "selected_packages",
-            "selected_packages_sha256",
-        },
-        path + " identity",
-    )
-    require_exact_keys(
         identity["base_image"],
         {"index_digest", "manifest_digest"},
         path + " base_image",
     )
-    expected_arch = TARGETS[target]
-    release = context["release"]
     require(
         identity["base_image"]
         == {
@@ -1199,12 +1192,7 @@ def validate_overlay_evidence(
         },
         "%s base image mismatch" % path,
     )
-    require(
-        identity["release_sha256"] == context["release_sha256"],
-        "%s release digest mismatch" % path,
-    )
     require_exact_keys(identity["target"], {"arch", "triple"}, path + " target")
-    target_arch = "x86_64" if expected_arch == "amd64" else "aarch64"
     require(
         identity["target"] == {"arch": target_arch, "triple": target},
         "%s target mismatch" % path,
