@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-semantic-ci-scope-review",
+  "base_commit": "96f019d",
+  "source_dirty": true,
+  "problem": "The syntax-only platform-python-check copies all host scripts. Treating that inventory as a runtime mapping caused changes to component build, input validation, resolution and qualification controllers to select syntax checks alone.",
+  "change": "Exclude the syntax-check root when establishing known runtime paths. Unmapped host-only files use the existing full fallback; explicit SDK/installation mappings and real runtime dependencies retain incremental selection.",
+  "regression": {
+    "before": "22 tests ran; both existing and hypothetical new syntax-only controller cases failed by incorrectly selecting incremental mode.",
+    "after": "All 1474 configuration tests passed, including the two regressions and a control retaining ordinary runtime dependency selection."
+  },
+  "actual_graph_probe": [
+    {
+      "path": "scripts/crossforge_internal/component_build.py",
+      "observed_by": [
+        "platform-python-check"
+      ],
+      "mode": "full",
+      "selected_stages": [
+        "gcc-full",
+        "gcc-smoke",
+        "inputs",
+        "python-cp310",
+        "python-cp311",
+        "python-cp312",
+        "python-cp313",
+        "python-cp314",
+        "python-cp39",
+        "sdk",
+        "toolchain-aarch64",
+        "toolchain-x86_64",
+        "vcpkg"
+      ]
+    },
+    {
+      "path": "scripts/crossforge_internal/component_inputs.py",
+      "observed_by": [
+        "platform-python-check"
+      ],
+      "mode": "full",
+      "selected_stages": [
+        "gcc-full",
+        "gcc-smoke",
+        "inputs",
+        "python-cp310",
+        "python-cp311",
+        "python-cp312",
+        "python-cp313",
+        "python-cp314",
+        "python-cp39",
+        "sdk",
+        "toolchain-aarch64",
+        "toolchain-x86_64",
+        "vcpkg"
+      ]
+    },
+    {
+      "path": "scripts/crossforge_internal/component_resolution.py",
+      "observed_by": [
+        "platform-python-check"
+      ],
+      "mode": "full",
+      "selected_stages": [
+        "gcc-full",
+        "gcc-smoke",
+        "inputs",
+        "python-cp310",
+        "python-cp311",
+        "python-cp312",
+        "python-cp313",
+        "python-cp314",
+        "python-cp39",
+        "sdk",
+        "toolchain-aarch64",
+        "toolchain-x86_64",
+        "vcpkg"
+      ]
+    },
+    {
+      "path": "scripts/crossforge_internal/qualification_execution.py",
+      "observed_by": [
+        "platform-python-check"
+      ],
+      "mode": "full",
+      "selected_stages": [
+        "gcc-full",
+        "gcc-smoke",
+        "inputs",
+        "python-cp310",
+        "python-cp311",
+        "python-cp312",
+        "python-cp313",
+        "python-cp314",
+        "python-cp39",
+        "sdk",
+        "toolchain-aarch64",
+        "toolchain-x86_64",
+        "vcpkg"
+      ]
+    },
+    {
+      "path": "scripts/crossforge_internal/component_qualification.py",
+      "observed_by": [
+        "platform-python-check"
+      ],
+      "mode": "full",
+      "selected_stages": [
+        "gcc-full",
+        "gcc-smoke",
+        "inputs",
+        "python-cp310",
+        "python-cp311",
+        "python-cp312",
+        "python-cp313",
+        "python-cp314",
+        "python-cp39",
+        "sdk",
+        "toolchain-aarch64",
+        "toolchain-x86_64",
+        "vcpkg"
+      ]
+    },
+    {
+      "path": "scripts/crossforge_internal/component_ci.py",
+      "observed_by": [
+        "platform-python-check"
+      ],
+      "mode": "full",
+      "selected_stages": [
+        "gcc-full",
+        "gcc-smoke",
+        "inputs",
+        "python-cp310",
+        "python-cp311",
+        "python-cp312",
+        "python-cp313",
+        "python-cp314",
+        "python-cp39",
+        "sdk",
+        "toolchain-aarch64",
+        "toolchain-x86_64",
+        "vcpkg"
+      ]
+    },
+    {
+      "path": "scripts/crossforge_internal/ci_sdk.py",
+      "observed_by": [
+        "platform-python-check"
+      ],
+      "mode": "incremental",
+      "selected_stages": [
+        "inputs",
+        "sdk"
+      ]
+    },
+    {
+      "path": "scripts/crossforge_internal/ci_replay.py",
+      "observed_by": [
+        "platform-python-check"
+      ],
+      "mode": "full",
+      "selected_stages": [
+        "gcc-full",
+        "gcc-smoke",
+        "inputs",
+        "python-cp310",
+        "python-cp311",
+        "python-cp312",
+        "python-cp313",
+        "python-cp314",
+        "python-cp39",
+        "sdk",
+        "toolchain-aarch64",
+        "toolchain-x86_64",
+        "vcpkg"
+      ]
+    }
+  ],
+  "docker_validation": {
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "cpus": 4,
+    "memory": "16 GiB",
+    "network": "none",
+    "checks": {
+      "status": "passed",
+      "steps": [
+        {
+          "step": "Release configuration",
+          "seconds": 1.7524561469908804,
+          "exit_code": 0
+        },
+        {
+          "step": "RPM plans, transactions, and locks",
+          "seconds": 1.9919878829969093,
+          "exit_code": 0
+        },
+        {
+          "step": "Configuration tests",
+          "seconds": 121.29203799998504,
+          "exit_code": 0
+        },
+        {
+          "step": "Packaging planner tests",
+          "seconds": 1.384153402002994,
+          "exit_code": 0
+        },
+        {
+          "step": "Script syntax",
+          "seconds": 0.3498769020079635,
+          "exit_code": 0
+        },
+        {
+          "step": "Generated Bake definition",
+          "seconds": 0.9668776849866845,
+          "exit_code": 0
+        }
+      ]
+    },
+    "configuration": {
+      "status": "passed",
+      "source_sha256": "64bb15830347fbf0c33e6071510fe25aee10a488b05243cad8b304c95de8bda7",
+      "source_unchanged": true,
+      "discovered_tests": 1474,
+      "tests_run": 1474,
+      "elapsed_seconds": 121.23446243800572,
+      "worker_tests": [
+        344,
+        343,
+        397,
+        390
+      ],
+      "outcomes": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "fixture_skips": 0,
+        "expected_failures": 0,
+        "unexpected_successes": 0
+      }
+    },
+    "packaging_tests": 40
+  },
+  "evidence": {
+    "before.log": {
+      "sha256": "6b142c09d36212a15a0d7b0cab1d1a15504e83485a2286a1f5160a54cbbea21a",
+      "size": 1710
+    },
+    "controller-scope-probe.json": {
+      "sha256": "8affc19e2612cfff9d941783ada352194558dd5bb4ae520bb4a65634febd7b37",
+      "size": 12214
+    },
+    "full/all-checks.json": {
+      "sha256": "5e21ba2f580037a922e13ecb1f64ba8d3803f2d599488cb1d172eb254ea30643",
+      "size": 710
+    },
+    "full/all-checks.log": {
+      "sha256": "2742ebf4b6570d1829c1ceedf8fa7dd677593741c63f339777890a8d65cadfb4",
+      "size": 27077
+    },
+    "full/runtime/config-tests/result.json": {
+      "sha256": "febada7454cd6719a5367d3b52fa7d37d518c8f1a717eb91cda643efe766fa80",
+      "size": 178534
+    }
+  },
+  "limits": [
+    "The actual graph probe changes material hashes in a copied source inventory; it does not execute component builds.",
+    "Conservative full selection is intentional for unmapped controllers. Future narrower mappings require demonstrated runtime scope.",
+    "Real GitHub checks for this follow-up and main-only acceptance remain pending."
+  ]
+}

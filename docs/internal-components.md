@@ -64,6 +64,13 @@ input set. Reading a SHA256 from the same untrusted artifact is not that handoff
 
 ## Local Docker workflow
 
+Incremental selection uses runtime source dependencies and explicit controller
+mappings. A file read only by `platform-python-check` has syntax coverage, not
+an established runtime scope. Changes to such unmapped host controllers select
+the complete CI graph. The SDK and Python installation controller mappings keep
+their narrower scope; ordinary build inputs still select their actual consumers
+even when the syntax check also reads them.
+
 Run the CLI inside the local Docker tooling environment with the Docker CLI,
 pinned Buildx plugin, and access to the task's builder. Keep source mounted read
 only. OCI paths must be visible at the same absolute paths to the producer and

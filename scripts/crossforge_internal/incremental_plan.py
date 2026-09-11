@@ -22,6 +22,7 @@ SDK_CONTROLLERS = {".github/actions/run-component-sdk/action.yml", "scripts/ci-s
     ("ci_sdk", "local_sdk", "python_sdk", "python_sdk_catalog", "python_sdk_recovery")}
 PYTHON_INSTALL_CONTROLLERS = {"scripts/crossforge_internal/python_row_install.py"}
 SHARED_BUILD_CONTROLLERS = {"scripts/ci-build.py", "scripts/crossforge_internal/ci_replay.py"}
+SYNTAX_CHECK_ROOTS = {"platform-python-check"}
 
 
 def quick_only(path):
@@ -58,7 +59,12 @@ def snapshot(source, graph, stages, compiler_targets, execution):
 
 def _known_paths(snapshot):
     paths = set()
-    for node in snapshot["nodes"].values():
+    for target, node in snapshot["nodes"].items():
+        # Syntax validation reads every host script, but that does not tell us
+        # which runtime jobs its controller can affect. Unmapped host inputs
+        # must retain the conservative unknown-path fallback.
+        if target in SYNTAX_CHECK_ROOTS:
+            continue
         paths.update(record["path"] for record in node["files"])
         paths.update(recipe["dockerfile"] for recipe in node["parameters"]["recipes"].values())
     return paths

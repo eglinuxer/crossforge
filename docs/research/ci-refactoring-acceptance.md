@@ -1,6 +1,6 @@
 # CI 重构验收状态
 
-本页是六项已确认方案的验收索引，便于评审；详细历史在[实施进度](ci-refactoring-progress.md)。工作分支 `codex/component-ci-refactor` 的实现 `a6cbfd6` 已整合完整配置测试并行、GCC native 预期诊断修复及本地 SDK OCI 交接，并以含验收记录的 `f502449` 推送至 PR #3；远程 main 的外部诊断修复 `e8aa68a` 已包含在其历史中。PR #3 的完整运行仍在进行，尚未合并 main。本页不构成候选或发布资格证据。
+本页是六项已确认方案的验收索引，便于评审；详细历史在[实施进度](ci-refactoring-progress.md)。主实现 `f502449` 的 PR #3 仍在运行，尚未合并 main；本地 GCC full 与八阶段源码 SDK 已成功，更新 release 绑定后的 SDK 最终集成继续验证。PR #5 的增量选择修复已通过其真实检查。后续独立分支已补齐 main 资格重放、候选实际执行记录和共享控制模块选路，分别取得本地 Docker 验证；这些后续改造仍需真实 PR/main 验收。本页不构成候选或发布资格证据。
 
 | 已确认方向 | 当前实现与已取得证据 | 尚待验收 |
 |---|---|---|
@@ -52,3 +52,9 @@
 另在独立分支补齐 main 的工具链、GCC smoke/full、vcpkg 重放接线。这些 job 原本只验证 raw 组件，却允许普通 BuildKit 缓存满足资格阶段；它们尚无认证资格目录，无法证明旧报告匹配当前物理环境。现在已选择的五个范围均经过原 replay executor，强制执行其资格 RUN，并核对完整执行区间和未改变的物理环境。保持原动态目标、组件输入和只读权限，观察记录不冒充可复用签名 receipt。候选发布图内的 raw/cache 路线仍独立存在，其报告交接与新鲜度必须另行补齐，尚不能宣布第五批或候选闭环完成。
 
 [本次记录](main-qualification-freshness-2026-09-11.json)保留修复前五个范围缺少 replay 参数的失败、修复后真实 composite shell 至 CLI 的回归，以及固定断网 Docker 中完整 1,460 项配置测试 / 153.559 秒、40 项打包 / 1.702 秒的通过结果，无跳过。锁定验证、生成文件、完整语法及 workflow actionlint 通过。第一次完整调用漏挂 Docker CLI，相关检查失败或跳过；原记录保持失败，补齐 CLI 和固定 Buildx 后重新执行了完整检查。main 接线尚待真实受信入口验收；本次没有重跑已通过的 GCC full 或发布候选。
+
+## 候选执行与共享控制模块选路（2026-09-11）
+
+[候选执行记录](candidate-qualification-execution-2026-09-11.json)对应 `96f019d`：实际发布图补齐 GCC smoke 与 vcpkg contract/Tier 1–3 依赖，并强制声明的资格阶段重新执行。SDK checkpoint schema 3 绑定原 producer、源码、组件选择、物理环境、完整 RUN 记录与候选 image index digest；旧版 checkpoint 读取仍保留。固定 Docker 中 1,471 项配置测试、40 项打包及其余 quick 检查通过，无跳过。真实小型 BuildKit 图两次各完成三个物理 RUN、覆盖四个逻辑步骤，中间的缓存命中对照被拒绝。这不是完整候选执行证明；实际候选耗时、原生 ARM 和恢复仍待 main 入口验收。
+
+[语义选路记录](semantic-ci-scope-2026-09-11.json)修复了语法检查掩盖运行期范围的问题。实际材料图显示六个共享控制模块原先只选择 `platform-python-check`；排除其语法清单后，未映射模块使用原有完整验证兜底，已明确映射的 SDK 控制模块仍只选 inputs/SDK。新增回归先复现两项漏检，再通过完整 1,474 项配置测试 / 121.234 秒、40 项打包及其余 quick 检查，无跳过。源码 SDK 已完成六行、`python-dev` 与 `sdk-complete-dev` 的八阶段执行和七次本地 OCI 交接；其计时包含共享 builder 排队，不是性能基线。

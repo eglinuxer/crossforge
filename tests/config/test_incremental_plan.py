@@ -116,6 +116,27 @@ class IncrementalPlanTests(unittest.TestCase):
     def test_shared_qualification_replay_change_selects_full_even_when_platform_checks_read_it(self):
         self.check_shared_controller("scripts/crossforge_internal/ci_replay.py")
 
+    def test_syntax_only_component_executor_does_not_establish_runtime_scope(self):
+        self.check_shared_controller("scripts/crossforge_internal/component_build.py")
+
+    def test_new_syntax_only_controller_falls_back_without_an_explicit_mapping(self):
+        self.check_shared_controller("scripts/crossforge_internal/future_controller.py")
+
+    def test_runtime_input_also_read_by_syntax_checks_keeps_its_real_dependency_scope(self):
+        self.recipe.write_text(self.recipe.read_text() +
+            "FROM rocky AS platform-check\nCOPY build.sh /build.sh\nRUN syntax-check\n")
+        self.graph["target"]["platform-python-check"] = {
+            "context": ".", "dockerfile": "Dockerfile", "target": "platform-check",
+            "platforms": ["linux/amd64"],
+            "contexts": {"rocky": "docker-image://rocky@sha256:" + "b" * 64}}
+        self.stages["inputs"] = ["platform-python-check"]
+        self.before = self.snapshot()
+        plan = self.change("build.sh")
+        self.assertEqual(plan["mode"], "incremental")
+        self.assertEqual(set(plan["targets"]), set(self.stages))
+        self.assertEqual(plan["compiler_inputs_changed"], sorted(self.compilers))
+        self.assertEqual(plan["fallback_reasons"], [])
+
     def check_shared_controller(self, path):
         script = self.root / path
         script.parent.mkdir(parents=True)
