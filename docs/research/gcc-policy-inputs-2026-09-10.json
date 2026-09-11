@@ -1,18 +1,86 @@
 {
   "actual_replay": {
+    "prepared_script": "/tmp/crossforge-gcc-policy/replay.py",
+    "process_started": false,
     "required": [
       "x86_64 gcc-smoke",
       "aarch64 gcc-smoke",
       "x86_64 gcc-full"
     ],
-    "status": "pending"
+    "source_commit": "9dab68281c5ca30786a2ff65250c9f8faeec1586",
+    "status": "awaiting explicit Docker socket authorization"
+  },
+  "approval_review": {
+    "action": "three required GCC replays in a tooling container with host Docker socket",
+    "outcome": "rejected before process creation",
+    "reason": "host socket grants broad daemon control; local Docker validation authorization did not explicitly cover this side effect",
+    "scope_of_request": "x86_64 smoke, aarch64 smoke and x86_64 full; fixed source 9dab682; crossforge-ci-review builder; local /tmp outputs; no publication",
+    "user_authorization_requested": true
   },
   "artifacts": {
     "/tmp/crossforge-gcc-policy/check-platform.py": "40c7e1837c11f9a4d7d1be95bfeb4928a0bf2dbe27b757e88bc8b7c4bab493e8",
+    "/tmp/crossforge-gcc-policy/close-skips.json": "6b6642b5017dd4e69ec440522b3b493215bfbd349851029b53e294fee7328952",
+    "/tmp/crossforge-gcc-policy/close-skips.log": "81ef8a0bba495ea441b99e427efb7127edb2ab315dd4821ee33c4cea6c2bc461",
+    "/tmp/crossforge-gcc-policy/close-skips.py": "d330dbd23ec2372d4f3dd9f0638c9477287a0cb61fcbadcfda5ef0d4bef82acb",
     "/tmp/crossforge-gcc-policy/focused-final.log": "876cf0e952e49dbd013393a8c7a83a0d628b291c2858189ab53e63016a922aa1",
     "/tmp/crossforge-gcc-policy/focused.log": "fae90c99eb65491716a42b4c2a08f14605b67ebd7d24c21ae47a39b1faf6574f",
     "/tmp/crossforge-gcc-policy/full.log": "ebebe3926b7ba1636c27d48d7470512d97e1cf2cbb9a6967bf061d01386ec246",
     "/tmp/crossforge-gcc-policy/platform-python.log": "fde1b93c10e617f07dc4d08e0379b0a8e8d1ae4d562dac3063797cd4f542b6e5",
+    "/tmp/crossforge-gcc-policy/quick-command-00.log": "e3a371c1316f09e6c2b97a28e25b0814acef20db760f12e310daba553850d012",
+    "/tmp/crossforge-gcc-policy/quick-command-01.log": "c7e26390ece452c5f2f78376cbe4e02d488c20b956c693ca825aafd62981ecac",
+    "/tmp/crossforge-gcc-policy/quick-command-02.log": "87e88acfbee13a6d47d5509279bd6eb6b029695cc3e7480934438b2cf93b6385",
+    "/tmp/crossforge-gcc-policy/quick-command-03.log": "ba179728f86a9186b4bc0273598624d25b799ea83b9796efdf6ae4221b7a6f32",
+    "/tmp/crossforge-gcc-policy/quick-command-04.log": "f1ce0a5cfd4da4bd2d84ff1d4fa2e2d527811231f9442bd10315c101b04f22de",
+    "/tmp/crossforge-gcc-policy/quick-command-05.log": "3d346d3bc8f47a1af63b7d39bb67c89eacd65dd3f54081afc9be394acdb7e65e",
+    "/tmp/crossforge-gcc-policy/quick-command-06.log": "06fb37b47eebd29a9ae0741023768e50df04b0b5a497d110ae7e86c9276a4a1c",
+    "/tmp/crossforge-gcc-policy/quick-command-07.log": "f200dd3fd3b5007b16300d73f7ad9c160616ae652b6b0f76bda21814f8a7762f",
+    "/tmp/crossforge-gcc-policy/quick-command-08.log": "538551e047fb147f43c1bacd947d25807adff4418c47c9a0eb6fbcc4d48d8eff",
+    "/tmp/crossforge-gcc-policy/quick-command-09.log": "784ba5a53f406bc36ac52e546158d3c0b7c26a0a8bfc0821e9ab289641290746",
+    "/tmp/crossforge-gcc-policy/quick-command-10.log": "f5101c891f3add5cbc635e7f9d1e6374d6813154400ff97a10b2df7c9fb70c2d",
+    "/tmp/crossforge-gcc-policy/quick-command-11.log": "97c792bcf0a1c7f0b6b06be80439eb90d76cc667b619955ee27a1340001074ee",
+    "/tmp/crossforge-gcc-policy/quick-command-12.log": "1d68d1c7497ed85ed6dbfa8f546c7c0e5daa72612cb67c6931c7e5368ee1614b",
+    "/tmp/crossforge-gcc-policy/quick-command-13.log": "a579e5c2cf2b042335e2af171ad7f76606d34c7eaea85bf291cc08ef8e90a4d5",
+    "/tmp/crossforge-gcc-policy/quick-command-14.log": "1e4ab57a59a9cdd4dc2430d3a5874f8b00db149a75be611b94c2ad3bd27d6096",
+    "/tmp/crossforge-gcc-policy/quick-command-15.log": "397afba06dac51173fd764d091d735204b2f5fcb56c598c378b0fdd546f74ff4",
+    "/tmp/crossforge-gcc-policy/quick-command-16.log": "8319be23c5b7eae4dc20e4302f3cb7ddf4ecaf7757c8e412e86ace59915ed928",
+    "/tmp/crossforge-gcc-policy/quick-command-17.log": "5c603f320f8e3463165dcbc208848372df9693fa0916393a42a867c7dba267f6",
+    "/tmp/crossforge-gcc-policy/quick-command-18.log": "4356e4be639de4e0321754a59950248434b46eafb5fd3507d87e5cc9151e74be",
+    "/tmp/crossforge-gcc-policy/quick-command-19.log": "be7341849324dff369f6b69f46c08b969dcc14c0599b01ebb61e7fa6624d1314",
+    "/tmp/crossforge-gcc-policy/quick-command-20.log": "fe03288891605135b2a80195eebd74602bd52696a41213e2d1559875f4a08906",
+    "/tmp/crossforge-gcc-policy/quick-command-21.log": "1d72b71e29792aaa208c7c1f66d108faaf33b26f5c22c2d1d83c45391d9c69ae",
+    "/tmp/crossforge-gcc-policy/quick-command-22.log": "e7cb0af02f7c8b625751269f0a111849831f2ab4f50e33406e1df28bb59888b7",
+    "/tmp/crossforge-gcc-policy/quick-command-23.log": "32155576fc8e68a51b184bcffb29efc51662847e4e76354639d851da4fbce894",
+    "/tmp/crossforge-gcc-policy/quick-command-24.log": "0baafb41e45ba970acec99f674767a8750c6d95d49a0c74526e45d3faec5679d",
+    "/tmp/crossforge-gcc-policy/quick-command-25.log": "6e31757381b8e2c1d25b6d340089c556a009e26bb40d8f3a9abb2acbd342b197",
+    "/tmp/crossforge-gcc-policy/quick-command-26.log": "6d660a1d94c0876e188758f0ef92a4eb8c33ad5eaef0fe7e8a94d19daf8ccf6c",
+    "/tmp/crossforge-gcc-policy/quick-command-27.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-28.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-29.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-30.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-31.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-32.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-33.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-34.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-35.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-36.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-37.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-38.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-39.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-40.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-41.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-42.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-43.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-44.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-45.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-46.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-47.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-48.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-49.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-gcc-policy/quick-command-50.log": "178e4dc050ed3b99d5ad308dd51694f068c4e7f6ad1082101b2344d533e73c99",
+    "/tmp/crossforge-gcc-policy/quick-remaining.json": "aa8f979efc1b4d724809612a9836209c7d9a01dd892d2dc9087dece9f190c14b",
+    "/tmp/crossforge-gcc-policy/quick-remaining.log": "6ecc84a4f49b7b48ccd2c83ac75d04f16c34d07ba36934cd7aa25e5eb28db06c",
+    "/tmp/crossforge-gcc-policy/quick-remaining.py": "349244cfc6c5fc8e4fa02ed30299c228dbcca99dea71cc17c4a79a9f1cc81337",
+    "/tmp/crossforge-gcc-policy/replay.py": "bd742050e4e065e445359d47403c3a5a6e60235310dc799b2805a8407cf6103c",
     "/tmp/crossforge-gcc-policy/scope-corrected.log": "16171422f8b0cb456bb51dbc943c3827af7df62b2d9a440bd55e74b8b775279b",
     "/tmp/crossforge-gcc-policy/scope-corrected/result.json": "461ec0c959290657a0a6af8dcf36b470b92b33303df6c237d42082b2c6da2359",
     "/tmp/crossforge-gcc-policy/scope-probe-corrected.py": "9d630c203d01eec29e40351f77b2698c3e1f3db5159c029261e4792206137f31",
@@ -68,6 +136,12 @@
     "No GitHub event, signing, candidate or native ARM acceptance in this record"
   ],
   "merged_main": false,
+  "remote_observation": {
+    "main": "cf736eab8aa53b851874509d66676e5bac98dc27",
+    "method": "git ls-remote; read only",
+    "observed_at": "2026-09-11T00:47:01.178687+00:00",
+    "working_branch_exists": false
+  },
   "remote_pushed": false,
   "scope": "GCC qualification policy scoping; socketless Docker regression, compatibility and graph/material evidence; actual GCC replay pending",
   "scope_comparison": {
@@ -120,6 +194,8 @@
   },
   "validation": {
     "actionlint": "passed; existing concurrency.queue parser exception only",
+    "combined_unexecuted_config_packaging_tests": 0,
+    "combined_unique_config_packaging_tests": 1206,
     "config": {
       "passed": true,
       "seconds": 156.079,
@@ -139,6 +215,300 @@
       "tests": 40
     },
     "platform_python": "Rocky 8 Python 3.6.8; four modules compile, scoped/legacy policy equivalence for both architectures and runner CLI; no Bake stage",
-    "renderer_checks": 3
+    "remaining_quick_checks": {
+      "commands": [
+        [
+          "./scripts/validate-gcc-testsuite.py",
+          "--plan",
+          "config/gcc-testsuite-full.json"
+        ],
+        [
+          "./scripts/validate-qt-qualification.py",
+          "--require-locked"
+        ],
+        [
+          "./scripts/validate-qt-runtime-qualification.py"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/sysroot-el8-x86_64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/sysroot-el8-aarch64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/host-build-common-el8-x86_64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/host-gcc-build-el8-x86_64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/host-gcc-test-el8-x86_64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/host-python-build-el8-x86_64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/host-runtime-el8-x86_64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/host-qt-build-el8-x86_64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/qt-target-el8-x86_64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/qt-target-el8-aarch64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/qt-runtime-el8-x86_64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "config/rpm/qt-runtime-el8-aarch64.plan.json"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/sysroot-el8-x86_64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/sysroot-el8-aarch64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/host-build-common-el8-x86_64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/host-gcc-build-el8-x86_64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/host-gcc-test-el8-x86_64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/host-python-build-el8-x86_64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/host-runtime-el8-x86_64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/host-qt-build-el8-x86_64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/qt-target-el8-x86_64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/qt-target-el8-aarch64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/qt-runtime-el8-x86_64.json",
+          "--require-lock"
+        ],
+        [
+          "./scripts/validate-rpm-lock.py",
+          "locks/qt-runtime-el8-aarch64.json",
+          "--require-lock"
+        ],
+        [
+          "/usr/bin/python3",
+          "-m",
+          "compileall",
+          "-q",
+          "scripts",
+          "docker",
+          "tools/crossforge"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/build-binutils.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/build-cpython-cross.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/build-cpython-native.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/build-ffmpeg.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/build-gcc.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/build-qt-host.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/build-qt-target.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/build-zstd.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/check-qt-host-install.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/check-qt-target-install.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/collect-buildkit-diagnostics.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/configure-qt-host.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/configure-qt-target.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/install-hybrid-runtime.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/prepare-srpm.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/qualify-crosspack-install.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "scripts/run-aarch64-smoke.sh"
+        ],
+        [
+          "bash",
+          "-n",
+          "docker/run-python-qualification.sh"
+        ],
+        [
+          "gcc",
+          "-fsyntax-only",
+          "-fPIC",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "scripts/deny-target-exec.c"
+        ],
+        [
+          "gcc",
+          "-fsyntax-only",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "scripts/target-exec-canary.c"
+        ],
+        [
+          "gcc",
+          "-fsyntax-only",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "scripts/target-artifact-canary.c"
+        ],
+        [
+          "gcc",
+          "-fsyntax-only",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "scripts/qt-plugin-probe.c"
+        ],
+        [
+          "docker",
+          "buildx",
+          "bake",
+          "--print",
+          "phase5",
+          "phase6",
+          "phase7",
+          "phase8",
+          "phase9",
+          "phase10",
+          "phase13-source",
+          "phase13-host-tools",
+          "phase13-integration",
+          "phase13-contract",
+          "phase13-ports",
+          "phase14",
+          "phase15",
+          "phase16",
+          "qt-source-qualified",
+          "qt-target-runtime-qualified",
+          "candidate"
+        ]
+      ],
+      "scope": "remaining quick validators, all pinned RPM plans/locks, Python/Bash/C syntax and canonical Bake --print in socketless Docker; not BuildKit --check or qualification",
+      "seconds": 4.516,
+      "status": "passed"
+    },
+    "renderer_checks": 3,
+    "skipped_tests_followup": {
+      "names": [
+        "test_prepare_zstd_source.PrepareZstdSourceTests.test_tracked_component_prepares_real_signed_source_subset",
+        "test_prepare_zstd_source.PrepareZstdSourceTests.test_real_prepared_source_builds_static_host_archive",
+        "test_crosspack_plan.CrosspackPlanTests.test_real_nfpm_build_is_atomic_and_reproducible"
+      ],
+      "scope": "three previously skipped resource-dependent tests in socketless offline Docker; locked archive/binary hashes and actual signed zstd source preparation",
+      "seconds": 6.712,
+      "skipped": 0,
+      "status": "passed",
+      "tests": 3
+    }
   }
 }
