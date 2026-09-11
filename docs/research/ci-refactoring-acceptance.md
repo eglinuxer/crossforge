@@ -1,6 +1,6 @@
 # CI 重构验收状态
 
-本页是六项已确认方案的验收索引，便于评审；详细历史在[实施进度](ci-refactoring-progress.md)。工作分支 `codex/component-ci-refactor` 的本地实现 `a6cbfd6` 已整合完整配置测试并行、GCC native 预期诊断修复及本地 SDK OCI 交接；远程 main 的外部诊断修复 `e8aa68a` 已包含在其历史中。本地整合版本尚未推送或合并 main。本页不构成候选或发布资格证据。
+本页是六项已确认方案的验收索引，便于评审；详细历史在[实施进度](ci-refactoring-progress.md)。工作分支 `codex/component-ci-refactor` 的实现 `a6cbfd6` 已整合完整配置测试并行、GCC native 预期诊断修复及本地 SDK OCI 交接，并以含验收记录的 `f502449` 推送至 PR #3；远程 main 的外部诊断修复 `e8aa68a` 已包含在其历史中。PR #3 的完整运行仍在进行，尚未合并 main。本页不构成候选或发布资格证据。
 
 | 已确认方向 | 当前实现与已取得证据 | 尚待验收 |
 |---|---|---|
@@ -42,3 +42,13 @@
 整合版本 `a6cbfd6` 在固定、断网、4 CPU / 16 GiB Docker 中通过完整 1,457 项配置测试和 40 项打包测试，无跳过。配置测试 159.906 秒；独立复核确认四个进程的实际测试身份与完整清单一致，并核对 872 份输入文件的字节、权限和源码摘要。锁定配置/RPM、生成文件、语法与全部 workflow actionlint 通过。GCC full 与六行源码 SDK 的实际 Docker 构建仍在执行；共享 builder 的排队耗时不用于性能比较。尚未取得整合后的真实 PR 全通过，main 仍未合并。
 
 四个已提交版本在 Docker 中经原材料闭包接口对照：整合未改变任何编译器源码输入，单独 GCC 修复与整合版本的完整 GCC 门禁输入完全相同。两种 SDK 相对单独交接修复的唯一材料差异是 `config/release.json`，配方参数相同；因此仍需用更新的 release 绑定执行 SDK 最终集成，不能直接把旧绑定上的通过记为整合验收。
+
+## 当前检查结果与 main 资格重放接线（2026-09-11）
+
+本地 GCC full 已完成，原校验器接受全部四套 suite 的 461,362 条结果；87 条 unexpected 的状态、suite、identity 与 occurrence 均保持原基线。实际 full RUN 为 3,740.8 秒，报告摘要为 `72a4deea5bdfd2ddd98cfe5b2adcc32d2aa682f3ce1d1366fa17fdac5ae557ea`。这证明本地完整资格通过；GitHub 的实际 native 环境仍以 PR #3 当前运行结果为准。源码 SDK 已通过 cp313、cp311 的 OCI 交接并继续后续行，尚未完成整轮及更新 release 绑定后的最终 SDK 集成。
+
+增量选择修复的 [PR #5](https://github.com/eglinuxer/crossforge/pull/5) 在 `8d545fa` 的[真实运行](https://github.com/eglinuxer/crossforge/actions/runs/34646398867)通过全部已选检查。实际合并树与本地源码树一致；1,459 项配置测试的身份逐项匹配本地完整覆盖，两个既有 zstd 资产跳过和一个 nFPM 打包跳过已在本地 Docker 补齐。quick job 为 318 秒，配置测试 224.319 秒；材料计划只选择 `platform-python-check`，没有编译输入变化。它仍以 PR #3 工作分支为 base，不能代替主改造及合并后 main 专属门禁。
+
+另在独立分支补齐 main 的工具链、GCC smoke/full、vcpkg 重放接线。这些 job 原本只验证 raw 组件，却允许普通 BuildKit 缓存满足资格阶段；它们尚无认证资格目录，无法证明旧报告匹配当前物理环境。现在已选择的五个范围均经过原 replay executor，强制执行其资格 RUN，并核对完整执行区间和未改变的物理环境。保持原动态目标、组件输入和只读权限，观察记录不冒充可复用签名 receipt。候选发布图内的 raw/cache 路线仍独立存在，其报告交接与新鲜度必须另行补齐，尚不能宣布第五批或候选闭环完成。
+
+[本次记录](main-qualification-freshness-2026-09-11.json)保留修复前五个范围缺少 replay 参数的失败、修复后真实 composite shell 至 CLI 的回归，以及固定断网 Docker 中完整 1,460 项配置测试 / 153.559 秒、40 项打包 / 1.702 秒的通过结果，无跳过。锁定验证、生成文件、完整语法及 workflow actionlint 通过。第一次完整调用漏挂 Docker CLI，相关检查失败或跳过；原记录保持失败，补齐 CLI 和固定 Buildx 后重新执行了完整检查。main 接线尚待真实受信入口验收；本次没有重跑已通过的 GCC full 或发布候选。

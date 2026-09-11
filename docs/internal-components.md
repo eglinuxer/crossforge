@@ -785,6 +785,16 @@ authentication, transport or verification failure. Fresh local rows are not
 signed or published. Candidate prequalification shares this job, while candidate
 image publication retains its existing raw-component route.
 
+Selected main toolchain, GCC smoke/full and vcpkg jobs use the explicit
+qualification replay path. These jobs have no authenticated qualification
+catalog, so they re-execute their canonical test stages from verified raw
+components and require fresh BuildKit RUN events. They retain the same selected
+roots and read-only permissions. Replay observations bind the physical worker
+and execution interval; they are not signed reusable qualification receipts.
+The PR source-build route continues to exercise the original source graph.
+This main-job fallback does not change the candidate publication graph or
+establish verified report reuse within that graph.
+
 After a fresh row is sealed and its receipt matches the planned inputs and
 producer, the controller removes that row's `payload/` and `extracted/` staging
 directories. Diagnostic copies must have succeeded first. It retains the OCI

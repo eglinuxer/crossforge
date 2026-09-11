@@ -16,6 +16,9 @@ on:
 
 # The caller grants the maximum needed by the producer chain. Every job
 # explicitly reduces permissions; ordinary consumers cannot write or sign.
+# Toolchain, GCC and vcpkg jobs have no authenticated qualification catalog.
+# Selected gates therefore replay from verified raw components and require
+# fresh execution evidence; a normal BuildKit cache hit cannot satisfy them.
 permissions:
   contents: read
 
@@ -101,6 +104,7 @@ jobs:
       - uses: ./.github/actions/run-build-stage
         with:
           component-reader: true
+          replay-qualification: true
           component-builder: ${{ steps.buildx.outputs.builder }}
           stage: ${{ matrix.stage }}
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
@@ -161,6 +165,7 @@ jobs:
       - uses: ./.github/actions/run-build-stage
         with:
           component-reader: true
+          replay-qualification: true
           component-builder: ${{ steps.buildx.outputs.builder }}
           stage: vcpkg
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['vcpkg']) }}
@@ -189,6 +194,7 @@ jobs:
       - uses: ./.github/actions/run-build-stage
         with:
           component-reader: true
+          replay-qualification: true
           component-builder: ${{ steps.buildx.outputs.builder }}
           stage: ${{ matrix.stage }}
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
