@@ -17,6 +17,9 @@ DOCUMENTS = {"README.md", "SUPPORT.md", "SECURITY.md", "AGENTS.md", "LICENSE-MIT
 CONTROL_WORKFLOWS = {".github/workflows/" + name + ".yml" for name in (
     "candidate", "release", "release-control-plane", "native-aarch64-release", "component-pilot",
     "replay-qualification")}
+SDK_CONTROLLERS = {".github/actions/run-component-sdk/action.yml", "scripts/ci-sdk.py"} | {
+    "scripts/crossforge_internal/" + name + ".py" for name in
+    ("ci_sdk", "python_sdk", "python_sdk_catalog", "python_sdk_recovery")}
 
 
 def quick_only(path):
@@ -100,7 +103,7 @@ def select(before, after, paths):
     relevant = [path for path in paths if not quick_only(path)]
     if not relevant:
         return _plan({}, {}, [], paths)
-    known = _known_paths(before) | _known_paths(after) | GENERATORS | CONTROL_WORKFLOWS
+    known = _known_paths(before) | _known_paths(after) | GENERATORS | CONTROL_WORKFLOWS | SDK_CONTROLLERS
     unknown = sorted(set(relevant) - known)
     if unknown:
         return full(after["stages"], "unrecognized paths: " + ", ".join(unknown), paths)
@@ -111,6 +114,14 @@ def select(before, after, paths):
             changes[target] = _difference(previous, node)
     selected = {stage: [target for target in targets if target in changes]
                 for stage, targets in after["stages"].items() if not stage.startswith("qt")}
+    controllers = sorted(set(relevant) & SDK_CONTROLLERS)
+    if controllers:
+        if "sdk" not in after["stages"]:
+            return full(after["stages"], "SDK orchestration changed without a canonical SDK stage", paths)
+        selected["sdk"] = list(after["stages"]["sdk"])
+        for target in selected["sdk"]:
+            changes.setdefault(target, _difference(before["nodes"].get(target), after["nodes"][target]))
+            changes[target]["orchestration_files"] = controllers
     # Control-plane workflow changes are validated by quick's dedicated tests
     # and workflow lint. They are not compiler inputs. A generated policy or
     # copied implementation change still selects its real Bake consumers above.

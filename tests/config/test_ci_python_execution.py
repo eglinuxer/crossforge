@@ -95,9 +95,12 @@ class PythonExecutionTests(unittest.TestCase):
             self.assertIn("permissions:\n      contents: read\n      packages: read", block)
             self.assertNotIn(": write", block)
             self.assertNotIn("id-token:", block)
-            self.assertIn("component-reader: true", block)
+            if name == "sdk":
+                self.assertIn("uses: ./.github/actions/run-component-sdk", block)
+            else:
+                self.assertIn("component-reader: true", block)
             self.assertIn("component-builder: ${{ steps.buildx.outputs.builder }}", block)
-            self.assertEqual("python-components: true" in block, name in ("python", "sdk"))
+            self.assertEqual("python-components: true" in block, name == "python")
             needs = re.search(r"needs: \[(.+)\]", block).group(1).split(", ")
             self.assertEqual("python-components" in needs, name in ("python", "sdk"))
         producer = job(workflow, "python-components")
@@ -120,6 +123,11 @@ class PythonExecutionTests(unittest.TestCase):
                 after = after.replace("    permissions:\n      contents: read\n      packages: read\n", "", 1)
                 after = after.replace("component-reader: true", "component-reader: ${{ inputs.component-reader }}")
             after = after.replace(", python-components", "").replace("          python-components: true\n", "")
+            if name == "sdk":
+                after = after.replace("uses: ./.github/actions/run-component-sdk", "uses: ./.github/actions/run-build-stage")
+                after = after.replace("        with:\n          component-builder:",
+                    "        with:\n          component-reader: ${{ inputs.component-reader }}\n          component-builder:")
+                after = after.replace("          targets-json:", "          stage: sdk\n          targets-json:")
             self.assertEqual(before, after, name)
         action = (ROOT / ".github/actions/run-build-stage/action.yml").read_text()
         self.assertIn('test "$COMPONENT_READER" = true\n          components+=(--python-components)', action)

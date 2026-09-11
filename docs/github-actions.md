@@ -33,6 +33,7 @@ Avoid starting a second candidate for the same SHA while one is active.
 | Full GCC baseline bytes | GCC smoke/full evidence roots; no compiler input changes |
 | Shared cross-Python build script | All cross-Python builds, affected row gates and SDK |
 | Candidate supply policy | Relevant input/policy checks; no compiler input changes |
+| SDK acquisition, recovery or orchestration implementation | Canonical SDK roots, with explicit orchestration reasons; compiler inputs change only when their actual materials change |
 | cp39 patch and its release pin | Only cp39 native/cross compiler inputs change; several qualification roots still change because they copy the entire release document |
 | Unknown path or unavailable comparison base | Complete SDK/GCC stage set |
 
@@ -72,14 +73,39 @@ to this wrapper; each leaf job receives the permissions for its own operation.
 PRs, forks and non-main dispatches use a separate contents:read-only caller and
 retain the complete source dependency graph without registry credentials.
 
-The current graph retains broad Python/vcpkg qualification COPY dependencies,
-including the complete `release.json`. Shared clean-Rocky Python runtime roots
-now consume their authenticated sysroot projection, so a product version change
-does not invalidate those roots; the row reports still retain full-release
-bindings. GCC gates now consume authenticated policy
-components, but their aggregate still binds smoke/full and both architectures.
-The planner preserves these remaining dependencies. Further qualification input
-scoping and consuming qualified Python row artifacts in production remain rollout work. Full
+The SDK job now calls `run-component-sdk` and `scripts/ci-sdk.py`. It independently
+acquires two raw toolchains, thirty raw Python parts and six row qualifications.
+Matching signed rows retain their original producer. Only a missing qualification
+input index permits fresh row qualification on the SDK worker; missing raw parts,
+authentication errors, transfer errors or rejected evidence stop the job.
+Physical environment matching remains strict. At most two independent Python
+processes qualify missing rows using the same builder; all rows must pass before
+the existing SDK executor rechecks their files and freshly runs append/final gates.
+Process isolation avoids the documented shared-interpreter mutation hazards of
+[`runpy.run_path`](https://docs.python.org/3/library/runpy.html).
+
+This is a transitional consumer route. Existing selected Python jobs and required
+status dependencies remain, so their work may overlap the SDK worker's fresh
+qualification. The signed `produce-python-row.yml` workflow is not yet called by
+the main matrix, and fresh local row artifacts are not published. Candidate
+prequalification calls this same build workflow; candidate image publication
+retains its existing raw-component route and fresh qualification policy. These
+paths still need actual Docker and GitHub acceptance; no speed or disk reduction
+has been measured for this change.
+
+Before row execution, SDK diagnostics preserve all thirty-two raw selections in
+`execution/component-recovery.json`, plus a separate canonical SHA256 in
+`execution/recovery-reference.json`. The job summary identifies the uploaded
+diagnostic artifact and SHA256. This is the existing raw recovery format, usable
+through the raw recovery interface under its original source/root/environment
+checks; it is not a complete six-qualified-row checkpoint. Automatic recovery of
+the new SDK job and persistence of its fresh local rows remain rollout work.
+OCI blobs and installed trees stay outside the diagnostic artifact.
+
+Python target/runtime/row, GCC and all five vcpkg qualification stages now consume
+authenticated scoped policy inputs. Final SDK integration still binds the complete
+release document, and GCC aggregate policy still binds smoke/full and both
+architectures. The planner preserves these actual dependencies. Full
 qualification continues daily, manually and for explicitly requested candidates.
 The new dynamic workflow is locally checked but has not yet run on GitHub.
 

@@ -1,0 +1,210 @@
+{
+  "base_commit": "fd458cb7f8109f8bc9793315438ad9a63fac214d",
+  "checks": [
+    {
+      "command": [
+        "./scripts/validate-release.py",
+        "--require-locked"
+      ],
+      "seconds": 0.023
+    },
+    {
+      "command": [
+        "./scripts/validate-supply-chain-evidence.py"
+      ],
+      "seconds": 0.446
+    },
+    {
+      "command": [
+        "./scripts/validate-frozen-abi.py"
+      ],
+      "seconds": 0.32
+    },
+    {
+      "command": [
+        "./scripts/validate-python-runtime-providers.py"
+      ],
+      "seconds": 0.242
+    },
+    {
+      "command": [
+        "./scripts/render-release-components.py",
+        "--check"
+      ],
+      "seconds": 0.183
+    },
+    {
+      "command": [
+        "./scripts/render-vcpkg-integration.py",
+        "--check"
+      ],
+      "seconds": 0.267
+    },
+    {
+      "command": [
+        "./scripts/render-bake.py",
+        "--check"
+      ],
+      "seconds": 0.213
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "docker/run-python-qualification.sh"
+      ],
+      "seconds": 0.001
+    },
+    {
+      "command": [
+        "actionlint",
+        "-ignore",
+        "unexpected key \"queue\" for \"concurrency\" section"
+      ],
+      "seconds": 0.009
+    }
+  ],
+  "date": "2026-09-11",
+  "environment": {
+    "cpus": 4,
+    "docker_socket_mounted": false,
+    "memory": "16g",
+    "network": "none",
+    "platform_python": "3.6.8",
+    "rocky_image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+    "tool_image_id": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "user": "1000:1000"
+  },
+  "kind": "crossforge-local-refactoring-observation",
+  "limits": [
+    "Registry/domain artifact validation, GitHub source identity, actual environment observation, qualification production and final SDK execution use explicit fixtures/mocks in new orchestration tests.",
+    "Successful worker launch is mocked to call the real request decoder and control flow; the negative request test launches a real independent Python process. No successful BuildKit row solve is claimed.",
+    "Rocky compiles three production files and runs seventeen new tests using the saved real Bake print for its graph fixture. It does not exercise all existing modern CI cache CLI operations under Python 3.6.",
+    "Candidate prequalification shares verify-main-builds and therefore this new SDK route. Candidate image publication remains on the existing raw-component route.",
+    "Existing standalone Python jobs are not deduplicated. The main matrix does not call the signed row producer; fresh local rows are not published or signed, and the new SDK job has no automatic complete-row recovery entry.",
+    "No Docker recipe, generated policy, compiler/source pin or ABI/GCC baseline changed in this batch. Bake print and fixture results are not runtime or performance evidence.",
+    "Initial focused failures involved incomplete raw fixtures, a wrong argument index and reused diagnostic paths. Production now rejects reused run diagnostics. Manual review additionally replaced shared-interpreter runpy threads with subprocesses, followed by final focused, Rocky and full reruns.",
+    "Actionlint ignores only the existing concurrency.queue compatibility limitation. Intermediate thread-based/full logs are retained separately and are not the final test results.",
+    "Strict physical matching remains unchanged. Same-worker fresh qualification is an explicitly stated transition assumption; the optional cross-runner policy choice is still pending.",
+    "New runtime/report/source replay, real GitHub trust and retries, native ARM/candidate, reference-aware retention and three baseline plus affected-change/performance experiments remain pending.",
+    "Prior automatic review rejected mounting the host Docker socket inside an orchestration container because it grants broad daemon control. Explicit authorization remains pending; no retry or bypass occurred.",
+    "No merge to main, remote push or publication."
+  ],
+  "local_outputs": {
+    "focused.log": {
+      "path": "/tmp/crossforge-main-sdk/focused.log",
+      "sha256": "a0e89dc0c9d96748abae3a00712b779ea0f3ab21a49070b82cd0a5046ada853f"
+    },
+    "full-result.json": {
+      "path": "/tmp/crossforge-main-sdk/full-result.json",
+      "sha256": "471a7fc7d9a2665cdc94a29f372ecfabed1cfc220bd45af8c0c753952984ca47"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-main-sdk/full.log",
+      "sha256": "dee0ced26eed152966341b87480d24d932136fe5aa69c45819507fbb10951987"
+    },
+    "full.py": {
+      "path": "/tmp/crossforge-main-sdk/full.py",
+      "sha256": "83225c71ff855365fe579b9a7461cc6d6ca95b24eacdee33d248d69f6b11fb3e"
+    },
+    "graph.json": {
+      "path": "/tmp/crossforge-main-sdk/graph.json",
+      "sha256": "9b1f141995165ed8f35a59441cdd8673ec276e8d7b8b530cf083a5b83f2be93c"
+    },
+    "graph.log": {
+      "path": "/tmp/crossforge-main-sdk/graph.log",
+      "sha256": "06fbf69971e5e236c7b5683cf19aa2c6ad3d2a0ecf474cb7cd0f1f4c4c637c0c"
+    },
+    "graph.py": {
+      "path": "/tmp/crossforge-main-sdk/graph.py",
+      "sha256": "87ea5732e6f989f26d36b976ae712f74017bc3b9263af4867cf33ef474463574"
+    },
+    "initial-focused.log": {
+      "path": "/tmp/crossforge-main-sdk/initial-focused.log",
+      "sha256": "a09d84c21c2ab18632d81fd09b87b5f738bf8ae27d3eb5a2efc2e0f6eb06b63b"
+    },
+    "initial-full-result.json": {
+      "path": "/tmp/crossforge-main-sdk/initial-full-result.json",
+      "sha256": "4e4a44d4a7543f949d7aa4a2164e073938b661aff8c66c7c1c363e7d89756135"
+    },
+    "initial-full.log": {
+      "path": "/tmp/crossforge-main-sdk/initial-full.log",
+      "sha256": "3ed5280aed00b9b5aa2879475b9ab4de79250cd812e890e553216c32b2f654cb"
+    },
+    "rocky.log": {
+      "path": "/tmp/crossforge-main-sdk/rocky.log",
+      "sha256": "100cabf70b81443e6ff17a0f58d8e906e3b5096e57027eec9bcdc8d003ef15c7"
+    },
+    "rocky.py": {
+      "path": "/tmp/crossforge-main-sdk/rocky.py",
+      "sha256": "8f6acf9be38bdaf3c268221f13304a268267963ec287085a6bc8566ddac2a4e8"
+    },
+    "thread-focused.log": {
+      "path": "/tmp/crossforge-main-sdk/thread-focused.log",
+      "sha256": "3e893d1895f26238cf333f3ac52b845cd4486046b8e2f8f04304ee1e537ac6ad"
+    },
+    "thread-rocky.log": {
+      "path": "/tmp/crossforge-main-sdk/thread-rocky.log",
+      "sha256": "081ed3efc0fc66f5e793bc6691c042f22325ac045bbc5c73bd60feca9dc27976"
+    }
+  },
+  "references": [
+    {
+      "supports": "run_path changes shared interpreter state; separate processes avoid its threading limitations.",
+      "url": "https://docs.python.org/3/library/runpy.html"
+    }
+  ],
+  "regression_scope": [
+    "Real acquisition control flow and SDK graph validation require two raw toolchains and thirty raw Python parts; no implicit source build fallback.",
+    "Matching signed rows retain original producers. Only missing qualification indexes trigger fresh rows on the SDK worker; signature, transport and evidence failures stop execution.",
+    "At most two independent Python interpreters share the original builder. Requests bind a separate canonical SHA256 and verify source/invocation/physical identity before and after row work.",
+    "All six rows finish before the original SDK executor; receipt/input changes and row, SDK, source or environment failures prevent a success record.",
+    "A fixed thirty-two-part raw recovery record and independent SHA256 survive final-integration failure and validate with the original raw recovery contract.",
+    "CLI resource monitoring stops on success or failure; existing diagnostics are not overwritten. An actual worker CLI subprocess rejects a changed request before source or Docker access.",
+    "SDK controller changes select canonical SDK roots with explicit orchestration reasons; mixed unknown paths still select full gates and actual compiler material changes keep their own reasons.",
+    "Workflow permissions, existing selected Python jobs, dependencies, required-status gates, heartbeat and separate diagnostic uploads remain covered."
+  ],
+  "schema_version": 1,
+  "scope": "Main SDK acquisition with strictly matched signed rows or fresh same-worker qualification before final integration",
+  "source_sha256": {
+    ".github/actions/run-component-sdk/action.yml": "e4d3554187ee5b0d787947e2338fd7dee79b29e65a20cf3b10d666b256f394da",
+    ".github/workflows/verify-main-builds.yml": "ddb58c965ddeb3adcd360b83f7c5bc3d3566288e9d9ed9e1fac231cf23f20446",
+    "README.md": "35ee0370d9c1a125a405fba9567a8dfa40033e77a74f1c25d8ad3dd38171f626",
+    "docs/architecture.md": "4a3725b27bfa7cb1ff5eedc3ee075d26c5d4a40a36a66bfa3f74273e7e631b2e",
+    "docs/github-actions.md": "423e08d1707744344ea4dea15f3e3ecd819d431512480aebaf312eaef014fc4b",
+    "docs/internal-components.md": "9170aa9818f2bb6dd7e513caef10b623dbf25e3a08c0598c47b2a39f71917fa9",
+    "scripts/ci-sdk.py": "43fdb6f1f7a8156b7caeb17b9a7dafcf7c82364478fd592f2cc70e0e55d87a84",
+    "scripts/crossforge_internal/ci_sdk.py": "4edfb4a8be6ed720c6adf2b38a5cadc787786443c15fcbe228818be0c81c1ce8",
+    "scripts/crossforge_internal/incremental_plan.py": "61125faa15d6840f19606653b917c2073033af5f285aa7284db57bd820a45811",
+    "tests/config/test_ci_python_execution.py": "fe62a81d624445fa31f735a294d46196e70dd90a1b4e2da329ca3f46f10f391f",
+    "tests/config/test_ci_sdk.py": "e439c0b88c64a429c915df8b9cd8f499c3918995d8ae183581858b7fe6b2c4b9",
+    "tests/config/test_incremental_plan.py": "acc469e579037a3cb1eb020af819af0c207e4058d9687ba40bdf600d5ab609af"
+  },
+  "status": "local contract checks passed; new Docker runtime, GitHub and performance acceptance pending",
+  "tests": [
+    {
+      "seconds": 291.129,
+      "skipped": 0,
+      "suite": "config",
+      "tests": 1395
+    },
+    {
+      "seconds": 1.151,
+      "skipped": 0,
+      "suite": "packaging",
+      "tests": 40
+    },
+    {
+      "seconds": 9.019,
+      "skipped": 0,
+      "suite": "focused",
+      "tests": 59
+    },
+    {
+      "seconds": 5.511,
+      "skipped": 0,
+      "suite": "rocky",
+      "tests": 17
+    }
+  ]
+}

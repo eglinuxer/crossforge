@@ -155,7 +155,10 @@ manually. Version tags request digest-only
 stable promotion of the exact commit's successful candidate, subject to production
 approval; see the Actions operating guide for tag timing and required credentials.
 Toolchains, Python rows, vcpkg and GCC use separate GitHub-hosted jobs with
-shared trusted registry caches. See [the Actions operating guide](docs/github-actions.md)
+shared trusted registry caches. The main SDK job consumes authenticated components
+and qualifies missing rows on its own worker before fresh final integration.
+Independent Python jobs remain during this transition; live CI validation and
+performance measurement are pending. See [the Actions operating guide](docs/github-actions.md)
 for stage selection, cold-build measurement, diagnostics and the required check.
 
 Qt checks run locally using the commands below. They are excluded from default

@@ -219,12 +219,9 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-locked-buildx
         id: buildx
-      - uses: ./.github/actions/run-build-stage
+      - uses: ./.github/actions/run-component-sdk
         with:
-          component-reader: true
-          python-components: true
           component-builder: ${{ steps.buildx.outputs.builder }}
-          stage: sdk
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['sdk']) }}
 
   verified:

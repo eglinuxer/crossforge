@@ -703,8 +703,9 @@ signing/storage attempt preserves the original qualification producer.
 Failure diagnostics retain the available input record, BuildKit progress and
 qualification reports; installed payloads and OCI blobs are excluded. Diagnostic
 source paths reject symlinks. These are local orchestration/contract fixtures,
-not new GitHub signatures or actual row execution. Main matrix/SDK wiring,
-cross-run acceptance and environment-policy decisions remain outstanding.
+not new GitHub signatures or actual row execution. The signed producer is not yet
+called by the main matrix. The main SDK consumer route below, cross-run acceptance
+and environment-policy decisions have separate rollout boundaries.
 
 ### Acquire SDK inputs from signed catalogs
 
@@ -737,8 +738,22 @@ Neither command publishes artifacts or implicitly rebuilds missing dependencies.
 The existing `bind-python-sdk` and `execute-python-sdk` commands retain their local
 manifest interface and all prior checks.
 
-These commands connect the catalog reader to full SDK integration; they have not
-yet been enabled in the main dynamic matrix or candidate publication workflow.
+These commands connect the catalog reader to full SDK integration. Main's SDK
+job now uses `scripts/ci-sdk.py` to call acquisition and then run missing row
+qualifications on the same worker before the existing SDK executor. That CI-only
+controller requires the exact trusted GitHub caller and clean source; local
+Docker operation continues through the explicit component commands above.
+It preserves strict environment matching, shares one builder between at most two
+independent row interpreter processes, and stops on missing raw inputs or any
+authentication, transport or verification failure. Fresh local rows are not
+signed or published. Candidate prequalification shares this job, while candidate
+image publication retains its existing raw-component route.
+
+The SDK diagnostic artifact saves the original thirty-two raw selections and
+their independent SHA256 before row qualification/final integration. Its summary
+provides the artifact ID and document location. This supports the original raw
+recovery interface; complete recovery of this CI job's fresh local row results
+is not implemented. Existing independently selected Python jobs also remain.
 Local fixtures use a real parsed Bake graph and the existing SDK input capture,
 but explicitly mock registry/domain verification and execution boundaries. Graph
 checks confirm the eight-artifact boundary and absence of GCC/CPython source

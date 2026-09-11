@@ -186,7 +186,13 @@ clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七
 
 正式行 CI 的独立生产/签名工作流和目录查找接口已实现，但尚未接入 main 动态 matrix 或候选 SDK。查找方重新绑定七个上游组件、当前构建及物理环境，只有目录输入索引缺失才请求新资格；签名、传输或实际行验收失败均报错。新 catalog schema 4 只授权固定 `produce-python-row.yml` 的完整行资格 receipt，原始组件 signer 权限保持原范围。复用保留原 producer；新生产必须通过既有正式资格执行器并在发布前核对输入、receipt、环境与 clean source，重试沿用原 run/attempt 和精确交接摘要。实际 GitHub 签名、跨 run/跨机器环境验收仍未完成。
 
-完整 SDK 另提供 `acquire-python-sdk` 与 `execute-python-sdk-catalog` CLI：前者从签名目录取得两份共享工具链、六行原始组件及六份行资格，只有完整就绪才输出可消费的组件清单；后者随后调用原 SDK executor，独立重验实际文件并重新执行最终集成。目录缺失显式列出待生产组件/行，验签或产物核验失败则报错，不隐式重编译。OCI 数据与上传诊断目录严格分离，旧本地组件清单接口保持。该自动路径尚未接入 main 动态任务或候选发布，严格物理环境匹配也未放宽。
+完整 SDK 另提供 `acquire-python-sdk` 与 `execute-python-sdk-catalog` CLI：前者从签名目录取得两份共享工具链、六行原始组件及六份行资格，只有完整就绪才输出可消费的组件清单；后者随后调用原 SDK executor，独立重验实际文件并重新执行最终集成。目录缺失显式列出待生产组件/行，验签或产物核验失败则报错，不隐式重编译。OCI 数据与上传诊断目录严格分离，旧本地组件清单接口保持。main SDK 已通过下述过渡控制器调用 acquisition，独立目录执行 CLI 和候选发布路径保持原接口，严格物理环境匹配未放宽。
+
+`verify-main-builds.yml` 的 SDK job 使用 `run-component-sdk` 与标准库 `ci_sdk.py`。它要求两份工具链和三十份 Python 原始组件全部已验收，仅在当前输入对应的资格索引缺失时，在 SDK 所在 worker 补做该行双目标完整资格；验签、传输或既有证据失败不能触发回退。父进程最多调度两个独立 Python 子进程，共享原 builder，并在子进程前后及最终集成前后复核源码、调用身份与完整物理环境。子进程请求另绑定独立 canonical SHA256。使用独立解释器避免既有资格模块通过 `runpy.run_path` 修改共享解释器状态时发生并发冲突；依据见 [Python 官方文档](https://docs.python.org/3/library/runpy.html)。六行全部通过后，原 SDK executor 重新检查实际 receipt/文件，并强制执行 append/final 门禁。
+
+SDK job 仍只有 contents/read 和 packages/read 权限；匹配的签名行保留原 producer，新行只留在本 job，不发布或签名。既有被选中的独立 Python 任务及 required status 依赖未去重，可能与本地补验重复。candidate 前置资格调用同一工作流，候选镜像发布本身仍走原始组件绑定路径。SDK 编排与目录/恢复实现变更由增量选择器显式选择 canonical SDK roots，诊断区分编排原因与真实源码输入变化。实际新 Docker 运行、GitHub 事件和性能仍待验收。
+
+在补做资格或最终集成之前，SDK job 保存原 raw schema 的三十二份固定选择及独立 SHA256，诊断上传后的 summary 给出 run/artifact ID、摘要和文件位置。失败时可按原 raw recovery 接口及严格来源约束取回这些原始组件；这份记录不包含新执行的六行资格，不能冒充下面的完整 SDK 恢复记录。新的主 SDK job 尚无自动恢复入口，OCI blobs 与安装树也不进入诊断工件。
 
 这两个目录消费入口可用 `--record-component-recovery` 在完整取得 32 个原始组件和六行资格后、最终集成开始前写出 `component-recovery.json`；acquisition 结果给出它的 canonical SHA256。恢复时同时提供 `--component-recovery` 与独立保存的 `--component-recovery-sha256`，并使用新的数据/诊断目录。SDK 恢复 schema 1 嵌套原 raw recovery schema 1，额外固定各行的 catalog/artifact digest、输入及 receipt SHA256 和原 producer，不扩大原始组件 schema 的资格角色权限。它要求干净 Git checkout 的同一提交、SDK 根、实际来源材料与完整物理执行环境；仅部分输入就绪时不生成完整恢复记录。
 

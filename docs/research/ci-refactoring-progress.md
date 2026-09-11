@@ -573,3 +573,21 @@ vcpkg SDK 新增可选工具链组件目录和两个资格根 pin，要求一起
 SDK 编排测试的 registry、签名、域产物验收、实际执行环境探测和最终 integration 是显式 fixture/mock，源码状态在这些用例中也是可控 fixture；旧 reader/信任与恢复域回归仍在全量和定向套件中运行。没有取得新的 GitHub 签名、跨 run 下载、目标执行或候选证据。初次定向运行中，原 SDK fixture 的部分 raw subject 是空占位，补齐测试需要的 receipt/layout/hash 后重测；同时修正了指向不存在测试模块的命令。未放宽生产摘要校验。
 
 本批未改动 Docker 配方、生成配置、版本 pin 或 ABI/GCC baseline。SDK 自动目录消费和恢复尚未接通 main/候选；行 producer 的跨 run 取得与完整工作流恢复仍待集成。实际新报告链、源码重放、GitHub 信任/重试、候选/原生 ARM、引用保留和性能实验仍待验收。跨 runner 资格环境边界及此前 Docker socket 自动审批拒绝后的明确授权仍待答复；本批没有挂载 socket 或绕过拒绝，未合入 main、推送或发布。
+
+## 批次 3/4/6：主 SDK 目录消费与同 worker 补验（2026-09-11）
+
+主 SDK job 改用 `run-component-sdk` 和标准库控制器 `ci_sdk.py`，由现有 acquisition 取得两份工具链、三十份 Python 原始组件及六行资格。严格匹配的签名行保留原 producer；只有资格输入索引缺失时，才在 SDK 所在 worker 补做该行双目标完整资格。缺少原始组件、验签、传输或证据失败均停止，不隐式重编译 GCC/CPython 或把错误当作缓存缺失。六行全部通过后，继续由原 SDK executor 独立检查 receipt/实际文件并强制执行 append/final 集成。
+
+跨 runner 的物理环境边界尚未确定，本批按已明确告知的过渡假设保留全部严格环境字段。父进程最多调度两个独立 Python 子进程，共享原 builder；每个请求绑定独立 canonical SHA256，子进程前后及最终集成前后核对源码、调用与执行环境。最初实现直接在线程中调用资格函数，手工复核发现其既有动态模块加载使用 `runpy.run_path`；依据 [Python 官方文档](https://docs.python.org/3/library/runpy.html) 的共享解释器状态限制，改为独立进程后重新完成最终检查。并行度仍为 2，未进行 2→3 实验。
+
+SDK job 权限继续为 contents/read 与 packages/read，新增行只保存在本 job，不发布或签名。补做资格和集成之前保存原 raw schema 的 32 份固定选择及独立摘要，上传诊断后的 summary 提供 run/artifact ID、canonical SHA256 和路径。原 raw recovery 接口可在自身严格约束下取得这些原始组件；该记录不包含新执行的行资格，不能替代完整 SDK 恢复记录。OCI blobs 与安装树不进入诊断工件，CLI 保留心跳、资源采样和失败退出记录，并拒绝覆盖已有 run 诊断。
+
+增量选择器明确识别 SDK 控制器、目录消费与恢复实现的变更，选择 canonical SDK roots，在原因中单列 `orchestration_files`。实际源码材料差异仍保留自身解释，不能把纯编排变化声称为 compiler inputs 变化；混合未知路径继续全量兜底。现有独立 Python job、原 job needs/timeout、权限和 required status 检查保留，可能与 SDK worker 的补验重复。`produce-python-row.yml` 仍未接入主 matrix。候选前置资格复用此工作流，因此也使用新 SDK job；候选镜像发布本身仍走原始组件路径。
+
+[验证记录](main-sdk-integration-2026-09-11.json)：固定、断网、非 root、无 Docker socket 的工具容器中 config 1395 项、291.129 秒及 packaging 40 项、1.151 秒全部通过，无跳过；四项 locked validators、三个 renderer `--check`、shell syntax 和 actionlint 通过（仅既有 concurrency.queue 兼容例外）。最终定向 59 项、9.019 秒通过；固定 Rocky 8 platform-python 3.6.8 编译三个生产文件并执行十七项新增回归、5.511 秒通过。Rocky 图入口读取同轮工具容器保存的实际 Bake print。
+
+新增 SDK 编排测试执行真实 acquisition 控制流、SDK 图验收、raw recovery contract 和子进程请求解码，显式 mock registry/域产物验收、GitHub 来源与物理环境观察、资格生产及最终执行。成功子进程调度在 fixture 中转入真实请求处理，另一个负向测试在工具容器与 Rocky 中实际启动独立 Python 进程，确认请求被修改时在访问源码/Docker 前拒绝。没有声称取得新的实际行 BuildKit solve。回归覆盖精确 32+6 集合、只补缺失行、两个并发槽、保留原 producer、失败及输入/环境漂移不写成功、原始恢复选择留存、诊断目录保护和工作流权限/门禁约束。
+
+首轮定向失败包括旧 raw subject fixture 字段不全、错误的参数位置及复用诊断目录，修正 fixture 后增加生产目录拒绝及回归。首轮完整套件和线程版本通过记录另行保留；最终记录以改为独立进程、加入原始恢复记录和实际子进程负向用例后的定向、Rocky 与全量运行作为依据。未改 Docker 配方、生成配置、版本 pin 或 ABI/GCC baseline。
+
+实际新报告链与源码 Docker 重放、GitHub 签名/跨 run 取得/重试、候选与原生 ARM、主 SDK 完整恢复、按引用保留及三次基线/受影响变更/并行度实验仍待验收，未宣称 CI 耗时或磁盘改善。此前自动审批拒绝容器挂载主机 Docker socket（广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。未合入 main、推送或发布。

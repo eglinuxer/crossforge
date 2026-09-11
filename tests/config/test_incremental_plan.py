@@ -70,6 +70,25 @@ class IncrementalPlanTests(unittest.TestCase):
         self.assertEqual(plan["changes"]["sdk-complete-dev"]["files"], ["cp39.patch"])
         self.assertEqual(plan["artifact_reuse"], "not-authorized-by-source-selection")
 
+    def test_sdk_controller_changes_select_sdk_without_claiming_compiler_input_changes(self):
+        for path in planner.SDK_CONTROLLERS:
+            plan = planner.select(self.before, self.snapshot(), [path])
+            self.assertEqual(plan["mode"], "incremental")
+            self.assertEqual(plan["targets"], {"sdk": ["sdk-complete-dev"]})
+            self.assertEqual(plan["compiler_inputs_changed"], [])
+            change = plan["changes"]["sdk-complete-dev"]
+            self.assertEqual(change["orchestration_files"], [path])
+            self.assertEqual(change["before_sha256"], change["after_sha256"])
+        plan = planner.select(self.before, self.snapshot(), ["scripts/ci-sdk.py", "unknown-controller.py"])
+        self.assertEqual(plan["mode"], "full")
+
+    def test_sdk_controller_and_real_recipe_changes_keep_both_reasons(self):
+        (self.root / "cp39.patch").write_text("modified\n")
+        plan = planner.select(self.before, self.snapshot(), ["cp39.patch", "scripts/ci-sdk.py"])
+        self.assertEqual(set(plan["targets"]), {"python-cp39", "sdk"})
+        self.assertEqual(plan["changes"]["sdk-complete-dev"]["files"], ["cp39.patch"])
+        self.assertEqual(plan["changes"]["sdk-complete-dev"]["orchestration_files"], ["scripts/ci-sdk.py"])
+
     def test_architecture_input_keeps_other_toolchain_independent(self):
         plan = self.change("x86.txt")
         self.assertEqual(set(plan["targets"]), set(self.stages) - {"toolchain-aarch64"})
