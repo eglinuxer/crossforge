@@ -1,0 +1,201 @@
+{
+  "base_commit": "3f5db3201ee656ac674d33497aa9ea3ae6d42b81",
+  "checks": [
+    {
+      "command": [
+        "./scripts/validate-release.py",
+        "--require-locked"
+      ],
+      "seconds": 0.022
+    },
+    {
+      "command": [
+        "./scripts/validate-supply-chain-evidence.py"
+      ],
+      "seconds": 0.377
+    },
+    {
+      "command": [
+        "./scripts/validate-frozen-abi.py"
+      ],
+      "seconds": 0.386
+    },
+    {
+      "command": [
+        "./scripts/validate-python-runtime-providers.py"
+      ],
+      "seconds": 0.233
+    },
+    {
+      "command": [
+        "./scripts/render-release-components.py",
+        "--check"
+      ],
+      "seconds": 0.186
+    },
+    {
+      "command": [
+        "./scripts/render-vcpkg-integration.py",
+        "--check"
+      ],
+      "seconds": 0.275
+    },
+    {
+      "command": [
+        "./scripts/render-bake.py",
+        "--check"
+      ],
+      "seconds": 0.22
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "docker/run-python-qualification.sh"
+      ],
+      "seconds": 0.001
+    },
+    {
+      "command": [
+        "actionlint",
+        "-ignore",
+        "unexpected key \"queue\" for \"concurrency\" section"
+      ],
+      "seconds": 0.008
+    }
+  ],
+  "date": "2026-09-11",
+  "environment": {
+    "bake": "Fresh CLI print in the tool container; no BuildKit solve",
+    "cpus": 4,
+    "docker_socket_mounted": false,
+    "memory": "16g",
+    "network": "none",
+    "platform_python": "3.6.8",
+    "rocky_image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+    "tool_image_id": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "user": "1000:1000"
+  },
+  "kind": "crossforge-local-refactoring-observation",
+  "limits": [
+    "Registry acquisition, domain artifact verification and actual integration execution in new tests are explicit mocks. The real Bake graph and existing material-capture path are used, but no new SDK or row qualification was executed.",
+    "Neither new CLI is yet called by main dynamic CI or candidate publication. Dynamic required-status/selection integration, exact cross-run recovery and remote acceptance remain pending.",
+    "Strict physical execution identity remains unchanged. The user has been asked to decide the cross-runner reuse boundary; no relaxed environment equivalence has been implemented.",
+    "The SDK still freshly integrates under its complete-release identity; catalog acquisition alone is not qualification or release acceptance.",
+    "No source replay, GitHub signing/retry, candidate/native ARM qualification, reference-aware retention or matched performance/concurrency experiment was executed.",
+    "Earlier automatic approval review rejected mounting the host Docker socket inside the orchestration container for broad daemon control; explicit authorization remains pending and was not bypassed.",
+    "No merge to main, remote push or image publication."
+  ],
+  "local_outputs": {
+    "check-rocky.py": {
+      "path": "/tmp/crossforge-sdk-catalog/check-rocky.py",
+      "sha256": "ff78387894432ea6e9070372d68b7d9577e3125419477c7c8bc7fc5fcb0d14c3"
+    },
+    "focused.log": {
+      "path": "/tmp/crossforge-sdk-catalog/focused.log",
+      "sha256": "cef8ef8cad8cf6830b400febf014ba1d5c5b19b974a920a94e66bf306878770f"
+    },
+    "full-result.json": {
+      "path": "/tmp/crossforge-sdk-catalog/full-result.json",
+      "sha256": "c509373dc45de7b4c4ee139c2d88868425710cc7c148be452c049c6d3bf1d65d"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-sdk-catalog/full.log",
+      "sha256": "4fac2df464e294cadcaefdeac0217cf01043d1e1e29c35073467fccd1f89ed30"
+    },
+    "full.py": {
+      "path": "/tmp/crossforge-sdk-catalog/full.py",
+      "sha256": "83225c71ff855365fe579b9a7461cc6d6ca95b24eacdee33d248d69f6b11fb3e"
+    },
+    "graph-print.log": {
+      "path": "/tmp/crossforge-sdk-catalog/graph-print.log",
+      "sha256": "6710e916f1fac082f535c30151cf218ac99006f289fa241e182f1efec680f874"
+    },
+    "graph.json": {
+      "path": "/tmp/crossforge-sdk-catalog/graph.json",
+      "sha256": "8783847b8f87a9d2ac0e190173d4faa58e3fe9fa5dd025fae00598ed1f6225da"
+    },
+    "graph.log": {
+      "path": "/tmp/crossforge-sdk-catalog/graph.log",
+      "sha256": "924111895b0ae8d8ce7052c0b3eb9f30cd6cb91d8bd43e044b8bede06b580160"
+    },
+    "graph.py": {
+      "path": "/tmp/crossforge-sdk-catalog/graph.py",
+      "sha256": "9c5e7ffe21d02c9b6ad74aef3d1827e38e65b6ad02ddbf7f471262b81f519600"
+    },
+    "rocky.log": {
+      "path": "/tmp/crossforge-sdk-catalog/rocky.log",
+      "sha256": "a420afa77e49bc67ec20f1ce15e7f2d8fc4d1658b6452f3b9422a3ed497fab91"
+    }
+  },
+  "regression_scope": [
+    "Both complete SDK roots require exactly two shared toolchain installations and all five raw parts for each of the six rows in the real parsed Bake graph.",
+    "Acquisition resolves shared toolchains once, connects every row to the same seven subjects and supplies the existing local SDK component format.",
+    "Acquired fixture components pass through the existing SDK binder and actual material capture: both final graphs end at eight verified artifact boundaries and omit GCC/CPython source compilers.",
+    "Wrong chain, row version/coverage, raw graph scope, missing or extra resolver results and missing unplanned producers fail before a ready component set can be emitted.",
+    "A missing raw part blocks only its row lookup; a missing shared toolchain blocks every row. Missing qualification is not replaced by raw parts or implicit execution.",
+    "Signature/transport/row-verifier failure aborts and retains available input evidence, while physical environment changes reject ready output.",
+    "Data/evidence overlap, existing paths and parent symlink aliases are rejected.",
+    "The connected execution entry point invokes the existing fresh SDK integration only for a complete acquisition. Missing inputs and failed integration cannot write an outer success result.",
+    "The CLI returns nonzero for missing components while emitting explicit required producers, and existing local-manifest CLI behavior remains covered by prior tests."
+  ],
+  "research": [
+    {
+      "fact": "Standard non-single-CPU hosted jobs use new VMs; the runner label describes OS/runner specifications.",
+      "observed": "2026-09-11",
+      "url": "https://docs.github.com/en/actions/reference/runners/github-hosted-runners"
+    },
+    {
+      "fact": "GA runner images receive weekly updates; a fixed OS label does not pin all installed software bytes.",
+      "observed": "2026-09-11",
+      "url": "https://github.com/actions/runner-images/blob/main/README.md"
+    },
+    {
+      "fact": "Docker CPU/memory limits constrain host resources through cgroups.",
+      "observed": "2026-09-11",
+      "url": "https://docs.docker.com/engine/containers/resource_constraints/"
+    }
+  ],
+  "research_inference": "A fixed runner OS label or CPU/memory quota alone cannot prove equality of the physical environment currently bound by this repository; this is an inference from the documented deployment/resource model and the local identity fields, not a measured cross-runner mismatch.",
+  "rocky_graph": "New tests consume the saved current Bake print; only their class graph-acquisition hook is replaced. Declared fixture verification/execution boundaries are unchanged.",
+  "rocky_syntax_files": [
+    "scripts/component-artifact.py",
+    "scripts/crossforge_internal/python_sdk.py",
+    "scripts/crossforge_internal/python_sdk_catalog.py"
+  ],
+  "schema_version": 1,
+  "scope": "Automatic signed-catalog acquisition connected to the existing complete Python/SDK integration executor; local contract checks",
+  "source_sha256": {
+    "scripts/component-artifact.py": "aac12f51c1dc4595db8fc7674237e54157bc87f11847cf4a31b46166d3127117",
+    "scripts/crossforge_internal/python_sdk.py": "a35ebc02f17ffcb96e0974d0a4d50a14acf258d7c04aee5ae26796da4386637a",
+    "scripts/crossforge_internal/python_sdk_catalog.py": "30018afd39a06eebf403e5472fd5477a8bd44a5ff215abcb02828cb6544aaf11",
+    "tests/config/test_python_sdk_catalog.py": "c799881616914226450156485445d6fd70ba8c4b26f92e43323e4476f68d4acb"
+  },
+  "status": "local-contract-checks-passed; main matrix wiring and actual execution acceptance pending",
+  "tests": [
+    {
+      "seconds": 277.22,
+      "skipped": 0,
+      "suite": "config",
+      "tests": 1322
+    },
+    {
+      "seconds": 1.204,
+      "skipped": 0,
+      "suite": "packaging",
+      "tests": 40
+    },
+    {
+      "seconds": 6.322,
+      "skipped": 0,
+      "suite": "focused",
+      "tests": 46
+    },
+    {
+      "seconds": 3.828,
+      "skipped": 0,
+      "suite": "rocky",
+      "tests": 14
+    }
+  ]
+}

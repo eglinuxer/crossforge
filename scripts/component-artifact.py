@@ -103,6 +103,18 @@ def main(argv=None):
             sdk.add_argument("--output", type=Path, required=True)
         else:
             sdk.add_argument("--temporary-parent", type=Path)
+    for command in ("acquire-python-sdk", "execute-python-sdk-catalog"):
+        sdk = commands.add_parser(command, allow_abbrev=False)
+        sdk.add_argument("--source", type=Path, required=True)
+        sdk.add_argument("--graph", type=Path, required=True)
+        sdk.add_argument("--root", choices=sorted(python_sdk.ROOTS), required=True)
+        sdk.add_argument("--execution", type=Path, required=True)
+        sdk.add_argument("--builder", required=True)
+        sdk.add_argument("--docker-config", type=Path)
+        sdk.add_argument("--oras", type=Path, required=True)
+        sdk.add_argument("--cosign", type=Path, required=True)
+        sdk.add_argument("--component-directory", type=Path, required=True, help="new OCI data directory outside uploaded diagnostics")
+        sdk.add_argument("--output", type=Path, required=True, help="new diagnostics directory")
     verify = commands.add_parser("verify-local", allow_abbrev=False)
     verify.add_argument("--receipt", type=Path, required=True)
     verify.add_argument("--receipt-sha256", required=True, help="independently trusted canonical receipt SHA256")
@@ -192,6 +204,14 @@ def main(argv=None):
                 expected = python_sdk.inputs(args.source, resolved, args.root, execution, bindings)
                 value = {"graph": resolved, "bindings": bindings, "inputs": expected, "reused_rows": reused,
                          "integration": "not executed by binding"}
+        elif args.command in ("acquire-python-sdk", "execute-python-sdk-catalog"):
+            from crossforge_internal import python_sdk_catalog
+            operation = python_sdk_catalog.acquire if args.command == "acquire-python-sdk" else python_sdk_catalog.execute
+            value = operation(args.source, load_json(args.graph), args.root, load_json(args.execution),
+                args.component_directory, args.output, args.builder, args.oras, args.cosign, args.docker_config)
+            if args.command == "acquire-python-sdk" and value["status"] != "ready":
+                print(json.dumps(value, sort_keys=True, indent=2))
+                return 1
         elif args.command == "verify-local":
             require(bool(args.consumer_target) == bool(args.context_name),
                     "consumer target and context name must be specified together")

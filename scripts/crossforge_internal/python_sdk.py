@@ -30,24 +30,15 @@ def _stage(graph, target, dockerfile, stage):
     return definition
 
 
-def bind(source, graph, root, execution, components, builder, docker_config=None, temporary_parent=None):
+def validate_graph(source, graph, root):
+    """Require the complete canonical SDK chain before resolving any registry inputs."""
     require(root in ROOTS, "unsupported component SDK root")
     _stage(graph, root, *ROOTS[root])
     rows = matrix(source)
     final = _stage(graph, "python-dev", *ROOTS["python-dev"])
     require(final.get("args", {}).get("CROSSFORGE_PYTHON_ROWS") == " ".join(rows), "SDK row order or coverage differs")
-    exact_fields(components, ("toolchains", "rows"), "SDK components")
-    exact_fields(components["toolchains"], python_components.ARCHES, "SDK toolchains")
-    exact_fields(components["rows"], rows, "SDK Python rows")
     previous = "sdk-toolchains-dev"
     for row in rows:
-        value = components["rows"][row]
-        exact_fields(value, ("subjects", "qualification"), "SDK row inputs")
-        exact_fields(value["qualification"], ("receipt", "receipt_sha256", "layout"), "SDK row qualification")
-        for arch in python_components.ARCHES:
-            require(value["subjects"].get(arch + "-toolchain", {}).get("receipt_sha256") ==
-                    components["toolchains"][arch].get("receipt_sha256"),
-                    "SDK and Python row use different toolchain receipts: " + row + ":" + arch)
         target = "python-dev-append-" + row
         definition = _stage(graph, target, "docker/python.Dockerfile", "python-sdk-append")
         settings = python_qualification.spec(source, row)
@@ -61,6 +52,22 @@ def bind(source, graph, root, execution, components, builder, docker_config=None
         previous = target
     require(final.get("contexts", {}).get("crossforge_sdk_base") == "target:" + previous,
             "SDK final stage does not consume the complete row chain")
+    return rows
+
+
+def bind(source, graph, root, execution, components, builder, docker_config=None, temporary_parent=None):
+    rows = validate_graph(source, graph, root)
+    exact_fields(components, ("toolchains", "rows"), "SDK components")
+    exact_fields(components["toolchains"], python_components.ARCHES, "SDK toolchains")
+    exact_fields(components["rows"], rows, "SDK Python rows")
+    for row in rows:
+        value = components["rows"][row]
+        exact_fields(value, ("subjects", "qualification"), "SDK row inputs")
+        exact_fields(value["qualification"], ("receipt", "receipt_sha256", "layout"), "SDK row qualification")
+        for arch in python_components.ARCHES:
+            require(value["subjects"].get(arch + "-toolchain", {}).get("receipt_sha256") ==
+                    components["toolchains"][arch].get("receipt_sha256"),
+                    "SDK and Python row use different toolchain receipts: " + row + ":" + arch)
     resolved, bindings, reused = copy.deepcopy(graph), {}, {}
     for arch in python_components.ARCHES:
         resolved, selected = component_qualification.bind_subjects(source, resolved,

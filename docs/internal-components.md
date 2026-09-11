@@ -706,6 +706,44 @@ source paths reject symlinks. These are local orchestration/contract fixtures,
 not new GitHub signatures or actual row execution. Main matrix/SDK wiring,
 cross-run acceptance and environment-policy decisions remain outstanding.
 
+### Acquire SDK inputs from signed catalogs
+
+`component-artifact.py acquire-python-sdk` resolves the full `python-dev` or
+`sdk-complete-dev` input set without a hand-written local component manifest.
+It takes the existing checked `--graph`, observed qualification `--execution`,
+`--source` and `--builder`, plus pinned `--oras`/`--cosign` executables, a new
+`--component-directory` for OCI data and a separate new `--output` for diagnostics.
+The complete canonical SDK chain is checked before registry acquisition. Both
+toolchain installations are acquired once and shared by all six rows; every raw
+Python part is resolved through the existing dependency-aware reader, then each
+complete row is checked through the qualified-row catalog reader.
+
+On success, `components.json` has the same format accepted by the existing local
+SDK binder. Missing raw artifacts or row qualifications return exit status 1,
+explicit `required_builds` and `required_rows`, and no consumable complete component
+file. Independent rows can still be inspected to provide a complete diagnostic
+picture. A signature, transport or qualification-verification error aborts rather
+than becoming a miss. Acquisition checks the physical environment before and
+afterward and retains the original catalog, receipt and producer records. OCI
+data cannot overlap the diagnostic directory, including through parent symlinks.
+
+`component-artifact.py execute-python-sdk-catalog` accepts the same arguments and
+continues only when acquisition is complete. It invokes the existing SDK executor,
+which independently rechecks all local receipts and installed bytes, binds the
+eight final artifacts, and freshly runs SDK append/final integration. It keeps
+acquisition evidence under `output/acquisition/` and integration evidence under
+`output/integration/`; only completed integration writes the outer `result.json`.
+Neither command publishes artifacts or implicitly rebuilds missing dependencies.
+The existing `bind-python-sdk` and `execute-python-sdk` commands retain their local
+manifest interface and all prior checks.
+
+These commands connect the catalog reader to full SDK integration; they have not
+yet been enabled in the main dynamic matrix or candidate publication workflow.
+Local fixtures use a real parsed Bake graph and the existing SDK input capture,
+but explicitly mock registry/domain verification and execution boundaries. Graph
+checks confirm the eight-artifact boundary and absence of GCC/CPython source
+compilers; actual cross-run retrieval and SDK execution remain acceptance gates.
+
 ## GCC qualification policy inputs
 
 GCC smoke/full Docker gates use `run-gcc-testsuite.py --components` with the

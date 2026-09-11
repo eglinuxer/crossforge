@@ -7,7 +7,7 @@
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；main 缺失工具链集中生产及只读消费已接线 | GitHub 实跑、真实签名与跨 run 验收 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线；Python 共享运行时根、目标 compile/runtime/final 与行汇总已消费相应组件输入 | GitHub 实跑、其他领域资格 COPY 范围、正式 Python 行资格复用接入 |
-| 4：整行 Python/SDK 交接 | 此前六行正式资格、Python SDK 与完整 SDK 本地实跑通过；新报告链及正式行 CI 生产/签名边界的 Docker 契约回归通过，原始 Python 组件 CI 消费已接线 | 新报告链 Docker 实跑、正式行资格的动态 matrix/SDK 接入与远程验收 |
+| 4：整行 Python/SDK 交接 | 此前六行正式资格、Python SDK 与完整 SDK 本地实跑通过；新报告链、正式行 CI 生产/签名与目录驱动的完整 SDK 消费路径通过 Docker 契约回归，原始 Python 组件 CI 消费已接线 | 新报告链 Docker 实跑、正式行资格及 SDK 目录消费的动态 matrix 接入与远程验收 |
 | 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储、候选组件消费及分阶段恢复、raw producer 部分重试接线本地验证通过 | 真实 GitHub 跨 run 信任和 producer 重试、其他资格领域、候选集成/原生 ARM |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
@@ -509,3 +509,19 @@ runtime schema 3 与 final schema 4 仍精确绑定完整 release。finalizer �
 本批新测试是控制流和契约 fixture：上游组件域验证、OCI transport、Cosign、实际目标执行及正式行验收均为显式 mock；全量套件保留相应原有域回归，没有取得新资格执行、GitHub 签名或跨 run 复用证据。代码审阅后补充了发布前身份检查与失败日志保留，再执行最终定向和全量测试。版本 pin、ABI/GCC baseline、Docker 资格配方和严格物理环境比较策略均未改变。只读 `git ls-remote` 确认远程 main 仍为 `cf736eab8aa53b851874509d66676e5bac98dc27`。
 
 新的可复用工作流尚未被 main 动态 matrix 或 candidate SDK 调用；下一步接入选中行的资格取得、忠实反映所选工作的 required status 和 SDK 消费，不能据当前入口就声称 CI 行资格复用已上线。跨机器物理执行环境边界仍待决定；新报告链实际 Docker 重放、真实 GitHub 信任/重试、候选/原生 ARM、强制源码重放和性能实验仍待验收。此前自动审批拒绝容器挂载主机 Docker socket（会授予广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。未合入 main、推送或发布。
+
+## 批次 4/5：签名目录自动取得完整 SDK 输入并连接原集成执行器（2026-09-11）
+
+新增 `python_sdk_catalog.py`，通过 `acquire-python-sdk` 和 `execute-python-sdk-catalog` 两个 CLI 接入原完整 SDK 消费路径。首先复用从 `python_sdk.bind` 提取的 canonical graph 验证，确认两份工具链和六行各五份原始 Python 组件的完整依赖集合；共享工具链只做一次目录取得，随后按原依赖 reader 取得各行组件，再调用正式行目录 reader 核验七个 subject 和资格记录。没有增加一套手写的 source/build/qualification 身份规则。
+
+全部就绪时输出与原本地 SDK binder 兼容的 `components.json`。原始组件或行资格缺失时返回非零状态、明确的 `required_builds`/`required_rows`，不输出可消费的完整组件清单；不受影响的行仍可检查并留下诊断。验签、传输或域验收失败直接报错，执行环境在前后均须保持一致。OCI 数据与诊断目录不能重叠，包括经父目录 symlink 指向同一路径的情形。
+
+集成 CLI 仅在完整就绪后调用原 `python_sdk.execute`，重新核对所有本地 receipts、安装文件、原始执行证据和当前输入，再执行原 SDK append/final 集成。取得目录本身不声明集成成功；只有原集成执行器成功后才写外层 `result.json`。两条新命令均为只读 registry consumer，不发布产物、不隐式补编译或补资格。原 `bind-python-sdk` / `execute-python-sdk` 的本地组件清单接口和验证要求保留。
+
+[验证记录](sdk-catalog-consumption-2026-09-11.json)：固定工具容器中 config 1322 项、277.22 秒及 packaging 40 项、1.204 秒全部通过，无跳过；四项 locked validators、三个 renderer `--check`、shell syntax 与 actionlint 通过（仅既有 concurrency.queue 兼容例外）。定向 46 项回归通过；固定 Rocky 8 platform-python 3.6.8 编译三个运行文件并执行十四项新回归通过。Rocky 测试读取同一轮工具容器保存的真实 Bake print，仅替换获取图的测试入口，原来声明的域/传输/执行 mock 边界保持明确。
+
+两个实际 SDK 根的 Bake 解析均确认两份共享工具链、六行各五份原始组件。新 acquisition 的 fixture 结果继续进入原 SDK binder 和真实材料捕获：最终依赖止于八个产物边界，不含 GCC/CPython 自身源码编译；这不是新 SDK 运行证明。回归覆盖精确依赖/行顺序、单行与共享依赖缺失、缺失 producer 不得被遗漏、验签/传输/资格失败、环境变化、数据/诊断目录重叠、执行失败不写成功标记，以及两条 CLI 的非零失败语义。新 tests 的 registry、域验收和实际 integration 调用是显式 fixture/mock，未声称实际下载/验签或新资格执行。
+
+补充核对 runner 的官方保证：[GitHub 标准 hosted runner 文档](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)说明常规非单 CPU runner 使用新的 VM；[runner-images 说明](https://github.com/actions/runner-images/blob/main/README.md)说明 GA 镜像按周更新；[Docker 资源约束文档](https://docs.docker.com/engine/containers/resource_constraints/)说明 CPU/内存限制通过宿主 cgroup 控制。由此结合本项目目前绑定的 CPU、微码、内核、Docker 和内存等字段，可以推断仅固定 OS 标签或资源上限不足以证明全部环境字段一致；本轮没有实测跨 runner 失配比例，也没有把该推断当作性能数据。已向用户明确询问环境边界选择，未放宽现有严格匹配。
+
+主 CI 动态任务、所选工作对应的 required status、增量选择器对新编排代码的覆盖、精确跨 run 恢复以及候选发布的调用接入仍待完成。新报告链实际 Docker 重放、GitHub 信任/重试、候选/原生 ARM、强制源码重放和性能实验仍待验收。此前自动审批拒绝容器挂载主机 Docker socket（会授予广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。未合入 main、推送或发布。
