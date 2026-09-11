@@ -17,6 +17,7 @@ SCRIPT_DIRECTORY = Path(__file__).resolve().parent
 COMPONENT_READER = runpy.run_path(
     str(SCRIPT_DIRECTORY / "release_component.py")
 )
+VCPKG_POLICY = runpy.run_path(str(SCRIPT_DIRECTORY / "vcpkg_policy.py"))
 COMMON = runpy.run_path(
     str(SCRIPT_DIRECTORY / "vcpkg_qualification.py")
 )
@@ -261,6 +262,7 @@ def validate_component_closure(
     policy_digest,
     prerequisite_report,
     tier="tier1",
+    input_policy=None,
 ):
     gate = TIER_PROFILES.get(tier)
     require(gate is not None, "unsupported upstream vcpkg tier")
@@ -277,9 +279,22 @@ def validate_component_closure(
     prerequisite_identity = prerequisite_report.get("components", {}).get(
         "qualification"
     )
+    scoped = input_policy is not None or "input_binding" in prerequisite_report
+    if scoped:
+        if input_policy is None:
+            input_policy = VCPKG_POLICY["from_release"](release, tier)
+        try:
+            previous = VCPKG_POLICY["STAGES"][VCPKG_POLICY["STAGES"].index(tier) - 1]
+            VCPKG_POLICY["require_binding"](prerequisite_report, VCPKG_POLICY["prior"](input_policy, previous))
+            require(input_policy["components"][tier] == {"component": gate["qualification_component"],
+                    "canonical_sha256": canonical_sha256(qualification_component)}, "upstream vcpkg policy root differs")
+        except VCPKG_POLICY["PolicyError"] as error:
+            raise QualificationError(str(error)) from error
+    else:
+        require(prerequisite_report.get("schema_version", 1) == 1, "unsupported vcpkg prerequisite schema")
     require(
         prerequisite_report.get("status") == "passed"
-        and prerequisite_report.get("release_sha256") == canonical_sha256(release)
+        and (scoped or prerequisite_report.get("release_sha256") == canonical_sha256(release))
         and prerequisite_identity
         == {
             "component": gate["prerequisite_component"],
@@ -385,7 +400,7 @@ def resolved_library(root, filename):
     return path, resolved
 
 
-def build_consumer(profile, gate, source, include, library, work, qemu, release):
+def build_consumer(profile, gate, source, include, library, work, qemu, executor):
     cc, cxx, readelf, sysroot = profile_tools(profile)
     executable = work / "consumer"
     compiler = cc if gate["consumer_language"] == "cc" else cxx
@@ -411,7 +426,6 @@ def build_consumer(profile, gate, source, include, library, work, qemu, release)
     if profile["linkage"] == "dynamic":
         environment["LD_LIBRARY_PATH"] = str(library)
     if profile["arch"] == "aarch64":
-        executor = release["qemu"]["executor"]
         command = [
             qemu,
             "-cpu",
@@ -483,7 +497,7 @@ def build_generated_consumer(
     triplet,
     work,
     qemu,
-    release,
+    executor,
 ):
     source = work / "source"
     source.mkdir()
@@ -548,7 +562,6 @@ def build_generated_consumer(
     if profile["linkage"] == "dynamic":
         environment["LD_LIBRARY_PATH"] = str(target_root / "lib")
     if profile["arch"] == "aarch64":
-        executor = release["qemu"]["executor"]
         command = [
             qemu,
             "-cpu",
@@ -591,7 +604,7 @@ def qualify_triplet(
     triplet,
     profile,
     qemu,
-    release,
+    executor,
     work,
 ):
     seed_installed = None
@@ -647,7 +660,7 @@ def qualify_triplet(
             triplet,
             consumer_work,
             qemu,
-            release,
+            executor,
         )
     else:
         consumer = build_consumer(
@@ -658,7 +671,7 @@ def qualify_triplet(
             target_root / "lib",
             consumer_work,
             qemu,
-            release,
+            executor,
         )
     result = {
         "triplet": triplet,
@@ -676,7 +689,16 @@ def qualify_triplet(
 def qualify(arguments):
     gate = TIER_PROFILES.get(arguments.tier)
     require(gate is not None, "unsupported upstream vcpkg tier")
-    release = load_json(arguments.release)
+    components = getattr(arguments, "components", None)
+    require((arguments.release is None) != (components is None), "provide exactly one vcpkg policy source")
+    if components is not None:
+        input_policy = VCPKG_POLICY["load"](components, arguments.tier, arguments.qualification_component_sha256)
+        release = None
+        executor = input_policy["toolchains"]["aarch64"]["runtime_executor"]
+    else:
+        input_policy = None
+        release = load_json(arguments.release)
+        executor = release["qemu"]["executor"]
     policy_component = load_component(
         arguments.policy_component,
         gate["policy_component"],
@@ -701,7 +723,12 @@ def qualify(arguments):
         arguments.policy_component_sha256,
         prerequisite_report,
         arguments.tier,
+        input_policy,
     )
+    if input_policy is not None:
+        VCPKG_POLICY["require_binding"](contract_report, VCPKG_POLICY["prior"](input_policy, "contract"))
+    elif "input_binding" in contract_report:
+        VCPKG_POLICY["require_binding"](contract_report, VCPKG_POLICY["from_release"](release, "contract"))
     expected_patchelf = contract_report.get("patchelf_asset")
     require(
         isinstance(expected_patchelf, dict)
@@ -738,7 +765,7 @@ def qualify(arguments):
                 triplet,
                 TRIPLETS[triplet],
                 arguments.qemu,
-                release,
+                executor,
                 work,
             )
             for triplet in (
@@ -754,11 +781,10 @@ def qualify(arguments):
             not (arguments.vcpkg_root / name).exists(),
             "vcpkg root was polluted: %s" % name,
         )
-    return {
-        "schema_version": 1,
+    report = {
+        "schema_version": 2 if input_policy is not None else 1,
         "kind": "crossforge-vcpkg-upstream-%s-qualification" % arguments.tier,
         "status": "passed",
-        "release_sha256": canonical_sha256(release),
         "components": {
             "policy": {
                 "component": gate["policy_component"],
@@ -775,11 +801,16 @@ def qualify(arguments):
         "ports": policy["ports"],
         "results": results,
     }
+    report.update({"input_binding": VCPKG_POLICY["binding"](input_policy)} if input_policy is not None else
+                  {"release_sha256": canonical_sha256(release)})
+    return report
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
-    parser.add_argument("--release", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--release", type=Path)
+    source.add_argument("--components", type=Path)
     parser.add_argument("--tier", choices=tuple(sorted(TIER_PROFILES)), required=True)
     parser.add_argument("--vcpkg-root", type=Path, required=True)
     parser.add_argument("--fixture-root", type=Path, required=True)

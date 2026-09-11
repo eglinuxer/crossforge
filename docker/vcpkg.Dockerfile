@@ -202,7 +202,6 @@ ARG TOOLCHAIN_AARCH64_QUALIFICATION_COMPONENT_SHA256
 COPY --from=crossforge_qemu_validated \
   /usr/local/libexec/crossforge/qemu-aarch64 \
   /usr/local/libexec/crossforge/qemu-aarch64
-COPY config/release.json /opt/crossforge/release.json
 COPY --from=crossforge_cmake_host_tool \
   /opt/crossforge/host-tools/cmake/ \
   /opt/crossforge/host-tools/cmake/
@@ -223,29 +222,31 @@ COPY integration/vcpkg/triplets/ /opt/crossforge/vcpkg/triplets/
 COPY integration/vcpkg/manifest.json \
   /opt/crossforge/vcpkg/integration.json
 COPY config/generated/components/sources/vcpkg.json \
-  /work/config/sources-vcpkg.json
+  /opt/crossforge/qualification/vcpkg/inputs/sources/vcpkg.json
 COPY config/generated/components/implementation/vcpkg-integration.json \
-  /work/config/vcpkg-integration.json
+  /opt/crossforge/qualification/vcpkg/inputs/implementation/vcpkg-integration.json
 COPY config/generated/components/vcpkg/sdk-build.json \
-  /work/config/vcpkg-sdk-build.json
+  /opt/crossforge/qualification/vcpkg/inputs/vcpkg/sdk-build.json
 COPY config/generated/components/host-tools/ninja.json \
-  /work/config/ninja-host-tool.json
+  /opt/crossforge/qualification/vcpkg/inputs/host-tools/ninja.json
 COPY config/generated/components/host-tools/cmake.json \
-  /work/config/cmake-host-tool.json
+  /opt/crossforge/qualification/vcpkg/inputs/host-tools/cmake.json
 COPY config/generated/components/toolchain/x86_64-qualification.json \
   config/generated/components/toolchain/aarch64-qualification.json \
   config/generated/components/toolchain/x86_64-build.json \
   config/generated/components/toolchain/aarch64-build.json \
-  /work/config/components/toolchain/
+  /opt/crossforge/qualification/vcpkg/inputs/toolchain/
 COPY config/generated/components/abi/x86_64-baseline.json \
   config/generated/components/abi/aarch64-baseline.json \
-  /work/config/components/abi/
+  /opt/crossforge/qualification/vcpkg/inputs/abi/
 COPY config/generated/components/sources/gcc.json \
   config/generated/components/sources/binutils.json \
-  /work/config/components/sources/
+  config/generated/components/sources/ninja.json \
+  config/generated/components/sources/cmake.json \
+  /opt/crossforge/qualification/vcpkg/inputs/sources/
 COPY --chmod=0755 scripts/fetch-vcpkg-history.py \
   scripts/release_component.py scripts/qualify-vcpkg-sdk.py \
-  scripts/toolchain_policy.py scripts/toolchain_report.py \
+  scripts/toolchain_policy.py scripts/toolchain_report.py scripts/vcpkg_policy.py \
   /work/scripts/
 ENV NINJA_ROOT=/opt/crossforge/host-tools/ninja/1.13.2 \
     CROSSFORGE_CMAKE_ROOT=/opt/crossforge/host-tools/cmake/4.4.0 \
@@ -257,8 +258,7 @@ ENV NINJA_ROOT=/opt/crossforge/host-tools/ninja/1.13.2 \
     PATH=/opt/crossforge/host-tools/cmake/4.4.0/bin:/opt/crossforge/host-tools/ninja/1.13.2/bin:/opt/crossforge/vcpkg/root:${PATH}
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-vcpkg-sdk.py \
-      --release /opt/crossforge/release.json \
-      --toolchain-components /work/config/components \
+      --components /opt/crossforge/qualification/vcpkg/inputs \
       --toolchain-x86_64-component-sha256 \
         "$TOOLCHAIN_X86_64_QUALIFICATION_COMPONENT_SHA256" \
       --toolchain-aarch64-component-sha256 \
@@ -269,18 +269,18 @@ RUN --network=none /usr/libexec/platform-python \
       --cmake-root /opt/crossforge/cmake \
       --triplet-root /opt/crossforge/vcpkg/triplets \
       --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
-      --source-component /work/config/sources-vcpkg.json \
+      --source-component /opt/crossforge/qualification/vcpkg/inputs/sources/vcpkg.json \
       --source-component-sha256 "$VCPKG_SOURCE_COMPONENT_SHA256" \
-      --integration-component /work/config/vcpkg-integration.json \
+      --integration-component /opt/crossforge/qualification/vcpkg/inputs/implementation/vcpkg-integration.json \
       --integration-component-sha256 \
         "$VCPKG_INTEGRATION_COMPONENT_SHA256" \
-      --sdk-component /work/config/vcpkg-sdk-build.json \
+      --sdk-component /opt/crossforge/qualification/vcpkg/inputs/vcpkg/sdk-build.json \
       --sdk-component-sha256 "$VCPKG_SDK_COMPONENT_SHA256" \
-      --ninja-component /work/config/ninja-host-tool.json \
+      --ninja-component /opt/crossforge/qualification/vcpkg/inputs/host-tools/ninja.json \
       --ninja-component-sha256 "$NINJA_TOOL_COMPONENT_SHA256" \
       --ninja-report \
         /opt/crossforge/qualification/host-tools/ninja.json \
-      --cmake-component /work/config/cmake-host-tool.json \
+      --cmake-component /opt/crossforge/qualification/vcpkg/inputs/host-tools/cmake.json \
       --cmake-component-sha256 "$CMAKE_TOOL_COMPONENT_SHA256" \
       --cmake-report \
         /opt/crossforge/qualification/host-tools/cmake.json \
@@ -308,24 +308,24 @@ COPY tests/vcpkg/contract/ /work/contract/
 COPY --from=crossforge_vcpkg_contract_assets \
   /patchelf-0.19.0-x86_64.tar.gz /work/assets/patchelf-0.19.0-x86_64.tar.gz
 COPY config/generated/components/implementation/vcpkg-contract-qualification.json \
-  /work/config/vcpkg-contract-policy.json
+  /opt/crossforge/qualification/vcpkg/inputs/implementation/vcpkg-contract-qualification.json
 COPY config/generated/components/vcpkg/contract-qualification.json \
-  /work/config/vcpkg-contract-qualification.json
+  /opt/crossforge/qualification/vcpkg/inputs/vcpkg/contract-qualification.json
 COPY --chmod=0755 scripts/release_component.py \
   scripts/qualify-vcpkg-contract.py scripts/vcpkg_qualification.py \
-  scripts/toolchain_report.py scripts/toolchain_policy.py \
+  scripts/toolchain_report.py scripts/toolchain_policy.py scripts/vcpkg_policy.py \
   /work/scripts/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-vcpkg-contract.py \
-      --release /opt/crossforge/release.json \
+      --components /opt/crossforge/qualification/vcpkg/inputs \
       --vcpkg-root /opt/crossforge/vcpkg/root \
       --fixture-root /work/contract \
       --patchelf-archive /work/assets/patchelf-0.19.0-x86_64.tar.gz \
       --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
-      --policy-component /work/config/vcpkg-contract-policy.json \
+      --policy-component /opt/crossforge/qualification/vcpkg/inputs/implementation/vcpkg-contract-qualification.json \
       --policy-component-sha256 \
         "$VCPKG_CONTRACT_POLICY_COMPONENT_SHA256" \
-      --contract-component /work/config/vcpkg-contract-qualification.json \
+      --contract-component /opt/crossforge/qualification/vcpkg/inputs/vcpkg/contract-qualification.json \
       --contract-component-sha256 \
         "$VCPKG_CONTRACT_QUALIFICATION_COMPONENT_SHA256" \
       --output /opt/crossforge/qualification/vcpkg/contract.json \
@@ -348,26 +348,26 @@ COPY --from=crossforge_vcpkg_upstream_tier1_assets \
 COPY --from=crossforge_vcpkg_contract_assets \
   /patchelf-0.19.0-x86_64.tar.gz /work/patchelf-0.19.0-x86_64.tar.gz
 COPY config/generated/components/implementation/vcpkg-upstream-tier1-qualification.json \
-  /work/config/vcpkg-upstream-tier1-policy.json
+  /opt/crossforge/qualification/vcpkg/inputs/implementation/vcpkg-upstream-tier1-qualification.json
 COPY config/generated/components/vcpkg/upstream-tier1-qualification.json \
-  /work/config/vcpkg-upstream-tier1-qualification.json
+  /opt/crossforge/qualification/vcpkg/inputs/vcpkg/upstream-tier1-qualification.json
 COPY --chmod=0755 scripts/release_component.py \
   scripts/fetch-vcpkg-assets.py scripts/vcpkg_qualification.py \
-  scripts/qualify-vcpkg-upstream.py /work/scripts/
+  scripts/qualify-vcpkg-upstream.py scripts/vcpkg_policy.py scripts/toolchain_policy.py /work/scripts/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-vcpkg-upstream.py \
+      --components /opt/crossforge/qualification/vcpkg/inputs \
       --tier tier1 \
-      --release /opt/crossforge/release.json \
       --vcpkg-root /opt/crossforge/vcpkg/root \
       --fixture-root /work/upstream-tier1 \
       --asset-root /work/assets \
       --patchelf-archive /work/patchelf-0.19.0-x86_64.tar.gz \
       --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
-      --policy-component /work/config/vcpkg-upstream-tier1-policy.json \
+      --policy-component /opt/crossforge/qualification/vcpkg/inputs/implementation/vcpkg-upstream-tier1-qualification.json \
       --policy-component-sha256 \
         "$VCPKG_UPSTREAM_TIER1_POLICY_COMPONENT_SHA256" \
       --qualification-component \
-        /work/config/vcpkg-upstream-tier1-qualification.json \
+        /opt/crossforge/qualification/vcpkg/inputs/vcpkg/upstream-tier1-qualification.json \
       --qualification-component-sha256 \
         "$VCPKG_UPSTREAM_TIER1_QUALIFICATION_COMPONENT_SHA256" \
       --output \
@@ -391,26 +391,26 @@ COPY --from=crossforge_vcpkg_upstream_tier2_assets \
 COPY --from=crossforge_vcpkg_contract_assets \
   /patchelf-0.19.0-x86_64.tar.gz /work/patchelf-0.19.0-x86_64.tar.gz
 COPY config/generated/components/implementation/vcpkg-upstream-tier2-qualification.json \
-  /work/config/vcpkg-upstream-tier2-policy.json
+  /opt/crossforge/qualification/vcpkg/inputs/implementation/vcpkg-upstream-tier2-qualification.json
 COPY config/generated/components/vcpkg/upstream-tier2-qualification.json \
-  /work/config/vcpkg-upstream-tier2-qualification.json
+  /opt/crossforge/qualification/vcpkg/inputs/vcpkg/upstream-tier2-qualification.json
 COPY --chmod=0755 scripts/release_component.py \
   scripts/fetch-vcpkg-assets.py scripts/vcpkg_qualification.py \
-  scripts/qualify-vcpkg-upstream.py /work/scripts/
+  scripts/qualify-vcpkg-upstream.py scripts/vcpkg_policy.py scripts/toolchain_policy.py /work/scripts/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-vcpkg-upstream.py \
+      --components /opt/crossforge/qualification/vcpkg/inputs \
       --tier tier2 \
-      --release /opt/crossforge/release.json \
       --vcpkg-root /opt/crossforge/vcpkg/root \
       --fixture-root /work/upstream-tier2 \
       --asset-root /work/assets \
       --patchelf-archive /work/patchelf-0.19.0-x86_64.tar.gz \
       --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
-      --policy-component /work/config/vcpkg-upstream-tier2-policy.json \
+      --policy-component /opt/crossforge/qualification/vcpkg/inputs/implementation/vcpkg-upstream-tier2-qualification.json \
       --policy-component-sha256 \
         "$VCPKG_UPSTREAM_TIER2_POLICY_COMPONENT_SHA256" \
       --qualification-component \
-        /work/config/vcpkg-upstream-tier2-qualification.json \
+        /opt/crossforge/qualification/vcpkg/inputs/vcpkg/upstream-tier2-qualification.json \
       --qualification-component-sha256 \
         "$VCPKG_UPSTREAM_TIER2_QUALIFICATION_COMPONENT_SHA256" \
       --output \
@@ -435,26 +435,26 @@ COPY --from=crossforge_vcpkg_upstream_tier3_assets \
 COPY --from=crossforge_vcpkg_contract_assets \
   /patchelf-0.19.0-x86_64.tar.gz /work/patchelf-0.19.0-x86_64.tar.gz
 COPY config/generated/components/implementation/vcpkg-upstream-tier3-qualification.json \
-  /work/config/vcpkg-upstream-tier3-policy.json
+  /opt/crossforge/qualification/vcpkg/inputs/implementation/vcpkg-upstream-tier3-qualification.json
 COPY config/generated/components/vcpkg/upstream-tier3-qualification.json \
-  /work/config/vcpkg-upstream-tier3-qualification.json
+  /opt/crossforge/qualification/vcpkg/inputs/vcpkg/upstream-tier3-qualification.json
 COPY --chmod=0755 scripts/release_component.py \
   scripts/fetch-vcpkg-assets.py scripts/vcpkg_qualification.py \
-  scripts/qualify-vcpkg-upstream.py /work/scripts/
+  scripts/qualify-vcpkg-upstream.py scripts/vcpkg_policy.py scripts/toolchain_policy.py /work/scripts/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-vcpkg-upstream.py \
+      --components /opt/crossforge/qualification/vcpkg/inputs \
       --tier tier3 \
-      --release /opt/crossforge/release.json \
       --vcpkg-root /opt/crossforge/vcpkg/root \
       --fixture-root /work/upstream-tier3 \
       --asset-root /work/assets \
       --patchelf-archive /work/patchelf-0.19.0-x86_64.tar.gz \
       --qemu /usr/local/libexec/crossforge/qemu-aarch64 \
-      --policy-component /work/config/vcpkg-upstream-tier3-policy.json \
+      --policy-component /opt/crossforge/qualification/vcpkg/inputs/implementation/vcpkg-upstream-tier3-qualification.json \
       --policy-component-sha256 \
         "$VCPKG_UPSTREAM_TIER3_POLICY_COMPONENT_SHA256" \
       --qualification-component \
-        /work/config/vcpkg-upstream-tier3-qualification.json \
+        /opt/crossforge/qualification/vcpkg/inputs/vcpkg/upstream-tier3-qualification.json \
       --qualification-component-sha256 \
         "$VCPKG_UPSTREAM_TIER3_QUALIFICATION_COMPONENT_SHA256" \
       --output \

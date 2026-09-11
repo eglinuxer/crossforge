@@ -541,3 +541,21 @@ vcpkg SDK 新增可选工具链组件目录和两个资格根 pin，要求一起
 首轮定向检查中，新图测试误将组件 scope 名 `build` 当作材料角色，改用实际允许的 `qualification` 后通过；生产材料解析器未变。补齐 CLI 完整性回归后重新完成定向、Rocky 和完整套件。下一步迁移 vcpkg SDK 的宿主工具与执行器输入，以及契约/三层报告的配置绑定，再测材料范围和真实资格；严格物理环境匹配仍未放宽。
 
 主 CI qualified-row/SDK 调用、精确恢复、真实 GitHub 信任/重试、新报告链及源码 Docker 重放、候选/原生 ARM、引用保留策略和性能实验仍待完成。此前自动审批拒绝容器挂载主机 Docker socket（广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。未合入 main、推送或发布。
+
+## 批次 3/6：vcpkg 五阶段输入与报告绑定（2026-09-11）
+
+新增标准库 `vcpkg_policy.py`，SDK 模式从 build 根及两个独立工具链资格根认证工具链、Ninja/CMake 来源与实际二进制身份；契约和 tier1–3 模式沿前序根推导同一组输入。SDK 与工具链资格必须绑定相同 build，CMake 与 SDK 必须绑定相同 Ninja，宿主工具必须绑定相同 runtime。读取完整 tier3 策略只需要三个运行模块与十七份投影；既有来源、integration 和各层 fixture/asset 文件继续由原资格函数认证。
+
+五个 Docker 阶段均使用 `--components`、六个明确复制的运行模块和持久化的 `/opt/crossforge/qualification/vcpkg/inputs`，不再复制完整 release、schema 或 renderer。新 schema 2 报告绑定该层输入策略，严格限制顶层字段；后序阶段认证前序报告，契约重验实际工具链报告并核对 SDK 记录的原文件 SHA256，tier2/3 另外认证提供 patchelf 身份的契约报告。CMake/Ninja 安装文件、来源、五套 triplet、port 源码与显式 QEMU 执行检查保留。
+
+原 `--release` CLI 继续生成 schema 1 和精确完整 release 身份，兼容消费者从完整 release 独立推导新前序报告策略。`packaging-sdk` 在自己的边界复制当前 release，避免依赖已经移除的 vcpkg 继承文件。完整 SDK 独立推导 vcpkg SDK 策略、检查 scoped 或精确匹配的 legacy 报告，schema 2 集成结果记录原 vcpkg 报告文件 SHA256。配置 binding 不是正式执行 receipt，不放宽物理环境匹配或取消最终集成。
+
+[验证记录](vcpkg-policy-inputs-2026-09-11.json)：固定、断网、非 root、无 Docker socket 的工具容器中 config 1359 项、282.052 秒及 packaging 40 项、1.295 秒全部通过，无跳过；四项 locked validators、三个 renderer `--check`、shell syntax 和 actionlint 通过（仅既有 concurrency.queue 兼容例外）。最终定向 80 项、6.905 秒通过；固定 Rocky 8 platform-python 3.6.8 编译五个变更运行文件，37 项回归、5.122 秒通过。Rocky 图测试只替换取图入口，使用同轮工具容器生成的实际 Bake print。
+
+真实 Bake print 与规范化源码材料比较 `83fed59` 和最终实现：34 个原始编译组件、3 个 GCC 正式资格阶段的闭包保持不变，113 份生成配置逐字节不变。五个 vcpkg 阶段随实现变化而更新；单改产品版本或 cp39 source digest，旧实现五层均失效，新实现均不受影响。单改 Python 行模块，两者均不受影响；单改 QEMU executor 或 Ninja binary identity，新实现仍使五层全部失效；只改 tier3 consumer，则只影响 tier3。最终格式收紧后重新执行全部材料实验，没有把图与输入范围观测写成 BuildKit 执行或性能改善。
+
+新增回归使用合成工具链/vcpkg 报告，组件认证、策略推导、binding 与既有工具链报告核验执行真实代码；producer dispatch 中实际已安装工具、来源、asset/archive 和 port/consumer 执行是显式 mock。实际运行过的原域回归仍包含在全量套件内。这些测试不构成新目标执行、vcpkg 锁定源码资格或新 SDK 资格证据。
+
+首轮全量通过后，手工复核发现 packaging 隐式继承 release 的依赖，增加边界及裁剪目录回归并修正。裁剪测试最初将脚本放在临时根目录，而生成器按实际 `scripts/` 布局查找 validator；改用 Docker 一致的目录结构后通过。随后新增 schema 2 顶层未知/缺失字段拒绝，并再次完成最终定向、Rocky、全量和材料验证。版本 pin、ABI/GCC baseline、生成配置和交叉构建中禁止目标执行的限制未变。
+
+主 CI qualified-row/SDK 接入、精确恢复、真实 GitHub 信任/重试、新报告链和源码 Docker 重放、候选/原生 ARM、按引用保留及性能实验仍待完成。此前自动审批拒绝容器挂载主机 Docker socket（会授予广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。跨 runner 物理环境边界也仍待决定。未合入 main、推送或发布。

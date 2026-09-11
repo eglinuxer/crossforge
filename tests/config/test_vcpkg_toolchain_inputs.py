@@ -174,7 +174,7 @@ class VcpkgToolchainInputsTests(unittest.TestCase):
         scripts = self.root / "scripts"
         scripts.mkdir()
         for name in ("qualify-vcpkg-sdk.py", "fetch-vcpkg-history.py", "release_component.py",
-                     "toolchain_report.py", "toolchain_policy.py"):
+                     "toolchain_report.py", "toolchain_policy.py", "vcpkg_policy.py"):
             shutil.copyfile(ROOT / "scripts" / name, scripts / name)
         trimmed = runpy.run_path(str(scripts / "qualify-vcpkg-sdk.py"))
         self.assertEqual(self.qualify(module=trimmed), self.qualify())
@@ -182,7 +182,7 @@ class VcpkgToolchainInputsTests(unittest.TestCase):
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(b"--toolchain-components", result.stdout)
-        self.assertEqual(len(list(scripts.iterdir())), 5)
+        self.assertEqual(len(list(scripts.iterdir())), 6)
         self.assertEqual(len(list(self.components.rglob("*.json"))), 8)
 
     def cli(self):
@@ -237,20 +237,18 @@ class VcpkgToolchainGraphTests(unittest.TestCase):
         self.assertTrue({"config/generated/components/" + name + ".json" for name in FILES} <= files)
         self.assertNotIn("scripts/release-components-core.py", files)
         self.assertNotIn("scripts/python_row_contract.py", files)
-        # The rest of the vcpkg input migration is separate: retain its existing
-        # full-release report until host-tool/executor and prerequisite bindings move.
-        self.assertIn("config/release.json", files)
+        self.assertNotIn("config/release.json", files)
 
-    def test_sdk_stage_copies_exactly_five_runtime_modules(self):
+    def test_sdk_stage_copies_exactly_six_runtime_modules(self):
         _, stages, _ = bake_materials.recipe((ROOT / "docker/vcpkg.Dockerfile").read_text())
         instructions = stages["vcpkg-sdk-base"]["instructions"]
         copies = [source for line in instructions if line.startswith("COPY ")
                   for source in bake_materials._copy(line)[1] if source.startswith("scripts/")]
         self.assertEqual(set(copies), {"scripts/" + name for name in (
-            "fetch-vcpkg-history.py", "release_component.py", "qualify-vcpkg-sdk.py", "toolchain_policy.py", "toolchain_report.py")})
+            "fetch-vcpkg-history.py", "release_component.py", "qualify-vcpkg-sdk.py", "toolchain_policy.py", "toolchain_report.py", "vcpkg_policy.py")})
         runs = [line for line in instructions if line.startswith("RUN ")]
         self.assertEqual(len(runs), 1)
-        self.assertIn("--toolchain-components /work/config/components", runs[0])
+        self.assertIn("--components /opt/crossforge/qualification/vcpkg/inputs", runs[0])
         for arch in ARCHES:
             self.assertIn("--toolchain-%s-component-sha256" % arch, runs[0])
 

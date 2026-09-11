@@ -484,9 +484,11 @@ Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单�
 
 工具链策略以 `toolchain/<arch>-qualification` 的可信 canonical SHA256 为根，校验其 build、ABI baseline 及 build 下 GCC/binutils source 共五份已有投影。策略绑定 target/sysroot、版本与来源、冻结 ABI、干净 Rocky runtime 以及原生 x86_64 或显式固定 QEMU 执行器。Docker 资格阶段使用 `--components`，不复制完整 release；schema 2 报告的 `input_binding.policy_sha256` 绑定该策略，并禁止同时声称 `release_sha256`。旧 `--release` CLI 仍保留完整 release 报告和原校验语义。
 
-最终 SDK 与 vcpkg SDK 从当前完整 release 独立推导工具链策略，检查原报告、资格组件与 locked/clean runtime 成功状态。vcpkg 契约还要求工具链报告字节与已资格化 vcpkg SDK 记录的 SHA256 一致。无关 Python 变更可以保持工具链报告的原身份；组件 receipt 复用另外要求产物、完整实际资格材料、校验实现和执行环境严格匹配，并保留原 producer 与执行区间。任何新候选仍须执行最终镜像集成及原生 ARM 门禁。
+最终 SDK 从当前完整 release 独立推导工具链策略，vcpkg SDK 则使用已认证组件策略；二者检查原报告、资格组件与 locked/clean runtime 成功状态。vcpkg 契约还要求工具链报告字节与已资格化 vcpkg SDK 记录的 SHA256 一致。无关 Python 变更可以保持工具链报告的原身份；组件 receipt 复用另外要求产物、完整实际资格材料、校验实现和执行环境严格匹配，并保留原 producer 与执行区间。任何新候选仍须执行最终镜像集成及原生 ARM 门禁。
 
-共享 `toolchain_report.py` 提供直接消费已认证 toolchain policy 的入口；它要求 scoped 报告，不能把旧 release 报告改写成组件报告。完整 release 适配器保留旧格式及相同运行时校验。vcpkg SDK 的 Docker 路径通过两个独立资格根 pin 认证八份工具链投影，再与当前 release 推导的策略比较；阶段只复制五个运行模块，不加载组件生成器或 Python 行模块。其 CMake/Ninja、QEMU 及后续四层 vcpkg 报告目前仍使用完整 release，整条链对产品版本或 Python 配置变化的依赖尚未解除；此次模块裁剪本身不是新资格执行或 CI 耗时证明。
+共享 `toolchain_report.py` 提供直接消费已认证 toolchain policy 的入口；它要求 scoped 报告，不能把旧 release 报告改写成组件报告。完整 release 适配器保留旧格式及相同运行时校验。`vcpkg_policy.py` 认证 SDK build 根、两个独立工具链资格根，以及 CMake/Ninja 的来源输入；后续契约和 tier1–3 根逐层绑定 SDK、工具链与前序资格。每层 schema 2 报告使用自身输入 binding，后续阶段核对前序报告；SDK 与契约阶段仍重新验收实际工具链报告，tier2/3 还核对提供 patchelf 身份的契约报告。五个 Docker 阶段均只复制六个运行模块，不复制完整 release 或组件生成器，保留的投影位于 `/opt/crossforge/qualification/vcpkg/inputs`。
+
+原 vcpkg `--release` CLI 继续生成 schema 1 报告并绑定精确完整 release；其消费者可从完整 release 独立推导预期，验收新 scoped 前序报告。`packaging-sdk` 在自己的消费边界复制当前 release，供 launcher、分包和完整 SDK 使用。完整 SDK 在最终集成时也从完整 release 独立推导 vcpkg SDK 策略，验收新报告或精确匹配的旧报告，其 schema 2 集成报告记录 vcpkg 报告格式和文件 SHA256。产品版本或单行 Python 输入变化可以保留 vcpkg 资格配置身份，最终 SDK 集成仍须重新执行。这些配置与图检查不是新执行 receipt、跨 runner 资格复用授权或 CI 耗时证明。
 
 `replay-sources.yml` 提供独立的手动源码编译重放范围：单架构 binutils/GCC，或单行 build/x86_64/aarch64 CPython。`ci_source_replay.py` 从真实可达 recipe 核对原编译 RUN，仅对相应 owning stage 设置 `no-cache-filter`，并用结构化事件、实际环境和构建后材料复核确认新执行。CLI 要求显式固定 builder、新诊断目录，拒绝组件替换、资格重放和缓存写入组合，全部输出限制为 cache-only。既有 canonical 阶段门禁保留，但重放记录只证明选中编译阶段；源码取得、prepared 输入、其他编译器和资格步骤仍可使用普通缓存。`cold` 继续只控制远程缓存导入，不能单独证明重建。实际新编译和 GitHub 验收尚未运行。
 

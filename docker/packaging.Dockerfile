@@ -39,6 +39,7 @@ FROM scratch AS nfpm-tool-export
 COPY --from=nfpm-tool /out/ /
 
 FROM crossforge_sdk_base AS packaging-sdk
+COPY config/release.json /opt/crossforge/release.json
 ARG NFPM_VERSION
 ARG NFPM_BINARY_SHA256
 ARG NFPM_SOURCE_COMPONENT_SHA256
@@ -231,10 +232,14 @@ COPY LICENSE-APACHE LICENSE-MIT \
   /opt/crossforge/share/licenses/crossforge/
 COPY --chmod=0755 scripts/release_component.py \
   scripts/validate-release.py scripts/license-file-inventory.py \
+  scripts/vcpkg_policy.py scripts/toolchain_policy.py \
+  scripts/release-components-core.py scripts/release-components-vcpkg.py scripts/python_row_contract.py \
   scripts/qualify-complete-sdk.py /work/scripts/
 COPY tests/consumer/ /work/consumer/
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-complete-sdk.py \
+      --release /opt/crossforge/release.json \
+      --vcpkg-report /opt/crossforge/qualification/vcpkg/sdk.json \
       --policy-component /work/config/complete-sdk-policy.json \
       --policy-component-sha256 "$COMPLETE_SDK_POLICY_COMPONENT_SHA256" \
       --launcher-component /work/config/crossforge-launcher.json \
