@@ -8,7 +8,7 @@ import re
 import subprocess
 import tempfile
 
-from . import bake_materials, component_artifacts, component_inputs, oci_layout
+from . import bake_materials, component_artifacts, component_inputs, local_export, oci_layout
 from .identity import (content_sha256, digest_value, load_json, require)
 
 
@@ -112,14 +112,10 @@ def extract_metadata(layout, observation, paths, frontend, directory, builder, d
     require(not directory.exists(), "metadata extraction directory must be new")
     directory.mkdir(parents=True)
     destination = directory / "files"
-    destination.mkdir()
     reference = "oci-layout://%s@%s" % (Path(layout).resolve(), observation["root_digest"])
     graph = oci_layout.metadata_graph(reference, {path: path for path in paths}, destination, frontend)
-    write_json(directory / "extract.bake.json", graph)
-    subprocess.run(docker_command(docker_config) + ["buildx", "bake", "--builder", builder,
-        "--allow=fs.write=" + str(destination), "-f", str(directory / "extract.bake.json"),
-        "component-metadata", "--progress=plain"], cwd=str(directory), check=True)
-    return destination
+    return local_export.extract(graph, "component-metadata", directory,
+        docker_command(docker_config) + ["buildx", "bake", "--builder", builder])
 
 
 def _build_digest(path):

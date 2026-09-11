@@ -67,6 +67,15 @@ only. OCI paths must be visible at the same absolute paths to the producer and
 consumer. Use new output directories so a failed or repeated invocation cannot
 replace the original record.
 
+Local OCI metadata and qualified-row extraction allow ten minutes per transfer.
+A timeout stops the Docker client and its Buildx children, retains the partial
+directory, and retries once into a new directory with the same digest and COPY
+recipe. Other export errors fail immediately. Both attempts remain available
+until normal staging cleanup; row CI preserves their recipes and timeout records
+in its diagnostics. Consumers accept only the successful directory and still perform
+the original byte, contract, report, and installed-tree checks. This retry does
+not rerun qualification or turn an interrupted producer into a successful one.
+
 First run the three release renderers with `--check`, then obtain the resolved
 canonical graph and actual execution identity:
 

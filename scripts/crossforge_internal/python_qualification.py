@@ -133,7 +133,7 @@ def extract_row(layout, observation, settings, frontend, directory, builder, doc
     directory = Path(directory).resolve()
     require(not directory.exists(), "row extraction directory must be new")
     destination = directory / "files"
-    destination.mkdir(parents=True)
+    directory.mkdir(parents=True)
     reference = "oci-layout://%s@%s" % (Path(layout).resolve(), observation["root_digest"])
     paths = settings["copies"] + ["component"]
     lines = ["# syntax=" + frontend, "FROM scratch"]
@@ -141,11 +141,8 @@ def extract_row(layout, observation, settings, frontend, directory, builder, doc
     graph = {"target": {"row-extract": {"context": ".", "dockerfile-inline": "\n".join(lines) + "\n",
         "contexts": {"row": reference}, "platforms": ["linux/amd64"],
         "output": [{"type": "local", "dest": str(destination)}]}}}
-    component_build.write_json(directory / "extract.bake.json", graph)
-    subprocess.run(component_build.docker_command(docker_config) + ["buildx", "bake", "--builder", builder,
-        "--allow=fs.write=" + str(destination), "-f", str(directory / "extract.bake.json"),
-        "row-extract", "--progress=plain"], cwd=str(directory), check=True)
-    return destination
+    return component_build.local_export.extract(graph, "row-extract", directory,
+        component_build.docker_command(docker_config) + ["buildx", "bake", "--builder", builder])
 
 
 def produce(source, graph, row, execution, producer, subjects, directory, builder, docker_config=None):

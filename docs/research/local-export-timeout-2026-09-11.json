@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-local-export-timeout-repair-observation",
+  "observed_at": "2026-09-11T08:03:34.393662-04:00",
+  "base_commit": "34bcb7b5543cb6a85c64e3a32764530c3147ddad",
+  "status": "regressions and actual immutable-OCI timeout/retry acceptance passed",
+  "source_sha256": {
+    "scripts/crossforge_internal/local_export.py": "12e9a89b87a2f067384218e2e79cbabeb6997e43fd42468e9ebf600c8bd607eb",
+    "scripts/crossforge_internal/component_build.py": "32746496a06992850899a70b1cb77c2111ca7cc5ab2a5e2ae2937b5d5e42be35",
+    "scripts/crossforge_internal/python_qualification.py": "df84af5ebdc1b5f97f73ead5572b5ad63bc57b8b11d80fc7cd381f45310822e8",
+    "scripts/crossforge_internal/ci_python_rows.py": "aae2bdb0cef978254c2e039ee6809bcbb7c1749175991cc3b2fa6c870b459948",
+    "tests/config/test_local_export.py": "ee5b617be741aead2b422b38774081ca620d66793d3fa67e8ea7a35458b78973"
+  },
+  "scope": "Bound metadata and row OCI transfers; not fresh qualification or GitHub/candidate acceptance",
+  "behavior": {
+    "transfer_timeout_seconds": 600,
+    "timeout_retries": 1,
+    "partial_directories": "retained separately until caller staging cleanup",
+    "retry_inputs": "same immutable OCI digest and COPY recipe",
+    "non_timeout_errors": "fail without retry",
+    "process_cleanup": "terminate Docker client process group and kill remaining children after bounded grace",
+    "consumer_verification": "original contracts, bytes, reports and installed-tree checks unchanged",
+    "row_diagnostics": "preserve both extraction recipes and timeout records before SDK staging cleanup"
+  },
+  "trigger": {
+    "phase": "runtime-attempt4/python-cp314",
+    "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+    "original_build_ref": "crossforge-ci-review/crossforge-ci-review0/q8b00t2gq3h9zkspuu35f8cab",
+    "status": "failed during local export; no final receipt/result",
+    "stalled_partial_regular_file_bytes": 257427381,
+    "tool_container_memory": "1.348 GiB of 16 GiB; OOMKilled false",
+    "trace": "SIGQUIT on only the verified stalled Buildx client recorded thousands of fsutil receiver/write goroutines waiting; no root-cause or version-fix claim",
+    "diagnostic_same_digest_export_seconds": 19.7,
+    "diagnostic_export_reported_bytes": 817460000,
+    "termination": "Only original export client terminated after independent same-OCI export succeeded; original logs and directories preserved",
+    "log": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4-python-cp314.log",
+      "sha256": "21e5b8c5538ce8da3fb7749edbe949d3ae42da876a824d6c80054220d03bd8dc"
+    }
+  },
+  "tests": [
+    {
+      "log": "focused.log",
+      "tests": 39,
+      "seconds": 2.973,
+      "status": "passed",
+      "skipped": 0
+    },
+    {
+      "log": "full.log",
+      "tests": 1405,
+      "seconds": 315.362,
+      "status": "passed",
+      "skipped": 0
+    },
+    {
+      "log": "full.log",
+      "tests": 40,
+      "seconds": 1.327,
+      "status": "passed",
+      "skipped": 0
+    },
+    {
+      "log": "rocky.log",
+      "tests": 7,
+      "seconds": 1.049,
+      "status": "passed",
+      "skipped": 0
+    },
+    {
+      "log": "final-focused.log",
+      "tests": 78,
+      "seconds": 9.257,
+      "status": "passed",
+      "skipped": 0
+    },
+    {
+      "log": "final-rocky.log",
+      "tests": 8,
+      "seconds": 1.072,
+      "status": "passed",
+      "skipped": 0
+    }
+  ],
+  "checks": {
+    "locked_release": "passed",
+    "supply_chain_evidence": "passed",
+    "frozen_abi": "passed",
+    "python_runtime_providers": "passed",
+    "render_release_components": "passed",
+    "render_vcpkg_integration": "passed",
+    "render_bake": "passed",
+    "shell_syntax": "passed",
+    "actionlint": "passed"
+  },
+  "check_notes": [
+    "Complete driver exited 1 only at actionlint: the Git-archive test copy had no .git and project discovery failed. After git init in that disposable copy, separate actionlint passed before final focused tests; no repository source or validation rule was relaxed.",
+    "Full 1405-test config run preceded the final timeout-duration reporting refinement and the extra diagnostic-retention test. Final affected modules passed 78 tests, and final Rocky Python 3.6 passed 8 tests; passed full suites were not repeated.",
+    "Actionlint retains only the pre-existing concurrency.queue compatibility ignore."
+  ],
+  "actual_retry": {
+    "attempts": 2,
+    "coverage": {
+      "build_python_sdk_tree": {
+        "canonical_sha256": "548f4fe03bc55472c80350be3bf8a5dc64a24b3b8df503934cb41d8623a44a38",
+        "entries": 3154
+      },
+      "manifest_sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045",
+      "row": "cp314",
+      "runtime_tiers": [
+        "locked-sysroot",
+        "clean-rocky"
+      ],
+      "status": "passed",
+      "targets": {
+        "aarch64": {
+          "python_sha256": "793cef6889d0429b942084108803c4f81c3aa965934d06682721eace2ddfad56",
+          "report_sha256": "50352204e837ab5a3c9d3e4e4a2863fc0f01b3c3bdee076285342db39caedb60",
+          "sdk_tree": {
+            "canonical_sha256": "609a55307c4160c07f80f0d45b521e7fd24868fb2da79d232d75e72155aca69d",
+            "entries": 3154
+          },
+          "target": "aarch64-unknown-linux-gnu"
+        },
+        "x86_64": {
+          "python_sha256": "e01058843da172be2436db7f4d60ed7c5eb7d7295fbc05abd9bded09cea5417f",
+          "report_sha256": "6fcd90a0ff30265e425e67df4d0d52ed51a1addaf0245b1832ff7fc5b8119f87",
+          "sdk_tree": {
+            "canonical_sha256": "2b825eb5bd37cd45fd29ee2b67184a6c92132eed7b18e9c2f4a742208ec15939",
+            "entries": 3154
+          },
+          "target": "x86_64-unknown-linux-gnu"
+        }
+      }
+    },
+    "injected_first_timeout_seconds": 1,
+    "input_artifact": {
+      "compressed_layer_bytes": 231427031,
+      "config_digest": "sha256:28e44281b5dc38d195cf6c7bf9554ef6fab39b6c05e537dd75c8de546a9e987a",
+      "kind": "crossforge-oci-layout-observation",
+      "layer_digests": [
+        "sha256:043a78e9deeb979496f9b45ccfbcc1dc81b88552ecc0b2d46a94ce869408573c",
+        "sha256:fec50671ab4808e4049af5c4bd42ff784c2183f139c269705884523b4a584b0d",
+        "sha256:e7b10fd6bdc317c4a44b4cfc6ee79bc600e386a66d1b03a07396763444c8ad7c"
+      ],
+      "platform": "linux/amd64",
+      "platform_digest": "sha256:7461d41a3b7460d3d33168f7bafec2a02299fdae1183def34718b8be0a160b85",
+      "root_digest": "sha256:7461d41a3b7460d3d33168f7bafec2a02299fdae1183def34718b8be0a160b85",
+      "schema_version": 1
+    },
+    "input_source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+    "kind": "crossforge-local-export-timeout-retry-observation",
+    "prior_qualification_sha256": "87155a6ee9d5cf4ee788ab49b9ea75dec9446c354f8b6078761a14bbadea8a96",
+    "production_timeout_seconds": 600,
+    "schema_version": 1,
+    "scope": "actual immutable OCI transfer retry and original file/report acceptance; original cp314 qualification phase remains failed, no fresh test or receipt claim",
+    "seconds": 35.992,
+    "source_sha256": {
+      "scripts/crossforge_internal/component_build.py": "32746496a06992850899a70b1cb77c2111ca7cc5ab2a5e2ae2937b5d5e42be35",
+      "scripts/crossforge_internal/local_export.py": "12e9a89b87a2f067384218e2e79cbabeb6997e43fd42468e9ebf600c8bd607eb",
+      "scripts/crossforge_internal/python_qualification.py": "df84af5ebdc1b5f97f73ead5572b5ad63bc57b8b11d80fc7cd381f45310822e8"
+    },
+    "status": "passed"
+  },
+  "logs": {
+    "focused.log": {
+      "path": "/tmp/crossforge-local-export/focused.log",
+      "sha256": "c5641f91090ad31e20a142e10efe027c73aef4a5722dd7b76be65af7d5e12054"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-local-export/full.log",
+      "sha256": "62ba044eaa6dd221ea575d7e1414b5c582aa1271b531e4ade378761012054828"
+    },
+    "rocky.log": {
+      "path": "/tmp/crossforge-local-export/rocky.log",
+      "sha256": "79b0bc2ca07b7f49368eed965ca0aaf0bc49bd74e3f4be5e494eed75fab8c5a9"
+    },
+    "final-focused.log": {
+      "path": "/tmp/crossforge-local-export/final-focused.log",
+      "sha256": "07b2d6e566ba45fa9deabc2ff8531f90b75c326495baca0e6747d1f7d991f5d3"
+    },
+    "final-rocky.log": {
+      "path": "/tmp/crossforge-local-export/final-rocky.log",
+      "sha256": "6a9a74f45df26f0634dac45f966695717679e9f9bc5fd40772c21c14d4694484"
+    },
+    "retry.log": {
+      "path": "/tmp/crossforge-local-export/retry.log",
+      "sha256": "9f9a159523139f02f2bf878632f66e1519b4e5f1a0d039b222cead095bb61ee3"
+    },
+    "retry-result.json": {
+      "path": "/tmp/crossforge-local-export/retry-result.json",
+      "sha256": "9d4f22d12494ec6abc770ac5cf5af3ba283ed86d75878cdc548f071013ce3e09"
+    },
+    "verify-retry.py": {
+      "path": "/tmp/crossforge-local-export/verify-retry.py",
+      "sha256": "0b396c0002f04c8f75b116d30b1f93d416d8393c50829ac7b9f52da618c7dc83"
+    },
+    "run-retry.sh": {
+      "path": "/tmp/crossforge-local-export/run-retry.sh",
+      "sha256": "f0758667620d0c68695cb9e2a39f9bb60a9e9f49f53dd18737f22dd74d4a6784"
+    },
+    "metadata.log": {
+      "path": "/tmp/crossforge-local-export/metadata.log",
+      "sha256": "2da7e22023366b33f08f2d3a04f494a32331d07a4434c323e44f6142c2b251c5"
+    },
+    "metadata-result.json": {
+      "path": "/tmp/crossforge-local-export/metadata-result.json",
+      "sha256": "b9a5bacbfbde892f555857853d4f603d220189c1530caff016d9412bb077db69"
+    },
+    "verify-metadata.py": {
+      "path": "/tmp/crossforge-local-export/verify-metadata.py",
+      "sha256": "dfe5cddfc52473d2601f6bba8b002adc8920e294b1ce4b54f0330556896ea778"
+    },
+    "run-metadata.sh": {
+      "path": "/tmp/crossforge-local-export/run-metadata.sh",
+      "sha256": "a54170b64346aafffb7c21e58a0a3ae504d7fb5236736bf94827ac170d399f79"
+    }
+  },
+  "remaining": "Fresh current-input Python row receipts, independent installations and SDK integration; forced sources/vcpkg, GitHub trust/recovery, candidate/native ARM, retention and performance acceptance remain",
+  "merged_main": false,
+  "pushed": false,
+  "published": false,
+  "actual_metadata": {
+    "artifact_digest": "sha256:7461d41a3b7460d3d33168f7bafec2a02299fdae1183def34718b8be0a160b85",
+    "files": [
+      {
+        "mode": "0644",
+        "path": "component/contract.json",
+        "sha256": "b22bc798b4a9a156ec9ba4f123e7c7cb1e020246c6ccb232dd29ca8cf952c615"
+      },
+      {
+        "mode": "0644",
+        "path": "component/execution.jsonl",
+        "sha256": "0ca5490463892b3139c6f133171d8ac2117d7bb1edefe0536ffd5528265b8e45"
+      },
+      {
+        "mode": "0644",
+        "path": "component/qualification.json",
+        "sha256": "5df2d9199557577096aed721eec13d91cabf5a766cb25ac13fa2f0b50476ec88"
+      },
+      {
+        "mode": "0644",
+        "path": "component/reports/aarch64.json",
+        "sha256": "50352204e837ab5a3c9d3e4e4a2863fc0f01b3c3bdee076285342db39caedb60"
+      },
+      {
+        "mode": "0644",
+        "path": "component/reports/row.json",
+        "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+      },
+      {
+        "mode": "0600",
+        "path": "component/reports/source.json",
+        "sha256": "635a52f82613fdb9f41f4e5bb30f45e87c6551283bb44019bec1e7015a160738"
+      },
+      {
+        "mode": "0644",
+        "path": "component/reports/x86_64.json",
+        "sha256": "6fcd90a0ff30265e425e67df4d0d52ed51a1addaf0245b1832ff7fc5b8119f87"
+      }
+    ],
+    "scope": "metadata export wiring and exact file equality, no qualification execution",
+    "seconds": 4.056,
+    "status": "passed"
+  },
+  "environment": {
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "rocky_image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+    "regression_container": "network none, no socket, user 1000, 4 CPUs, 16 GiB",
+    "actual_export_container": "same fixed tooling image, bridge, group 989 and approved Docker socket; crossforge-ci-review unchanged"
+  }
+}

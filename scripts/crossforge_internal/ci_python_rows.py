@@ -43,6 +43,8 @@ def preserve_qualification(directory, destination, row):
     """Retain execution diagnostics on failure without copying installed trees or OCI blobs."""
     paths = ["inputs.json", "qualification.bake.json", "receipt.json", "buildx-metadata.json",
              "payload/" + python_qualification.PROGRESS_PATH, "payload/" + python_qualification.RECORD_PATH]
+    paths += ["extracted/" + name for name in ("extract.bake.json", "extract-attempt2.bake.json",
+              "export-timeout-1.json", "export-timeout-2.json")]
     paths += ["payload/opt/crossforge/qualification/python/%s/%s" % (row, name) for name in python_qualification.REPORTS]
     for name in paths:
         path = directory / name
