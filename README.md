@@ -842,6 +842,12 @@ the SDK build budget, the workflow logs out, anonymously pulls the source image,
 streams the complete archive from its scratch filesystem, and verifies the
 archive SHA256; a manifest-only visibility check is not accepted as proof that
 downstream users can retrieve the corresponding source payload.
+Source publication, SDK publication and final anonymous consumer validation are
+separate jobs. Successful publishers save immutable, digest-checked metadata
+checkpoints; a failed downstream job can reuse the same published image and
+original producer identity on a partial rerun. The final consumer job has only
+package read permission. See the [candidate recovery boundaries](docs/github-actions.md#candidate-and-stable-delivery)
+for failures before checkpoint completion and the remaining live validation.
 The same anonymous boundary fetches each OCI attestation manifest and its raw
 blobs, recomputes descriptor sizes and digests, and requires exactly one
 in-toto SLSA v1 max-provenance statement plus one SPDX document for both the

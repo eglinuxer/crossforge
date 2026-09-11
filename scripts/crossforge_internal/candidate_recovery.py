@@ -15,6 +15,7 @@ WORKFLOW = ".github/workflows/candidate.yml"
 PREFIXES = {"identity": "candidate-identity", "probes": "native-aarch64-probes", "native": "native-aarch64-evidence"}
 PUBLISH_OUTPUTS = ("candidate_digest", "platform_digest", "candidate_sha256", "probe_bundle_sha256",
                    "publish_attempt", "identity_artifact_id", "probe_artifact_id")
+PUBLICATION_OUTPUTS = ("source_attempt", "source_checkpoint_sha256", "sdk_attempt", "sdk_checkpoint_sha256")
 NATIVE_OUTPUTS = ("native_attempt", "native_artifact_id", "native_report_sha256")
 
 
@@ -37,6 +38,8 @@ def upstream(needs, attempt, stage):
             continue
         exact_fields(needs[job], ("result", "outputs"), "candidate upstream job")
         require(needs[job]["result"] == "success", "candidate upstream job did not succeed: " + job)
+        if job == "publish" and set(needs[job]["outputs"]) & set(PUBLICATION_OUTPUTS):
+            fields = fields + PUBLICATION_OUTPUTS
         exact_fields(needs[job]["outputs"], fields, "candidate upstream outputs")
         for field, value in needs[job]["outputs"].items():
             if field.endswith("_attempt") or field.endswith("_artifact_id"):
@@ -45,6 +48,9 @@ def upstream(needs, attempt, stage):
                 digest_value(value, field, oci=field in ("candidate_digest", "platform_digest"))
     publish = needs["publish"]["outputs"]
     require(number(publish["publish_attempt"], "publish attempt") <= attempt, "publish attempt is in the future")
+    if "source_attempt" in publish:
+        require(number(publish["source_attempt"], "source attempt") <= number(publish["sdk_attempt"], "SDK attempt") <=
+                number(publish["publish_attempt"], "candidate consumer attempt"), "publication attempts are out of order")
     if stage == "sign":
         native = needs["native-aarch64"]["outputs"]
         require(number(publish["publish_attempt"], "publish attempt") <= number(native["native_attempt"], "native attempt") <= attempt,
@@ -53,9 +59,11 @@ def upstream(needs, attempt, stage):
 
 
 def validate(value):
-    exact_fields(value, ("schema_version", "kind", "repository", "workflow", "source_commit", "run_id", "sign_attempt",
-        "candidate_manifest_sha256", "probe_bundle_sha256", "native_report_sha256", "artifacts"), "candidate recovery")
-    require(type(value["schema_version"]) is int and value["schema_version"] == 1 and
+    fields = ("schema_version", "kind", "repository", "workflow", "source_commit", "run_id", "sign_attempt",
+              "candidate_manifest_sha256", "probe_bundle_sha256", "native_report_sha256", "artifacts")
+    require(type(value) is dict, "candidate recovery must be an object")
+    exact_fields(value, fields + (("publication",) if value.get("schema_version") == 2 else ()), "candidate recovery")
+    require(type(value["schema_version"]) is int and value["schema_version"] in (1, 2) and
             value["kind"] == "crossforge-candidate-recovery", "unsupported candidate recovery schema")
     require(value["repository"] == REPOSITORY and value["workflow"] == WORKFLOW, "candidate recovery source is not trusted")
     require(type(value["source_commit"]) is str and re.fullmatch(r"[0-9a-f]{40}", value["source_commit"]),
@@ -76,6 +84,14 @@ def validate(value):
     require(len(set(ids)) == len(ids), "candidate artifact IDs must be distinct")
     require(artifacts["identity"]["attempt"] == artifacts["probes"]["attempt"] <= artifacts["native"]["attempt"] <= value["sign_attempt"],
             "candidate artifact producer attempts are out of order")
+    if value["schema_version"] == 2:
+        exact_fields(value["publication"], ("source", "sdk"), "candidate publication lineage")
+        for item in value["publication"].values():
+            exact_fields(item, ("attempt", "checkpoint_sha256"), "candidate publication producer")
+            positive(item["attempt"], "publication attempt")
+            digest_value(item["checkpoint_sha256"], "publication checkpoint SHA256")
+        require(value["publication"]["source"]["attempt"] <= value["publication"]["sdk"]["attempt"] <= artifacts["identity"]["attempt"],
+                "candidate publication attempts are out of order")
     return value
 
 
@@ -90,10 +106,15 @@ def document(candidate, needs, run_id, attempt):
         producer_attempt = number(source[attempt_field], attempt_field)
         artifacts[role] = {"id": number(source[id_field], id_field), "attempt": producer_attempt,
             "name": "%s-%d-%d" % (PREFIXES[role], run_id, producer_attempt)}
-    return validate({"schema_version": 1, "kind": "crossforge-candidate-recovery", "repository": REPOSITORY,
+    value = {"schema_version": 1, "kind": "crossforge-candidate-recovery", "repository": REPOSITORY,
         "workflow": WORKFLOW, "source_commit": candidate["source_commit"], "run_id": run_id, "sign_attempt": attempt,
         "candidate_manifest_sha256": content_sha256(candidate), "probe_bundle_sha256": publish["probe_bundle_sha256"],
-        "native_report_sha256": native["native_report_sha256"], "artifacts": artifacts})
+        "native_report_sha256": native["native_report_sha256"], "artifacts": artifacts}
+    if "source_attempt" in publish:
+        value["schema_version"] = 2
+        value["publication"] = {phase: {"attempt": number(publish[phase + "_attempt"], phase + " publication attempt"),
+            "checkpoint_sha256": publish[phase + "_checkpoint_sha256"]} for phase in ("source", "sdk")}
+    return validate(value)
 
 
 def bind(value, candidate_sha256, run):

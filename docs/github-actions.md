@@ -361,8 +361,22 @@ Prepare a candidate first with `gh workflow run candidate.yml --ref main`.
 The workflow binds the commit selected at dispatch; later main pushes do not
 change that candidate's source identity.
 
-If publishing and the final anonymous consumer checks succeeded but native ARM
-or signing failed, use `gh run rerun RUN_ID --failed`. GitHub preserves the
+Source publication, SDK publication and final anonymous consumer checks run as
+three separate jobs. The first two seal a strict metadata checkpoint after
+their push and identity binding succeed. Downstream jobs download the successful
+producer's immutable artifact ID and verify its independently supplied canonical
+SHA256 before restoring inputs. The checkpoint binds the original source commit,
+run/attempt, release, raw OCI index and Buildx metadata, archive identity and
+locked SBOM generator report. The SDK checkpoint embeds the original source
+checkpoint and preserves its files byte for byte. These checkpoints record
+publication identity; qualification and anonymous byte retrieval still run in
+the downstream gates.
+
+If SDK publication fails after the source checkpoint succeeds, or final consumer
+checks fail after the SDK checkpoint succeeds, use `gh run rerun RUN_ID --failed`
+to keep those original image digests. The final `publish` consumer job has only
+package read permission. The same retry command applies when native ARM or
+signing fails. GitHub preserves the
 original source commit and ref on a partial retry, as described in its
 [rerun documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs?tool=cli).
 Native and signing consumers use the successful upstream jobs' immutable
@@ -371,8 +385,10 @@ retry therefore keeps the original candidate/source digests, probe bundle and
 successful native report; a native retry executes the real ARM probes again.
 
 The signature artifact includes `candidate-recovery.json`, binding the candidate
-manifest SHA256, original probe/report byte hashes, run ID and each publishing,
-native and signing attempt. Promotion retrieves the exact latest successful
+manifest SHA256, original probe/report byte hashes, run ID and each final-consumer,
+native and signing attempt. Recovery schema 2 also records the original source
+and SDK publication attempts and checkpoint SHA256 values; their order must be
+source ≤ SDK ≤ final consumer ≤ native ≤ signing. Promotion retrieves the exact latest successful
 signing attempt, checks the selected upstream IDs against
 [GitHub's artifact metadata](https://docs.github.com/en/rest/actions/artifacts),
 then downloads those original artifacts and revalidates all existing semantics
@@ -389,11 +405,11 @@ revalidated when creating or reading the durable archive. A recovery record does
 not itself establish qualification. Partial retry behavior still needs live
 GitHub acceptance; local fixtures are not native ARM execution evidence.
 
-Failures within the combined `publish` job, including failures after an image
-push but before its final checks complete, still require separate publication
-checkpoints. Rerunning all jobs still starts the publication job again. Recovery
-across different candidate runs and reuse of internal component selections in
-that publication path remain pending.
+An image push followed by failure before its producer successfully seals and
+uploads the checkpoint is not recoverable through this path. The workflow does
+not infer a replacement checkpoint from a tag. Rerunning all jobs starts the
+publication jobs again. Recovery across different candidate runs and reuse of
+internal component selections in that publication path remain pending.
 
 Push a stable `vX.Y.Z` Git tag to request a formal release. The tag must point
 to a commit in main and match `product.version` in that commit's

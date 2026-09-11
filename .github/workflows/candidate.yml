@@ -26,18 +26,13 @@ jobs:
     needs: quick
     uses: ./.github/workflows/qualification.yml
 
-  publish:
+  source-publication:
     needs: qualify
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     outputs:
-      candidate_digest: ${{ steps.digest.outputs.digest }}
-      platform_digest: ${{ steps.digest.outputs.platform_digest }}
-      probe_bundle_sha256: ${{ steps.native_probe.outputs.bundle_sha256 }}
-      candidate_sha256: ${{ steps.digest.outputs.candidate_sha256 }}
-      publish_attempt: ${{ steps.identity.outputs.attempt }}
-      identity_artifact_id: ${{ steps.identity_artifact.outputs.artifact-id }}
-      probe_artifact_id: ${{ steps.probe_artifact.outputs.artifact-id }}
+      checkpoint_artifact_id: ${{ steps.checkpoint_artifact.outputs.artifact-id }}
+      checkpoint_sha256: ${{ steps.checkpoint.outputs.checkpoint_sha256 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
@@ -161,6 +156,80 @@ jobs:
           printf 'platform_digest=%s\n' "$source_platform_digest" >> "$GITHUB_OUTPUT"
           printf 'archive_sha256=%s\n' "$source_archive_sha256" >> "$GITHUB_OUTPUT"
           printf 'archive_size=%s\n' "$source_archive_size" >> "$GITHUB_OUTPUT"
+      - name: Seal source publication checkpoint
+        id: checkpoint
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-publication.py seal --phase source \
+            --root "$RUNNER_TEMP" \
+            --output "$RUNNER_TEMP/source-publication-checkpoint"
+      - name: Upload source publication checkpoint
+        id: checkpoint_artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: source-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/source-publication-checkpoint/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Log out the publication writer
+        if: always()
+        run: docker logout ghcr.io >/dev/null 2>&1 || true
+
+  sdk-publication:
+    needs: [source-publication]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      actions: read
+      contents: read
+      packages: write
+    outputs:
+      checkpoint_artifact_id: ${{ steps.checkpoint_artifact.outputs.artifact-id }}
+      checkpoint_sha256: ${{ steps.checkpoint.outputs.checkpoint_sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-locked-buildx
+      - uses: ./.github/actions/configure-build-cache
+      - name: Require the original source publication
+        env:
+          PUBLICATION_NEEDS: ${{ toJSON(needs) }}
+        run: python3 scripts/candidate-publication.py upstream --phase source --needs-json "$PUBLICATION_NEEDS"
+      - name: Download original source publication checkpoint
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.source-publication.outputs.checkpoint_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/source-checkpoint
+      - name: Restore and verify the original source publication
+        id: source
+        env:
+          CHECKPOINT_SHA256: ${{ needs.source-publication.outputs.checkpoint_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-publication.py restore --phase source \
+            --directory "$RUNNER_TEMP/source-checkpoint" \
+            --sha256 "$CHECKPOINT_SHA256" --output "$RUNNER_TEMP"
+      - name: Resolve unique public candidate tag
+        id: identity
+        env:
+          ORIGINAL_SOURCE_REFERENCE: ${{ steps.source.outputs.source_reference }}
+        run: |
+          set -Eeuo pipefail
+          tag=$(./scripts/candidate_manifest.py tag \
+            --source-commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT")
+          reference="$CANDIDATE_REPOSITORY:$tag"
+          source_reference="$ORIGINAL_SOURCE_REFERENCE"
+          source_tag=${source_reference#"$CANDIDATE_REPOSITORY:"}
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          printf 'attempt=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          printf 'reference=%s\n' "$reference" >> "$GITHUB_OUTPUT"
+          printf 'source_tag=%s\n' "$source_tag" >> "$GITHUB_OUTPUT"
+          printf 'source_reference=%s\n' "$source_reference" >> "$GITHUB_OUTPUT"
       - name: Prove the complete source payload is anonymously retrievable
         env:
           SOURCE_DIGEST: ${{ steps.source.outputs.digest }}
@@ -204,10 +273,19 @@ jobs:
           set -Eeuo pipefail
           printf '%s' "$GHCR_TOKEN" \
             | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Reject an existing SDK publication tag
+        env:
+          CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
+        run: |
+          set -Eeuo pipefail
+          if docker buildx imagetools inspect "$CANDIDATE_REFERENCE" >/dev/null 2>&1; then
+            echo "candidate tag already exists: $CANDIDATE_REFERENCE" >&2
+            exit 1
+          fi
       - name: Build once and push the source-bound candidate
         env:
           CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
-          SBOM_GENERATOR: ${{ steps.release_inputs.outputs.sbom_generator }}
+          SBOM_GENERATOR: ${{ steps.source.outputs.sbom_generator }}
         run: |
           set -Eeuo pipefail
           python3 ./scripts/run-with-heartbeat.py \
@@ -271,9 +349,77 @@ jobs:
             "$CANDIDATE_REPOSITORY:${{ steps.identity.outputs.tag }}"
           test "${{ steps.identity.outputs.source_reference }}" = \
             "$CANDIDATE_REPOSITORY:${{ steps.identity.outputs.source_tag }}"
+      - name: Seal sdk publication checkpoint
+        id: checkpoint
+        env:
+          SOURCE_CHECKPOINT_SHA256: ${{ needs.source-publication.outputs.checkpoint_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-publication.py seal --phase sdk \
+            --root "$RUNNER_TEMP" \
+            --source-checkpoint "$RUNNER_TEMP/source-checkpoint" \
+            --source-sha256 "$SOURCE_CHECKPOINT_SHA256" \
+            --output "$RUNNER_TEMP/sdk-publication-checkpoint"
+      - name: Upload sdk publication checkpoint
+        id: checkpoint_artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sdk-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/sdk-publication-checkpoint/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Log out the publication writer
+        if: always()
+        run: docker logout ghcr.io >/dev/null 2>&1 || true
+
+  publish:
+    needs: [sdk-publication]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+    outputs:
+      candidate_digest: ${{ steps.inputs.outputs.digest }}
+      platform_digest: ${{ steps.inputs.outputs.platform_digest }}
+      probe_bundle_sha256: ${{ steps.native_probe.outputs.bundle_sha256 }}
+      candidate_sha256: ${{ steps.inputs.outputs.candidate_sha256 }}
+      publish_attempt: ${{ steps.inputs.outputs.attempt }}
+      identity_artifact_id: ${{ steps.identity_artifact.outputs.artifact-id }}
+      probe_artifact_id: ${{ steps.probe_artifact.outputs.artifact-id }}
+      source_attempt: ${{ steps.inputs.outputs.source_attempt }}
+      source_checkpoint_sha256: ${{ steps.inputs.outputs.source_checkpoint_sha256 }}
+      sdk_attempt: ${{ steps.inputs.outputs.sdk_attempt }}
+      sdk_checkpoint_sha256: ${{ steps.inputs.outputs.sdk_checkpoint_sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Require the original sdk publication
+        env:
+          PUBLICATION_NEEDS: ${{ toJSON(needs) }}
+        run: python3 scripts/candidate-publication.py upstream --phase sdk --needs-json "$PUBLICATION_NEEDS"
+      - name: Download original sdk publication checkpoint
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.sdk-publication.outputs.checkpoint_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/sdk-checkpoint
+      - name: Restore and verify the original sdk publication
+        id: inputs
+        env:
+          CHECKPOINT_SHA256: ${{ needs.sdk-publication.outputs.checkpoint_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-publication.py restore --phase sdk \
+            --directory "$RUNNER_TEMP/sdk-checkpoint" \
+            --sha256 "$CHECKPOINT_SHA256" --output "$RUNNER_TEMP"
       - name: Prove anonymous public availability
         env:
-          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+          CANDIDATE_DIGEST: ${{ steps.inputs.outputs.digest }}
         run: |
           set -Eeuo pipefail
           docker logout ghcr.io
@@ -284,22 +430,22 @@ jobs:
             --index "$RUNNER_TEMP/anonymous-candidate-index.json" \
             --expected-digest "$CANDIDATE_DIGEST")
           test "$anonymous_platform" = \
-            "${{ steps.digest.outputs.platform_digest }}"
+            "${{ steps.inputs.outputs.platform_digest }}"
           docker buildx imagetools inspect \
-            "$CANDIDATE_REPOSITORY@${{ steps.source.outputs.digest }}" --raw \
+            "$CANDIDATE_REPOSITORY@${{ steps.inputs.outputs.source_digest }}" --raw \
             > "$RUNNER_TEMP/anonymous-source-index.json"
           anonymous_source_platform=$(./scripts/resolve_candidate_image.py \
             platform-digest --index "$RUNNER_TEMP/anonymous-source-index.json" \
-            --expected-digest "${{ steps.source.outputs.digest }}")
+            --expected-digest "${{ steps.inputs.outputs.source_digest }}")
           test "$anonymous_source_platform" = \
-            "${{ steps.source.outputs.platform_digest }}"
+            "${{ steps.inputs.outputs.source_platform_digest }}"
       - name: Validate public source provenance and SBOM
         uses: ./.github/actions/validate-public-attestations
         with:
           repository: ${{ env.CANDIDATE_REPOSITORY }}
           index: ${{ runner.temp }}/anonymous-source-index.json
-          index-digest: ${{ steps.source.outputs.digest }}
-          platform-digest: ${{ steps.source.outputs.platform_digest }}
+          index-digest: ${{ steps.inputs.outputs.source_digest }}
+          platform-digest: ${{ steps.inputs.outputs.source_platform_digest }}
           image-kind: source-bundle
           source-commit: ${{ github.sha }}
           output: ${{ runner.temp }}/source-attestations.json
@@ -308,14 +454,14 @@ jobs:
         with:
           repository: ${{ env.CANDIDATE_REPOSITORY }}
           index: ${{ runner.temp }}/anonymous-candidate-index.json
-          index-digest: ${{ steps.digest.outputs.digest }}
-          platform-digest: ${{ steps.digest.outputs.platform_digest }}
+          index-digest: ${{ steps.inputs.outputs.digest }}
+          platform-digest: ${{ steps.inputs.outputs.platform_digest }}
           image-kind: sdk-candidate
           source-commit: ${{ github.sha }}
           output: ${{ runner.temp }}/sdk-attestations.json
       - name: Run the anonymous non-root candidate
         env:
-          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+          CANDIDATE_DIGEST: ${{ steps.inputs.outputs.digest }}
         run: |
           set -Eeuo pipefail
           image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
@@ -326,9 +472,9 @@ jobs:
             "$RUNNER_TEMP/candidate-sources.json"
           docker run --rm "$image" cat /opt/crossforge/SOURCE-OFFER \
             > "$RUNNER_TEMP/candidate-source-offer.txt"
-          grep -F "${{ steps.source.outputs.digest }}" \
+          grep -F "${{ steps.inputs.outputs.source_digest }}" \
             "$RUNNER_TEMP/candidate-source-offer.txt"
-          grep -F "${{ steps.source.outputs.archive_sha256 }}" \
+          grep -F "${{ steps.inputs.outputs.archive_sha256 }}" \
             "$RUNNER_TEMP/candidate-source-offer.txt"
           docker run --rm "$image" cat /opt/crossforge/LICENSES.json \
             > "$RUNNER_TEMP/candidate-licenses.json"
@@ -360,7 +506,7 @@ jobs:
             "$RUNNER_TEMP/candidate-environment.json"
       - name: Build downstream consumers through the public launcher
         env:
-          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+          CANDIDATE_DIGEST: ${{ steps.inputs.outputs.digest }}
         run: |
           set -Eeuo pipefail
           image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
@@ -405,7 +551,7 @@ jobs:
       - name: Build native AArch64 probes from the immutable candidate
         id: native_probe
         env:
-          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+          CANDIDATE_DIGEST: ${{ steps.inputs.outputs.digest }}
         run: |
           set -Eeuo pipefail
           image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
@@ -483,11 +629,11 @@ jobs:
           retention-days: 90
       - name: Report public candidate
         env:
-          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
-          CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
-          PLATFORM_DIGEST: ${{ steps.digest.outputs.platform_digest }}
-          SOURCE_DIGEST: ${{ steps.source.outputs.digest }}
-          SOURCE_REFERENCE: ${{ steps.identity.outputs.source_reference }}
+          CANDIDATE_DIGEST: ${{ steps.inputs.outputs.digest }}
+          CANDIDATE_REFERENCE: ${{ steps.inputs.outputs.reference }}
+          PLATFORM_DIGEST: ${{ steps.inputs.outputs.platform_digest }}
+          SOURCE_DIGEST: ${{ steps.inputs.outputs.source_digest }}
+          SOURCE_REFERENCE: ${{ steps.inputs.outputs.source_reference }}
         run: |
           set -Eeuo pipefail
           {
@@ -498,8 +644,8 @@ jobs:
             echo "- linux/amd64 manifest: \`$PLATFORM_DIGEST\`"
             echo "- Source tag: \`$SOURCE_REFERENCE\`"
             echo "- Source OCI index: \`$CANDIDATE_REPOSITORY@$SOURCE_DIGEST\`"
-            echo "- Source archive SHA256: \`${{ steps.source.outputs.archive_sha256 }}\`"
-            echo "- Source archive bytes: \`${{ steps.source.outputs.archive_size }}\`"
+            echo "- Source archive SHA256: \`${{ steps.inputs.outputs.archive_sha256 }}\`"
+            echo "- Source archive bytes: \`${{ steps.inputs.outputs.archive_size }}\`"
             echo '- Status: public candidate; no stable or SemVer tag was created'
           } >> "$GITHUB_STEP_SUMMARY"
 

@@ -146,7 +146,7 @@ class CandidateWorkflowTests(unittest.TestCase):
     def test_public_availability_is_checked_without_registry_credentials(self):
         logout = self.workflow.index("docker logout ghcr.io")
         anonymous = self.workflow.index("anonymous-candidate-index.json")
-        upload = self.workflow.index("actions/upload-artifact@")
+        upload = self.workflow.index("- name: Upload immutable candidate identity")
         self.assertLess(logout, anonymous)
         self.assertLess(anonymous, upload)
         self.assertIn("if-no-files-found: error", self.workflow)
@@ -287,7 +287,7 @@ class CandidateWorkflowTests(unittest.TestCase):
     def test_every_ci_and_candidate_job_uses_the_locked_buildx_setup(self):
         local_action = "uses: ./.github/actions/setup-locked-buildx"
         self.assertEqual(self.quick.count(local_action), 1)
-        self.assertEqual(self.workflow.count(local_action), 2)
+        self.assertEqual(self.workflow.count(local_action), 4)
         self.assertIn("buildx-v0.36.1.linux-amd64", self.setup)
         self.assertIn("--retry 5 --retry-all-errors", self.setup)
         self.assertIn("--retry-delay 2 --connect-timeout 30", self.setup)

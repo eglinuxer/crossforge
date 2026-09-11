@@ -371,3 +371,13 @@ main 的组件分支现经 `verify-main-incremental.yml` 先解析实际选中 B
 验证过程中修正了一处测试定位与新增 step 的冲突，并将 native report 摘要绑定到实际上传的 staging 文件。临时兼容性脚本最初命名 `platform.py`，遮蔽同名标准库后只收集到 0 项测试；该结果无效，未作为通过证据。改名并强制要求执行 11 项后重新通过。最终复核还将来源记录创建/校验从签名后移到签名前，避免身份失败发生在签名写入之后，并完整复测。
 
 此批仅完成成功 publisher 之后的同 run 部分重试；publish job 内 source/SDK 推送后的中途失败仍需要分阶段 checkpoint，跨 candidate run 恢复和内部组件进入候选发布图仍待接入。真实 GitHub 部分重试、公开签名与 ARM 执行验收未运行；之前 Docker socket 授权仍待答复，未重试被拒绝操作。整体目标仍未完成，未合入 main、推送或发布。
+
+## 批次 5：来源与 SDK 发布分别保存恢复检查点
+
+将候选原 `publish` 拆为 `source-publication` → `sdk-publication` → 最终消费者 `publish`。前两者成功推送并绑定身份后保存严格元数据 checkpoint；下游只接受成功上游的不可变 artifact ID 和独立 canonical SHA256。新 `candidate_publication.py` 模块核对同 source/run、原 attempt、当前 release、原始 OCI index 与 Buildx digest、来源归档身份、固定 SBOM generator 报告及精确文件集。SDK checkpoint 嵌入原来源 checkpoint，并逐字节保留五份来源文件。未知字段、错摘要、缺失/额外文件、符号链接、跨 run/source、未来 attempt 和覆盖已有恢复输入均拒绝。
+
+SDK 构建前仍匿名拉取并核对完整来源归档；最终消费者独立验证公开 OCI/SBOM/provenance、匿名非 root 镜像和双目标下游 fixture，并重新构建 native probe bundle。该 job 降为 packages:read，不再推送镜像。来源成功后 SDK 失败可引用原来源检查点；SDK 成功后最终消费者失败可引用原 SDK 检查点。原生 ARM 失败仍重新执行原生探针。recovery schema 2 记录来源/SDK 的原 attempt 与 checkpoint SHA256，经既有 promotion schema 2 嵌入持久来源记录，顺序要求 source ≤ SDK ≤ 最终消费者 ≤ native ≤ signing。
+
+[本批验证](candidate-publication-checkpoints-2026-09-10.json)：断网、非 root、无 Docker socket 的 Docker config 1212 项、165.981 秒及 packaging 40 项、1.254 秒全部通过，无跳过；四项 locked validators、三个 renderer 和 actionlint 通过。46 项候选定向测试通过；固定 Rocky 8 platform-python 3.6.8 编译三个运行模块并执行 20 项恢复回归通过。补充核对拆分前后 13 个原构建/验收步骤，除声明的上游输出引用替换外逐字节相同；原 native/sign job 内容完整保留。
+
+这些 checkpoint 是发布身份记录，不是资格报告。只有成功保存检查点的原 producer 才能恢复；推送成功但检查点尚未成功封存上传时失败，仍没有安全自动恢复入口。全量重跑仍重新执行 producer，不通过可变 tag 猜测缺失记录。本批未执行真实 GitHub 部分重试、镜像推送、原生 ARM 或新的 BuildKit solve；之前被自动审批拒绝的 Docker socket 操作未重试。跨 run 候选恢复、候选组件消费、资格复用的 CI 接线和性能重放仍需推进，整体目标未完成，尚未合入 main 或推送。

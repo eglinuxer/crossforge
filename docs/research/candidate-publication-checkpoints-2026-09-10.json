@@ -1,0 +1,217 @@
+{
+  "artifacts": {
+    "/tmp/crossforge-publication-checkpoint/focused.log": "43bce5a35b23c5e01b2276768c02b579b72b05185f1b783607bdf4657f834f1b",
+    "/tmp/crossforge-publication-checkpoint/full-result.json": "2d16359f5a1e245dbf08fe30ddf1b0b24e61b020263bd882425fc8edf3a44121",
+    "/tmp/crossforge-publication-checkpoint/full.log": "ba5911e361a3ebfac7f588e614399aafe4180c70df59ef6a5864de2e6001f69d",
+    "/tmp/crossforge-publication-checkpoint/full.py": "808675a7851310b88607d4ddc4452af7f406f8cdbf7ee0c4714eeeb65178234f",
+    "/tmp/crossforge-publication-checkpoint/rocky-check.py": "696648b53bbf644bcb837d4b2387f362ea856d272505994eb5a0ff81809cefa1",
+    "/tmp/crossforge-publication-checkpoint/rocky.log": "4e687399c571eb73ac37614e5c71bf1fee49182203356e4817aff7850c6ce5fd",
+    "/tmp/crossforge-publication-checkpoint/workflow-check.json": "956adfa0cae33e53c898fe63f7a5bc41ccf4bead66601afcfc02d3ffc07fbfa0",
+    "/tmp/crossforge-publication-checkpoint/workflow-check.log": "258522f9795f18f2fc1e2a86f25e6b1a513d7fd09cd92d79fb05e32df6b7441c",
+    "/tmp/crossforge-publication-checkpoint/workflow-check.py": "045da2e4265201b657e2e73954e1057612311675b525d98eed954e8036bbda91"
+  },
+  "base_commit": "54b1a782b2bf70157f8c92b943ece48f6610cca3",
+  "boundaries": [
+    "Separate source publication, SDK publication and read-only final consumer jobs",
+    "Immutable upstream artifact IDs and independent canonical checkpoint SHA256 required before restoration",
+    "Raw file hashes, OCI index bytes, platform digest and Buildx metadata revalidated against exact current release and source binding",
+    "SDK checkpoint embeds the original same-run source checkpoint with identical source payload bytes",
+    "Source and SDK attempt and checkpoint hashes are retained in recovery schema 2 and existing promotion schema 2 lineage",
+    "Final candidate integration and mandatory native ARM gates remain; checkpoints are not qualification receipts"
+  ],
+  "date": "2026-09-10",
+  "docker": {
+    "cpus": 4,
+    "daemon_socket_mounted": false,
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "network": "none",
+    "user": "1000:1000"
+  },
+  "files": {
+    ".github/workflows/candidate.yml": {
+      "executable": false,
+      "sha256": "f63206a5d7bce6c869ec7b4b56dac6575873284339afd15ac84b04952ffd3ac9"
+    },
+    "README.md": {
+      "executable": false,
+      "sha256": "16c1b7ff368aadc42cc8e4ce57a7c82f264927a657b44d2438eea6de3a63c633"
+    },
+    "docs/architecture.md": {
+      "executable": false,
+      "sha256": "ad0b3d56dccb50911aabedb0402b5bfbb7bd3a7cdb68bcccc96f492626ad0626"
+    },
+    "docs/github-actions.md": {
+      "executable": false,
+      "sha256": "6206422192e0f0141cc0050b02f34cd2e8cdf5f96ba189984c0cb43fd4e3fab0"
+    },
+    "docs/research/ci-refactoring-progress.md": {
+      "executable": false,
+      "sha256": "8dfa58d7cc0d8f10e527cd26766e04f4c3d55d21fc053224e549df0728c00f6c"
+    },
+    "scripts/candidate-publication.py": {
+      "executable": false,
+      "sha256": "565c9b71ba343091cea4ddd52e833bbc0a94d11b64b7122b7065351e1789b842"
+    },
+    "scripts/crossforge_internal/candidate_publication.py": {
+      "executable": false,
+      "sha256": "a39c88465811d1f54c6c3837359961346b4bdbbe92da87c82e78afcae7b35983"
+    },
+    "scripts/crossforge_internal/candidate_recovery.py": {
+      "executable": false,
+      "sha256": "cf443163540c80d366d8beb0b63bce4c484b63d7b248ae8a507a872e7365baff"
+    },
+    "tests/config/test_candidate_publication.py": {
+      "executable": false,
+      "sha256": "9e2590e1c92f597e02c08322cf151745c2c65a4f87f53f7041bcceda6bcc962f"
+    },
+    "tests/config/test_candidate_workflow.py": {
+      "executable": false,
+      "sha256": "f5b7825cfdf7d7dc41d886983847df6bf7d91aab3d1b65a4b82f0be318200937"
+    }
+  },
+  "kind": "local-candidate-publication-checkpoint-validation",
+  "pending": [
+    "Live GitHub partial rerun and public candidate acceptance",
+    "Recovery after push but before successful producer checkpoint upload",
+    "Cross-candidate-run recovery and internal component consumption in candidate publication",
+    "Previously rejected Docker socket replay remains unexecuted pending explicit permission",
+    "Native ARM, formal qualification reuse wiring and controlled runner performance replays",
+    "Merge to main and remote push only after required acceptance"
+  ],
+  "scope": "Socketless Docker regression fixtures and gate-body comparison; no live candidate, GitHub signing, native ARM or performance acceptance",
+  "verification": {
+    "actionlint_exception": "Only the existing concurrency.queue compatibility exception; no new ignored rule",
+    "config": {
+      "seconds": 165.981,
+      "skipped": 0,
+      "tests": 1212
+    },
+    "focused": {
+      "seconds": 0.883,
+      "skipped": 0,
+      "tests": 46
+    },
+    "full_commands": {
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/config",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 167.741
+        },
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/packaging",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 1.318
+        },
+        {
+          "command": [
+            "./scripts/validate-release.py",
+            "--require-locked"
+          ],
+          "seconds": 0.029
+        },
+        {
+          "command": [
+            "./scripts/validate-supply-chain-evidence.py"
+          ],
+          "seconds": 0.364
+        },
+        {
+          "command": [
+            "./scripts/validate-frozen-abi.py"
+          ],
+          "seconds": 0.408
+        },
+        {
+          "command": [
+            "./scripts/validate-python-runtime-providers.py"
+          ],
+          "seconds": 0.235
+        },
+        {
+          "command": [
+            "./scripts/render-release-components.py",
+            "--check"
+          ],
+          "seconds": 0.143
+        },
+        {
+          "command": [
+            "./scripts/render-vcpkg-integration.py",
+            "--check"
+          ],
+          "seconds": 0.148
+        },
+        {
+          "command": [
+            "./scripts/render-bake.py",
+            "--check"
+          ],
+          "seconds": 0.186
+        },
+        {
+          "command": [
+            "actionlint",
+            "-ignore",
+            "unexpected key \"queue\" for \"concurrency\" section"
+          ],
+          "seconds": 0.008
+        }
+      ],
+      "status": "passed"
+    },
+    "gate_preservation": {
+      "native_and_sign_jobs_identical": true,
+      "preserved_gates": {
+        "Bind the pushed OCI index and platform manifest": "aaae006c0d86025f642503057d6b6e7f5d58e198fd3e89800433a71316b2aa2e",
+        "Build downstream consumers through the public launcher": "97bd4d92f9a37ad68b103ee754f8accaf8e05a870f7c25f864ea57f657bf418c",
+        "Build native AArch64 probes from the immutable candidate": "f69cb7ee6edf63a427bc7f6ab554460a02f1cd074e011edc3a3bfbb314feb206",
+        "Build once and push the corresponding source bundle": "1fb984365d5359f3fc0e6aa649fb0d1281628c216d35e4e61f50bb3d20e2f120",
+        "Build once and push the source-bound candidate": "f02c5f9ffcadc9b92a1877f8102b7dbf4d026f8dbd8f2a81b4279b5f4ad6ff27",
+        "Prove anonymous public availability": "3c0e448451973f59cfd0bd73c47a9f162307e8eb52a2aca31ad7639701a619fe",
+        "Prove the complete source payload is anonymously retrievable": "d7b30f089d9ae44f25ad74bbddfbdeb74efee0565a3546f70c403d91449befd4",
+        "Qualify Sigstore source signatures offline": "c8577b8f8b2cce03fffb6a29f88ad0bd6be81fa3101c0a72624de138fb9ce1cc",
+        "Run the anonymous non-root candidate": "4a791f923892419a66904914c30c3ce339aeae9a2d00b5a578607045f43331b6",
+        "Validate candidate inputs": "42a8f55e335916854aeea47ce5698dab100ee4539bfac718d9b8bba2a84eaf6c",
+        "Validate public SDK provenance and SBOM": "6af3cdf44a3e83c46cfaee6744e0db666ba0636a2c7326ab012e79591441892a",
+        "Validate public source provenance and SBOM": "a18be7942ea4f0f907931724d98540cb794d53cf2fcedb97f4775f5eaf91998b",
+        "Validate the locked SBOM generator image and source identity": "7452d47554485b60c5145df46efafe544ef4054b9a8ed7fa6513df6281b5b54a"
+      },
+      "scope": "textual preservation after declared producer-output rewiring; no candidate image or native execution",
+      "status": "passed"
+    },
+    "packaging": {
+      "seconds": 1.254,
+      "skipped": 0,
+      "tests": 40
+    },
+    "rocky": {
+      "compiled": [
+        "scripts/candidate-publication.py",
+        "scripts/crossforge_internal/candidate_publication.py",
+        "scripts/crossforge_internal/candidate_recovery.py"
+      ],
+      "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+      "scope": "socketless Rocky 8 Python 3.6 regression fixtures; no native ARM or GitHub execution",
+      "status": "passed",
+      "tests": 20
+    }
+  }
+}
