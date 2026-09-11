@@ -1052,6 +1052,7 @@ def render_python_graph(config, targets, component_arguments):
                 "crossforge_sdk_base": "target:sdk-toolchains-dev",
                 "crossforge_python_row": "target:%s" % export_name,
             },
+            {"CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": row_qualification_digest},
         )
         groups["python-%s" % row_name] = {
             "targets": [prepared_name, build_name]
@@ -1082,6 +1083,8 @@ def render_python_graph(config, targets, component_arguments):
                 "crossforge_sdk_base": "target:%s" % aggregate_base,
                 "crossforge_python_row": "target:python-row-%s" % row["row"],
             },
+            {"CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": component_arguments[
+                component_argument_name("python/%s-qualification" % row["row"])]},
         )
         aggregate_base = append_name
         append_targets[row["row"]] = append_name

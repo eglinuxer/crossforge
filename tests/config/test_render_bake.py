@@ -183,9 +183,10 @@ class RenderBakeTests(unittest.TestCase):
                 self.assertNotIn("CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256", target.get("args", {}))
                 self.assertNotIn("CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256", target.get("args", {}))
 
-    def test_row_qualification_pins_enter_only_row_producers(self):
+    def test_row_qualification_pins_enter_only_row_producers_and_append_consumers(self):
         key = "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256"
-        names = {"python-row-" + row["row"] for row in RENDERER["IMPLEMENTED_ROWS"]}
+        names = {name for row in RENDERER["IMPLEMENTED_ROWS"] for name in
+                 ("python-row-" + row["row"], "python-" + row["row"] + "-dev", "python-dev-append-" + row["row"])}
         for name, target in self.targets.items():
             if target.get("inherits") == ["_python_common"]:
                 with self.subTest(target=name):
@@ -279,7 +280,7 @@ class RenderBakeTests(unittest.TestCase):
                 "python-%s-dev" % row,
             ):
                 target_expected = dict(expected)
-                if name == "python-row-" + row:
+                if name in ("python-row-" + row, "python-" + row + "-dev"):
                     target_expected["CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256"] = self.binding_records[
                         "python/%s-qualification" % row]["canonical_sha256"]
                 self.assertEqual(self.targets[name]["args"], target_expected)

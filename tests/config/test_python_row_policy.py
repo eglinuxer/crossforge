@@ -154,10 +154,16 @@ class PythonRowPolicyTests(unittest.TestCase):
                 SDK["validate_row_input_binding"](value, self.release, "cp313", policy["version"], SHA(self.release))
 
     def test_cropped_row_stage_loads_without_full_release_helpers(self):
+        self.check_cropped_row_stage('cpython-row-assemble')
+
+    def test_cropped_append_stage_loads_without_full_release_helpers(self):
+        self.check_cropped_row_stage('python-sdk-append')
+
+    def check_cropped_row_stage(self, stage):
         policy = self.derive("cp314")
         scripts = self.directory / "scripts"
         scripts.mkdir()
-        block = (ROOT / "docker/python.Dockerfile").read_text().split(" AS cpython-row-assemble\n", 1)[1].split("\nFROM ", 1)[0]
+        block = (ROOT / "docker/python.Dockerfile").read_text().split(" AS " + stage + "\n", 1)[1].split("\nFROM ", 1)[0]
         paths = ["scripts/" + name for name in ("abi_contract.py", "python_abi_audit.py", "python_runtime_providers.py",
             "finalize-cpython-qualification.py", "python_sdk_identity.py", "python_zstd_evidence.py", "python_runtime_overlay.py",
             "python_qualification_policy.py", "python_row_policy.py", "release_component.py", "prepare-cpython-source.py",

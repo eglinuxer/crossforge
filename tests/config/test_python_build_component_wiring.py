@@ -224,7 +224,7 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
 
     def test_full_release_bridge_enters_only_at_late_boundaries(self):
         stages_with_release_copy = {name for name, block in self.stages.items() if "COPY config/release.json" in block}
-        self.assertEqual(stages_with_release_copy, {"python-host", "python-sdk-append", "python-sdk-final"})
+        self.assertEqual(stages_with_release_copy, {"python-host", "python-sdk-final"})
         qualify = self.stages["cpython-qualify-build"]
         for path in ("config/release.json", "config/schemas/release.schema.json", "python_source_release_binding.py",
                      "release-components-core.py", "render-release-components.py", "validate-release.py"):
@@ -236,11 +236,17 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         self.assertLess(qualify.index("RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py"),
                         qualify.index("RUN --network=none minor="))
         append = self.stages["python-sdk-append"]
-        self.assertIn("config/schemas/release.schema.json", append)
-        self.assertIn("python_source_release_binding.py", append)
-        self.assertIn("release-components-core.py", append)
-        self.assertNotIn("render-release-components.py", append)
-        self.assertIn("/work/scripts/validate-release.py", append)
+        for path in ("config/release.json", "release.schema.json", "python_source_release_binding.py",
+                     "release-components-core.py", "render-release-components.py", "validate-release.py"):
+            self.assertNotIn(path, append)
+        self.assertIn("--qualification-components /work/qualification-components", append)
+        self.assertIn('--qualification-component-sha256 "$CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256"', append)
+        self.assertIn('--source-component-sha256 "$CPYTHON_SOURCE_COMPONENT_SHA256"', append)
+        self.assertIn('--policy-component-sha256 "$CPYTHON_BUILD_POLICY_COMPONENT_SHA256"', append)
+        for row in ("cp39", "cp310", "cp311", "cp312", "cp313", "cp314"):
+            for target in ("python-" + row + "-dev", "python-dev-append-" + row):
+                self.assertEqual(self.targets[target]['args']['CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256'],
+                                 self.records['python/' + row + '-qualification']['canonical_sha256'])
         for script in ("finalize-cpython-qualification.py", "python_sdk_identity.py", "python_zstd_evidence.py",
                        "target_artifact_audit.py", "python_qualification_policy.py", "release_component.py"):
             self.assertIn(script, append)

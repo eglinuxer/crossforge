@@ -693,3 +693,13 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 固定、断网、只读 Docker 工具容器随后使用原 `python_sdk.fresh_vertices` 与输入/文件校验接口独立复核两种 SDK 的已保存结果：13/14 条 fresh RUN、各八份组件依赖、六份原 row manifest 和全部导出报告摘要均匹配。完整 SDK 的 Python 最终报告还与先前 `python-dev` 导出字节一致。详见[本地运行记录](runtime-replay-a56bb29-2026-09-11.json)；这次独立复核没有生成新的资格执行或改写原 producer。
 
 顺序 batch 继续执行 vcpkg 五阶段锁定源码资格重放，之后运行 x86_64 工具链与 cp39 的强制源码重建。[验收索引](ci-refactoring-acceptance.md)集中列出六项选择的当前证据和剩余门槛，避免将历史 fixture、本地功能计时或旧源码结果当成真实 GitHub/候选验收。只读核对远程 main 仍为 `cf736ea`。未合入 main、推送或发布。
+
+## 实际增量实验发现：独立 Python 安装仍被完整 release 扩散（2026-09-11）
+
+在独立 `4a730cc` 源码副本中仅改变 cp39 补丁的说明文字、同步 release 中的补丁摘要，再依次运行原 renderer 和锁定验证器。真实 Bake 材料计划正确区分三个 cp39 编译目标，却仍选中全部六行独立安装；另外五行的唯一变化文件均为 `config/release.json`，不是实际编译输入。原始 before/after 源清单和宽范围计划保留，未把这个现象描述成 GitHub 测量。
+
+修复 `python-sdk-append`：只复制本行的 source、build policy、两份 target policy、row root 与 qualification policy 六份投影，renderer 将 row 根摘要同时传入独立和累计 append。复用已有 component 模式的 source verifier 和 row finalizer，保留安装前重复目录拒绝、安装后实际文件/ABI 检查与完整 manifest 字节比较，仍是原来的两个 RUN。quick/host 与最终 SDK 保留完整 release 校验；源码编译和行资格生产配方、ABI/GCC baseline 均未改。修复后同一独立变更的真实计划只选 inputs、cp39 和 SDK，五个其他独立行闭包完全相同。新增回归使用真实 renderer/Bake 与临时源码，而不是简化图替身。
+
+[验证记录](python-append-scope-2026-09-11.json)保留完整配置运行 1,423 项 / 525.094 秒、14 个失败观察：它们全部来自三项仍要求旧完整 release 输入、或只允许 producer 携带 row 根摘要的断言，其中一项含十二个子场景。更新这些测试契约后，全部受影响模块 75 项 / 22.490 秒通过；生产代码在这次完整运行后未再修改。打包 40 项 / 1.890 秒、四个锁定验证器、三个 renderer、shell 与全部 workflow actionlint 通过，后者仅保留既有 concurrency.queue 兼容例外。固定 Rocky 8 Python 3.6.8 的 23 项 / 20.988 秒通过，覆盖裁剪后的 append finalizer 导入、六份行策略和 renderer 接线。没有把分开的复验记录写成一次未发生的全绿完整运行。
+
+由于 Docker append 配方变化，另从固定规范化工作副本启动六个独立安装与两种 SDK 的实际验收；明确标为 source_dirty=true，仍保留原 a56bb29 行 receipt/producer，由原接口重新核验，尚未取得本批新的安装成功结果。此前 a56bb29 的完整 SDK 成功记录保留为历史，不能代替新配方验收。旧源码 batch 的 vcpkg Tier 2 已通过，Tier 3 仍在源码执行；二者共享 max-parallelism=1 的本地 builder，会互相等待。未合入 main、推送或发布。

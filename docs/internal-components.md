@@ -708,6 +708,14 @@ GCC/CPython source compiler. Failed installation prevents a new publication,
 signed handoff or successful CI result. These independent gates do not replace
 the cumulative SDK append/final gates.
 
+Both independent and cumulative append stages authenticate only the selected
+row's six policy projections. Rendered arguments pin its source, build policy
+and complete row qualification root. The original source-manifest comparison,
+duplicate-row rejection, installed-file/ABI checks and byte-for-byte row
+manifest comparison remain. Full release validation stays in quick/host and
+final SDK boundaries. A cp39-only source or patch change therefore does not
+invalidate the five unrelated independent append roots through `release.json`.
+
 The CI adapter checks the planned input identity, receipt, source and environment
 before publication. Reused rows generate no new handoff or signature.
 New `python_row_handoff.py` binds one exact row, original run/attempt, physical

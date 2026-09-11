@@ -1,0 +1,331 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-python-append-scope-observation",
+  "observed_at": "2026-09-11T13:41:51.001840+00:00",
+  "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
+  "status": "regressions checked; actual append and SDK acceptance running",
+  "source_sha256": {
+    "docker/python.Dockerfile": "df3421a429a12d570ec792329aea9a3435ae56e86a45f96683e3ec065938947d",
+    "docker-bake.override.json": "8228ed9a109f2d849d092427fa6424a8dbc25264544a8c172821934d5835258e",
+    "scripts/render-bake.py": "219bf72bb73f52205ef7170fd1156ad97d380711bf498fa22f944457f00eb5b3",
+    "tests/config/test_python_append_scope.py": "81988db4083b7fac594efe9ab6bd511c319ec9caf572eedd0326c325698a704a",
+    "tests/config/test_python_row_install.py": "561556a6db214d5f6b60c00cbf5bb91dd36b4889dd927ea741cbfe4d11b8c8ba",
+    "tests/config/test_python_row_policy.py": "23ed94794104a9441178c1bcf860b77683e24267968b9e7137c5543f834bb1c5",
+    "tests/config/test_python_build_component_wiring.py": "318a4fe00b48d78ce124e2ea787a1018e9c3244cb183ddc39cf1b9ae064cd75c",
+    "tests/config/test_render_bake.py": "11053549fe411bf02dd6e9ed5dfc36d4943d41179eb08df612826022fac0b008"
+  },
+  "defect": "A cp39 patch and its checked release pin selected all six independent rows because python-sdk-append still copied full release.json",
+  "behavior": [
+    "Append authenticates exactly this row's six source/build/qualification projections with rendered digest pins",
+    "Both original append RUNs retain duplicate-row checks, source manifest verification, installed-file/ABI finalization and byte-for-byte qualified row manifest comparison",
+    "Full release validation remains in quick/host and final SDK integration; source/qualification producer recipes and frozen baselines are unchanged"
+  ],
+  "selection_probe": {
+    "mutation": "cp39 patch description only, with matching release patch SHA256 and original renderer outputs; patch hunks unchanged",
+    "original": {
+      "plan": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-4a730cc/plan.json",
+        "sha256": "57f136d0e80121ce778fd079091dc6a5da35cdc65ce189c642b5f137f33e69f1"
+      },
+      "log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-4a730cc/prepare.log",
+        "sha256": "58c1f3d3315b75849b4ee774c98cd8466da1cc0ececc4fb2fdabf0fca0300a44"
+      },
+      "targets": {
+        "inputs": [
+          "platform-python-check",
+          "qemu-source-qualified",
+          "rpm-source-lock-validated",
+          "sigstore-sources-qualified",
+          "validate"
+        ],
+        "python-cp310": [
+          "python-cp310-dev"
+        ],
+        "python-cp311": [
+          "python-cp311-dev"
+        ],
+        "python-cp312": [
+          "python-cp312-dev"
+        ],
+        "python-cp313": [
+          "python-cp313-dev"
+        ],
+        "python-cp314": [
+          "python-cp314-dev"
+        ],
+        "python-cp39": [
+          "python-cp39-dev"
+        ],
+        "sdk": [
+          "python-dev",
+          "sdk-complete-dev"
+        ]
+      }
+    },
+    "fixed": {
+      "plan": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/plan.json",
+        "sha256": "de0c35e136b09d914026a649edd67816484a09c4d01c096bc8025bc13c3e8ed3"
+      },
+      "log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/prepare.log",
+        "sha256": "4426df0b5da226b30d10b2108ba715a9b099971c16a677a869eb4de549a3072e"
+      },
+      "before_inventory": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/before-inventory.json",
+        "sha256": "95073751b0997f8c353601de65863d558dc77e1e3cd7cba2ee0d182aec6b6986"
+      },
+      "after_inventory": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/after-inventory.json",
+        "sha256": "dea0df7b5129e61c14a02ecffe145f3f4bf5ef2e7b009049a808f6e48001164b"
+      },
+      "targets": {
+        "inputs": [
+          "platform-python-check",
+          "qemu-source-qualified",
+          "rpm-source-lock-validated",
+          "sigstore-sources-qualified",
+          "validate"
+        ],
+        "python-cp39": [
+          "python-cp39-dev"
+        ],
+        "sdk": [
+          "python-dev",
+          "sdk-complete-dev"
+        ]
+      },
+      "compiler_inputs_changed": [
+        "cpython-build-cp39",
+        "cpython-cross-cp39-aarch64",
+        "cpython-cross-cp39-x86_64"
+      ]
+    },
+    "scope": "Actual pinned Docker Bake source closure and renderer capture, not a source-build or GitHub performance result"
+  },
+  "validation": {
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "environment": "fixed offline Docker, no daemon socket; full suite and final checks use locked zstd/nFPM assets",
+    "initial_full_config": {
+      "tests": 1423,
+      "seconds": 525.094,
+      "skipped": 0,
+      "failure_observations": 14,
+      "failing_methods": [
+        "test_enabled_rows_take_exact_metadata_from_release",
+        "test_full_release_bridge_enters_only_at_late_boundaries",
+        "test_row_qualification_pins_enter_only_row_producers"
+      ],
+      "exit_code": 1,
+      "resolution": "Three assertions still required full-release append inputs or denied row pins on append targets. Only these test expectations changed after this full run; production bytes were unchanged. All affected modules then passed."
+    },
+    "focused": {
+      "tests": 75,
+      "seconds": 22.49,
+      "skipped": 0,
+      "status": "passed"
+    },
+    "packaging": {
+      "tests": 40,
+      "seconds": 1.89,
+      "skipped": 0,
+      "status": "passed"
+    },
+    "rocky": {
+      "status": "passed",
+      "tests": 23,
+      "skipped": 0,
+      "seconds": 20.988,
+      "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+      "scope": "Python 3.6, cropped append policy loader and renderer wiring; installer graph from actual pinned Docker print, original domain fixtures retained",
+      "image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+    },
+    "final_checks": {
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/config",
+            "-p",
+            "test_python_build_component_wiring.py"
+          ],
+          "seconds": 0.406
+        },
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/packaging",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 2.062
+        },
+        {
+          "command": [
+            "./scripts/validate-release.py",
+            "--require-locked"
+          ],
+          "seconds": 0.05
+        },
+        {
+          "command": [
+            "./scripts/validate-supply-chain-evidence.py"
+          ],
+          "seconds": 0.647
+        },
+        {
+          "command": [
+            "./scripts/validate-frozen-abi.py"
+          ],
+          "seconds": 0.696
+        },
+        {
+          "command": [
+            "./scripts/validate-python-runtime-providers.py"
+          ],
+          "seconds": 0.516
+        },
+        {
+          "command": [
+            "./scripts/render-release-components.py",
+            "--check"
+          ],
+          "seconds": 0.415
+        },
+        {
+          "command": [
+            "./scripts/render-vcpkg-integration.py",
+            "--check"
+          ],
+          "seconds": 0.421
+        },
+        {
+          "command": [
+            "./scripts/render-bake.py",
+            "--check"
+          ],
+          "seconds": 0.519
+        },
+        {
+          "command": [
+            "bash",
+            "-n",
+            "docker/run-python-qualification.sh"
+          ],
+          "seconds": 0.002
+        },
+        {
+          "command": [
+            "actionlint",
+            "-ignore",
+            "unexpected key \"queue\" for \"concurrency\" section",
+            ".github/workflows/candidate.yml",
+            ".github/workflows/ci.yml",
+            ".github/workflows/component-pilot.yml",
+            ".github/workflows/produce-python-row.yml",
+            ".github/workflows/produce-python.yml",
+            ".github/workflows/produce-toolchain.yml",
+            ".github/workflows/promote.yml",
+            ".github/workflows/qualification.yml",
+            ".github/workflows/release-control-plane.yml",
+            ".github/workflows/release-request.yml",
+            ".github/workflows/replay-qualification.yml",
+            ".github/workflows/replay-sources.yml",
+            ".github/workflows/rollback.yml",
+            ".github/workflows/verify-builds.yml",
+            ".github/workflows/verify-incremental.yml",
+            ".github/workflows/verify-main-builds.yml",
+            ".github/workflows/verify-main-incremental.yml",
+            ".github/workflows/verify-quick.yml"
+          ],
+          "seconds": 0.02
+        }
+      ],
+      "status": "passed"
+    },
+    "logs": {
+      "focused.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/focused.log",
+        "sha256": "e71def9a0135a03de9a145abfd0525185535ffb5ebb3eb26738747c93b77abad"
+      },
+      "full.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/full.log",
+        "sha256": "c11341634ad326c6f272758147daccb53414e03491624de6a744a2a2ff496b57"
+      },
+      "final-focused.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/final-focused.log",
+        "sha256": "c50717d950f2337489ddb38bb9a1d5f23e7c4802d6089d2b2af99650918dba0f"
+      },
+      "final-checks.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/final-checks.log",
+        "sha256": "29b63f405274b9e822daca4e2657caa4fc84b114d2e077987b85f0ec0af7bc69"
+      },
+      "final-checks-result.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/final-checks-result.json",
+        "sha256": "38b605391a97cb3c0dd3f14f3ecf12d8b74160f6bf3223a863f3e851ccb07c0b"
+      },
+      "rocky.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/rocky.log",
+        "sha256": "027ef2f1a24b068a362e850683b3cc578a4e627f2b58c24fd6603f8940ba215e"
+      },
+      "rocky-result.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/rocky-result.json",
+        "sha256": "e223b69434db8b11f1789e99d7ec360a73e04ed06674e7edb302abda4eadb2f8"
+      },
+      "independent-graph.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/independent-graph.json",
+        "sha256": "449a07e8b2653e0b28fdc30f21e6896527c96fc93fc47f510eee094ed9210c24"
+      }
+    },
+    "notes": [
+      "No all-green full-suite rerun is asserted. Unchanged passing full-suite coverage and final affected-module checks are recorded separately.",
+      "New regression uses actual source copies, renderer and canonical Bake; domain OCI/BuildKit execution fixtures remain explicit in installer tests.",
+      "Rocky cropped append test loads its original finalizer and six policy projections without full-release helpers."
+    ]
+  },
+  "actual_acceptance": {
+    "status": "running",
+    "manifest": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/acceptance-manifest.json",
+      "sha256": "1b0f9e5691e00b21dc4b21ca125c91a8560e563613aab3e24ea666f84581a41e"
+    },
+    "runner": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/run-acceptance.py",
+      "sha256": "572af8cef6f8dafd4b8749c78cfea72c92a4f59070c5034c158093e3ef440c1c"
+    },
+    "wrapper": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/run-acceptance.sh",
+      "sha256": "1c903d3856d1eaf13077e91b4c4ec61980d2bf9d77b0f2e3abffc085dafa8d1d"
+    },
+    "source": "fixed normalized working snapshot based on 4a730cc, explicitly source_dirty=true; original a56bb29 row receipts and producers preserved",
+    "phases": [
+      "cp39",
+      "cp310",
+      "cp311",
+      "cp312",
+      "cp313",
+      "cp314",
+      "python-dev",
+      "sdk-complete-dev"
+    ],
+    "scope": "original production executors, new output directories, crossforge-ci-review only; not a new row qualification or GitHub/candidate assertion"
+  },
+  "remaining": [
+    "Finish new six independent append and both SDK runtime gates",
+    "Run the controlled changed cp39 build and compare actual execution to the saved selection",
+    "Finish ongoing vcpkg and source replay batch",
+    "Real GitHub events, trust/recovery, candidate/native ARM, retention and three-run resource/performance acceptance"
+  ],
+  "merged_main": false,
+  "pushed": false,
+  "published": false
+}

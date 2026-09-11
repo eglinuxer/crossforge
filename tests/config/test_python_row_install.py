@@ -89,6 +89,9 @@ class PythonRowInstallTests(unittest.TestCase):
                     {'toolchain/x86_64-install', 'toolchain/aarch64-install', 'qualification/python-' + row})
                 self.assertFalse({'scripts/build-gcc.sh', 'scripts/build-cpython-native.sh', 'scripts/build-cpython-cross.sh'} &
                                  {item['path'] for item in captured['files']})
+                self.assertNotIn('config/release.json', {item['path'] for item in captured['files']})
+                self.assertIn('config/generated/components/python/' + row + '-qualification.json',
+                              {item['path'] for item in captured['files']})
                 graph = load_json(self.output / 'installation.bake.json')
                 self.assertEqual(graph['target']['python-' + row + '-dev']['contexts']['crossforge_sdk_base'],
                                  'target:sdk-toolchains-dev')
