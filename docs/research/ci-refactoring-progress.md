@@ -591,3 +591,15 @@ SDK job 权限继续为 contents/read 与 packages/read，新增行只保存在�
 首轮定向失败包括旧 raw subject fixture 字段不全、错误的参数位置及复用诊断目录，修正 fixture 后增加生产目录拒绝及回归。首轮完整套件和线程版本通过记录另行保留；最终记录以改为独立进程、加入原始恢复记录和实际子进程负向用例后的定向、Rocky 与全量运行作为依据。未改 Docker 配方、生成配置、版本 pin 或 ABI/GCC baseline。
 
 实际新报告链与源码 Docker 重放、GitHub 签名/跨 run 取得/重试、候选与原生 ARM、主 SDK 完整恢复、按引用保留及三次基线/受影响变更/并行度实验仍待验收，未宣称 CI 耗时或磁盘改善。此前自动审批拒绝容器挂载主机 Docker socket（广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。未合入 main、推送或发布。
+
+## 验收准备：独立行门禁与当前源码原始组件（2026-09-11）
+
+复核主 SDK 与独立 Python job 后，不能仅凭完整 SDK 含六行就删除独立行 job。实际 Bake 图中，六个 `python-<row>-dev` 均从 `sdk-toolchains-dev` 开始；累计 SDK 只有首行 cp313 使用相同基座，其余五行分别继承前一行。这些独立安装门禁与累计组合覆盖不同。后续消除重复资格时应交接已验收行产物，再继续执行原独立安装及累计最终门禁，并由 required status 明确核对承接关系；本轮没有修改任务选择或删减门禁。
+
+为先验收已经变更的实际报告链，从干净 `cb115b51a3038a9d84c68c0e98a2f255379da4f7` 导出规范化源码。固定、断网、非 root、无 Docker socket 的工具容器重新解析当前 SDK、GCC context 与独立行 Bake 根，用原记录中的 build identity 比较材料，并对四份工具链/GCC 原始组件和三十份 Python 原始组件运行真实 OCI descriptor、manifest/config/layer 字节校验。34 份输入均与原 receipt 精确匹配，receipt pin 另与已提交的历史观察记录核对。[完整结果](runtime-replay-preflight-2026-09-11.json)保存逐项身份与来源。
+
+这次检查未观察新的 daemon/物理环境。Python 的依赖图绑定只在此次材料捕获中替换了需要 BuildKit 提取的验证回调；替代回调实际核对 receipt、预期输入和 OCI blobs，但没有验收嵌入 contract 或安装树，不能据此授权消费。实际执行器仍必须完成这些原检查。所有旧行资格均从准备的重放输入中移除，新报告链要求重新执行；既有原始组件没有因这批资格代码变化而需要重新编译的材料差异。
+
+新的重放目录 `/tmp/crossforge-runtime-replay-cb115b5/` 固定源码、1,007 项源码清单、执行脚本和输入文件摘要；`run.py --check-only` 已在无 socket 的只读 Docker 容器中实际通过。待执行阶段包括双工具链、双 GCC smoke/x86_64 full、六行 Python 及两种 SDK 集成，各阶段只使用原本地资格 API、新目录和真实 local producer。SDK 只接受该清单中已经成功的新行结果；源码或实际环境变化不能写成功。`run-authorized.sh` 是尚未执行的具体命令，使用 `crossforge-ci-review`，不操作其他 builder、不发布或伪造 GitHub 身份。
+
+此前自动审批因广泛宿主 daemon 控制拒绝挂载 Docker socket，本轮已就这份具体命令请求明确授权。未重试挂载，也未改用其他 daemon 入口。独立行安装、vcpkg upstream 强制重放、源码重建、真实 GitHub/候选/原生 ARM、恢复保留和性能验收仍是完整目标的一部分；准备清单不是资格通过记录。未改实现、生成配置或版本/ABI/GCC pin，未合入 main、推送或发布。
