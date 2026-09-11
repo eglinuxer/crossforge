@@ -218,6 +218,12 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
         raise ValueError("qualification replay requires authenticated components without cache writes or cold mode")
     if replay_qualification and (directory.exists() or directory.is_symlink()):
         raise ValueError("qualification replay requires a new diagnostics directory")
+    recovery_mode = components is not None and (components.get("record_recovery") or components.get("recovery") is not None)
+    if recovery_mode:
+        if not components.get("required") or write or cold:
+            raise ValueError("component recovery requires authenticated components without cold mode or cache writes")
+        if directory.exists() or directory.is_symlink():
+            raise ValueError("component recovery requires a new diagnostics directory")
     graph = selected_graph(stage, selected_targets)
     directory.mkdir(parents=True, exist_ok=True)
     write_json(directory / "graph.json", graph)
@@ -234,6 +240,7 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
     started = time.monotonic()
     status = 127
     replay_plan, replay_results, replay_execution = None, {}, None
+    recovery_sha256 = None
     monitor.start()
     try:
         bake = list(BAKE)
@@ -247,17 +254,44 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
         if components is not None:
             from crossforge_internal import component_build, component_resolution
             execution = component_build.execution_identity(components["builder"])
+            pins = None
+            if recovery_mode:
+                from crossforge_internal import component_recovery
+                from crossforge_internal.identity import content_sha256, load_json
+                recovery_context = component_recovery.context(ROOT, graph, stage, targets, execution, os.environ.get("GITHUB_SHA"))
+                recovery_requirements = component_recovery.requirements(ROOT, graph, components.get("python", False))
+                if components.get("recovery") is not None:
+                    recovery = components["recovery"]
+                    pins = component_recovery.verify(load_json(recovery["path"]), recovery["sha256"],
+                        recovery_context, recovery_requirements)
+            toolchain_recovery = {} if pins is None else {"recovery": {name: value for name, value in pins.items()
+                if value["role"] in ("toolchain-install", "gcc-test-context")}}
             resolved, binding = component_resolution.bind_toolchains(ROOT, graph, execution,
                 components["cosign"], components["directory"], directory / "components",
-                components["builder"], components["oras"])
+                components["builder"], components["oras"], **toolchain_recovery)
             if components.get("python"):
+                python_recovery = {} if pins is None else {"recovery": {name: value for name, value in pins.items()
+                    if value["role"] in ("python-install", "python-test-context")}}
                 resolved, python_binding = component_resolution.bind_python(ROOT, graph, resolved, binding["components"], execution,
                     components["cosign"], components["directory"] / "python", directory / "python-components",
-                    components["builder"], components["oras"])
+                    components["builder"], components["oras"], **python_recovery)
                 binding = {"components": dict(binding["components"], **python_binding["components"]),
                            "required_producers": sorted(set(binding["required_producers"] + python_binding["required_producers"]))}
             if components.get("required") and binding["required_producers"]:
                 raise ValueError("centralized component preparation is incomplete: " + ", ".join(binding["required_producers"]))
+            if recovery_mode:
+                def check_recovery_context():
+                    current = component_recovery.context(ROOT, selected_graph(stage, selected_targets), stage, targets,
+                        component_build.execution_identity(components["builder"]), os.environ.get("GITHUB_SHA"))
+                    if current != recovery_context:
+                        raise ValueError("component recovery source, graph or execution inputs changed")
+                check_recovery_context()
+                recovery_document = component_recovery.document(recovery_context, binding["components"], recovery_requirements)
+                if pins is not None and recovery_document["components"] != pins:
+                    raise ValueError("component recovery changed the original selected pins")
+                recovery_sha256 = content_sha256(recovery_document)
+                write_json(directory / "component-recovery.json", recovery_document)
+                print("%s: component recovery SHA256 %s" % (stage, recovery_sha256), flush=True)
             resolved_path = directory / "components.bake.json"
             write_json(resolved_path, resolved)
             bake += ["--builder", components["builder"], "-f", str(resolved_path)]
@@ -316,6 +350,10 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
                         "complete": set(replay_results) == set(targets),
                         "qualification_receipt": False})
                     status = 0
+        if recovery_mode and status == 0:
+            status = 1
+            check_recovery_context()
+            status = 0
         return status
     finally:
         stopped.set()
@@ -328,6 +366,7 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
             "source_commit": os.environ.get("GITHUB_SHA", ""),
             "kind": "crossforge-ci-build-observation",
             "replay_qualification": replay_qualification,
+            "component_recovery_sha256": recovery_sha256,
         })
         print("%s: exit=%d elapsed=%.1fs" % (stage, status, elapsed), flush=True)
         if status and (directory / "build.log").exists():
@@ -357,6 +396,9 @@ def main():
     run.add_argument("--require-components", action="store_true")
     run.add_argument("--python-components", action="store_true")
     run.add_argument("--replay-qualification", action="store_true")
+    run.add_argument("--record-component-recovery", action="store_true")
+    run.add_argument("--component-recovery", type=Path)
+    run.add_argument("--component-recovery-sha256")
     cache = commands.add_parser("cache")
     cache.add_argument("--output", type=Path, required=True)
     cache.add_argument("targets", nargs="+")
@@ -367,7 +409,12 @@ def main():
         from crossforge_internal.identity import parse_json
         components = None
         options = (args.component_builder, args.component_oras, args.component_cosign, args.component_directory)
-        if (args.require_components or args.python_components) and not all(value is not None for value in options):
+        if (args.component_recovery is None) != (args.component_recovery_sha256 is None):
+            raise ValueError("component recovery requires both a document and its independent SHA256")
+        recovery_mode = args.record_component_recovery or args.component_recovery is not None
+        if recovery_mode and not args.require_components:
+            raise ValueError("component recovery requires --require-components")
+        if (args.require_components or args.python_components or recovery_mode) and not all(value is not None for value in options):
             raise ValueError("required component consumption needs all component options")
         if any(value is not None for value in options):
             if not all(value is not None for value in options):
@@ -376,7 +423,10 @@ def main():
                 raise ValueError("incremental component consumption cannot be combined with cold or cache-writing qualification")
             components = {"builder": args.component_builder, "oras": args.component_oras,
                 "cosign": args.component_cosign, "directory": args.component_directory,
-                "required": args.require_components, "python": args.python_components}
+                "required": args.require_components, "python": args.python_components,
+                "record_recovery": args.record_component_recovery,
+                "recovery": {"path": args.component_recovery, "sha256": args.component_recovery_sha256}
+                            if args.component_recovery is not None else None}
         return run_stage(args.stage, args.directory.resolve(), args.repository,
                          args.write_cache, args.cold,
                          parse_json(args.targets_json) if args.targets_json is not None else None, components,

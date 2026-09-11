@@ -109,7 +109,8 @@ def toolchain_edges(graph):
     return edges
 
 
-def bind_toolchains(source, graph, execution, cosign, directory, evidence, builder, oras, docker_config=None):
+def bind_toolchains(source, graph, execution, cosign, directory, evidence, builder, oras, docker_config=None,
+                    recovery=None):
     """Resolve each needed artifact once; retain explicit producers on a miss.
 
     This is a build graph binding, not a qualification record. Cache-only CI
@@ -120,12 +121,20 @@ def bind_toolchains(source, graph, execution, cosign, directory, evidence, build
     require(directory != evidence and directory not in evidence.parents and evidence not in directory.parents,
             "component OCI data must be outside uploaded evidence")
     edges = toolchain_edges(graph)
+    if recovery is not None:
+        from . import component_recovery
+        require(set(recovery) == {arch + "-" + role for arch, role in edges}, "toolchain recovery set differs")
+        for pin in recovery.values():
+            component_recovery.validate_pin(pin)
     resolved, resolutions, required = copy.deepcopy(graph), {}, []
     for (arch, role), consumers in sorted(edges.items()):
         name = arch + "-" + role
         output = directory / name
         try:
-            result = toolchain(source, graph, arch, role, execution, cosign, output, builder, oras, docker_config)
+            options = {} if recovery is None else {"catalog_reference": recovery[name]["catalog_reference"]}
+            result = toolchain(source, graph, arch, role, execution, cosign, output, builder, oras, docker_config, **options)
+            if recovery is not None:
+                component_recovery.verify_selection(recovery[name], result)
         finally:
             if output.exists():
                 preserve_evidence(output, evidence / name)
@@ -181,7 +190,7 @@ def python_requirements(source, graph):
 
 
 def bind_python(source, graph, resolved, toolchains, execution, cosign, directory, evidence,
-                builder, oras, docker_config=None):
+                builder, oras, docker_config=None, recovery=None):
     """Bind raw row parts against the original graph and verified toolchains.
 
     The original graph remains authoritative for producer input capture. The
@@ -195,6 +204,12 @@ def bind_python(source, graph, resolved, toolchains, execution, cosign, director
             "Python OCI data must be outside uploaded evidence")
     resolved = copy.deepcopy(resolved)
     edges, requirements = python_edges(source, graph), python_requirements(source, graph)
+    if recovery is not None:
+        from . import component_recovery
+        require(set(recovery) == {row + "-" + name for row, names in requirements.items() for name in names},
+                "Python recovery set differs")
+        for pin in recovery.values():
+            component_recovery.validate_pin(pin)
     results, required = {}, []
     for row, names in requirements.items():
         subjects = {}
@@ -205,6 +220,7 @@ def bind_python(source, graph, resolved, toolchains, execution, cosign, director
             label = row + "-" + name
             toolchain = toolchains.get(arch + "-toolchain-install", {}) if arch != "build" else None
             if arch != "build" and ("build" not in subjects or toolchain.get("status") != "verified-build-component"):
+                require(recovery is None, "Python recovery dependency cannot be replaced by a producer")
                 required.append(settings["target"])
                 results[label] = {"status": "dependency-build-required", "component": settings["component"],
                                   "reason": "build Python or target toolchain requires production"}
@@ -213,8 +229,11 @@ def bind_python(source, graph, resolved, toolchains, execution, cosign, director
                 "build-python": subjects["build"], "toolchain-install": toolchain["subject"]}
             output = directory / label
             try:
+                options = {} if recovery is None else {"catalog_reference": recovery[label]["catalog_reference"]}
                 result = python(source, graph, row, arch, kind, execution, dependencies, cosign,
-                                output, builder, oras, docker_config)
+                                output, builder, oras, docker_config, **options)
+                if recovery is not None:
+                    component_recovery.verify_selection(recovery[label], result)
             finally:
                 if output.exists():
                     preserve_evidence(output, evidence / label)

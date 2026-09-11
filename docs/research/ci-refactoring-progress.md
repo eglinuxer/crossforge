@@ -347,3 +347,15 @@ main 的组件分支现经 `verify-main-incremental.yml` 先解析实际选中 B
 - Rocky 8 platform-python 3.6.8 完成模块编译/导入、12 个策略入口和合成日志验证。新验证器读取此前真实 Python SDK/完整 SDK 日志，分别得到与原验证结果完全相同的 13/14 条记录及时间；没有改写成新执行。
 
 实际新重放和 GitHub 事件验收尚未执行，之前三项 GCC Docker socket 授权仍待答复；本批没有重试被拒绝的 socket 操作。正式行资格复用、完整候选恢复/集成/native ARM、runner 重放对照和保留策略继续推进。未合入 main、推送远程或发布镜像。
+
+## 批次 5：失败阶段固定原组件选择
+
+新增 `component_recovery.py`，将 CI reader 已验证的完整原始组件选择保存为独立摘要约束的恢复文档。每项记录输入身份、catalog/OCI/receipt digest 和原 producer，不包含本次下载路径，不签发资格结果。恢复先核对源码材料、构建执行输入、commit（GitHub 环境）、stage、roots 和完整组件集合，再通过既有认证与实际 OCI 校验接口按固定 catalog digest 取得产物。任何缺失、身份变化或原 producer 变化均失败，不替换 producer 或回退源码构建。
+
+`ci-build.py` 在首个 Bake solve 前保存完整清单，后续构建失败仍保留；组件取得未完成则没有可恢复清单。取得组件后和执行成功后再次检查当前源码、图和执行输入，阻止把运行中变化记录为成功。恢复与记录均要求新诊断目录、必需的已认证组件，禁止 cold/cache write。main reader 默认记录，手动重放入口接受原 run ID、不可变诊断 artifact ID 和独立 SHA256，使用 actions:read 下载。接口和限制见 [Actions 说明](../github-actions.md#recover-the-original-component-selection)：只接受相同源提交和完全相同的阶段 roots，main 前进或部分选择变成完整阶段会拒绝。
+
+[本地验证记录](ci-component-recovery-2026-09-10.json)：无 socket、断网 Docker 完整 config 1192 项、165.554 秒，packaging 40 项、1.163 秒全部通过，无跳过；四项 locked validators、三个 renderer 检查和 actionlint 通过。新增 13 项回归覆盖原清单保留、独立摘要、缺项/角色错配、下载路径迁移、producer/receipt/产物替换、依赖顺序、失败后的同 digest 重试、取得前后源码变化和实际 composite shell 参数。最初两个测试重复使用诊断目录，被既有目录保护提前拒绝；改为每次独立测试目录后通过，未削弱生产保护。
+
+12 种真实 Bake 图和源码材料闭包检查通过：单架构工具链各 1 份、GCC smoke 4 份、GCC full/vcpkg 各 2 份、每行 Python 7 份、SDK 32 份原始组件。改变声明的 execution fixture 会使材料身份变化。此项只有无 daemon 的真实图解析，没有组件认证或资格执行。固定 Rocky 8 platform-python 3.6.8 完成三个运行模块编译及合成恢复文档校验。
+
+实际 registry 恢复、GitHub 重放、完整 candidate/source image 恢复与 native ARM 仍待验收；GCC socket 挂载授权仍待答复，本批没有重新尝试或改用间接方式执行。正式 Python 资格跨机器边界未放宽，runner 并行上限仍为 2，组件保留不自动删除。未合入 main、推送或发布。

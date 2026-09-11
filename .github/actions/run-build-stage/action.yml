@@ -25,6 +25,12 @@ inputs:
   replay-qualification:
     default: 'false'
     description: Force the selected supported qualification gates and require fresh RUN evidence
+  component-recovery:
+    default: ''
+    description: Optional prior component-recovery.json to use without rediscovering mutable indices
+  component-recovery-sha256:
+    default: ''
+    description: Independent canonical SHA256 required with component-recovery
 runs:
   using: composite
   steps:
@@ -58,6 +64,8 @@ runs:
         COMPONENT_BUILDER: ${{ inputs.component-builder }}
         COMPONENT_ORAS: ${{ steps.components.outputs.oras }}
         COMPONENT_COSIGN: ${{ steps.components.outputs.cosign }}
+        COMPONENT_RECOVERY: ${{ inputs.component-recovery }}
+        COMPONENT_RECOVERY_SHA256: ${{ inputs.component-recovery-sha256 }}
       run: |
         set -Eeuo pipefail
         options=()
@@ -75,8 +83,14 @@ runs:
           components+=(--python-components)
         fi
         if test "$COMPONENT_READER" = true; then
-          components+=(--require-components --component-builder "$COMPONENT_BUILDER" --component-oras "$COMPONENT_ORAS"
+          components+=(--require-components --record-component-recovery --component-builder "$COMPONENT_BUILDER" --component-oras "$COMPONENT_ORAS"
             --component-cosign "$COMPONENT_COSIGN" --component-directory "$RUNNER_TEMP/component-data/$BUILD_STAGE")
+        fi
+        if test -n "$COMPONENT_RECOVERY" || test -n "$COMPONENT_RECOVERY_SHA256"; then
+          test "$COMPONENT_READER" = true
+          test -n "$COMPONENT_RECOVERY"
+          test -n "$COMPONENT_RECOVERY_SHA256"
+          components+=(--component-recovery "$COMPONENT_RECOVERY" --component-recovery-sha256 "$COMPONENT_RECOVERY_SHA256")
         fi
         python3 scripts/ci-build.py "${options[@]}" run "$BUILD_STAGE" \
           --directory "$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE" "${selection[@]}" "${components[@]}"
@@ -101,12 +115,31 @@ runs:
         ./scripts/collect-buildkit-diagnostics.sh "$root"
     - name: Preserve build diagnostics
       if: always()
+      id: diagnostics
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: build-${{ inputs.stage }}-${{ github.run_id }}-${{ github.run_attempt }}
         path: ${{ runner.temp }}/build-diagnostics/${{ inputs.stage }}/
         retention-days: 7
         if-no-files-found: warn
+    - name: Report immutable recovery selection
+      if: always() && inputs.component-reader == 'true'
+      shell: bash
+      env:
+        BUILD_STAGE: ${{ inputs.stage }}
+        RECOVERY_ARTIFACT_ID: ${{ steps.diagnostics.outputs.artifact-id }}
+      run: |
+        set -Eeuo pipefail
+        python3 - "$RUNNER_TEMP/build-diagnostics/$BUILD_STAGE/result.json" <<'PY'
+        import json, os, pathlib, sys
+        path = pathlib.Path(sys.argv[1])
+        value = json.loads(path.read_text()) if path.is_file() else {}
+        digest = value.get('component_recovery_sha256')
+        if digest and os.environ.get('RECOVERY_ARTIFACT_ID'):
+            with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as stream:
+                stream.write('\nComponent recovery: run `%s`, artifact `%s`, canonical SHA256 `%s`.\n' % (
+                    os.environ['GITHUB_RUN_ID'], os.environ['RECOVERY_ARTIFACT_ID'], digest))
+        PY
     - name: Log out the component reader
       if: always() && inputs.component-reader == 'true'
       shell: bash

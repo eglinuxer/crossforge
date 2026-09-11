@@ -120,6 +120,45 @@ fails CI. These are CI execution observations, not signed reusable qualification
 receipts or candidate/native ARM evidence. The workflow still needs actual
 GitHub replay acceptance; socketless graph checks cannot provide it.
 
+### Recover the original component selection
+
+Main component consumers and manual replays write `component-recovery.json`
+before starting the first Bake solve. It fixes each selected catalog, artifact
+and receipt digest, input identity and original producer. The uploaded build
+diagnostics artifact remains available for seven days; the job summary reports
+its immutable artifact ID, run ID and the recovery document's canonical SHA256.
+An acquisition failure before a complete selection produces no recovery document.
+A subsequent build failure retains the complete selection for a retry.
+
+To replay using that selection, provide all three optional dispatch inputs:
+`recovery-run-id`, `recovery-artifact-id` and `recovery-sha256`. The workflow
+downloads the specified artifact from the original repository using read-only
+Actions access. Cross-run download requires an explicit token, run and artifact
+selection, as documented by the pinned
+[download-artifact action](https://github.com/actions/download-artifact/blob/d3f86a106a0bac45b974a628896c90dbdf5c8093/README.md).
+Choose the same stage and source commit. If main has advanced, the recovery is
+rejected; this entry point does not check out an older source. A partial-root
+incremental selection cannot be used for a full-stage manual replay.
+
+For the CLI, add `--record-component-recovery` to record a selection, or pass
+`--component-recovery /path/component-recovery.json` together with
+`--component-recovery-sha256 <original-canonical-sha256>` to recover one. Both
+require the authenticated reader options and `--require-components`; use
+`--python-components` when the original selection included Python parts. Use new
+diagnostics and acquisition directories for every attempt. A local invocation
+without `GITHUB_SHA` binds the source material inventory instead of claiming a
+Git commit identity; it still requires authenticated GitHub-produced components.
+
+Recovery verifies the independently selected document SHA256, exact source
+inventory, build execution inputs, stage, roots and component set before any
+lookup. Each original catalog is then fetched by digest, authenticated again,
+and its OCI bytes and receipt checked against current inputs. Missing or changed
+catalogs, receipts, artifacts or producers fail; they do not trigger a replacement
+producer. Source and execution inputs are rechecked after acquisition and after
+successful execution. New local paths and run IDs do not rewrite original
+producer records. This preserves raw component selection for CI gate retries;
+candidate/source-image recovery and new native ARM evidence remain separate work.
+
 ## Build stages
 
 `verify-incremental.yml` serves daily CI and inherits the caller's permissions for

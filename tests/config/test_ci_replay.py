@@ -213,13 +213,20 @@ class ReplayWorkflowTests(unittest.TestCase):
         self.assertIn("plan-components: false", text)
         options = text.split("options: [", 1)[1].split("]", 1)[0].split(", ")
         self.assertEqual(set(options), set(ci_replay.STAGES))
-        script = text.split("      - name: Require the trusted main source\n        run: |\n", 1)[1].split("      - uses:", 1)[0]
+        script = text.split("      - name: Require the trusted main source\n", 1)[1].split("        run: |\n", 1)[1].split("      - uses:", 1)[0]
         valid = dict(os.environ, GITHUB_SERVER_URL="https://github.com", GITHUB_REPOSITORY="eglinuxer/crossforge",
                      GITHUB_REF="refs/heads/main")
         self.assertEqual(subprocess.run(["bash", "-c", script], env=valid).returncode, 0)
         for key, value in (("GITHUB_SERVER_URL", "https://example.invalid"), ("GITHUB_REPOSITORY", "fork/crossforge"),
                            ("GITHUB_REF", "refs/heads/feature")):
             self.assertNotEqual(subprocess.run(["bash", "-c", script], env=dict(valid, **{key: value})).returncode, 0)
+        recovery = {"RECOVERY_RUN_ID": "123", "RECOVERY_ARTIFACT_ID": "456", "RECOVERY_SHA256": "a" * 64}
+        self.assertEqual(subprocess.run(["bash", "-c", script], env=dict(valid, **recovery)).returncode, 0)
+        for key, value in (("RECOVERY_RUN_ID", ""), ("RECOVERY_ARTIFACT_ID", ""), ("RECOVERY_SHA256", ""),
+                           ("RECOVERY_RUN_ID", "0"), ("RECOVERY_ARTIFACT_ID", "1,2"), ("RECOVERY_SHA256", "tag")):
+            with self.subTest(key=key, value=value):
+                self.assertNotEqual(subprocess.run(["bash", "-c", script],
+                    env=dict(valid, **dict(recovery, **{key: value}))).returncode, 0)
 
 
 if __name__ == "__main__":

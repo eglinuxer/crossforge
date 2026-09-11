@@ -8,6 +8,18 @@ on:
         type: choice
         options: [toolchain-x86_64, toolchain-aarch64, gcc-smoke, gcc-full, python-cp39, python-cp310, python-cp311, python-cp312, python-cp313, python-cp314, vcpkg, sdk]
         default: gcc-smoke
+      recovery-run-id:
+        description: Optional original run; supply all three recovery fields together
+        type: string
+        default: ''
+      recovery-artifact-id:
+        description: Immutable build diagnostics artifact ID from that run
+        type: string
+        default: ''
+      recovery-sha256:
+        description: Original component recovery canonical SHA256 shown in its job summary
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -29,18 +41,37 @@ jobs:
     permissions:
       contents: read
       packages: read
+      actions: read
     steps:
       - name: Require the trusted main source
+        env:
+          RECOVERY_RUN_ID: ${{ inputs.recovery-run-id }}
+          RECOVERY_ARTIFACT_ID: ${{ inputs.recovery-artifact-id }}
+          RECOVERY_SHA256: ${{ inputs.recovery-sha256 }}
         run: |
           set -Eeuo pipefail
           test "$GITHUB_SERVER_URL" = https://github.com
           test "$GITHUB_REPOSITORY" = eglinuxer/crossforge
           test "$GITHUB_REF" = refs/heads/main
+          if test -n "${RECOVERY_RUN_ID:-}" || test -n "${RECOVERY_ARTIFACT_ID:-}" || test -n "${RECOVERY_SHA256:-}"; then
+            [[ "${RECOVERY_RUN_ID:-}" =~ ^[1-9][0-9]*$ ]]
+            [[ "${RECOVERY_ARTIFACT_ID:-}" =~ ^[1-9][0-9]*$ ]]
+            [[ "${RECOVERY_SHA256:-}" =~ ^[0-9a-f]{64}$ ]]
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-locked-buildx
         id: buildx
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        if: inputs.recovery-artifact-id != ''
+        with:
+          github-token: ${{ github.token }}
+          repository: eglinuxer/crossforge
+          run-id: ${{ inputs.recovery-run-id }}
+          artifact-ids: ${{ inputs.recovery-artifact-id }}
+          path: ${{ runner.temp }}/component-recovery-input
+          merge-multiple: true
       - uses: ./.github/actions/run-build-stage
         with:
           stage: ${{ inputs.stage }}
@@ -48,3 +79,5 @@ jobs:
           component-builder: ${{ steps.buildx.outputs.builder }}
           python-components: ${{ startsWith(inputs.stage, 'python-') || inputs.stage == 'sdk' }}
           replay-qualification: true
+          component-recovery: ${{ inputs.recovery-artifact-id != '' && format('{0}/component-recovery-input/component-recovery.json', runner.temp) || '' }}
+          component-recovery-sha256: ${{ inputs.recovery-sha256 }}
