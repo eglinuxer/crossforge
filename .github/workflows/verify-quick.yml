@@ -66,7 +66,17 @@ jobs:
           ./scripts/validate-rpm-lock.py locks/qt-runtime-el8-x86_64.json --require-lock
           ./scripts/validate-rpm-lock.py locks/qt-runtime-el8-aarch64.json --require-lock
       - name: Configuration tests
-        run: python3 -m unittest discover -s tests/config -p 'test_*.py'
+        run: python3 scripts/ci-tests.py run --jobs 4 --output "$RUNNER_TEMP/config-tests"
+      - name: Preserve configuration test coverage and timings
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: configuration-tests-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/config-tests/*.json
+            ${{ runner.temp }}/config-tests/*.log
+          retention-days: 7
+          if-no-files-found: warn
       - name: Packaging planner tests
         run: python3 -m unittest discover -s tests/packaging -p 'test_*.py'
       - name: Script syntax

@@ -16,7 +16,7 @@ GENERATORS = {"docker-bake.hcl", "docker-bake.override.json", "config/release.js
 DOCUMENTS = {"README.md", "SUPPORT.md", "SECURITY.md", "AGENTS.md", "LICENSE-MIT", "LICENSE-APACHE"}
 CONTROL_WORKFLOWS = {".github/workflows/" + name + ".yml" for name in (
     "candidate", "release", "release-control-plane", "native-aarch64-release", "component-pilot",
-    "replay-qualification")}
+    "replay-qualification", "verify-quick")}
 SDK_CONTROLLERS = {".github/actions/run-component-sdk/action.yml", "scripts/ci-sdk.py"} | {
     "scripts/crossforge_internal/" + name + ".py" for name in
     ("ci_sdk", "python_sdk", "python_sdk_catalog", "python_sdk_recovery")}

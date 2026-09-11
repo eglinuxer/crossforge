@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-configuration-test-runner-validation",
+  "date": "2026-09-11",
+  "base_commit": "ca4d4297782f1ac996ce143628c765a9d1ecb290",
+  "branch": "codex/quick-test-parallelism",
+  "status": "local-validation-passed",
+  "implementation": {
+    "workers": 4,
+    "library": "Python standard library unittest",
+    "selection": "Full discovery. Module timing weights only schedule placement; no test filtering.",
+    "isolation": "Independent interpreter and copied current source per worker; full inventory and executed-ID multisets checked.",
+    "failure_handling": "Import, execution, coverage and source mutation failures fail the run; missing results and zero-exit early termination fail. Timeout/cancellation stop process groups. Explicit fixture skips are recorded separately from tests actually run."
+  },
+  "source_files": {
+    ".github/workflows/verify-quick.yml": {
+      "path": "/tmp/crossforge-quick-parallel-worktree/.github/workflows/verify-quick.yml",
+      "sha256": "577ce81bbb8e0dc85a5e7afecfdb95a2fc91883eedf54ddae82dc8c287369899"
+    },
+    "docker/Dockerfile": {
+      "path": "/tmp/crossforge-quick-parallel-worktree/docker/Dockerfile",
+      "sha256": "ffe12dde7b3b006e94f3d3509f6e755ad456ea2608b5ed33efdd620c8e7b26e1"
+    },
+    "scripts/ci-tests.py": {
+      "path": "/tmp/crossforge-quick-parallel-worktree/scripts/ci-tests.py",
+      "sha256": "236dbee3b9202ad391c7aa460db8b4bfb2d7ce2961c5c536e3a8f382b90cc267"
+    },
+    "scripts/crossforge_internal/ci_tests.py": {
+      "path": "/tmp/crossforge-quick-parallel-worktree/scripts/crossforge_internal/ci_tests.py",
+      "sha256": "705d1be0e6dbda9af15bf17bc7d0f4ae4c68c78f8a639a24a29e93c7273499b9"
+    },
+    "scripts/crossforge_internal/incremental_plan.py": {
+      "path": "/tmp/crossforge-quick-parallel-worktree/scripts/crossforge_internal/incremental_plan.py",
+      "sha256": "c6aed81c0df98efc059092a9a207f067321deba06b00c8c7883481c45033dbdf"
+    },
+    "tests/config/test_ci_tests.py": {
+      "path": "/tmp/crossforge-quick-parallel-worktree/tests/config/test_ci_tests.py",
+      "sha256": "c89f1411772a5ea19e1b94a0bc3157c68f2bb003e553027535804a8746c47832"
+    },
+    "tests/config/test_incremental_plan.py": {
+      "path": "/tmp/crossforge-quick-parallel-worktree/tests/config/test_incremental_plan.py",
+      "sha256": "6b8a430aa99ac9c263f5ec534ee6d1d76bad94be5e3f7af22c5a3367525a843b"
+    },
+    "tests/config/timing-hints.json": {
+      "path": "/tmp/crossforge-quick-parallel-worktree/tests/config/timing-hints.json",
+      "sha256": "8bcc0e09ba10a02a8e629daf63de833f69711d45be9304819eabca3e46bcfe16"
+    }
+  },
+  "controlled_comparison": {
+    "schema_version": 1,
+    "kind": "crossforge-local-test-parallelism-comparison",
+    "status": "passed",
+    "source_commit": "ca4d4297782f1ac996ce143628c765a9d1ecb290",
+    "tests_in_both": 1431,
+    "skipped_in_both": 0,
+    "serial_seconds_including_discovery": 346.44706639798824,
+    "parallel_seconds_including_loading": 99.19330410900875,
+    "wall_reduction_percent": 71.36840985830189,
+    "observed_speedup": 3.49264569327441,
+    "parallel_cgroup_peak_memory_bytes": 908824576,
+    "serial_observation": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-timing-ca4d429-cwd/observation.json",
+      "sha256": "3bf66dce5af85f13545e91e218067c40e3ee98e8f9a9ce57eaadcda176ddd45b"
+    },
+    "parallel_evidence": {
+      "source.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/source.json",
+        "sha256": "330276493d0e630bba5d8dfba01687f639ec5216ef88f751aa819ac6393e8e00"
+      },
+      "plan.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/plan.json",
+        "sha256": "8873237af46b8ff6d9dc635802afc8ce0c96f0f62ea6659c3ecd6eedddfb9648"
+      },
+      "measure.py": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/measure.py",
+        "sha256": "c655703700ff40cb1a1c5d322fcde6461bad499ac26b2a2d339aa9fab1f7134f"
+      },
+      "worker.py": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/worker.py",
+        "sha256": "fa1a0fd495c35001b6e13527d94d33ae3454460cc9fe83102dac72fa0163adb0"
+      },
+      "result.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/result.json",
+        "sha256": "8b1409e34d27d1274f0a914b7830435780c772b560fb8048430b09f1ddc7c09c"
+      },
+      "run.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/run.log",
+        "sha256": "807368ddf2c0b8fd827bb1fcd3d34e487231ba254aadc01e30ceb62542d18979"
+      },
+      "container-host-config.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/container-host-config.json",
+        "sha256": "66510bfa350ee5ae758eae6ea5e1db3042f1abbfbd2bf751858687e0c3ff04bb"
+      },
+      "container-platform.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/container-platform.json",
+        "sha256": "a36e80a2d001351b5002860de9c6f4f1169cec2ba06916a198443a14f44ac643"
+      }
+    },
+    "workers": [
+      {
+        "json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/worker-0.json",
+          "sha256": "a87015283a9866b0ee34a0d0ed11bf88a4d745ea4efe041b93dc4b4e850bd145"
+        },
+        "log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/worker-0.log",
+          "sha256": "4cbb653c6c80ec6f7f2063f2c540c0f4793601840599428c1f0ecd38a6f9dc7d"
+        }
+      },
+      {
+        "json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/worker-1.json",
+          "sha256": "19c131c20aabee94304fbdd6ede78cdb16e75962989ff6a3491b2a99619b694b"
+        },
+        "log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/worker-1.log",
+          "sha256": "949465cecac72752d4b0008cf66e182cdb7b7625fccdf9516853a08aaa7bc5ab"
+        }
+      },
+      {
+        "json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/worker-2.json",
+          "sha256": "c747596a07ad3030cdf93a23d5431fa211d642670221bbd60bf3f1a3ff30488f"
+        },
+        "log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/worker-2.log",
+          "sha256": "76b26f48c0760ba23d6d6fb49ed0b3add2170dfb6c70f74c6c223b7bb47a41dc"
+        }
+      },
+      {
+        "json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/worker-3.json",
+          "sha256": "c34d6f9bfb9d17ab0174e5d6e2ee66aa4182a499bcaa58056dddb57f5a893565"
+        },
+        "log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/config-parallel-ca4d429/worker-3.log",
+          "sha256": "894bbaf97a9956679221aed4ff03dbce14fc737e661c04cc8e070f9c985234de"
+        }
+      }
+    ],
+    "limits": "Single local controlled comparison at 4 CPU/16 GiB with the same pinned image, original test assertions and validators, original locked zstd/nFPM asset preparation, and exact per-test multiset coverage. Each parallel process uses an independent source directory. Source copies and locked asset setup precede both timers. The serial peak was only sampled during the run, so no peak-memory ratio is claimed. Not a GitHub improvement, three-run baseline, production test runner, or implemented workflow change.",
+    "next_action": "Implement and negatively test a maintainable complete-suite process runner in a later change, preserving discovery, per-test accounting, failure aggregation and isolated state; then measure actual GitHub quick feedback."
+  },
+  "production_runner": {
+    "environment": "Pinned offline Docker tools image, 4 CPU / 16 GiB, non-root, no daemon socket; original pinned zstd/nFPM fixtures prepared once.",
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "configuration_tests": 1447,
+    "skips": 0,
+    "runner_seconds": 104.879896,
+    "workflow_step_seconds": 104.912,
+    "packaging_tests": 40,
+    "packaging_skips": 0,
+    "packaging_step_seconds": 1.152,
+    "other_checks": "Release/RPM validators, three renderers, script syntax, remaining Bake graphs and all workflow actionlint passed. Only existing concurrency.queue actionlint compatibility exclusion."
+  },
+  "subsequent_checks": {
+    "runner_regressions": {
+      "tests": 16,
+      "seconds": 5.292,
+      "skips": 0
+    },
+    "incremental_regressions": {
+      "tests": 16,
+      "seconds": 0.101
+    },
+    "rocky8": "Actual platform-python-check four RUN steps forcibly executed with fixed Buildx; includes new CLI --help.",
+    "native_static": "Original phase4 and host-runtime-qualified scope passed using check-bake adapter and explicit crossforge-ci-review builder.",
+    "source_scope": "Full suite preceded final symlink-ancestor guard, log-label clarification, verify-quick control classification and Docker CLI smoke addition. Final 16 runner regressions, planner regressions, actual Rocky 8 and native checks cover these changes; not described as a second full suite."
+  },
+  "material_selection": {
+    "status": "passed",
+    "targets": {
+      "inputs": [
+        "platform-python-check"
+      ]
+    },
+    "compiler_inputs_changed": [],
+    "normalization": "Compared original Git export to current source normalized with the same 0644/0755 file and 0755 directory rules.",
+    "scope": "Real renderers/Bake/material collector. Per-file hashes in saved source identities. Subsequent guard/log wording and documentation changes were not recaptured into v2."
+  },
+  "failed_experiments": [
+    "First timing wrapper omitted work root from sys.path and failed two imports; full serial rerun with official cwd import semantics passed. Original failed observation retained in controlled comparison source.",
+    "First runner test fixture omitted actual .gitignore and captured generated pyc files; fixture copied repository ignore rules, then 13 and final 16 tests passed.",
+    "First material experiment compared Git-export 0644 files to group-writable 0664 checkout files. Conservative full fallback was correct. A distinct v2 snapshot used original Git export normalization and selected only platform-python-check."
+  ],
+  "evidence": {
+    "full.py": {
+      "path": "/tmp/crossforge-quick-parallel-validation/full.py",
+      "sha256": "c3c25debb903e78fb863ddf903b35c197c1ced3cae56dc71725fbb0f6a863b81"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-quick-parallel-validation/full.log",
+      "sha256": "05605a0dbb834736757dbfbe073b53723f65bcc1c6570db2b2be6eda01201fbb"
+    },
+    "full-result.json": {
+      "path": "/tmp/crossforge-quick-parallel-validation/full-result.json",
+      "sha256": "56ba48d41ae8e3ffcde302fc08a3345a325c261d3802caacc197230fcd6ec3d2"
+    },
+    "runtime/config-tests/source.json": {
+      "path": "/tmp/crossforge-quick-parallel-validation/runtime/config-tests/source.json",
+      "sha256": "733f5ac61beca829dd5572a4de5ff5095a12669e1887613461d7792bb063994f"
+    },
+    "runtime/config-tests/inventory.json": {
+      "path": "/tmp/crossforge-quick-parallel-validation/runtime/config-tests/inventory.json",
+      "sha256": "7dc34564648c29c6e54709e1c4fbfd58ae28b7a7d67623aa9a9582cb4cf48fa5"
+    },
+    "runtime/config-tests/result.json": {
+      "path": "/tmp/crossforge-quick-parallel-validation/runtime/config-tests/result.json",
+      "sha256": "52a8ad0da052e2a73d3762c53df52384c78fd09bce297bb16f62268713a047b4"
+    },
+    "runner-regressions.log": {
+      "path": "/tmp/crossforge-quick-parallel-validation/runner-regressions.log",
+      "sha256": "9dd890fb0e16d3154c7efbcbf515e9231dede251c6616e98033c3939c48b9b55"
+    },
+    "runner-regressions-with-ignore.log": {
+      "path": "/tmp/crossforge-quick-parallel-validation/runner-regressions-with-ignore.log",
+      "sha256": "6982565b7cc1eab8b952394d4163b95f0e9316f9df224f7831d7f4487a742bd6"
+    },
+    "runner-regressions-complete.log": {
+      "path": "/tmp/crossforge-quick-parallel-validation/runner-regressions-complete.log",
+      "sha256": "78f7fdf9bf7bc8cd2ed1d1224c4a83b3235b639afe0290c8917eac91b876b3a0"
+    },
+    "runner-regressions-final.log": {
+      "path": "/tmp/crossforge-quick-parallel-validation/runner-regressions-final.log",
+      "sha256": "71742b2e8c7cfde45098d737a709ec4f9a03ccf2c1605eac6666a0f93c399061"
+    },
+    "incremental-regressions.log": {
+      "path": "/tmp/crossforge-quick-parallel-validation/incremental-regressions.log",
+      "sha256": "e501a60eb3e5f9958bc36104a736437c5ff00e418aefe68ca3bded5af8da7436"
+    },
+    "platform-python-final.log": {
+      "path": "/tmp/crossforge-quick-parallel-validation/platform-python-final.log",
+      "sha256": "2aff2880aa98651402c83134bf7889a03131017aaea202fb467cd2a1f4190c8c"
+    },
+    "native-static.log": {
+      "path": "/tmp/crossforge-quick-parallel-validation/native-static.log",
+      "sha256": "68d1e94e17f15a47d9adf3f09f50b1dcee82458b4712a9048266ce194c787fbd"
+    },
+    "selection.log": {
+      "path": "/tmp/crossforge-quick-parallel-validation/selection.log",
+      "sha256": "d4b4572a686a190b9d80fe8836db49704ff943bdf6495de588b4119703951112"
+    },
+    "selection-v2.log": {
+      "path": "/tmp/crossforge-quick-parallel-validation/selection-v2.log",
+      "sha256": "ef14df7e7c75d1eb20e9cc82183d795cba9cb7365f799bb31a9c8e460aa9da71"
+    },
+    "selection-v2.json": {
+      "path": "/tmp/crossforge-quick-parallel-validation/selection-v2.json",
+      "sha256": "638f08c9b802cdb87a4430c50d1e3d64f9f81dec072b5caf5906f3cadda963c1"
+    },
+    "selection-v2-identity.json": {
+      "path": "/tmp/crossforge-quick-parallel-validation/selection-v2-identity.json",
+      "sha256": "622a5501930a28de8cdb796c425c5a3ac3c4e9545cab849b60cc52ba9fe535fd"
+    },
+    "complete-coverage-comparison.json": {
+      "path": "/tmp/crossforge-quick-parallel-validation/complete-coverage-comparison.json",
+      "sha256": "84b051dac97aff82775954557302a5251b90e58333eb9ad448c9f6c044293b7d"
+    }
+  },
+  "limits": [
+    "Local controlled timing only; no measured GitHub improvement or three-run performance baseline.",
+    "Four quick-test workers do not change Python build matrix parallelism (still 2).",
+    "This branch has not been pushed or merged and leaves PR #3 ca4d429 validation undisturbed.",
+    "No signed component, candidate, native ARM or full six-batch completion claim."
+  ]
+}

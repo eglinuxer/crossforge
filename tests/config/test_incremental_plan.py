@@ -140,7 +140,7 @@ class IncrementalPlanTests(unittest.TestCase):
 
     def test_docs_config_tests_and_control_workflow_keep_fast_validation(self):
         for path in ("docs/new.md", "tests/config/test_new.py", ".github/workflows/candidate.yml",
-                     ".github/workflows/component-pilot.yml"):
+                     ".github/workflows/component-pilot.yml", ".github/workflows/verify-quick.yml"):
             self.assertEqual(planner.select(self.before, self.snapshot(), [path])["targets"], {})
         # A rename cannot hide a changed build recipe behind a documentation path.
         self.recipe.write_text(self.recipe.read_text().replace("RUN gcc-test", "RUN gcc-test --strict"))

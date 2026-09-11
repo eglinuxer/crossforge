@@ -19,6 +19,21 @@ baselines, unsupported material syntax, unknown paths or changed root catalogs
 select the complete existing SDK/GCC stage set. Qt qualification remains opt-in.
 A PR uses the merge base against the checked-out merge commit.
 
+Configuration regressions use `scripts/ci-tests.py run --jobs 4` on the same
+runner. The standard-library unittest loader discovers the entire `tests/config`
+suite before assigning modules to independent Python processes and source copies.
+Every discovered test must be accounted for by execution or an explicit fixture
+skip. Import errors, missing worker results, changed test inventories and any
+test failure fail the overall check; other selected workers still report their
+results. Timeout and cancellation stop worker process groups, including children.
+`tests/config/timing-hints.json` only balances work: new modules receive a default
+weight, and stale hints cannot remove tests. The `configuration-tests` artifact
+retains source identities, discovery, per-worker logs, skips and elapsed times.
+The original `python3 -m unittest discover -s tests/config -p 'test_*.py'` command
+remains available. When running the parallel CLI locally, supply a new
+`--output` directory outside the Git worktree; it tests current tracked and
+non-ignored untracked files, including uncommitted edits.
+
 Each main push runs the selected roots and does not publish a public SDK candidate.
 Missing internal toolchain components are produced separately for those roots.
 Dispatch `candidate.yml` on main when preparing a candidate or release:
