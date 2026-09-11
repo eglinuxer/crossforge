@@ -171,6 +171,28 @@ class CandidateWorkflowTests(unittest.TestCase):
             self.workflow.count("scripts/run-with-heartbeat.py"), 2
         )
 
+    def test_public_consumer_job_preserves_buildkit_diagnostics_after_failure(self):
+        publish = self.workflow.split("\n  publish:", 1)[1].split(
+            "\n  native-aarch64:", 1
+        )[0]
+        collect, upload = publish.split(
+            "      - name: Collect publish build diagnostics\n", 1
+        )[1].split(
+            "      - name: Preserve publish build diagnostics\n", 1
+        )
+        for step in (collect, upload):
+            self.assertIn("        if: always()\n", step)
+            self.assertNotIn("continue-on-error:", step)
+        self.assertIn("./scripts/collect-buildkit-diagnostics.sh", collect)
+        self.assertIn('"$RUNNER_TEMP/build-diagnostics/publish"', collect)
+        self.assertIn("uses: actions/upload-artifact@", upload)
+        self.assertIn("${{ runner.temp }}/build-diagnostics/publish/", upload)
+        self.assertIn("${{ github.run_id }}-${{ github.run_attempt }}", upload)
+        self.assertLess(
+            publish.index("Build downstream consumers through the public launcher"),
+            publish.index("Collect publish build diagnostics"),
+        )
+
     def test_public_candidate_runs_non_root_with_a_read_only_sdk(self):
         self.assertIn('docker run --rm --pull=always "$image" id -u', self.workflow)
         self.assertIn(')" = 1000', self.workflow)

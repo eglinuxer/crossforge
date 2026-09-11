@@ -4,6 +4,7 @@ import copy
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import runpy
 import shutil
@@ -173,16 +174,26 @@ class VcpkgToolchainInputsTests(unittest.TestCase):
     def test_trimmed_sdk_scripts_accept_reports_without_loading_a_renderer(self):
         scripts = self.root / "scripts"
         scripts.mkdir()
-        for name in ("qualify-vcpkg-sdk.py", "fetch-vcpkg-history.py", "release_component.py",
-                     "toolchain_report.py", "toolchain_policy.py", "vcpkg_policy.py"):
+        expected_scripts = {"qualify-vcpkg-sdk.py", "fetch-vcpkg-history.py", "release_component.py",
+                            "toolchain_report.py", "toolchain_policy.py", "vcpkg_policy.py"}
+        for name in expected_scripts:
             shutil.copyfile(ROOT / "scripts" / name, scripts / name)
+        self.assertEqual({path.name for path in scripts.iterdir()}, expected_scripts)
         trimmed = runpy.run_path(str(scripts / "qualify-vcpkg-sdk.py"))
         self.assertEqual(self.qualify(module=trimmed), self.qualify())
-        result = subprocess.run([sys.executable, str(scripts / "qualify-vcpkg-sdk.py"), "--help"],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(b"--toolchain-components", result.stdout)
-        self.assertEqual(len(list(scripts.iterdir())), 6)
+        environment = dict(os.environ)
+        environment.pop("PYTHONDONTWRITEBYTECODE", None)
+        for write_bytecode in (False, True):
+            with self.subTest(write_bytecode=write_bytecode):
+                flags = [] if write_bytecode else ["-B"]
+                result = subprocess.run([sys.executable] + flags +
+                    [str(scripts / "qualify-vcpkg-sdk.py"), "--help"], env=environment,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn(b"--toolchain-components", result.stdout)
+                self.assertEqual({path.name for path in scripts.iterdir()} - {"__pycache__"}, expected_scripts)
+                if write_bytecode:
+                    self.assertTrue((scripts / "__pycache__").is_dir())
         self.assertEqual(len(list(self.components.rglob("*.json"))), 8)
 
     def cli(self):

@@ -751,3 +751,11 @@ cp39 新行资格完成，377.433 秒、七条 fresh RUN，原 producer 已执�
 用户已确认：本地 Docker 与真实 PR 检查全部通过后合并并推送 main，再执行 main 专属的签名、候选和原生 ARM 验收。当前分支的真实 PR 验收将按此顺序推进；main 专属信任条件保持原样。
 
 只读核对远程 main 仍为 `cf736ea`。定期资格化 [34581713087](https://github.com/eglinuxer/crossforge/actions/runs/34581713087/job/103218027588) 的 cp312 job 在 AArch64 Rocky runtime 依赖 COPY 时遇到 `short read`：预期 75,189,011 字节，实际 2,097,152，随后 `unexpected EOF`。失败发生在 Python 资格之前；日志不能区分传输、中间缓存或内容存储的根因。另有外部 [PR #2](https://github.com/eglinuxer/crossforge/pull/2) 为旧候选发布 job 增加失败诊断，本分支拆分后的两个发布 job 已保留对应诊断；未改动该 PR。
+
+## 真实 PR 验收：整合上游诊断，修复默认字节码环境断言（2026-09-11）
+
+工作分支 `4b62ed1` 已推送并创建草稿 [PR #3](https://github.com/eglinuxer/crossforge/pull/3)，未更新 main。首次 PR 实际测试的合并提交为 `79e9660`，包含已在 15:01 UTC 合入 main 的外部 PR #2 / `e8aa68a`。配置测试运行 1,424 项 / 651.362 秒，报告两个失败、一个错误、两个跳过；required status 拒绝放行。三项失败均在默认启用字节码的固定断网 Docker 中复现。此前禁止字节码写入的本地工具环境未暴露两项目录计数缺陷，原本地结果不会改写成覆盖了该差异。
+
+先将最新 main 整合到工作分支：保留新增公共消费者 job 的 BuildKit 诊断，将旧测试中的 SDK build 步骤定位改为该 job 实际执行的 launcher 消费者步骤。原 source/SDK 两个发布 job 的独立诊断保持。两个 vcpkg 裁剪导入测试现在先核对精确六份脚本，随后分别执行禁用和启用字节码的真实 CLI 子进程；只允许解释器生成的 `__pycache__` 目录，不增加业务模块依赖。完整受影响模块 55 项 / 6.774 秒通过，无跳过，候选 actionlint 通过。尚需修复后真实 PR 检查；源码配方和资格验证器未改变。
+
+受控 cp39 的串行 Python SDK 已通过，583.864 秒，原十三条 fresh RUN、八份依赖、新 cp39 与另外五行原 receipt/manifest 及导出报告在断网 Docker 中再次复核通过。完整 SDK 的 cp314 行导出触发一次 600 秒超时，原机制在新目录重试同一 digest 后恢复，继续原验证。运行日志保留超时与重试；消费者的临时提取目录按原流程在成功后清理，不作为永久诊断工件。此前并发 SDK batch 仍记录为失败，不能由此宣称根因已查明或 GitHub 已提速。

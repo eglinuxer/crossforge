@@ -404,12 +404,24 @@ class VcpkgPolicyGraphTests(unittest.TestCase):
                 directory = Path(temporary)
                 for source in sources:
                     shutil.copyfile(ROOT / source, directory / Path(source).name)
-                process = subprocess.run([sys.executable, str(directory / Path(qualifier).name), "--help"],
-                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                self.assertEqual(process.returncode, 0, process.stderr)
-                self.assertIn(b"--components", process.stdout)
-                self.assertIn(b"--release", process.stdout)
-                self.assertEqual(len(list(directory.iterdir())), 6)
+                expected_scripts = {Path(source).name for source in sources}
+                self.assertEqual(len(expected_scripts), 6)
+                self.assertEqual({path.name for path in directory.iterdir()}, expected_scripts)
+                environment = dict(os.environ)
+                environment.pop("PYTHONDONTWRITEBYTECODE", None)
+                for write_bytecode in (False, True):
+                    with self.subTest(target=target, write_bytecode=write_bytecode):
+                        flags = [] if write_bytecode else ["-B"]
+                        process = subprocess.run([sys.executable] + flags +
+                            [str(directory / Path(qualifier).name), "--help"], env=environment,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        self.assertEqual(process.returncode, 0, process.stderr)
+                        self.assertIn(b"--components", process.stdout)
+                        self.assertIn(b"--release", process.stdout)
+                        self.assertEqual({path.name for path in directory.iterdir()} - {"__pycache__"},
+                                         expected_scripts)
+                        if write_bytecode:
+                            self.assertTrue((directory / "__pycache__").is_dir())
 
     def test_packaging_reads_release_from_its_own_stage_after_the_vcpkg_boundary(self):
         sys.path.insert(0, str(ROOT / "scripts"))

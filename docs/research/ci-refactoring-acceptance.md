@@ -1,6 +1,6 @@
 # CI 重构验收状态
 
-本页是六项已确认方案的验收索引，便于评审；详细历史在[实施进度](ci-refactoring-progress.md)。当前生产实现包含 `5e56bb8` 的 append 输入范围修复，位于 `codex/component-ci-refactor`；最近一次只读核对远程 main 为 `cf736ea`。本页不构成候选或发布资格证据。
+本页是六项已确认方案的验收索引，便于评审；详细历史在[实施进度](ci-refactoring-progress.md)。当前生产实现包含 `5e56bb8` 的 append 输入范围修复，位于 `codex/component-ci-refactor`；远程 main 的外部诊断修复 `e8aa68a` 正整合进该分支。本页不构成候选或发布资格证据。
 
 | 已确认方向 | 当前实现与已取得证据 | 尚待验收 |
 |---|---|---|
@@ -18,6 +18,8 @@
 跨 runner 仍逐项比较原物理环境。不同 runner 未匹配时 SDK 会重新验收缺失行，不能宣称已经消除跨 job 重复资格。完整 32+6 恢复记录只覆盖全部来自已认证目录的行；SDK 本 job 补验的未签名行不产生完整恢复记录。主 job 自动恢复入口尚未接入。组件 registry 目前保留全部 digest 标签，不自动删除，尚未取得按引用清理的容量效果。
 
 用户已确认执行顺序：全部本地 Docker 与真实 PR 检查通过后，合并并推送 main；随后执行要求真实 main、精确 workflow SHA 和干净源码的组件签名、候选及原生 ARM 门禁。合并不等于整个方案验收完成。表中未完成的实际验证仍不能由静态图、fixture、本地历史计时或旧版本结果代替。
+
+[PR #3](https://github.com/eglinuxer/crossforge/pull/3) 已作为草稿推送。首次真实 PR 配置检查共运行 1,424 项，出现两个失败、一个错误及两个跳过：新 main 带入的旧发布 job 断言不适用于拆分流程，另两个 vcpkg 测试误把默认字节码目录计为额外依赖。三个问题已在 Docker 中复现；保留上游诊断、适配公共消费者 job 断言并覆盖两种字节码环境后，全部受影响的 55 项通过，无跳过，候选工作流 actionlint 通过。详情见[真实 PR 验收记录](pr-rollout-2026-09-11.json)，尚未将失败的 PR 检查记为通过。
 
 最新发现与修复：真实 cp39 补丁实验暴露了独立 append 对完整 release 的依赖，已改用本行固定组件，修复后的计划只选 inputs、cp39 和 SDK。[本批记录](python-append-scope-2026-09-11.json)分别保存首次完整回归的旧断言失败和修正后 75 项复验。新配方的六个独立安装已全部通过：每行两条 fresh RUN、原行 receipt/manifest 与裁剪后的输入均经原校验器复核，实际安装输入均不含完整 release。新版两种 SDK 的十三/十四条 fresh RUN、各八份组件依赖、六份原行记录及导出报告均已通过断网 Docker 原校验器复核，完整实际日志中没有 GCC/CPython 源码编译。
 
