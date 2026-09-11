@@ -71,7 +71,7 @@
     },
     {
       "path": "/gcc_testsuite/full/baselines/0/canonical_sha256",
-      "value": "1c1ede9bd00d1e40c7da24ff083f93f15d4e6a16854266da1d1899fba6437866"
+      "value": "ca521cebedacc41d5d01edffec3182d33b7ba7df560c56b9bb6abe5cdf94161c"
     },
     {
       "path": "/gcc_testsuite/full/baselines/0/file",
@@ -87,7 +87,7 @@
     },
     {
       "path": "/gcc_testsuite/full/plan/canonical_sha256",
-      "value": "b81d85e4f176c4e26c1a3062522847664ec853f9e5cee5994c993db2e079f6e7"
+      "value": "8a080fd490c0533807c8287104241331e2765c6a136208fd3e155eb717ad82ad"
     },
     {
       "path": "/gcc_testsuite/full/plan/file",

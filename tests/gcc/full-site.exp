@@ -15,3 +15,20 @@ set GXX_UNDER_TEST \
     "$::env(GXX_UNDER_TEST) -B$::env(CROSSFORGE_GCC_TOOL_PREFIX)/"
 set GCC_AR_UNDER_TEST $::env(GCC_AR_UNDER_TEST)
 set GCOV_UNDER_TEST $::env(GCOV_UNDER_TEST)
+
+# GCC 15's native driver expands present AVX10.1 CPU features to options
+# whose aliases intentionally warn. Only the patched native-option tests
+# expect that exact diagnostic. Determine the condition independently of
+# compiler output, using baseline x86 instructions in this host-direct tier.
+proc check_effective_target_crossforge_native_avx10_1 {} {
+    if { ![istarget x86_64-*-*] } {
+        return 0
+    }
+    return [check_runtime crossforge_native_avx10_1 {
+        int main ()
+        {
+            return !(__builtin_cpu_supports ("avx10.1")
+                     || __builtin_cpu_supports ("avx10.1-256"));
+        }
+    } "-march=x86-64"]
+}

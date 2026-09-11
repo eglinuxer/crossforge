@@ -106,7 +106,9 @@
             "libstdcxx-el8-pr93672-hang",
             "gcc-testsuite-gcov-under-test",
             "testsuite-gcov-under-test",
-            "testsuite-cross-gcc-ar"
+            "testsuite-cross-gcc-ar",
+            "gxx-native-avx10-alias",
+            "gcc-native-avx10-alias"
           ]
         },
         "suite": {
@@ -122,7 +124,9 @@
             "patches/gcc/0002-testsuite-honor-gcov-under-test.patch",
             "patches/gcc/0003-testsuite-honor-cross-gcc-ar.patch",
             "patches/gcc/0004-libstdcxx-skip-el8-pr93672-hang.patch",
-            "patches/gcc/0005-gcc-testsuite-honor-gcov-under-test.patch"
+            "patches/gcc/0005-gcc-testsuite-honor-gcov-under-test.patch",
+            "patches/gcc/0006-gxx-expect-native-avx10-alias.patch",
+            "patches/gcc/0007-gcc-expect-native-avx10-alias.patch"
           ]
         },
         "sha256": {

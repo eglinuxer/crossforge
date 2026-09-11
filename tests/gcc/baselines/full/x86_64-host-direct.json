@@ -1,7 +1,7 @@
 {
   "$schema": "https://crossforge.dev/schemas/gcc-testsuite-baseline.schema.json",
   "kind": "gcc-testsuite-baseline",
-  "plan_sha256": "b81d85e4f176c4e26c1a3062522847664ec853f9e5cee5994c993db2e079f6e7",
+  "plan_sha256": "8a080fd490c0533807c8287104241331e2765c6a136208fd3e155eb717ad82ad",
   "profile": "full",
   "runtime_tier": "host-direct",
   "schema_version": 1,
