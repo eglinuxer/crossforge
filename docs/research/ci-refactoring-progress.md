@@ -7,7 +7,7 @@
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；main 缺失工具链集中生产及只读消费已接线 | GitHub 实跑、真实签名与跨 run 验收 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线；Python 共享运行时根、目标 compile/runtime/final 与行汇总已消费相应组件输入 | GitHub 实跑、其他领域资格 COPY 范围、正式 Python 行资格复用接入 |
-| 4：整行 Python/SDK 交接 | 此前六行正式资格、Python SDK 与完整 SDK 本地实跑通过；新 compile/runtime/final、行 schema 3 与 SDK 消费的 Docker 契约回归通过，原始 Python 组件 CI 消费已接线 | 新报告链 Docker 实跑、正式行资格生产/SDK 复用的 CI 接入与远程验收 |
+| 4：整行 Python/SDK 交接 | 此前六行正式资格、Python SDK 与完整 SDK 本地实跑通过；新报告链及正式行 CI 生产/签名边界的 Docker 契约回归通过，原始 Python 组件 CI 消费已接线 | 新报告链 Docker 实跑、正式行资格的动态 matrix/SDK 接入与远程验收 |
 | 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储、候选组件消费及分阶段恢复、raw producer 部分重试接线本地验证通过 | 真实 GitHub 跨 run 信任和 producer 重试、其他资格领域、候选集成/原生 ARM |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
@@ -495,3 +495,17 @@ runtime schema 3 与 final schema 4 仍精确绑定完整 release。finalizer �
 首轮定向测试有两处旧图断言仍要求原 row host 和不带根 pin 的参数，已改为精确检查新的最小阶段及可信根。第一次全量运行另发现旧材料测试仍要求 `config/release.json`；改为精确检查六份投影且禁止完整 release/schema，同时保留七个已验证 subject 及不包含 GCC/CPython 源码编译器的断言，随后重新完整运行全部测试并通过。
 
 下一步接通正式 qualified-row 的 CI 生产与 SDK 消费，保持现有物理执行环境约束，等待跨机器资格边界决定。新报告链实际 Docker 重放、GitHub 信任/重试、候选/原生 ARM、强制源码重放、三次基线及并行度实验仍待验收。此前自动审批拒绝容器挂载主机 Docker socket（会授予广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。未合入 main、推送或发布。
+
+## 批次 4/5：正式 Python 行的 CI 生产、目录查找与签名交接边界（2026-09-11）
+
+新增 `ci-python-row.py`、`ci_python_rows.py` 和仅供复用调用的 `produce-python-row.yml`。入口检查既有可信 main caller 与精确 clean source，经已认证目录取得两份工具链安装组件及五份原始 Python 组件，缺失任一原始组件就报错，不在行资格 job 内隐式重编译 GCC/CPython。新 `python_row_resolution.resolve` 随后重新绑定七个 subject、捕获完整当前资格输入，查找签名目录、拉取 digest 固定的 OCI，并调用原 `python_qualification.verify_local` 核验实际安装字节、报告与执行 vertices。
+
+仅明确缺失输入索引会请求 fresh qualification；签名失败、传输失败、receipt/报告验收失败、执行环境变化和固定恢复引用缺失均不回退。命中结果保留原 producer 和 `verified-prior-execution`，不生成新 handoff 或签名。缺失时调用原正式资格生产者重跑完整 compile/runtime/row 门禁并验证封装后的产物；CI 适配器在发布前核对计划输入、receipt、clean source 与物理执行环境。失败时保留已有输入、BuildKit progress 和资格报告，不上传安装树或 OCI blobs；诊断路径拒绝 symlink。
+
+`python_row_handoff.py` 绑定单一完整行、原始 run/attempt、构建及物理环境、产物 digest 和完整 metadata 清单。新 catalog schema 4 只接受固定 `produce-python-row.yml@refs/heads/main` signer 的完整行资格 receipt，并核对允许的 main 事件和原 source SHA。原始工具链/Python 的 signer 仍不能授权资格报告，行 signer 也不能授权原始组件；`from-handoff --python-row-ci` 与旧入口不能混用。producer、signer、registry writer 分别使用所需权限，签名/存储重试沿用原 artifact ID、handoff/catalog/bundle 摘要与 producer invocation，不将旧执行改写为当前 attempt。
+
+[验证记录](python-row-ci-2026-09-11.json)：断网、非 root、无 Docker socket 的固定工具容器中 config 1308 项、273.949 秒及 packaging 40 项、1.271 秒全部通过，无跳过；四项 locked validators、三个 renderer `--check`、shell syntax 与 actionlint 通过（仅既有 concurrency.queue 兼容例外）。定向 71 项回归通过；固定 Rocky 8 platform-python 3.6.8 编译七个运行文件并执行十八项新测试通过。覆盖 handoff 身份、签名权限隔离、原始 attempt 重试、七组件依赖顺序、目录/传输/执行失败不得视为 miss、变化的 source/host 不得发布，以及失败诊断范围。
+
+本批新测试是控制流和契约 fixture：上游组件域验证、OCI transport、Cosign、实际目标执行及正式行验收均为显式 mock；全量套件保留相应原有域回归，没有取得新资格执行、GitHub 签名或跨 run 复用证据。代码审阅后补充了发布前身份检查与失败日志保留，再执行最终定向和全量测试。版本 pin、ABI/GCC baseline、Docker 资格配方和严格物理环境比较策略均未改变。只读 `git ls-remote` 确认远程 main 仍为 `cf736eab8aa53b851874509d66676e5bac98dc27`。
+
+新的可复用工作流尚未被 main 动态 matrix 或 candidate SDK 调用；下一步接入选中行的资格取得、忠实反映所选工作的 required status 和 SDK 消费，不能据当前入口就声称 CI 行资格复用已上线。跨机器物理执行环境边界仍待决定；新报告链实际 Docker 重放、真实 GitHub 信任/重试、候选/原生 ARM、强制源码重放和性能实验仍待验收。此前自动审批拒绝容器挂载主机 Docker socket（会授予广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。未合入 main、推送或发布。

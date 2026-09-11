@@ -184,6 +184,8 @@ clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七
 
 行汇总通过独立可信的 `python/<row>-qualification` 根摘要认证两份目标策略，再复用 prepared-source reader 核对共同的 source/build-policy 与精确源码清单，总计六份投影。`cpython-row-assemble` 从锁定 host 工具根出发，显式复制十四个 Python 文件，不继承完整 release host；原安装树、ABI、ELF、build Python、zstd 和嵌套报告检查继续执行。新行清单 schema 3 用行 `input_binding` 替代完整 release SHA256 与全行 qualification pair，要求 source schema 2 和 target final schema 5。原 `--release` 调用仍产生 schema 2；SDK append 和正式 receipt 验收新增 `--row-manifest`，从当前完整 release 独立重算新行策略，检查实际文件并比较整份清单，不能信任清单自报摘要。最终 SDK 同样核对行策略后重新执行 host 集成，自身继续绑定完整 release。材料实验显示产品版本不再使六行资格输入失效，cp39 source 和私有 zstd 各只影响自身行；这不代表取得了实际新资格或跨机器复用证据。
 
+正式行 CI 的独立生产/签名工作流和目录查找接口已实现，但尚未接入 main 动态 matrix 或候选 SDK。查找方重新绑定七个上游组件、当前构建及物理环境，只有目录输入索引缺失才请求新资格；签名、传输或实际行验收失败均报错。新 catalog schema 4 只授权固定 `produce-python-row.yml` 的完整行资格 receipt，原始组件 signer 权限保持原范围。复用保留原 producer；新生产必须通过既有正式资格执行器并在发布前核对输入、receipt、环境与 clean source，重试沿用原 run/attempt 和精确交接摘要。实际 GitHub 签名、跨 run/跨机器环境验收仍未完成。
+
 target SDK 包含解释器、stdlib、headers、`pyconfig.h`、`_sysconfigdata_*`、扩展模块和构建元数据。即使 x86_64 build/target 架构相同，也不得复用。每个 target 必须验证 zlib、bz2、lzma、ctypes、ssl、hashlib、sqlite3、uuid 等约定模块，以及最小 C extension 的编译、ELF 架构和 import；3.14 另验 `compression.zstd`。
 
 Rocky 8 的 zstd 1.4.4 低于 CPython 3.14 `compression.zstd` 所需的 1.4.5。Phase 8 因此从签名和 hash 锁定的上游源构建 PIC 私有静态 zstd 1.5.7，分别产生 host、x86_64 和 aarch64 prefix，并只链接进 `_zstd`；全局不可变 sysroot 未改动。编译资格化绑定精确 zstd build manifest/component identity，确认 `_zstd` 唯一、静态符号完整，且无 zstd `DT_NEEDED`、动态导出、RPATH 或 text relocation。locked-sysroot 与 clean-Rocky 运行时 tier 都实际执行 one-shot、streaming、dictionary、multithreaded、tarfile 和 zipfile zstd 探针。

@@ -666,6 +666,46 @@ only cp39 and private zstd affects only cp314. Shared target ABI/QEMU changes
 still affect every row containing that target. Formal CI production/reuse,
 physical execution-environment policy and actual replay acceptance remain open.
 
+### Qualified row CI handoff and lookup
+
+`ci-python-row.py` and the reusable `produce-python-row.yml` provide the producer
+boundary for a complete qualified row. They are not yet called by the main
+dynamic matrix or the candidate SDK path. They require the existing trusted main
+caller and exact clean source, acquire both toolchain installations and all five
+raw Python parts through authenticated catalogs, and reject a missing raw part.
+This job has no implicit GCC/CPython source-build fallback.
+
+`python_row_resolution.resolve` rebinds all seven subjects and captures the
+current qualification inputs, including the observed build worker, physical
+host and inspection tools. It then looks up the signed catalog, fetches the
+digest-bound OCI artifact and invokes `python_qualification.verify_local` to
+recheck execution vertices, reports and actual installed bytes. Only an absent
+input index requests fresh qualification. Authentication, transfer or row
+verification failures remain errors; a missing fixed recovery catalog cannot
+fall back to another producer. A successful lookup preserves the original
+producer and has mode `verified-prior-execution`.
+
+On a genuine miss, the existing formal row producer freshly runs the static,
+runtime and row gates, verifies the sealed artifact, and returns a qualification
+receipt. The CI adapter checks the planned input identity, receipt, source and
+environment before publication. Reused rows generate no new handoff or signature.
+New `python_row_handoff.py` binds one exact row, original run/attempt, physical
+execution identity, qualified artifact digest and the complete metadata set.
+
+Catalog schema 4 permits only complete Python row qualification receipts from
+the exact `produce-python-row.yml@refs/heads/main` signer with the allowed main
+event and original source SHA. Existing raw toolchain and Python signer policies
+remain restricted to their original roles. `from-handoff --python-row-ci` cannot
+consume a raw or pilot handoff. The separate producer, signer and registry writer
+jobs retain the same exact artifact-ID/digest retry checks: a later successful
+signing/storage attempt preserves the original qualification producer.
+
+Failure diagnostics retain the available input record, BuildKit progress and
+qualification reports; installed payloads and OCI blobs are excluded. Diagnostic
+source paths reject symlinks. These are local orchestration/contract fixtures,
+not new GitHub signatures or actual row execution. Main matrix/SDK wiring,
+cross-run acceptance and environment-policy decisions remain outstanding.
+
 ## GCC qualification policy inputs
 
 GCC smoke/full Docker gates use `run-gcc-testsuite.py --components` with the

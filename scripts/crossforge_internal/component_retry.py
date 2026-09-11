@@ -1,4 +1,4 @@
-"""Preserve successful raw-component producers across same-run partial retries.
+"""Preserve successful component producers across same-run partial retries.
 
 Independent outputs identify the original handoff and signed catalog bytes.
 These checks neither sign anything nor replace the pinned catalog verifier.
@@ -44,7 +44,7 @@ def upstream(needs, stage, current):
             "component artifact ID must be a positive decimal")
     prior_invocation(output["producer-invocation"], current["invocation"])
     if stage == "sign":
-        require(output["produced"] == "true", "no new raw components were produced")
+        require(output["produced"] == "true", "no new components were produced")
         digest_value(output["handoff-sha256"], "original producer handoff SHA256")
     else:
         for name in ("catalog-sha256", "bundle-sha256"):
@@ -64,7 +64,7 @@ def catalog_metadata(directory, current, producer_invocation):
     bundle = component_catalog.regular_bytes(directory / "catalog.sigstore.json", 16 * 1024 * 1024)
     component_catalog.regular_bytes(directory / "authentication.json", 1024 * 1024)
     catalog = component_catalog.validate(parse_json(data))
-    require(catalog["schema_version"] in (2, 3), "component retry supports raw production catalogs only")
+    require(catalog["schema_version"] in (2, 3, 4), "component retry supports main production catalogs only")
     require(data == canonical_bytes(catalog) + b"\n", "component retry catalog encoding differs")
     require(catalog["producer"]["source_commit"] == current["source_commit"] and
             catalog["producer"]["invocation"] == producer_invocation,

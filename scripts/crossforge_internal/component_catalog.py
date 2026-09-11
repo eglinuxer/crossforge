@@ -27,12 +27,13 @@ SIGNER = "https://github.com/" + GITHUB_REPOSITORY + "/" + WORKFLOW + "@refs/hea
 EVENT = "workflow_dispatch"
 MAIN_WORKFLOW = ".github/workflows/produce-toolchain.yml"
 PYTHON_WORKFLOW = ".github/workflows/produce-python.yml"
+PYTHON_ROW_WORKFLOW = ".github/workflows/produce-python-row.yml"
 
 
 def signing_policy(value, version):
     """Untrusted documents select only an exact, consumer-owned allowlist pair."""
     exact_fields(value, ("workflow", "event"), "catalog signing policy")
-    require(value["workflow"] == {2: MAIN_WORKFLOW, 3: PYTHON_WORKFLOW}[version] and
+    require(value["workflow"] == {2: MAIN_WORKFLOW, 3: PYTHON_WORKFLOW, 4: PYTHON_ROW_WORKFLOW}[version] and
             value["event"] in ("push", "workflow_dispatch"),
             "catalog signing workflow or event is not allowed")
     return value
@@ -47,10 +48,10 @@ def validate(value):
     require(type(value) is dict, "component catalog must be an object")
     version = value.get("schema_version")
     exact_fields(value, ("schema_version", "kind", "producer", "entries") +
-                 (("signing",) if type(version) is int and version in (2, 3) else ()), "component catalog")
-    require(type(version) is int and version in (1, 2, 3) and
+                 (("signing",) if type(version) is int and version in (2, 3, 4) else ()), "component catalog")
+    require(type(version) is int and version in (1, 2, 3, 4) and
             value["kind"] == "crossforge-component-catalog", "unsupported component catalog schema")
-    if version in (2, 3):
+    if version in (2, 3, 4):
         signing_policy(value["signing"], version)
     producer = component_artifacts.validate_producer(value["producer"])
     require(producer["kind"] == "github-actions" and producer["invocation"].startswith(
@@ -79,6 +80,19 @@ def validate(value):
             require(contract["inputs"]["targets"] == targets and contract["role"] ==
                     ("python-install" if kind == "install" else "python-test-context"),
                     "Python catalog component role or target differs")
+        elif version == 4:
+            from . import python_qualification
+            contract = receipt["contract"]
+            match = re.fullmatch(r"qualification/python-(cp[0-9]+)", contract["inputs"]["component"])
+            require(match is not None and contract["role"] == "qualification" and
+                    contract["inputs"]["targets"] == ["aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"],
+                    "Python row catalog must contain complete row qualification receipts")
+            settings = contract["inputs"]["parameters"].get("qualification", {})
+            require(type(settings) is dict and settings.get("row") == match.group(1) and
+                    settings.get("target") == "python-row-" + match.group(1),
+                    "Python row catalog qualification settings differ")
+            require([item["path"] for item in receipt["metadata"]] == python_qualification.metadata_paths(),
+                    "Python row catalog evidence set differs")
         digest_value(entry["receipt_sha256"], "catalog receipt SHA256")
         require(content_sha256(receipt) == entry["receipt_sha256"], "catalog receipt differs from its digest")
         require(receipt["contract"]["producer"] == producer, "catalog cannot relabel another producer's receipt")
@@ -91,7 +105,8 @@ def validate(value):
 
 def document(producer, entries, signing=None):
     # Validate before sorting so malformed input always fails at the boundary.
-    version = 1 if signing is None else 3 if type(signing) is dict and signing.get("workflow") == PYTHON_WORKFLOW else 2
+    version = 1 if signing is None else {PYTHON_WORKFLOW: 3, PYTHON_ROW_WORKFLOW: 4}.get(
+        signing.get("workflow") if type(signing) is dict else None, 2)
     value = {"schema_version": version, "kind": "crossforge-component-catalog",
              "producer": copy.deepcopy(producer), "entries": copy.deepcopy(entries)}
     if signing is not None:

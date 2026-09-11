@@ -195,7 +195,7 @@ class ComponentRetryTests(unittest.TestCase):
 
 class ComponentRetryWorkflowTests(unittest.TestCase):
     def test_producer_workflows_validate_original_outputs_before_download_and_sign_or_store(self):
-        for filename in ("produce-toolchain.yml", "produce-python.yml"):
+        for filename in ("produce-toolchain.yml", "produce-python.yml", "produce-python-row.yml"):
             workflow = (ROOT / ".github/workflows" / filename).read_text()
             sign, store = (workflow_fixtures.job(workflow, name) for name in ("sign", "store"))
             for stage, block, upstream in (("sign", sign, "ensure"), ("store", store, "sign")):
