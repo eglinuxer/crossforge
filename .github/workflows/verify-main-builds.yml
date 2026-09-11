@@ -36,6 +36,7 @@ jobs:
       toolchains-matrix: ${{ steps.plan.outputs.toolchains-matrix }}
       python: ${{ steps.plan.outputs.python }}
       python-matrix: ${{ steps.plan.outputs.python-matrix }}
+      python-rows-matrix: ${{ steps.plan.outputs.python-rows-matrix }}
       vcpkg: ${{ steps.plan.outputs.vcpkg }}
       vcpkg-matrix: ${{ steps.plan.outputs.vcpkg-matrix }}
       gcc: ${{ steps.plan.outputs.gcc }}
@@ -126,31 +127,20 @@ jobs:
   python:
     permissions:
       contents: read
-      packages: read
+      actions: read
+      packages: write
+      id-token: write
     needs: [plan, inputs, toolchains, python-components]
     if: >-
       always() && !cancelled() && needs.plan.outputs.python == 'true' &&
       !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 360
     strategy:
       fail-fast: false
       max-parallel: 2
-      matrix:
-        stage: ${{ fromJSON(needs.plan.outputs.python-matrix) }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup-locked-buildx
-        id: buildx
-      - uses: ./.github/actions/run-build-stage
-        with:
-          component-reader: true
-          python-components: true
-          component-builder: ${{ steps.buildx.outputs.builder }}
-          stage: ${{ matrix.stage }}
-          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
+      matrix: ${{ fromJSON(needs.plan.outputs.python-rows-matrix) }}
+    uses: ./.github/workflows/produce-python-row.yml
+    with:
+      row: ${{ matrix.row }}
 
   vcpkg:
     permissions:

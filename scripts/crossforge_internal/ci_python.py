@@ -42,6 +42,13 @@ def execution(selection_text, profile, stages, requirements_text):
     matrix = [{"row": row, "parts": selected[row]} for row in sorted(selected)]
     result["python-components-matrix"] = json.dumps({"include": matrix or [{"row": "cp39", "parts": ["build"]}]},
                                                    separators=(",", ":"))
+    consumers = parse_json(result["selection"])["targets"]
+    qualified = []
+    for stage in sorted(set(consumers) & set(ci_execution.GROUPS["python"])):
+        row = stage[len("python-"):]
+        require(consumers[stage] == [stage + "-dev"], "Python row job must preserve its canonical independent root")
+        qualified.append({"row": row})
+    result["python-rows-matrix"] = json.dumps({"include": qualified or [{"row": "cp39"}]}, separators=(",", ":"))
     return result
 
 
@@ -57,7 +64,7 @@ def check_results(results, stages):
             "required Python producers did not succeed or unselected producers executed")
         ordinary = copy.deepcopy(results)
         del ordinary["python-components"]
-        for key in ("python-parts", "python-components", "python-components-matrix"):
+        for key in ("python-parts", "python-components", "python-components-matrix", "python-rows-matrix"):
             del ordinary["plan"]["outputs"][key]
         return ci_execution.check_results(ordinary, stages)
     except (IdentityError, AttributeError, KeyError, TypeError, ValueError):

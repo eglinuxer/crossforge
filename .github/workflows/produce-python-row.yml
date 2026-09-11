@@ -45,7 +45,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
-      - name: Verify prior row execution or freshly run every row qualification gate
+      - name: Qualify the row and freshly verify its independent installation
         id: ensure
         env:
           PYTHON_ROW: ${{ inputs.row }}
@@ -74,6 +74,9 @@ jobs:
           path: ${{ runner.temp }}/component-producer/handoff.json
           retention-days: 7
           if-no-files-found: error
+      - name: Export row BuildKit diagnostics
+        if: always()
+        run: ./scripts/collect-buildkit-diagnostics.sh "$RUNNER_TEMP/component-producer/report/buildkit"
       - name: Preserve availability and producer diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

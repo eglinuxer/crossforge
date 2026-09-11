@@ -663,3 +663,15 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 [新版本地重放](runtime-replay-a56bb29-2026-09-11.json)已确认 cp314 与 cp39 两行的完整资格、OCI 封存与原独立 consumer 验收通过，各七个 fresh RUN；两个独立安装也通过，各两个 fresh append RUN。旧 cb115b5 batch 保留为 cp314 导出失败后停止，没有追写成功。本次 batch 正顺序推进 cp310–cp313，然后执行两种 SDK 汇总和已准备的 vcpkg/源码强制重放。所有计时仍是本地功能观测，不是 GitHub 并行度或三次性能基线。
 
 跨 runner 环境策略尚未收到新选择，继续严格比较全部物理环境字段。主行签名 producer、完整 SDK 恢复、候选资格复用、真实 GitHub/原生 ARM、引用保留及性能验收仍需完成；没有合入 main、推送或发布。
+
+## 批次 3/4/5：主 Python 行的签名交接与独立安装门禁（2026-09-11）
+
+主 `python` matrix 现在调用既有 `produce-python-row.yml`，由计划输出明确的行集合，保留两行并行以及原 inputs/toolchains/raw-Python 依赖。最终 required status 比较完整计划和行 matrix，不能以缺失、取消、失败或意外 skipped 代替成功。调用方授予 reusable workflow 的最大权限，内部仍将 producer 的 packages/write、signer 的 id-token/write 和 store 的 packages/write 分开；普通 SDK 消费 job 保持只读。
+
+新增 `python_row_install.py` 将先前实际验证过的独立安装路径纳入正式接口。每行无论新取得还是复用资格，都重新核对七份原始输入和完整行 receipt/OCI/文件，再交接到原 `python-<row>-dev`。基座必须是 `sdk-toolchains-dev`，不得换成累计 SDK；两个原 append RUN 必须本次执行，安装后的 row manifest 必须与已验收行一致。失败阻止新产物发布、签名 handoff 与 job 成功。累计 SDK 的六次 append 和 final 仍另行执行。新安装控制器的单独变更会选择各独立行，不能宣称 compiler inputs 变化；未知路径仍全量兜底。
+
+[验证记录](main-python-row-integration-2026-09-11.json)：固定、断网、非 root、无 socket 工具容器中配置 1,419 项 / 412.167 秒与打包 40 项 / 1.759 秒全部通过，无跳过；定向 101 项 / 20.732 秒通过。四个锁定验证器、三个 renderer、shell 与全部 workflow 的 actionlint 通过，仅保留既有 concurrency.queue 兼容例外。固定 Rocky 8 Python 3.6.8 编译四个生产模块并通过 46 项回归，测试主体 4.574 秒；Bake 图来自同轮固定工具容器的实际 print。图与编排用例使用显式 OCI、执行环境、BuildKit 和 registry/signing fixtures，不将这些回归计作真实资格执行。
+
+实际正式安装接口另消费本轮已验收的 cp39 行，完成原始组件和资格产物复核、两个 fresh append RUN 与行清单比较，外层退出 0，213.394 秒。捕获材料只有两份工具链与一份 qualified row；实际执行日志没有 GCC/CPython 源码编译 RUN。源码是基于 `fb836c5`、含本批实现的固定规范化工作副本，记录明确标为 source_dirty=true 并固定全部目录模式及文件字节/模式，未伪造 GitHub 或 clean producer。原行 receipt 与 producer 保留，未创建新行资格。首轮临时包装脚本混用物理/逻辑路径，在访问 daemon 前失败；第二轮副本目录为 0775，与原始组件的 0755 不符，原 verifier 正确拒绝。两次现场保留，第三轮使用新的规范化副本，不修改验证器或旧 receipt。
+
+新版 a56bb29 的六行完整资格现均已通过，各七个 fresh RUN；其中五个独立安装已经通过，cp313 独立安装仍在顺序 batch 中。随后继续两种 SDK 汇总及 vcpkg/源码强制重放。主行签名工作流已完成代码接入，但实际 GitHub 发布/签名/跨 run 取得、完整 SDK 恢复、候选资格交接与原生 ARM、引用保留和性能验收仍待完成。严格物理环境不匹配时，SDK 仍会补验；没有宣称跨 runner 已去重或 CI 已提速。未合入 main、推送或发布。

@@ -41,6 +41,9 @@ class PythonExecutionTests(unittest.TestCase):
                 matrix = json.loads(actual["python-components-matrix"])["include"]
                 self.assertEqual(matrix, [{"row": row, "parts": parts[row]} for row in sorted(parts)] if parts else
                                  [{"row": "cp39", "parts": ["build"]}])
+                qualified = sorted(set(targets) & set(ci_execution.GROUPS["python"]))
+                self.assertEqual(json.loads(actual["python-rows-matrix"]),
+                    {"include": [{"row": stage[7:]} for stage in qualified] or [{"row": "cp39"}]})
 
     def test_missing_selected_row_unknown_parts_and_unrelated_producers_rejected(self):
         for parts in ({}, {"cp310": ["build"]}, {"cp39": ["build"], "cp310": ["build"]},
@@ -90,7 +93,7 @@ class PythonExecutionTests(unittest.TestCase):
             self.assertIn("permissions:\n      contents: read", block)
             self.assertNotIn("packages:", block)
             self.assertNotIn("id-token:", block)
-        for name in ("toolchains", "python", "vcpkg", "gcc", "sdk"):
+        for name in ("toolchains", "vcpkg", "gcc", "sdk"):
             block = job(workflow, name)
             self.assertIn("permissions:\n      contents: read\n      packages: read", block)
             self.assertNotIn(": write", block)
@@ -100,9 +103,19 @@ class PythonExecutionTests(unittest.TestCase):
             else:
                 self.assertIn("component-reader: true", block)
             self.assertIn("component-builder: ${{ steps.buildx.outputs.builder }}", block)
-            self.assertEqual("python-components: true" in block, name == "python")
+            self.assertNotIn("python-components: true", block)
             needs = re.search(r"needs: \[(.+)\]", block).group(1).split(", ")
-            self.assertEqual("python-components" in needs, name in ("python", "sdk"))
+            self.assertEqual("python-components" in needs, name == "sdk")
+        qualified = job(workflow, "python")
+        self.assertIn("uses: ./.github/workflows/produce-python-row.yml", qualified)
+        self.assertIn("matrix: ${{ fromJSON(needs.plan.outputs.python-rows-matrix) }}", qualified)
+        self.assertIn("row: ${{ matrix.row }}", qualified)
+        self.assertIn("max-parallel: 2", qualified)
+        self.assertIn("needs: [plan, inputs, toolchains, python-components]", qualified)
+        self.assertIn("packages: write", qualified)
+        self.assertIn("id-token: write", qualified)
+        self.assertNotIn("run-build-stage", qualified)
+        self.assertIn("python, vcpkg", job(workflow, "sdk"))
         producer = job(workflow, "python-components")
         self.assertIn("uses: ./.github/workflows/produce-python.yml", producer)
         self.assertIn("max-parallel: 2", producer)
@@ -116,7 +129,7 @@ class PythonExecutionTests(unittest.TestCase):
     def test_existing_gate_commands_match_readonly_workflow_after_permission_and_binding_changes(self):
         ordinary = (ROOT / ".github/workflows/verify-incremental.yml").read_text()
         main = (ROOT / ".github/workflows/verify-main-builds.yml").read_text()
-        for name in ("inputs", "toolchains", "python", "vcpkg", "gcc", "sdk"):
+        for name in ("inputs", "toolchains", "vcpkg", "gcc", "sdk"):
             before = job(ordinary, name)
             after = job(main, name)
             if name != "inputs":

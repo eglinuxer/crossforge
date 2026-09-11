@@ -20,6 +20,7 @@ CONTROL_WORKFLOWS = {".github/workflows/" + name + ".yml" for name in (
 SDK_CONTROLLERS = {".github/actions/run-component-sdk/action.yml", "scripts/ci-sdk.py"} | {
     "scripts/crossforge_internal/" + name + ".py" for name in
     ("ci_sdk", "python_sdk", "python_sdk_catalog", "python_sdk_recovery")}
+PYTHON_INSTALL_CONTROLLERS = {"scripts/crossforge_internal/python_row_install.py"}
 
 
 def quick_only(path):
@@ -103,7 +104,7 @@ def select(before, after, paths):
     relevant = [path for path in paths if not quick_only(path)]
     if not relevant:
         return _plan({}, {}, [], paths)
-    known = _known_paths(before) | _known_paths(after) | GENERATORS | CONTROL_WORKFLOWS | SDK_CONTROLLERS
+    known = _known_paths(before) | _known_paths(after) | GENERATORS | CONTROL_WORKFLOWS | SDK_CONTROLLERS | PYTHON_INSTALL_CONTROLLERS
     unknown = sorted(set(relevant) - known)
     if unknown:
         return full(after["stages"], "unrecognized paths: " + ", ".join(unknown), paths)
@@ -122,6 +123,16 @@ def select(before, after, paths):
         for target in selected["sdk"]:
             changes.setdefault(target, _difference(before["nodes"].get(target), after["nodes"][target]))
             changes[target]["orchestration_files"] = controllers
+    row_controllers = sorted(set(relevant) & PYTHON_INSTALL_CONTROLLERS)
+    if row_controllers:
+        stages = [stage for stage in after["stages"] if re.fullmatch(r"python-cp[0-9]+", stage)]
+        if not stages:
+            return full(after["stages"], "Python installation changed without independent row stages", paths)
+        for stage in stages:
+            selected[stage] = list(after["stages"][stage])
+            for target in selected[stage]:
+                changes.setdefault(target, _difference(before["nodes"].get(target), after["nodes"][target]))
+                changes[target]["orchestration_files"] = row_controllers
     # Control-plane workflow changes are validated by quick's dedicated tests
     # and workflow lint. They are not compiler inputs. A generated policy or
     # copied implementation change still selects its real Bake consumers above.

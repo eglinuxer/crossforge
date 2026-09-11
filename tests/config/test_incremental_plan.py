@@ -89,6 +89,15 @@ class IncrementalPlanTests(unittest.TestCase):
         self.assertEqual(plan["changes"]["sdk-complete-dev"]["files"], ["cp39.patch"])
         self.assertEqual(plan["changes"]["sdk-complete-dev"]["orchestration_files"], ["scripts/ci-sdk.py"])
 
+    def test_independent_installation_change_selects_each_row_without_compiler_work(self):
+        path = "scripts/crossforge_internal/python_row_install.py"
+        plan = planner.select(self.before, self.snapshot(), [path])
+        self.assertEqual(plan["targets"], {name: roots for name, roots in self.stages.items() if name.startswith("python-")})
+        self.assertEqual(plan["compiler_inputs_changed"], [])
+        self.assertEqual(plan["mode"], "incremental")
+        self.assertTrue(all(value["orchestration_files"] == [path] for value in plan["changes"].values()))
+        self.assertEqual(planner.select(self.before, self.snapshot(), [path, "unknown.py"])["mode"], "full")
+
     def test_architecture_input_keeps_other_toolchain_independent(self):
         plan = self.change("x86.txt")
         self.assertEqual(set(plan["targets"]), set(self.stages) - {"toolchain-aarch64"})

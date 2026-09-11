@@ -277,10 +277,13 @@ class PythonRowCITests(unittest.TestCase):
     def setup_ensure(self, missing=False):
         self.patch(component_ci, "checked_source", return_value=self.producer)
         self.patch(component_ci, "source_graph", return_value=self.graph)
+        self.patch(ci_python_rows.python_row_install, "validate_graph", return_value=("python-cp39-dev", self.settings))
+        self.install = self.patch(ci_python_rows.python_row_install, "execute", return_value={"fixture": "independent installation"})
         self.patch(qualification_execution, "execution_identity", return_value=self.execution)
         self.patch(ci_python_rows, "prepared_subjects", return_value=(self.subjects, {"fixture": "raw resolutions"}))
         resolution = {"status": "qualification-required" if missing else "verified-qualified-row",
-                      "inputs_sha256": component_inputs.identity(self.expected)}
+                      "inputs_sha256": component_inputs.identity(self.expected),
+                      "subject": {"receipt": "prior.json", "receipt_sha256": self.entry["receipt_sha256"], "layout": "prior-oci"}}
         self.resolver = self.patch(python_row_resolution, "resolve", return_value=resolution)
         def produce(*args):
             component_build.write_json(args[6] / "receipt.json", self.entry["receipt"])
@@ -300,15 +303,40 @@ class PythonRowCITests(unittest.TestCase):
         self.assertFalse((self.output / "handoff.json").exists())
         self.produce.assert_not_called()
         self.publish.assert_not_called()
+        self.install.assert_called_once()
+        self.assertEqual(self.install.call_args[0][5], self.resolver.return_value["subject"])
+        self.assertEqual(result["installation"], {"fixture": "independent installation"})
 
     def test_missing_row_runs_formal_producer_then_publishes_only_its_qualified_receipt(self):
         self.setup_ensure(missing=True)
+        events = []
+        self.install.side_effect = lambda *args: events.append("installation") or {"fixture": "installation"}
+        self.publish.side_effect = lambda *args: events.append("publication") or {"reference": self.entry["reference"]}
         result = self.ensure()
+        self.assertEqual(events, ["installation", "publication"])
         self.assertTrue(result["produced"])
         self.assertEqual(self.produce.call_args[0][:6], (ROOT, self.graph, "cp39", self.execution, self.producer, self.subjects))
         self.assertEqual(self.publish.call_args[0][1], self.entry["receipt"]["artifact"]["root_digest"])
         value = load_json(self.output / "handoff.json")
         python_row_handoff.verify(ROOT, value, result["handoff_sha256"], self.producer["source_commit"], self.producer["invocation"])
+
+    def test_failed_independent_installation_blocks_fresh_publication_and_handoff(self):
+        self.setup_ensure(missing=True)
+        self.install.side_effect = IdentityError("fixture independent append failed")
+        with self.assertRaisesRegex(IdentityError, "independent append failed"):
+            self.ensure()
+        self.publish.assert_not_called()
+        self.assertFalse((self.output / "handoff.json").exists())
+        self.assertFalse((self.output / "report/result.json").exists())
+
+    def test_reused_row_still_fails_the_job_when_independent_installation_fails(self):
+        self.setup_ensure()
+        self.install.side_effect = IdentityError("fixture independent append failed")
+        with self.assertRaisesRegex(IdentityError, "independent append failed"):
+            self.ensure()
+        self.produce.assert_not_called()
+        self.publish.assert_not_called()
+        self.assertFalse((self.output / "report/result.json").exists())
 
     def test_failed_execution_or_changed_input_cannot_publish_success(self):
         self.setup_ensure(missing=True)

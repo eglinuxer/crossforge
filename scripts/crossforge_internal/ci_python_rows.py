@@ -5,7 +5,7 @@ from pathlib import Path
 import shutil
 
 from . import component_build, component_catalog, component_ci, component_inputs, component_resolution
-from . import python_components, python_handoff, python_qualification, python_row_handoff, python_row_resolution
+from . import python_components, python_handoff, python_qualification, python_row_handoff, python_row_install, python_row_resolution
 from . import qualification_execution, registry_transfer
 from .identity import content_sha256, file_record, load_json, require
 
@@ -67,8 +67,9 @@ def ensure(source, row, directory, builder, oras, cosign, docker_config=None):
     directory = Path(directory).absolute()
     require(not directory.exists() and not directory.is_symlink(), "Python row producer output directory must be new")
     producer = component_ci.checked_source(source, "main")
-    settings = python_qualification.spec(source, row)
-    graph = component_ci.source_graph(source, [settings["target"]], directory / "source", builder, docker_config)
+    python_qualification.spec(source, row)
+    graph = component_ci.source_graph(source, ["python-" + row + "-dev"], directory / "source", builder, docker_config)
+    python_row_install.validate_graph(source, graph, row)
     execution = qualification_execution.execution_identity(builder, docker_config)
     report = directory / "report"
     subjects, raw = prepared_subjects(source, graph, row, execution, directory / "subjects", report / "subjects",
@@ -95,7 +96,16 @@ def ensure(source, row, directory, builder, oras, cosign, docker_config=None):
         entry = {"reference": component_catalog.REPOSITORY + "@" + receipt["artifact"]["root_digest"],
                  "receipt_sha256": built["receipt_sha256"], "receipt": receipt}
         handoff = python_row_handoff.document(source, row, producer, execution, entry)
-        unchanged(source, producer, execution, builder, docker_config)
+        qualification = {"receipt": str(output / "receipt.json"), "receipt_sha256": built["receipt_sha256"],
+                         "layout": str(output / "oci")}
+    else:
+        require(resolution["status"] == "verified-qualified-row", "unsupported Python row resolution")
+        qualification = resolution["subject"]
+    unchanged(source, producer, execution, builder, docker_config)
+    result["installation"] = python_row_install.execute(source, graph, row, execution, subjects, qualification,
+        report / "installation", builder, docker_config)
+    unchanged(source, producer, execution, builder, docker_config)
+    if resolution["status"] == "qualification-required":
         policy = registry_transfer.validate_tool(load_json(Path(source) / ".github/locked-tools/oras.json"))
         config = Path(docker_config or os.environ.get("DOCKER_CONFIG") or Path.home() / ".docker") / "config.json"
         published = registry_transfer.publish(output / "oci", built["artifact"]["root_digest"],
@@ -105,8 +115,6 @@ def ensure(source, row, directory, builder, oras, cosign, docker_config=None):
         component_build.write_json(path, handoff)
         result.update(produced=True, handoff=str(path), handoff_sha256=content_sha256(handoff),
                       producer_invocation=producer["invocation"], qualification=built)
-    else:
-        require(resolution["status"] == "verified-qualified-row", "unsupported Python row resolution")
     unchanged(source, producer, execution, builder, docker_config)
     component_build.write_json(report / "result.json", result)
     return result

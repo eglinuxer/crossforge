@@ -184,13 +184,13 @@ clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七
 
 行汇总通过独立可信的 `python/<row>-qualification` 根摘要认证两份目标策略，再复用 prepared-source reader 核对共同的 source/build-policy 与精确源码清单，总计六份投影。`cpython-row-assemble` 从锁定 host 工具根出发，显式复制十四个 Python 文件，不继承完整 release host；原安装树、ABI、ELF、build Python、zstd 和嵌套报告检查继续执行。新行清单 schema 3 用行 `input_binding` 替代完整 release SHA256 与全行 qualification pair，要求 source schema 2 和 target final schema 5。原 `--release` 调用仍产生 schema 2；SDK append 和正式 receipt 验收新增 `--row-manifest`，从当前完整 release 独立重算新行策略，检查实际文件并比较整份清单，不能信任清单自报摘要。最终 SDK 同样核对行策略后重新执行 host 集成，自身继续绑定完整 release。材料实验显示产品版本不再使六行资格输入失效，cp39 source 和私有 zstd 各只影响自身行；这不代表取得了实际新资格或跨机器复用证据。
 
-正式行 CI 的独立生产/签名工作流和目录查找接口已实现，但尚未接入 main 动态 matrix 或候选 SDK。查找方重新绑定七个上游组件、当前构建及物理环境，只有目录输入索引缺失才请求新资格；签名、传输或实际行验收失败均报错。新 catalog schema 4 只授权固定 `produce-python-row.yml` 的完整行资格 receipt，原始组件 signer 权限保持原范围。复用保留原 producer；新生产必须通过既有正式资格执行器并在发布前核对输入、receipt、环境与 clean source，重试沿用原 run/attempt 和精确交接摘要。实际 GitHub 签名、跨 run/跨机器环境验收仍未完成。
+正式行 CI 的生产/签名工作流和目录查找接口已接入 main 动态 matrix；候选 SDK 发布自身仍使用独立路径。被选中的每行均须在原 `sdk-toolchains-dev` 基座完成两个新的独立 append RUN，安装后的 row manifest 与资格产物一致。原始组件和资格产物经原验证器复核，安装失败不得发布新产物或交接签名。查找方重新绑定七个上游组件、当前构建及物理环境，只有目录输入索引缺失才请求新资格；签名、传输或实际行验收失败均报错。新 catalog schema 4 只授权固定 `produce-python-row.yml` 的完整行资格 receipt，原始组件 signer 权限保持原范围。复用保留原 producer；新生产必须通过既有正式资格执行器并在发布前核对输入、receipt、环境与 clean source，重试沿用原 run/attempt 和精确交接摘要。实际 GitHub 签名、跨 run/跨机器环境验收仍未完成。
 
 完整 SDK 另提供 `acquire-python-sdk` 与 `execute-python-sdk-catalog` CLI：前者从签名目录取得两份共享工具链、六行原始组件及六份行资格，只有完整就绪才输出可消费的组件清单；后者随后调用原 SDK executor，独立重验实际文件并重新执行最终集成。目录缺失显式列出待生产组件/行，验签或产物核验失败则报错，不隐式重编译。OCI 数据与上传诊断目录严格分离，旧本地组件清单接口保持。main SDK 已通过下述过渡控制器调用 acquisition，独立目录执行 CLI 和候选发布路径保持原接口，严格物理环境匹配未放宽。
 
 `verify-main-builds.yml` 的 SDK job 使用 `run-component-sdk` 与标准库 `ci_sdk.py`。它要求两份工具链和三十份 Python 原始组件全部已验收，仅在当前输入对应的资格索引缺失时，在 SDK 所在 worker 补做该行双目标完整资格；验签、传输或既有证据失败不能触发回退。父进程最多调度两个独立 Python 子进程，共享原 builder，并在子进程前后及最终集成前后复核源码、调用身份与完整物理环境。子进程请求另绑定独立 canonical SHA256。使用独立解释器避免既有资格模块通过 `runpy.run_path` 修改共享解释器状态时发生并发冲突；依据见 [Python 官方文档](https://docs.python.org/3/library/runpy.html)。六行全部通过后，原 SDK executor 重新检查实际 receipt/文件，并强制执行 append/final 门禁。
 
-SDK job 仍只有 contents/read 和 packages/read 权限；匹配的签名行保留原 producer，新行只留在本 job，不发布或签名。既有被选中的独立 Python 任务及 required status 依赖未去重，可能与本地补验重复。candidate 前置资格调用同一工作流，候选镜像发布本身仍走原始组件绑定路径。SDK 编排与目录/恢复实现变更由增量选择器显式选择 canonical SDK roots，诊断区分编排原因与真实源码输入变化。实际新 Docker 运行、GitHub 事件和性能仍待验收。
+SDK job 仍只有 contents/read 和 packages/read 权限；匹配的签名行保留原 producer，新行只留在本 job，不发布或签名。被选中的独立 Python 任务通过行生产/签名工作流交接资格产物，required status 校验完整行 matrix；严格物理环境不匹配时，SDK 仍可能补验同一行。candidate 前置资格调用同一工作流，候选镜像发布本身仍走原始组件绑定路径。SDK 编排与目录/恢复实现变更由增量选择器显式选择 canonical SDK roots，诊断区分编排原因与真实源码输入变化。实际新 Docker 运行、GitHub 事件和性能仍待验收。
 
 在补做资格或最终集成之前，SDK job 保存原 raw schema 的三十二份固定选择及独立 SHA256，诊断上传后的 summary 给出 run/artifact ID、摘要和文件位置。失败时可按原 raw recovery 接口及严格来源约束取回这些原始组件；这份记录不包含新执行的六行资格，不能冒充下面的完整 SDK 恢复记录。新的主 SDK job 尚无自动恢复入口，OCI blobs 与安装树也不进入诊断工件。
 

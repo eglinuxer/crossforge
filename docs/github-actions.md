@@ -65,7 +65,7 @@ outputs and uploaded artifacts, and still needs live GitHub retry acceptance.
 After all planned producers finish, the wrapper explicitly reduces the actual
 consumer jobs to contents:read + packages:read. They capture current inputs,
 verify the signed catalog and OCI bytes, and substitute fixed component contexts
-in selected toolchain, Python, vcpkg, GCC and SDK stages. These jobs require the
+in selected toolchain, vcpkg, GCC and SDK stages. These jobs require the
 prepared components: a missing index fails with diagnostics instead of compiling
 another copy. Authentication, transfer and artifact verification failures also
 stop the stage. The main caller grants the maximum writer/OIDC permissions only
@@ -84,10 +84,17 @@ the existing SDK executor rechecks their files and freshly runs append/final gat
 Process isolation avoids the documented shared-interpreter mutation hazards of
 [`runpy.run_path`](https://docs.python.org/3/library/runpy.html).
 
-This is a transitional consumer route. Existing selected Python jobs and required
-status dependencies remain, so their work may overlap the SDK worker's fresh
-qualification. The signed `produce-python-row.yml` workflow is not yet called by
-the main matrix, and fresh local row artifacts are not published. Candidate
+Selected Python row jobs now call `produce-python-row.yml` instead of the raw
+consumer action. Every row acquires or freshly produces complete qualification,
+then runs its original independent installation on `sdk-toolchains-dev` before
+any new artifact publication. The producer, signer and registry writer retain
+separate permissions; the ordinary SDK job remains read-only. The exact selected
+row matrix and workflow success are required by the final status, with row
+parallelism still limited to two.
+
+The SDK consumer route remains transitional: full physical environment matching
+can cause a signed row from another runner to miss its input index and run again.
+Rows freshly qualified inside the SDK job remain local and unsigned. Candidate
 prequalification calls this same build workflow; candidate image publication
 retains its existing raw-component route and fresh qualification policy. These
 paths still need actual Docker and GitHub acceptance; no speed or disk reduction

@@ -672,15 +672,17 @@ the full target-validator regressions are separate, and none of these fixtures
 constitutes a new qualification run. Material captures over normalized snapshots
 show product-version changes no longer invalidate any row, cp39 source affects
 only cp39 and private zstd affects only cp314. Shared target ABI/QEMU changes
-still affect every row containing that target. Formal CI production/reuse,
-physical execution-environment policy and actual replay acceptance remain open.
+still affect every row containing that target. Remote CI production/reuse
+acceptance, physical execution-environment policy and complete replay acceptance
+remain open.
 
 ### Qualified row CI handoff and lookup
 
 `ci-python-row.py` and the reusable `produce-python-row.yml` provide the producer
-boundary for a complete qualified row. They are not yet called by the main
-dynamic matrix or the candidate SDK path. They require the existing trusted main
-caller and exact clean source, acquire both toolchain installations and all five
+boundary for a complete qualified row. Main now calls this workflow for each
+selected independent Python row, at a maximum of two concurrent rows. The
+candidate SDK publication path remains separate. The producer requires the
+existing trusted main caller and exact clean source, acquires both toolchain installations and all five
 raw Python parts through authenticated catalogs, and reject a missing raw part.
 This job has no implicit GCC/CPython source-build fallback.
 
@@ -696,8 +698,18 @@ producer and has mode `verified-prior-execution`.
 
 On a genuine miss, the existing formal row producer freshly runs the static,
 runtime and row gates, verifies the sealed artifact, and returns a qualification
-receipt. The CI adapter checks the planned input identity, receipt, source and
-environment before publication. Reused rows generate no new handoff or signature.
+receipt. Both fresh and reused rows then pass `python_row_install.execute`, which
+reverifies all seven raw subjects and the sealed qualified artifact before
+substituting the row into its canonical `python-<row>-dev` graph. The base remains
+`sdk-toolchains-dev`; both independent append RUNs must execute freshly, and the
+installed row manifest must match the qualified artifact byte for byte. Its
+material graph ends at two toolchain digests and one qualified row, with no
+GCC/CPython source compiler. Failed installation prevents a new publication,
+signed handoff or successful CI result. These independent gates do not replace
+the cumulative SDK append/final gates.
+
+The CI adapter checks the planned input identity, receipt, source and environment
+before publication. Reused rows generate no new handoff or signature.
 New `python_row_handoff.py` binds one exact row, original run/attempt, physical
 execution identity, qualified artifact digest and the complete metadata set.
 
@@ -711,10 +723,11 @@ signing/storage attempt preserves the original qualification producer.
 
 Failure diagnostics retain the available input record, BuildKit progress and
 qualification reports; installed payloads and OCI blobs are excluded. Diagnostic
-source paths reject symlinks. These are local orchestration/contract fixtures,
-not new GitHub signatures or actual row execution. The signed producer is not yet
-called by the main matrix. The main SDK consumer route below, cross-run acceptance
-and environment-policy decisions have separate rollout boundaries.
+source paths reject symlinks. Main waits for the selected row workflow, including
+its separate signer/store jobs when a new row is produced. Required status checks
+the exact row matrix and rejects missing, cancelled or failed selected work.
+Actual GitHub signing/cross-run acceptance and the physical environment policy
+remain separate from local regression and Docker installation checks.
 
 ### Acquire SDK inputs from signed catalogs
 
@@ -770,7 +783,9 @@ The SDK diagnostic artifact saves the original thirty-two raw selections and
 their independent SHA256 before row qualification/final integration. Its summary
 provides the artifact ID and document location. This supports the original raw
 recovery interface; complete recovery of this CI job's fresh local row results
-is not implemented. Existing independently selected Python jobs also remain.
+is not implemented. Selected independent Python jobs now publish qualified rows
+through the separate producer workflow; strict environment differences can still
+cause the SDK worker to qualify a row again.
 Local fixtures use a real parsed Bake graph and the existing SDK input capture,
 but explicitly mock registry/domain verification and execution boundaries. Graph
 checks confirm the eight-artifact boundary and absence of GCC/CPython source
