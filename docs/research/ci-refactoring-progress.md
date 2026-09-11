@@ -759,3 +759,15 @@ cp39 新行资格完成，377.433 秒、七条 fresh RUN，原 producer 已执�
 先将最新 main 整合到工作分支：保留新增公共消费者 job 的 BuildKit 诊断，将旧测试中的 SDK build 步骤定位改为该 job 实际执行的 launcher 消费者步骤。原 source/SDK 两个发布 job 的独立诊断保持。两个 vcpkg 裁剪导入测试现在先核对精确六份脚本，随后分别执行禁用和启用字节码的真实 CLI 子进程；只允许解释器生成的 `__pycache__` 目录，不增加业务模块依赖。完整受影响模块 55 项 / 6.774 秒通过，无跳过，候选 actionlint 通过。尚需修复后真实 PR 检查；源码配方和资格验证器未改变。
 
 受控 cp39 的串行 Python SDK 已通过，583.864 秒，原十三条 fresh RUN、八份依赖、新 cp39 与另外五行原 receipt/manifest 及导出报告在断网 Docker 中再次复核通过。完整 SDK 的 cp314 行导出触发一次 600 秒超时，原机制在新目录重试同一 digest 后恢复，继续原验证。运行日志保留超时与重试；消费者的临时提取目录按原流程在成功后清理，不作为永久诊断工件。此前并发 SDK batch 仍记录为失败，不能由此宣称根因已查明或 GitHub 已提速。
+
+## 真实 PR 验收：修复 Buildx 原生静态检查的目标连接缺陷（2026-09-11）
+
+`c821303` 的第二次真实 PR 配置 1,424 项 / 630.435 秒、打包 40 项 / 18.329 秒通过，分别跳过两个与一个需要外部资产的测试；语法及三个 renderer 检查通过。随后 `bake --check phase4 host-runtime-qualified` 因两份工具链的 `target:` 上下文无法解析而失败，required status 正确拒绝。该问题与 [Buildx #3343](https://github.com/docker/buildx/issues/3343) 一致：[拟议修复 #3992](https://github.com/docker/buildx/pull/3992) 仍未合入，固定 v0.36.1 的 check 请求只返回检查元数据，无法作为下游构建输入。
+
+两个小型 Docker 实验分别使用逐目标 `call=check`、保留或省略 provider 的 cacheonly output，均真实执行了 provider 的故意失败 RUN，退出 73；因此没有采用。最终适配器只在临时检查副本中，将相同 Dockerfile、构建上下文与执行参数下的 COPY-only scratch 导出连接为已有本地阶段。合并参数和镜像上下文前后，原消费者及其生产者的材料闭包必须完全一致；不支持的连接、覆盖默认参数、元数据继承、向前或嵌套引用均拒绝。检查仍包含原全部目标及隐式 provider，仍调用原生全局 `--check`，生产 Dockerfile 与 Bake 图没有修改。
+
+七项回归通过；原生小型正例未执行任一 RUN，生产者和消费者分别注入的 WorkdirRelativePath 错误都使原生检查退出 1。首次临时文件读取未授权，被 Buildx 自身拦住；仅为本次创建的检查目录加入读授权后继续通过。实际 phase4 加 host runtime 的全部 11 个目标随后无警告通过，未执行构建 RUN。固定、断网且无 socket 的 Docker 随后按工作流原命令完成完整回归：配置 1,431 项 / 344.331 秒，打包 40 项 / 1.211 秒，均无跳过；发布/RPM 锁定、脚本语法、三个 renderer、其余 Bake 图和全部 workflow actionlint 通过，仅保留既有 concurrency.queue 兼容例外。默认启用字节码并提供原锁定 zstd/nFPM 资产；[检查记录](bake-static-check-2026-09-11.json)保留源码、失败尝试和成功原生日志。
+
+受控 cp39 的串行完整 SDK 同时已完成，1,269.252 秒，原十四条 fresh RUN、八份组件依赖、全部原/新行记录和报告在断网 Docker 中复核通过。仅 cp39 receipt 改变，另外五行精确引用原记录，两种 SDK 的完整日志均无 GCC/CPython 自身源码编译。完整门禁跨保留的尝试完成，此前并发失败 batch 不改写为成功；600 秒 COPY-only 导出超时与同 digest 重试仍保留。该观测是本地功能验收，不能替代 GitHub 性能、真实签名、候选或原生 ARM。
+
+原 Rocky 8 平台 Python 阶段的四条 RUN 已强制重跑通过，包括全脚本编译、身份模块导入、CLI 导入与 renderer 检查。修复准备推送工作分支并重新验收真实 PR；main 尚未合并，后续签名、候选、原生 ARM 与性能门槛仍保留。

@@ -83,15 +83,42 @@
     "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42"
   },
   "controlled_cp39_serial_python_sdk": {
-    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/serial-python-dev-observation.json",
+    "path": "/data/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/serial-python-dev-observation.json",
     "sha256": "33eac5c2a97c69ab0eccee33026f5866a56f21946010724539d35ffd998a5f75"
   },
   "remaining": [
-    "Finish serial changed complete SDK and preserve the OCI timeout/retry observation",
-    "Push the repaired feature branch and pass real PR checks against the integrated main",
+    "Push the locally verified native-check repair and pass every real PR check against the integrated main",
     "Merge/push main only after local Docker and PR gates pass; then main-only signing/candidate/native ARM and remaining rollout/performance acceptance"
   ],
   "branch_pushed": true,
   "merged_main": false,
-  "published_candidate": false
+  "published_candidate": false,
+  "controlled_cp39_serial_complete_sdk": {
+    "path": "/data/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/serial-sdk-complete-dev-observation.json",
+    "sha256": "6edaba807613c02e18ee03a16ed17cfbdb751f9144c9d485c45d8fa2df77e923"
+  },
+  "second_pr_check": {
+    "head": "c8213033eab054308257fb90c9b70f367b4654c9",
+    "run_id": 34617834970,
+    "job_id": 103324070784,
+    "status": "failed",
+    "configuration": {
+      "tests": 1424,
+      "seconds": 630.435,
+      "status": "passed",
+      "skipped": 2
+    },
+    "packaging": {
+      "tests": 40,
+      "seconds": 18.329,
+      "status": "passed",
+      "skipped": 1
+    },
+    "failure": "Pinned Buildx global --check cannot resolve linked target: contexts; native Docker static check failed before component planning",
+    "log": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/github-rollout-review-2026-09-11/pr3-repaired-quick-failed.log",
+      "sha256": "941e387a199fd1bfbb8bb85ce02bc024cb362b521c5a9f23fdb5ad0938682554"
+    },
+    "resolution_record": "bake-static-check-2026-09-11.json"
+  }
 }

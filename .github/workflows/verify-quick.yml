@@ -86,7 +86,7 @@ jobs:
           ./scripts/render-bake.py --check
       - name: Docker/Bake static checks
         run: |
-          docker buildx bake --check phase4 host-runtime-qualified
+          python3 scripts/check-bake.py phase4 host-runtime-qualified
           docker buildx bake --print phase5 phase6 phase7 phase8 phase9 phase10 \
             phase13-source phase13-host-tools phase13-integration \
             phase13-contract phase13-ports phase14 phase15 phase16 \
@@ -140,4 +140,3 @@ jobs:
           path: ${{ runner.temp }}/component-plan.json
           retention-days: 7
           if-no-files-found: error
-

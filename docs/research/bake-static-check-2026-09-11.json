@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-bake-static-check-observation",
+  "source_base_commit": "c8213033eab054308257fb90c9b70f367b4654c9",
+  "source_dirty": true,
+  "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+  "buildx": "v0.36.1",
+  "builder": "crossforge-ci-review",
+  "scope": "Native Docker static checks only; no new build qualification or GitHub performance result",
+  "upstream": {
+    "issue": "https://github.com/docker/buildx/issues/3343",
+    "proposed_fix": "https://github.com/docker/buildx/pull/3992",
+    "status_observed": "open, not merged on 2026-09-11",
+    "cause": "Check requests return metadata without a build result; target: dependencies cannot be resolved by this pinned Buildx"
+  },
+  "rejected_attempts": [
+    {
+      "approach": "Per-target call=check, provider cacheonly output",
+      "status": "failed",
+      "reason": "Provider RUN actually executed and exited 73",
+      "graph": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/per-target.bake.json",
+        "sha256": "cd9b7d04acd0f09538b554ab442dacde4f557c006379c0f8f67d43d68248d83b"
+      },
+      "log": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/per-target-prepared.log",
+        "sha256": "14621c392db9f8fdf03cc73f0110ef962845cfdd186c0521c1eea020e566d5ca"
+      }
+    },
+    {
+      "approach": "Per-target call=check, provider output omitted",
+      "status": "failed",
+      "reason": "Provider RUN still executed and exited 73",
+      "graph": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/per-target-no-output.bake.json",
+        "sha256": "1c446d231298c8421a761d0e8fae2b36e87ca7a00c7b80453f7f54eed2509d12"
+      },
+      "log": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/per-target-no-output.log",
+        "sha256": "87cff932a61f95bf47767e722ca5c3a3cd69501ae050d941cf59c3f0deaa1868"
+      }
+    },
+    {
+      "approach": "Native temporary lint file before explicit file-read entitlement",
+      "status": "failed",
+      "reason": "Buildx rejected reading the temporary Dockerfile before checking; fixed by granting read access only to the newly created check directory",
+      "log": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/native-fixture.log",
+        "sha256": "442d0738ae56659682d622f65dc54adde8263d6395729ca6edd459a7303591be"
+      }
+    }
+  ],
+  "adapter": {
+    "behavior": "Only same-context/same-Dockerfile/same-execution COPY-only scratch exports are reconnected to their preceding local stage in a temporary Dockerfile. Original material closures must remain exactly equal under merged explicit arguments and external image contexts. All resolved targets, including providers, still use native global --check. Original recipe files, frontend directives, line numbers and Dockerfile-specific ignores are retained. Unsupported links fail closed.",
+    "remove_when": "Pinned upstream Buildx passes the original linked --check fixture without executing RUNs",
+    "source_files": {
+      "scripts/check-bake.py": {
+        "path": "/data/workspace/github/eglinux/crossforge/scripts/check-bake.py",
+        "sha256": "891b9f01e6455246ba3b15f7d655054d354cdc810de86c5fb0354b5e5e560e3f"
+      },
+      "scripts/crossforge_internal/bake_check.py": {
+        "path": "/data/workspace/github/eglinux/crossforge/scripts/crossforge_internal/bake_check.py",
+        "sha256": "7b42d88e1145e248162b4733354bcba066885c5ebdea0498bd456367c90a0daf"
+      },
+      "tests/config/test_bake_check.py": {
+        "path": "/data/workspace/github/eglinux/crossforge/tests/config/test_bake_check.py",
+        "sha256": "1fb57c5a2bb2a9c8c4fda092c71ca74188dc2e71b9b7fad5e08596908afb88f7"
+      },
+      ".github/workflows/verify-quick.yml": {
+        "path": "/data/workspace/github/eglinux/crossforge/.github/workflows/verify-quick.yml",
+        "sha256": "ea2cad25955beb4735eea280b2be259a45a50c938d2bda2fdbc3f74ab155c52b"
+      }
+    }
+  },
+  "regressions": {
+    "tests": 7,
+    "status": "passed",
+    "skipped": 0,
+    "log": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/regressions.log",
+      "sha256": "86c967a00f06ad033ecab8fdfd48f0dfe4f7c54ecd2a5af426df39e10af79aa8"
+    },
+    "coverage": "Argument defaults on both sides, implicit BuildKit/proxy arguments, context/argument/execution conflicts, image metadata, non-alias references, forward/nested links, exact source preservation and ignore rules"
+  },
+  "native_fixture": {
+    "status": "passed",
+    "cases": {
+      "positive-no-run": 0,
+      "provider-native-error": 1,
+      "consumer-native-error": 1
+    },
+    "guard": "Provider/consumer RUNs exit 73/74 if executed; neither executed. Both WorkdirRelativePath violations reached native Docker checking and failed.",
+    "runner": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/native-fixture.py",
+      "sha256": "cc34ee5d7649dbed16625c8d48cc5a0d0419a0f0cd2c3d95152c25efe1584b37"
+    },
+    "log": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/native-fixture-authorized-temp.log",
+      "sha256": "5137ab31e89fbd967718680c43c37f88bcee2535935a7e79a67096e7418ebed2"
+    }
+  },
+  "native_repository_check": {
+    "status": "passed",
+    "targets": [
+      "host-build-common-locked",
+      "host-gcc-build-locked",
+      "host-runtime-qualified",
+      "platform-python-check",
+      "sysroot-aarch64",
+      "sysroot-x86_64",
+      "toolchain-aarch64-build-export",
+      "toolchain-aarch64-dev",
+      "toolchain-x86_64-build-export",
+      "toolchain-x86_64-dev",
+      "validate"
+    ],
+    "warnings": 0,
+    "executed_build_runs": 0,
+    "log": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/native-phase4.log",
+      "sha256": "a9021c99bafbb5adaab8ba23f6c6b7a16352ef4fbe982adce2a974aa1aa47814"
+    },
+    "resolved_original_graph": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/phase4-graph.json",
+      "sha256": "93e336b815a6ae3782cb2fbc38b21e9d091eab534d9ef66944636e467aac550b"
+    }
+  },
+  "full_local_regression": {
+    "status": "passed",
+    "source_manifest": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/full-source.json",
+      "sha256": "e7b602d826814bb77260eed43707c86c9e9f0f03fb1a01a7bf6d99b762b3c5da"
+    },
+    "runner": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/full.py",
+      "sha256": "333336b7e9c91a841ccbd0279322a7324c3731032256d1c5329146282abdfa13"
+    },
+    "configuration": {
+      "tests": 1431,
+      "seconds": 344.331,
+      "skipped": 0
+    },
+    "packaging": {
+      "tests": 40,
+      "seconds": 1.211,
+      "skipped": 0
+    },
+    "log": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/full.log",
+      "sha256": "daac7f1135e8c63aeeb06cfff0b339258f41040cbaf6939be6b2c46bb141b816"
+    },
+    "result": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/full-result.json",
+      "sha256": "72d96eb930ed1de5b743c0dacd2ddbd6803c422e0e52eeb74e17a249c5f0a64e"
+    },
+    "environment": "Fixed offline Docker, no daemon socket, default enabled bytecode, locked real zstd/nFPM assets, 4 CPU and 16 GiB outer container limits",
+    "actionlint_exception": "Existing unexpected concurrency.queue key only"
+  },
+  "merged_main": false,
+  "published_candidate": false,
+  "platform_python": {
+    "status": "passed",
+    "targets": [
+      "validate",
+      "platform-python-check"
+    ],
+    "forced_stage": "platform-python-check",
+    "fresh_platform_runs": 4,
+    "scope": "Original pinned Rocky 8 platform Python compileall, identity import, CLI imports and renderer check",
+    "log": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/bake-check-linked-targets/platform-python.log",
+      "sha256": "26beee0056821aa16aa8f633ea01593fa33f0862c7006e5457d6d4ccab57bdb2"
+    }
+  }
+}

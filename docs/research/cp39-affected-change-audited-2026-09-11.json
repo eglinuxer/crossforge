@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "kind": "crossforge-local-audited-affected-change-acceptance",
-  "observed_at": "2026-09-11T14:50:39.773420+00:00",
-  "status": "serial SDK retry running; prior component continuation failed",
+  "observed_at": "2026-09-11T16:20:45.076163+00:00",
+  "status": "local affected-change gates passed across preserved attempts; earlier failed batches remain failed",
   "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
   "source_dirty": true,
   "change": "cp39 patch description, release pin and separately audited supply-chain patch pin; validation rules and patch hunks unchanged",
@@ -859,7 +859,7 @@
     }
   },
   "sdk_serial_retry": {
-    "status": "running",
+    "status": "passed",
     "manifest": {
       "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/sdk-serial-manifest.json",
       "sha256": "b1861d3555e7eb91be9ac56221525d0a55fb3319c9c830651f1775f891dcd876"
@@ -889,6 +889,173 @@
         }
       }
     },
-    "scope": "Both prior batches have exited; reverify existing inputs and run both original SDK executors sequentially, with unchanged strict fresh RUN validation. Preserve new cp39 and five prior row receipts. Earlier failed batch remains failed."
+    "scope": "Both prior batches have exited; reverify existing inputs and run both original SDK executors sequentially, with unchanged strict fresh RUN validation. Preserve new cp39 and five prior row receipts. Earlier failed batch remains failed.",
+    "results": {
+      "python-dev": {
+        "status": "passed",
+        "phase": "python-dev",
+        "seconds": 583.864,
+        "manifest_sha256": "b1861d3555e7eb91be9ac56221525d0a55fb3319c9c830651f1775f891dcd876",
+        "fresh_runs": 13,
+        "inputs_sha256": "822db67df76657935a814e891a1e5691007bcbf73227f8b97b56ef4f696ebd78",
+        "started_at": "2026-09-11T15:18:30Z",
+        "completed_at": "2026-09-11T15:23:11Z",
+        "reused_row_receipts": {
+          "cp310": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+          "cp311": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+          "cp312": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+          "cp313": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+          "cp314": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+          "cp39": "650e9f60851377b4af23c5f49a9ccb41accb5a356a60dcd89480db32abf0dd7f"
+        },
+        "reports": [
+          {
+            "mode": "0644",
+            "path": "reports/cp310.json",
+            "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp311.json",
+            "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp312.json",
+            "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp313.json",
+            "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp314.json",
+            "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp39.json",
+            "sha256": "f0572eabbc9aed9950fffaa741c5d64d56a299c43f12a4ff2c7deb9cbde27d92"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/python-final-sdk.json",
+            "sha256": "6a269243fbaa2a4862b9ea6df56ce9300535b2f666fba816fedd15621d7ed055"
+          }
+        ],
+        "outer_result": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-sdk-serial/python-dev/result.json",
+          "sha256": "4370a3fb8b3a268a9dc9c46ec0dba8b471337e69c599a756fffa29a936e904a9"
+        },
+        "raw_progress": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-sdk-serial/python-dev/integration/execution.jsonl",
+          "sha256": "ec95a68728e2b4e7119935169e638d32aeb6ae0fdd66345b7107b1d1f5a7a360"
+        },
+        "recheck_runner": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-sdk-serial.py",
+          "sha256": "238e991242428b9a940ca9122a53fcbbadf06b910ff7d11411760d68db3d0e33"
+        },
+        "recheck_log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-serial-python-dev.log",
+          "sha256": "4d5e0eba7087ec9270a482e35ff2371e03a418022b084ff5d70227680298d71f"
+        },
+        "scope": "Serial original executor and strict verifier; changed cp39 plus five original rows. Earlier overlapping batch remains failed. No GitHub/candidate/native ARM/performance claim."
+      },
+      "sdk-complete-dev": {
+        "status": "passed",
+        "phase": "sdk-complete-dev",
+        "seconds": 1269.252,
+        "manifest_sha256": "b1861d3555e7eb91be9ac56221525d0a55fb3319c9c830651f1775f891dcd876",
+        "fresh_runs": 14,
+        "inputs_sha256": "a68133d39603e66ecf7a4edda33ecf6111a5720929c701b1629309b5acd30e37",
+        "started_at": "2026-09-11T15:37:49Z",
+        "completed_at": "2026-09-11T15:44:20Z",
+        "reused_row_receipts": {
+          "cp310": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+          "cp311": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+          "cp312": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+          "cp313": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+          "cp314": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+          "cp39": "650e9f60851377b4af23c5f49a9ccb41accb5a356a60dcd89480db32abf0dd7f"
+        },
+        "reports": [
+          {
+            "mode": "0644",
+            "path": "reports/complete-sdk.json",
+            "sha256": "19d0ff748dad8a541d4e9807ec41ab0084bfa8cb63df030d98844e6db553de6f"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp310.json",
+            "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp311.json",
+            "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp312.json",
+            "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp313.json",
+            "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp314.json",
+            "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp39.json",
+            "sha256": "f0572eabbc9aed9950fffaa741c5d64d56a299c43f12a4ff2c7deb9cbde27d92"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/python-final-sdk.json",
+            "sha256": "6a269243fbaa2a4862b9ea6df56ce9300535b2f666fba816fedd15621d7ed055"
+          }
+        ],
+        "outer_result": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-sdk-serial/sdk-complete-dev/result.json",
+          "sha256": "1e5d5359e7d83915e3f5baf96199e2e6bb9325068687a7d733d60c17f82d1c39"
+        },
+        "raw_progress": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-sdk-serial/sdk-complete-dev/integration/execution.jsonl",
+          "sha256": "756fb00f8895019b01b98ec0a7710973afe9280276eb21d5a9164a1c26db9722"
+        },
+        "batch_result": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-sdk-serial/result.json",
+          "sha256": "840d9e8f2906329fe8a99f442f32219ac9521b03450ba1f5c7cc1fc8f3262a8d"
+        },
+        "runtime_log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/sdk-serial-runtime.log",
+          "sha256": "3d96feb3dab0c78aabcc4e403d7c89022704fa87f1fc0b5ce57ead0f1630fc65"
+        },
+        "recheck_runner": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-sdk-serial.py",
+          "sha256": "238e991242428b9a940ca9122a53fcbbadf06b910ff7d11411760d68db3d0e33"
+        },
+        "recheck_log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-serial-sdk-complete-dev.log",
+          "sha256": "15c2bd5a38502fef3fe4366a775677110644b5084ccbcebb19a9d28c3c6f9ecb"
+        },
+        "timeout_observation": {
+          "component": "qualification/python-cp314",
+          "artifact_digest": "sha256:f4ac4de00bf6027ffcd7b8f20e488ffea1c9829c4ddbd48f9b1e952ca388422a",
+          "attempts": 2,
+          "first_attempt": "COPY-only local export timed out after 600 seconds",
+          "second_attempt": "same immutable OCI input, new directory, passed original full row acceptance",
+          "temporary_directories": "cleaned by original consumer after success; timeout and retry retained in runtime log"
+        },
+        "scope": "Serial original executor and strict verifier; changed cp39 plus five original rows. Earlier overlapping batch remains failed. No GitHub/candidate/native ARM/performance claim."
+      }
+    }
   }
 }
