@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "crossforge-local-audited-affected-change-acceptance",
-  "observed_at": "2026-09-11T14:28:19.968266+00:00",
+  "observed_at": "2026-09-11T14:50:39.773420+00:00",
   "status": "running",
   "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
   "source_dirty": true,
@@ -343,7 +343,7 @@
       ]
     }
   },
-  "running_at_observation": "component continuation: raw-x86_64-install",
+  "running_at_observation": "component continuation: python-dev",
   "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
   "builder": "crossforge-ci-review",
   "timing_note": "Concurrent local builder use; not an isolated or GitHub performance baseline. Separate source-cp39 replay may build uncached prerequisites.",
@@ -513,6 +513,7 @@
           "platform_digest": "sha256:ce22458a0f800b8ceff3f84767d19daa294661c81079fb776961b7af97006772",
           "root_digest": "sha256:ce22458a0f800b8ceff3f84767d19daa294661c81079fb776961b7af97006772"
         },
+        "dependencies": [],
         "files": {
           "result.json": {
             "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-build/result.json",
@@ -528,7 +529,319 @@
           }
         },
         "scope": "Original artifact producer accepted a new cp39 build input identity; build artifact, not row qualification"
+      },
+      {
+        "part": "x86_64-install",
+        "status": "passed",
+        "seconds": 139.702,
+        "inputs_sha256": "e620e5b9e3af4123bbfa3d68b52948d2a9ae3b061d5180b105650105e27c0067",
+        "receipt_sha256": "3f8eb9da4292430cc8fb4a8070845aa416a35524abafb64b10499a28eb5da90c",
+        "artifact": {
+          "config_digest": "sha256:b0d7d7c6b85e0d2c973903073e2335a8d6345936d1cc8ee309be73f1fac60b10",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:e1aebf2041bf6647a5713606159ec368e7cbe9d13de7fcbfd2729779b85e0b88",
+          "root_digest": "sha256:e1aebf2041bf6647a5713606159ec368e7cbe9d13de7fcbfd2729779b85e0b88"
+        },
+        "dependencies": [
+          {
+            "artifact_digest": "sha256:ce22458a0f800b8ceff3f84767d19daa294661c81079fb776961b7af97006772",
+            "component": "python/cp39-build-install",
+            "inputs_sha256": "bc10d90f4af5741f755b58039c78de579aa6f1bcb91bcc045bcffc15fb7d015e"
+          },
+          {
+            "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+            "component": "toolchain/x86_64-install",
+            "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+          }
+        ],
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-x86_64-install/result.json",
+            "sha256": "7556a20306483fcb9144c3a3946dd6106bb1922f6d57fb6069c484b80eb99065"
+          },
+          "artifact/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-x86_64-install/artifact/inputs.json",
+            "sha256": "2a80605cbb116b0adc1b4f0125a21b070dd4a6024acdffe920b22becaf78b38d"
+          },
+          "artifact/receipt.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-x86_64-install/artifact/receipt.json",
+            "sha256": "21d9c840e48bd173f84d13de4f3352d94c3bd513250fc94cf96e4d5427869c23"
+          }
+        },
+        "scope": "Original artifact producer accepted a new cp39 build input identity; build artifact, not row qualification"
+      },
+      {
+        "part": "x86_64-test-context",
+        "status": "passed",
+        "seconds": 45.596,
+        "inputs_sha256": "db5f64d279b5cc580d698f8c5432d0409a1b8717be245192e7c17fdc900e9175",
+        "receipt_sha256": "c1b5ca534d822516089cbfc93e381f03219b7261589b5246e71798f896676c2d",
+        "artifact": {
+          "config_digest": "sha256:d3f977d3a3b980d204cfa2bec4dd1aa3c29fa2d4ed60429563303044ab59dbf1",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:ed29e3d2b3ce8d236dacfd30146b9066ca63794f1688b303e96b1210e6c8235f",
+          "root_digest": "sha256:ed29e3d2b3ce8d236dacfd30146b9066ca63794f1688b303e96b1210e6c8235f"
+        },
+        "dependencies": [
+          {
+            "artifact_digest": "sha256:ce22458a0f800b8ceff3f84767d19daa294661c81079fb776961b7af97006772",
+            "component": "python/cp39-build-install",
+            "inputs_sha256": "bc10d90f4af5741f755b58039c78de579aa6f1bcb91bcc045bcffc15fb7d015e"
+          },
+          {
+            "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+            "component": "toolchain/x86_64-install",
+            "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+          }
+        ],
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-x86_64-test-context/result.json",
+            "sha256": "5a31f110d7e02d06c1e197ba2887af7cd10f10f0ef6989d1424f88513ade907a"
+          },
+          "artifact/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-x86_64-test-context/artifact/inputs.json",
+            "sha256": "e912c1f6883b4b5624452aa4fa6046766e7c90b46a473fd75a331b434ffd5ceb"
+          },
+          "artifact/receipt.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-x86_64-test-context/artifact/receipt.json",
+            "sha256": "f6ab3658a1ed8f51f4e62f5efcc3e46844c50dcbf4dbf8b4d1bda012b71f73fb"
+          }
+        },
+        "scope": "Original artifact producer accepted a new cp39 build input identity; build artifact, not row qualification"
+      },
+      {
+        "part": "aarch64-install",
+        "status": "passed",
+        "seconds": 133.353,
+        "inputs_sha256": "7240a9c478e95ef25f6b4d5b561d2bf59e1dafa01bb90e2add53cb01fa7c5f35",
+        "receipt_sha256": "2482a75c87ed9868ff4f1fe93063a4bfd075024297d807f68f713b442ac2a782",
+        "artifact": {
+          "config_digest": "sha256:a20b1aad5044d1c62a31b86c7690e63b0aa51c02b902cf90b8f96821f4e05fa8",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:860465981cfccf6eddfe9829631ac1a5f5d50807ab0cbacf216fce3c3ec5f544",
+          "root_digest": "sha256:860465981cfccf6eddfe9829631ac1a5f5d50807ab0cbacf216fce3c3ec5f544"
+        },
+        "dependencies": [
+          {
+            "artifact_digest": "sha256:ce22458a0f800b8ceff3f84767d19daa294661c81079fb776961b7af97006772",
+            "component": "python/cp39-build-install",
+            "inputs_sha256": "bc10d90f4af5741f755b58039c78de579aa6f1bcb91bcc045bcffc15fb7d015e"
+          },
+          {
+            "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+            "component": "toolchain/aarch64-install",
+            "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+          }
+        ],
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-aarch64-install/result.json",
+            "sha256": "6f7353241d02e0ad74b85f6a1319f7d98ddf1c67a1dfbf7d008100664672a89a"
+          },
+          "artifact/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-aarch64-install/artifact/inputs.json",
+            "sha256": "f93f0d4e7d3fec1dc65451d9c9c7182cf6d59548ff4c7ab3f87db181cc2627a8"
+          },
+          "artifact/receipt.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-aarch64-install/artifact/receipt.json",
+            "sha256": "6551dfa3338b93076202f24023f667edc730d82e9217333e3673fdbcdaf2d076"
+          }
+        },
+        "scope": "Original artifact producer accepted a new cp39 build input identity; build artifact, not row qualification"
+      },
+      {
+        "part": "aarch64-test-context",
+        "status": "passed",
+        "seconds": 44.7,
+        "inputs_sha256": "e31bd44a104cf41991f860fa6042da5623442b6453d8930e2f70b6d044c41b23",
+        "receipt_sha256": "266a676fc3a82511d193c5506a401396a4b22e5a33938402491f52cc0f4143a5",
+        "artifact": {
+          "config_digest": "sha256:2f0c2e86ab954dc6ab3964ab3862089fcf3876eb6b118bcbf105255cafe63d49",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:f81c60b4bbbe0107fa7f1f47ac3e4f1306143fdbaf3e455f50d3499766b75aa5",
+          "root_digest": "sha256:f81c60b4bbbe0107fa7f1f47ac3e4f1306143fdbaf3e455f50d3499766b75aa5"
+        },
+        "dependencies": [
+          {
+            "artifact_digest": "sha256:ce22458a0f800b8ceff3f84767d19daa294661c81079fb776961b7af97006772",
+            "component": "python/cp39-build-install",
+            "inputs_sha256": "bc10d90f4af5741f755b58039c78de579aa6f1bcb91bcc045bcffc15fb7d015e"
+          },
+          {
+            "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+            "component": "toolchain/aarch64-install",
+            "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+          }
+        ],
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-aarch64-test-context/result.json",
+            "sha256": "d5960dea8da85caa7e15656f08c79384b1632d44e61cf5e6121c8dd04639bb15"
+          },
+          "artifact/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-aarch64-test-context/artifact/inputs.json",
+            "sha256": "94c06e9ffaf15858d369ab0a689967f995ae87334e388c79a8fb77acec98e9c8"
+          },
+          "artifact/receipt.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-aarch64-test-context/artifact/receipt.json",
+            "sha256": "434337e28851401de44f8346ac0e37b25380d734e0d008af7fb4fd6ec57e638d"
+          }
+        },
+        "scope": "Original artifact producer accepted a new cp39 build input identity; build artifact, not row qualification"
       }
-    ]
+    ],
+    "raw_result_recheck": {
+      "status": "passed",
+      "exit_code": 0,
+      "runner": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-raw-results.py",
+        "sha256": "b23db5051ca1b6dc33e272a6d9dee9fba3c89ecbc26b46042b766c4e6dcb20a1"
+      },
+      "log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-raw-results.log",
+        "sha256": "0a75c01547f5385a2e1369ed9c1d1031de729d78c30a2711073b97e0aa4a2af4"
+      },
+      "scope": "Original receipt schema, OCI compressed-blob digests, current material file bytes/modes, saved metadata and exact native/toolchain dependencies checked offline; all five old cp39 receipts rejected by original verify_local with component inputs differ before daemon access. Fresh extraction and complete row qualification remain in the active original consumer."
+    },
+    "row_qualification": {
+      "status": "passed",
+      "seconds": 377.433,
+      "receipt_sha256": "650e9f60851377b4af23c5f49a9ccb41accb5a356a60dcd89480db32abf0dd7f",
+      "inputs_sha256": "7eb06472e851cb5ea4eb70f6e9d3654ba357d33ce58ccbbb9d1b1a06b0c884c2",
+      "artifact": {
+        "config_digest": "sha256:0cf40787a663085d24370ee156c04540ef4661141679ebf97fa1224466567891",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:0ceec34a8cf8c979d1c761fb59df5aca659230f1d01d3eafd00277df57c4cb4f",
+        "root_digest": "sha256:0ceec34a8cf8c979d1c761fb59df5aca659230f1d01d3eafd00277df57c4cb4f"
+      },
+      "fresh_runs": 7,
+      "coverage": {
+        "build_python_sdk_tree": {
+          "canonical_sha256": "6ae0762f0beb07fcb3ce319392fa4312d5708cccb97a60da154a8643e79f1552",
+          "entries": 7652
+        },
+        "manifest_sha256": "f0572eabbc9aed9950fffaa741c5d64d56a299c43f12a4ff2c7deb9cbde27d92",
+        "row": "cp39",
+        "runtime_tiers": [
+          "locked-sysroot",
+          "clean-rocky"
+        ],
+        "status": "passed",
+        "targets": {
+          "aarch64": {
+            "python_sha256": "2424b9b23b647499b07e974a4c0d93c2e76110f5db4443de1137c9bb2342acfa",
+            "report_sha256": "d0a60e17de8295ce4c36feadeb0292469f957fdebf8cd4cfc9d6e412482b79df",
+            "sdk_tree": {
+              "canonical_sha256": "a9a3c67f43f1072c6f1633c2e87c6b58deb6b26ab4660ecf3b542ba3aa0a5757",
+              "entries": 7652
+            },
+            "target": "aarch64-unknown-linux-gnu"
+          },
+          "x86_64": {
+            "python_sha256": "9e77297bb66344a308fab37b49227a4f94970ef3f91f285eb6891201eb417480",
+            "report_sha256": "30ac5448a01bf173898acce5fc8464cb64a6467ff5e8059b6087151fce9fc246",
+            "sdk_tree": {
+              "canonical_sha256": "9d49fc5250a2791c1a44b38c06bd3bc3876a1092dee65f365c7165e431c13f52",
+              "entries": 7652
+            },
+            "target": "x86_64-unknown-linux-gnu"
+          }
+        }
+      },
+      "producer": {
+        "invocation": "urn:crossforge:local:cp39-affected-change-fixed-e47accc0000f7898",
+        "kind": "local",
+        "source_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
+        "source_dirty": true,
+        "started_at": "2026-09-11T14:25:57Z"
+      },
+      "started_at": "2026-09-11T14:33:47Z",
+      "completed_at": "2026-09-11T14:37:14Z",
+      "files": {
+        "result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/qualify-cp39/result.json",
+          "sha256": "1bca664773dcae19701f1d34a7b3085a7881b37ad4808f677702a5b02c510c7d"
+        },
+        "qualified/receipt.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/qualify-cp39/qualified/receipt.json",
+          "sha256": "4c59cf01baf57dc12c45e5349586f0b5d2a379b9b733e4d31e65ebba61c984fc"
+        },
+        "qualified/inputs.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/qualify-cp39/qualified/inputs.json",
+          "sha256": "1b0db10c3194814d8407527feb38ac8e5fc4bb200e3c93dfe9875bdbef241a66"
+        },
+        "qualified/payload/component/execution.jsonl": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/qualify-cp39/qualified/payload/component/execution.jsonl",
+          "sha256": "df6d6c6c85e8b115af3aff80d267f54353a113b2e7e501e7f5a6034214edb283"
+        }
+      },
+      "independent_recheck": {
+        "status": "passed",
+        "exit_code": 0,
+        "runner": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-row-result.py",
+          "sha256": "f72d33fe71e4e64f200d134c52da759e063d43520585731baae999c76fd01256"
+        },
+        "log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-row-result.log",
+          "sha256": "91a17a40ed23645326c62c93178ecc095d99988e9b35e5d605a311d2b9435b46"
+        },
+        "unchanged_rows": [
+          "cp310",
+          "cp311",
+          "cp312",
+          "cp313",
+          "cp314"
+        ],
+        "old_cp39_qualification": "rejected by original verify_local: component inputs differ"
+      },
+      "components": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/components.json",
+        "sha256": "20627ec0b4b37e42849a2ecfa4ffe4f1da099426317462cc16b9dd13bca8942f"
+      }
+    },
+    "independent_installation": {
+      "status": "passed",
+      "seconds": 356.478,
+      "inputs_sha256": "61fe32eec961aac2a8fe2050d87ed07806bb59dc801517a34dc2d53587a64ee7",
+      "row_receipt_sha256": "650e9f60851377b4af23c5f49a9ccb41accb5a356a60dcd89480db32abf0dd7f",
+      "fresh_runs": 2,
+      "report": {
+        "mode": "0644",
+        "path": "row.json",
+        "sha256": "f0572eabbc9aed9950fffaa741c5d64d56a299c43f12a4ff2c7deb9cbde27d92"
+      },
+      "files": {
+        "result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/install-cp39/result.json",
+          "sha256": "7eb3a980e39d5bd404d1e742a57dacfd651db6c262a48c5aacd23eaa1f13444c"
+        },
+        "installation/inputs.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/install-cp39/installation/inputs.json",
+          "sha256": "089220ac827976e1f23c919a90594f4776b9f007876d857a096f0b643044719c"
+        },
+        "installation/execution.jsonl": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/install-cp39/installation/execution.jsonl",
+          "sha256": "dad3abd0a989f829a1d60d34bb7f932dc3ddb0d9bfabfb0897f74a462344698b"
+        },
+        "installation/payload/row.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/install-cp39/installation/payload/row.json",
+          "sha256": "f0572eabbc9aed9950fffaa741c5d64d56a299c43f12a4ff2c7deb9cbde27d92"
+        }
+      },
+      "independent_recheck": {
+        "status": "passed",
+        "exit_code": 0,
+        "runner": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-integrations.py",
+          "sha256": "8aff29f5952973f19c73b632cd04f50284996217f7fd9bcd5a654d0fed89a2c9"
+        },
+        "log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-install-cp39.log",
+          "sha256": "ff09bfc676d58f829af6deac19067f8da3451391735ee8bbb316bf00311a7120"
+        }
+      }
+    }
   }
 }

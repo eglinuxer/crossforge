@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "crossforge-python-append-scope-observation",
-  "observed_at": "2026-09-11T14:30:28.493054+00:00",
+  "observed_at": "2026-09-11T14:50:39.773420+00:00",
   "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
   "status": "regressions checked; actual append and SDK acceptance running",
   "source_sha256": {
@@ -626,12 +626,137 @@
         }
       }
     ],
-    "running_at_observation": "python-dev",
+    "running_at_observation": "sdk-complete-dev",
     "timing_note": "Shared max-parallelism=1 builder also executes source replays; local elapsed includes queueing and is not an isolated performance baseline.",
     "installation_matrix_status": "passed",
     "pending": [
-      "python-dev",
       "sdk-complete-dev"
+    ],
+    "sdk_integrations": [
+      {
+        "phase": "python-dev",
+        "status": "passed",
+        "seconds": 988.473,
+        "source_dirty": true,
+        "inputs_sha256": "af7214081fdd219a3170c66c03eeeb89df2908e6353c61576c2024ea3b850d53",
+        "fresh_runs": 13,
+        "dependencies": [
+          {
+            "artifact_digest": "sha256:ff78bc0289382b9e14eeddacdc648aecb6a169a134dfacf514d10262155c20f3",
+            "component": "qualification/python-cp310",
+            "inputs_sha256": "c1c0b08cebbcae11f61c26e15f02e4c6ba9e9b4069ab8a1b7f6f6ad26bc30ab9"
+          },
+          {
+            "artifact_digest": "sha256:8df31c46fa79cbb02fd2d22e88bc310851891c02ad04e06172e6eea48566e52a",
+            "component": "qualification/python-cp311",
+            "inputs_sha256": "d7f7f74dc4804798dfa10e3e805814ba8e47f3b920109d313247e768bee1c284"
+          },
+          {
+            "artifact_digest": "sha256:196b96d97c7e86bb5d775b5f80b60d2bd42140f20d70c41ceff3be78c7771ffc",
+            "component": "qualification/python-cp312",
+            "inputs_sha256": "5dedc12c1e7f89594939f1181e34fcf9ea73507f594beeec4aba2c558659cd6c"
+          },
+          {
+            "artifact_digest": "sha256:ca9946741c45d6bb8b9a65bd90fd79d36a7bea3b0de0ebcf81ef95b9804b2a0a",
+            "component": "qualification/python-cp313",
+            "inputs_sha256": "e579fb379fc6769a5ba53b18faa90629ef99cb19963415850100cba2c196b215"
+          },
+          {
+            "artifact_digest": "sha256:f4ac4de00bf6027ffcd7b8f20e488ffea1c9829c4ddbd48f9b1e952ca388422a",
+            "component": "qualification/python-cp314",
+            "inputs_sha256": "3e8dcd7a59f38af637108d6de9c321e5a0fc6649dfafd9cc872960343bc4b935"
+          },
+          {
+            "artifact_digest": "sha256:e73e7fd9db8b4b76b8be190610b21f4102d096b94bce16adc132d717962c3a05",
+            "component": "qualification/python-cp39",
+            "inputs_sha256": "b8d58152a4d3fd5d6d9645a26d0fd3891164cea3b4e98f512fd30cd34a124735"
+          },
+          {
+            "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+            "component": "toolchain/aarch64-install",
+            "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+          },
+          {
+            "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+            "component": "toolchain/x86_64-install",
+            "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+          }
+        ],
+        "started_at": "2026-09-11T14:39:30Z",
+        "completed_at": "2026-09-11T14:44:24Z",
+        "reports": [
+          {
+            "mode": "0644",
+            "path": "reports/cp310.json",
+            "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp311.json",
+            "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp312.json",
+            "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp313.json",
+            "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp314.json",
+            "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp39.json",
+            "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/python-final-sdk.json",
+            "sha256": "6c8e196cd7870f53db8476bedad21a26e872aa374c2e340b2e189bdab0d4025f"
+          }
+        ],
+        "reused_row_receipts": {
+          "cp310": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+          "cp311": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+          "cp312": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+          "cp313": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+          "cp314": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+          "cp39": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3"
+        },
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/python-dev/result.json",
+            "sha256": "7bc89eb7df5d70d5b78cde737b198849f8ba45450c0572a01b8a8afc9ba7253e"
+          },
+          "integration/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/python-dev/integration/inputs.json",
+            "sha256": "cfb8ab893305be0fdcd2b55d2aa9e8a252ce35393e3c2758f2680ff1511a0173"
+          },
+          "integration/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/python-dev/integration/execution.jsonl",
+            "sha256": "74f01ae79350f2a569c3c0baf3ef852a355141e367f190ffc060d26a873a87b7"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-integrations.py",
+            "sha256": "8aff29f5952973f19c73b632cd04f50284996217f7fd9bcd5a654d0fed89a2c9"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-python-dev.log",
+            "sha256": "bd40f0b7fed759ed8bc4a7add79af196db9d0f8d8f8de194762181829ba6f765"
+          },
+          "scope": "Original thirteen fresh RUNs, eight dependencies, current material files, six original row reports/identities, all exported report bytes/modes and no GCC/CPython source compiler RUN in complete saved log"
+        }
+      }
     ]
   },
   "remaining": [

@@ -733,3 +733,11 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 补齐审计摘要的 cp39 源码门禁完成，477.924 秒，原 driver 退出 0，三个编译与三个行输入校验 RUN 均通过。随后外层实验脚本误用只允许新建文件的 `component_build.write_json` 再次写入 `progress.json`，退出 1；这是本地验收编排错误，未生成任何新 raw 组件，不把整个原 batch 记为成功。原脚本、源码清单、成功门禁和失败日志全部保留。
 
 新的继续执行脚本采用独立的每阶段进度文件，并固定 66 个输入文件摘要，包括两项成功结果、原源码计划及 raw BuildKit 日志。无网络、无 socket 的 Docker 预检通过；实际继续执行前，又用原源码计划与 fresh RUN verifier、原 producer 和相同物理环境核验成功门禁，记录为 `verified-prior-local-gate`，没有重新编译或改写原执行时间。两个不同进度文件已实际写入成功，随后原 artifact producer 完成新 cp39 build-Python 组件，69.553 秒，输入身份与旧组件不同。目标安装/测试上下文、本行七条资格 RUN、独立安装及两种 SDK 继续按原接口执行。生产代码和正式策略未改，未合入 main、推送或发布。
+
+## Docker 验收：新版 Python SDK 与变更后的 cp39 行通过（2026-09-11）
+
+新版 append 配方的 `python-dev` 完成，988.473 秒包含输入复核与共享 builder 等待，实际集成 solve 为 14:39:30–14:44:24 UTC。原十三条 fresh RUN、八份组件依赖、六份原行 receipt/manifest、全部导出报告模式及摘要，在断网 Docker 中再次核对通过；完整保存的执行日志也没有 GCC/CPython 自身源码编译入口。最终 Python SDK 报告摘要仍为 `6c8e196cd7870f53db8476bedad21a26e872aa374c2e340b2e189bdab0d4025f`，与原 a56bb29 报告字节一致。这证明当前配方完成相同资格覆盖，不作为 GitHub 性能对照。当前 batch 正在完整 SDK 集成。
+
+受影响变更的五份新 cp39 raw 组件已全部完成。原 receipt/schema、OCI 压缩 blob、当前材料文件/模式、已保存 metadata 和精确依赖在断网 Docker 中核对；原 `verify_local` 对五份旧 cp39 receipt 均以 `component inputs differ` 拒绝，未访问 daemon。新目标组件依赖原架构工具链 digest 和新 build-Python，未替换其他工具链。该离线检查没有冒充新的文件系统解包验收；原行消费者随后重新取得每份组件 metadata 并完整验证实际行。
+
+cp39 新行资格完成，377.433 秒、七条 fresh RUN，原 producer 已执行完整文件/ELF/ABI 验收、OCI 封存后复核和独立完整行消费。新 receipt 为 `650e9f60851377b4af23c5f49a9ccb41accb5a356a60dcd89480db32abf0dd7f`。离线复核原执行、OCI 与记录通过；旧行资格同样被原接口以输入不匹配拒绝，最终选定组件文件中另外五行的全部 subjects/qualification 和两份工具链都与原记录精确相同。随后 cp39 独立安装完成，356.478 秒、两条 fresh RUN、三份依赖，导出 manifest 与新行资格匹配，原校验器复核通过。变更后的两种 SDK 仍在推进，未将局部成功记为端到端完成；未合入 main、推送或发布。
