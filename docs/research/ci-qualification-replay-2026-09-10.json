@@ -1,0 +1,508 @@
+{
+  "artifacts": {
+    "/tmp/crossforge-ci-replay/focused-final.log": "cfecb67531d7abb449f077371a107d23c9bd316f46631eb2a2ebe30e2a6feb19",
+    "/tmp/crossforge-ci-replay/focused.log": "a48ff7f62d5326cbb139cf1e256cf5e158c97d047fb61bd44042d984eb76e56b",
+    "/tmp/crossforge-ci-replay/full-final.log": "287a854b7ef85cf66f29f62a810bcc50eb8d5fd40322686ef89fa289692154b4",
+    "/tmp/crossforge-ci-replay/full-result.json": "b0c515a5da4ffc79fe1ee65cbb771c6cafeb70b17418a45eb691f06af1568e3d",
+    "/tmp/crossforge-ci-replay/full.log": "2ec10f53997179edabd45bd94b681a27a66bb1d9a35470ae9a2421f7e6d71e39",
+    "/tmp/crossforge-ci-replay/full.py": "808675a7851310b88607d4ddc4452af7f406f8cdbf7ee0c4714eeeb65178234f",
+    "/tmp/crossforge-ci-replay/graphs.json": "bccf868e13a7804f88b9fbd0ade590d66597a4ef39ed20589bfc887f838f4512",
+    "/tmp/crossforge-ci-replay/graphs.log": "96b76019ebae272ee3791d650773e414bd378d24d320129f4042fcccfc7e7ec0",
+    "/tmp/crossforge-ci-replay/graphs.py": "2c1e5097d8172adaa4450d619d080d9baa630048cf344fc0643eed7b438078eb",
+    "/tmp/crossforge-ci-replay/historical-events.json": "1ae7bd732add604474bf8d83f20f28b2394af4c1189125dbad09526fd8bdf72a",
+    "/tmp/crossforge-ci-replay/historical-events.log": "caf313edd5b3ee656465d4cb4c793fe277eb862591c47ac04f97c09c55a99153",
+    "/tmp/crossforge-ci-replay/historical-events.py": "2d21c4838bbe7bbfde549dbda0c1a26046b1bcce51031de30c9d209515aa9e67",
+    "/tmp/crossforge-ci-replay/platform.log": "c6d7662537cfd99d327728e8985fe578265ca8e47142b7aed0a29f8cf8906f39",
+    "/tmp/crossforge-ci-replay/platform.py": "84ecfa10866c43ba4756320c9b52d8145686ad93abcbd5f58c63ea184f321d92"
+  },
+  "base_commit": "6de928040d3dd7558a8c4788421b9923368a5319",
+  "boundaries": [
+    "requires authenticated existing raw build components; missing component fails with no source compiler fallback",
+    "qualification-only no-cache-filter; no cold mode, registry cache writer, image publication or signing",
+    "complete canonical selected stage roots and owning RUN counts required",
+    "new diagnostics directory prevents stale success observations from mixing with a failed replay",
+    "raw stderr events separated from stdout, pipeline failure preserved, owner timestamps retained, cached/failed aliases rejected",
+    "source graph and observed execution identity compared again after successful solves",
+    "SDK append/final Python integration runs in first solve; complete SDK integration alone is forced in second solve",
+    "CI observations are not reusable qualification receipts, candidate evidence or native ARM results"
+  ],
+  "corrections": [
+    "First full-test command had a mistyped tooling image ID and exited 125 before tests; corrected command completed successfully"
+  ],
+  "date": "2026-09-10",
+  "docker": {
+    "cpus": 4,
+    "daemon_socket_mounted": false,
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "network": "none"
+  },
+  "files": {
+    ".github/actions/run-build-stage/action.yml": {
+      "executable": false,
+      "sha256": "00a51623d83337bf2a888dffb6a06eac436d6e7584d42821489554d46cd71342"
+    },
+    ".github/workflows/replay-qualification.yml": {
+      "executable": false,
+      "sha256": "ea07c829baa23b3a2812fb29b5c58e14587a75959f9d50277716f602d193cb32"
+    },
+    "scripts/ci-build.py": {
+      "executable": false,
+      "sha256": "f7653a053db970f1f687683c82d2407837766687eff11c8a87b4aa0c350d6b77"
+    },
+    "scripts/crossforge_internal/ci_replay.py": {
+      "executable": false,
+      "sha256": "8fea5c86772875b5cf351a22ef09ed210e798cf503925da0dc93ec25b8845713"
+    },
+    "scripts/crossforge_internal/incremental_plan.py": {
+      "executable": false,
+      "sha256": "84f6742aaa1166ceb058037b46553441e2b083cecb5e84430417b5cd9329b304"
+    },
+    "tests/config/test_ci_replay.py": {
+      "executable": false,
+      "sha256": "55801c5dbedb5a9dfd2811b8b40d2923886206b57c8d677ca6e856258fff70a0"
+    }
+  },
+  "graphs": {
+    "gcc-full": {
+      "gcc-testsuite-full-qualification-evidence": {
+        "gcc-testsuite-full-qualification-evidence": {
+          "gcc-testsuite-x86_64-base": {
+            "marker": null,
+            "runs": 1
+          },
+          "gcc-testsuite-x86_64-full-qualified": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "gcc-smoke": {
+      "gcc-testsuite-smoke-evidence": {
+        "gcc-testsuite-smoke-evidence": {
+          "gcc-testsuite-aarch64-base": {
+            "marker": null,
+            "runs": 1
+          },
+          "gcc-testsuite-aarch64-smoke": {
+            "marker": null,
+            "runs": 2
+          },
+          "gcc-testsuite-x86_64-base": {
+            "marker": null,
+            "runs": 1
+          },
+          "gcc-testsuite-x86_64-smoke": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "python-cp310": {
+      "python-cp310-dev": {
+        "cpython-cp310-aarch64-qualify": {
+          "cpython-qualify-aarch64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp310-aarch64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "cpython-cp310-x86_64-qualify": {
+          "cpython-qualify-x86_64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp310-x86_64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "python-cp310-dev": {
+          "python-sdk-append": {
+            "marker": "--row \"cp310\"",
+            "runs": 2
+          }
+        },
+        "python-row-cp310": {
+          "cpython-row-assemble": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "python-cp311": {
+      "python-cp311-dev": {
+        "cpython-cp311-aarch64-qualify": {
+          "cpython-qualify-aarch64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp311-aarch64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "cpython-cp311-x86_64-qualify": {
+          "cpython-qualify-x86_64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp311-x86_64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "python-cp311-dev": {
+          "python-sdk-append": {
+            "marker": "--row \"cp311\"",
+            "runs": 2
+          }
+        },
+        "python-row-cp311": {
+          "cpython-row-assemble": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "python-cp312": {
+      "python-cp312-dev": {
+        "cpython-cp312-aarch64-qualify": {
+          "cpython-qualify-aarch64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp312-aarch64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "cpython-cp312-x86_64-qualify": {
+          "cpython-qualify-x86_64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp312-x86_64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "python-cp312-dev": {
+          "python-sdk-append": {
+            "marker": "--row \"cp312\"",
+            "runs": 2
+          }
+        },
+        "python-row-cp312": {
+          "cpython-row-assemble": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "python-cp313": {
+      "python-cp313-dev": {
+        "cpython-cp313-aarch64-qualify": {
+          "cpython-qualify-aarch64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp313-aarch64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "cpython-cp313-x86_64-qualify": {
+          "cpython-qualify-x86_64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp313-x86_64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "python-cp313-dev": {
+          "python-sdk-append": {
+            "marker": "--row \"cp313\"",
+            "runs": 2
+          }
+        },
+        "python-row-cp313": {
+          "cpython-row-assemble": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "python-cp314": {
+      "python-cp314-dev": {
+        "cpython-cp314-aarch64-qualify": {
+          "cpython-qualify-aarch64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp314-aarch64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "cpython-cp314-x86_64-qualify": {
+          "cpython-qualify-x86_64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp314-x86_64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "python-cp314-dev": {
+          "python-sdk-append": {
+            "marker": "--row \"cp314\"",
+            "runs": 2
+          }
+        },
+        "python-row-cp314": {
+          "cpython-row-assemble": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "python-cp39": {
+      "python-cp39-dev": {
+        "cpython-cp39-aarch64-qualify": {
+          "cpython-qualify-aarch64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp39-aarch64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "cpython-cp39-x86_64-qualify": {
+          "cpython-qualify-x86_64": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "cpython-cp39-x86_64-qualify-build": {
+          "cpython-qualify-build": {
+            "marker": null,
+            "runs": 2
+          }
+        },
+        "python-cp39-dev": {
+          "python-sdk-append": {
+            "marker": "--row \"cp39\"",
+            "runs": 2
+          }
+        },
+        "python-row-cp39": {
+          "cpython-row-assemble": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "sdk": {
+      "python-dev": {
+        "python-dev": {
+          "python-sdk-final": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "python-dev-append-cp310": {
+          "python-sdk-append": {
+            "marker": "--row \"cp310\"",
+            "runs": 2
+          }
+        },
+        "python-dev-append-cp311": {
+          "python-sdk-append": {
+            "marker": "--row \"cp311\"",
+            "runs": 2
+          }
+        },
+        "python-dev-append-cp312": {
+          "python-sdk-append": {
+            "marker": "--row \"cp312\"",
+            "runs": 2
+          }
+        },
+        "python-dev-append-cp313": {
+          "python-sdk-append": {
+            "marker": "--row \"cp313\"",
+            "runs": 2
+          }
+        },
+        "python-dev-append-cp314": {
+          "python-sdk-append": {
+            "marker": "--row \"cp314\"",
+            "runs": 2
+          }
+        },
+        "python-dev-append-cp39": {
+          "python-sdk-append": {
+            "marker": "--row \"cp39\"",
+            "runs": 2
+          }
+        }
+      },
+      "sdk-complete-dev": {
+        "sdk-complete-dev": {
+          "sdk-complete-dev": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "toolchain-aarch64": {
+      "toolchain-aarch64-dev": {
+        "toolchain-aarch64-dev": {
+          "runtime-smoke-aarch64": {
+            "marker": null,
+            "runs": 4
+          },
+          "toolchain-aarch64-qualify-build": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "toolchain-x86_64": {
+      "toolchain-x86_64-dev": {
+        "toolchain-x86_64-dev": {
+          "runtime-smoke-x86_64": {
+            "marker": null,
+            "runs": 1
+          },
+          "toolchain-x86_64-qualify-build": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    },
+    "vcpkg": {
+      "vcpkg-upstream-tier3-qualified": {
+        "vcpkg-contract-qualified": {
+          "vcpkg-contract-qualified": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "vcpkg-upstream-tier1-qualified": {
+          "vcpkg-upstream-tier1-qualified": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "vcpkg-upstream-tier2-qualified": {
+          "vcpkg-upstream-tier2-qualified": {
+            "marker": null,
+            "runs": 1
+          }
+        },
+        "vcpkg-upstream-tier3-qualified": {
+          "vcpkg-upstream-tier3-qualified": {
+            "marker": null,
+            "runs": 1
+          }
+        }
+      }
+    }
+  },
+  "historical_events": {
+    "cases": {
+      "python-dev": {
+        "completed_at": "2026-09-10T21:52:56Z",
+        "log_sha256": "944a86bd8ef311ae886ebfe8958d97d7778cf5a7b4aabbe9f839a67f126ca5b0",
+        "started_at": "2026-09-10T21:48:46Z",
+        "vertices": 13
+      },
+      "sdk-complete-dev": {
+        "completed_at": "2026-09-10T22:05:03Z",
+        "log_sha256": "b9e1e5b957e3672be82c0b8730a6f7ec116da7ee9edfbf4617efab354ec15b8f",
+        "started_at": "2026-09-10T21:57:39Z",
+        "vertices": 14
+      }
+    },
+    "scope": "new verifier accepts original historical SDK owner events without rewriting time; no new execution, component revalidation or qualification claimed",
+    "status": "passed"
+  },
+  "merged_main": false,
+  "remaining": [
+    "new local replay execution (Docker socket authorization still pending)",
+    "real GitHub manual replay acceptance and component trust bootstrap",
+    "forced locked-source compiler rebuild mode",
+    "formal row qualification reuse, candidate recovery/integration and native ARM",
+    "matching-input baseline replays, concurrency experiment and reference-aware retention"
+  ],
+  "remote_pushed": false,
+  "scope": "explicit manual CI qualification replay from authenticated build components; implementation and socketless local regression, graph and historical log validation; no actual new replay or GitHub rollout",
+  "validation": {
+    "actionlint": "passed; existing concurrency.queue parser exception only",
+    "config": {
+      "passed": true,
+      "scope": "full suite before final new-diagnostics-directory guard",
+      "seconds": 164.09,
+      "skipped": 0,
+      "tests": 1178
+    },
+    "final_ci_focused": {
+      "passed": true,
+      "scope": "includes final diagnostics directory refusal regression",
+      "seconds": 7.099,
+      "tests": 89
+    },
+    "locked_validators": 4,
+    "packaging": {
+      "passed": true,
+      "seconds": 1.232,
+      "skipped": 0,
+      "tests": 40
+    },
+    "platform_python": "Rocky 8 Python 3.6.8 compile/import, 12 policies and synthetic progress check; no BuildKit execution",
+    "renderer_checks": 3
+  },
+  "workflow_dispatched": false
+}

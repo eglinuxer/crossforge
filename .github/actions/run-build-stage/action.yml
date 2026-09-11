@@ -22,6 +22,9 @@ inputs:
   python-components:
     default: 'false'
     description: Require prepared raw Python components as well as toolchain components
+  replay-qualification:
+    default: 'false'
+    description: Force the selected supported qualification gates and require fresh RUN evidence
 runs:
   using: composite
   steps:
@@ -51,6 +54,7 @@ runs:
         SELECTED_TARGETS: ${{ inputs.targets-json }}
         COMPONENT_READER: ${{ inputs.component-reader }}
         PYTHON_COMPONENTS: ${{ inputs.python-components }}
+        REPLAY_QUALIFICATION: ${{ inputs.replay-qualification }}
         COMPONENT_BUILDER: ${{ inputs.component-builder }}
         COMPONENT_ORAS: ${{ steps.components.outputs.oras }}
         COMPONENT_COSIGN: ${{ steps.components.outputs.cosign }}
@@ -62,6 +66,10 @@ runs:
         selection=()
         if test -n "$SELECTED_TARGETS"; then selection+=(--targets-json "$SELECTED_TARGETS"); fi
         components=()
+        if test "$REPLAY_QUALIFICATION" = true; then
+          test "$COMPONENT_READER" = true
+          components+=(--replay-qualification)
+        fi
         if test "$PYTHON_COMPONENTS" = true; then
           test "$COMPONENT_READER" = true
           components+=(--python-components)

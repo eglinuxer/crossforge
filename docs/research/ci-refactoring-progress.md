@@ -330,3 +330,20 @@ main 的组件分支现经 `verify-main-incremental.yml` 先解析实际选中 B
 补充验收：下载并核对仓库固定的 zstd 1.5.7 源码/签名及 nFPM 2.47.0 archive/可执行文件摘要后，在非 root、断网且无 socket 的 Docker 容器中补跑三个资源测试，3 项全部通过（6.678 秒，无跳过）。因此本版本 1166 项 config 与 40 项 packaging 均已有实际通过结果；不是将原整套测试的跳过改写为通过。工作流剩余的 51 条前置命令也通过（4.516 秒），包括全部列出的 RPM 计划/锁、Qt/GCC 策略、Python/Bash/C 语法和 canonical Bake 图解析；BuildKit `--check` 不在本次无 socket 检查范围内。
 
 实际 GCC 重跑已准备固定源提交 `9dab68281c5ca30786a2ff65250c9f8faeec1586`，但自动审批再次因工具容器挂载宿主 Docker socket 所带来的广泛 daemon 控制能力而拒绝，进程未启动。已向用户请求该三项门禁的具体授权，没有改用间接方式绕过。只读远程检查确认 `main` 仍为研究基线 `cf736eab`，工作分支尚未推送。
+
+
+## 批次 5：显式 CI 资格重放入口
+
+新增手动 `replay-qualification.yml` 和领域模块 `ci_replay.py`，复用 `ci-build.py` 的超时、资源监控、已认证组件读取和诊断上传。工作流只授予 contents/packages read，拒绝非原仓库 main；缺少组件时失败，不在重放路径回退到源码编译。支持双架构各自工具链、GCC smoke/full、六行 Python、vcpkg 三个 upstream tier 和 SDK 集成，共 12 种选定范围。具体语义见 [Actions 操作说明](../github-actions.md#explicit-qualification-replay)。
+
+计划从真实可达 Docker recipe 取得每个 owning target/stage 的 RUN 数量，只在所选资格阶段设置 `no-cache-filter`。SDK 的六行 append 和 Python final 在第一轮执行，完整 SDK 的第二轮只强制自己的 final，避免重复强制同一组追加检查。`--cold` 仍仅控制远程缓存导入；源码强制重建是尚待接入的独立模式。
+
+成功必须同时具备 Docker 成功退出和本次完整 RUN 证据：保留所属 target 的原时间，拒绝 cached/failed 别名、缺失/重复/过期/错误行事件，结束后重算源图并比较实际环境。新的诊断目录要求防止新失败与旧成功记录混合。输出为明确的 CI observation，不生成可复用资格 receipt，不替代候选最终集成或 native ARM。
+
+[本批记录](ci-qualification-replay-2026-09-10.json)：
+
+- 12 种真实 Bake 图计划及 override 解析通过；所强制 RUN 数为 x86_64 工具链 2、ARM 工具链 5、GCC smoke 5、GCC full 2、每行 Python 9、vcpkg 4、SDK 合计 14，过滤器不含 GCC/CPython 源码构建步骤。图检查不证明实际执行。
+- 无 socket、断网 Docker 全量 config 1178 项、164.090 秒，packaging 40 项、1.232 秒通过，本次挂入固定 zstd/nFPM 资源，无跳过。四项 locked validators、三个 renderer 和 actionlint 通过。全量之后新增诊断目录保护及回归，最终 CI 定向 89 项、7.099 秒复测通过。
+- Rocky 8 platform-python 3.6.8 完成模块编译/导入、12 个策略入口和合成日志验证。新验证器读取此前真实 Python SDK/完整 SDK 日志，分别得到与原验证结果完全相同的 13/14 条记录及时间；没有改写成新执行。
+
+实际新重放和 GitHub 事件验收尚未执行，之前三项 GCC Docker socket 授权仍待答复；本批没有重试被拒绝的 socket 操作。正式行资格复用、完整候选恢复/集成/native ARM、runner 重放对照和保留策略继续推进。未合入 main、推送远程或发布镜像。

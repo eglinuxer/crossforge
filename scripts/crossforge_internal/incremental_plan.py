@@ -15,7 +15,8 @@ GENERATORS = {"docker-bake.hcl", "docker-bake.override.json", "config/release.js
               "scripts/render-bake.py"}
 DOCUMENTS = {"README.md", "SUPPORT.md", "SECURITY.md", "AGENTS.md", "LICENSE-MIT", "LICENSE-APACHE"}
 CONTROL_WORKFLOWS = {".github/workflows/" + name + ".yml" for name in (
-    "candidate", "release", "release-control-plane", "native-aarch64-release", "component-pilot")}
+    "candidate", "release", "release-control-plane", "native-aarch64-release", "component-pilot",
+    "replay-qualification")}
 
 
 def quick_only(path):

@@ -60,10 +60,11 @@ to this wrapper; each leaf job receives the permissions for its own operation.
 PRs, forks and non-main dispatches use a separate contents:read-only caller and
 retain the complete source dependency graph without registry credentials.
 
-The current graph retains broad qualification COPY dependencies, including the
-complete `release.json` and GCC baseline directory. The planner preserves those
-dependencies. Narrowing qualification inputs and consuming Python row artifacts
-in production remain rollout work. Full
+The current graph retains broad Python/vcpkg qualification COPY dependencies,
+including the complete `release.json`. GCC gates now consume authenticated policy
+components, but their aggregate still binds smoke/full and both architectures.
+The planner preserves these remaining dependencies. Further qualification input
+scoping and consuming qualified Python row artifacts in production remain rollout work. Full
 qualification continues daily, manually and for explicitly requested candidates.
 The new dynamic workflow is locally checked but has not yet run on GitHub.
 
@@ -77,6 +78,47 @@ main branch protection/rulesets to require `pr-required`, require PRs and
 restrict bypasses according to the maintainer policy. Workflow files cannot
 activate repository branch protection by themselves. Enable the required
 check after the changed workflow has produced that check on GitHub.
+
+## Explicit qualification replay
+
+Dispatch `replay-qualification.yml` on the original repository's main branch and
+choose one supported CI stage. Its quick preflight and package reader use read
+permissions; it does not publish images, export registry caches or sign results.
+The selected stage requires existing authenticated toolchain components and,
+for Python/SDK, raw Python components. If one is missing, run normal main CI to
+prepare it before replaying. A missing or invalid component cannot silently
+fall back to a source compiler build.
+
+| Stage | Forced scope |
+| --- | --- |
+| `toolchain-x86_64` / `toolchain-aarch64` | That target's static and clean-runtime toolchain gates |
+| `gcc-smoke` | Both targets' GCC smoke gates and their final-compiler probes |
+| `gcc-full` | x86_64 GCC full gate and its final-compiler probe |
+| `python-cp39` through `python-cp314` | That row's two static gates, both runtime tiers per target, row finalizer and SDK append |
+| `vcpkg` | Contract plus all three existing locked-source upstream qualification tiers |
+| `sdk` | Six row append validations, Python SDK final validation and complete SDK final validation |
+
+The CLI equivalent adds `--replay-qualification` to `ci-build.py run` with
+`--require-components` and the normal component reader options; Python/SDK also
+requires `--python-components`. It requires the complete canonical roots of the
+selected stage. Unsupported stages, partial root selections, `--cold` and cache
+writes are rejected. Ordinary `--cold` retains its existing meaning of removing
+remote cache imports; it does not prove that tests were newly executed.
+
+The plan derives each required RUN count from the reachable Docker recipe and
+sets `no-cache-filter` only on the selected qualification stages. SDK append
+steps are forced once in the Python SDK solve, then consumed by the complete SDK
+solve. Upstream source compiler stages are not selected for replay. This option
+does not implement a clean source rebuild, nor does an SDK-only replay freshly
+execute every upstream row qualification.
+
+Diagnostics retain `replay-plan.json`, per-solve raw BuildKit events and
+`replay-result.json`. Success requires every owning RUN to complete within this
+execution, with no cached/failed alias, missing coverage, changed source graph or
+changed observed execution environment. A zero Docker exit with bad evidence
+fails CI. These are CI execution observations, not signed reusable qualification
+receipts or candidate/native ARM evidence. The workflow still needs actual
+GitHub replay acceptance; socketless graph checks cannot provide it.
 
 ## Build stages
 
