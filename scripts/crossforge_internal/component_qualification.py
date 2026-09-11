@@ -38,10 +38,12 @@ def spec(arch, profile):
             "target": target, "stages": stages, "contexts": contexts, "triple": arch + "-unknown-linux-gnu"}
 
 
-def _gcc_profile(source, profile):
+def _gcc_profile(source, profile, arch):
     validator = runpy.run_path(str(source / "scripts/validate-gcc-testsuite.py"))
     try:
-        return validator, validator["validate_release_contract"](source / "config/release.json")["profiles"][profile]
+        directory = source / "config/generated/components"
+        digest = content_sha256(load_json(directory / "toolchain/gcc-testsuite-qualification.json"))
+        return validator, validator["validate_component_contract"](directory, arch, digest)["profiles"][profile]
     except validator["ValidationError"] as error:
         raise IdentityError(str(error)) from error
 
@@ -53,7 +55,7 @@ def report_copies(source, settings):
         if arch == "x86_64":
             result["/work/qualification/clean-rocky.ok"] = "component/reports/x86_64-clean-runtime.ok"
         return result
-    _, policy = _gcc_profile(source, "smoke" if profile == "gcc-smoke" else "full")
+    _, policy = _gcc_profile(source, "smoke" if profile == "gcc-smoke" else "full", arch)
     tiers = ["host-direct"] if arch == "x86_64" else ["locked-sysroot", "clean-rocky"]
     result = {}
     for tier in tiers:
@@ -104,7 +106,8 @@ def qualification_inputs(source, graph, settings, execution, bindings):
                        "scripts/python_row_contract.py", "scripts/validate-release.py",
                        "scripts/toolchain_policy.py", "scripts/release_component.py"]
     else:
-        validators += ["scripts/validate-gcc-testsuite.py", "scripts/validate-release.py"]
+        validators += ["scripts/validate-gcc-testsuite.py", "scripts/validate-release.py",
+                       "scripts/gcc_testsuite_policy.py", "scripts/release_component.py"]
     files = {record["path"]: record for record in value["files"]}
     for path in validators:
         files[path] = file_record(source, path)
@@ -121,8 +124,8 @@ def qualification_inputs(source, graph, settings, execution, bindings):
 def validate_reports(source, settings, directory):
     arch, profile = settings["arch"], settings["profile"]
     root = Path(directory) / "component/reports"
-    release = load_json(source / "config/release.json")
     if profile == "toolchain":
+        release = load_json(source / "config/release.json")
         components = runpy.run_path(str(source / "scripts/release-components-core.py"))
         validator = runpy.run_path(str(source / "scripts/toolchain_report.py"))
         target = next(target for target in release["targets"] if target["arch"] == arch)
@@ -130,7 +133,7 @@ def validate_reports(source, settings, directory):
             release, content_sha256(release), target["sysroot"]["canonical_sha256"],
             components["toolchain_qualification_component"](release, arch))
         return [{"profile": "toolchain", "target": settings["triple"], "status": "passed", "report": value}]
-    validator, policy = _gcc_profile(source, "smoke" if profile == "gcc-smoke" else "full")
+    validator, policy = _gcc_profile(source, "smoke" if profile == "gcc-smoke" else "full", arch)
     results = []
     for tier in (["host-direct"] if arch == "x86_64" else ["locked-sysroot", "clean-rocky"]):
         name = "%s-%s%s" % (arch, tier, "-full" if profile == "gcc-full" else "")
@@ -152,7 +155,7 @@ def validate_reports(source, settings, directory):
             "GCC qualification component differs")
         require(materials.get("site_sha256") == policy["plan"]["site"]["sha256"] and
                 materials.get("board") == {key: tier_policy["board"][key] for key in ("name", "sha256")} and
-                materials.get("gcc", {}).get("version") == release["gts"]["gcc_version"],
+                materials.get("gcc", {}).get("version") == policy["plan"]["gcc_version"],
                 "GCC tested policy materials differ")
         require(type(materials.get("make")) is list and
                 sorted(item.get("suite", "") for item in materials["make"]) == sorted(summaries),

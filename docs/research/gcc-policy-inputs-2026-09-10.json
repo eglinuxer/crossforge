@@ -1,0 +1,144 @@
+{
+  "actual_replay": {
+    "required": [
+      "x86_64 gcc-smoke",
+      "aarch64 gcc-smoke",
+      "x86_64 gcc-full"
+    ],
+    "status": "pending"
+  },
+  "artifacts": {
+    "/tmp/crossforge-gcc-policy/check-platform.py": "40c7e1837c11f9a4d7d1be95bfeb4928a0bf2dbe27b757e88bc8b7c4bab493e8",
+    "/tmp/crossforge-gcc-policy/focused-final.log": "876cf0e952e49dbd013393a8c7a83a0d628b291c2858189ab53e63016a922aa1",
+    "/tmp/crossforge-gcc-policy/focused.log": "fae90c99eb65491716a42b4c2a08f14605b67ebd7d24c21ae47a39b1faf6574f",
+    "/tmp/crossforge-gcc-policy/full.log": "ebebe3926b7ba1636c27d48d7470512d97e1cf2cbb9a6967bf061d01386ec246",
+    "/tmp/crossforge-gcc-policy/platform-python.log": "fde1b93c10e617f07dc4d08e0379b0a8e8d1ae4d562dac3063797cd4f542b6e5",
+    "/tmp/crossforge-gcc-policy/scope-corrected.log": "16171422f8b0cb456bb51dbc943c3827af7df62b2d9a440bd55e74b8b775279b",
+    "/tmp/crossforge-gcc-policy/scope-corrected/result.json": "461ec0c959290657a0a6af8dcf36b470b92b33303df6c237d42082b2c6da2359",
+    "/tmp/crossforge-gcc-policy/scope-probe-corrected.py": "9d630c203d01eec29e40351f77b2698c3e1f3db5159c029261e4792206137f31",
+    "/tmp/crossforge-gcc-policy/scope-probe.py": "8157ae10c0a1f344554b97e228c028f74992d19052f4e051723b4d0d63181da9",
+    "/tmp/crossforge-gcc-policy/scope.log": "479971da479ea7f8d94d6bde7650074c1b78a388e31340075d3b93201e424244"
+  },
+  "base_commit": "96ce456774156234c72416f3f4fdae8a9f6bb12e",
+  "corrections": [
+    "Initial focused fixture used a different runpy ValidationError class; corrected fixture and reran focused/full suites",
+    "Initial comparison fixture omitted required declared BuildKit image identity; corrected fixture; no actual daemon observation claimed"
+  ],
+  "date": "2026-09-10",
+  "docker": {
+    "cpus": 4,
+    "daemon_socket_mounted": false,
+    "memory_gib": 16,
+    "network": "none",
+    "regression_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42"
+  },
+  "files": {
+    "docker/Dockerfile": {
+      "executable": false,
+      "sha256": "5548c72188510c4a49c5b5805769ab780de6185918480abcc1070c5bfb3aa543"
+    },
+    "scripts/crossforge_internal/component_qualification.py": {
+      "executable": false,
+      "sha256": "00198ee010d973a5e80ce745ce9bb3634344e4fe7d4974afdef0e644d9ef501e"
+    },
+    "scripts/gcc_testsuite_policy.py": {
+      "executable": false,
+      "sha256": "0aaa941a18bb6fe911c1eb743d54abc706ae7b2cebf9c65645b17164cbb29086"
+    },
+    "scripts/run-gcc-testsuite.py": {
+      "executable": true,
+      "sha256": "9df809a30ccf6c3cc8e8ece73b857f8fc9e17a731687ae5a04cef930f07cf85c"
+    },
+    "scripts/validate-gcc-testsuite.py": {
+      "executable": true,
+      "sha256": "43581e6691b6768d893beef2fbaa5f56d712155b94d4f9621d13b8f54262ebb3"
+    },
+    "tests/config/test_component_qualification.py": {
+      "executable": false,
+      "sha256": "5d16f30f62d5298e435ee248908e4c1b8ed2675eb975d52f93a82f65dbde48f2"
+    },
+    "tests/config/test_gcc_policy_components.py": {
+      "executable": false,
+      "sha256": "67f4d166f1ff32000fe88c027eb13a5b207eb1dbee0d53563bc8f8fa3f559a9b"
+    }
+  },
+  "limitations": [
+    "Existing GCC aggregate still couples smoke/full and both architectures",
+    "Graph and policy equivalence checks are not GCC qualification",
+    "No GitHub event, signing, candidate or native ARM acceptance in this record"
+  ],
+  "merged_main": false,
+  "remote_pushed": false,
+  "scope": "GCC qualification policy scoping; socketless Docker regression, compatibility and graph/material evidence; actual GCC replay pending",
+  "scope_comparison": {
+    "base_commit": "96ce456774156234c72416f3f4fdae8a9f6bb12e",
+    "cases": {
+      "after": {
+        "gcc-testsuite-aarch64-smoke": {
+          "full_release_in_closure": false,
+          "modified_inputs_sha256": "fbb784aca574fc248470dfe22723a05c8c052282e100919146f54d0a2bf09f69",
+          "original_inputs_sha256": "fbb784aca574fc248470dfe22723a05c8c052282e100919146f54d0a2bf09f69",
+          "product_version_invalidates": false
+        },
+        "gcc-testsuite-x86_64-full-qualified": {
+          "full_release_in_closure": false,
+          "modified_inputs_sha256": "03109ecd61a30eeb04151cc9ad5b17ad4575e9524c5a863ad84f2a0b2ce8c475",
+          "original_inputs_sha256": "03109ecd61a30eeb04151cc9ad5b17ad4575e9524c5a863ad84f2a0b2ce8c475",
+          "product_version_invalidates": false
+        },
+        "gcc-testsuite-x86_64-smoke": {
+          "full_release_in_closure": false,
+          "modified_inputs_sha256": "f4a371ae62900979cd1f7f22324220b1b725cb811b2d9e202722ef557bfd6576",
+          "original_inputs_sha256": "f4a371ae62900979cd1f7f22324220b1b725cb811b2d9e202722ef557bfd6576",
+          "product_version_invalidates": false
+        }
+      },
+      "before": {
+        "gcc-testsuite-aarch64-smoke": {
+          "full_release_in_closure": true,
+          "modified_inputs_sha256": "6716673aab87ae6f4ebc0b7b289d9583a37af9d3f0a0661ddb2b10b545b5a027",
+          "original_inputs_sha256": "90ca8560ba5291394059223e315c0bec08bb8d2c9721b706118261bbd1e99381",
+          "product_version_invalidates": true
+        },
+        "gcc-testsuite-x86_64-full-qualified": {
+          "full_release_in_closure": true,
+          "modified_inputs_sha256": "f86ba710b011cd81cbf59b756009721c4fb15908ac1aed90443551012ff7a7b4",
+          "original_inputs_sha256": "358f079bb55776eb039150fcf28f836590d1c91397a5f8bf6a94cecb5d7c57cd",
+          "product_version_invalidates": true
+        },
+        "gcc-testsuite-x86_64-smoke": {
+          "full_release_in_closure": true,
+          "modified_inputs_sha256": "4ff6d380522f19d5ffd32f2fb3b66b7b3c1355122744e163348215ffb3bff46c",
+          "original_inputs_sha256": "0e02ddeb1449fd43fa7e3abccb7787b6b66189b176ed32cb57949695b4c25f91",
+          "product_version_invalidates": true
+        }
+      }
+    },
+    "raw_compiler_inputs_unchanged": true,
+    "scope": "actual Bake graph and material capture in socketless Docker; artifact bindings are graph fixtures; no qualification execution or artifact trust claim",
+    "status": "passed"
+  },
+  "validation": {
+    "actionlint": "passed; existing concurrency.queue parser exception only",
+    "config": {
+      "passed": true,
+      "seconds": 156.079,
+      "skipped": 2,
+      "tests": 1166
+    },
+    "focused": {
+      "passed": true,
+      "seconds": 1.05,
+      "tests": 38
+    },
+    "locked_validators": 4,
+    "packaging": {
+      "passed": true,
+      "seconds": 0.832,
+      "skipped": 1,
+      "tests": 40
+    },
+    "platform_python": "Rocky 8 Python 3.6.8; four modules compile, scoped/legacy policy equivalence for both architectures and runner CLI; no Bake stage",
+    "renderer_checks": 3
+  }
+}

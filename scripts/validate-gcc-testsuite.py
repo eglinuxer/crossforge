@@ -342,6 +342,10 @@ def validate_baseline(baseline, plan, target, runtime_tier):
 
 
 def validate_profile_contract(release, contract, expected_pairs):
+    return validate_profile_policy(release["gts"]["gcc_version"], contract, expected_pairs)
+
+
+def validate_profile_policy(gcc_version, contract, expected_pairs):
     plan_path = repository_file(contract["plan"]["file"], "GCC testsuite plan")
     plan = validate_plan(load_json(plan_path))
     plan_sha256 = canonical_sha256(plan)
@@ -349,7 +353,7 @@ def validate_profile_contract(release, contract, expected_pairs):
         raise ValidationError("release GCC testsuite plan digest differs")
     if plan["profile"] != contract["profile"]:
         raise ValidationError("release GCC testsuite profile differs")
-    if plan["gcc_version"] != release["gts"]["gcc_version"]:
+    if plan["gcc_version"] != gcc_version:
         raise ValidationError("GCC testsuite compiler version differs from release")
     records = contract["baselines"]
     pairs = [(record["target"], record["runtime_tier"]) for record in records]
@@ -374,6 +378,18 @@ def validate_profile_contract(release, contract, expected_pairs):
         "plan_sha256": plan_sha256,
         "baselines": baselines,
     }
+
+
+def validate_component_contract(directory, arch, trusted_sha256):
+    policy_reader = runpy.run_path(str(Path(__file__).with_name("gcc_testsuite_policy.py")))
+    try:
+        policy = policy_reader["load"](directory, arch, trusted_sha256)
+    except policy_reader["PolicyError"] as error:
+        raise ValidationError(str(error)) from error
+    profiles = {name: validate_profile_policy(policy["gcc_version"], policy["profiles"][name],
+        [(target["triple"], tier["name"]) for target in PROFILE_TARGET_CONTRACTS[name]
+         for tier in target["runtime_tiers"]]) for name in ("smoke", "full")}
+    return {"policy": policy, "profiles": profiles}
 
 
 def validate_release_contract(release_path):

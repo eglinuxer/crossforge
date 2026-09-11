@@ -1,6 +1,6 @@
 # CI 重构实施进度
 
-目标是完成[六批实施方案](ci-refactoring-plan-2026-09-10.md)，不是仅完成触发器调整。工作分支为 `codex/component-ci-refactor`；研究基线为 `cf736eab8aa53b851874509d66676e5bac98dc27`。
+目标是完成[六批实施方案](ci-refactoring-plan-2026-09-10.md)，不是仅完成触发器调整。工作分支为 `codex/component-ci-refactor`；研究基线为 `cf736eab8aa53b851874509d66676e5bac98dc27`。用户已授权在全部所需验证通过后合入 `main` 并推送远程；当前仍在实施和验收，不提前合并。
 
 | 批次 | 当前状态 | 仍需取得的证据 |
 |---|---|---|
@@ -312,3 +312,17 @@ main 的组件分支现经 `verify-main-incremental.yml` 先解析实际选中 B
 补充 producer 实跑因 Docker socket 的宿主 daemon 控制能力被自动审批拒绝，没有启动。改用断网、无 socket 的图核对，在原记录环境与此前验证过的 receipt 绑定下，确认 cp39 五份原始组件在 producer 图和 consumer 图中得到相同输入身份。这个补充结果仅是输入图验证，不计为新 OCI 校验、producer 实跑或 GitHub 身份验证；此前已完成的实际消费和 Rocky 门禁独立保留。
 
 本批尚未推送或远程 dispatch。正式行资格包生产/复用接线、真实 GitHub 信任验收、候选最终集成与 native ARM、资格范围收窄及 runner 性能实验继续推进；当前实现不能作为这些事项已完成的证据。
+
+
+## 批次 3/5：GCC 资格策略脱离完整 release
+
+新增自包含标准库模块 `gcc_testsuite_policy.py`，从既有 GCC 资格投影及其可信摘要依赖读取版本、smoke/full 计划、冻结 baseline 和 ARM QEMU 身份。三个正式 GCC 门禁改用 `--components`；原 `--release` CLI、显式 observation 分支和最终候选完整 release 验收保留。原 DejaGNU suite、执行命令、基线精确比较及 qualification receipt 的执行环境约束不变。
+
+[本批观测](gcc-policy-inputs-2026-09-10.json)记录了无 daemon socket 的 Docker 验证：
+
+- 全量 config 1166 项、156.079 秒，packaging 40 项、0.832 秒通过，分别保留既有 2 项 zstd 和 1 项 nFPM 资源缺失跳过。四项 locked validators、三个 renderer 检查及 actionlint 通过。
+- 38 项聚焦回归通过，包括没有完整 release 文件的裁剪目录、错误策略和子组件摘要拒绝、旧/新计划与 baseline 等价、三个真实 Bake 根的材料范围及 RUN 数量。
+- 固定 Rocky 8 镜像内的 platform-python 3.6.8 完成四个修改模块编译、双架构策略等价和 runner CLI 检查；该项为普通容器检查，没有执行 Bake 或 GCC。
+- 隔离源中仅修改产品版本并依次重新生成投影、vcpkg 和 Bake：旧版三个 GCC 根的材料身份全部变化，新版三个根均保持不变；双架构安装和 GCC 测试上下文的四份原始编译材料在本次代码改动前后完全一致。该对照使用显式外部产物 fixture，不作为实际产物信任或资格证明。
+
+实际双架构 GCC smoke 及 x86_64 GCC full 重跑待执行；现有聚合投影仍耦合 smoke/full 与双架构，本批只移除无关完整 release 输入，没有宣称已完成全部资格范围拆分。合并和推送须等待整体所需验证完成。

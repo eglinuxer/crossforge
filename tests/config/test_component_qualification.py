@@ -105,7 +105,7 @@ class GccQualificationReportTests(unittest.TestCase):
         self.summary.write_text("PASS: fixture\n")
         (self.directory / "gcc.execute.make.log").write_text("make log\n")
         (self.directory / "gcc.execute.log").write_text("DejaGNU log\n")
-        validator, policy = qualification._gcc_profile(ROOT, "smoke")
+        validator, policy = qualification._gcc_profile(ROOT, "smoke", "x86_64")
         board = policy["plan"]["targets"][0]["runtime_tiers"][0]["board"]
         component = load_json(ROOT / "config/generated/components/toolchain/gcc-testsuite-qualification.json")
         materials = {"qualification_component": {"component": component["component"], "canonical_sha256": content_sha256(component)},

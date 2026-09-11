@@ -1587,8 +1587,8 @@ FROM host-gcc-test-locked AS gcc-testsuite-x86_64-base
 COPY --from=gcc-x86_64-test-input /work/prepared/gcc/ /work/prepared/gcc/
 COPY --from=gcc-x86_64-test-input /work/build/gcc-x86_64/ /work/build/gcc-x86_64/
 COPY --from=toolchain-x86_64-install-input /opt/crossforge/ /opt/crossforge/
-COPY config/release.json /work/config/release.json
-COPY config/schemas/release.schema.json /work/config/schemas/release.schema.json
+COPY config/generated/components/sources/gcc.json \
+  /work/config/generated/components/sources/gcc.json
 COPY config/schemas/gcc-testsuite-plan.schema.json \
   /work/config/schemas/gcc-testsuite-plan.schema.json
 COPY config/schemas/gcc-testsuite-baseline.schema.json \
@@ -1597,7 +1597,7 @@ COPY config/gcc-testsuite-smoke.json config/gcc-testsuite-full.json \
   /work/config/
 COPY patches/gcc/ /work/patches/gcc/
 COPY tests/gcc/ /work/tests/gcc/
-COPY scripts/validate-release.py scripts/release_component.py \
+COPY scripts/validate-release.py scripts/release_component.py scripts/gcc_testsuite_policy.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
 RUN --network=none \
     /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc \
@@ -1620,7 +1620,7 @@ COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
   /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
-      --release /work/config/release.json \
+      --components /work/config/generated/components \
       --build /work/build/gcc-x86_64/gcc-build \
       --source /work/prepared/gcc \
       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
@@ -1638,6 +1638,8 @@ RUN --network=none /usr/libexec/platform-python \
         /work/qualification/gcc-testsuite/x86_64-host-direct.json
 
 FROM gcc-testsuite-x86_64-base AS gcc-testsuite-x86_64-full-libstdcxx-observe
+COPY config/release.json /work/config/release.json
+COPY config/schemas/release.schema.json /work/config/schemas/release.schema.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
       --mode observation \
@@ -1668,7 +1670,7 @@ COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
       --profile full \
-      --release /work/config/release.json \
+      --components /work/config/generated/components \
       --build /work/build/gcc-x86_64/gcc-build \
       --source /work/prepared/gcc \
       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
@@ -1755,8 +1757,10 @@ COPY --from=rocky-runtime-aarch64-source / /runtime-root/
 COPY --from=qemu-aarch64-validated \
   /usr/local/libexec/crossforge/qemu-aarch64 \
   /usr/local/libexec/crossforge/qemu-aarch64
-COPY config/release.json /work/config/release.json
-COPY config/schemas/release.schema.json /work/config/schemas/release.schema.json
+COPY config/generated/components/toolchain/aarch64-qualification.json \
+  /work/config/generated/components/toolchain/aarch64-qualification.json
+COPY config/generated/components/sources/gcc.json \
+  /work/config/generated/components/sources/gcc.json
 COPY config/schemas/gcc-testsuite-plan.schema.json \
   /work/config/schemas/gcc-testsuite-plan.schema.json
 COPY config/schemas/gcc-testsuite-baseline.schema.json \
@@ -1765,7 +1769,7 @@ COPY config/gcc-testsuite-smoke.json config/gcc-testsuite-full.json \
   /work/config/
 COPY patches/gcc/ /work/patches/gcc/
 COPY tests/gcc/ /work/tests/gcc/
-COPY scripts/validate-release.py scripts/release_component.py \
+COPY scripts/validate-release.py scripts/release_component.py scripts/gcc_testsuite_policy.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
 RUN --network=none \
     /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc \
@@ -1788,7 +1792,7 @@ COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
   /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
-      --release /work/config/release.json \
+      --components /work/config/generated/components \
       --build /work/build/gcc-aarch64/gcc-build \
       --source /work/prepared/gcc \
       --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu \
@@ -1808,7 +1812,7 @@ RUN --network=none /usr/libexec/platform-python \
         /work/qualification/gcc-testsuite/aarch64-locked-sysroot.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
-      --release /work/config/release.json \
+      --components /work/config/generated/components \
       --build /work/build/gcc-aarch64/gcc-build \
       --source /work/prepared/gcc \
       --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu \

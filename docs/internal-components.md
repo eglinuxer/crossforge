@@ -515,6 +515,26 @@ GCC/CPython source compiler in its material closure. Its registry discovery and
 transport were explicit local fixtures, so GitHub signing, remote publication
 and cross-run acceptance still require the rollout pilot.
 
+## GCC qualification policy inputs
+
+GCC smoke/full Docker gates use `run-gcc-testsuite.py --components` with the
+existing independently pinned `toolchain/gcc-testsuite-qualification` projection.
+The policy reader authenticates its GCC source dependency and, for ARM, its
+QEMU executor constraint through the ARM toolchain qualification dependency.
+Plan and baseline files still pass the same schema, matrix, canonical digest
+and exact result checks. The report component identity and candidate verifier
+remain compatible; frozen baselines and upstream test commands are unchanged.
+
+The qualification path no longer reads the whole `release.json` or its schema.
+The old `--release` CLI remains supported, and the explicit observation branch
+continues to use it. A scoped policy is not a partial release manifest, and
+full release validation remains a separate CI/candidate requirement.
+
+This first change removes unrelated release fields from GCC gate inputs. The
+existing GCC qualification projection still groups smoke/full and both target
+policies; their further separation remains work to do. Socketless graph checks
+and policy/CLI checks in Rocky Python 3.6 are not new GCC qualification runs.
+
 ## Durable catalog storage and discovery
 
 `catalog_registry.py` stores the exact catalog and signature bundle together as
