@@ -335,7 +335,7 @@ class PythonQualificationTests(unittest.TestCase):
             "version": self.version,
             "adapter": self.adapter,
             "release_sha256": canonical_sha256(self.release),
-            "qualification_components": QUALIFIER["RELEASE_COMPONENTS"][
+            "qualification_components": QUALIFIER["release_components"]()[
                 "python_qualification_components"
             ](self.release),
             "source": {
@@ -414,7 +414,7 @@ class PythonQualificationTests(unittest.TestCase):
         return report
 
     def zstd_manifest(self, identity, arch):
-        documents = QUALIFIER["RELEASE_COMPONENTS"][
+        documents = QUALIFIER["release_components"]()[
             "render_component_documents"
         ](self.release)
         component = "zstd/host-build" if identity == "host" else "zstd/%s-build" % arch
@@ -761,7 +761,7 @@ class PythonQualificationTests(unittest.TestCase):
         self.assertEqual(report["abi"], report["compile"]["abi"])
         self.assertEqual(
             report["qualification_components"],
-            QUALIFIER["RELEASE_COMPONENTS"][
+            QUALIFIER["release_components"]()[
                 "python_qualification_components"
             ](self.release),
         )

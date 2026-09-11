@@ -998,6 +998,7 @@ def _render_expected_components(release, implemented_rows):
             ]
             dependencies = [
                 "implementation/python-%s-qualification-policy" % row,
+                source_component,
                 "python/%s-%s-build" % (row, arch),
                 toolchain_qualifications[arch],
                 target_components[arch],

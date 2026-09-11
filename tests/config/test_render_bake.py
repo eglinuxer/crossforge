@@ -161,18 +161,7 @@ class RenderBakeTests(unittest.TestCase):
                 self.assertRegex(digest, r"^[0-9a-f]{64}$")
 
     def test_python_qualification_identities_enter_only_static_qualifiers(self):
-        expected = {
-            RENDERER["component_argument_name"](
-                "implementation/python-qualification-policy"
-            ): self.binding_records[
-                "implementation/python-qualification-policy"
-            ]["canonical_sha256"],
-            RENDERER["component_argument_name"](
-                "python/qualification"
-            ): self.binding_records["python/qualification"][
-                "canonical_sha256"
-            ],
-        }
+        key = "CPYTHON_QUALIFICATION_COMPONENT_SHA256"
         qualifier_names = set()
         for contract in RENDERER["IMPLEMENTED_ROWS"]:
             row = contract["row"]
@@ -181,39 +170,25 @@ class RenderBakeTests(unittest.TestCase):
                 qualifier_names.add(name)
                 target = self.targets[name]
                 self.assertEqual(target["target"], "cpython-qualify-build")
-                self.assertEqual(
-                    {
-                        key: target["args"][key]
-                        for key in expected
-                    },
-                    expected,
-                )
-
+                self.assertEqual(target["args"][key], self.binding_records[
+                    "python/%s-%s-qualification" % (row, arch)]["canonical_sha256"])
         for name, target in self.targets.items():
             if target.get("inherits") != ["_python_common"]:
                 continue
-            present = set(target.get("args", {})) & set(expected)
             with self.subTest(target=name):
-                self.assertEqual(
-                    present,
-                    set(expected) if name in qualifier_names else set(),
-                )
+                self.assertEqual(key in target.get("args", {}), name in qualifier_names)
+                self.assertNotIn("CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256", target.get("args", {}))
+                self.assertNotIn("CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256", target.get("args", {}))
 
     def test_python_qualification_identity_arguments_fail_closed(self):
-        for component in (
-            "implementation/python-qualification-policy",
-            "python/qualification",
-        ):
-            arguments = copy.deepcopy(self.component_arguments)
-            del arguments[RENDERER["component_argument_name"](component)]
-            with self.subTest(component=component):
-                with self.assertRaisesRegex(
-                    ValueError,
-                    "missing Python qualification component digest",
-                ):
-                    RENDERER["render_python_graph"](
-                        copy.deepcopy(self.release), {}, arguments
-                    )
+        for row in RENDERER["IMPLEMENTED_ROWS"]:
+            for arch in RENDERER["PYTHON_TARGETS"]:
+                component = "python/%s-%s-qualification" % (row["row"], arch)
+                arguments = copy.deepcopy(self.component_arguments)
+                del arguments[RENDERER["component_argument_name"](component)]
+                with self.subTest(component=component):
+                    with self.assertRaisesRegex(ValueError, "missing Python qualification component digest"):
+                        RENDERER["render_python_graph"](copy.deepcopy(self.release), {}, arguments)
 
     def test_only_explicitly_planned_qt_remains_future(self):
         future = {

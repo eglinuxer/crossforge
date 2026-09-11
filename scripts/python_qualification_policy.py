@@ -112,7 +112,7 @@ def from_documents(root, row_policy, version, arch, trusted_sha256):
         row = contract["row"]
         policy_name = "implementation/python-%s-qualification-policy" % row
         dependencies = {item["component"]: item for item in root["dependencies"]}
-        expected_dependencies = {policy_name, "python/%s-%s-build" % (row, arch),
+        expected_dependencies = {policy_name, "python/%s-source" % row, "python/%s-%s-build" % (row, arch),
                                  "toolchain/%s-qualification" % arch, "rpm/sysroot-" + arch}
         if contract["zstd"]:
             expected_dependencies.update({"implementation/zstd-build-policy", "zstd/host-build", "zstd/%s-build" % arch})
@@ -175,6 +175,8 @@ def from_documents(root, row_policy, version, arch, trusted_sha256):
                 "component": {"component": name, "canonical_sha256": trusted_sha256},
                 "contract": copy.deepcopy(contract), "version": version, "support": support,
                 "source": _source(_object(root, python_prefix + "/source")), "target": target,
+                "source_components": {"source": copy.deepcopy(dependencies["python/%s-source" % row]),
+                                      "policy": copy.deepcopy(row_policy["dependencies"][0])},
                 "abi": abi, "runtime_base": base, "runtime_executor": executor, "zstd_components": zstd,
                 "runtime_overlay_binding": dict(kind="release-component", scope="build", **dependencies["rpm/sysroot-" + arch])}
     except (READER["ComponentError"], ROWS["ContractError"]) as error:

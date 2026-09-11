@@ -11,6 +11,10 @@
       "component": "implementation/zstd-build-policy"
     },
     {
+      "canonical_sha256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
+      "component": "python/cp314-source"
+    },
+    {
       "canonical_sha256": "67a6e878e8fc9e592765ce0318a709b2686683b132900431ace217b774c712ae",
       "component": "python/cp314-x86_64-build"
     },

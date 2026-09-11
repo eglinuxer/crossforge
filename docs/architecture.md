@@ -178,7 +178,7 @@ cross build 在 configure 前用目标 ELF canary 实测 `execve`/`execv`、PATH
 
 clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七个精确验签 runtime RPM；因 OCI 与 sysroot errata 版本可不同，该 `--nodeps` overlay 仅验证精确 DSO 字节兼容性，不是可部署的 RPM transaction，也不进入 SDK。两套 runtime tier 都把真实 tmpfs 挂到 `/dev/shm`，并实际执行 `multiprocessing.Lock()` 与 libc unnamed semaphore。aarch64 只使用固定 QEMU，发布前仍需原生 ARM 终检。
 
-两个 `python-runtime-clean-<arch>` 构建阶段只读取已认证的 `rpm/sysroot-<arch>` 投影、原 lock/transaction/metadata 和信任根，不再依赖整份 release、release schema 或维护用 RPM plan。原 materializer 仍核对完整锁事务、全部 RPM 字节及签名，然后选择原七个 runtime RPM，保留两次 transaction 检查和前后 rpmdb/os-release 约束。overlay schema 2 用明确的 `input_binding` 记录组件摘要，不声明完整 release 摘要；runtime reader 和最终行验证器从当前完整 release 独立推导预期组件，再检查原镜像、target、sysroot、包摘要及实际运行时证据。旧 schema 1 继续严格绑定原完整 release。行 compile/runtime/final 报告自身仍绑定完整 release；本批只移除共享运行时根的无关配置依赖，整行资格范围拆分继续推进，实际新 runtime 执行尚待验收。
+两个 `python-runtime-clean-<arch>` 构建阶段只读取已认证的 `rpm/sysroot-<arch>` 投影、原 lock/transaction/metadata 和信任根，不再依赖整份 release、release schema 或维护用 RPM plan。原 materializer 仍核对完整锁事务、全部 RPM 字节及签名，然后选择原七个 runtime RPM，保留两次 transaction 检查和前后 rpmdb/os-release 约束。overlay schema 2 用明确的 `input_binding` 记录组件摘要，不声明完整 release 摘要；runtime reader 和最终行验证器从当前完整 release 独立推导预期组件，再检查原镜像、target、sysroot、包摘要及实际运行时证据。旧 schema 1 继续严格绑定原完整 release。静态 compile schema 5 已改为行/目标 input binding，runtime/final 报告仍绑定完整 release；整行资格范围拆分继续推进，实际新 runtime 执行尚待验收。
 
 target SDK 包含解释器、stdlib、headers、`pyconfig.h`、`_sysconfigdata_*`、扩展模块和构建元数据。即使 x86_64 build/target 架构相同，也不得复用。每个 target 必须验证 zlib、bz2、lzma、ctypes、ssl、hashlib、sqlite3、uuid 等约定模块，以及最小 C extension 的编译、ELF 架构和 import；3.14 另验 `compression.zstd`。
 
@@ -222,7 +222,7 @@ $ docker buildx bake phase10
 
 cp39 的 source、build-policy、native 与两套 target build identity 独立新增，原五行对应 identity 保持不变；共享 qualification policy 与 aggregate identity 按设计重新绑定六行。compile/final 报告、runtime preflight 和双架构 row manifest 都重新从 release/policy 计算该身份，而不信任传入摘要。完整 Phase 10 已实际通过 6 个 build Python、12 个 cross SDK、两套 target 的 locked-sysroot/clean-Rocky 运行时资格化及六行 append-only 聚合。
 
-CI 重构已另增六个行级 qualification policy、十二个行/目标输入投影及六个双目标汇总。`python_qualification_policy.py` 可通过独立固定的目标投影 digest 验证并读取当前行的配置；最终消费者可从完整 release 重新计算预期。原 89 个组件文档保持不变，新接口尚未接替 compile/runtime/final 报告。它将行、架构、ABI、QEMU 和 zstd 的配置影响明确分开，但不能替代实际产物、测试代码、环境和执行证据身份。正式资格报告链的迁移与实跑仍在进行，详见[内部组件说明](internal-components.md#python-row-qualification-policy-inputs)。
+CI 重构已另增六个行级 qualification policy、十二个行/目标输入投影及六个双目标汇总。`python_qualification_policy.py` 可通过独立固定的目标投影 digest 验证并读取当前行的配置；最终消费者可从完整 release 重新计算预期。原 89 个组件文档保持不变。静态编译资格阶段现已消费新投影及其认证的 source/build-policy 依赖，schema 5 用明确的 input binding 代替完整 release 和全行 qualification 身份；该阶段不再复制完整 release、schema 或 renderer。runtime preflight 与最终验证器从完整 release 独立推导预期，再进行原有 source、sysroot、ABI、ELF、guard 和原始序列化校验；schema 4 编译报告继续按旧完整 release 精确校验。最终报告仍保留完整 release 和全行 qualification 身份，不因嵌套新编译报告而允许跨 release 重用旧执行记录。这些配置身份不能替代实际产物、测试代码、环境和执行证据。正式资格报告链的迁移与实跑仍在进行，详见[内部组件说明](internal-components.md#python-row-qualification-policy-inputs)。
 
 Python 契约是“支持交叉编译扩展”，不是 PEP 517/wheel 编排器。Crossforge 不做 wheel retag、vendoring、manylinux repair，也不支持 PyPy、free-threaded 或 debug Python。
 

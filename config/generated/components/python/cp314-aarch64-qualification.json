@@ -15,6 +15,10 @@
       "component": "python/cp314-aarch64-build"
     },
     {
+      "canonical_sha256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
+      "component": "python/cp314-source"
+    },
+    {
       "canonical_sha256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
       "component": "rpm/sysroot-aarch64"
     },

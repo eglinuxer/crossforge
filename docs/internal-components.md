@@ -490,8 +490,8 @@ Runtime and final qualification readers independently derive the expected RPM
 component from the current release and continue checking base image, target,
 lock/transaction, selected RPM bytes and actual runtime inventory. Schema 1 keeps
 its original exact full-release contract. This only scopes shared runtime-root
-inputs; the Python compile/runtime/final reports and row qualification aggregate
-still have broader release dependencies. Local graph and regression checks are
+inputs. Static compile schema 5 now uses the row/target policy below; runtime/final
+reports and row qualification aggregation still have broader release dependencies. Local graph and regression checks are
 separate from actual new runtime qualification, which remains pending.
 
 The main plan also captures raw Python edges from the actual selected Bake graph.
@@ -557,8 +557,9 @@ and cross-run acceptance still require the rollout pilot.
 The component renderer now also emits a qualification policy for each Python
 row, a qualification input component for each row/target pair, and one row
 aggregate that binds its two targets. The legacy all-row qualification
-components remain byte-for-byte compatible. The new components do not yet
-replace the compile/runtime/final report schemas or authorize CI report reuse.
+components remain byte-for-byte compatible. The static compile gate now consumes
+these inputs. Runtime/final reports retain their complete release binding; this
+migration does not authorize CI report reuse.
 
 `python_qualification_policy.py` reads a target component and its row policy
 using one independently trusted target-component digest. It needs only
@@ -579,10 +580,31 @@ identity: actual artifacts, copied test/validator code, execution environment,
 and authenticated execution evidence remain required by the receipt interface.
 The policy input binding cannot claim a complete `release_sha256`.
 
-The reader and its isolated projections have passed Docker contract tests and
-Rocky platform-python checks. Production Docker qualification stages still use
-the legacy full-release reports. Migrating that producer/consumer chain and
-executing new qualification runs remain separate acceptance work.
+The static qualifier accepts either the legacy `--release` and two qualification
+pins, or `--qualification-components`, its independently trusted target pin,
+and `--source-manifest`. Component mode authenticates the source and build-policy
+projections through the target/row-policy dependencies before checking the full
+prepared source manifest. The Docker stage copies just those four projections
+and its ABI inputs; it does not copy the full release, its schema, the renderer,
+or the source-to-release binding module. Legacy support is imported only for
+the explicit legacy CLI mode.
+
+Compile schema 5 replaces `release_sha256` and the all-row qualification pair
+with the scoped `input_binding`. Runtime preflight and the final validator
+independently derive this binding from their complete release, then retain all
+existing ABI, source, artifact, guard, runtime and serialized-report checks.
+Compile schema 4 continues to require its exact full-release identity. Final
+schema 4 can embed either compile version while still requiring its own full
+release and all-row qualification identities; no old runtime or final evidence
+is rebound to a different release by accepting a scoped compile report.
+
+The reader, cropped producer inputs, and report consumers have passed Docker
+contract tests and Rocky platform-python checks. Real Bake material captures
+prove that product-version changes no longer invalidate static qualifiers, a
+cp39 source change affects its two static qualifiers, and x86_64 ABI changes
+leave ARM static qualifiers unchanged. These are input-scope checks, not new
+qualification execution. Runtime/final and row/SDK contract migration, actual
+new qualification runs and CI reuse acceptance remain in progress.
 
 ## GCC qualification policy inputs
 

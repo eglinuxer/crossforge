@@ -7,6 +7,10 @@
       "component": "implementation/python-cp312-qualification-policy"
     },
     {
+      "canonical_sha256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
+      "component": "python/cp312-source"
+    },
+    {
       "canonical_sha256": "bcbd28b151216ee2355cf76cf42cae7fd5c26c384419447a530b51757c5c1481",
       "component": "python/cp312-x86_64-build"
     },

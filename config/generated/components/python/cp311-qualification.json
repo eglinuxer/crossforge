@@ -3,11 +3,11 @@
   "component": "python/cp311-qualification",
   "dependencies": [
     {
-      "canonical_sha256": "5f05c2e2b52e0e182e8c6376fbbadc151a24cbef77e0a1be5e93312ad987d4aa",
+      "canonical_sha256": "557bb7db872da683874661a92ffcdabc15f908acab5408a884274af2e927cef1",
       "component": "python/cp311-aarch64-qualification"
     },
     {
-      "canonical_sha256": "2c71a7a37948801f64385fc1cbd4f9a6c1c0d63a51554a8bbd5f0c660aac2e99",
+      "canonical_sha256": "4478e29bb31462b25f13753faafa0ca61693848392f98f6682547519eccdc15b",
       "component": "python/cp311-x86_64-qualification"
     }
   ],

@@ -805,19 +805,6 @@ def cacheonly_python_target(target, row, contexts=None, extra_args=None):
 def render_python_graph(config, targets, component_arguments):
     rows = []
     zstd_version = config["python"]["zstd"]["version"]
-    qualification_arguments = {}
-    for component in (
-        "implementation/python-qualification-policy",
-        "python/qualification",
-    ):
-        argument = component_argument_name(component)
-        try:
-            qualification_arguments[argument] = component_arguments[argument]
-        except KeyError as error:
-            raise ValueError(
-                "missing Python qualification component digest: %s"
-                % component
-            ) from error
     for record in IMPLEMENTED_ROWS:
         try:
             binding = bind_python_row(config, row=record["row"])
@@ -998,6 +985,11 @@ def render_python_graph(config, targets, component_arguments):
                                 (test_context_name, "cpython-test-context-export")):
                 targets[name] = cacheonly_python_target(stage, row,
                     {"crossforge_cpython_cross_output": "target:" + cross_name}, target_args)
+            qualification_component = "python/%s-%s-qualification" % (row_name, arch)
+            try:
+                qualification_digest = component_arguments[component_argument_name(qualification_component)]
+            except KeyError as error:
+                raise ValueError("missing Python qualification component digest: %s" % qualification_component) from error
             targets[qualify_build_name] = cacheonly_python_target(
                 "cpython-qualify-build",
                 row,
@@ -1006,7 +998,7 @@ def render_python_graph(config, targets, component_arguments):
                  "crossforge_cpython_build": "target:" + build_export_name,
                  "crossforge_cpython_install": "target:" + install_name,
                  "crossforge_cpython_test_context": "target:" + test_context_name},
-                dict(target_args, **qualification_arguments),
+                dict(target_args, CPYTHON_QUALIFICATION_COMPONENT_SHA256=qualification_digest),
             )
             runtime_contexts = {
                 "crossforge_host_python": "target:host-python-build-locked",

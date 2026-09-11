@@ -6,8 +6,8 @@
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；main 缺失工具链集中生产及只读消费已接线 | GitHub 实跑、真实签名与跨 run 验收 |
-| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线；Python 共享运行时根已移除完整 release 依赖，行/目标资格输入契约已建立 | GitHub 实跑、整行及其他领域资格 COPY 范围、正式 Python 行资格复用接入 |
-| 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过；原始 Python 组件 CI 消费已接线 | 正式行资格生产/SDK 复用的 CI 接入与远程验收 |
+| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线；Python 共享运行时根及静态 compile 已消费行/目标输入 | GitHub 实跑、整行及其他领域资格 COPY 范围、正式 Python 行资格复用接入 |
+| 4：整行 Python/SDK 交接 | 此前六行正式资格、Python SDK 与完整 SDK 本地实跑通过；新 compile schema 5 通过契约回归，原始 Python 组件 CI 消费已接线 | 新报告链 Docker 实跑、正式行资格生产/SDK 复用的 CI 接入与远程验收 |
 | 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储、候选组件消费及分阶段恢复、raw producer 部分重试接线本地验证通过 | 真实 GitHub 跨 run 信任和 producer 重试、其他资格领域、候选集成/原生 ARM |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
@@ -447,3 +447,19 @@ SDK checkpoint schema 2 保存原 `component-selection.json`；最终消费者�
 首轮投影回归要求旧精确影响集合补上新增的行/目标节点；保留全部原断言后通过。首轮全量 1258 项只有 Bake 测试仍断言组件总数 89，更新为 113 后重新完成上述全量验证。未变更版本、ABI/GCC 基线或目标执行限制。
 
 下一步将新契约接入 compile/runtime/final producer/reader 和行/SDK 汇总，保留旧报告的精确完整 release 校验。正式跨机器资格环境边界、真实 GitHub 信任与恢复、候选/原生 ARM、源码/资格重放、三次基线和并行度实验仍待验收；Docker socket 自动审批拒绝后的授权仍待答复，未重试或绕过该操作。整体仍在实施，未合入 main、推送或发布。
+
+## 批次 3/4：静态 Python 编译资格消费行/目标输入（2026-09-11）
+
+`cpython-qualify-build` 已切换到行/目标 qualification 投影，不再复制完整 release、release schema、renderer 或 source-to-release bridge。目标投影增加对本行 source component 的直接依赖，row qualification policy 继续绑定 build policy；阶段只复制这四份投影和相应 ABI 输入。qualifier 在访问编译产物之前，通过独立可信的资格根摘要重新认证 source/build-policy 并核对完整 prepared source manifest，不能靠几组互不核对的 CLI pin 拼接输入。
+
+`qualify-cpython.py` 的显式组件模式生成 compile schema 5，以 `input_binding` 替换全 release SHA256 和全行 qualification pair；旧 CLI 模式保留 schema 4 与原身份，并延迟加载完整 renderer。编译后的 source、sysroot/transaction、ABI、ELF、target guard、SDK tree、扩展与私有 zstd 检查继续执行。runtime preflight 和原 finalizer 接受 v4/v5 两种 compile，但新 binding 必须由当前完整 release 独立推导，混合字段、错 schema/digest 或组件篡改均拒绝。
+
+runtime schema 3 与 final schema 4 仍精确绑定完整 release。finalizer 的全行 qualification pair 从完整 release 独立生成；嵌套 v5 compile 的序列化摘要及两个原 runtime report 的绑定仍逐一验证，不能借此把旧完整报告迁移到新 release。row/SDK 汇总继续走原完整 release 门禁。该批只缩小静态资格输入，正式整行资格复用尚未接通。
+
+[验证记录](python-compile-inputs-2026-09-11.json)：断网、非 root、无 Docker socket 的工具容器中 config 1268 项、217.868 秒和 packaging 40 项、1.196 秒全部通过，无跳过；四项 locked validators、三个 renderer 和 actionlint 通过（仅既有 queue 兼容例外）。固定 Rocky 8 platform-python 3.6.8 编译四个运行模块并执行十项新增回归通过。测试覆盖十二套实际投影/source manifest 的输入认证、六行新 compile 在原 runtime/final 门禁内的消费、裁剪目录无 release/renderer 加载、旧 CLI、类型/字段/摘要/源码篡改、ABI/ELF/guard 拒绝，以及 cp314 zstd 的显式组件路径。报告与执行是 fixture；zstd isolated test 使用真实 manifest 校验并 mock 模块 ELF audit，不记成实际新资格执行。
+
+对规范化 `3d19020` 与当前源码解析真实 Bake 图，34 个原始编译组件和两个共享 runtime 根输入不变；十二个静态资格输入按新契约变化。只改产品版本：旧实现十二个静态资格均失效，新实现均保持原身份；只改 cp39 source digest：新实现仅两个 cp39 静态资格失效；只改 x86_64 ABI identity：仅六个 x86_64 静态资格失效，ARM 保持不变。95 份原有组件文档不变，本批只更新十二份目标投影及六份行汇总。上述数据是材料范围观测，不是 BuildKit solve、时间优化或真实执行证明。
+
+首轮定向/全量回归提示旧测试仍期望全行参数和 release COPY；改为精确断言新参数、四份投影与最小复制范围。新增 zstd fixture 最初用了紧凑 JSON，与预期 serialized digest 不同；统一实际 fixture 字节后保留原 digest 比较，完成最终验证。源码版本、ABI/GCC baseline 和交叉构建中禁止目标执行的规则未变。
+
+下一步迁移 runtime/final 及 row/SDK 的行级输入生产路径，并完成真实静态/运行时重放。GitHub 信任/恢复、正式跨机器资格环境边界、候选/原生 ARM、强制源码重放和性能实验仍待验收。此前 Docker socket 自动审批拒绝后的授权仍待答复，未重试或绕过；未合入 main、推送或发布。

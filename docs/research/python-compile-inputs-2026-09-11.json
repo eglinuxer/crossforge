@@ -1,0 +1,255 @@
+{
+  "base_commit": "3d1902035704d978e6e9a13cec19585f6b8af463",
+  "checks": [
+    {
+      "command": [
+        "./scripts/validate-release.py",
+        "--require-locked"
+      ],
+      "seconds": 0.024
+    },
+    {
+      "command": [
+        "./scripts/validate-supply-chain-evidence.py"
+      ],
+      "seconds": 0.445
+    },
+    {
+      "command": [
+        "./scripts/validate-frozen-abi.py"
+      ],
+      "seconds": 0.306
+    },
+    {
+      "command": [
+        "./scripts/validate-python-runtime-providers.py"
+      ],
+      "seconds": 0.236
+    },
+    {
+      "command": [
+        "./scripts/render-release-components.py",
+        "--check"
+      ],
+      "seconds": 0.179
+    },
+    {
+      "command": [
+        "./scripts/render-vcpkg-integration.py",
+        "--check"
+      ],
+      "seconds": 0.195
+    },
+    {
+      "command": [
+        "./scripts/render-bake.py",
+        "--check"
+      ],
+      "seconds": 0.283
+    },
+    {
+      "command": [
+        "actionlint",
+        "-ignore",
+        "unexpected key \"queue\" for \"concurrency\" section"
+      ],
+      "seconds": 0.009
+    }
+  ],
+  "config": {
+    "seconds": 217.868,
+    "skipped": 0,
+    "tests": 1268
+  },
+  "date": "2026-09-11",
+  "docker": {
+    "cpus": 4,
+    "docker_socket_mounted": false,
+    "image_id": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "network": "none",
+    "repository_read_only": true
+  },
+  "initial_failures": [
+    "Old Bake and static-stage tests still expected the global qualification pins/full-release COPY; replaced with exact scoped-pin and four-projection assertions",
+    "Initial full run used compact zstd fixture serialization while expected evidence bound pretty serialized bytes; corrected the fixture bytes, retained exact digest comparison and reran validation"
+  ],
+  "kind": "crossforge-python-compile-input-observation",
+  "limits": [
+    "No actual new compiler, static qualification, runtime or image solve",
+    "Source manifests and report/ELF inputs in regressions are explicit fixtures; zstd manifest validation is real but the required-module ELF audit is mocked in its isolated branch test",
+    "Material observations use real Bake print with an execution identity fixture, not performance measurements or qualification evidence",
+    "Runtime/final, row/SDK producer input migration and formal CI qualification reuse remain incomplete",
+    "Physical execution identity for cross-machine reuse has not been relaxed",
+    "Prior Docker socket auto-review rejection remains pending; not retried or bypassed",
+    "No GitHub event/signature/trust/recovery, fresh candidate/native ARM or runner performance acceptance",
+    "No main merge, remote push or publication"
+  ],
+  "material_comparison": {
+    "base_commit": "3d1902035704d978e6e9a13cec19585f6b8af463",
+    "changed_component_documents": [
+      "python/cp310-aarch64-qualification.json",
+      "python/cp310-qualification.json",
+      "python/cp310-x86_64-qualification.json",
+      "python/cp311-aarch64-qualification.json",
+      "python/cp311-qualification.json",
+      "python/cp311-x86_64-qualification.json",
+      "python/cp312-aarch64-qualification.json",
+      "python/cp312-qualification.json",
+      "python/cp312-x86_64-qualification.json",
+      "python/cp313-aarch64-qualification.json",
+      "python/cp313-qualification.json",
+      "python/cp313-x86_64-qualification.json",
+      "python/cp314-aarch64-qualification.json",
+      "python/cp314-qualification.json",
+      "python/cp314-x86_64-qualification.json",
+      "python/cp39-aarch64-qualification.json",
+      "python/cp39-qualification.json",
+      "python/cp39-x86_64-qualification.json"
+    ],
+    "execution_fixture": {
+      "buildkit_image": "moby/buildkit:v0.33.0@sha256:6c2fa84a6b61ccd72899dde4239f8d5717f05f9a8ca6f3cad185fb1a95a94de3"
+    },
+    "mutations": {
+      "new-cp39-source": {
+        "changed_static_qualifiers": [
+          "cpython-cp39-aarch64-qualify-build",
+          "cpython-cp39-x86_64-qualify-build"
+        ],
+        "digests": {
+          "cpython-cp310-aarch64-qualify-build": "784e1fabb0a9b0b29d53b19a87a42198afdfba1492382743e70d52fc93985bac",
+          "cpython-cp310-x86_64-qualify-build": "567ce2ac1cfbbd309b3a240c1d7b626fad2be72e9470719d041dba46cc583094",
+          "cpython-cp311-aarch64-qualify-build": "7dca6d7eed591d0f0fe6291c8f927613d49ad702acaaa3207c79fa59d9b9f3d0",
+          "cpython-cp311-x86_64-qualify-build": "634e1f45deb13a56ac9810a0359c0117ed306faac140a58b638b64b5c2fb39d3",
+          "cpython-cp312-aarch64-qualify-build": "ef5719c37ec9ffc00b7ad6cc336fffffc3bc7c01ab5811800705c32fa77a07e4",
+          "cpython-cp312-x86_64-qualify-build": "9292cdcc42235bee96702a1d837bf0a2942a0007e6a13b6aa3449b1f7020a8c0",
+          "cpython-cp313-aarch64-qualify-build": "67d3fa3c5239551ec8079191b64178776f7741af53648670ed6aa70535d40483",
+          "cpython-cp313-x86_64-qualify-build": "e4c9654d96c7e84af51402cebb42743d01f1b8976d027d71fa2acb64777157e8",
+          "cpython-cp314-aarch64-qualify-build": "10eb7526aacbcd39204b736368a43af72c9a0ad256f8b8709f3b46eec7611718",
+          "cpython-cp314-x86_64-qualify-build": "610e10e33cb2bf636d6e76711c68d53cf3e46f29a5664ab5a5530e14889dd76a",
+          "cpython-cp39-aarch64-qualify-build": "d56b70a31c43062389c27c831ebf6a7fc75605c07a924452fd462b99f52285be",
+          "cpython-cp39-x86_64-qualify-build": "bf3c9a1af25d957b6d7c1cd057b49bd6fc334df53a2437c904346ae1e5de5467"
+        }
+      },
+      "new-product-version": {
+        "changed_static_qualifiers": [],
+        "digests": {
+          "cpython-cp310-aarch64-qualify-build": "784e1fabb0a9b0b29d53b19a87a42198afdfba1492382743e70d52fc93985bac",
+          "cpython-cp310-x86_64-qualify-build": "567ce2ac1cfbbd309b3a240c1d7b626fad2be72e9470719d041dba46cc583094",
+          "cpython-cp311-aarch64-qualify-build": "7dca6d7eed591d0f0fe6291c8f927613d49ad702acaaa3207c79fa59d9b9f3d0",
+          "cpython-cp311-x86_64-qualify-build": "634e1f45deb13a56ac9810a0359c0117ed306faac140a58b638b64b5c2fb39d3",
+          "cpython-cp312-aarch64-qualify-build": "ef5719c37ec9ffc00b7ad6cc336fffffc3bc7c01ab5811800705c32fa77a07e4",
+          "cpython-cp312-x86_64-qualify-build": "9292cdcc42235bee96702a1d837bf0a2942a0007e6a13b6aa3449b1f7020a8c0",
+          "cpython-cp313-aarch64-qualify-build": "67d3fa3c5239551ec8079191b64178776f7741af53648670ed6aa70535d40483",
+          "cpython-cp313-x86_64-qualify-build": "e4c9654d96c7e84af51402cebb42743d01f1b8976d027d71fa2acb64777157e8",
+          "cpython-cp314-aarch64-qualify-build": "10eb7526aacbcd39204b736368a43af72c9a0ad256f8b8709f3b46eec7611718",
+          "cpython-cp314-x86_64-qualify-build": "610e10e33cb2bf636d6e76711c68d53cf3e46f29a5664ab5a5530e14889dd76a",
+          "cpython-cp39-aarch64-qualify-build": "7730e4f866446e5abc2086d79f27fa904be497abf4f423d24a4b7c004b5ab99e",
+          "cpython-cp39-x86_64-qualify-build": "7ad2ee67fa1448ee602674c0e2ad8f52d4bf8eeed141126f95dafdad9862517f"
+        }
+      },
+      "new-x86-abi": {
+        "changed_static_qualifiers": [
+          "cpython-cp310-x86_64-qualify-build",
+          "cpython-cp311-x86_64-qualify-build",
+          "cpython-cp312-x86_64-qualify-build",
+          "cpython-cp313-x86_64-qualify-build",
+          "cpython-cp314-x86_64-qualify-build",
+          "cpython-cp39-x86_64-qualify-build"
+        ],
+        "digests": {
+          "cpython-cp310-aarch64-qualify-build": "784e1fabb0a9b0b29d53b19a87a42198afdfba1492382743e70d52fc93985bac",
+          "cpython-cp310-x86_64-qualify-build": "676aff842622c05936ea5251544878dc58e0b3b441b1b62dbd94634b911c9acf",
+          "cpython-cp311-aarch64-qualify-build": "7dca6d7eed591d0f0fe6291c8f927613d49ad702acaaa3207c79fa59d9b9f3d0",
+          "cpython-cp311-x86_64-qualify-build": "ccde10ea3f5e8b34351c3db5a89a455356b23fc35949fadc588ff24731a69ef9",
+          "cpython-cp312-aarch64-qualify-build": "ef5719c37ec9ffc00b7ad6cc336fffffc3bc7c01ab5811800705c32fa77a07e4",
+          "cpython-cp312-x86_64-qualify-build": "6586e4e8f0b3dead56a450dfb80bd292a0aaa8e52067f614085708016d55f466",
+          "cpython-cp313-aarch64-qualify-build": "67d3fa3c5239551ec8079191b64178776f7741af53648670ed6aa70535d40483",
+          "cpython-cp313-x86_64-qualify-build": "668298fb8dbc45b94936952297a20a5b86932b3617610ad0b1d74e9066968cd5",
+          "cpython-cp314-aarch64-qualify-build": "10eb7526aacbcd39204b736368a43af72c9a0ad256f8b8709f3b46eec7611718",
+          "cpython-cp314-x86_64-qualify-build": "04129b70f1c2174eada60b4f41903f6d8a0739a235e922e9e32cc85322cb845e",
+          "cpython-cp39-aarch64-qualify-build": "7730e4f866446e5abc2086d79f27fa904be497abf4f423d24a4b7c004b5ab99e",
+          "cpython-cp39-x86_64-qualify-build": "6cc55f67fa180c44d70212b251f59f80a34159bc15ec6936df3c45c4e3ddd3b0"
+        }
+      },
+      "old-product-version": {
+        "changed_static_qualifiers": [
+          "cpython-cp310-aarch64-qualify-build",
+          "cpython-cp310-x86_64-qualify-build",
+          "cpython-cp311-aarch64-qualify-build",
+          "cpython-cp311-x86_64-qualify-build",
+          "cpython-cp312-aarch64-qualify-build",
+          "cpython-cp312-x86_64-qualify-build",
+          "cpython-cp313-aarch64-qualify-build",
+          "cpython-cp313-x86_64-qualify-build",
+          "cpython-cp314-aarch64-qualify-build",
+          "cpython-cp314-x86_64-qualify-build",
+          "cpython-cp39-aarch64-qualify-build",
+          "cpython-cp39-x86_64-qualify-build"
+        ],
+        "digests": {
+          "cpython-cp310-aarch64-qualify-build": "bc8d47b6edfc172a84674ebaa52397cce23e624e637355998f971fa2fc0aa32a",
+          "cpython-cp310-x86_64-qualify-build": "ed10c02230868e883721320d111fd2ec51cb611b0aa5937b303d63c797ad215f",
+          "cpython-cp311-aarch64-qualify-build": "d7cf9914f2ab23fdb7b903916d7b3c5d9a7b6544e43da5acd0ea4f03fd2b6fa5",
+          "cpython-cp311-x86_64-qualify-build": "cc097dfa8f1d31651e4803f18afc9d590d26657861a1e6c15e9433ff714d334d",
+          "cpython-cp312-aarch64-qualify-build": "3638db5d118d4f72c0a8e9ab2fe6fff6baf3905cbf66f1c8e3670eacc93b297e",
+          "cpython-cp312-x86_64-qualify-build": "4beecab8c274977024d10dfb2e30a3310a38da197992ff7b8ffede3c4293ee5f",
+          "cpython-cp313-aarch64-qualify-build": "994f67acc99bad3e2373d30f690ea5e7ac2c6131923cd4ad6bd6c211cafaaf31",
+          "cpython-cp313-x86_64-qualify-build": "3d8f8e7c4940cc80fa59e5c82206a691bb2f7b410ed5b3db0b48b5c11478b26c",
+          "cpython-cp314-aarch64-qualify-build": "55e3b8d15f94969385ef0cfa59e82ce11d088ca7fdbc167a6be7a47bac0f823c",
+          "cpython-cp314-x86_64-qualify-build": "14f40bdabf2b2c7d14ebdda872a064206201d70dca23de5c390bc025ac8a9fc5",
+          "cpython-cp39-aarch64-qualify-build": "a7489c2a62ea4d1ff06cfe756657b412acfcea871cb621c24869235559e63f39",
+          "cpython-cp39-x86_64-qualify-build": "594ea7c077513b5514c9ab6ce2cfda1e0ff118a6bb2a1c16362588cb4449a557"
+        }
+      }
+    },
+    "raw_component_closures_unchanged": 34,
+    "runtime_closures_unchanged": 2,
+    "scope": "Real Bake print and source material capture over immutable normalized snapshots; configuration mutations only, no actual compiler/image/runtime execution or performance acceptance",
+    "static_qualification_closures_changed": 12,
+    "status": "passed",
+    "unchanged_component_documents": 95
+  },
+  "packaging": {
+    "seconds": 1.196,
+    "skipped": 0,
+    "tests": 40
+  },
+  "qualification_receipt": false,
+  "report_schemas": {
+    "component_compile": 5,
+    "final": 4,
+    "legacy_compile": 4,
+    "runtime": 3
+  },
+  "rocky_platform_python": {
+    "compiled": [
+      "scripts/qualify-cpython.py",
+      "scripts/finalize-cpython-qualification.py",
+      "scripts/run-cpython-runtime.py",
+      "scripts/python_qualification_policy.py"
+    ],
+    "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+    "scope": "Actual component/source authentication and compile/runtime/final report fixtures, not new target execution",
+    "skipped": 0,
+    "status": "passed",
+    "tests": 10
+  },
+  "schema_version": 1,
+  "scope": "Static Docker qualifier uses authenticated per-row/target inputs and produces compile schema 5; runtime/final retain full-release bindings and independently validate new and legacy compile reports",
+  "source_file_sha256": {
+    "docker-bake.override.json": "b059a608490f82940dcd11f86c3811d1a6f40ae8975f3272ed230848e5d58228",
+    "docker/python.Dockerfile": "254afd8a328f280c17adc519b82792bce14a3bc66b22df0ebcdf2a6306a440d9",
+    "scripts/finalize-cpython-qualification.py": "52da7f9b7936e64d194bbaa293d8c6cd97146e537ede18d8b872f3f7e6589aec",
+    "scripts/python_qualification_policy.py": "529d40bb914c5da4500ec38170416e956db04afec20ddbf73c410c0646dd90a8",
+    "scripts/qualify-cpython.py": "4756f595aae035ad3686e4ab6cfd259bfb8131d857edcb07b249106bb0acb29f",
+    "scripts/release-components-core.py": "8ce972f35b61fe3b8a5ad387168b78fbb050a4064842fd4898213fb919e39740",
+    "scripts/render-bake.py": "09b645d272665bee393dc68acc976f4c97dac589d563eb26ac2bc2a0e2cf4b51",
+    "scripts/run-cpython-runtime.py": "34d3176488e26acd2d5447eb08a2e3ac2efb76b3b6835c414d6622b7bdfdd2aa",
+    "tests/config/test_python_build_component_wiring.py": "89c913e19014dccd735eaeb69694c3fd82a52cae6e636cb1f879b0d06c69b80c",
+    "tests/config/test_python_compile_component_inputs.py": "75473bea2a52f7b3db39cbd0784183f89865db29ab8642714301455ee0db15c0",
+    "tests/config/test_python_qualification.py": "8a40cdcb4819562102a075fac34d654fa6bc4cf57d0c9e7f8911f400873c22c3",
+    "tests/config/test_render_bake.py": "dae47b9362ae88ff10e93e94f483c408e9968ceaf907d73567b3fdf7a4674a26"
+  },
+  "status": "local-contract-validation-passed"
+}

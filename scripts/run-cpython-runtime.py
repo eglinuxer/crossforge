@@ -38,6 +38,7 @@ RELEASE_COMPONENTS = runpy.run_path(
     str(Path(__file__).with_name("release-components-core.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+POLICY = runpy.run_path(str(Path(__file__).with_name("python_qualification_policy.py")))
 OVERLAY = runpy.run_path(str(Path(__file__).with_name("python_runtime_overlay.py")))
 RUNTIME_PROVIDERS = runpy.run_path(
     str(Path(__file__).with_name("python_runtime_providers.py"))
@@ -107,15 +108,25 @@ def require_sha256(value, label):
 
 
 def validate_compile_qualification_components(compile_report, release):
+    version = compile_report.get("qualification_schema_version")
     require(
-        compile_report.get("qualification_schema_version") == 4,
+        type(version) is int and version in (4, 5),
         "compile report schema version mismatch",
     )
     try:
+        if version == 5:
+            require("qualification_components" not in compile_report, "scoped compile report contains legacy qualification components")
+            profile = TARGETS.get(compile_report.get("target"))
+            require(profile is not None, "compile report target mismatch")
+            policy = POLICY["from_release"](release, compile_report.get("version"), profile["arch"],
+                                            RELEASE_COMPONENTS["render_component_documents"])
+            POLICY["require_binding"](compile_report, policy)
+            return POLICY["binding"](policy)
+        require("input_binding" not in compile_report, "legacy compile report contains a scoped input binding")
         return RELEASE_COMPONENTS["validate_python_qualification_components"](
             compile_report.get("qualification_components"), release
         )
-    except ProjectionError as error:
+    except (ProjectionError, POLICY["PolicyError"]) as error:
         raise RuntimeError_(
             "compile report qualification_components: %s" % error
         ) from error
@@ -690,8 +701,9 @@ def main():
     require(compile_report.get("target") == arguments.target, "compile report target mismatch")
     require(compile_report.get("version") == arguments.version, "compile report version mismatch")
     require(compile_report.get("adapter") == contract["adapter"], "compile report adapter mismatch")
-    require(compile_report.get("release_sha256") == release_sha256, "compile report release mismatch")
     validate_compile_qualification_components(compile_report, release)
+    if compile_report["qualification_schema_version"] == 4:
+        require(compile_report.get("release_sha256") == release_sha256, "compile report release mismatch")
     compile_abi = compile_report.get("abi")
     require(isinstance(compile_abi, dict), "compile report ABI evidence is missing")
     compile_provider_policy = compile_abi.get("runtime_provider_policy")

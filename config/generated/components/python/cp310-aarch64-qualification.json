@@ -11,6 +11,10 @@
       "component": "python/cp310-aarch64-build"
     },
     {
+      "canonical_sha256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
+      "component": "python/cp310-source"
+    },
+    {
       "canonical_sha256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
       "component": "rpm/sysroot-aarch64"
     },

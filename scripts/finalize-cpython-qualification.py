@@ -28,6 +28,7 @@ RELEASE_COMPONENTS = runpy.run_path(
     str(Path(__file__).with_name("release-components-core.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+POLICY = runpy.run_path(str(Path(__file__).with_name("python_qualification_policy.py")))
 OVERLAY = runpy.run_path(str(Path(__file__).with_name("python_runtime_overlay.py")))
 ZSTD_EVIDENCE = runpy.run_path(
     str(Path(__file__).with_name("python_zstd_evidence.py"))
@@ -1283,11 +1284,13 @@ def validate_compile_report(
     actual_elf_evidence,
     require_qualification_artifact,
 ):
-    require_exact_keys(report, COMPILE_KEYS, "compile report")
+    schema_version = report.get("qualification_schema_version") if isinstance(report, dict) else None
     require(
-        report["qualification_schema_version"] == 4,
+        type(schema_version) is int and schema_version in (4, 5),
         "compile report schema version mismatch",
     )
+    fields = COMPILE_KEYS if schema_version == 4 else (COMPILE_KEYS - {"release_sha256", "qualification_components"}) | {"input_binding"}
+    require_exact_keys(report, fields, "compile report")
     require(
         report["report_kind"] == "crossforge-cpython-compile",
         "compile report kind mismatch",
@@ -1295,16 +1298,18 @@ def validate_compile_report(
     require(report["target"] == target, "compile report target mismatch")
     require(report["version"] == version, "compile report version mismatch")
     require(report["adapter"] == context["adapter"], "compile report adapter mismatch")
-    require_sha256(report["release_sha256"], "compile report release_sha256")
-    require(
-        report["release_sha256"] == context["release_sha256"],
-        "compile report release digest mismatch",
-    )
-    validate_python_qualification_components(
-        report["qualification_components"],
-        context["release"],
-        "compile report qualification_components",
-    )
+    if schema_version == 4:
+        require_sha256(report["release_sha256"], "compile report release_sha256")
+        require(report["release_sha256"] == context["release_sha256"], "compile report release digest mismatch")
+        validate_python_qualification_components(report["qualification_components"], context["release"],
+                                                 "compile report qualification_components")
+    else:
+        try:
+            policy = POLICY["from_release"](context["release"], version, target.split("-", 1)[0],
+                                            RELEASE_COMPONENTS["render_component_documents"])
+            POLICY["require_binding"](report, policy)
+        except (POLICY["PolicyError"], ProjectionError) as error:
+            raise FinalizationError("compile report input binding: %s" % error) from error
     require_sha256(report["sysroot_sha256"], "compile report sysroot_sha256")
     require(
         report["sysroot_sha256"] == context["sysroot_sha256"],
@@ -2089,10 +2094,11 @@ def validate_final_report(
         release,
         "qualification report qualification_components",
     )
-    require(
-        qualification_components == compile_report["qualification_components"],
-        "qualification report component identities differ from compile report",
-    )
+    if compile_report["qualification_schema_version"] == 4:
+        require(
+            qualification_components == compile_report["qualification_components"],
+            "qualification report component identities differ from compile report",
+        )
     compile_digest = serialized_sha256(compile_report)
     require(
         report["compile_report_sha256"] == compile_digest,
@@ -2259,9 +2265,7 @@ def finalize(
         "version": version,
         "adapter": context["adapter"],
         "release_sha256": context["release_sha256"],
-        "qualification_components": compile_report[
-            "qualification_components"
-        ],
+        "qualification_components": RELEASE_COMPONENTS["python_qualification_components"](release),
         "source": compile_report["source"],
         "sysroot_sha256": context["sysroot_sha256"],
         "python_sha256": compile_report["python_sha256"],
