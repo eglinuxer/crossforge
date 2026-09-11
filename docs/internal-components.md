@@ -779,7 +779,18 @@ qualification failure, mismatched inputs or failed diagnostic preservation keep
 the staging trees. This removes local duplicate installations only. It does not
 delete registry artifacts or implement reference-aware catalog retention.
 
-The SDK diagnostic artifact saves the original thirty-two raw selections and
+When all six rows are acquired from authenticated catalogs, main's SDK acquisition
+also saves the complete `32 + 6` recovery document before final integration.
+`execution/sdk-recovery-reference.json` holds its independent digest and points to
+`execution/acquisition/component-recovery.json`; the diagnostic artifact summary
+reports this separately from the raw-only selection. Final integration rechecks
+the saved complete selection, current source/root/materials and full physical
+execution identity before reporting success. If integration fails, the prior
+checkpoint remains available to the existing explicit SDK catalog recovery
+interface. Missing or locally qualified unsigned rows do not create a complete
+checkpoint or a complete-recovery summary.
+
+The SDK diagnostic artifact still saves the original thirty-two raw selections and
 their independent SHA256 before row qualification/final integration. Its summary
 provides the artifact ID and document location. This supports the original raw
 recovery interface; complete recovery of this CI job's fresh local row results

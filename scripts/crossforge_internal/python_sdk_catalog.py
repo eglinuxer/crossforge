@@ -126,6 +126,15 @@ def acquire(source, graph, root, execution, directory, evidence, builder, oras, 
     return result
 
 
+def verify_checkpoint(source, graph, root, execution, checkpoint, builder, docker_config=None):
+    """Recheck a saved complete selection against its independently held digest."""
+    observed = qualification_execution.execution_identity(builder, docker_config)
+    require(observed == execution, "SDK recovery execution environment changed during integration")
+    return python_sdk_recovery.verify(load_json(checkpoint["path"]), checkpoint["sha256"],
+        python_sdk_recovery.context(source, graph, root, observed),
+        component_recovery.requirements(source, graph, True), python_sdk.matrix(source))
+
+
 def execute(source, graph, root, execution, directory, output, builder, oras, cosign, docker_config=None,
             record_recovery=False, recovery=None):
     """Acquire authenticated inputs and freshly execute the existing SDK gates."""
@@ -136,12 +145,7 @@ def execute(source, graph, root, execution, directory, output, builder, oras, co
     integrated = python_sdk.execute(source, graph, root, execution, acquired["components"],
         output / "integration", builder, docker_config)
     if record_recovery or recovery is not None:
-        observed = qualification_execution.execution_identity(builder, docker_config)
-        require(observed == execution, "SDK recovery execution environment changed during integration")
-        checkpoint = acquired["component_recovery"]
-        python_sdk_recovery.verify(load_json(checkpoint["path"]), checkpoint["sha256"],
-            python_sdk_recovery.context(source, graph, root, observed),
-            component_recovery.requirements(source, graph, True), python_sdk.matrix(source))
+        verify_checkpoint(source, graph, root, execution, acquired["component_recovery"], builder, docker_config)
     result = {"schema_version": 1, "kind": "crossforge-sdk-catalog-integration", "root": root,
               "acquisition": acquired, "integration": integrated}
     component_build.write_json(output / "result.json", result)

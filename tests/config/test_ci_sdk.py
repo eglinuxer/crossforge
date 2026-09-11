@@ -4,18 +4,21 @@ import contextlib
 import copy
 import io
 import json
+import os
 from pathlib import Path
 import runpy
 import subprocess
 import sys
 import threading
+import textwrap
 import unittest
 from unittest import mock
 
 import test_python_sdk_catalog as fixtures
 import test_component_recovery as producer_fixtures
+import test_python_sdk_recovery as recovery_fixtures
 
-from crossforge_internal import ci_sdk, component_ci, component_recovery, python_qualification
+from crossforge_internal import ci_sdk, component_ci, component_recovery, python_qualification, python_sdk_recovery
 from crossforge_internal.identity import IdentityError, content_sha256, load_json
 
 ROOT = fixtures.ROOT
@@ -38,9 +41,10 @@ class MainSdkTests(unittest.TestCase):
                 subject.setdefault("layout", "/fixture/" + name + "/oci")
                 result.update(producer_fixtures.selection(**expected[name]), subject=subject)
         self.source = self.patch(component_ci, "checked_source", return_value=self.producer)
+        self.patch(python_sdk_recovery, "revision", return_value=self.producer["source_commit"])
         self.graph_reader = self.patch(component_ci, "source_graph", return_value=self.graph)
-        self.qualified = {row: {"status": "verified-qualified-row", "subject": value["qualification"],
-            "producer": {"fixture": "original row producer"}} for row, value in self.components["rows"].items()}
+        self.qualified = {row: dict(recovery_fixtures.row_selection(row), subject=value["qualification"])
+            for row, value in self.components["rows"].items()}
         self.row_resolver.side_effect = lambda *args, **kwargs: self.qualified[args[2]]
         self.produce = self.patch(python_qualification, "produce", side_effect=self.produced)
         self.integrate = self.patch(fixtures.python_sdk, "execute", return_value={"fixture": "fresh SDK integration"})
@@ -80,9 +84,17 @@ class MainSdkTests(unittest.TestCase):
         self.assertEqual(self.integrate.call_args[0][4], self.components)
         self.assertEqual(value["integration"], {"fixture": "fresh SDK integration"})
         self.assertTrue(all(row["origin"] == "authenticated-catalog" for row in value["rows"].values()))
-        self.assertTrue(all(row["producer"] == {"fixture": "original row producer"} for row in value["rows"].values()))
+        self.assertTrue(all(value["rows"][row]["producer"] == self.qualified[row]["producer"] for row in self.qualified))
         self.produce.assert_not_called()
         self.assertEqual(load_json(self.evidence / "result.json"), value)
+        checkpoint = value["component_recovery"]
+        selection = load_json(checkpoint["path"])
+        current = python_sdk_recovery.context(ROOT, self.graph, "sdk-complete-dev", self.execution)
+        pins = python_sdk_recovery.verify(selection, checkpoint["sha256"], current,
+            component_recovery.requirements(ROOT, self.graph, True), list(self.qualified))
+        self.assertEqual(len(pins["raw"]), 32)
+        self.assertEqual(set(pins["rows"]), set(self.qualified))
+        self.assertEqual(load_json(self.evidence / "sdk-recovery-reference.json")["sha256"], checkpoint["sha256"])
 
     def test_only_missing_rows_are_freshly_qualified_on_the_integration_builder(self):
         self.miss("cp39")
@@ -104,6 +116,9 @@ class MainSdkTests(unittest.TestCase):
         self.assertEqual((data / "oci/blob").read_text(), "fixture sealed bytes")
         self.assertEqual((self.evidence / "rows/cp39/payload/component/execution.jsonl").read_text(), "fixture progress\n")
         self.assertEqual(load_json(data / "receipt.json"), load_json(self.evidence / "rows/cp39/receipt.json"))
+        self.assertIsNone(result["component_recovery"])
+        self.assertFalse((self.evidence / "sdk-recovery-reference.json").exists())
+        self.assertFalse((self.evidence / "acquisition/component-recovery.json").exists())
 
     def test_all_missing_rows_keep_two_workers_and_complete_before_integration(self):
         for row in self.qualified:
@@ -225,6 +240,23 @@ class MainSdkTests(unittest.TestCase):
         context = component_recovery.context(ROOT, self.graph, "sdk", ["python-dev", "sdk-complete-dev"],
             self.execution["build"], self.producer["source_commit"])
         self.assertEqual(len(component_recovery.verify(saved, selected["sha256"], context, expected)), 32)
+        checkpoint = load_json(self.evidence / "sdk-recovery-reference.json")
+        saved = load_json(self.evidence / "acquisition/component-recovery.json")
+        pins = python_sdk_recovery.verify(saved, checkpoint["sha256"],
+            python_sdk_recovery.context(ROOT, self.graph, "sdk-complete-dev", self.execution), expected, list(self.qualified))
+        self.assertEqual(len(pins["rows"]), 6)
+
+    def test_checkpoint_changed_during_integration_cannot_be_reported_as_success(self):
+        def tamper(*args):
+            path = self.evidence / "acquisition/component-recovery.json"
+            value = load_json(path)
+            value["rows"]["cp39"]["receipt_sha256"] = "0" * 64
+            path.write_text(json.dumps(value))
+            return {"fixture": "integration completed after checkpoint changed"}
+        self.integrate.side_effect = tamper
+        with self.assertRaisesRegex(IdentityError, "selected SHA256"):
+            self.execute()
+        self.assertFalse((self.evidence / "result.json").exists())
 
     def test_worker_request_tampering_fails_before_qualification(self):
         path = self.root / "request.json"
@@ -311,6 +343,30 @@ class MainSdkCliTests(unittest.TestCase):
         self.assertNotIn("registry_transfer.publish", (ROOT / "scripts/crossforge_internal/ci_sdk.py").read_text())
         self.assertIn("if: always()", action)
         self.assertIn("docker logout ghcr.io", action)
+
+    def test_action_reports_complete_recovery_only_when_its_checkpoint_and_artifact_exist(self):
+        action = (ROOT / ".github/actions/run-component-sdk/action.yml").read_text()
+        script = action.split('python3 - "$RUNNER_TEMP/build-diagnostics/sdk/execution" <<\'PY\'\n', 1)[1]
+        script = textwrap.dedent(script.split("\n        PY\n", 1)[0])
+        directory = self.root / "execution"
+        directory.mkdir()
+        (directory / "recovery-reference.json").write_text(json.dumps({"sha256": "a" * 64}))
+        for full, artifact in ((False, "456"), (True, "456"), (True, "")):
+            if full:
+                (directory / "sdk-recovery-reference.json").write_text(json.dumps({"sha256": "b" * 64}))
+            summary = self.root / ("summary-%s-%s" % (full, artifact))
+            result = subprocess.run([sys.executable, "-c", script, str(directory)],
+                env={**os.environ, "GITHUB_STEP_SUMMARY": str(summary), "GITHUB_RUN_ID": "123",
+                     "RECOVERY_ARTIFACT_ID": artifact}, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            value = summary.read_text() if summary.exists() else ""
+            if not artifact:
+                self.assertEqual(value, "")
+            else:
+                self.assertIn("artifact `456`", value)
+                self.assertIn("execution/component-recovery.json", value)
+                self.assertEqual("32 raw + 6 signed rows" in value, full)
+                self.assertEqual("execution/acquisition/component-recovery.json" in value, full)
 
 
 if __name__ == "__main__":

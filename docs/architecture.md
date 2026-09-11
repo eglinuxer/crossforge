@@ -192,7 +192,7 @@ clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七
 
 SDK job 仍只有 contents/read 和 packages/read 权限；匹配的签名行保留原 producer，新行只留在本 job，不发布或签名。被选中的独立 Python 任务通过行生产/签名工作流交接资格产物，required status 校验完整行 matrix；严格物理环境不匹配时，SDK 仍可能补验同一行。candidate 前置资格调用同一工作流，候选镜像发布本身仍走原始组件绑定路径。SDK 编排与目录/恢复实现变更由增量选择器显式选择 canonical SDK roots，诊断区分编排原因与真实源码输入变化。实际新 Docker 运行、GitHub 事件和性能仍待验收。
 
-在补做资格或最终集成之前，SDK job 保存原 raw schema 的三十二份固定选择及独立 SHA256，诊断上传后的 summary 给出 run/artifact ID、摘要和文件位置。失败时可按原 raw recovery 接口及严格来源约束取回这些原始组件；这份记录不包含新执行的六行资格，不能冒充下面的完整 SDK 恢复记录。新的主 SDK job 尚无自动恢复入口，OCI blobs 与安装树也不进入诊断工件。
+在补做资格或最终集成之前，SDK job 保存原 raw schema 的三十二份固定选择及独立 SHA256，诊断上传后的 summary 给出 run/artifact ID、摘要和文件位置。失败时可按原 raw recovery 接口及严格来源约束取回这些原始组件；这份记录不包含新执行的六行资格，不能冒充下面的完整 SDK 恢复记录。当六行全部来自已认证目录时，主 SDK acquisition 另在最终集成前保存完整的 32+6 恢复记录，summary 单独报告其摘要和路径；集成成功后再次核对完整记录、源码材料与物理环境，集成失败则保留原记录供显式 SDK catalog 恢复接口使用。本 job 新补验的未签名行不产生完整记录。主 SDK job 尚无自动恢复入口，OCI blobs 与安装树也不进入诊断工件。
 
 每份新行封存成功、receipt 与计划输入及 producer 一致，并保存诊断后，SDK 控制器清理该行的 `payload/` 和 `extracted/` 两份中间安装目录，保留 OCI、receipt 和输入记录供原 SDK executor 独立验收。资格失败、输入不匹配或诊断保存失败不会触发清理；只清理本 job 的重复安装副本，不删除 registry 产物，也不替代按引用保留策略。
 

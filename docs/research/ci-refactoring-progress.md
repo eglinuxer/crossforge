@@ -675,3 +675,13 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 实际正式安装接口另消费本轮已验收的 cp39 行，完成原始组件和资格产物复核、两个 fresh append RUN 与行清单比较，外层退出 0，213.394 秒。捕获材料只有两份工具链与一份 qualified row；实际执行日志没有 GCC/CPython 源码编译 RUN。源码是基于 `fb836c5`、含本批实现的固定规范化工作副本，记录明确标为 source_dirty=true 并固定全部目录模式及文件字节/模式，未伪造 GitHub 或 clean producer。原行 receipt 与 producer 保留，未创建新行资格。首轮临时包装脚本混用物理/逻辑路径，在访问 daemon 前失败；第二轮副本目录为 0775，与原始组件的 0755 不符，原 verifier 正确拒绝。两次现场保留，第三轮使用新的规范化副本，不修改验证器或旧 receipt。
 
 新版 a56bb29 的六行完整资格现均已通过，各七个 fresh RUN；六个独立安装也均已退出 0，各两个 fresh append RUN。顺序 batch 已启动 python-dev 汇总，随后继续 sdk-complete-dev 及 vcpkg/源码强制重放。主行签名工作流已完成代码接入，但实际 GitHub 发布/签名/跨 run 取得、完整 SDK 恢复、候选资格交接与原生 ARM、引用保留和性能验收仍待完成。严格物理环境不匹配时，SDK 仍会补验；没有宣称跨 runner 已去重或 CI 已提速。未合入 main、推送或发布。
+
+## 批次 4/5：Python SDK 实际汇总与主 SDK 完整输入记录（2026-09-11）
+
+新版 `python-dev` 已完成原 executor 的全部输入验收与集成，外层退出 0、577.654 秒：六行重新核验 receipt/OCI/实际文件，十二条累计 append 与一条 final RUN 本次执行。捕获图只有两份工具链和六份 qualified row 共八个组件依赖，图及实际执行日志均未出现 GCC/CPython 源码编译入口。六份汇总 row manifest 与原资格产物一致；最终报告为 passed，覆盖六个 build Python、六个双目标 Python 行和两个目标编译器，并记录固定 QEMU。摘要和原报告引用已纳入[本地重放记录](runtime-replay-a56bb29-2026-09-11.json)。这不是候选或原生 ARM 通过记录，计时仍不是 GitHub 性能基线。顺序 batch 已进入 `sdk-complete-dev`，后续 vcpkg/源码重放仍待完成。
+
+主 SDK acquisition 现在请求完整恢复记录：只有三十二份原始组件与六份行资格全部来自已认证目录，才在最终集成前保存 32+6 文档。单独的 `sdk-recovery-reference.json` 固定摘要并在工件 summary 指明 `execution/acquisition/component-recovery.json`，原 raw-only 记录继续另行保留。最终集成成功后，主 SDK 与显式 catalog executor 共用完整记录、当前源码/根/材料和实际物理环境的复核函数。集成失败保留原选择；SDK 自行补验的未签名行不会产生完整记录或完整恢复 summary。
+
+[本批验证](main-sdk-complete-checkpoint-2026-09-11.json)：固定、断网、非 root、无 socket 的 Docker 工具容器通过受影响的 SDK、目录、恢复和增量模块共 69 项 / 25.469 秒，无跳过；固定 Rocky 8 Python 3.6.8 编译两个生产模块并通过 48 项 / 23.645 秒，图入口使用固定工具容器实际 Bake print。main/candidate 调用方 actionlint 通过，只保留既有 concurrency.queue 兼容例外。前一批全量 1,419+40 项验证单独保留，本批只改编排、诊断和相应回归，没有重复未受影响的全量套件。新 summary 用例实际在独立 Python 进程执行 action 中的脚本，验证仅 raw、完整记录和工件缺失三种输出；源码/registry/签名/集成边界在编排测试中仍为显式 fixture。首次篡改用例误用只允许新文件的生产 JSON writer，被正确拒绝覆盖；改为测试直接篡改文件后，完整回归确认集成后的摘要复核会拒绝该变更。
+
+该接入使已认证完整输入可通过既有显式 SDK catalog 恢复接口重新取得，尚未实现主 job 的自动恢复入口或未签名本地行的持久恢复。跨 runner 环境规则仍保持全部严格字段，实际 GitHub 信任/重试、候选资格复用与原生 ARM、引用保留及三次性能/受影响变更验收仍待完成。未合入 main、推送或发布。

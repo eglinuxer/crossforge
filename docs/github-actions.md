@@ -105,8 +105,16 @@ Before row execution, SDK diagnostics preserve all thirty-two raw selections in
 `execution/recovery-reference.json`. The job summary identifies the uploaded
 diagnostic artifact and SHA256. This is the existing raw recovery format, usable
 through the raw recovery interface under its original source/root/environment
-checks; it is not a complete six-qualified-row checkpoint. Automatic recovery of
-the new SDK job and persistence of its fresh local rows remain rollout work.
+checks; it is not a complete six-qualified-row checkpoint.
+
+If all six rows come from authenticated catalogs, acquisition additionally saves
+`execution/acquisition/component-recovery.json` with all 32 raw and six qualified
+row pins. `execution/sdk-recovery-reference.json` and a separate summary line give
+its independent SHA256. This record survives a later integration failure and is
+rechecked against current inputs after successful integration; the explicit SDK
+catalog recovery CLI can consume it. Rows freshly qualified inside the SDK job
+are unsigned and cannot produce this complete checkpoint. Automatic main-job
+recovery and persistence of those fresh local rows remain rollout work.
 OCI blobs and installed trees stay outside the diagnostic artifact.
 
 Python target/runtime/row, GCC and all five vcpkg qualification stages now consume

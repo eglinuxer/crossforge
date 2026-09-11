@@ -113,7 +113,11 @@ def execute(source, targets, data, evidence, builder, oras, cosign, docker_confi
     component_build.write_json(evidence / "request.json", {"targets": sorted(targets), "root": root,
         "producer": producer, "execution": execution, "row_parallelism": 2})
     acquired = python_sdk_catalog.acquire(source, graph, root, execution, data / "catalog", evidence / "acquisition",
-        builder, oras, cosign, docker_config)
+        builder, oras, cosign, docker_config, record_recovery=True)
+    checkpoint = acquired["component_recovery"]
+    if checkpoint is not None:
+        component_build.write_json(evidence / "sdk-recovery-reference.json", {"sha256": checkpoint["sha256"],
+            "root": root, "document": "acquisition/component-recovery.json"})
     components = raw_components(acquired, rows)
     raw = dict(acquired["raw_toolchains"]["components"], **acquired["raw_python"]["components"])
     roots = sorted({"python-dev" if name == "python-matrix" else name for name in targets})
@@ -152,8 +156,11 @@ def execute(source, targets, data, evidence, builder, oras, cosign, docker_confi
     component_build.write_json(evidence / "components.json", components)
     integrated = python_sdk.execute(source, graph, root, execution, components, evidence / "integration", builder, docker_config)
     ci_python_rows.unchanged(source, producer, execution, builder, docker_config)
+    if checkpoint is not None:
+        python_sdk_catalog.verify_checkpoint(source, graph, root, execution, checkpoint, builder, docker_config)
     result = {"schema_version": 1, "kind": "crossforge-ci-sdk-integration", "root": root,
               "selected_targets": sorted(targets), "rows": results, "integration": integrated,
+              "component_recovery": checkpoint,
               "publication": "not performed; fresh rows remain local to this job"}
     component_build.write_json(evidence / "result.json", result)
     return result
