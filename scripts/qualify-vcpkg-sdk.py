@@ -787,19 +787,37 @@ def qualify_cmake(root, release, component_path, component_sha256, report_path):
     }
 
 
-def qualify_toolchain_reports(release, release_sha256, directory):
-    components = runpy.run_path(str(SCRIPT_DIRECTORY / "release-components-core.py"))
+def qualify_toolchain_reports(release, release_sha256, directory,
+                              component_directory=None, component_sha256=None):
+    scoped = component_directory is not None
+    require(scoped == (component_sha256 is not None), "toolchain component directory and pins must be supplied together")
+    if scoped:
+        require(type(component_sha256) is dict and set(component_sha256) == set(TARGETS),
+                "toolchain component pins must cover both targets")
+    else:
+        # Retain the complete-release CLI without loading its renderer in the
+        # component-mode Docker stage.
+        components = runpy.run_path(str(SCRIPT_DIRECTORY / "release-components-core.py"))
     validator = runpy.run_path(str(SCRIPT_DIRECTORY / "toolchain_report.py"))
+    errors = (validator["QualificationError"], ValueError)
+    if not scoped:
+        errors += (components["ProjectionError"],)
     results = {}
     for arch in TARGETS:
         targets = [target for target in release["targets"] if target["arch"] == arch]
         require(len(targets) == 1, "toolchain release target is not unique")
         try:
-            results[arch] = validator["qualify_prior_toolchain_report"](
-                arch, TARGETS[arch]["triple"], directory / (arch + ".json"), release, release_sha256,
-                targets[0]["sysroot"]["canonical_sha256"],
-                components["toolchain_qualification_component"](release, arch))
-        except (validator["QualificationError"], components["ProjectionError"]) as error:
+            if scoped:
+                policy = validator["POLICY"]["load"](component_directory, arch, component_sha256[arch])
+                expected = validator["POLICY"]["from_release"](release, arch, policy["component"])
+                require(policy == expected, "%s toolchain components differ from the vcpkg release inputs" % arch)
+                results[arch] = validator["qualify_policy_toolchain_report"](directory / (arch + ".json"), policy)
+            else:
+                results[arch] = validator["qualify_prior_toolchain_report"](
+                    arch, TARGETS[arch]["triple"], directory / (arch + ".json"), release, release_sha256,
+                    targets[0]["sysroot"]["canonical_sha256"],
+                    components["toolchain_qualification_component"](release, arch))
+        except errors as error:
             raise QualificationError(str(error)) from error
     return results
 
@@ -816,6 +834,8 @@ def qualify(
     cmake_report_path,
     component_paths,
     component_sha256,
+    toolchain_components=None,
+    toolchain_component_sha256=None,
 ):
     release = load_json(release_path)
     release_sha256 = hashlib.sha256(
@@ -823,7 +843,8 @@ def qualify(
             release, ensure_ascii=False, sort_keys=True, separators=(",", ":")
         ).encode("utf-8")
     ).hexdigest()
-    qualify_toolchain_reports(release, release_sha256, Path("/opt/crossforge/qualification/toolchain"))
+    qualify_toolchain_reports(release, release_sha256, Path("/opt/crossforge/qualification/toolchain"),
+                              toolchain_components, toolchain_component_sha256)
     source_component = load_component(
         component_paths["source"],
         "sources/vcpkg",
@@ -958,11 +979,22 @@ def main():
     parser.add_argument("--qemu", type=Path, required=True)
     parser.add_argument("--ninja-report", type=Path, required=True)
     parser.add_argument("--cmake-report", type=Path, required=True)
+    parser.add_argument("--toolchain-components", type=Path)
+    for arch in TARGETS:
+        parser.add_argument("--toolchain-%s-component-sha256" % arch)
     for role in ("source", "integration", "sdk", "ninja", "cmake"):
         parser.add_argument("--%s-component" % role, type=Path, required=True)
         parser.add_argument("--%s-component-sha256" % role, required=True)
     parser.add_argument("--output", type=Path, required=True)
     arguments = parser.parse_args()
+    toolchain_pins = {arch: getattr(arguments, "toolchain_%s_component_sha256" % arch) for arch in TARGETS}
+    if arguments.toolchain_components is None:
+        require(not any(value is not None for value in toolchain_pins.values()),
+                "toolchain component pins require --toolchain-components")
+        toolchain_pins = None
+    else:
+        require(all(value is not None for value in toolchain_pins.values()),
+                "toolchain components require both target pins")
     report = qualify(
         arguments.release,
         arguments.root,
@@ -987,6 +1019,8 @@ def main():
             "ninja": arguments.ninja_component_sha256,
             "cmake": arguments.cmake_component_sha256,
         },
+        arguments.toolchain_components,
+        toolchain_pins,
     )
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.output.with_name(arguments.output.name + ".tmp")

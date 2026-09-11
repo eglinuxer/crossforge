@@ -503,6 +503,8 @@ def render_vcpkg_graph(
                 "implementation/vcpkg-integration"
             ),
             "VCPKG_SDK_COMPONENT_SHA256": digest("vcpkg/sdk-build"),
+            "TOOLCHAIN_X86_64_QUALIFICATION_COMPONENT_SHA256": digest("toolchain/x86_64-qualification"),
+            "TOOLCHAIN_AARCH64_QUALIFICATION_COMPONENT_SHA256": digest("toolchain/aarch64-qualification"),
             "NINJA_TOOL_COMPONENT_SHA256": digest("host-tools/ninja"),
             "CMAKE_TOOL_COMPONENT_SHA256": digest("host-tools/cmake"),
         },

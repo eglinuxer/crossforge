@@ -41,29 +41,25 @@ def sha256_file(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def qualify_prior_toolchain_report(
-    arch,
-    target,
-    report_path,
-    release,
-    release_sha256,
-    sysroot_sha256,
-    component,
-):
+def _read_report(arch, target, report_path):
     require(arch in ("x86_64", "aarch64") and target == arch + "-unknown-linux-gnu",
             "unsupported toolchain qualification target")
     require(
         report_path.is_file() and not report_path.is_symlink(),
         "%s toolchain qualification report is missing or unsafe" % arch,
     )
-    report = load_json(report_path)
+    return load_json(report_path)
+
+
+def _qualify_report(arch, target, report_path, report, gcc, binutils,
+                    sysroot_sha256, component, policy=None, release_sha256=None):
     scoped = "input_binding" in report
     require(scoped or "qualification_schema_version" not in report or
             (arch == "aarch64" and type(report["qualification_schema_version"]) is int and
              report["qualification_schema_version"] == 1), "unsupported toolchain qualification schema")
     if scoped:
         try:
-            policy = POLICY["from_release"](release, arch, component)
+            require(policy is not None, "scoped toolchain report requires authenticated policy")
             POLICY["require_binding"](report, policy)
         except (ValueError, KeyError, TypeError) as error:
             raise QualificationError(str(error)) from error
@@ -81,17 +77,17 @@ def qualify_prior_toolchain_report(
         report.get("target") == target
         and (scoped or report.get("release_sha256") == release_sha256)
         and report.get("sysroot_sha256") == sysroot_sha256
-        and report.get("compiler_version") == release["gts"]["gcc_version"]
+        and report.get("compiler_version") == gcc["version"]
         and re.search(
             r"(?<![0-9.])%s(?![0-9.])"
-            % re.escape(release["binutils"]["version"]),
+            % re.escape(binutils["version"]),
             report.get("binutils_version", ""),
         )
         is not None
         and report.get("sources")
         == {
-            "gcc": release["gts"]["source"],
-            "binutils": release["binutils"]["source"],
+            "gcc": gcc["source"],
+            "binutils": binutils["source"],
         }
         and report.get("qualification_component") == component,
         "%s prior toolchain qualification does not match current inputs" % arch,
@@ -125,3 +121,45 @@ def qualify_prior_toolchain_report(
         "component": component,
         "report_sha256": sha256_file(report_path),
     }
+
+
+def qualify_policy_toolchain_report(report_path, policy):
+    """Check a scoped report using policy authenticated by load/from_release.
+
+    The caller supplies expected policy, never policy inferred from the report.
+    A legacy report requires the complete-release entry point below.
+    """
+    try:
+        require(type(policy) is dict, "toolchain policy must be an object")
+        arch = policy["target"]["arch"]
+        validated = POLICY["_policy"](arch, policy["component"], policy["target"],
+            policy["abi_baseline"], policy["gcc"], policy["binutils"],
+            policy["runtime_base"], policy["runtime_executor"])
+        require(POLICY["component"].canonical_sha256(policy) ==
+                POLICY["component"].canonical_sha256(validated), "toolchain policy fields differ")
+    except (ValueError, KeyError, TypeError) as error:
+        raise QualificationError(str(error)) from error
+    target = validated["target"]["triple"]
+    report_path = Path(report_path)
+    report = _read_report(arch, target, report_path)
+    require("input_binding" in report, "component policy requires a scoped toolchain report")
+    return _qualify_report(arch, target, report_path, report, validated["gcc"], validated["binutils"],
+        validated["target"]["sysroot"]["canonical_sha256"], validated["component"], policy=validated)
+
+
+def qualify_prior_toolchain_report(
+    arch, target, report_path, release, release_sha256, sysroot_sha256, component,
+):
+    """Compatibility adapter for consumers with complete release expectations."""
+    report_path = Path(report_path)
+    report = _read_report(arch, target, report_path)
+    policy = None
+    if "input_binding" in report:
+        try:
+            policy = POLICY["from_release"](release, arch, component)
+        except (ValueError, KeyError, TypeError) as error:
+            raise QualificationError(str(error)) from error
+    return _qualify_report(arch, target, report_path, report,
+        {"version": release["gts"]["gcc_version"], "source": release["gts"]["source"]},
+        {"version": release["binutils"]["version"], "source": release["binutils"]["source"]},
+        sysroot_sha256, component, policy=policy, release_sha256=release_sha256)

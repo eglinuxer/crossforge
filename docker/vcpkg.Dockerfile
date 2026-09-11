@@ -197,6 +197,8 @@ ARG VCPKG_INTEGRATION_COMPONENT_SHA256
 ARG VCPKG_SDK_COMPONENT_SHA256
 ARG NINJA_TOOL_COMPONENT_SHA256
 ARG CMAKE_TOOL_COMPONENT_SHA256
+ARG TOOLCHAIN_X86_64_QUALIFICATION_COMPONENT_SHA256
+ARG TOOLCHAIN_AARCH64_QUALIFICATION_COMPONENT_SHA256
 COPY --from=crossforge_qemu_validated \
   /usr/local/libexec/crossforge/qemu-aarch64 \
   /usr/local/libexec/crossforge/qemu-aarch64
@@ -230,11 +232,21 @@ COPY config/generated/components/host-tools/ninja.json \
   /work/config/ninja-host-tool.json
 COPY config/generated/components/host-tools/cmake.json \
   /work/config/cmake-host-tool.json
+COPY config/generated/components/toolchain/x86_64-qualification.json \
+  config/generated/components/toolchain/aarch64-qualification.json \
+  config/generated/components/toolchain/x86_64-build.json \
+  config/generated/components/toolchain/aarch64-build.json \
+  /work/config/components/toolchain/
+COPY config/generated/components/abi/x86_64-baseline.json \
+  config/generated/components/abi/aarch64-baseline.json \
+  /work/config/components/abi/
+COPY config/generated/components/sources/gcc.json \
+  config/generated/components/sources/binutils.json \
+  /work/config/components/sources/
 COPY --chmod=0755 scripts/fetch-vcpkg-history.py \
   scripts/release_component.py scripts/qualify-vcpkg-sdk.py \
   scripts/toolchain_policy.py scripts/toolchain_report.py \
-  scripts/release-components-core.py scripts/python_row_contract.py \
-  scripts/validate-release.py /work/scripts/
+  /work/scripts/
 ENV NINJA_ROOT=/opt/crossforge/host-tools/ninja/1.13.2 \
     CROSSFORGE_CMAKE_ROOT=/opt/crossforge/host-tools/cmake/4.4.0 \
     VCPKG_ROOT=/opt/crossforge/vcpkg/root \
@@ -246,6 +258,11 @@ ENV NINJA_ROOT=/opt/crossforge/host-tools/ninja/1.13.2 \
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/qualify-vcpkg-sdk.py \
       --release /opt/crossforge/release.json \
+      --toolchain-components /work/config/components \
+      --toolchain-x86_64-component-sha256 \
+        "$TOOLCHAIN_X86_64_QUALIFICATION_COMPONENT_SHA256" \
+      --toolchain-aarch64-component-sha256 \
+        "$TOOLCHAIN_AARCH64_QUALIFICATION_COMPONENT_SHA256" \
       --root /opt/crossforge/vcpkg/root \
       --source-manifest /opt/crossforge/qualification/vcpkg/source.json \
       --integration-manifest /opt/crossforge/vcpkg/integration.json \

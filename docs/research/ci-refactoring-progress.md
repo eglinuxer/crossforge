@@ -525,3 +525,19 @@ runtime schema 3 与 final schema 4 仍精确绑定完整 release。finalizer �
 补充核对 runner 的官方保证：[GitHub 标准 hosted runner 文档](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)说明常规非单 CPU runner 使用新的 VM；[runner-images 说明](https://github.com/actions/runner-images/blob/main/README.md)说明 GA 镜像按周更新；[Docker 资源约束文档](https://docs.docker.com/engine/containers/resource_constraints/)说明 CPU/内存限制通过宿主 cgroup 控制。由此结合本项目目前绑定的 CPU、微码、内核、Docker 和内存等字段，可以推断仅固定 OS 标签或资源上限不足以证明全部环境字段一致；本轮没有实测跨 runner 失配比例，也没有把该推断当作性能数据。已向用户明确询问环境边界选择，未放宽现有严格匹配。
 
 主 CI 动态任务、所选工作对应的 required status、增量选择器对新编排代码的覆盖、精确跨 run 恢复以及候选发布的调用接入仍待完成。新报告链实际 Docker 重放、GitHub 信任/重试、候选/原生 ARM、强制源码重放和性能实验仍待验收。此前自动审批拒绝容器挂载主机 Docker socket（会授予广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。未合入 main、推送或发布。
+
+## 批次 3/6：vcpkg 工具链报告消费与模块范围（2026-09-11）
+
+检查发现 GCC 三个正式资格阶段已经使用独立投影，vcpkg SDK 则仍复制完整 release、组件生成器和 Python 行模块，后续契约与三层 upstream 报告也绑定完整 release。本批先拆开共享工具链报告验收的输入接口：新增 `qualify_policy_toolchain_report` 直接消费已认证策略，要求 scoped 报告及精确策略格式；旧 `qualify_prior_toolchain_report` 保留完整 release 和旧报告兼容路径。两个入口共享原有来源、版本、sysroot、ABI、QEMU、运行时结果和安全文件检查，不把旧报告改写为新执行。
+
+vcpkg SDK 新增可选工具链组件目录和两个资格根 pin，要求一起提供且完整覆盖两架构。Docker/Bake 正式路径使用该入口，沿各自依赖认证八份投影，再与当前 release 独立推导的策略比较；随后执行原报告检查。该阶段只复制五个运行模块，去掉组件生成器、Python 行模块和不再需要的 validator。CMake/Ninja、执行器及 vcpkg 的完整 release 报告链尚未迁移，既有 CLI 和报告 schema 均保持兼容。
+
+[验证记录](vcpkg-toolchain-inputs-2026-09-11.json)：固定、断网、非 root、无 Docker socket 的工具容器中 config 1335 项、277.919 秒及 packaging 40 项、1.300 秒全部通过，无跳过；四项 locked validators、三个 renderer `--check`、shell syntax 和 actionlint 通过（仅既有 concurrency.queue 兼容例外）。最终定向 70 项回归通过；固定 Rocky 8 platform-python 3.6.8 编译两个变更运行文件，新增十三项测试全部通过。Rocky 图测试读取同轮工具容器保存的真实 Bake print，仅替换测试取图入口。
+
+新增测试使用合成工具链报告，但认证组件、构造预期策略和验收报告均执行真实域代码；两项 CLI dispatch 测试显式 mock 资格函数。覆盖两架构完整 release 与组件策略入口结果相同、错误 pin/缺失投影/篡改源码、策略格式、混合新旧身份、ABI/runtime/marker、报告 symlink、不完整 CLI 选项，以及只带五个运行模块和八份投影的裁剪目录。没有执行目标编译器、运行时或 vcpkg port 资格；源码输入图也不代表新执行证据。
+
+对规范化 `0b39c2a` 与本批源码解析实际 Bake 图：34 个原始编译组件和 3 个 GCC 正式资格阶段闭包保持不变，113 份组件文档原字节不变；五个 vcpkg 阶段因配方和模块范围更新而改变。单改 `python_row_contract.py`，旧实现五个 vcpkg 阶段均失效，新实现均不受影响。单改产品版本，旧、新实现仍均使这五个阶段失效，明确保留完整 release 迁移的后续工作。此处是材料范围实验，不能用本地回归耗时预测 GitHub runner 改造收益。
+
+首轮定向检查中，新图测试误将组件 scope 名 `build` 当作材料角色，改用实际允许的 `qualification` 后通过；生产材料解析器未变。补齐 CLI 完整性回归后重新完成定向、Rocky 和完整套件。下一步迁移 vcpkg SDK 的宿主工具与执行器输入，以及契约/三层报告的配置绑定，再测材料范围和真实资格；严格物理环境匹配仍未放宽。
+
+主 CI qualified-row/SDK 调用、精确恢复、真实 GitHub 信任/重试、新报告链及源码 Docker 重放、候选/原生 ARM、引用保留策略和性能实验仍待完成。此前自动审批拒绝容器挂载主机 Docker socket（广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。未合入 main、推送或发布。
