@@ -24,11 +24,12 @@ jobs:
       produced: ${{ steps.ensure.outputs.produced }}
       handoff-sha256: ${{ steps.ensure.outputs.handoff_sha256 }}
       artifact-id: ${{ steps.handoff.outputs.artifact-id }}
+      producer-invocation: ${{ steps.ensure.outputs.producer_invocation }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - name: Check the original main CI caller before credentials
+      - name: Check the original trusted main caller before credentials
         run: |
           PYTHONPATH=scripts python3 - <<'PY'
           from pathlib import Path
@@ -66,6 +67,7 @@ jobs:
           print("produced=" + ("true" if value["produced"] else "false"))
           if value["produced"]:
               print("handoff_sha256=" + value["handoff_sha256"])
+              print("producer_invocation=" + value["producer_invocation"])
           PY
       - name: Preserve the new same-run handoff
         if: steps.ensure.outputs.produced == 'true'
@@ -94,25 +96,39 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
+      actions: read
       contents: read
       id-token: write
     outputs:
       artifact-id: ${{ steps.signed.outputs.artifact-id }}
+      catalog-sha256: ${{ steps.catalog.outputs.catalog-sha256 }}
+      bundle-sha256: ${{ steps.catalog.outputs.bundle-sha256 }}
+      producer-invocation: ${{ steps.catalog.outputs.producer-invocation }}
+      signer-invocation: ${{ steps.catalog.outputs.signer-invocation }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Require the original successful component producer
+        env:
+          UPSTREAM_JOBS: ${{ toJSON(needs) }}
+        run: python3 scripts/component-retry.py upstream --stage sign --needs-json "$UPSTREAM_JOBS"
       - uses: ./.github/actions/setup-locked-buildx
       - uses: ./.github/actions/setup-component-verifier
         id: verifier
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ needs.ensure.outputs.artifact-id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
           path: ${{ runner.temp }}/component-handoff
           merge-multiple: true
       - name: Sign the exact new raw receipts without asserting qualification
+        id: catalog
         env:
           HANDOFF_SHA256: ${{ needs.ensure.outputs.handoff-sha256 }}
+          PRODUCER_INVOCATION: ${{ needs.ensure.outputs.producer-invocation }}
           COMPONENT_COSIGN: ${{ steps.verifier.outputs.binary }}
         run: |
           set -Eeuo pipefail
@@ -120,10 +136,12 @@ jobs:
           mkdir "$output"
           python3 scripts/component-catalog.py from-handoff --main-ci \
             --handoff "$RUNNER_TEMP/component-handoff/handoff.json" --handoff-sha256 "$HANDOFF_SHA256" \
-            --output "$output/catalog.json"
+            --producer-invocation "$PRODUCER_INVOCATION" --output "$output/catalog.json"
           "$COMPONENT_COSIGN" sign-blob --yes --bundle "$output/catalog.sigstore.json" "$output/catalog.json"
           python3 scripts/component-catalog.py verify --catalog "$output/catalog.json" \
             --bundle "$output/catalog.sigstore.json" --cosign "$COMPONENT_COSIGN" > "$output/authentication.json"
+          python3 scripts/component-retry.py catalog-outputs --directory "$output" \
+            --producer-invocation "$PRODUCER_INVOCATION" >> "$GITHUB_OUTPUT"
       - name: Preserve the signed catalog
         id: signed
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -138,12 +156,17 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
+      actions: read
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Require the original successful catalog signer
+        env:
+          UPSTREAM_JOBS: ${{ toJSON(needs) }}
+        run: python3 scripts/component-retry.py upstream --stage store --needs-json "$UPSTREAM_JOBS"
       - uses: ./.github/actions/setup-locked-buildx
       - uses: ./.github/actions/setup-component-transport
         id: transport
@@ -152,8 +175,17 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ needs.sign.outputs.artifact-id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
           path: ${{ runner.temp }}/component-catalog
           merge-multiple: true
+      - name: Verify the original signed bytes before registry credentials
+        env:
+          UPSTREAM_JOBS: ${{ toJSON(needs) }}
+        run: |
+          python3 scripts/component-retry.py verify-catalog \
+            --directory "$RUNNER_TEMP/component-catalog" --needs-json "$UPSTREAM_JOBS"
       - name: Authenticate the catalog writer
         env:
           REGISTRY_TOKEN: ${{ github.token }}

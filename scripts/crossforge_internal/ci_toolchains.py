@@ -79,7 +79,7 @@ def ensure(source, arch, requested, directory, builder, oras, cosign, docker_con
         handoff = component_handoff.document(producer, execution, fresh, architecture=arch)
         path = directory / "handoff.json"
         component_build.write_json(path, handoff)
-        result.update(handoff=str(path), handoff_sha256=content_sha256(handoff))
+        result.update(handoff=str(path), handoff_sha256=content_sha256(handoff), producer_invocation=producer["invocation"])
     component_build.write_json(report / "result.json", result)
     return result
 

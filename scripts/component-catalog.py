@@ -21,6 +21,7 @@ def main(argv=None):
     create = commands.add_parser("from-handoff", allow_abbrev=False)
     create.add_argument("--handoff", type=Path, required=True)
     create.add_argument("--handoff-sha256", required=True)
+    create.add_argument("--producer-invocation", help="original successful raw producer invocation from the upstream job output")
     create.add_argument("--output", type=Path, required=True)
     modes = create.add_mutually_exclusive_group()
     modes.add_argument("--main-ci", action="store_true", help="sign only new raw toolchains from the exact main CI run")
@@ -53,13 +54,18 @@ def main(argv=None):
     try:
         if args.command == "from-handoff":
             current = component_ci.checked_source(ROOT, "main" if args.main_ci or args.python_ci else "pilot")
+            invocation = current["invocation"]
+            if args.producer_invocation is not None:
+                require(args.main_ci or args.python_ci, "legacy pilot handoff requires the current attempt")
+                from crossforge_internal.component_retry import prior_invocation
+                invocation = prior_invocation(args.producer_invocation, current["invocation"])
             if args.python_ci:
                 value = python_handoff.verify(ROOT, load_json(args.handoff), args.handoff_sha256,
-                    current["source_commit"], current["invocation"])
+                    current["source_commit"], invocation)
                 signing = {"workflow": component_catalog.PYTHON_WORKFLOW, "event": os.environ["GITHUB_EVENT_NAME"]}
             else:
                 value = component_handoff.verify(load_json(args.handoff), args.handoff_sha256,
-                    current["source_commit"], current["invocation"])
+                    current["source_commit"], invocation)
                 require(value["schema_version"] == (2 if args.main_ci else 1), "handoff schema differs from signing entry point")
                 signing = {"workflow": component_catalog.MAIN_WORKFLOW, "event": os.environ["GITHUB_EVENT_NAME"]} if args.main_ci else None
             catalog = component_catalog.document(value["producer"], list(value["components"].values()), signing)

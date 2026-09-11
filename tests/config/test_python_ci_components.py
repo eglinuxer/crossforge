@@ -319,6 +319,7 @@ class PythonCIComponentsTests(unittest.TestCase):
         handoff = python_handoff.verify(ROOT, load_json(result["handoff"]), result["handoff_sha256"],
             self.producer["source_commit"], self.producer["invocation"])
         self.assertEqual(sorted(handoff["components"]), result["new_parts"])
+        self.assertEqual(result["producer_invocation"], self.producer["invocation"])
 
     def test_available_parts_never_publish_or_create_a_new_handoff(self):
         result = self.run_producer()

@@ -498,6 +498,25 @@ push/dispatch identity. The old pilot and toolchain signing policies remain
 separate. Producer/store jobs have package write permission; only the sign job
 has OIDC permission. Consumer jobs have contents/package read permission.
 
+Both raw producer workflows support same-run partial signing/storage retries.
+The successful producer supplies its original invocation alongside the handoff
+digest and artifact ID. `component-catalog.py from-handoff --producer-invocation`
+accepts that earlier attempt only in the main toolchain/Python modes, with the
+same trusted run and source commit; omission keeps the exact-current-attempt
+contract, and the legacy pilot remains unchanged. Catalogs retain the original
+producer and receipt bytes. A successful signer supplies the raw catalog/bundle
+SHA256 values and its own invocation; storage checks both exact files before
+registry credentials, then repeats the existing pinned signature verification.
+The required order is producer ≤ signer ≤ current storage attempt. Empty or
+altered predecessor outputs fail before artifact download, and explicit artifact
+IDs select the original successful artifacts. The metadata helper does not
+authenticate signatures or trust a downloaded authentication report.
+
+This recovery requires a successful predecessor and retained artifact; a failure
+before the producer/sign job successfully uploads its handoff cannot be recovered
+through these outputs. Cross-run recovery and live GitHub signing/storage retry
+acceptance remain pending. No raw component is promoted to qualification by retry.
+
 Python component preparation shares the inputs/toolchain prerequisites with
 GCC and vcpkg, which can continue independently. Python row consumers and the
 SDK wait for the component matrix, then use `--python-components` together with

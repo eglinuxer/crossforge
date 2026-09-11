@@ -135,6 +135,7 @@ class ToolchainPreparationTests(unittest.TestCase):
         self.assertEqual(list(handoff["components"]), ["gcc-test-context"])
         self.assertEqual(handoff["architecture"], "x86_64")
         self.assertEqual(handoff["producer"], self.producer)
+        self.assertEqual(result["producer_invocation"], self.producer["invocation"])
 
     def test_aarch64_component_handoff_remains_independent(self):
         result = self.run_ensure("aarch64", ["toolchain-install"], missing=["toolchain-install"])

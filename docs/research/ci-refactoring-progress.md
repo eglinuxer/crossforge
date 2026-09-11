@@ -8,7 +8,7 @@
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；main 缺失工具链集中生产及只读消费已接线 | GitHub 实跑、真实签名与跨 run 验收 |
 | 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线 | GitHub 实跑、缩小资格 COPY 范围、正式 Python 行资格复用接入 |
 | 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过；原始 Python 组件 CI 消费已接线 | 正式行资格生产/SDK 复用的 CI 接入与远程验收 |
-| 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储、候选原始组件消费及分阶段恢复接线本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及 producer 部分重试 |
+| 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储、候选组件消费及分阶段恢复、raw producer 部分重试接线本地验证通过 | 真实 GitHub 跨 run 信任和 producer 重试、其他资格领域、候选集成/原生 ARM |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
 ## 批次 1 已实现
@@ -393,3 +393,13 @@ SDK checkpoint schema 2 保存原 `component-selection.json`；最终消费者�
 [本批验证](candidate-components-2026-09-10.json)：断网、非 root、无 Docker socket 的 Docker config 1220 项、169.964 秒及 packaging 40 项、1.185 秒全部通过，无跳过；四项 locked validators、三个 renderer 和 actionlint 通过。53 项候选定向回归通过。固定 Rocky 8 platform-python 3.6.8 编译七个运行文件，24 项兼容性/恢复回归通过。真实 canonical Bake 图使用明确的 resolver fixture 完成 33 份组件替换与重解析，保留 SDK/GCC 验收材料，确认源码编译输入消失；不是实际 OCI 认证或候选构建的证据。新增持久归档回归读取归档中的原组件选择，并重新验证整体归档；native 报告验证边界使用既有 fixture，不宣称原生执行。
 
 初轮新测试有两处 fixture 错误：工具链 spec 的 role 应由调用参数提供，以及篡改测试不能用只写一次的生产 JSON writer 覆盖已有文件；修正 fixture 后定向与全量测试通过。没有降低生产校验条件。正式行资格 receipt 的 CI 复用及环境边界、原始组件 producer 的部分重试、跨 run 候选恢复、实际候选集成/native ARM、真实 GitHub 签名信任和性能重放仍待完成。此前 Docker socket 操作仍待明确授权，未重试被拒绝的操作；没有推送、发布镜像或合入 main，整体目标继续进行。
+
+## 批次 5：原始组件签名和存储部分重试
+
+修复原始组件签名重试的断点：工作流虽保存了成功 producer 的 artifact ID，`from-handoff` 却默认要求当前 attempt，导致只重跑签名时拒绝原 handoff。工具链/Python ensure 现在额外输出原 producer invocation；新的 `component_retry.py` 域模块和 CLI 在下载前核对成功上游的完整输出、正整数 artifact ID、独立 SHA256、同一可信 run/source 和 attempt 顺序。只有 main 工具链/Python 模式可显式选择原 invocation；未提供时及旧 pilot 保留原契约。
+
+签名重试保留原 producer、receipt 和 catalog 字节。成功 signer 在既有固定 Cosign 验证后输出 catalog/bundle 的原始字节 SHA256 及 signer invocation；store 按不可变 artifact ID 取得原文件，要求 producer ≤ signer ≤ 当前 attempt，核对原字节后才取得 registry 凭据，并继续执行既有真实签名验证和确定性持久存储。元数据 helper 不验证签名、不信任下载的 authentication 报告；固定 verifier 没有减弱。嵌套 caller 到 sign/store 补齐显式 artifact-ID 下载所需 actions:read，签名 job 仍没有 packages:write，存储 job 仍没有 id-token:write。
+
+[本批验证](component-producer-retry-2026-09-10.json)：断网、非 root、无 Docker socket 的 Docker config 1229 项、170.248 秒及 packaging 40 项、1.188 秒全部通过，无跳过；四项 locked validators、三个 renderer 和 actionlint 通过。9 项新回归覆盖双架构工具链/Python 原 producer 保留、连续签名重试 catalog 字节一致、同 run/source 和 attempt 次序、独立摘要、签名文件变更与缺失、符号链接拒绝、权限分离及完整嵌套权限传递。Rocky 8 platform-python 3.6.8 编译五个运行文件并执行全部 9 项新回归通过。测试中的签名文件是明确的未签名 fixture，仅验证元数据交接，不作为真实 Cosign 或 GitHub 签名成功证据。
+
+此路径要求成功的 producer/sign job 输出和已上传 artifact；成功上传前失败、跨 run 恢复、真实 GitHub 部分重试仍未验收。正式 Python 行资格跨机器环境边界未放宽，runner 并行度仍为 2。此前被自动审批拒绝的 Docker socket 构建操作未重试，实际新 GCC 重放及候选集成/native ARM 等剩余验收继续等待。未合入 main、推送远程或发布镜像，整体目标保持进行中。

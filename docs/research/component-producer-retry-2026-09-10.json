@@ -1,0 +1,231 @@
+{
+  "artifacts": {
+    "/tmp/crossforge-component-retry/focused.log": "ace016ebec696f4fdef876dcb37271e57fa4921ea618b507b9695d84e57b07c1",
+    "/tmp/crossforge-component-retry/full-result.json": "de4ba0de367db51fb247b905371d0c045f9d51a0b3b12402aacfbc1f8d9f2cd8",
+    "/tmp/crossforge-component-retry/full.log": "75f122fae788fa8e4261d61db7aa0d09cdedd59ee3830e178e9ea0755d283d1e",
+    "/tmp/crossforge-component-retry/full.py": "808675a7851310b88607d4ddc4452af7f406f8cdbf7ee0c4714eeeb65178234f",
+    "/tmp/crossforge-component-retry/rocky-check.py": "c97d2ec025aa579bf14932b0a846ba650887f7f3dd16f1df340b08a28ad243ae",
+    "/tmp/crossforge-component-retry/rocky-result.json": "4bfc275e8c59db428c464e5836f98859b9a2f994b957e40851e0f60825f88805",
+    "/tmp/crossforge-component-retry/rocky.log": "242c2e838357e896fa7e872d3f7de6e4806f39ed9b8d74b99f11c1869299c94d"
+  },
+  "base_commit": "3506021c17a0dd9a3becdc1625ad53370b5cf54f",
+  "boundaries": [
+    "Original successful ensure outputs identify producer invocation, handoff SHA256 and immutable artifact ID",
+    "Signing accepts original same-run producer attempt only for the main raw toolchain and Python modes; legacy pilot remains unchanged",
+    "Catalog creation preserves original receipt producers and bytes across signer attempts",
+    "Successful signer outputs independently bind catalog/bundle raw-byte SHA256 and signer invocation",
+    "Store validates exact predecessor outputs and original signed pair, without compiling or signing again",
+    "Same trusted source/run and ordered producer <= signer <= retry attempts are mandatory",
+    "Explicit artifact downloads have actions:read through every nested caller; package writer and OIDC signer remain separate",
+    "No catalog schema or pinned signature verification policy is weakened"
+  ],
+  "date": "2026-09-10",
+  "docker": {
+    "cpus": 4,
+    "daemon_socket_mounted": false,
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "network": "none",
+    "user": "1000:1000"
+  },
+  "files": {
+    ".github/workflows/candidate.yml": {
+      "executable": false,
+      "sha256": "8f5050165557564dc91222846a20142c5eeeac5e1481a2b8e328beae2e37318e"
+    },
+    ".github/workflows/ci.yml": {
+      "executable": false,
+      "sha256": "1d64c925da6038f2962a4c069bf1631893a65a5776120c3b61a54976438805d4"
+    },
+    ".github/workflows/produce-python.yml": {
+      "executable": false,
+      "sha256": "120d008afa47cde09c73f06bfe0ed6156712bb57fe0ff07775689e03d04d8d49"
+    },
+    ".github/workflows/produce-toolchain.yml": {
+      "executable": false,
+      "sha256": "e19507315738b1ecdc5946fff55a0658f4acfaac6795a82f63d3e956a582db81"
+    },
+    ".github/workflows/verify-main-builds.yml": {
+      "executable": false,
+      "sha256": "2acbfac54c7229687dd332937f5558df6e37e8b77311990030587cb7840adb38"
+    },
+    ".github/workflows/verify-main-incremental.yml": {
+      "executable": false,
+      "sha256": "035a2e8cb30c87a5cf23a75bfaa10b4e4866e396d30577e2ac38e564ac9893b8"
+    },
+    "docs/architecture.md": {
+      "executable": false,
+      "sha256": "7b7363bd25e56745f80b4aa369fb22b70eeba914104186181199d2f7f6cce146"
+    },
+    "docs/github-actions.md": {
+      "executable": false,
+      "sha256": "724043876f9250f46c7d007f2a37895c0518d1bc9a70481efc8ea53ae81a2fee"
+    },
+    "docs/internal-components.md": {
+      "executable": false,
+      "sha256": "b27dd98ba9e71a5a32468a1522be8c01128c7f765085559787fd1a9671af0b47"
+    },
+    "docs/research/ci-refactoring-progress.md": {
+      "executable": false,
+      "sha256": "efc1ccf6f97642b8d6592a88af7fa4b96714d92d9c689a7085fe478968906bb6"
+    },
+    "scripts/component-catalog.py": {
+      "executable": true,
+      "sha256": "c0ae09cfb563576b55a0d6344ce866f1115166b8711529273bccf749fa695fef"
+    },
+    "scripts/component-retry.py": {
+      "executable": false,
+      "sha256": "d3b39eaa6d53f83da0752e6851074fa459814eaded3bcdd8f7d59361aa65e126"
+    },
+    "scripts/crossforge_internal/ci_python.py": {
+      "executable": false,
+      "sha256": "66f5c1e5a4f4d8736b10e6d65f3bd191055426e416bae3e3f2ad3e99e9bb789f"
+    },
+    "scripts/crossforge_internal/ci_toolchains.py": {
+      "executable": false,
+      "sha256": "a51344c8a9d16c899bbe3098af8297b032c1dd2c387449d72a5cd8271b604ad0"
+    },
+    "scripts/crossforge_internal/component_retry.py": {
+      "executable": false,
+      "sha256": "3284438903b7230b0e768c8485d156e7324358db8e36d828b8e53a41590998da"
+    },
+    "tests/config/test_ci_toolchains.py": {
+      "executable": false,
+      "sha256": "a45fca02df1189da993cb3d1b6d0d53a8ac1bd842453aabca82c08c64c2fa176"
+    },
+    "tests/config/test_component_retry.py": {
+      "executable": false,
+      "sha256": "34ffddd13485b4faa9d79d4f418528e526ffefeaa235052581cd1bb348d63ba8"
+    },
+    "tests/config/test_python_ci_components.py": {
+      "executable": false,
+      "sha256": "f63d4a8f0c720db2eeffc99059f7a0f85d5c793e7fc7da88f10968549596c411"
+    }
+  },
+  "kind": "local-raw-component-producer-partial-retry-validation",
+  "pending": [
+    "Live GitHub caller, output, artifact, signature and partial retry acceptance",
+    "Failure before a predecessor succeeds and uploads its handoff; cross-run recovery",
+    "Formal qualified-row CI reuse and its physical execution boundary",
+    "Actual new GCC replay, candidate integration and native ARM acceptance",
+    "Controlled runner performance replay and retention capacity acceptance",
+    "Previously rejected Docker socket replay remains unexecuted pending explicit authorization",
+    "Merge to main and remote push only after required acceptance"
+  ],
+  "verification": {
+    "actionlint_exception": "Only the existing concurrency.queue compatibility exception",
+    "config": {
+      "seconds": 170.248,
+      "skipped": 0,
+      "tests": 1229
+    },
+    "focused": {
+      "skipped": 0,
+      "tests": 9
+    },
+    "full_commands": {
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/config",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 171.878
+        },
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/packaging",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 1.339
+        },
+        {
+          "command": [
+            "./scripts/validate-release.py",
+            "--require-locked"
+          ],
+          "seconds": 0.029
+        },
+        {
+          "command": [
+            "./scripts/validate-supply-chain-evidence.py"
+          ],
+          "seconds": 0.361
+        },
+        {
+          "command": [
+            "./scripts/validate-frozen-abi.py"
+          ],
+          "seconds": 0.417
+        },
+        {
+          "command": [
+            "./scripts/validate-python-runtime-providers.py"
+          ],
+          "seconds": 0.237
+        },
+        {
+          "command": [
+            "./scripts/render-release-components.py",
+            "--check"
+          ],
+          "seconds": 0.134
+        },
+        {
+          "command": [
+            "./scripts/render-vcpkg-integration.py",
+            "--check"
+          ],
+          "seconds": 0.15
+        },
+        {
+          "command": [
+            "./scripts/render-bake.py",
+            "--check"
+          ],
+          "seconds": 0.199
+        },
+        {
+          "command": [
+            "actionlint",
+            "-ignore",
+            "unexpected key \"queue\" for \"concurrency\" section"
+          ],
+          "seconds": 0.018
+        }
+      ],
+      "status": "passed"
+    },
+    "packaging": {
+      "seconds": 1.188,
+      "skipped": 0,
+      "tests": 40
+    },
+    "rocky": {
+      "compiled": [
+        "scripts/component-retry.py",
+        "scripts/crossforge_internal/component_retry.py",
+        "scripts/component-catalog.py",
+        "scripts/crossforge_internal/ci_toolchains.py",
+        "scripts/crossforge_internal/ci_python.py"
+      ],
+      "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+      "scope": "socketless Rocky 8 Python 3.6 regression fixtures; no actual OCI, signature, native ARM or GitHub execution",
+      "status": "passed",
+      "tests": 9
+    },
+    "signature_fixtures": "Unsigned metadata-only fixtures; actual pinned Cosign verification remains a separate required workflow gate, not executed here"
+  }
+}

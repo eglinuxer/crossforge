@@ -49,6 +49,18 @@ signs their same-run receipts in an OIDC-only job, then persists the signed cata
 in a separate package-writer job. Existing entries keep their original producer;
 they are not re-signed or claimed as new qualification.
 
+The raw toolchain and Python workflows also preserve successful predecessor jobs
+when only failed jobs are rerun. Signing receives the original producer invocation,
+handoff SHA256 and artifact ID; storage receives the original signer artifact ID
+and independent SHA256 values for the catalog and signature bundle. Guards require
+the same trusted run/source and ordered attempts (producer ≤ signer ≤ retry)
+before downloading artifacts. A signing retry keeps the original receipt producer;
+a storage retry checks the exact signed bytes and does not sign again. The pinned
+catalog verifier remains mandatory. These jobs and their reusable-workflow callers
+grant actions:read for explicit same-run artifact-ID downloads; signer and package
+writer permissions remain separate. This path requires successful predecessor job
+outputs and uploaded artifacts, and still needs live GitHub retry acceptance.
+
 After all planned producers finish, the wrapper explicitly reduces the actual
 consumer jobs to contents:read + packages:read. They capture current inputs,
 verify the signed catalog and OCI bytes, and substitute fixed component contexts
@@ -433,7 +445,7 @@ An image push followed by failure before its producer successfully seals and
 uploads the checkpoint is not recoverable through this path. The workflow does
 not infer a replacement checkpoint from a tag. Rerunning all jobs starts the
 publication jobs again. Recovery across different candidate runs, qualification
-receipt reuse, component-producer partial retry handling and live candidate
+receipt reuse, live component-producer retry acceptance and live candidate
 acceptance remain pending. Local graph tests use explicit resolver fixtures;
 they are not proof of a public candidate build or its performance.
 

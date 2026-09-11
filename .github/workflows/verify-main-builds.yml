@@ -111,6 +111,7 @@ jobs:
       !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     permissions:
       contents: read
+      actions: read
       packages: write
       id-token: write
     strategy:

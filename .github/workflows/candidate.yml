@@ -28,6 +28,7 @@ jobs:
     # prepared once; this candidate does not join the shared cache-writer queue.
     permissions:
       contents: read
+      actions: read
       packages: write
       id-token: write
     uses: ./.github/workflows/verify-main-incremental.yml

@@ -44,6 +44,7 @@ jobs:
     if: needs.plan.outputs.x86_64-roles != '[]'
     permissions:
       contents: read
+      actions: read
       packages: write
       id-token: write
     uses: ./.github/workflows/produce-toolchain.yml
@@ -56,6 +57,7 @@ jobs:
     if: needs.plan.outputs.aarch64-roles != '[]'
     permissions:
       contents: read
+      actions: read
       packages: write
       id-token: write
     uses: ./.github/workflows/produce-toolchain.yml
@@ -84,6 +86,7 @@ jobs:
     # Python producer and signer may use these separate write capabilities.
     permissions:
       contents: read
+      actions: read
       packages: write
       id-token: write
     uses: ./.github/workflows/verify-main-builds.yml

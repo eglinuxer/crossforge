@@ -38,6 +38,7 @@ jobs:
     if: ${{ github.server_url == 'https://github.com' && github.repository == 'eglinuxer/crossforge' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     permissions:
       contents: read
+      actions: read
       packages: write
       id-token: write
     concurrency:
