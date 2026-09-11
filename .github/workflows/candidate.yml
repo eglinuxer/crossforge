@@ -491,6 +491,21 @@ jobs:
             echo "- Source archive bytes: \`${{ steps.source.outputs.archive_size }}\`"
             echo '- Status: public candidate; no stable or SemVer tag was created'
           } >> "$GITHUB_STEP_SUMMARY"
+      # Dockerfile frontend stderr goes to the BuildKit daemon, so the Bake
+      # progress log alone can contain only the frontend's exit code.
+      - name: Collect publish build diagnostics
+        if: always()
+        run: |
+          ./scripts/collect-buildkit-diagnostics.sh \
+            "$RUNNER_TEMP/build-diagnostics/publish"
+      - name: Preserve publish build diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: build-publish-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/build-diagnostics/publish/
+          if-no-files-found: warn
+          retention-days: 7
 
   native-aarch64:
     needs: [publish]
