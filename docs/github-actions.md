@@ -410,6 +410,15 @@ observations/upload; already emitted Actions logs remain useful. Files inside
 a failed Docker RUN are not automatically exported as standalone test reports.
 Use the full build log/build record to investigate those failures.
 
+The source and SDK publication jobs also save the publication Buildx output in
+`candidate-build-diagnostics/build.log`, emit heartbeat/log-size updates, and
+collect BuildKit state, logs and history on success or failure. Separate
+`candidate-source-build-<run>-<attempt>` and `candidate-sdk-build-<run>-<attempt>`
+artifacts retain these diagnostics and any Buildx metadata for 90 days. The
+publication command's exit status still controls the gate. A runner loss can
+prevent collection here too; these artifacts do not replace a successful
+publication checkpoint or qualification evidence.
+
 Use GitHub's rerun-failed-jobs operation for failed stages. Reused cache entries
 must still satisfy the current Bake graph and its existing report validators.
 Cache misses rebuild; they must not skip a required gate. All-failed/cancelled

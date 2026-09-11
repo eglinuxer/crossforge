@@ -651,3 +651,15 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 同一 OCI 的另一条元数据调用路径也完成实际导出，4.056 秒内逐项比较七份契约、执行记录和报告的字节摘要及文件模式；与原封存目录完全相同。该检查覆盖通用元数据图和整行导出图的两个实际调用入口，没有生成新资格记录。
 
 另外已准备两种 SDK 汇总之后的 vcpkg 锁定源码资格重放与 x86_64 工具链/cp39 编译步骤强制重建脚本，通过断网容器中的固定输入与原策略接口检查，尚未执行实际重放。跨 GitHub runner 环境兼容策略已单独提出，当前继续逐项匹配原宿主边界；[GitHub 官方文档](https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job)说明常规托管 job 使用新的 runner 实例，故不能假定不同 job 的物理环境身份相同。未合入 main、推送或发布。
+
+## 候选发布诊断与新版行重放（2026-09-11）
+
+只读核对旧 main 的候选运行 `34478167419`：`publish` job 在资格阶段之后失败，SDK 构建日志重新进入 AArch64 GCC prepared-source 阶段，最终 Dockerfile frontend 退出 2。原始 job 日志与摘要记录在[候选诊断观察](candidate-publication-diagnostics-2026-09-11.json)。未从该日志确定 frontend 的根因，也未把 Qt cache miss 认定为原因。这是远程 `cf736ea` 的旧工作流，不能用于证明当前 topic 分支行为。
+
+当前候选已有原始组件交接和分阶段 checkpoint，本次只补齐 source-publication 与 sdk-publication 的完整构建日志、每分钟心跳/日志大小、无论成功失败都执行的 BuildKit 诊断与独立工件。工件使用 run/attempt 名称保留 90 天，并在存在时包含 Buildx metadata。构建退出码继续决定门禁；诊断不构成发布或资格通过证明，runner 丢失时仍可能来不及上传。
+
+固定、断网、非 root、无 socket 的 Docker 工具容器通过相关六个模块共 51 项回归 / 8.145 秒，无跳过；candidate actionlint 和诊断 shell syntax 通过，仅保留既有 concurrency.queue 兼容例外。新增故障注入执行实际工作流 shell 与原心跳包装，只将 Docker 替换成写出 stdout/stderr 后返回 2 的命令，确认两个发布步骤都保留完整日志且返回 2。首轮测试的 GitHub 表达式替换遗漏字段名数字，修正 fixture 后重跑上述全部模块；未调整生产行为来绕过错误。未改 Docker 配方或资格实现，不影响正在运行的固定 a56bb29 源码归档。
+
+[新版本地重放](runtime-replay-a56bb29-2026-09-11.json)已确认 cp314 与 cp39 两行的完整资格、OCI 封存与原独立 consumer 验收通过，各七个 fresh RUN；两个独立安装也通过，各两个 fresh append RUN。旧 cb115b5 batch 保留为 cp314 导出失败后停止，没有追写成功。本次 batch 正顺序推进 cp310–cp313，然后执行两种 SDK 汇总和已准备的 vcpkg/源码强制重放。所有计时仍是本地功能观测，不是 GitHub 并行度或三次性能基线。
+
+跨 runner 环境策略尚未收到新选择，继续严格比较全部物理环境字段。主行签名 producer、完整 SDK 恢复、候选资格复用、真实 GitHub/原生 ARM、引用保留及性能验收仍需完成；没有合入 main、推送或发布。

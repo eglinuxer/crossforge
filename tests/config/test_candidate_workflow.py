@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -190,6 +191,45 @@ class CandidateWorkflowTests(unittest.TestCase):
             'startswith("/opt/crossforge/share/licenses/crossforge/")',
             self.workflow,
         )
+
+    def test_publication_failure_preserves_full_log_and_original_exit_status(self):
+        for label in ("corresponding source bundle", "source-bound candidate"):
+            block = self.workflow.split("      - name: Build once and push the " + label + "\n", 1)[1]
+            block = block.split("      - name:", 1)[0]
+            script = block.split("        run: |\n", 1)[1]
+            script = "\n".join(line[10:] for line in script.splitlines())
+            # The GitHub expression values are inert fixture identities. The
+            # workflow shell and heartbeat are real; only Docker is substituted.
+            script = re.sub(r"\$\{\{ steps\.source\.outputs\.[a-z0-9_]+ \}\}", "fixture", script)
+            with self.subTest(publication=label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                binary = root / "docker"
+                binary.write_text("#!/bin/sh\necho fixture-build-output\necho fixture-frontend-error >&2\nexit 2\n")
+                binary.chmod(0o755)
+                result = subprocess.run(["bash", "-c", script], cwd=REPOSITORY,
+                    env={**os.environ, "PATH": directory + ":" + os.environ["PATH"],
+                         "RUNNER_TEMP": directory, "GITHUB_SHA": "a" * 40,
+                         "SOURCE_REFERENCE": "fixture/source", "CANDIDATE_REFERENCE": "fixture/sdk",
+                         "SBOM_GENERATOR": "fixture/generator", "COMPONENT_BUILDER": "fixture-builder"},
+                    text=True, capture_output=True)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertEqual((root / "candidate-build-diagnostics/build.log").read_text(),
+                                 "fixture-build-output\nfixture-frontend-error\n")
+                self.assertFalse((root / "source-binding.json").exists())
+                self.assertFalse((root / "candidate.json").exists())
+
+    def test_each_publication_collects_and_uploads_diagnostics_after_failure(self):
+        for phase, next_job, metadata in (("source", "sdk-publication", "source-build-metadata.json"),
+                                          ("sdk", "publish", "build-metadata.json")):
+            block = self.workflow.split("  " + phase + "-publication:\n", 1)[1].split("  " + next_job + ":\n", 1)[0]
+            with self.subTest(phase=phase):
+                self.assertIn('      - name: Export publication BuildKit diagnostics\n        if: always()\n'
+                              '        run: ./scripts/collect-buildkit-diagnostics.sh "$RUNNER_TEMP/candidate-build-diagnostics"', block)
+                self.assertIn("      - name: Preserve " + phase + " publication build diagnostics\n        if: always()", block)
+                self.assertIn("name: candidate-" + phase + "-build-${{ github.run_id }}-${{ github.run_attempt }}", block)
+                self.assertIn("${{ runner.temp }}/" + metadata, block)
+                self.assertLess(block.index("Export publication BuildKit diagnostics"),
+                                block.index("Preserve " + phase + " publication build diagnostics"))
 
     def test_public_launcher_builds_real_downstream_consumers(self):
         self.assertIn(

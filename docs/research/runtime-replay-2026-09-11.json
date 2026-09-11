@@ -3,7 +3,7 @@
   "kind": "crossforge-local-runtime-replay-observation",
   "observed_at": "2026-09-11T07:58:59.895145-04:00",
   "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
-  "status": "in-progress",
+  "status": "stopped-after-cp314-local-export-failure",
   "authorization": "User explicitly approved prepared local Docker socket qualification replay; prior approval blocker is resolved.",
   "scope": "Local scoped-report qualification and immutable component acceptance; not CI, candidate, native ARM, source rebuild, or performance acceptance.",
   "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
@@ -1503,5 +1503,6 @@
       "result_file_sha256": "4c07a08157b9fe82b29ff1862d12407f1a6880d01fbbc936d9c15abb76aa0a86"
     }
   ],
-  "followup": "Bounded local-export repair is being validated against the actual OCI. Its Python qualification implementation change requires fresh current-input row receipts; prior completed observations remain historical evidence, not rewritten current qualifications."
+  "followup": "Bounded local-export repair is being validated against the actual OCI. Its Python qualification implementation change requires fresh current-input row receipts; prior completed observations remain historical evidence, not rewritten current qualifications.",
+  "successor_observation": "runtime-replay-a56bb29-2026-09-11.json"
 }

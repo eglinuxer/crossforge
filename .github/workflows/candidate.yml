@@ -125,8 +125,10 @@ jobs:
         run: |
           set -Eeuo pipefail
           identity_root="$RUNNER_TEMP/source-bundle-identity"
+          mkdir -p "$RUNNER_TEMP/candidate-build-diagnostics"
           python3 ./scripts/run-with-heartbeat.py \
-            --label source-bundle-publish --interval 60 -- \
+            --label source-bundle-publish --interval 60 \
+            --log "$RUNNER_TEMP/candidate-build-diagnostics/build.log" -- \
             docker buildx bake source-bundle \
             --set "source-bundle.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
             --set "source-bundle.tags=$SOURCE_REFERENCE" \
@@ -179,6 +181,19 @@ jobs:
           name: source-publication-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/source-publication-checkpoint/
           if-no-files-found: error
+          retention-days: 90
+      - name: Export publication BuildKit diagnostics
+        if: always()
+        run: ./scripts/collect-buildkit-diagnostics.sh "$RUNNER_TEMP/candidate-build-diagnostics"
+      - name: Preserve source publication build diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-source-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/candidate-build-diagnostics/
+            ${{ runner.temp }}/source-build-metadata.json
+          if-no-files-found: warn
           retention-days: 90
       - name: Log out the publication writer
         if: always()
@@ -315,8 +330,10 @@ jobs:
           COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
         run: |
           set -Eeuo pipefail
+          mkdir -p "$RUNNER_TEMP/candidate-build-diagnostics"
           python3 ./scripts/run-with-heartbeat.py \
-            --label sdk-candidate-publish --interval 60 -- \
+            --label sdk-candidate-publish --interval 60 \
+            --log "$RUNNER_TEMP/candidate-build-diagnostics/build.log" -- \
             docker buildx bake --builder "$COMPONENT_BUILDER" \
             -f "$RUNNER_TEMP/candidate-components/components.bake.json" sdk-candidate \
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
@@ -406,6 +423,19 @@ jobs:
           name: sdk-publication-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/sdk-publication-checkpoint/
           if-no-files-found: error
+          retention-days: 90
+      - name: Export publication BuildKit diagnostics
+        if: always()
+        run: ./scripts/collect-buildkit-diagnostics.sh "$RUNNER_TEMP/candidate-build-diagnostics"
+      - name: Preserve sdk publication build diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-sdk-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/candidate-build-diagnostics/
+            ${{ runner.temp }}/build-metadata.json
+          if-no-files-found: warn
           retention-days: 90
       - name: Preserve candidate component identities and diagnostics
         if: always()

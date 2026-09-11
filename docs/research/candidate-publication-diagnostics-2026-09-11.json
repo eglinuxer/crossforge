@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-candidate-publication-diagnostics-observation",
+  "observed_at": "2026-09-11T12:28:02.676338+00:00",
+  "base_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+  "source_sha256": {
+    ".github/workflows/candidate.yml": "33e5d48eaec4aa106679aae616e2fb3289e4e81cc7d8cfb6994281b2188934e7",
+    "tests/config/test_candidate_workflow.py": "81787b8643a79e5159fb0d5f903588554384a1851c835ca9145de80a4ecd5a49",
+    "scripts/collect-buildkit-diagnostics.sh": "0b8c42da9e09a148e54539a48b5404fa8c9876f48aeb6a2ca10086fe084e2a16",
+    "scripts/run-with-heartbeat.py": "b7b2454aca893ca5748455d078d1956360068012aa87f0bdb7678d08c7f6139f"
+  },
+  "scope": "Publication diagnostic preservation; no candidate publication or remote topic-branch acceptance",
+  "motivation": {
+    "observed_at": "2026-09-11T08:17:13.516642-04:00",
+    "source_commit": "cf736eab8aa53b851874509d66676e5bac98dc27",
+    "url": "https://github.com/eglinuxer/crossforge/actions/runs/34478167419",
+    "created_at": "2026-09-10T12:41:43Z",
+    "updated_at": "2026-09-11T05:30:54Z",
+    "failed_job": 103156892300,
+    "failed_step": "Build once and push the source-bound candidate",
+    "raw_log": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/remote-candidate-job-raw.log",
+    "raw_log_sha256": "fce60beaf273cb6da06fd9d590854b7c2afdbe40ca7038fff2b2e47580f134cc",
+    "confirmed": [
+      "publish job failed after preceding qualification jobs completed",
+      "sdk-candidate solve re-entered GCC aarch64 prepared-source stage",
+      "final error: Dockerfile frontend exit code 2"
+    ],
+    "not_established": [
+      "root cause of frontend termination",
+      "Qt cache misses as cause of final failure",
+      "new topic-branch candidate behavior"
+    ],
+    "scope": "read-only remote main baseline; topic branch has not been pushed"
+  },
+  "changes": [
+    "Save each publication Buildx output with the existing heartbeat wrapper",
+    "Collect container state, restart count, daemon logs, available OOM journal and Buildx history on success or failure",
+    "Upload separate source/SDK build diagnostics with run/attempt identity and 90-day retention, including metadata when available",
+    "Preserve publication exit status and existing immutable checkpoints"
+  ],
+  "validation": {
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "environment": "Docker, network none, user 1000, 4 CPUs, 8 GiB, source read-only, no daemon socket",
+    "tests": 51,
+    "test_seconds": 8.145,
+    "skipped": 0,
+    "status": "passed",
+    "commands": [
+      {
+        "command": [
+          "python3",
+          "-m",
+          "unittest",
+          "test_candidate_workflow",
+          "test_candidate_publication",
+          "test_candidate_recovery",
+          "test_candidate_components",
+          "test_buildkit_diagnostics",
+          "test_run_with_heartbeat"
+        ],
+        "seconds": 8.438,
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "actionlint",
+          "-ignore",
+          "unexpected key \"queue\" for \"concurrency\" section",
+          ".github/workflows/candidate.yml"
+        ],
+        "seconds": 0.01,
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "bash",
+          "-n",
+          "scripts/collect-buildkit-diagnostics.sh"
+        ],
+        "seconds": 0.002,
+        "exit_code": 0
+      }
+    ],
+    "failure_injection": "Actual source/SDK workflow shell and original heartbeat; Docker replaced by a command emitting stdout/stderr and exit 2. Both logs retained exact output and both commands returned 2.",
+    "limits": [
+      "Actionlint retains only the pre-existing concurrency.queue compatibility ignore",
+      "BuildKit collection failure cases use existing shell mocks; no new live candidate was run",
+      "A lost or forcibly terminated runner may prevent collection/upload"
+    ],
+    "initial_test_failure": "Fixture substitution excluded digits in archive_sha256; fixed the test substitution and reran all six affected modules. Production code was unchanged.",
+    "logs": {
+      "tests-authorized.log": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/candidate-publication-diagnostics/tests-authorized.log",
+        "sha256": "be0433f8ba6d4d46049e5ea7de8a9124b0ca7b40859b39c34c429d7a6aac4cef"
+      },
+      "final-check.log": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/candidate-publication-diagnostics/final-check.log",
+        "sha256": "f4d3569c9c3ec3b39bb6a16e87fef50f8868dc74c4c8e282af3a984d017f2a1c"
+      },
+      "check-result.json": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/candidate-publication-diagnostics/check-result.json",
+        "sha256": "75a0a817a7b766c618a26ec2b5c1edde933d4fb0308c253d13ee73fb2340feb8"
+      },
+      "check.py": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/candidate-publication-diagnostics/check.py",
+        "sha256": "c5f003d0a35c0090a961035895098e7c3923c51ccbec3a1721fe3ee7105ec73d"
+      }
+    }
+  },
+  "merged_main": false,
+  "pushed": false,
+  "published": false
+}
