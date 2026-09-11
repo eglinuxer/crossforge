@@ -1,0 +1,212 @@
+{
+  "artifacts": {
+    "/tmp/crossforge-source-replay/focused-final.log": "d85ea9051b1510e9a1445da7e396840cde1a6fd5529eeb88c83793df9ee85162",
+    "/tmp/crossforge-source-replay/focused.log": "69a225dadb5315c1659a9ea30de9fe376713c31717d5ed342a5071213da9a23e",
+    "/tmp/crossforge-source-replay/focused.py": "5d1c6367a845886bec17d4fcc02a6f2bcbed429079858230809d267de041c89d",
+    "/tmp/crossforge-source-replay/full-result.json": "b73992a396c1d6cdc6d7c219478cc3f88c6e783117651007fde5f9a061b13ef0",
+    "/tmp/crossforge-source-replay/full.log": "5d47205fadf364122fc8a2958426103854e80f80e75ef3eff3487b00ec7c24ea",
+    "/tmp/crossforge-source-replay/full.py": "808675a7851310b88607d4ddc4452af7f406f8cdbf7ee0c4714eeeb65178234f",
+    "/tmp/crossforge-source-replay/graph-inventory.py": "7e91805d731b856249abc4417698f0f1a5bfa8df71d4c032e404a01878399262",
+    "/tmp/crossforge-source-replay/inspect.log": "40f4d1755f30e8ee3c20cf8dc3a750a7a906d4e84210289fc8ccea1a13faf5ba",
+    "/tmp/crossforge-source-replay/rocky-check.py": "3da352c35d3aeff7440d75fb620ee6d632abf4c97393126de424e9e53a2968ac",
+    "/tmp/crossforge-source-replay/rocky-final.log": "ccd2b026e30f39fb34cedeacf1116a01744580eefdba70134b5fef2bfaf578ff",
+    "/tmp/crossforge-source-replay/rocky-result.json": "768700a215a380c0c0c664be51c3fc3407ab914152c0c104b5f5aae84c5851f5",
+    "/tmp/crossforge-source-replay/rocky.log": "762d9888a71db77e4e174e9fcd56229f3b9ffd06942a823f37ca965a9bf5dc8e"
+  },
+  "base_commit": "5861efd4ab23c9b4ed2d5888d5609293ff47115f",
+  "boundaries": [
+    "Explicit compiler-stage scope distinct from qualification replay and removal of remote cache imports",
+    "Original source producer stages and compiler commands are required in the full material closure",
+    "Toolchain scope forces selected-architecture binutils/GCC; Python scope forces native and both target CPython stages",
+    "Unselected compilation, acquisition and prepared inputs may use ordinary cache; missing dependencies may still build",
+    "Current canonical stage gates remain; source observations are not reusable qualification evidence",
+    "Compiler owning RUNs require fresh successful events without cached/failed aliases or source/environment drift",
+    "Explicit pinned builder and new diagnostics directory; no component replacement, qualification replay or cache writes",
+    "Cache-only outputs, no tags, no cache exports, no package writer or OIDC signing permission"
+  ],
+  "date": "2026-09-10",
+  "docker": {
+    "cpus": 4,
+    "daemon_socket_mounted": false,
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "network": "none",
+    "user": "1000:1000"
+  },
+  "files": {
+    ".github/actions/run-build-stage/action.yml": {
+      "executable": false,
+      "sha256": "85e0bd710cbf4e57185f21cb49799efcefefb232c916ac2b224a2eba94fc1a8c"
+    },
+    ".github/workflows/replay-sources.yml": {
+      "executable": false,
+      "sha256": "8f8ec76b8320246c15d37706918f2808d03b9c1cf3d8614f0c0d532dca4b95ce"
+    },
+    "docs/architecture.md": {
+      "executable": false,
+      "sha256": "b178319beea4fb8869a2b5b28853a39df1ccc42ccb8db3f867789ceb78fb7d5f"
+    },
+    "docs/github-actions.md": {
+      "executable": false,
+      "sha256": "c1013f18e77de748088d8a86b19adcffd8b707d6f6929715127f7f339521d001"
+    },
+    "docs/research/ci-refactoring-progress.md": {
+      "executable": false,
+      "sha256": "a372381bafd100074da17e905ae8d62af4f58e39c67328de61632211cbe64535"
+    },
+    "scripts/ci-build.py": {
+      "executable": false,
+      "sha256": "4c419c176aefcceb42de513002ce04a995c4b4706b3d075f9a5ddf19638222b3"
+    },
+    "scripts/crossforge_internal/ci_source_replay.py": {
+      "executable": false,
+      "sha256": "d14c92fcf4a829d970a421095f17d4f7d4ea552644cdbf0a14614ec71ed38192"
+    },
+    "tests/config/test_ci_source_replay.py": {
+      "executable": false,
+      "sha256": "04d38cd07a928852bcb6aefdfaddd4d3358b33c5507c567cc7fd1eed8a962dff"
+    },
+    "tests/config/test_component_recovery.py": {
+      "executable": false,
+      "sha256": "14b13e013476293a250464ec09fb27bfa50d0f09e13485ca9b51bc8534539c7e"
+    }
+  },
+  "fixture_corrections": [
+    "Rename temporary inspect.py to avoid shadowing the standard library",
+    "Provide a temporary python3 alias to platform-python only for Rocky shell argument fixtures"
+  ],
+  "kind": "local-explicit-source-replay-validation",
+  "pending": [
+    "Actual new compiler replay and GitHub manual event acceptance",
+    "Previously rejected Docker socket GCC replay awaits explicit authorization and was not retried",
+    "Formal qualified-row CI reuse and its physical execution boundary",
+    "Cross-run recovery, candidate integration and native ARM acceptance",
+    "Runner performance and retention capacity acceptance",
+    "Merge and push only after required acceptance"
+  ],
+  "references": [
+    "https://docs.docker.com/build/bake/reference/#targetno-cache-filter",
+    "https://docs.docker.com/build/bake/reference/#file-format"
+  ],
+  "verification": {
+    "actionlint_exception": "Only the existing concurrency.queue compatibility exception",
+    "config": {
+      "seconds": 173.178,
+      "skipped": 0,
+      "tests": 1238
+    },
+    "evidence": "Synthetic BuildKit events validate rejection and state handling, not actual recompilation",
+    "focused": {
+      "note": "Before one additional composite regression included in the final full suite",
+      "seconds": 6.472,
+      "skipped": 0,
+      "tests": 34
+    },
+    "full_commands": {
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/config",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 174.949
+        },
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/packaging",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 1.345
+        },
+        {
+          "command": [
+            "./scripts/validate-release.py",
+            "--require-locked"
+          ],
+          "seconds": 0.023
+        },
+        {
+          "command": [
+            "./scripts/validate-supply-chain-evidence.py"
+          ],
+          "seconds": 0.373
+        },
+        {
+          "command": [
+            "./scripts/validate-frozen-abi.py"
+          ],
+          "seconds": 0.314
+        },
+        {
+          "command": [
+            "./scripts/validate-python-runtime-providers.py"
+          ],
+          "seconds": 0.278
+        },
+        {
+          "command": [
+            "./scripts/render-release-components.py",
+            "--check"
+          ],
+          "seconds": 0.191
+        },
+        {
+          "command": [
+            "./scripts/render-vcpkg-integration.py",
+            "--check"
+          ],
+          "seconds": 0.137
+        },
+        {
+          "command": [
+            "./scripts/render-bake.py",
+            "--check"
+          ],
+          "seconds": 0.175
+        },
+        {
+          "command": [
+            "actionlint",
+            "-ignore",
+            "unexpected key \"queue\" for \"concurrency\" section"
+          ],
+          "seconds": 0.008
+        }
+      ],
+      "status": "passed"
+    },
+    "graph": {
+      "actual_compilation": false,
+      "forced_runs_per_python_row": 6,
+      "forced_runs_per_toolchain": 2,
+      "real_bake_plans_and_override_reparses": 8
+    },
+    "packaging": {
+      "seconds": 1.279,
+      "skipped": 0,
+      "tests": 40
+    },
+    "rocky": {
+      "compiled": [
+        "scripts/ci-build.py",
+        "scripts/crossforge_internal/ci_source_replay.py"
+      ],
+      "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+      "scope": "Socketless regression fixtures; temporary python3 alias uses platform-python for the shell argument fixture; no actual source build, OCI transfer, native ARM or GitHub execution; CI CLI remains on its existing newer Python baseline",
+      "status": "passed",
+      "tests": 6
+    }
+  }
+}

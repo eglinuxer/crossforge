@@ -213,11 +213,19 @@ def selected_graph(stage, targets=None):
 
 
 def run_stage(stage, directory, repository, write=False, cold=False, selected_targets=None, components=None,
-              replay_qualification=False):
+              replay_qualification=False, rebuild_sources=False, source_builder=None):
+    if rebuild_sources:
+        if replay_qualification or components is not None or write or not source_builder:
+            raise ValueError("source replay requires its own builder without component consumption, qualification replay or cache writes")
+        from crossforge_internal import ci_source_replay
+        ci_source_replay.policy(stage)
+    elif source_builder is not None:
+        raise ValueError("source builder requires --rebuild-sources")
+    replay = replay_qualification or rebuild_sources
     if replay_qualification and (not components or not components.get("required") or write or cold):
         raise ValueError("qualification replay requires authenticated components without cache writes or cold mode")
-    if replay_qualification and (directory.exists() or directory.is_symlink()):
-        raise ValueError("qualification replay requires a new diagnostics directory")
+    if replay and (directory.exists() or directory.is_symlink()):
+        raise ValueError("replay requires a new diagnostics directory")
     recovery_mode = components is not None and (components.get("record_recovery") or components.get("recovery") is not None)
     if recovery_mode:
         if not components.get("required") or write or cold:
@@ -244,13 +252,18 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
     monitor.start()
     try:
         bake = list(BAKE)
-        if replay_qualification:
+        if replay:
             from crossforge_internal import ci_replay, qualification_execution
-            if (stage.startswith("python-") or stage == "sdk") and not components.get("python"):
+            if replay_qualification and (stage.startswith("python-") or stage == "sdk") and not components.get("python"):
                 raise ValueError("Python/SDK replay requires authenticated raw Python components")
-            replay_execution = qualification_execution.execution_identity(components["builder"])
-            replay_plan = ci_replay.plan(ROOT, graph, stage, targets, replay_execution["build"])
+            replay_driver = ci_source_replay if rebuild_sources else ci_replay
+            replay_builder = source_builder if rebuild_sources else components["builder"]
+            replay_kind = "source" if rebuild_sources else "qualification"
+            replay_execution = qualification_execution.execution_identity(replay_builder)
+            replay_plan = replay_driver.plan(ROOT, graph, stage, targets, replay_execution["build"])
             write_json(directory / "replay-plan.json", replay_plan)
+            if rebuild_sources:
+                bake += ["--builder", source_builder]
         if components is not None:
             from crossforge_internal import component_build, component_resolution
             execution = component_build.execution_identity(components["builder"])
@@ -313,12 +326,12 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
                     break
                 command = ["timeout", "--signal=TERM", "--kill-after=60s",
                            str(remaining) + "s", *bake, "-f", str(solve_override),
-                           target, "--progress=" + ("rawjson" if replay_qualification else "plain"), "--metadata-file",
+                           target, "--progress=" + ("rawjson" if replay else "plain"), "--metadata-file",
                            str(directory / ("metadata-" + target + ".json"))]
                 progress_path = None
-                if replay_qualification:
+                if replay:
                     replay_override = directory / ("replay-" + target + ".json")
-                    write_json(replay_override, ci_replay.override(graph, replay_plan["solves"][target]))
+                    write_json(replay_override, replay_driver.override(graph, replay_plan["solves"][target]))
                     command += ["-f", str(replay_override)]
                     progress_path = directory / ("replay-" + target + ".jsonl")
                     with progress_path.open("x"):
@@ -330,22 +343,22 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
                     log_path=directory / "build.log")
                 if status:
                     break
-                if replay_qualification:
+                if replay:
                     # A successful Docker exit alone is insufficient. Leave a
                     # failed result if evidence or the observed boundary differs.
                     status = 1
                     replay_completed = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-                    vertices = ci_replay.fresh_vertices(progress_path, replay_plan["solves"][target]["owners"],
+                    vertices = replay_driver.fresh_vertices(progress_path, replay_plan["solves"][target]["owners"],
                         replay_started, replay_completed)
-                    if qualification_execution.execution_identity(components["builder"]) != replay_execution:
-                        raise ValueError("qualification replay execution environment changed")
-                    if ci_replay.plan(ROOT, selected_graph(stage, selected_targets), stage, targets,
+                    if qualification_execution.execution_identity(replay_builder) != replay_execution:
+                        raise ValueError(replay_kind + " replay execution environment changed")
+                    if replay_driver.plan(ROOT, selected_graph(stage, selected_targets), stage, targets,
                                       replay_execution["build"]) != replay_plan:
-                        raise ValueError("qualification replay source or graph changed")
+                        raise ValueError(replay_kind + " replay source or graph changed")
                     replay_results[target] = {"started_at": replay_started, "completed_at": replay_completed,
                                                "vertices": vertices}
                     write_json(directory / "replay-result.json", {
-                        "schema_version": 1, "kind": "crossforge-ci-qualification-replay-observation",
+                        "schema_version": 1, "kind": "crossforge-ci-" + replay_kind + "-replay-observation",
                         "stage": stage, "execution": replay_execution, "solves": replay_results,
                         "complete": set(replay_results) == set(targets),
                         "qualification_receipt": False})
@@ -366,6 +379,7 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
             "source_commit": os.environ.get("GITHUB_SHA", ""),
             "kind": "crossforge-ci-build-observation",
             "replay_qualification": replay_qualification,
+            "rebuild_sources": rebuild_sources,
             "component_recovery_sha256": recovery_sha256,
         })
         print("%s: exit=%d elapsed=%.1fs" % (stage, status, elapsed), flush=True)
@@ -396,6 +410,8 @@ def main():
     run.add_argument("--require-components", action="store_true")
     run.add_argument("--python-components", action="store_true")
     run.add_argument("--replay-qualification", action="store_true")
+    run.add_argument("--rebuild-sources", action="store_true", help="force this toolchain or Python row's compiler RUNs")
+    run.add_argument("--source-builder", help="explicit pinned builder for source replay")
     run.add_argument("--record-component-recovery", action="store_true")
     run.add_argument("--component-recovery", type=Path)
     run.add_argument("--component-recovery-sha256")
@@ -430,7 +446,8 @@ def main():
         return run_stage(args.stage, args.directory.resolve(), args.repository,
                          args.write_cache, args.cold,
                          parse_json(args.targets_json) if args.targets_json is not None else None, components,
-                         replay_qualification=args.replay_qualification)
+                         replay_qualification=args.replay_qualification,
+                         rebuild_sources=args.rebuild_sources, source_builder=args.source_builder)
     write_json(args.output, cache_override(read_graph(args.targets), args.repository,
                                           args.write_cache, args.cold, cache_catalog()))
     return 0

@@ -25,6 +25,12 @@ inputs:
   replay-qualification:
     default: 'false'
     description: Force the selected supported qualification gates and require fresh RUN evidence
+  rebuild-sources:
+    default: 'false'
+    description: Force the selected toolchain or Python row compiler RUNs and verify fresh execution
+  source-builder:
+    default: ''
+    description: Explicit pinned builder for source replay without component consumption
   component-recovery:
     default: ''
     description: Optional prior component-recovery.json to use without rediscovering mutable indices
@@ -61,6 +67,8 @@ runs:
         COMPONENT_READER: ${{ inputs.component-reader }}
         PYTHON_COMPONENTS: ${{ inputs.python-components }}
         REPLAY_QUALIFICATION: ${{ inputs.replay-qualification }}
+        REBUILD_SOURCES: ${{ inputs.rebuild-sources }}
+        SOURCE_BUILDER: ${{ inputs.source-builder }}
         COMPONENT_BUILDER: ${{ inputs.component-builder }}
         COMPONENT_ORAS: ${{ steps.components.outputs.oras }}
         COMPONENT_COSIGN: ${{ steps.components.outputs.cosign }}
@@ -74,6 +82,15 @@ runs:
         selection=()
         if test -n "$SELECTED_TARGETS"; then selection+=(--targets-json "$SELECTED_TARGETS"); fi
         components=()
+        if test "$REBUILD_SOURCES" = true; then
+          test "$COMPONENT_READER" = false
+          test "$REPLAY_QUALIFICATION" = false
+          test "$WRITE_CACHE" = false
+          test -n "$SOURCE_BUILDER"
+          components+=(--rebuild-sources --source-builder "$SOURCE_BUILDER")
+        else
+          test -z "$SOURCE_BUILDER"
+        fi
         if test "$REPLAY_QUALIFICATION" = true; then
           test "$COMPONENT_READER" = true
           components+=(--replay-qualification)

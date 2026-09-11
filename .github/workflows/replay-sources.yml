@@ -1,0 +1,46 @@
+name: Rebuild selected compilers from locked sources
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Force one toolchain or Python row; other dependencies may use cache
+        type: choice
+        options: [toolchain-x86_64, toolchain-aarch64, python-cp39, python-cp310, python-cp311, python-cp312, python-cp313, python-cp314]
+        default: toolchain-x86_64
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-replay-${{ github.ref }}-${{ inputs.stage }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    uses: ./.github/workflows/verify-quick.yml
+    with:
+      plan-components: false
+
+  rebuild:
+    needs: preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Require the trusted main source
+        run: |
+          set -Eeuo pipefail
+          test "$GITHUB_SERVER_URL" = https://github.com
+          test "$GITHUB_REPOSITORY" = eglinuxer/crossforge
+          test "$GITHUB_REF" = refs/heads/main
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: ${{ inputs.stage }}
+          rebuild-sources: true
+          source-builder: ${{ steps.buildx.outputs.builder }}

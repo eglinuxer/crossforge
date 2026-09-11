@@ -91,6 +91,47 @@ restrict bypasses according to the maintainer policy. Workflow files cannot
 activate repository branch protection by themselves. Enable the required
 check after the changed workflow has produced that check on GitHub.
 
+## Explicit source compiler rebuild
+
+Dispatch `replay-sources.yml` on the original repository's main branch to rebuild
+one toolchain or one Python row from its locked source inputs. The workflow runs
+quick preflight, uses the existing pinned builder and has only contents:read.
+It produces cache-only local results and diagnostics, with no registry export,
+catalog signing or component publication.
+
+| Stage | Forced compiler scope |
+| --- | --- |
+| `toolchain-x86_64` / `toolchain-aarch64` | That architecture's binutils and GCC compilation |
+| `python-cp39` through `python-cp314` | That row's build Python and both target CPython compilations |
+
+For local Docker/Bake, the corresponding command is:
+
+```sh
+python3 scripts/ci-build.py run python-cp39 \
+  --directory /tmp/crossforge-source-replay-new \
+  --rebuild-sources --source-builder <pinned-builder-name>
+```
+
+Use a new diagnostics directory. The complete canonical stage still runs its
+existing gates, but the source observation only asserts fresh execution of its
+selected compiler stages. The plan requires their original reachable recipes
+and compiler RUNs. It forces every RUN in those stages, then checks owning
+BuildKit events, timestamps, cache/failure aliases, current source and actual
+execution identity. A successful Docker exit without this evidence fails.
+The stage filter uses Docker's documented
+[`target.no-cache-filter`](https://docs.docker.com/build/bake/reference/#targetno-cache-filter)
+behavior; diagnostics separately establish whether the required RUNs occurred.
+
+Source replay cannot consume replacement build components, export caches or be
+combined with qualification replay. It does not force source downloads, prepared
+inputs, unselected compilers or all qualification gates. For example, Python row
+rebuild does not force GCC; ordinary missing dependencies can still build through
+the canonical graph. Optional global `--cold` also removes remote cache imports,
+while the explicit source filters remain responsible for proving recompilation.
+This is neither a fully empty-cache build nor reusable qualification evidence.
+Local graph/fixture checks have passed; actual compiler replay and GitHub event
+acceptance remain pending.
+
 ## Explicit qualification replay
 
 Dispatch `replay-qualification.yml` on the original repository's main branch and

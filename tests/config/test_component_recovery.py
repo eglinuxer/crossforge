@@ -274,6 +274,7 @@ class RecoveryActionTests(unittest.TestCase):
             (root / "scripts/ci-build.py").write_text("import json, sys; print(json.dumps(sys.argv[1:]))\n")
             valid = dict(os.environ, BUILD_STAGE="sdk", WRITE_CACHE="false", COLD_BUILD="false", SELECTED_TARGETS="",
                 COMPONENT_READER="true", PYTHON_COMPONENTS="true", REPLAY_QUALIFICATION="true",
+                REBUILD_SOURCES="false", SOURCE_BUILDER="",
                 COMPONENT_BUILDER="builder", COMPONENT_ORAS="oras", COMPONENT_COSIGN="cosign",
                 RUNNER_TEMP=temporary, COMPONENT_RECOVERY="path with spaces/input.json", COMPONENT_RECOVERY_SHA256="a" * 64)
             result = subprocess.run(["bash", "-c", script], cwd=temporary, env=valid,

@@ -403,3 +403,17 @@ SDK checkpoint schema 2 保存原 `component-selection.json`；最终消费者�
 [本批验证](component-producer-retry-2026-09-10.json)：断网、非 root、无 Docker socket 的 Docker config 1229 项、170.248 秒及 packaging 40 项、1.188 秒全部通过，无跳过；四项 locked validators、三个 renderer 和 actionlint 通过。9 项新回归覆盖双架构工具链/Python 原 producer 保留、连续签名重试 catalog 字节一致、同 run/source 和 attempt 次序、独立摘要、签名文件变更与缺失、符号链接拒绝、权限分离及完整嵌套权限传递。Rocky 8 platform-python 3.6.8 编译五个运行文件并执行全部 9 项新回归通过。测试中的签名文件是明确的未签名 fixture，仅验证元数据交接，不作为真实 Cosign 或 GitHub 签名成功证据。
 
 此路径要求成功的 producer/sign job 输出和已上传 artifact；成功上传前失败、跨 run 恢复、真实 GitHub 部分重试仍未验收。正式 Python 行资格跨机器环境边界未放宽，runner 并行度仍为 2。此前被自动审批拒绝的 Docker socket 构建操作未重试，实际新 GCC 重放及候选集成/native ARM 等剩余验收继续等待。未合入 main、推送远程或发布镜像，整体目标保持进行中。
+
+## 批次 5：显式重跑所选源码编译步骤
+
+新增 `ci_source_replay.py` 和手动 `replay-sources.yml`，通过 `ci-build.py run --rebuild-sources --source-builder` 复用既有超时、资源监控、raw BuildKit 日志及执行证据校验。明确支持两套工具链和六行 Python，共八个单阶段范围；工具链重跑该架构 binutils/GCC 的两个 RUN，Python 行重跑 build Python 与双目标 CPython 所属阶段的六个 RUN（包含原行身份检查）。计划必须在真实材料闭包中找到完整 canonical root、原 producer stage 及编译命令，不能将缺失的源码节点当作成功。
+
+仅对选中的 owning stage 设置 `no-cache-filter`，完整 canonical 阶段门禁继续存在；不强制源码下载、prepared 输入、无关编译器或全部资格阶段。Python 源码重建不会主动强制 GCC，但普通缺失依赖仍可能沿默认图构建。所有输出覆盖为 cache-only、清空 tags 和远程 cache exports。入口只有 contents:read，没有签名或包写权限；拒绝组件替换、资格重放、缓存写入组合和已有诊断目录。可额外选择既有 `cold` 以移除远程缓存导入，仍由实际编译事件证明重跑，不宣称完整空缓存构建。
+
+新 observation 与资格 replay 使用不同 kind，记录原编译事件时间，保留 `qualification_receipt: false`。Docker 退出为零仍须检查每条 owning RUN 的完成、时间、cached/failed alias，以及运行后完整源码图和实际执行环境；缺项或变化留下失败状态。现有资格重放、恢复和普通 CI 路径保持原行为。
+
+[本批验证](ci-source-replay-2026-09-10.json)：断网、非 root、无 Docker socket 的 Docker config 1238 项、173.178 秒与 packaging 40 项、1.279 秒全部通过，无跳过；四项 locked validators、三个 renderer 和 actionlint 通过。新增九项回归覆盖八个真实 Bake 图及 override 重解析、编译范围、缺失 source producer、缓存/失败/过期/错 owning 事件、源码和环境变化、非零退出、CLI 参数及真实 composite shell 模式约束。Rocky 8 platform-python 3.6.8 编译两个运行文件，六项执行证据/工作流 fixture 通过；CI CLI 保持既有较新 Python 运行基线，不宣称完整 CLI 已迁移到 3.6。
+
+临时图检查脚本最初使用 `inspect.py` 命名，遮蔽标准库导致定向测试加载失败；改名后 34 项定向回归通过，随后新增 composite 回归进入上述最终全量验证。Rocky shell fixture 初次因没有 `python3` 命令而失败，最终驱动只为该 fixture 将 `python3` 临时链接到 platform-python 后通过，没有改动生产工作流或放宽断言。图与合成事件均不是实际编译证据。
+
+尚未执行新的强制源码编译、GitHub 手动入口或性能对照；此前 Docker socket 授权仍待答复，未重试被拒绝的操作。正式 Python 行资格 CI 复用与环境边界、跨 run 恢复、真实候选/原生 ARM、runner 性能与保留容量仍待推进。整体未完成，未合入 main 或推送远程。
