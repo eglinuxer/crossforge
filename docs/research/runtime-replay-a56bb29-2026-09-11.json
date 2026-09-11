@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "kind": "crossforge-local-runtime-replay-observation",
-  "observed_at": "2026-09-11T14:01:23.686237+00:00",
+  "observed_at": "2026-09-11T14:16:13.447466+00:00",
   "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
-  "status": "in-progress",
-  "scope": "Original local row qualification and independent append gates; not GitHub, candidate, native ARM or performance acceptance",
+  "status": "completed-local-batch",
+  "scope": "Completed fixed a56bb29 local batch: six row qualifications, six independent installs, two SDK integrations, vcpkg replay, x86_64 and cp39 source replays; not newer append recipe, GitHub, candidate, native ARM or performance acceptance",
   "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
   "builder": "crossforge-ci-review",
   "manifest": {
@@ -527,12 +527,8 @@
     "No GitHub runner performance comparison or cross-run environment compatibility assertion",
     "The source-python-cp39 replay also encountered an ordinary AArch64 toolchain cache miss and is compiling its GCC prerequisite; source replay permits unselected prerequisites to use or miss ordinary caches. This is distinct from the artifact-bound SDK path."
   ],
-  "running_at_observation": [
-    "source-python-cp39"
-  ],
-  "pending": [
-    "forced cp39 source compilation"
-  ],
+  "running_at_observation": [],
+  "pending": [],
   "merged_main": false,
   "pushed": false,
   "published": false,
@@ -1191,6 +1187,63 @@
         },
         "scope": "Original source closure/plan and fresh RUN verifier; offline read-only Docker"
       }
+    },
+    {
+      "phase": "source-python-cp39",
+      "status": "passed",
+      "seconds": 1240.976,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "scope": "local forced RUN observation; not reusable qualification receipt, CI, candidate or native ARM evidence",
+      "started_at": "2026-09-11T13:51:32Z",
+      "completed_at": "2026-09-11T14:12:08Z",
+      "fresh_runs": 6,
+      "source_compile_runs": 3,
+      "row_validation_runs": 3,
+      "files": {
+        "result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/result.json",
+          "sha256": "f51a964a2dd745938c1cf519e32b00b2fd22913837fb642261c6f76c46ad1010"
+        },
+        "driver/result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver/result.json",
+          "sha256": "4ec0060aa6ca36b39ce1b7284014a21049663a0d969daa7eda057f58ff8e9e63"
+        },
+        "driver/graph.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver/graph.json",
+          "sha256": "0cb7aad4a43667776ba49ef2d88e3a802f3842c1bd221050faecef10610abd68"
+        },
+        "driver/replay-plan.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver/replay-plan.json",
+          "sha256": "adbf5cccd1ec6e692206df908878653faf957411922c54faeedbdb57bc893128"
+        },
+        "driver/replay-result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver/replay-result.json",
+          "sha256": "8c78608ba3cfc994e70955b15a0733b8a2b55a3c45d5c871d10c888397cae9a2"
+        },
+        "driver/replay-python-cp39-dev.jsonl": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver/replay-python-cp39-dev.jsonl",
+          "sha256": "ef6c119c5bc6ceec0139287104c7da5057e4751b33cde6368dc05ac46030fe7b"
+        },
+        "driver.log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver.log",
+          "sha256": "b2592cb980a71a4fefc77501260b27e14fc4211f3e22f873a94ee05dc9fbdbcb"
+        }
+      },
+      "independent_recheck": {
+        "status": "passed",
+        "exit_code": 0,
+        "runner": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/verify-source-results.py",
+          "sha256": "ef4c586d862258576c411cda3866be4436259d3401f8bfd337870bceb6182dc1"
+        },
+        "log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/verify-source-cp39.log",
+          "sha256": "a5b6e812f5912ab441b81ea534e334cedb787e6118e63521204acccad7609b89"
+        },
+        "scope": "Original source closure/plan and fresh RUN verifier; offline read-only Docker"
+      },
+      "prerequisite_note": "The ordinary source graph rebuilt uncached AArch64 binutils/GCC prerequisites. The selected forced scope contains three CPython compiler RUNs and three row-validation RUNs, not six compiler invocations."
     }
-  ]
+  ],
+  "batch_exit_code": 0
 }

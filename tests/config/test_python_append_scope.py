@@ -40,11 +40,26 @@ class PythonAppendScopeTests(unittest.TestCase):
             value = json.loads(release.read_text())
             entry = next(item for item in value['python']['versions'] if item['version'].startswith('3.9.'))
             self.assertEqual(entry['patches'][0]['file'], patch_name)
+            original_digest = entry['patches'][0]['sha256']
             entry['patches'][0]['sha256'] = hashlib.sha256(patch.read_bytes()).hexdigest()
             release.write_text(json.dumps(value, indent=2) + '\n')
+            validator = source / 'scripts/validate-supply-chain-evidence.py'
+            command = [sys.executable, str(validator), str(release)]
+            rejected = subprocess.run(command, cwd=str(source), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertIn(b'CPython 3.9 patch digest policy mismatch', rejected.stderr)
+            # A valid patch update also updates the separately audited pin. Only
+            # this isolated fixture changes; preserve every validation rule.
+            policy = validator.read_text()
+            self.assertEqual(policy.count(original_digest), 1)
+            validator.write_text(policy.replace(original_digest, entry['patches'][0]['sha256']))
+            self.assertEqual(patch.read_bytes().split(b'diff --git', 1)[1],
+                             originals[patch_name].split(b'diff --git', 1)[1])
             for script in ('render-release-components.py', 'render-vcpkg-integration.py', 'render-bake.py'):
                 subprocess.run([sys.executable, str(source / 'scripts' / script)], cwd=str(source),
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            accepted = subprocess.run(command, cwd=str(source), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.assertEqual(accepted.returncode, 0, accepted.stderr.decode())
             after = CLI['capture_source'](source, stages)
             changed = sorted(name for name, data in originals.items() if (source / name).read_bytes() != data)
             plan = incremental_plan.select(before, after, changed)

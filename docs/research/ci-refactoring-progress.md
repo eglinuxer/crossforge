@@ -717,3 +717,11 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 新 append 配方的 cp39 独立安装通过，1,304.503 秒包含共享 builder 等待，两条要求本次执行的 RUN 均通过原校验器。安装结果与 a56bb29 原行 manifest 的字节摘要相同，原 producer/receipt 未改，实际捕获输入不再包含完整 `config/release.json`。随后断网 Docker 独立复核输入身份、两条 fresh RUN、manifest 文件模式及摘要和原资格记录，退出 0。其余五行及两种 SDK 尚待此轮实际结果，未拿旧配方成功覆盖新版配方。
 
 [受影响变更验收](cp39-affected-change-acceptance-2026-09-11.json)已启动，使用之前保存的修复后 cp39 补丁说明变更副本，固定运行脚本、51 个输入文件摘要及两个源码清单/文件模式，预检在无网络、无 Docker socket 的固定工具容器中通过。实际流程遵循原 inputs 选择，再做独立源码重放、五份 cp39 原始组件生产、本行七条资格 RUN、独立安装和两种 SDK；后两者使用新 cp39 与另外五行原 receipt，并逐一执行原消费者校验。源码副本明确标为本地 `source_dirty=true`，不会改写仓库正式补丁/版本或冒充 GitHub producer。此 batch 与已有两批共享专用 review builder，当前是功能与增量边界验收，不作为隔离性能基线。尚未合入 main、推送或发布。
+
+## Docker 验收：原重放批次完成，补齐增量实验的独立审计输入（2026-09-11）
+
+固定 a56bb29 的顺序 batch 已退出 0，包含六行资格、六个独立安装、两种 SDK、vcpkg 和两个源码重放范围。最后 cp39 阶段为 1,240.976 秒，三个 owning stage 共六条 fresh RUN：三条原 CPython 编译、三条原行输入校验，不是六次编译。原图还实际重建了缓存未命中的 AArch64 binutils/GCC；额外开销如实保留。断网 Docker 独立重算原 source plan 并复核六条 RUN 通过。新版 append 的 cp310 独立安装也通过，1,232.190 秒包含共享 builder 等待；原两条 RUN、行 manifest 和未改写的 receipt/producer 复核通过。其余四行与两种 SDK 仍在当前配方 batch 内推进。
+
+第一次受影响变更实验在 `inputs/platform-python-check` 的完整供应链校验中退出 1，错误为 `CPython 3.9 patch digest policy mismatch`，尚未开始生产任何新组件。原因是实验只更新补丁说明及 release 中的摘要，漏改供应链 verifier 中独立固定的已审计摘要；这是无效实验输入被正常门禁拦截。原副本、清单和失败日志全部保留。另建[补齐审计摘要的实验](cp39-affected-change-audited-2026-09-11.json)，只在新 after 副本中替换这一项精确 pin，未改校验规则或 patch hunks，也未修改仓库正式补丁及供应链策略。四个原验证器、三个 renderer 和真实 Bake 材料计划在断网 Docker 中通过，仍只选 inputs/cp39/SDK 与三个 cp39 compiler input。
+
+增量回归现在先验证缺少独立审计摘要会被原 verifier 拒绝，再补齐实验 pin，执行完整供应链验证和材料计划比较；单项实际回归 7.665 秒、无跳过，通过。生产 recipe/renderer 没有变化，之前的全量结果保留原版本记录，不据此声称全量重新执行。新实验固定 53 个输入文件及源码模式，预检通过，实际 Docker inputs 的五个原目标也全部通过，70.287 秒，随后进入 cp39 源码重放。内部组件文档同步已接入的 main/PR 选择器及 append/receipt 不同策略入口，架构文档改正“实际源码重放尚未执行”的过时状态。GitHub、候选、原生 ARM、性能门槛仍未完成，未合入 main、推送或发布。

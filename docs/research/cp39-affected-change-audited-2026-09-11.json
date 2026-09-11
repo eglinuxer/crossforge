@@ -1,61 +1,102 @@
 {
   "schema_version": 1,
-  "kind": "crossforge-local-affected-change-acceptance",
+  "kind": "crossforge-local-audited-affected-change-acceptance",
   "observed_at": "2026-09-11T14:16:13.447466+00:00",
-  "status": "failed",
+  "status": "running",
   "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
   "source_dirty": true,
-  "change": "cp39 patch description and pinned SHA256; patch hunks unchanged",
+  "change": "cp39 patch description, release pin and separately audited supply-chain patch pin; validation rules and patch hunks unchanged",
   "scope": "isolated normalized fixture with the committed append scope fix; local only",
   "manifest": {
-    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/acceptance-manifest.json",
-    "sha256": "8d47a6241afcaa33e1839ead766a9c01742bf74417fb22ea11d61c40d8d51f09"
+    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/acceptance-manifest.json",
+    "sha256": "b8dac22dbcfcf380083ceab80401a7238fbd4e8f2c35a4262e9cbac132a73c4f"
   },
   "runner": {
-    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/run-acceptance.py",
-    "sha256": "2a6322fc34d484fe916adc16853d14bbb000059ebcb7bd7bc091941da4a72d8b"
+    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/run-acceptance.py",
+    "sha256": "6bf99e907fac505ba95469d4f08027b2338f620e59c1a21e00cd1e0578d9db7a"
   },
   "wrapper": {
-    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/run-acceptance.sh",
-    "sha256": "58a7088e7049a6124b8ab72a96431558bf006c9d1685a09773292d7fd92ea537"
+    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/run-acceptance.sh",
+    "sha256": "d36234c4ad014994ba92d02bf00a88c5c74b84353b39134cf9f71e57372321e4"
   },
+  "correction": {
+    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/fixture-correction.json",
+    "sha256": "c8c1a49bbd8fe51b26678178c6c75af1ce720374701feb9247d3168e48ad16da"
+  },
+  "prior_failure_record": "cp39-affected-change-acceptance-2026-09-11.json",
   "prepared_files": {
     "before-inventory.json": {
-      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/before-inventory.json",
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/before-inventory.json",
       "sha256": "95073751b0997f8c353601de65863d558dc77e1e3cd7cba2ee0d182aec6b6986"
     },
     "after-inventory.json": {
-      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/after-inventory.json",
-      "sha256": "dea0df7b5129e61c14a02ecffe145f3f4bf5ef2e7b009049a808f6e48001164b"
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/after-inventory.json",
+      "sha256": "514e358f0e8652487d18907744beb5ccaf6f2d5f615b13edd501550345b3bd9f"
     },
     "before-snapshot.json": {
-      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/before-snapshot.json",
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/before-snapshot.json",
       "sha256": "be530ef33d8f11e38575bdb74f198f73e631556fd0b3a77ffebe23e223ef9867"
     },
     "after-snapshot.json": {
-      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/after-snapshot.json",
-      "sha256": "a6bbf56a98f7f7248c888d3216b53cd492663349fe16f207a771d72b898303ff"
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/after-snapshot.json",
+      "sha256": "ffc3a68a34b3c097972fc140dadd770cd91ad1a5e9b95d8c860a426a06f55e3d"
     },
     "plan.json": {
-      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/plan.json",
-      "sha256": "de0c35e136b09d914026a649edd67816484a09c4d01c096bc8025bc13c3e8ed3"
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/plan.json",
+      "sha256": "a38ca8ce0c591a4b8f826d93fda008c75d94de28e860501d2633e49d713b8e83"
     },
     "prepared.json": {
-      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/prepared.json",
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/prepared.json",
       "sha256": "5bc165d82b35f69ec8753e00a93cb1880b53a0fb6659f6916c13117ff1a71331"
+    },
+    "prepare.py": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/prepare.py",
+      "sha256": "6f9baca543c29e1da6112cc658c104b29131ed847a0c13a7017694e75657743b"
     }
-  },
-  "production_overlay_sha256": {
-    "docker/python.Dockerfile": "df3421a429a12d570ec792329aea9a3435ae56e86a45f96683e3ec065938947d",
-    "scripts/render-bake.py": "219bf72bb73f52205ef7170fd1156ad97d380711bf498fa22f944457f00eb5b3",
-    "docker-bake.override.json": "8228ed9a109f2d849d092427fa6424a8dbc25264544a8c172821934d5835258e"
   },
   "preflight": {
     "status": "passed",
     "exit_code": 0,
     "network": "none",
     "socket_mounted": false,
-    "scope": "Original saved plan, all 51 pinned input file hashes, runner and both source inventories including modes; no daemon access"
+    "log": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/preflight.log",
+      "sha256": "a87d9eef25920f58e160e3d68f29c46960f5701eff5c50b844c4c978249e9c4c"
+    },
+    "pinned_files": 53
+  },
+  "preparation": {
+    "status": "passed",
+    "exit_code": 0,
+    "log": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/prepare.log",
+      "sha256": "3f50363a2ebb3276749abac2ff294087beeaa3b8ed7964b61a1a9deb285bb8c5"
+    },
+    "checks": [
+      "render-release-components.py",
+      "render-vcpkg-integration.py",
+      "render-bake.py",
+      "validate-release.py --require-locked",
+      "validate-supply-chain-evidence.py",
+      "validate-frozen-abi.py",
+      "validate-python-runtime-providers.py",
+      "original renderer checks and actual Bake source capture"
+    ]
+  },
+  "regression": {
+    "status": "passed",
+    "exit_code": 0,
+    "tests": 1,
+    "seconds": 7.665,
+    "source": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/tests/config/test_python_append_scope.py",
+      "sha256": "d144c2318f7c534be7bd0cba52af69ee2df35853b220e933c1262b0c486decad"
+    },
+    "log": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/regression.log",
+      "sha256": "cd1912c995990961a103cff36ca1dd3415f3a0ef75d3e8b0d2e1de0ba48b2fe3"
+    },
+    "scope": "Real copied source and Bake; reject missing audit pin, accept explicit experimental pin update without changing validator rules, retain patch hunks, select only inputs/cp39/SDK and the three cp39 compiler inputs"
   },
   "plan": {
     "artifact_reuse": "not-authorized-by-source-selection",
@@ -72,7 +113,8 @@
       "config/generated/release-binding.json",
       "config/release.json",
       "docker-bake.override.json",
-      "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+      "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch",
+      "scripts/validate-supply-chain-evidence.py"
     ],
     "changes": {
       "cpython-build-cp39": {
@@ -103,7 +145,7 @@
         "parameters_changed": true
       },
       "platform-python-check": {
-        "after_sha256": "48397de6c8aaa188ddf2aa5161c73f380319460e6e8e1155ab4da6d0adab504e",
+        "after_sha256": "415ce2b51a41546a6b1f81e46de76ae714526f65a7bd399f9d42f02b8f3ce027",
         "before_sha256": "ef8ec3be7e70cefffce53ec21961017c18a86974acb662af16973de860bbde6f",
         "files": [
           "config/generated/components/product/sdk-qualification.json",
@@ -117,7 +159,8 @@
           "config/generated/components/python/qualification.json",
           "config/generated/release-binding.json",
           "config/release.json",
-          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch",
+          "scripts/validate-supply-chain-evidence.py"
         ],
         "parameters_changed": false
       },
@@ -147,7 +190,7 @@
         "parameters_changed": true
       },
       "qemu-source-qualified": {
-        "after_sha256": "dbe33a5dd0c1b44b8a06b023a03720ee7da10f2b8ce49ab2e7280d7cc1698356",
+        "after_sha256": "45dabdd0cf5e4d77fa64ee97a06a7f93fb27287d1389752d3a34fc085b0781ee",
         "before_sha256": "107e21dc39bf53482c6bfb0a7d296a97257eb87433c82d9f4e1a86317796d6e3",
         "files": [
           "config/generated/components/product/sdk-qualification.json",
@@ -161,7 +204,8 @@
           "config/generated/components/python/qualification.json",
           "config/generated/release-binding.json",
           "config/release.json",
-          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch",
+          "scripts/validate-supply-chain-evidence.py"
         ],
         "parameters_changed": false
       },
@@ -198,7 +242,7 @@
         "parameters_changed": false
       },
       "rpm-source-lock-validated": {
-        "after_sha256": "bdd3cb61e9df58afc5193bef9cc80e7ca1490c4f3832f263e153d574d072e026",
+        "after_sha256": "fa9eded7f443a8a6c69127d5bf60f044442c09c9ecca1688bd232ba2da4cc9f1",
         "before_sha256": "ceb51017a449203a9d8c4c5feac4bb0be3e65496fa9609933882e1608c6d0821",
         "files": [
           "config/generated/components/product/sdk-qualification.json",
@@ -212,7 +256,8 @@
           "config/generated/components/python/qualification.json",
           "config/generated/release-binding.json",
           "config/release.json",
-          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch",
+          "scripts/validate-supply-chain-evidence.py"
         ],
         "parameters_changed": false
       },
@@ -232,7 +277,7 @@
         "parameters_changed": true
       },
       "sigstore-sources-qualified": {
-        "after_sha256": "8ee5923332181ec42564eb35ee5c10dcf9f1d4540a46b71f50d6211db6f5388e",
+        "after_sha256": "f938a1cf20936075535f2d7c9b0a6749d33c2867215f39f754a00b1a024d7f0e",
         "before_sha256": "4568eb63d4cee3d241d4a578a7c204e1def9de9407304f83e031b2c58a220463",
         "files": [
           "config/generated/components/product/sdk-qualification.json",
@@ -246,12 +291,13 @@
           "config/generated/components/python/qualification.json",
           "config/generated/release-binding.json",
           "config/release.json",
-          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch",
+          "scripts/validate-supply-chain-evidence.py"
         ],
         "parameters_changed": false
       },
       "validate": {
-        "after_sha256": "a2dadceee80c1f153afb9edc6b81d125af891283b3eaa864ca0c9d1e1769c172",
+        "after_sha256": "82749def051b3c7d728c62fb47a20e1b351eeb3e9c0fe55555ba0b41bc36aaba",
         "before_sha256": "f4a8cf80ec73e195287ddf491d27b0d2cbac34a4032edf587c0ff02f138fc10e",
         "files": [
           "config/generated/components/product/sdk-qualification.json",
@@ -265,7 +311,8 @@
           "config/generated/components/python/qualification.json",
           "config/generated/release-binding.json",
           "config/release.json",
-          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch",
+          "scripts/validate-supply-chain-evidence.py"
         ],
         "parameters_changed": false
       }
@@ -296,57 +343,55 @@
       ]
     }
   },
-  "phases": [
-    "inputs",
-    "source-cp39",
-    "raw-build",
-    "raw-x86_64-install",
-    "raw-x86_64-test-context",
-    "raw-aarch64-install",
-    "raw-aarch64-test-context",
-    "qualify-cp39",
-    "install-cp39",
-    "python-dev",
-    "sdk-complete-dev"
-  ],
-  "running_at_observation": null,
+  "running_at_observation": "source-cp39",
   "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
   "builder": "crossforge-ci-review",
-  "qualification_boundary": "Only cp39 raw components and qualified row are newly produced; original five row receipt references and both original toolchain subjects remain selected. Every downstream consumer uses original verification APIs. No GitHub producer is claimed.",
-  "timing_note": "Concurrent local builder use; not an isolated or GitHub performance baseline. The separate source-cp39 phase forces the original three compiler stages and may build uncached prerequisites.",
+  "timing_note": "Concurrent local builder use; not an isolated or GitHub performance baseline. Separate source-cp39 replay may build uncached prerequisites.",
   "merged_main": false,
   "pushed": false,
   "published": false,
-  "experiment_generated_bake": {
-    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/after/docker-bake.override.json",
-    "sha256": "c54ea922c43e303834d048d2ef0dfcc7c0dd35c65b01455620e6bfb901d0f0be"
-  },
-  "record_check_note": "Initial record check rejected comparison of the experiment-regenerated Bake pin file with the unchanged repository file. Production overlay hashes now identify the before snapshot; the after renderer output has a separate explicit digest. No source snapshot, build input or verifier was modified.",
-  "failure": {
-    "phase": "inputs",
-    "exit_code": 1,
-    "elapsed_seconds": 564.4,
-    "error": "CPython 3.9 patch digest policy mismatch",
-    "cause": "The experimental patch/release digest changed but the independent audited pin in validate-supply-chain-evidence.py was not updated. Original supply-chain validation correctly rejected the fixture before raw component production.",
-    "files": {
-      "runtime.log": {
-        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/runtime.log",
-        "sha256": "9086c0448964004a50bda0094e3cc69c8e3f9fc9f5568298c857504011f5cc64"
+  "completed": [
+    {
+      "phase": "inputs",
+      "status": "passed",
+      "seconds": 70.287,
+      "driver": {
+        "cache_write": false,
+        "cold": true,
+        "component_recovery_sha256": null,
+        "elapsed_seconds": 68.7,
+        "exit_code": 0,
+        "kind": "crossforge-ci-build-observation",
+        "rebuild_sources": false,
+        "replay_qualification": false,
+        "source_commit": "",
+        "stage": "inputs",
+        "targets": [
+          "platform-python-check",
+          "qemu-source-qualified",
+          "rpm-source-lock-validated",
+          "sigstore-sources-qualified",
+          "validate"
+        ]
       },
-      "runtime/inputs/driver.log": {
-        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/runtime/inputs/driver.log",
-        "sha256": "048171d62c4a29582030b1392c017cedbf94ff100ccebd00f4024a18085649b5"
-      },
-      "runtime/inputs/driver/result.json": {
-        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/runtime/inputs/driver/result.json",
-        "sha256": "a1031ea03e2a7a37ba5e5133c9fe39de5496b4e52e0c6be0388e11520e9e2274"
-      },
-      "runtime/inputs/driver/build.log": {
-        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/runtime/inputs/driver/build.log",
-        "sha256": "fd24740be31645ceaf6809b8ac232d9261af20ecaf8e3908cb2ee1e05e8946a5"
+      "files": {
+        "result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime/inputs/result.json",
+          "sha256": "4fa19b2e692d30f7e01c22e0122de3901ddc670528aad7e0c0809ef31504762c"
+        },
+        "driver.log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime/inputs/driver.log",
+          "sha256": "a522175d30977d7e4546104c413ce63d7c9643ea8145b0f072b0a06cd7a756b5"
+        },
+        "driver/result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime/inputs/driver/result.json",
+          "sha256": "a04848fef3243b7ca074bb11705a1813105f3b43e01d2447487b6426c1303e85"
+        },
+        "driver/build.log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime/inputs/driver/build.log",
+          "sha256": "d80205d1f6952cbeb7c4e19c49c09bd707a96bbfdde5ab5becb58ee7886095f2"
+        }
       }
-    },
-    "retry_record": "cp39-affected-change-audited-2026-09-11.json",
-    "preserved": "All original source snapshots, manifest, inputs and failed diagnostics remain unchanged."
-  }
+    }
+  ]
 }

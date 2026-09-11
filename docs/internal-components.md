@@ -1,11 +1,14 @@
 # Internal component handoff
 
-The local toolchain pilot uses the canonical Docker/Bake build stages and exports
-an OCI layout with an embedded component contract. It supports a single local
-`docker-container` BuildKit node. Local qualification receipts and explicit prior
-report verification are available. Digest-preserving registry transfer and a same-run CI pilot are implemented.
-The GitHub pilot event, cross-run trusted reuse, and candidate consumption still
-require validation or implementation.
+Component producers use the canonical Docker/Bake build stages and export OCI
+layouts with embedded contracts. They support a single local `docker-container`
+BuildKit node. Both toolchains, all six Python rows, qualified-row consumption,
+and digest-preserving registry transfer are implemented. Main CI prepares missing
+components and integrates verified rows; candidate publication independently
+consumes raw components and retains its full qualification gates. Live GitHub
+signing, cross-run reuse and candidate execution still require acceptance.
+See the [acceptance index](research/ci-refactoring-acceptance.md) for the exact
+source versions and completed local Docker gates.
 
 ## Selecting changed source work
 
@@ -170,8 +173,10 @@ Transport CLI implementation is not a compiler input unless the recipe copies
 it; qualification acceptance code is a qualification input. This intentionally
 changes the keys from model 1; old receipts are not relabeled. Ignore patterns
 are not applied to selected directory copies, so extra ignored files can still
-invalidate reuse. The material model is not yet the
-main/PR task selector. Keep generated files checked before planning, and do not
+invalidate reuse. The main/PR planner now compares `source_closure` inventories
+from checked base/head snapshots. Unknown changes or an unprovable inventory
+select full work; artifact reuse still requires independent current-input and
+receipt verification. Keep generated files checked before planning, and do not
 provide independently edited graphs to trusted producers.
 
 
@@ -655,12 +660,13 @@ The binding is configuration identity; actual artifacts and execution provenance
 remain bound by the separate formal qualification receipt.
 
 Bare `--release` invocation preserves row schema 2 and its original behavior.
-Consumers pass `--release` and `--row-manifest` together: the supplied manifest
-chooses only the format to verify, never the trusted digest. For schema 3, the
-consumer derives the entire expected row policy independently from the complete
-release, checks the prepared source, both target reports and actual installed
-files, then compares the complete recomputed manifest. SDK append and formal row
-receipt inspection retain their additional byte-for-byte output comparison.
+Formal row receipt inspection passes `--release` and `--row-manifest` together:
+the supplied manifest chooses only the format to verify, never the trusted
+digest. For schema 3, that inspector derives the expected row policy independently
+from the complete release, checks the prepared source, both target reports and
+actual installed files, then compares the complete recomputed manifest. SDK
+append derives its expectation from the row's six authenticated component
+projections. Both paths retain their additional byte-for-byte output comparison.
 Final SDK integration independently checks the scoped row metadata/binding before
 executing its host Python checks; its own report still binds the full release.
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "crossforge-python-append-scope-observation",
-  "observed_at": "2026-09-11T14:01:23.686237+00:00",
+  "observed_at": "2026-09-11T14:16:13.447466+00:00",
   "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
   "status": "regressions checked; actual append and SDK acceptance running",
   "source_sha256": {
@@ -369,9 +369,60 @@
             "sha256": "d26a05eb3691e9105ad6eac395258a82668e389aaf1052166d9aafb4123cfefc"
           }
         }
+      },
+      {
+        "phase": "cp310",
+        "status": "passed",
+        "seconds": 1232.19,
+        "source_dirty": true,
+        "fresh_runs": 2,
+        "inputs_sha256": "a287325950644ff7a13ccc8be08a6033191ecaae1c35ca9fe8b9f514bd184583",
+        "row_receipt_sha256": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+        },
+        "started_at": "2026-09-11T14:10:22Z",
+        "completed_at": "2026-09-11T14:12:33Z",
+        "full_release_in_inputs": false,
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp310/result.json",
+            "sha256": "62321457e19fda5609677dcc8c3873f98f3f6125d6abfb921817d1b6f2468618"
+          },
+          "installation/result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp310/installation/result.json",
+            "sha256": "1741decfc65f3c77a6953be329449e068748b0da584513656f6ea009e8ca7e77"
+          },
+          "installation/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp310/installation/inputs.json",
+            "sha256": "3350b8cfaabcce7a7f231a667fa4a8e8803adde0a36f2d96684278ae4e3b34c6"
+          },
+          "installation/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp310/installation/execution.jsonl",
+            "sha256": "b1a162719b532c02b88423a1415182e87ec8d918a8fee815487b604ff9113b7a"
+          },
+          "installation/payload/row.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp310/installation/payload/row.json",
+            "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-results.py",
+            "sha256": "dbb511b09318584ead0f53e2863daf605669f7b110f2451b9bb156f11e5f1ca2"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-cp310.log",
+            "sha256": "1b3f5ee8b6fe269fe6d068a46463070fb34d297059a4d1b6c3ed8166301f2033"
+          }
+        }
       }
     ],
-    "running_at_observation": "cp310",
+    "running_at_observation": "cp311",
     "timing_note": "Shared max-parallelism=1 builder also executes source replays; local elapsed includes queueing and is not an isolated performance baseline."
   },
   "remaining": [
@@ -382,5 +433,7 @@
   ],
   "merged_main": false,
   "pushed": false,
-  "published": false
+  "published": false,
+  "source_validation_revision": "eb3e50ef6a7d51e8703269212edff1dd19648d17",
+  "source_validation_note": "source_sha256 identifies the implementation and tests at this revision. The later affected-change fixture regression is recorded separately and does not relabel these earlier executions."
 }
