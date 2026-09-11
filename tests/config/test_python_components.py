@@ -77,7 +77,12 @@ class PythonComponentsTests(unittest.TestCase):
         paths = {record["path"] for record in inputs["files"]}
         self.assertFalse(paths & {"scripts/build-gcc.sh", "scripts/build-cpython-native.sh", "scripts/build-cpython-cross.sh"})
         self.assertTrue({"scripts/qualify-cpython.py", "scripts/finalize-cpython-qualification.py",
-                         "docker/finalize-python-row.py", "tests/python/runtime_probe.py", "config/release.json"} <= paths)
+                         "docker/finalize-python-row.py", "tests/python/runtime_probe.py",
+                         "scripts/python_row_policy.py", "scripts/python_qualification_policy.py"} <= paths)
+        self.assertFalse(paths & {"config/release.json", "config/schemas/release.schema.json"})
+        for name in ("python/cp39-qualification", "python/cp39-x86_64-qualification", "python/cp39-aarch64-qualification",
+                     "implementation/python-cp39-qualification-policy", "python/cp39-source", "implementation/python-cp39-build-policy"):
+            self.assertIn("config/generated/components/" + name + ".json", paths)
         for arch in python.ARCHES:
             self.assertIn("cpython-cp39-%s-qualify" % arch, inputs["parameters"]["recipes"])
 

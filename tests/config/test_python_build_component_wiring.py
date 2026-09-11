@@ -244,7 +244,13 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         for script in ("finalize-cpython-qualification.py", "python_sdk_identity.py", "python_zstd_evidence.py",
                        "target_artifact_audit.py", "python_qualification_policy.py", "release_component.py"):
             self.assertIn(script, append)
-        self.assertIn("FROM python-host AS cpython-row-assemble", self.stages["cpython-row-assemble"])
+        row = self.stages["cpython-row-assemble"]
+        self.assertIn("FROM python-build-host AS cpython-row-assemble", row)
+        self.assertIn("--qualification-component-sha256", row)
+        self.assertIn("ARG CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256", row)
+        self.assertIn("--row-manifest", append)
+        for path in ("release.json", "release.schema.json", "release-components-core.py", "python_source_release_binding.py"):
+            self.assertNotIn(path, row)
         runtime = self.stages["cpython-runtime-input"]
         self.assertIn("FROM python-build-host AS cpython-runtime-input", runtime)
         self.assertIn("--qualification-component-sha256", runtime)

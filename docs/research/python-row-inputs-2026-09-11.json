@@ -1,0 +1,229 @@
+{
+  "base_commit": "67ec8678adc155f7952149b6c7bd137b126fcc0f",
+  "checks": [
+    {
+      "command": [
+        "./scripts/validate-release.py",
+        "--require-locked"
+      ],
+      "seconds": 0.024
+    },
+    {
+      "command": [
+        "./scripts/validate-supply-chain-evidence.py"
+      ],
+      "seconds": 0.431
+    },
+    {
+      "command": [
+        "./scripts/validate-frozen-abi.py"
+      ],
+      "seconds": 0.327
+    },
+    {
+      "command": [
+        "./scripts/validate-python-runtime-providers.py"
+      ],
+      "seconds": 0.238
+    },
+    {
+      "command": [
+        "./scripts/render-release-components.py",
+        "--check"
+      ],
+      "seconds": 0.177
+    },
+    {
+      "command": [
+        "./scripts/render-vcpkg-integration.py",
+        "--check"
+      ],
+      "seconds": 0.181
+    },
+    {
+      "command": [
+        "./scripts/render-bake.py",
+        "--check"
+      ],
+      "seconds": 0.315
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "docker/run-python-qualification.sh"
+      ],
+      "seconds": 0.001
+    },
+    {
+      "command": [
+        "actionlint",
+        "-ignore",
+        "unexpected key \"queue\" for \"concurrency\" section"
+      ],
+      "seconds": 0.009
+    }
+  ],
+  "date": "2026-09-11",
+  "environment": {
+    "bake": "CLI print only; no BuildKit solve",
+    "cpus": 4,
+    "docker_socket_mounted": false,
+    "memory": "16g",
+    "network": "none",
+    "platform_python": "3.6.8",
+    "rocky_image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+    "tool_image_id": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "user": "1000:1000"
+  },
+  "focused": {
+    "seconds": 72.028,
+    "skipped": 0,
+    "tests": 82
+  },
+  "initial_findings": [
+    "Initial focused run had two stale graph expectations: legacy row-stage ancestry and absence of the row root argument. Updated them to require component ancestry and the exact trusted row pin.",
+    "The initial complete 1290-test run had one stale assertion requiring config/release.json in the row material closure. Replaced it with exact row/target/source projection requirements and explicit absence of full release/schema, retaining the seven-subject and no-source-compiler assertions; repeated the complete suite."
+  ],
+  "kind": "crossforge-local-refactoring-observation",
+  "limits": [
+    "New row aggregation tests use explicit fixture target reports and mocked target-validator/ELF execution boundaries. Separate full target-validation tests remain in the complete suite; no actual new row qualification was executed.",
+    "No new clean-runtime installation, source compiler replay, full row/SDK Docker solve, GitHub signing/retry/cross-run acceptance or candidate/native ARM execution occurred.",
+    "The SDK intentionally retains its complete-release identity and fresh integration gates. Formal qualified-row CI production and consumption remain to be connected and proven.",
+    "Existing physical execution-environment constraints are unchanged; cross-machine reuse policy is still awaiting a decision.",
+    "Reference-aware retention and matched performance/concurrency experiments remain pending.",
+    "Earlier automatic approval review rejected mounting the host Docker socket inside the orchestration container for broad daemon control; explicit approval is still pending and was not bypassed.",
+    "No merge to main, remote push or image publication."
+  ],
+  "local_outputs": {
+    "focused.log": {
+      "path": "/tmp/crossforge-python-row-inputs/focused.log",
+      "sha256": "acb29db6b56534b0c70a1beb9fc93708d9eafc4553a597188a29cd93171f4603"
+    },
+    "full-result.json": {
+      "path": "/tmp/crossforge-python-row-inputs/full-result.json",
+      "sha256": "80d5d851aef5ebcee9a85d3d31f0a5d3fd534294cd0accea10f5fd3a24760b57"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-python-row-inputs/full.log",
+      "sha256": "cf453e3a51476fbdc033bad9badb3346ae6b49e8102c1df5f70bdb882e16d4c2"
+    },
+    "material-check.py": {
+      "path": "/tmp/crossforge-python-row-inputs/material-check.py",
+      "sha256": "a4491ee68141003f9283832cf1ec48c39e998b675a4a972d554a8441384fa0bc"
+    },
+    "material-result.json": {
+      "path": "/tmp/crossforge-python-row-inputs/material-result.json",
+      "sha256": "025a130f984b5fd440c887d492da1bd63eb8ef017583f9afc93afbd801106c0b"
+    },
+    "rocky.log": {
+      "path": "/tmp/crossforge-python-row-inputs/rocky.log",
+      "sha256": "115f29fc89b02fdd4303871b19ba9e771aaf2bc8e83c4e797571aaf4fc2d6bd8"
+    }
+  },
+  "materials": {
+    "base_commit": "67ec8678adc155f7952149b6c7bd137b126fcc0f",
+    "clean_runtime_root_closures_unchanged": 2,
+    "component_documents_unchanged": 113,
+    "configuration_mutations": {
+      "new-cp39-source": [
+        "python-row-cp39"
+      ],
+      "new-product-version": [],
+      "new-qemu-executor": [
+        "python-row-cp310",
+        "python-row-cp311",
+        "python-row-cp312",
+        "python-row-cp313",
+        "python-row-cp314",
+        "python-row-cp39"
+      ],
+      "new-x86-abi": [
+        "python-row-cp310",
+        "python-row-cp311",
+        "python-row-cp312",
+        "python-row-cp313",
+        "python-row-cp314",
+        "python-row-cp39"
+      ],
+      "new-zstd-source": [
+        "python-row-cp314"
+      ],
+      "old-product-version": [
+        "python-row-cp310",
+        "python-row-cp311",
+        "python-row-cp312",
+        "python-row-cp313",
+        "python-row-cp314",
+        "python-row-cp39"
+      ]
+    },
+    "interpretation": "Real Bake print/source capture over equally normalized Git snapshots with an explicit execution fixture; not qualification or a measured speedup.",
+    "raw_component_closures_unchanged": 34,
+    "row_qualification_closures_changed": 6,
+    "runtime_qualification_closures_unchanged": 12,
+    "static_qualification_closures_unchanged": 12
+  },
+  "regression_scope": [
+    "Six component policies and independently derived full-release policies are equal, including both target policies and exact prepared-source manifests.",
+    "All six consumed projection documents are independently authenticated from the trusted row root; missing targets, changed bytes, wrong pins/row/version/adapter, mixed authorities and altered prepared source fail.",
+    "Six row aggregation fixtures produce schema 3 and reproduce identical bytes through --release --row-manifest consumption. Target execution bodies/ELF collection remain explicit mocks; actual fixture file/tree digests and existing zstd aggregation still run.",
+    "An unrelated product-version change preserves a scoped row; source changes and tampered installed Python, report references, unknown fields, float schema and legacy claims fail.",
+    "Final SDK binding validation independently derives row policy and rejects incorrect support/source/patch metadata, mixed legacy claims and input-binding tampering.",
+    "The cropped cp314 row stage contains only its fourteen copied Python files and six projections, loads the production input selector, and does not load full release renderer or source-release bridge.",
+    "Existing legacy row regressions preserve schema-2 release binding and source/ABI/file validation. Bake tests require exactly six row pins and reject a missing row pin."
+  ],
+  "rocky": {
+    "seconds": 24.417,
+    "skipped": 0,
+    "syntax_files": [
+      "scripts/python_row_policy.py",
+      "docker/finalize-python-row.py",
+      "scripts/qualify-final-sdk.py",
+      "scripts/crossforge_internal/python_qualification.py"
+    ],
+    "tests": 9
+  },
+  "schema_version": 1,
+  "schemas": {
+    "component_mode": {
+      "compile": 5,
+      "prepared_source": 2,
+      "row": 3,
+      "runtime": 4,
+      "target_final": 5
+    },
+    "final_sdk": 1,
+    "legacy_row": 2
+  },
+  "scope": "Scoped Python row policy/production and independent full-release SDK/receipt consumption; contract and material validation only",
+  "source_sha256": {
+    "docker-bake.override.json": "beb4dc2e0eeb046da5861c6532b26297e06cc3dba9ebd74428c4646a8e75c05f",
+    "docker/finalize-python-row.py": "de3d86b8e1bd3a5b718983d620451e457721ad61d6ba6936aec97d9f50352cac",
+    "docker/python.Dockerfile": "6f2b52782b10040ee855e67ee35193f26e6757ea87777cb78ef2da257afd731f",
+    "scripts/crossforge_internal/python_qualification.py": "eeb0688a9a2c40ab620a53602fa9d80975d614f0d3080ed336d9e0b43b4ebc7a",
+    "scripts/python_row_policy.py": "5897a1a68eeac7f4d8cfbe66e77128826e6193c1db2dd8729d6ef39f1c3f8a7e",
+    "scripts/qualify-final-sdk.py": "d77b8d8784338affd8ca3b9fd3cd0e11055b01d800820c002cd7d57bde630b84",
+    "scripts/render-bake.py": "78ba9b623fea7a7785bd640757723ab96369d753e8daca684bb38195574128d3",
+    "tests/config/test_python_build_component_wiring.py": "a631ebf221ccf449bc256364f7e1c4b04b7701c827e149539ead0df801dc8a70",
+    "tests/config/test_python_components.py": "2c03d8747b23f473b9083b865014be68a9ccdf98714dfb77086429362cee4ac2",
+    "tests/config/test_python_row_manifest.py": "466b2055be8bc8ae3ce68f88ffb75e3044e72156d07e4fb02454656eff44a341",
+    "tests/config/test_python_row_policy.py": "a996b81de2ca1a552ea88b0e103a07eba3436b85526ca63675a1a86dc5752fab",
+    "tests/config/test_render_bake.py": "6dd5524193a49a51901be02bedeadf242dc9d6293e60434912e1d3cc0c1db9c6"
+  },
+  "status": "local-contract-checks-passed; actual qualification and CI acceptance pending",
+  "tests": [
+    {
+      "seconds": 273.269,
+      "skipped": 0,
+      "suite": "config",
+      "tests": 1290
+    },
+    {
+      "seconds": 1.211,
+      "skipped": 0,
+      "suite": "packaging",
+      "tests": 40
+    }
+  ]
+}

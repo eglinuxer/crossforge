@@ -58,6 +58,7 @@ COPY scripts/python_row_contract.py /work/scripts/python_row_contract.py
 COPY scripts/finalize-cpython-qualification.py \
   scripts/python_sdk_identity.py scripts/python_zstd_evidence.py scripts/python_runtime_overlay.py \
   scripts/python_qualification_policy.py scripts/release_component.py \
+  scripts/python_row_policy.py scripts/prepare-cpython-source.py \
   scripts/target_artifact_audit.py \
   scripts/python_source_release_binding.py \
   scripts/release-components-core.py \
@@ -380,10 +381,13 @@ RUN --network=none \
 
 # A row export is deliberately scratch-based. Build-only RPMs, toolchains,
 # runtime roots, QEMU and qualification extensions cannot cross this boundary.
-FROM python-host AS cpython-row-assemble
+FROM python-build-host AS cpython-row-assemble
 ARG CPYTHON_ROW
 ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
+ARG CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256
+COPY config/generated/components/python/${CPYTHON_ROW}-qualification.json \
+  /work/config/qualification-components/python/${CPYTHON_ROW}-qualification.json
 COPY --from=crossforge_cpython_build \
   /opt/crossforge/python/${CPYTHON_ROW}/build/ \
   /row-export/opt/crossforge/python/${CPYTHON_ROW}/build/
@@ -406,20 +410,24 @@ COPY --from=crossforge_cpython_x86_64 \
   /work/config/ /work/abi-inputs/x86_64/
 COPY --from=crossforge_cpython_aarch64 \
   /work/config/ /work/abi-inputs/aarch64/
+COPY --from=crossforge_cpython_x86_64 \
+  /work/config/qualification-components/ /work/config/qualification-components/
+COPY --from=crossforge_cpython_aarch64 \
+  /work/config/qualification-components/ /work/config/qualification-components/
 COPY scripts/abi_contract.py scripts/python_abi_audit.py \
-  scripts/python_runtime_providers.py /work/scripts/
-RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
-      --release /src/config/release.json \
-      --row "$CPYTHON_ROW" \
-      --version "$CPYTHON_VERSION" \
-      --adapter "$CPYTHON_ADAPTER" \
-      --manifest "/row-export/opt/crossforge/qualification/python/$CPYTHON_ROW/source.json" \
-    && /usr/libexec/platform-python /work/scripts/finalize-python-row.py \
+  scripts/python_runtime_providers.py scripts/finalize-cpython-qualification.py \
+  scripts/python_sdk_identity.py scripts/python_zstd_evidence.py scripts/python_runtime_overlay.py \
+  scripts/python_qualification_policy.py scripts/python_row_policy.py scripts/release_component.py \
+  scripts/prepare-cpython-source.py scripts/python_row_contract.py scripts/target_artifact_audit.py \
+  /work/scripts/
+COPY --chmod=0755 docker/finalize-python-row.py /work/scripts/finalize-python-row.py
+RUN /usr/libexec/platform-python /work/scripts/finalize-python-row.py \
       --root /row-export \
       --row "$CPYTHON_ROW" \
       --version "$CPYTHON_VERSION" \
       --adapter "$CPYTHON_ADAPTER" \
-      --release /src/config/release.json \
+      --qualification-components /work/config/qualification-components \
+      --qualification-component-sha256 "$CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256" \
       --source-manifest "/row-export/opt/crossforge/qualification/python/$CPYTHON_ROW/source.json" \
       --abi-input-root /work/abi-inputs \
       --output "/row-export/opt/crossforge/qualification/python/$CPYTHON_ROW/row.json"
@@ -473,6 +481,7 @@ COPY --chmod=0755 docker/verify-python-row.py /work/scripts/verify-python-row.py
 COPY --chmod=0755 docker/finalize-python-row.py /work/scripts/finalize-python-row.py
 COPY scripts/abi_contract.py scripts/finalize-cpython-qualification.py \
   scripts/python_runtime_overlay.py scripts/python_qualification_policy.py scripts/release_component.py \
+  scripts/python_row_policy.py scripts/prepare-cpython-source.py \
   scripts/python_abi_audit.py scripts/python_runtime_providers.py \
   scripts/python_sdk_identity.py scripts/python_zstd_evidence.py \
   scripts/target_artifact_audit.py /work/scripts/
@@ -527,6 +536,7 @@ RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
       --release /src/config/release.json \
       --source-manifest "/opt/crossforge/qualification/python/$CPYTHON_ROW/source.json" \
       --abi-input-root /work/abi-inputs \
+      --row-manifest "/opt/crossforge/qualification/python/$CPYTHON_ROW/row.json" \
       --output /tmp/python-row.json \
     && cmp -s /tmp/python-row.json \
       "/opt/crossforge/qualification/python/$CPYTHON_ROW/row.json" \
@@ -542,6 +552,7 @@ COPY config/release.json /opt/crossforge/release.json
 COPY --chmod=0755 scripts/qualify-final-sdk.py scripts/toolchain_report.py \
   scripts/toolchain_policy.py scripts/release_component.py \
   scripts/loader_evidence.py scripts/python_row_contract.py scripts/python_qualification_policy.py \
+  scripts/python_row_policy.py scripts/prepare-cpython-source.py \
   scripts/python_sdk_identity.py scripts/release-components-core.py \
   scripts/validate-release.py /work/scripts/
 RUN --network=none test ! -e /runtime-locked \

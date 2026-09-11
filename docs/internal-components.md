@@ -491,7 +491,7 @@ from the row/target policy, or derive it from the complete release in legacy mod
 They continue checking base image, target, lock/transaction, selected RPM bytes
 and actual runtime inventory. Schema 1 keeps its exact full-release contract and
 cannot enter a component-only qualification. The target report chain uses the
-row/target policy below; row aggregation still binds the complete release.
+row/target policy below; row aggregation uses a separately authenticated row root.
 Local graph and regression checks are separate from actual new runtime
 qualification, which remains pending.
 
@@ -558,9 +558,9 @@ and cross-run acceptance still require the rollout pilot.
 The component renderer now also emits a qualification policy for each Python
 row, a qualification input component for each row/target pair, and one row
 aggregate that binds its two targets. The legacy all-row qualification
-components remain byte-for-byte compatible. The static compile gate now consumes
-these inputs. Runtime/final reports retain their complete release binding; this
-migration does not authorize CI report reuse.
+components remain byte-for-byte compatible. Static compile, runtime, target final
+and row aggregation now consume these inputs. Legacy report formats keep their
+exact complete-release identities; this migration does not authorize CI report reuse.
 
 `python_qualification_policy.py` reads a target component and its row policy
 using one independently trusted target-component digest. It needs only
@@ -610,9 +610,10 @@ final report can embed compile schema 4 or 5, but both runtime reports must rema
 schema 3 with exact full-release identities. A scoped final report requires compile
 schema 5, runtime schema 4 and overlay schema 2 throughout; mixed chains are rejected.
 The full-release consumer independently derives each scoped policy before accepting
-a new target report. Row manifests and SDK aggregation retain their complete
-release binding and independently computed all-row qualification pair. This does
-not rebind old evidence or establish cross-machine qualification reuse.
+a new target report. Legacy row schema 2 retains the complete-release binding and
+independently computed all-row qualification pair. New row schema 3 uses the row
+contract below; the assembled SDK still binds its complete release. This does not
+rebind old evidence or establish cross-machine qualification reuse.
 
 Docker contract tests cover the producer/consumer boundaries and a cropped runtime
 stage with no release renderer; Rocky platform-python compatibility is checked
@@ -620,8 +621,50 @@ separately. Bake material captures show that changing the product version leaves
 all twelve target runtime qualification inputs unchanged, changing cp39 source
 affects only its two targets, and changing x86_64 ABI or QEMU executor affects only
 the corresponding six targets. These are input-scope checks, not new qualification
-executions or measured CI speedups. Actual new qualification runs, row/SDK input
-migration and formal CI reuse acceptance remain in progress.
+executions or measured CI speedups. Actual new qualification runs and formal CI
+reuse acceptance remain in progress.
+
+
+### Component-bound row aggregation
+
+`python_row_policy.py` authenticates `python/<row>-qualification` using the
+producer's independent `--qualification-component-sha256`. Its two exact target
+dependencies authenticate their policies and agree on row implementation, source,
+source/build-policy references and support status. The source preparer's existing
+reader authenticates the shared raw source/build-policy pair and constructs the
+exact expected source manifest. No source/patch parser is duplicated, and no
+partial release object is created. A row consumes six projection documents.
+
+`cpython-row-assemble` inherits the locked host build-tool root and explicitly
+copies fourteen Python files. It receives target policy projections and ABI files
+from both qualified targets, plus the pinned row root. It does not inherit the
+legacy full-release host. The prepared source must be schema 2, each target final
+report must be schema 5, and the existing installed-file, ELF, ABI, build-Python,
+zstd and report validations still run. New row schema 3 replaces `release_sha256`
+and the all-row qualification pair with `crossforge-python-row-input-binding`.
+The binding is configuration identity; actual artifacts and execution provenance
+remain bound by the separate formal qualification receipt.
+
+Bare `--release` invocation preserves row schema 2 and its original behavior.
+Consumers pass `--release` and `--row-manifest` together: the supplied manifest
+chooses only the format to verify, never the trusted digest. For schema 3, the
+consumer derives the entire expected row policy independently from the complete
+release, checks the prepared source, both target reports and actual installed
+files, then compares the complete recomputed manifest. SDK append and formal row
+receipt inspection retain their additional byte-for-byte output comparison.
+Final SDK integration independently checks the scoped row metadata/binding before
+executing its host Python checks; its own report still binds the full release.
+
+Local Docker fixtures cover six-row production/consumption and rejection of
+changed source, policy, report, files, extra fields and mixed legacy claims. The
+cropped row-stage import/input test has no renderer or source-to-release bridge.
+Target execution bodies and ELF tools in row aggregation fixtures remain mocked;
+the full target-validator regressions are separate, and none of these fixtures
+constitutes a new qualification run. Material captures over normalized snapshots
+show product-version changes no longer invalidate any row, cp39 source affects
+only cp39 and private zstd affects only cp314. Shared target ABI/QEMU changes
+still affect every row containing that target. Formal CI production/reuse,
+physical execution-environment policy and actual replay acceptance remain open.
 
 ## GCC qualification policy inputs
 

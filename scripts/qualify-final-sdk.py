@@ -29,6 +29,7 @@ RELEASE_COMPONENTS = runpy.run_path(
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
 PYTHON_POLICY = runpy.run_path(str(Path(__file__).with_name("python_qualification_policy.py")))
+PYTHON_ROW_POLICY = runpy.run_path(str(Path(__file__).with_name("python_row_policy.py")))
 TOOLCHAIN_REPORT = runpy.run_path(str(Path(__file__).with_name("toolchain_report.py")))
 
 
@@ -191,7 +192,23 @@ def audit_dynamic_elf(readelf, path, expected_interpreter):
     return {"interpreter": expected_interpreter, "needed": needed}
 
 
-def qualify_build_python(prefix, row, version, manifest, release_sha256):
+def validate_row_input_binding(manifest, release, row, version, release_sha256):
+    require(release is not None and canonical_sha256(release) == release_sha256,
+            "scoped row requires the current complete release")
+    try:
+        adapter = ROW_CONTRACT["contract_for_version"](version)["adapter"]
+        policy = PYTHON_ROW_POLICY["from_release"](release, row, version, adapter,
+                                                 RELEASE_COMPONENTS["render_component_documents"])
+        PYTHON_ROW_POLICY["require_binding"](manifest, policy)
+    except (PYTHON_ROW_POLICY["RowPolicyError"], ContractError, ProjectionError) as error:
+        raise QualificationError(str(error)) from error
+
+
+def qualify_build_python(prefix, row, version, manifest, release_sha256, release=None):
+    if manifest.get("schema_version") == 3:
+        validate_row_input_binding(manifest, release, row, version, release_sha256)
+    else:
+        require(manifest.get("release_sha256") == release_sha256, "%s row release differs" % row)
     minor = version.rsplit(".", 1)[0]
     python = prefix / "bin" / ("python" + minor)
     require(python.is_file() and not python.is_symlink(), "%s build Python is missing" % row)
@@ -204,7 +221,6 @@ def qualify_build_python(prefix, row, version, manifest, release_sha256):
         manifest.get("kind") == "crossforge-cpython-row"
         and manifest.get("row") == row
         and manifest.get("version") == version
-        and manifest.get("release_sha256") == release_sha256
         and manifest.get("build_python_sha256") == python_sha256
         and manifest.get("build_python_sdk_tree") == tree,
         "%s build Python differs from its row manifest" % row,
@@ -786,9 +802,12 @@ def qualify(release_path, rows, qemu):
         manifest = load_json(manifest_path)
         manifest_sha256 = sha256_file(manifest_path)
         version = entries[row]["version"]
+        schema_version = manifest.get("schema_version")
+        row_keys = (ROW_MANIFEST_KEYS if schema_version == 2 else
+                    (ROW_MANIFEST_KEYS - {"release_sha256", "qualification_components"}) | {"input_binding"})
         require(
-            set(manifest) == ROW_MANIFEST_KEYS
-            and manifest.get("schema_version") == 2
+            set(manifest) == row_keys
+            and type(schema_version) is int and schema_version in (2, 3)
             and manifest.get("adapter") == entries[row]["adapter"],
             "%s row manifest shape or adapter differs" % row,
         )
@@ -799,6 +818,7 @@ def qualify(release_path, rows, qemu):
                 version,
                 manifest,
                 release_sha256,
+                release,
             )
         )
         target_pythons.append(

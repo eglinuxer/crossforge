@@ -183,6 +183,22 @@ class RenderBakeTests(unittest.TestCase):
                 self.assertNotIn("CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256", target.get("args", {}))
                 self.assertNotIn("CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256", target.get("args", {}))
 
+    def test_row_qualification_pins_enter_only_row_producers(self):
+        key = "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256"
+        names = {"python-row-" + row["row"] for row in RENDERER["IMPLEMENTED_ROWS"]}
+        for name, target in self.targets.items():
+            if target.get("inherits") == ["_python_common"]:
+                with self.subTest(target=name):
+                    self.assertEqual(key in target.get("args", {}), name in names)
+
+    def test_row_qualification_pin_is_required_for_each_row(self):
+        for row in RENDERER["IMPLEMENTED_ROWS"]:
+            component = "python/%s-qualification" % row["row"]
+            arguments = copy.deepcopy(self.component_arguments)
+            del arguments[RENDERER["component_argument_name"](component)]
+            with self.subTest(component=component), self.assertRaisesRegex(ValueError, "missing Python row qualification component digest"):
+                RENDERER["render_python_graph"](copy.deepcopy(self.release), {}, arguments)
+
     def test_python_qualification_identity_arguments_fail_closed(self):
         for row in RENDERER["IMPLEMENTED_ROWS"]:
             for arch in RENDERER["PYTHON_TARGETS"]:
@@ -262,7 +278,11 @@ class RenderBakeTests(unittest.TestCase):
                 "python-row-%s" % row,
                 "python-%s-dev" % row,
             ):
-                self.assertEqual(self.targets[name]["args"], expected)
+                target_expected = dict(expected)
+                if name == "python-row-" + row:
+                    target_expected["CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256"] = self.binding_records[
+                        "python/%s-qualification" % row]["canonical_sha256"]
+                self.assertEqual(self.targets[name]["args"], target_expected)
             build_expected = dict(expected)
             build_expected["CPYTHON_ZSTD_VERSION"] = (
                 self.release["python"]["zstd"]["version"]

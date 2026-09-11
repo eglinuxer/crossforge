@@ -108,6 +108,7 @@ def validate_row(source, settings, root, temporary_parent=None):
             "--root", str(root), "--row", settings["row"], "--version", settings["version"],
             "--adapter", settings["adapter"], "--release", str(source / "config/release.json"),
             "--source-manifest", str(reports / "source.json"), "--abi-input-root", str(work / "abi"),
+            "--row-manifest", str(reports / "row.json"),
             "--output", str(output)], check=True, stdout=sys.stderr)
         require(output.read_bytes() == (reports / "row.json").read_bytes(),
                 "row manifest differs from installed files and current qualification policy")

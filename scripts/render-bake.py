@@ -1023,6 +1023,11 @@ def render_python_graph(config, targets, component_arguments):
             qualification_names.append(qualify_name)
             final_qualification[arch] = qualify_name
 
+        row_qualification_component = "python/%s-qualification" % row_name
+        try:
+            row_qualification_digest = component_arguments[component_argument_name(row_qualification_component)]
+        except KeyError as error:
+            raise ValueError("missing Python row qualification component digest: %s" % row_qualification_component) from error
         targets[export_name] = cacheonly_python_target(
             "cpython-row-export",
             row,
@@ -1036,6 +1041,7 @@ def render_python_graph(config, targets, component_arguments):
                     "target:%s" % final_qualification["aarch64"]
                 ),
             },
+            {"CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": row_qualification_digest},
         )
         targets[dev_name] = cacheonly_python_target(
             "python-sdk-append",
