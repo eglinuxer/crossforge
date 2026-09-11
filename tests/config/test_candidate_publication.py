@@ -14,7 +14,6 @@ from unittest import mock
 
 import test_release_evidence as evidence_fixtures
 import test_candidate_recovery as recovery_fixtures
-import test_component_recovery as component_fixtures
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -67,13 +66,9 @@ class PublicationTests(unittest.TestCase):
         candidate = evidence_fixtures.CANDIDATE["candidate_document"](self.release, self.original["source_commit"], digest, platform,
             self.source_digest, self.source_platform, load_json(self.source / "source-bundle.json"))
         self.write(directory / "candidate.json", candidate)
-        from crossforge_internal import component_recovery
-        result = component_fixtures.selection()
-        context = {"stage": "candidate-sdk", "targets": ["sdk-candidate"], "source_commit": self.original["source_commit"],
-                   "source_inventory_sha256": "0" * 64}
-        self.write(directory / "component-selection.json", component_recovery.document(context,
-            {"x86_64-toolchain-install": result}, {"x86_64-toolchain-install": {"component": result["component"], "role": result["role"]}}))
         owner = dict(self.original, phase="sdk", attempt=2)
+        from test_candidate_qualification import publication_fixture
+        publication_fixture(directory, owner, directory / "source-binding.json", digest)
         return directory, publication.seal(ROOT, directory, owner, self.source_value), candidate
 
     def environment(self, attempt=3):
@@ -169,7 +164,7 @@ class PublicationTests(unittest.TestCase):
 
     def test_sdk_checkpoint_preserves_component_selection_and_accepts_exact_legacy_payloads(self):
         directory, value, _ = self.sdk()
-        self.assertEqual(value["schema_version"], 2)
+        self.assertEqual(value["schema_version"], 3)
         selection = load_json(directory / "component-selection.json")
         for commit in ("a" * 40, self.original["source_commit"]):
             altered = copy.deepcopy(selection)
@@ -187,6 +182,9 @@ class PublicationTests(unittest.TestCase):
         legacy["schema_version"] = 1
         del legacy["files"]["component-selection.json"]
         (directory / "component-selection.json").unlink()
+        for name in publication.candidate_qualification.FILES:
+            del legacy["files"][name]
+            (directory / name).unlink()
         self.write(directory / "checkpoint.json", legacy)
         restored = publication.restore(ROOT, directory, content_sha256(legacy), dict(self.original, attempt=3), "sdk", self.root / "legacy")
         self.assertEqual(restored, legacy)
@@ -232,6 +230,49 @@ class PublicationTests(unittest.TestCase):
                 wrong["publication"]["sdk"]["qualified"] = True
             with self.subTest(mode=mode), self.assertRaises(IdentityError):
                 recovery.validate(wrong)
+
+    def test_restoration_rejects_invalid_execution_even_when_payload_hashes_are_updated(self):
+        directory, original, _ = self.sdk()
+        files = publication.candidate_qualification.FILES
+        saved = {name: (directory / name).read_bytes() for name in files}
+        for mode in ("image", "producer", "environment", "coverage", "cached", "stale", "missing-run", "source", "schema"):
+            for name, payload in saved.items():
+                (directory / name).write_bytes(payload)
+            record = load_json(directory / files[0])
+            if mode == "image":
+                record["image_digest"] = "sha256:" + "f" * 64
+            elif mode == "producer":
+                record["producer"]["attempt"] += 1
+            elif mode == "environment":
+                record["execution"]["host"] = {"changed": True}
+            elif mode == "coverage":
+                plan = load_json(directory / files[2])
+                del plan["owners"]["gcc-testsuite-smoke-evidence"]
+                self.write(directory / files[2], plan)
+            elif mode in ("cached", "stale", "missing-run"):
+                events = [json.loads(line) for line in (directory / files[3]).read_text().splitlines()]
+                if mode == "cached":
+                    events[0]["vertexes"][0]["cached"] = True
+                elif mode == "stale":
+                    events[0]["vertexes"][0]["completed"] = "2026-09-10T00:00:02Z"
+                else:
+                    events.pop(0)
+                (directory / files[3]).write_text("".join(json.dumps(event) + "\n" for event in events))
+            elif mode == "source":
+                inputs = load_json(directory / files[1])
+                inputs["files"][0]["sha256"] = "f" * 64
+                self.write(directory / files[1], inputs)
+                record["inputs_sha256"] = content_sha256(inputs)
+            else:
+                record["schema_version"] = True
+            self.write(directory / files[0], record)
+            checkpoint = copy.deepcopy(original)
+            checkpoint["files"].update({name: publication.file_hash(directory / name) for name in files})
+            self.write(directory / "checkpoint.json", checkpoint)
+            output = self.root / ("rejected-" + mode)
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                publication.restore(ROOT, directory, content_sha256(checkpoint), dict(self.original, attempt=3), "sdk", output)
+            self.assertFalse(output.exists())
 
     def test_cli_seals_both_phases_from_workflow_paths_with_an_independent_parent_digest(self):
         inputs = self.root / "runner-temp"
@@ -279,7 +320,7 @@ class PublicationWorkflowTests(unittest.TestCase):
         self.assertIn("needs: [sdk-publication]", consumer)
         self.assertIn("source-bundle.output=type=image,push=true", source)
         self.assertNotIn("sdk-candidate.output=type=image,push=true", source)
-        self.assertIn("sdk-candidate.output=type=image,push=true", sdk)
+        self.assertIn("candidate-components.py build", sdk)
         self.assertNotIn("docker buildx bake source-bundle", sdk)
         self.assertNotIn("push=true", consumer)
         self.assertNotIn("packages: write", consumer)

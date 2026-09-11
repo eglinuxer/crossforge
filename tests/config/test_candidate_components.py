@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 try:
     from crossforge_internal import candidate_components as candidate, component_build, component_ci, component_inputs
-    from crossforge_internal import component_recovery, component_resolution, python_components
+    from crossforge_internal import component_recovery, component_resolution, python_components, qualification_execution
     from crossforge_internal.identity import IdentityError, content_sha256, load_json
 finally:
     sys.path.pop(0)
@@ -69,6 +69,8 @@ class CandidateComponentGraphTests(unittest.TestCase):
         stack.enter_context(mock.patch.object(component_ci, "checked_source", return_value=self.producer))
         stack.enter_context(mock.patch.object(component_ci, "source_graph", side_effect=self.source_graph))
         stack.enter_context(mock.patch.object(component_build, "execution_identity", return_value=self.execution))
+        stack.enter_context(mock.patch.object(qualification_execution, "execution_identity",
+            return_value={"build": self.execution, "host": {"fixture": True}}))
         stack.enter_context(mock.patch.object(component_resolution, "toolchain", side_effect=self.toolchain))
         stack.enter_context(mock.patch.object(component_resolution, "python", side_effect=self.python))
         return stack
@@ -80,7 +82,7 @@ class CandidateComponentGraphTests(unittest.TestCase):
         with self.patches():
             ready = self.prepare()
             self.assertEqual(candidate.check(ROOT, self.binding, self.directory, content_sha256(ready), "fixture"), ready)
-        self.assertEqual(len(ready["selection"]["components"]), 33)
+        self.assertEqual(len(ready["selection"]["components"]), 34)
         self.assertEqual(len(self.resolved), len(set(self.resolved)))
         inputs = ready["inputs"]
         paths = {item["path"] for item in inputs["files"]}
@@ -157,9 +159,10 @@ class CandidateComponentWorkflowTests(unittest.TestCase):
         self.assertIn("profile: full", qualify)
         self.assertNotIn("selection:", qualify)
         sdk = workflow.split("  sdk-publication:\n", 1)[1].split("  publish:\n", 1)[0]
-        self.assertLess(sdk.index("candidate-components.py prepare"), sdk.index("sdk-candidate.output=type=image,push=true"))
-        self.assertIn('-f "$RUNNER_TEMP/candidate-components/components.bake.json" sdk-candidate', sdk)
-        self.assertLess(sdk.index("sdk-candidate.output=type=image,push=true"), sdk.index("candidate-components.py check"))
+        self.assertLess(sdk.index("candidate-components.py prepare"), sdk.index("candidate-components.py build"))
+        self.assertIn('--builder "$COMPONENT_BUILDER" --sha256 "$BINDING_SHA256"', sdk)
+        self.assertIn('--reference "$CANDIDATE_REFERENCE" --sbom-generator "$SBOM_GENERATOR"', sdk)
+        self.assertLess(sdk.index("candidate-components.py build"), sdk.index("candidate-components.py check"))
         self.assertLess(sdk.index("candidate-components.py check"), sdk.index("candidate-publication.py seal --phase sdk"))
         self.assertNotIn("id-token: write", sdk)
 

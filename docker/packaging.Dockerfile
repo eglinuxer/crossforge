@@ -306,7 +306,16 @@ COPY config/schemas/release.schema.json \
   config/schemas/source-binding.schema.json /work/config/schemas/
 RUN --network=none \
     --mount=type=bind,from=crossforge_gcc_testsuite_full_qualified,source=/qualification/gcc-testsuite/x86_64-host-direct-full.json,target=/tmp/crossforge-gcc-testsuite-full.json,ro \
-      /usr/libexec/platform-python /work/scripts/release_component.py validate \
+    --mount=type=bind,from=crossforge_gcc_testsuite_smoke_qualified,source=/qualification/gcc-testsuite,target=/tmp/crossforge-gcc-smoke,ro \
+    --mount=type=bind,from=crossforge_vcpkg_qualified,source=/opt/crossforge/qualification/vcpkg,target=/tmp/crossforge-vcpkg,ro \
+      test -s /tmp/crossforge-gcc-smoke/x86_64-host-direct.json \
+    && test -s /tmp/crossforge-gcc-smoke/aarch64-locked-sysroot.json \
+    && test -s /tmp/crossforge-gcc-smoke/aarch64-clean-rocky.json \
+    && test -s /tmp/crossforge-vcpkg/contract.json \
+    && test -s /tmp/crossforge-vcpkg/upstream-tier1.json \
+    && test -s /tmp/crossforge-vcpkg/upstream-tier2.json \
+    && test -s /tmp/crossforge-vcpkg/upstream-tier3.json \
+    && /usr/libexec/platform-python /work/scripts/release_component.py validate \
         /work/config/product-identity.json \
         --expected-component product/identity \
         --expected-scope qualification \

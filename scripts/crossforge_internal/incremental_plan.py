@@ -21,7 +21,7 @@ SDK_CONTROLLERS = {".github/actions/run-component-sdk/action.yml", "scripts/ci-s
     "scripts/crossforge_internal/" + name + ".py" for name in
     ("ci_sdk", "local_sdk", "python_sdk", "python_sdk_catalog", "python_sdk_recovery")}
 PYTHON_INSTALL_CONTROLLERS = {"scripts/crossforge_internal/python_row_install.py"}
-SHARED_BUILD_CONTROLLERS = {"scripts/ci-build.py"}
+SHARED_BUILD_CONTROLLERS = {"scripts/ci-build.py", "scripts/crossforge_internal/ci_replay.py"}
 
 
 def quick_only(path):

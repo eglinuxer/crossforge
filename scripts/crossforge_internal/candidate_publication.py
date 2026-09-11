@@ -9,16 +9,18 @@ import shutil
 
 from .identity import content_sha256, digest_value, exact_fields, load_json, require
 from .candidate_recovery import number, positive, REPOSITORY, WORKFLOW
+from . import candidate_qualification
 
 
 SOURCE_FILES = ("source-bundle.json", "source-binding.json", "source-index.json", "source-build-metadata.json", "sbom-generator-image.json")
 LEGACY_SDK_FILES = SOURCE_FILES + ("candidate.json", "candidate-index.json", "build-metadata.json")
-SDK_FILES = LEGACY_SDK_FILES + ("component-selection.json",)
+COMPONENT_SDK_FILES = LEGACY_SDK_FILES + ("component-selection.json",)
+SDK_FILES = COMPONENT_SDK_FILES + candidate_qualification.FILES
 
 
-def files_for(phase, version=2):
+def files_for(phase, version=3):
     require(phase in ("source", "sdk"), "unsupported publication checkpoint phase")
-    return SOURCE_FILES if phase == "source" else LEGACY_SDK_FILES if version == 1 else SDK_FILES
+    return SOURCE_FILES if phase == "source" else LEGACY_SDK_FILES if version == 1 else COMPONENT_SDK_FILES if version == 2 else SDK_FILES
 
 
 def file_hash(path):
@@ -48,7 +50,7 @@ def validate_producer(value):
 def validate(value):
     exact_fields(value, ("schema_version", "kind", "repository", "workflow", "producer", "release_sha256", "image", "files", "source"),
                  "publication checkpoint")
-    require(type(value["schema_version"]) is int and value["schema_version"] in (1, 2) and
+    require(type(value["schema_version"]) is int and value["schema_version"] in (1, 2, 3) and
             value["kind"] == "crossforge-candidate-publication", "unsupported publication checkpoint schema")
     require(value["repository"] == REPOSITORY and value["workflow"] == WORKFLOW, "publication checkpoint repository or workflow differs")
     original = validate_producer(value["producer"])
@@ -111,9 +113,11 @@ def semantics(source, directory, value):
                 "SDK candidate source binding differs")
         require(all(current[key] == value["image"][key] for key in ("repository", "digest", "platform_manifest_digest")), "SDK candidate identity differs")
         check_image(value, "build-metadata.json", "candidate-index.json", "sdk-candidate")
-        if value["schema_version"] == 2:
+        if value["schema_version"] >= 2:
             from .candidate_components import validate_selection
-            validate_selection(load_json(directory / "component-selection.json"), original["source_commit"])
+            selection = validate_selection(load_json(directory / "component-selection.json"), original["source_commit"])
+            if value["schema_version"] >= 3:
+                candidate_qualification.verify(source, directory, original, value["image"]["digest"], selection, source_binding)
     report = load_json(directory / "sbom-generator-image.json")
     candidate["STRICT"]["validate"](report, load_json(source / "config/schemas/sbom-generator-image.schema.json"),
         load_json(source / "config/schemas/sbom-generator-image.schema.json"), "$")
@@ -133,7 +137,7 @@ def seal(source, directory, original, parent=None):
     platform = image_module["platform_manifest_digest"]((directory / index).read_bytes(), digest, "linux/amd64")
     tag = candidate_module["candidate_tag"](release, original["source_commit"], str(original["run_id"]), str(original["attempt"]))
     repository = release["product"]["image_repository"]
-    value = validate({"schema_version": 1 if phase == "source" else 2, "kind": "crossforge-candidate-publication", "repository": REPOSITORY, "workflow": WORKFLOW,
+    value = validate({"schema_version": 1 if phase == "source" else 3, "kind": "crossforge-candidate-publication", "repository": REPOSITORY, "workflow": WORKFLOW,
         "producer": copy.deepcopy(original), "release_sha256": content_sha256(release),
         "image": {"repository": repository, "digest": digest, "platform_manifest_digest": platform,
                   "reference": repository + ":" + ("source-" if phase == "source" else "") + tag},

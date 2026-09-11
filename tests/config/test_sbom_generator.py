@@ -93,7 +93,8 @@ class SbomGeneratorTests(unittest.TestCase):
         candidate = (REPOSITORY / ".github/workflows/candidate.yml").read_text(
             encoding="utf-8"
         )
-        self.assertEqual(candidate.count("generator=$SBOM_GENERATOR"), 2)
+        self.assertEqual(candidate.count("generator=$SBOM_GENERATOR"), 1)
+        self.assertIn('--sbom-generator "$SBOM_GENERATOR"', candidate)
         self.assertIn("sbom-generator-index.json", candidate)
         dockerfile = (REPOSITORY / "docker/sbom.Dockerfile").read_text(
             encoding="utf-8"

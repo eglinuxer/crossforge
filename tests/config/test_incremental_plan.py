@@ -111,7 +111,12 @@ class IncrementalPlanTests(unittest.TestCase):
         self.assertIn("without a canonical SDK stage", missing["fallback_reasons"][0])
 
     def test_shared_ci_executor_change_selects_full_even_when_platform_checks_read_it(self):
-        path = "scripts/ci-build.py"
+        self.check_shared_controller("scripts/ci-build.py")
+
+    def test_shared_qualification_replay_change_selects_full_even_when_platform_checks_read_it(self):
+        self.check_shared_controller("scripts/crossforge_internal/ci_replay.py")
+
+    def check_shared_controller(self, path):
         script = self.root / path
         script.parent.mkdir(parents=True)
         script.write_text("original executor\n")

@@ -792,8 +792,32 @@ components and require fresh BuildKit RUN events. They retain the same selected
 roots and read-only permissions. Replay observations bind the physical worker
 and execution interval; they are not signed reusable qualification receipts.
 The PR source-build route continues to exercise the original source graph.
-This main-job fallback does not change the candidate publication graph or
-establish verified report reuse within that graph.
+This main-job fallback is separate from candidate publication and does not
+establish reusable signed qualification reports.
+
+Candidate publication also uses an explicit fresh-execution fallback. Its graph
+directly depends on GCC smoke/full and the complete vcpkg contract/Tier 1–3 chain,
+as well as both toolchains, all six Python rows, packaging and final SDK checks.
+The candidate consumer verifies thirty-four raw inputs: both toolchain installs,
+both GCC test contexts, and thirty Python parts. It forces the declared
+qualification stages while allowing caches for material preparation; GCC and
+CPython source compilation remain outside the component graph.
+
+`candidate-components.py build` validates the prepared component graph and
+physical environment before and after building, retains raw BuildKit execution,
+and rejects cached, failed, missing or stale qualification RUNs. Shared RUN
+digests retain every checked owning target and count as one physical execution.
+The successful execution record binds the emitted candidate digest, source
+binding, component selection, inputs and original producer. It does not mint a
+reusable component qualification receipt.
+
+SDK publication checkpoint schema 3 carries the execution record, input and
+qualification plans, and raw execution alongside the original image metadata.
+Sealing and restoration verify this payload before downstream consumer/native
+ARM work. Readers retain exact legacy schema 1/2 support; new SDK checkpoints
+require schema 3 evidence. This implementation still needs actual candidate
+execution and recovery acceptance on trusted main. Local synthetic execution
+fixtures establish the failure boundaries, not a published candidate's result.
 
 After a fresh row is sealed and its receipt matches the planned inputs and
 producer, the controller removes that row's `payload/` and `extracted/` staging

@@ -46,15 +46,9 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("uses: ./.github/workflows/verify-quick.yml", self.ci)
         self.assertNotIn("workflow_call:", self.ci)
         self.assertIn("packages: write", self.workflow)
-        self.assertIn("sdk-candidate.output=type=image,push=true", self.workflow)
-        self.assertIn(
-            "sdk-candidate.attest=type=provenance,mode=max,version=v1",
-            self.workflow,
-        )
-        self.assertIn(
-            "sdk-candidate.attest+=type=sbom,generator=$SBOM_GENERATOR",
-            self.workflow,
-        )
+        self.assertIn("python3 scripts/candidate-components.py build", self.workflow)
+        self.assertIn('--reference "$CANDIDATE_REFERENCE" --sbom-generator "$SBOM_GENERATOR"', self.workflow)
+        self.assertIn('--builder "$COMPONENT_BUILDER" --sha256 "$BINDING_SHA256"', self.workflow)
         self.assertNotIn("--provenance=", self.workflow)
         self.assertNotIn("--sbom=", self.workflow)
         self.assertNotIn("sdk-complete-dev.output", self.workflow)
@@ -221,18 +215,27 @@ class CandidateWorkflowTests(unittest.TestCase):
             script = block.split("        run: |\n", 1)[1]
             script = "\n".join(line[10:] for line in script.splitlines())
             # The GitHub expression values are inert fixture identities. The
-            # workflow shell and heartbeat are real; only Docker is substituted.
+            # workflow shell and heartbeat are real; the invoked publication
+            # entry point (Docker or the checked candidate driver) is substituted.
             script = re.sub(r"\$\{\{ steps\.source\.outputs\.[a-z0-9_]+ \}\}", "fixture", script)
             with self.subTest(publication=label), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 binary = root / "docker"
                 binary.write_text("#!/bin/sh\necho fixture-build-output\necho fixture-frontend-error >&2\nexit 2\n")
                 binary.chmod(0o755)
-                result = subprocess.run(["bash", "-c", script], cwd=REPOSITORY,
+                working = REPOSITORY
+                if label == "source-bound candidate":
+                    working = root
+                    (root / "scripts").mkdir()
+                    (root / "scripts/run-with-heartbeat.py").write_bytes((REPOSITORY / "scripts/run-with-heartbeat.py").read_bytes())
+                    (root / "scripts/candidate-components.py").write_text(
+                        "import sys\nprint('fixture-build-output', flush=True)\n"
+                        "print('fixture-frontend-error', file=sys.stderr, flush=True)\nsys.exit(2)\n")
+                result = subprocess.run(["bash", "-c", script], cwd=working,
                     env={**os.environ, "PATH": directory + ":" + os.environ["PATH"],
                          "RUNNER_TEMP": directory, "GITHUB_SHA": "a" * 40,
                          "SOURCE_REFERENCE": "fixture/source", "CANDIDATE_REFERENCE": "fixture/sdk",
-                         "SBOM_GENERATOR": "fixture/generator", "COMPONENT_BUILDER": "fixture-builder"},
+                         "SBOM_GENERATOR": "fixture/generator", "COMPONENT_BUILDER": "fixture-builder", "BINDING_SHA256": "a" * 64},
                     text=True, capture_output=True)
                 self.assertEqual(result.returncode, 2, result.stderr)
                 self.assertEqual((root / "candidate-build-diagnostics/build.log").read_text(),
