@@ -212,6 +212,24 @@ def selected_graph(stage, targets=None):
     return read_graph(targets)
 
 
+def run_local_sdk(graph, targets, cache, directory, started):
+    from crossforge_internal import local_sdk
+
+    def solve(target, recipe, metadata, data):
+        remaining = int(330 * 60 - (time.monotonic() - started))
+        if remaining <= 0:
+            return 124
+        command = [*BAKE, "--allow=fs.read=" + str(data),
+                   "--allow=fs.write=" + str(data), "-f", str(recipe), target,
+                   "--progress=plain", "--metadata-file", str(metadata)]
+        return HEARTBEAT["execute"](
+            ["timeout", "--signal=TERM", "--kill-after=60s", str(remaining) + "s"]
+            + stream_build_command(command, directory / "build.log"),
+            "sdk/" + target, 60, log_path=directory / "build.log")
+
+    return local_sdk.execute(ROOT, graph, targets, cache, directory, solve)
+
+
 def run_stage(stage, directory, repository, write=False, cold=False, selected_targets=None, components=None,
               replay_qualification=False, rebuild_sources=False, source_builder=None):
     if rebuild_sources:
@@ -311,6 +329,10 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
             print("%s: resolved %d build components; %d producer boundaries require build" % (
                 stage, len(binding["components"]), len(binding["required_producers"])), flush=True)
         with (directory / "build.log").open("xb"):
+            if stage == "sdk" and components is None and not replay:
+                status = 1
+                status = run_local_sdk(graph, targets, cache, directory, started)
+                return status
             for target in targets:
                 # Linked roots can be solved again by a later consumer. Export
                 # only the current root, preserving every dependency import.

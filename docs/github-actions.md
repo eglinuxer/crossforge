@@ -421,6 +421,25 @@ docker buildx bake -f docker-bake.hcl -f docker-bake.override.json \
 
 ## Diagnostics and retries
 
+For local and read-only CI source builds, `ci-build.py run sdk --directory
+build/sdk-check` runs the six original Python append stages, Python final gate
+and complete SDK gate with local OCI handoffs. Each intermediate SDK is read
+by digest after its metadata and compressed layers have been verified. This
+bounds the dependency graph sent through BuildKit's gateway, whose message
+limit can otherwise stop the cumulative source graph. Use this executor for
+complete local source SDK builds; the canonical Bake graph remains available
+for inspection and individual targets. The main component reader keeps its
+authenticated component path.
+
+The `local-sdk/` diagnostics record each solve and its input/output identities.
+All solves share the stage timeout. Large images are held in a sibling
+`crossforge-sdk-*` directory, outside uploaded diagnostics; superseded snapshots
+are removed after the next verified export. Failed attempts retain their last
+snapshot and partial export. These local snapshots are neither published nor
+accepted as component receipts or cross-run recovery evidence. See the
+[SDK handoff investigation](research/sdk-llb-handoff-2026-09-11.md) for the original
+failure and current acceptance status.
+
 `ci-build.py` runs the existing heartbeat wrapper, retaining full Buildx output
 in `build.log` and printing elapsed time/log size every minute. Every 30 seconds
 it records available memory, swap, load and free workspace disk. It records

@@ -252,7 +252,7 @@ class HostedBuildTests(unittest.TestCase):
                         "cache_catalog": lambda: ["sdk"], "HEARTBEAT": heartbeat}
         ), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
             root = Path(directory)
-            result = function("sdk", root, "ghcr.io/test/cache")
+            result = function("inputs", root, "ghcr.io/test/cache")
             self.assertEqual(result, 23)
             self.assertIn("compiler-failed", (root / "build.log").read_text())
             self.assertEqual(json.loads((root / "result.json").read_text())["exit_code"], 23)
@@ -273,7 +273,7 @@ class HostedBuildTests(unittest.TestCase):
                     "cache_catalog": lambda: ["sdk"],
                     "HEARTBEAT": {"execute": execute},
                 }), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
-                    self.assertEqual(function("sdk", Path(directory), "ghcr.io/test/cache"),
+                    self.assertEqual(function("inputs", Path(directory), "ghcr.io/test/cache"),
                                      expected)
                 roots = [command[command.index("--progress=plain") - 1] for command in calls]
                 self.assertEqual(roots, ["evidence", "sdk"][:len(statuses)])
@@ -302,7 +302,7 @@ class HostedBuildTests(unittest.TestCase):
                 "HEARTBEAT": {"execute": execute},
             }
         ), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
-            self.assertEqual(function("sdk", Path(directory), "ghcr.io/test/cache", write=True), 0)
+            self.assertEqual(function("inputs", Path(directory), "ghcr.io/test/cache", write=True), 0)
         self.assertEqual(observed, ["evidence", "sdk"])
 
     def test_stage_budget_does_not_restart_for_each_root(self):
@@ -317,9 +317,47 @@ class HostedBuildTests(unittest.TestCase):
                                   monotonic=mock.Mock(side_effect=[0, 1, 19801, 19802])),
             }
         ), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
-            self.assertEqual(function("sdk", Path(directory), "ghcr.io/test/cache"), 124)
+            self.assertEqual(function("inputs", Path(directory), "ghcr.io/test/cache"), 124)
             self.assertEqual(execute.call_count, 1)
             self.assertIn("19799s", execute.call_args.args[0])
+
+    def test_sdk_uses_local_handoff_and_preserves_its_failure_status(self):
+        function = BUILD["run_stage"]
+        handoff = mock.Mock(return_value=31)
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            function.__globals__, {
+                "read_graph": lambda targets: self.graph(),
+                "cache_catalog": lambda: ["sdk"], "run_local_sdk": handoff,
+            }
+        ), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
+            root = Path(directory)
+            self.assertEqual(function("sdk", root, "ghcr.io/test/cache"), 31)
+            self.assertEqual(handoff.call_count, 1)
+            self.assertEqual(json.loads((root / "result.json").read_text())["exit_code"], 31)
+            self.assertTrue((root / "build.log").is_file())
+
+    def test_local_sdk_steps_share_the_stage_timeout_budget(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        try:
+            from crossforge_internal import local_sdk
+        finally:
+            sys.path.pop(0)
+        function = BUILD["run_local_sdk"]
+        heartbeat = mock.Mock(return_value=0)
+
+        def execute(source, graph, roots, cache, directory, solve):
+            recipe, metadata = directory / "graph.json", directory / "metadata.json"
+            self.assertEqual(solve("first", recipe, metadata, directory), 0)
+            return solve("second", recipe, metadata, directory)
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(local_sdk, "execute", execute), \
+                mock.patch.dict(function.__globals__, {
+                    "HEARTBEAT": {"execute": heartbeat},
+                    "time": mock.Mock(monotonic=mock.Mock(side_effect=[1, 19801])),
+                }):
+            self.assertEqual(function({}, [], {}, Path(directory), 0), 124)
+        self.assertEqual(heartbeat.call_count, 1)
+        self.assertIn("19799s", heartbeat.call_args.args[0])
 
     def test_profiles_fail_open_to_more_testing_for_unknown_or_shared_changes(self):
         select = PLAN["select_profile"]
