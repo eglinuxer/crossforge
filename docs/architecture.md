@@ -222,6 +222,8 @@ $ docker buildx bake phase10
 
 cp39 的 source、build-policy、native 与两套 target build identity 独立新增，原五行对应 identity 保持不变；共享 qualification policy 与 aggregate identity 按设计重新绑定六行。compile/final 报告、runtime preflight 和双架构 row manifest 都重新从 release/policy 计算该身份，而不信任传入摘要。完整 Phase 10 已实际通过 6 个 build Python、12 个 cross SDK、两套 target 的 locked-sysroot/clean-Rocky 运行时资格化及六行 append-only 聚合。
 
+CI 重构已另增六个行级 qualification policy、十二个行/目标输入投影及六个双目标汇总。`python_qualification_policy.py` 可通过独立固定的目标投影 digest 验证并读取当前行的配置；最终消费者可从完整 release 重新计算预期。原 89 个组件文档保持不变，新接口尚未接替 compile/runtime/final 报告。它将行、架构、ABI、QEMU 和 zstd 的配置影响明确分开，但不能替代实际产物、测试代码、环境和执行证据身份。正式资格报告链的迁移与实跑仍在进行，详见[内部组件说明](internal-components.md#python-row-qualification-policy-inputs)。
+
 Python 契约是“支持交叉编译扩展”，不是 PEP 517/wheel 编排器。Crossforge 不做 wheel retag、vendoring、manylinux repair，也不支持 PyPy、free-threaded 或 debug Python。
 
 ## 8. vcpkg 集成

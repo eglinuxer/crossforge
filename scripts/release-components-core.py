@@ -866,6 +866,17 @@ def _render_expected_components(release, implemented_rows):
             implemented_rows, QUALIFICATION_POLICY_FIELDS
         ),
     )
+    # Keep the legacy all-row policy byte-for-byte stable while new producers
+    # migrate to an independently authenticated policy for their own row.
+    for record in implemented_rows:
+        add(
+            "implementation/python-%s-qualification-policy" % record["row"],
+            "qualification",
+            dependencies=("implementation/python-%s-build-policy" % record["row"],),
+            explicit_materials=python_policy_materials(
+                (record,), QUALIFICATION_POLICY_FIELDS
+            ),
+        )
     add(
         "implementation/zstd-build-policy",
         "build",
@@ -969,6 +980,54 @@ def _render_expected_components(release, implemented_rows):
                 entry_prefix + ("support",),
                 entry_prefix + ("source", "sigstore"),
             ]
+        )
+
+        row_qualifications = []
+        for arch in ("x86_64", "aarch64"):
+            name = "python/%s-%s-qualification" % (row, arch)
+            row_qualifications.append(name)
+            prefixes = [
+                ("baseline",),
+                ("base_image",),
+                ("targets", target_indices[arch]),
+                entry_prefix,
+                ("abi", "provider_manifest"),
+                ("abi", "targets", arch),
+                ("abi", "python", "runtime_provider_policy"),
+                ("abi", "python", "provider_catalogs", arch),
+            ]
+            dependencies = [
+                "implementation/python-%s-qualification-policy" % row,
+                "python/%s-%s-build" % (row, arch),
+                toolchain_qualifications[arch],
+                target_components[arch],
+            ]
+            if arch == "aarch64":
+                prefixes.append(("qemu",))
+            if record["zstd"]:
+                prefixes.append(("python", "zstd"))
+                dependencies.extend((
+                    "implementation/zstd-build-policy",
+                    "zstd/host-build",
+                    "zstd/%s-build" % arch,
+                ))
+            add(
+                name,
+                "qualification",
+                selector_without(
+                    (
+                        ("qemu", "executor", "source", "archive"),
+                        ("qemu", "executor", "provenance", "builder_source"),
+                    ),
+                    *prefixes
+                ),
+                tuple(dependencies),
+            )
+        add(
+            "python/%s-qualification" % row,
+            "qualification",
+            selector(entry_prefix + ("version",), entry_prefix + ("adapter",)),
+            tuple(row_qualifications),
         )
 
     for row, entry in sorted(release_entries.items()):

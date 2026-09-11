@@ -1,0 +1,179 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp39-x86_64-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "1a71b1d6837f6ff62d5b50aef69200a9ce2aff07417c30cebd050df74a5afaa0",
+      "component": "implementation/python-cp39-qualification-policy"
+    },
+    {
+      "canonical_sha256": "d417845642a67ac02c9af504e3d77001d3732c4024b7ea52fa625bc53e924abf",
+      "component": "python/cp39-x86_64-build"
+    },
+    {
+      "canonical_sha256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
+      "component": "rpm/sysroot-x86_64"
+    },
+    {
+      "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
+      "component": "toolchain/x86_64-qualification"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/abi/provider_manifest/canonical_sha256",
+      "value": "709de9e38920b315e29bfb4e0c40763a8632697942a836140252ea5665de7de9"
+    },
+    {
+      "path": "/abi/provider_manifest/file",
+      "value": "config/abi-providers.json"
+    },
+    {
+      "path": "/abi/python/provider_catalogs/x86_64/canonical_sha256",
+      "value": "048b180ab090eb993ed47e92b1d9f923f332c82993b0eaa126a19d64ab07faed"
+    },
+    {
+      "path": "/abi/python/provider_catalogs/x86_64/file",
+      "value": "evidence/abi/el8-x86_64-python-provider-catalog.json"
+    },
+    {
+      "path": "/abi/python/runtime_provider_policy/canonical_sha256",
+      "value": "c25692ca24d11c13328f758f96dec49a81bb574763c08f9a437a139f1f363960"
+    },
+    {
+      "path": "/abi/python/runtime_provider_policy/file",
+      "value": "config/python-runtime-providers.json"
+    },
+    {
+      "path": "/abi/targets/x86_64/baseline/canonical_sha256",
+      "value": "efaaceb1b9264f04f8abd4f94724649b116e99532969d61027e825681fff8944"
+    },
+    {
+      "path": "/abi/targets/x86_64/baseline/file",
+      "value": "abi/el8/x86_64.json"
+    },
+    {
+      "path": "/abi/targets/x86_64/sysroot_inventory/canonical_sha256",
+      "value": "4f65a4b1770d96f8cadf46e7927ee40638f348f7fc218093f3059ca27d577534"
+    },
+    {
+      "path": "/abi/targets/x86_64/sysroot_inventory/file",
+      "value": "evidence/abi/el8-x86_64-sysroot.json"
+    },
+    {
+      "path": "/base_image/digest",
+      "value": "sha256:e8a49c5403b687db05d4d67333fa45808fbe74f36e683cec7abb1f7d0f2338c6"
+    },
+    {
+      "path": "/base_image/index_evidence",
+      "value": "evidence/oci/rocky-linux-8.index.json.b64"
+    },
+    {
+      "path": "/base_image/manifests/amd64",
+      "value": "sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+    },
+    {
+      "path": "/base_image/manifests/arm64",
+      "value": "sha256:f514765516176a9aa4729ee83964e5a1900df95fd4bc7182cca64c7199b7eec7"
+    },
+    {
+      "path": "/base_image/repository",
+      "value": "quay.io/rockylinux/rockylinux"
+    },
+    {
+      "path": "/base_image/tag",
+      "value": "8"
+    },
+    {
+      "path": "/baseline",
+      "value": "el8"
+    },
+    {
+      "path": "/python/versions/0/adapter",
+      "value": "legacy"
+    },
+    {
+      "path": "/python/versions/0/patches/0/file",
+      "value": "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+    },
+    {
+      "path": "/python/versions/0/patches/0/sha256",
+      "value": "e4d5629748d9737c891f47eb38cb3a5722c3b71afc5e28b5cede80ae5b66cf77"
+    },
+    {
+      "path": "/python/versions/0/source/sha256",
+      "value": "00e07d7c0f2f0cc002432d1ee84d2a40dae404a99303e3f97701c10966c91834"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_evidence",
+      "value": "evidence/sigstore/cpython-3.9.25.tar.xz.sigstore.b64"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_sha256",
+      "value": "09243be5b795dbccf2e3a28b1a478a51ccdc1d2e102122737fc012798a5b17ad"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_size",
+      "value": 5079
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/bundle_url",
+      "value": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz.sigstore"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/identity",
+      "value": "lukasz@langa.pl"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/oidc_issuer",
+      "value": "https://github.com/login/oauth"
+    },
+    {
+      "path": "/python/versions/0/source/sigstore/verification",
+      "value": "verified"
+    },
+    {
+      "path": "/python/versions/0/source/size",
+      "value": 20183236
+    },
+    {
+      "path": "/python/versions/0/source/status",
+      "value": "locked"
+    },
+    {
+      "path": "/python/versions/0/source/url",
+      "value": "https://www.python.org/ftp/python/3.9.25/Python-3.9.25.tar.xz"
+    },
+    {
+      "path": "/python/versions/0/support",
+      "value": "eol"
+    },
+    {
+      "path": "/python/versions/0/version",
+      "value": "3.9.25"
+    },
+    {
+      "path": "/targets/0/arch",
+      "value": "x86_64"
+    },
+    {
+      "path": "/targets/0/sysroot/canonical_sha256",
+      "value": "ffe67b4d7448b02be7db774c8d85fdc8b13da695c0184de444949c641876ef57"
+    },
+    {
+      "path": "/targets/0/sysroot/lock_file",
+      "value": "locks/sysroot-el8-x86_64.json"
+    },
+    {
+      "path": "/targets/0/sysroot/status",
+      "value": "locked"
+    },
+    {
+      "path": "/targets/0/triple",
+      "value": "x86_64-unknown-linux-gnu"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

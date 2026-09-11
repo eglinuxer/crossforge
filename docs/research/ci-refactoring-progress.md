@@ -6,7 +6,7 @@
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；main 缺失工具链集中生产及只读消费已接线 | GitHub 实跑、真实签名与跨 run 验收 |
-| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线；Python 共享运行时根已移除完整 release 依赖 | GitHub 实跑、整行及其他领域资格 COPY 范围、正式 Python 行资格复用接入 |
+| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线；Python 共享运行时根已移除完整 release 依赖，行/目标资格输入契约已建立 | GitHub 实跑、整行及其他领域资格 COPY 范围、正式 Python 行资格复用接入 |
 | 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过；原始 Python 组件 CI 消费已接线 | 正式行资格生产/SDK 复用的 CI 接入与远程验收 |
 | 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储、候选组件消费及分阶段恢复、raw producer 部分重试接线本地验证通过 | 真实 GitHub 跨 run 信任和 producer 重试、其他资格领域、候选集成/原生 ARM |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
@@ -433,3 +433,17 @@ SDK checkpoint schema 2 保存原 `component-selection.json`；最终消费者�
 - 分别在旧版和新版隔离源中只将产品版本改为 `0.1.1`，依次生成三个输出后重新解析真实 Bake 图：旧版两个运行时根均失效，新版均保持原材料身份。此项没有实际 BuildKit solve，不作为耗时、产物认证或资格执行证明。
 
 初轮新增 fixture 使用了错误的最终报告字段 `runtime_results`，并遗漏裁剪目录所需 Rocky RPM 公钥；修正为原 `executions` 字段并补齐信任根后，定向和全量均通过，没有降低生产检查。实际新 clean-Rocky 安装/Python 双目标 runtime 重放、整行资格投影、正式行 CI 复用、GitHub 信任/恢复及性能验收仍待推进。此前 Docker socket 授权仍待答复，没有重新尝试被拒绝的操作；未合入 main、推送或发布。
+
+## 批次 3/4：Python 行/目标资格配置契约
+
+新增六份 `implementation/python-<row>-qualification-policy`、十二份 `python/<row>-<arch>-qualification` 和六份双目标行汇总。target 投影通过依赖绑定当前 target build、toolchain qualification 和 runtime RPM 输入，并直接固定当前 Python source/signature、ABI 与执行策略；cp314 额外固定 zstd。保留旧全行 qualification policy/aggregate 的原文档，不改写旧报告身份。
+
+`python_qualification_policy.py` 只依赖标准库、最小 component reader 和行契约。使用独立可信的 target 投影 digest 验证根文档及其 row policy；最终消费者通过完整 release renderer 独立重算预期。返回明确的配置策略和 input binding，不创建裁剪版 release 摘要，不将配置摘要冒充产物或执行证据。当前 compile/runtime/final schema、Docker 资格输入及正式 CI 报告消费者仍走旧路径；本批是报告链迁移的契约前置，尚未使生产资格任务缩小重跑范围。
+
+[本批观测](python-row-policy-2026-09-10.json)：最终 Docker config 1258 项、191.202 秒和 packaging 40 项、1.236 秒全部通过，无跳过；四项 locked validators、三个 renderer `--check` 及 actionlint 通过（仅保留原 concurrency.queue 解析兼容例外）。68 项定向回归通过；固定 Rocky 8 platform-python 3.6.8 编译两个运行模块并通过十项新契约回归。裁剪目录只包含三个 Python 模块与每目标两份投影，覆盖 cp314 的 zstd 和 ARM QEMU 策略读取，没有完整 release/schema/renderer。
+
+精确失效回归覆盖单行 source/patch/support/signature、目标 sysroot/ABI、共享 provider、QEMU、zstd 和产品/供应链元数据；目标间仍共享现有 RPM base-image 输入，测试保留其真实传播范围。对规范化 `dced2c8` 和本批源码解析真实 Bake 图，34 个原始编译组件及两个共享 runtime 根均保持原输入身份，原 89 个组件文档全部不变；新增投影使总数增至 113，Bake 输出本身没有改变。图、配置解析和 fixture 不是新运行资格或性能验收。
+
+首轮投影回归要求旧精确影响集合补上新增的行/目标节点；保留全部原断言后通过。首轮全量 1258 项只有 Bake 测试仍断言组件总数 89，更新为 113 后重新完成上述全量验证。未变更版本、ABI/GCC 基线或目标执行限制。
+
+下一步将新契约接入 compile/runtime/final producer/reader 和行/SDK 汇总，保留旧报告的精确完整 release 校验。正式跨机器资格环境边界、真实 GitHub 信任与恢复、候选/原生 ARM、源码/资格重放、三次基线和并行度实验仍待验收；Docker socket 自动审批拒绝后的授权仍待答复，未重试或绕过该操作。整体仍在实施，未合入 main、推送或发布。

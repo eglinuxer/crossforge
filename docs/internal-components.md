@@ -552,6 +552,38 @@ GCC/CPython source compiler in its material closure. Its registry discovery and
 transport were explicit local fixtures, so GitHub signing, remote publication
 and cross-run acceptance still require the rollout pilot.
 
+## Python row qualification policy inputs
+
+The component renderer now also emits a qualification policy for each Python
+row, a qualification input component for each row/target pair, and one row
+aggregate that binds its two targets. The legacy all-row qualification
+components remain byte-for-byte compatible. The new components do not yet
+replace the compile/runtime/final report schemas or authorize CI report reuse.
+
+`python_qualification_policy.py` reads a target component and its row policy
+using one independently trusted target-component digest. It needs only
+`release_component.py`, `python_row_contract.py`, and those two projection
+files. `from_release` independently derives the expected input policy using
+the complete release renderer; a consumer must not take that expectation from
+an untrusted report. The returned policy names its own component and contains
+the exact Python source/signature policy, target/sysroot, five ABI identities,
+clean runtime image and overlay binding, row implementation contract, explicit
+ARM QEMU identity, and cp314 zstd component identities.
+
+Product metadata and other Python rows are absent from the target policy. An
+architecture-specific ABI/sysroot change affects that architecture and the row
+aggregate; QEMU affects ARM; zstd affects cp314. The existing RPM projections
+still share base-image manifest inputs, so those changes can affect both
+architectures. Component configuration identity is only part of qualification
+identity: actual artifacts, copied test/validator code, execution environment,
+and authenticated execution evidence remain required by the receipt interface.
+The policy input binding cannot claim a complete `release_sha256`.
+
+The reader and its isolated projections have passed Docker contract tests and
+Rocky platform-python checks. Production Docker qualification stages still use
+the legacy full-release reports. Migrating that producer/consumer chain and
+executing new qualification runs remain separate acceptance work.
+
 ## GCC qualification policy inputs
 
 GCC smoke/full Docker gates use `run-gcc-testsuite.py --components` with the
