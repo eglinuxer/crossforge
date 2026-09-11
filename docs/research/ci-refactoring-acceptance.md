@@ -58,3 +58,5 @@
 [候选执行记录](candidate-qualification-execution-2026-09-11.json)对应 `96f019d`：实际发布图补齐 GCC smoke 与 vcpkg contract/Tier 1–3 依赖，并强制声明的资格阶段重新执行。SDK checkpoint schema 3 绑定原 producer、源码、组件选择、物理环境、完整 RUN 记录与候选 image index digest；旧版 checkpoint 读取仍保留。固定 Docker 中 1,471 项配置测试、40 项打包及其余 quick 检查通过，无跳过。真实小型 BuildKit 图两次各完成三个物理 RUN、覆盖四个逻辑步骤，中间的缓存命中对照被拒绝。这不是完整候选执行证明；实际候选耗时、原生 ARM 和恢复仍待 main 入口验收。
 
 [语义选路记录](semantic-ci-scope-2026-09-11.json)修复了语法检查掩盖运行期范围的问题。实际材料图显示六个共享控制模块原先只选择 `platform-python-check`；排除其语法清单后，未映射模块使用原有完整验证兜底，已明确映射的 SDK 控制模块仍只选 inputs/SDK。新增回归先复现两项漏检，再通过完整 1,474 项配置测试 / 121.234 秒、40 项打包及其余 quick 检查，无跳过。源码 SDK 已完成六行、`python-dev` 与 `sdk-complete-dev` 的八阶段执行和七次本地 OCI 交接；其计时包含共享 builder 排队，不是性能基线。
+
+[并行度对照入口](../python-matrix-comparison.md)保留默认上限 2，允许手动 main CI 对同一提交指定 2 或 3，并同时应用于原始 Python 组件与资格行矩阵。输入在组件规划前及内层工作流分别校验，每次保存设置、源码和 run/attempt 记录。[本地验证](python-parallelism-control-2026-09-11.json)通过真实 shell 正反例、完整 1,476 项配置测试 / 150.744 秒、40 项打包及其余 quick 检查，无跳过。两个旧固定值断言的失败尝试仍保留。该入口尚未执行真实 main 的 3 行并行，连续三次基线和性能对照仍待完成。

@@ -11,6 +11,12 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      python-parallelism:
+        description: Maximum concurrent Python rows for a controlled main comparison
+        type: choice
+        default: '2'
+        options: ['2', '3']
 
 permissions:
   contents: read
@@ -48,6 +54,7 @@ jobs:
     with:
       profile: ${{ needs.quick.outputs.profile }}
       selection: ${{ needs.quick.outputs.selection }}
+      python-parallelism: ${{ fromJSON(inputs.python-parallelism || '2') }}
 
   builds:
     if: always()
