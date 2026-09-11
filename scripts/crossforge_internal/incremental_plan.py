@@ -19,7 +19,7 @@ CONTROL_WORKFLOWS = {".github/workflows/" + name + ".yml" for name in (
     "replay-qualification", "verify-quick")}
 SDK_CONTROLLERS = {".github/actions/run-component-sdk/action.yml", "scripts/ci-sdk.py"} | {
     "scripts/crossforge_internal/" + name + ".py" for name in
-    ("ci_sdk", "python_sdk", "python_sdk_catalog", "python_sdk_recovery")}
+    ("ci_sdk", "local_sdk", "python_sdk", "python_sdk_catalog", "python_sdk_recovery")}
 PYTHON_INSTALL_CONTROLLERS = {"scripts/crossforge_internal/python_row_install.py"}
 
 
