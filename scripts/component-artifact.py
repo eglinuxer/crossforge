@@ -115,6 +115,9 @@ def main(argv=None):
         sdk.add_argument("--cosign", type=Path, required=True)
         sdk.add_argument("--component-directory", type=Path, required=True, help="new OCI data directory outside uploaded diagnostics")
         sdk.add_argument("--output", type=Path, required=True, help="new diagnostics directory")
+        sdk.add_argument("--record-component-recovery", action="store_true")
+        sdk.add_argument("--component-recovery", type=Path)
+        sdk.add_argument("--component-recovery-sha256", help="independently selected canonical recovery SHA256")
     verify = commands.add_parser("verify-local", allow_abbrev=False)
     verify.add_argument("--receipt", type=Path, required=True)
     verify.add_argument("--receipt-sha256", required=True, help="independently trusted canonical receipt SHA256")
@@ -207,8 +210,17 @@ def main(argv=None):
         elif args.command in ("acquire-python-sdk", "execute-python-sdk-catalog"):
             from crossforge_internal import python_sdk_catalog
             operation = python_sdk_catalog.acquire if args.command == "acquire-python-sdk" else python_sdk_catalog.execute
+            require((args.component_recovery is None) == (args.component_recovery_sha256 is None),
+                    "SDK recovery requires both a document and its independent SHA256")
+            options = {}
+            if args.record_component_recovery or args.component_recovery is not None:
+                options["record_recovery"] = args.record_component_recovery
+                if args.component_recovery is not None:
+                    require(args.component_recovery.is_file() and not args.component_recovery.is_symlink(),
+                            "SDK recovery document is missing or unsafe")
+                    options["recovery"] = {"document": load_json(args.component_recovery), "sha256": args.component_recovery_sha256}
             value = operation(args.source, load_json(args.graph), args.root, load_json(args.execution),
-                args.component_directory, args.output, args.builder, args.oras, args.cosign, args.docker_config)
+                args.component_directory, args.output, args.builder, args.oras, args.cosign, args.docker_config, **options)
             if args.command == "acquire-python-sdk" and value["status"] != "ready":
                 print(json.dumps(value, sort_keys=True, indent=2))
                 return 1

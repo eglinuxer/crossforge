@@ -188,6 +188,10 @@ clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七
 
 完整 SDK 另提供 `acquire-python-sdk` 与 `execute-python-sdk-catalog` CLI：前者从签名目录取得两份共享工具链、六行原始组件及六份行资格，只有完整就绪才输出可消费的组件清单；后者随后调用原 SDK executor，独立重验实际文件并重新执行最终集成。目录缺失显式列出待生产组件/行，验签或产物核验失败则报错，不隐式重编译。OCI 数据与上传诊断目录严格分离，旧本地组件清单接口保持。该自动路径尚未接入 main 动态任务或候选发布，严格物理环境匹配也未放宽。
 
+这两个目录消费入口可用 `--record-component-recovery` 在完整取得 32 个原始组件和六行资格后、最终集成开始前写出 `component-recovery.json`；acquisition 结果给出它的 canonical SHA256。恢复时同时提供 `--component-recovery` 与独立保存的 `--component-recovery-sha256`，并使用新的数据/诊断目录。SDK 恢复 schema 1 嵌套原 raw recovery schema 1，额外固定各行的 catalog/artifact digest、输入及 receipt SHA256 和原 producer，不扩大原始组件 schema 的资格角色权限。它要求干净 Git checkout 的同一提交、SDK 根、实际来源材料与完整物理执行环境；仅部分输入就绪时不生成完整恢复记录。
+
+重试通过原目录验签、产物与资格验收函数取得所有固定引用，并逐项核对原选择；缺失、替换、来源或环境漂移均失败。最终 SDK 集成仍重新执行；失败时保留取得阶段的恢复记录，成功前再核对记录摘要、源码与环境。该入口不替代 registry 信任，不复用最终集成报告，也未接通主工作流的自动恢复。
+
 target SDK 包含解释器、stdlib、headers、`pyconfig.h`、`_sysconfigdata_*`、扩展模块和构建元数据。即使 x86_64 build/target 架构相同，也不得复用。每个 target 必须验证 zlib、bz2、lzma、ctypes、ssl、hashlib、sqlite3、uuid 等约定模块，以及最小 C extension 的编译、ELF 架构和 import；3.14 另验 `compression.zstd`。
 
 Rocky 8 的 zstd 1.4.4 低于 CPython 3.14 `compression.zstd` 所需的 1.4.5。Phase 8 因此从签名和 hash 锁定的上游源构建 PIC 私有静态 zstd 1.5.7，分别产生 host、x86_64 和 aarch64 prefix，并只链接进 `_zstd`；全局不可变 sysroot 未改动。编译资格化绑定精确 zstd build manifest/component identity，确认 `_zstd` 唯一、静态符号完整，且无 zstd `DT_NEEDED`、动态导出、RPATH 或 text relocation。locked-sysroot 与 clean-Rocky 运行时 tier 都实际执行 one-shot、streaming、dictionary、multithreaded、tarfile 和 zipfile zstd 探针。

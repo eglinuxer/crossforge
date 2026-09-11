@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from . import component_build, component_resolution, python_components, python_handoff
-from . import python_row_resolution, python_sdk, qualification_execution
-from .identity import exact_fields, require
+from . import component_build, component_recovery, component_resolution, python_components, python_handoff
+from . import python_row_resolution, python_sdk, python_sdk_recovery, qualification_execution
+from .identity import content_sha256, exact_fields, load_json, require
 
 
 def directories(data, evidence):
@@ -17,7 +17,8 @@ def directories(data, evidence):
     return data, evidence
 
 
-def acquire(source, graph, root, execution, directory, evidence, builder, oras, cosign, docker_config=None):
+def acquire(source, graph, root, execution, directory, evidence, builder, oras, cosign, docker_config=None,
+            record_recovery=False, recovery=None):
     """Resolve shared toolchains once, then all raw parts and qualified rows.
 
     A missing component is an explicit producer requirement. This read-only
@@ -35,10 +36,22 @@ def acquire(source, graph, root, execution, directory, evidence, builder, oras, 
     raw_parts = sorted(parts)
     require(component_resolution.python_requirements(source, graph) == {row: raw_parts for row in rows},
             "SDK catalog graph must require every raw part of exactly six rows")
+    recovery_mode = record_recovery or recovery is not None
+    pins = None
+    if recovery_mode:
+        current = python_sdk_recovery.context(source, graph, root, execution)
+        expected_raw = component_recovery.requirements(source, graph, True)
+        if recovery is not None:
+            exact_fields(recovery, ("document", "sha256"), "selected SDK recovery")
+            pins = python_sdk_recovery.verify(recovery["document"], recovery["sha256"], current, expected_raw, rows)
+    toolchain_options = {} if pins is None else {"recovery": {name: value for name, value in pins["raw"].items()
+        if value["role"] == "toolchain-install"}}
+    python_options = {} if pins is None else {"recovery": {name: value for name, value in pins["raw"].items()
+        if value["role"] in ("python-install", "python-test-context")}}
     resolved, toolchains = component_resolution.bind_toolchains(source, graph, execution["build"], cosign,
-        directory / "toolchains", evidence / "toolchains", builder, oras, docker_config)
+        directory / "toolchains", evidence / "toolchains", builder, oras, docker_config, **toolchain_options)
     _, python = component_resolution.bind_python(source, graph, resolved, toolchains["components"], execution["build"],
-        cosign, directory / "python", evidence / "python", builder, oras, docker_config)
+        cosign, directory / "python", evidence / "python", builder, oras, docker_config, **python_options)
     exact_fields(toolchains["components"], [arch + "-toolchain-install" for arch in python_components.ARCHES],
                  "SDK resolved toolchains")
     exact_fields(python["components"], [row + "-" + part for row in rows for part in raw_parts], "SDK resolved Python parts")
@@ -71,8 +84,11 @@ def acquire(source, graph, root, execution, directory, evidence, builder, oras, 
             continue
         output = directory / "rows" / row
         try:
+            options = {} if pins is None else {"catalog_reference": pins["rows"][row]["catalog_reference"]}
             result = python_row_resolution.resolve(source, graph, row, execution, subjects, cosign,
-                output, builder, oras, docker_config)
+                output, builder, oras, docker_config, **options)
+            if pins is not None:
+                python_sdk_recovery.verify_row_selection(pins["rows"][row], result, row)
         finally:
             if output.exists():
                 component_resolution.preserve_evidence(output, evidence / "rows" / row)
@@ -85,25 +101,47 @@ def acquire(source, graph, root, execution, directory, evidence, builder, oras, 
     require(qualification_execution.execution_identity(builder, docker_config) == execution,
             "SDK catalog acquisition execution environment changed")
     ready = not required_builds and not required_rows
+    checkpoint = None
     if ready:
         exact_fields(components["toolchains"], python_components.ARCHES, "SDK ready toolchains")
         exact_fields(components["rows"], rows, "SDK ready qualified rows")
+        if recovery_mode:
+            require(python_sdk_recovery.context(source, graph, root, execution) == current,
+                    "SDK recovery source or inputs changed during acquisition")
+            saved = python_sdk_recovery.document(current, dict(toolchains["components"], **python["components"]),
+                resolutions, expected_raw, rows)
+            if recovery is not None:
+                require(content_sha256(saved) == recovery["sha256"], "SDK recovery changed the original selections")
+            checkpoint = {"path": str(evidence / "component-recovery.json"), "sha256": content_sha256(saved)}
+            component_build.write_json(checkpoint["path"], saved)
         component_build.write_json(evidence / "components.json", components)
     result = {"schema_version": 1, "kind": "crossforge-sdk-catalog-acquisition", "root": root,
         "status": "ready" if ready else "components-required", "raw_toolchains": toolchains, "raw_python": python,
         "rows": resolutions, "required_builds": required_builds, "required_rows": sorted(required_rows),
         "components": components if ready else None, "integration": "not executed by acquisition"}
+    if recovery_mode:
+        require(pins is None or ready, "fixed SDK recovery components cannot be replaced by producers")
+        result["component_recovery"] = checkpoint
     component_build.write_json(evidence / "result.json", result)
     return result
 
 
-def execute(source, graph, root, execution, directory, output, builder, oras, cosign, docker_config=None):
+def execute(source, graph, root, execution, directory, output, builder, oras, cosign, docker_config=None,
+            record_recovery=False, recovery=None):
     """Acquire authenticated inputs and freshly execute the existing SDK gates."""
     directory, output = directories(directory, output)
-    acquired = acquire(source, graph, root, execution, directory, output / "acquisition", builder, oras, cosign, docker_config)
+    acquired = acquire(source, graph, root, execution, directory, output / "acquisition", builder, oras, cosign,
+        docker_config, record_recovery, recovery)
     require(acquired["status"] == "ready", "SDK components are missing; inspect acquisition/result.json for required producers")
     integrated = python_sdk.execute(source, graph, root, execution, acquired["components"],
         output / "integration", builder, docker_config)
+    if record_recovery or recovery is not None:
+        observed = qualification_execution.execution_identity(builder, docker_config)
+        require(observed == execution, "SDK recovery execution environment changed during integration")
+        checkpoint = acquired["component_recovery"]
+        python_sdk_recovery.verify(load_json(checkpoint["path"]), checkpoint["sha256"],
+            python_sdk_recovery.context(source, graph, root, observed),
+            component_recovery.requirements(source, graph, True), python_sdk.matrix(source))
     result = {"schema_version": 1, "kind": "crossforge-sdk-catalog-integration", "root": root,
               "acquisition": acquired, "integration": integrated}
     component_build.write_json(output / "result.json", result)

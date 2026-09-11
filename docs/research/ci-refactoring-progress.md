@@ -559,3 +559,17 @@ vcpkg SDK 新增可选工具链组件目录和两个资格根 pin，要求一起
 首轮全量通过后，手工复核发现 packaging 隐式继承 release 的依赖，增加边界及裁剪目录回归并修正。裁剪测试最初将脚本放在临时根目录，而生成器按实际 `scripts/` 布局查找 validator；改用 Docker 一致的目录结构后通过。随后新增 schema 2 顶层未知/缺失字段拒绝，并再次完成最终定向、Rocky、全量和材料验证。版本 pin、ABI/GCC baseline、生成配置和交叉构建中禁止目标执行的限制未变。
 
 主 CI qualified-row/SDK 接入、精确恢复、真实 GitHub 信任/重试、新报告链和源码 Docker 重放、候选/原生 ARM、按引用保留及性能实验仍待完成。此前自动审批拒绝容器挂载主机 Docker socket（会授予广泛 daemon 控制），明确授权仍待答复；本批未重试或绕过。跨 runner 物理环境边界也仍待决定。未合入 main、推送或发布。
+
+## 批次 5：完整 SDK 输入的固定引用恢复（2026-09-11）
+
+新增 `python_sdk_recovery.py`，在既有 raw recovery schema 1 外封装 SDK 恢复记录，逐行固定六份资格 catalog/artifact digest、输入与 receipt SHA256 以及原始 producer。原 raw schema 的角色范围保持不变，不能使用 raw producer 授权资格。SDK 记录按原依赖发现逻辑要求两份共享工具链、六行各五份原始组件以及六份完整行资格，不接受缺失、额外或混同行身份。
+
+`acquire-python-sdk` 和 `execute-python-sdk-catalog` 新增显式记录与恢复选项。所有输入完整就绪后、最终集成之前保存记录及独立 canonical SHA256；仅部分取得输入时不生成完整恢复记录。恢复必须使用新数据/诊断目录、同一干净 Git 提交、SDK 根、来源材料和完整物理执行环境；raw binder 与行 reader 收到固定 catalog 引用，继续执行原签名、产物、安装文件和资格记录验收。固定引用缺失或与原 producer/输入/receipt 不同均失败，不静默换新组件或补跑资格。最终集成仍调用原 executor，失败时保留取得阶段的记录，成功之前再次核对恢复摘要、当前源码和环境。
+
+[验证记录](sdk-component-recovery-2026-09-11.json)：固定、断网、非 root、无 Docker socket 的工具容器中 config 1376 项、284.673 秒及 packaging 40 项、1.265 秒全部通过，无跳过；四项 locked validators、三个 renderer `--check`、shell syntax 和 actionlint 通过（仅既有 concurrency.queue 兼容例外）。定向 62 项、6.778 秒通过；固定 Rocky 8 platform-python 3.6.8 编译三个变更运行模块并运行十六项新增回归、2.926 秒通过。Rocky 使用同轮工具容器保存的真实 Bake print，仅替换测试取图入口；其最小镜像不带 Git，另一个真实 Git 测试在工具容器的定向及完整套件中执行。
+
+新增十七项回归覆盖严格 schema/角色/registry/producer、独立文档摘要、原始运行身份保留、32+6 集合、所有固定引用转发、缺失/替换不得回退、部分取得不能生成完整记录、失败集成后的同选择重试、前后源码/环境变化和 CLI 成对参数及 symlink 拒绝。Git 清洁状态用例在工具容器内创建真实临时仓库、提交并修改文件，实际调用 Git。另一个用例使用真实 SDK Bake 图及原材料捕获函数，验证完整 host 身份进入恢复材料摘要；只 mock Git revision 发现。
+
+SDK 编排测试的 registry、签名、域产物验收、实际执行环境探测和最终 integration 是显式 fixture/mock，源码状态在这些用例中也是可控 fixture；旧 reader/信任与恢复域回归仍在全量和定向套件中运行。没有取得新的 GitHub 签名、跨 run 下载、目标执行或候选证据。初次定向运行中，原 SDK fixture 的部分 raw subject 是空占位，补齐测试需要的 receipt/layout/hash 后重测；同时修正了指向不存在测试模块的命令。未放宽生产摘要校验。
+
+本批未改动 Docker 配方、生成配置、版本 pin 或 ABI/GCC baseline。SDK 自动目录消费和恢复尚未接通 main/候选；行 producer 的跨 run 取得与完整工作流恢复仍待集成。实际新报告链、源码重放、GitHub 信任/重试、候选/原生 ARM、引用保留和性能实验仍待验收。跨 runner 资格环境边界及此前 Docker socket 自动审批拒绝后的明确授权仍待答复；本批没有挂载 socket 或绕过拒绝，未合入 main、推送或发布。
