@@ -1,0 +1,341 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-ci-executor-selection-validation",
+  "implementation_base_commit": "c06c04a3092af00ea4bb26afc1493ec58c293213",
+  "status": "local-validated-updated-pr-pending",
+  "defect": "The shared host executor scripts/ci-build.py was known through the platform syntax-check closure, so an edit selected only inputs. An explicit incremental selection takes precedence over the coarse full profile.",
+  "behavior": "A shared CI build executor edit selects every canonical regular CI stage. The local SDK-only controller retains platform plus SDK selection. Material identity and artifact/qualification trust rules are unchanged.",
+  "regressions": {
+    "before": {
+      "tests": 18,
+      "failures": 1
+    },
+    "after": {
+      "tests": 18,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "actual_scope_validation": {
+    "status": "passed",
+    "source_commit": "f502449436097dbe0d7405ed4655638b330f6d20",
+    "source_before_sha256": "96f609b600e6d96747776b5cfb05c43315248f29239c81bbf302e3a47faeeae3",
+    "cases": {
+      "scripts/crossforge_internal/local_sdk.py": {
+        "before_plan": {
+          "schema_version": 1,
+          "kind": "crossforge-ci-source-plan",
+          "mode": "incremental",
+          "fallback_reasons": [],
+          "changed_paths": [
+            "scripts/crossforge_internal/local_sdk.py"
+          ],
+          "targets": {
+            "inputs": [
+              "platform-python-check"
+            ]
+          },
+          "compiler_inputs_changed": [],
+          "changes": {
+            "platform-python-check": {
+              "before_sha256": "98f8b643a2632aa3c9792d95f33f7183faff0b780902506aeb472dbac9903d99",
+              "after_sha256": "0fcec6b0da645f144e2bb7bc762c40855e79f545e49a52f27d7cb92fb9f9afa4",
+              "files": [
+                "scripts/crossforge_internal/local_sdk.py"
+              ],
+              "parameters_changed": false
+            }
+          },
+          "artifact_reuse": "not-authorized-by-source-selection"
+        },
+        "after_plan": {
+          "schema_version": 1,
+          "kind": "crossforge-ci-source-plan",
+          "mode": "incremental",
+          "fallback_reasons": [],
+          "changed_paths": [
+            "scripts/crossforge_internal/local_sdk.py"
+          ],
+          "targets": {
+            "inputs": [
+              "platform-python-check"
+            ],
+            "sdk": [
+              "python-dev",
+              "sdk-complete-dev"
+            ]
+          },
+          "compiler_inputs_changed": [],
+          "changes": {
+            "platform-python-check": {
+              "before_sha256": "98f8b643a2632aa3c9792d95f33f7183faff0b780902506aeb472dbac9903d99",
+              "after_sha256": "0fcec6b0da645f144e2bb7bc762c40855e79f545e49a52f27d7cb92fb9f9afa4",
+              "files": [
+                "scripts/crossforge_internal/local_sdk.py"
+              ],
+              "parameters_changed": false
+            },
+            "python-dev": {
+              "before_sha256": "2bac49271fc8f57a6c2405c6fbefed4dfdc168d1205bb895aa98dba462b4d177",
+              "after_sha256": "2bac49271fc8f57a6c2405c6fbefed4dfdc168d1205bb895aa98dba462b4d177",
+              "files": [],
+              "parameters_changed": false,
+              "orchestration_files": [
+                "scripts/crossforge_internal/local_sdk.py"
+              ]
+            },
+            "sdk-complete-dev": {
+              "before_sha256": "1a302f676c983c58cb23d78fb321d415723fdc0fa5231a222acaeeb157d1b6d2",
+              "after_sha256": "1a302f676c983c58cb23d78fb321d415723fdc0fa5231a222acaeeb157d1b6d2",
+              "files": [],
+              "parameters_changed": false,
+              "orchestration_files": [
+                "scripts/crossforge_internal/local_sdk.py"
+              ]
+            }
+          },
+          "artifact_reuse": "not-authorized-by-source-selection"
+        },
+        "before_job_flags": {
+          "inputs": "true",
+          "toolchains": "false",
+          "python": "false",
+          "vcpkg": "false",
+          "sdk": "false",
+          "gcc": "false"
+        },
+        "after_job_flags": {
+          "inputs": "true",
+          "toolchains": "false",
+          "python": "false",
+          "vcpkg": "false",
+          "sdk": "true",
+          "gcc": "false"
+        },
+        "compiler_inputs_changed": [],
+        "source_after_sha256": "1f562bdb5a0fb8980ef42e8ebf0e63ef66cdc30cd973dbc0c9f01c2db82de437"
+      },
+      "scripts/ci-build.py": {
+        "before_plan": {
+          "schema_version": 1,
+          "kind": "crossforge-ci-source-plan",
+          "mode": "incremental",
+          "fallback_reasons": [],
+          "changed_paths": [
+            "scripts/ci-build.py"
+          ],
+          "targets": {
+            "inputs": [
+              "platform-python-check"
+            ]
+          },
+          "compiler_inputs_changed": [],
+          "changes": {
+            "platform-python-check": {
+              "before_sha256": "98f8b643a2632aa3c9792d95f33f7183faff0b780902506aeb472dbac9903d99",
+              "after_sha256": "a254afdc2fab82e78ec340c7caf3d9f360d5d797587e0e4547c1c637172e63c7",
+              "files": [
+                "scripts/ci-build.py"
+              ],
+              "parameters_changed": false
+            }
+          },
+          "artifact_reuse": "not-authorized-by-source-selection"
+        },
+        "after_plan": {
+          "schema_version": 1,
+          "kind": "crossforge-ci-source-plan",
+          "mode": "full",
+          "fallback_reasons": [
+            "shared CI build orchestration changed: scripts/ci-build.py"
+          ],
+          "changed_paths": [
+            "scripts/ci-build.py"
+          ],
+          "targets": {
+            "gcc-full": [
+              "gcc-testsuite-full-qualification-evidence"
+            ],
+            "gcc-smoke": [
+              "gcc-testsuite-smoke-evidence"
+            ],
+            "inputs": [
+              "cmake-host-tool",
+              "cmake-source",
+              "host-build-common-locked",
+              "host-gcc-build-locked",
+              "host-gcc-test-locked",
+              "host-python-build-locked",
+              "host-runtime-qualified",
+              "ninja-host-tool",
+              "platform-python-check",
+              "python-runtime-clean-aarch64",
+              "python-runtime-clean-x86_64",
+              "qemu-aarch64-validated",
+              "qemu-source-qualified",
+              "rpm-source-lock-validated",
+              "sigstore-sources-qualified",
+              "sysroot-aarch64",
+              "sysroot-x86_64",
+              "validate",
+              "vcpkg-source"
+            ],
+            "python-cp310": [
+              "python-cp310-dev"
+            ],
+            "python-cp311": [
+              "python-cp311-dev"
+            ],
+            "python-cp312": [
+              "python-cp312-dev"
+            ],
+            "python-cp313": [
+              "python-cp313-dev"
+            ],
+            "python-cp314": [
+              "python-cp314-dev"
+            ],
+            "python-cp39": [
+              "python-cp39-dev"
+            ],
+            "sdk": [
+              "python-dev",
+              "sdk-complete-dev"
+            ],
+            "toolchain-aarch64": [
+              "toolchain-aarch64-dev"
+            ],
+            "toolchain-x86_64": [
+              "toolchain-x86_64-dev"
+            ],
+            "vcpkg": [
+              "vcpkg-upstream-tier3-qualified"
+            ]
+          },
+          "compiler_inputs_changed": [],
+          "changes": {},
+          "artifact_reuse": "not-authorized-by-source-selection"
+        },
+        "before_job_flags": {
+          "inputs": "true",
+          "toolchains": "false",
+          "python": "false",
+          "vcpkg": "false",
+          "sdk": "false",
+          "gcc": "false"
+        },
+        "after_job_flags": {
+          "inputs": "true",
+          "toolchains": "true",
+          "python": "true",
+          "vcpkg": "true",
+          "sdk": "true",
+          "gcc": "true"
+        },
+        "compiler_inputs_changed": [],
+        "source_after_sha256": "268d73ca4ab0874c7a9f8df223391d770e6578d501f5689b65d04c4b12104cb0"
+      }
+    },
+    "scope": "Actual source closures and existing workflow planner; no build, artifact reuse or qualification claim"
+  },
+  "full_local_validation": {
+    "status": "passed-across-preserved-invocations",
+    "configuration_tests": 1459,
+    "packaging_tests": 40,
+    "skipped": 0,
+    "exact_test_identity_multiset": true,
+    "source_files": 874,
+    "source_sha256": "f05248cb190751fad2c2613eb74c9dc8b26f59739604ab80f7dbf82be996305f",
+    "configuration_seconds": 155.88522114799707,
+    "source_base_commit": "c06c04a3092af00ea4bb26afc1493ec58c293213",
+    "source_dirty": true,
+    "scope": "Complete tests and all quick non-build checks on unchanged source; not one successful aggregate invocation",
+    "environment_repair": "The first invocation passed release/RPM/configuration/packaging, then compileall failed on a read-only mount. Only remaining syntax/rendering/actionlint checks were rerun with a writable worktree.",
+    "evidence": {
+      "runtime/config-tests/inventory.json": "f46ef940abf0b8931b057848c8ee469718ec83c7e56904ff7d1286c2f9f9adee",
+      "runtime/config-tests/result.json": "6558727bb5eb7cbc4f3e90c9ed365d8838d9fa863d9e9dacab77fbcfa83285f4",
+      "runtime/config-tests/source.json": "e1fffb8dd2a75fe2077307c880f0e59f6c9481edb4f3894cc3d9986809db2bf1",
+      "runtime/config-tests/worker-0-plan.json": "e423625c7b938ef8f23f8194e3c3d378b5d425931bc1d7e9acd5e47dda2b1869",
+      "runtime/config-tests/worker-0.json": "04385b0f42c5ea8256d7a46cdff9ee9ab4aabfd2b64371469ad414aae569651a",
+      "runtime/config-tests/worker-1-plan.json": "a7170376a292d793895b1ba4efd54249d664b950f6466cf7db27634b6b1fd01f",
+      "runtime/config-tests/worker-1.json": "203024f5fa7ed2267a1ec75bc5e3b5806c52563ea3719ab12464403d435c2238",
+      "runtime/config-tests/worker-2-plan.json": "23370a4e062c10aeadaea9517593dbb433c193d68c7f9fce03a5f48f7fac8dbf",
+      "runtime/config-tests/worker-2.json": "46573940d13913d87de15de58356895eecb697511fd3a702f6f8d3dd7d0d50c1",
+      "runtime/config-tests/worker-3-plan.json": "9c2c18cf2ee4106a50e30a9b154e33f1bff540e804f25b69802f3e93c5162dfc",
+      "runtime/config-tests/worker-3.json": "ec8d78974392f75a459943b9a0c1712ef1b119709e8dd2aff9606019175bbfa4",
+      "runtime/config-tests/discovery.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "runtime/config-tests/worker-0.log": "2ca97584900593a02e66cd308ed7009fae9663f79ecbb4c0434fd6d54fe42b55",
+      "runtime/config-tests/worker-1.log": "18a042461a1c84a4dd318b2ac9776b11a0647c5df7b7b82168184c6635655bfe",
+      "runtime/config-tests/worker-2.log": "2ace047ded16df282c306c4d786f2ac950d5e4e75558e77bd963190c67482ea4",
+      "runtime/config-tests/worker-3.log": "c615da5ae20e6c49c2368735224b090b27b3f3ad56a6d09622057be93a7697a9",
+      "all-checks.log": "0729eb2d29aa12c792e4ffe9eda3575ebaf6bc8056feca407d5491f940aa4cac",
+      "remaining-checks.log": "b9deca53e195ecf8649f5518a6746b668a28073a99895eb079e3a15711006c1f",
+      "remaining-checks.json": "278b1d406d70bf5cefd0a76a43959807336b32044a0e39f9e2fca7e0d27ea309"
+    }
+  },
+  "prior_pr": {
+    "run_id": 34644237987,
+    "head_commit": "c06c04a3092af00ea4bb26afc1493ec58c293213",
+    "status": "all-selected-checks-passed-before-shared-executor-fix",
+    "base": "f502449436097dbe0d7405ed4655638b330f6d20"
+  },
+  "implementation_files": {
+    "scripts/crossforge_internal/incremental_plan.py": "d387315d61fa4d4d58d25cac6dc8c78d4f552628e99d170023d9d9d22f99c83f",
+    "tests/config/test_incremental_plan.py": "e8b2cbca6c8629bd5ef0eca96c54384d2f6b16db54a9da76e6550e64b7d04a75"
+  },
+  "evidence": {
+    "shared-executor-before.json": {
+      "path": "/tmp/crossforge-sdk-selection-validation/shared-executor-before.json",
+      "sha256": "2899261ece573562f24f211148fa73e08b371117079c109e46e3f39db73be208"
+    },
+    "shared-executor-before.log": {
+      "path": "/tmp/crossforge-sdk-selection-validation/shared-executor-before.log",
+      "sha256": "18fbcb864ad9639c1d091264f51bde41f5e2410f0cef9684ea52539bd30ccd2f"
+    },
+    "shared-executor-regression-before.log": {
+      "path": "/tmp/crossforge-sdk-selection-validation/shared-executor-regression-before.log",
+      "sha256": "f30f7951a9ec59dc0a52d6ee4a2727dddb75d7a51678db3eb47a501b786fd63a"
+    },
+    "shared-executor-regression-after.log": {
+      "path": "/tmp/crossforge-sdk-selection-validation/shared-executor-regression-after.log",
+      "sha256": "c54096d7b59a66dc9fd00bc403e5918be911d4570d82ff389b5470c61e1312ce"
+    },
+    "controller-scopes.json": {
+      "path": "/tmp/crossforge-sdk-selection-validation/controller-scopes.json",
+      "sha256": "9a8544a8403f2d0f28aa702dc9cb442ffee2f7e06d467603e4bd77fe36c951b6"
+    },
+    "controller-scopes.log": {
+      "path": "/tmp/crossforge-sdk-selection-validation/controller-scopes.log",
+      "sha256": "fdb7c8ad8439efd7655bab424306520f028dd3507c853865cf868f54b947b586"
+    },
+    "verify-controller-scopes.py": {
+      "path": "/tmp/crossforge-sdk-selection-validation/verify-controller-scopes.py",
+      "sha256": "2be59bc35f672dd20f46de118e74a646f924eb63b28f66cd84b04d3ccb82717e"
+    },
+    "full/verification.json": {
+      "path": "/tmp/crossforge-sdk-selection-validation/full/verification.json",
+      "sha256": "81f620669095e62401de6c3357de763d85e4503ae2b28cb7bddb54172dbcd6a5"
+    },
+    "full/all-checks.log": {
+      "path": "/tmp/crossforge-sdk-selection-validation/full/all-checks.log",
+      "sha256": "0729eb2d29aa12c792e4ffe9eda3575ebaf6bc8056feca407d5491f940aa4cac"
+    },
+    "full/remaining-checks.log": {
+      "path": "/tmp/crossforge-sdk-selection-validation/full/remaining-checks.log",
+      "sha256": "b9deca53e195ecf8649f5518a6746b668a28073a99895eb079e3a15711006c1f"
+    },
+    "full/remaining-checks.json": {
+      "path": "/tmp/crossforge-sdk-selection-validation/full/remaining-checks.json",
+      "sha256": "278b1d406d70bf5cefd0a76a43959807336b32044a0e39f9e2fca7e0d27ea309"
+    },
+    "pr5-initial/status-verification.json": {
+      "path": "/tmp/crossforge-sdk-selection-validation/pr5-initial/status-verification.json",
+      "sha256": "6cc765a070c02b03faf43ec8d5522d7595d6269bc8db9563ef5a13a723bd5457"
+    }
+  },
+  "remaining": [
+    "Updated PR checks for this combined selection fix",
+    "Retarget and verify against main after PR3 is accepted",
+    "The six-batch main/candidate/native ARM and performance acceptance remains separate"
+  ]
+}

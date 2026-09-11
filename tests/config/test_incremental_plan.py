@@ -110,6 +110,26 @@ class IncrementalPlanTests(unittest.TestCase):
         self.assertEqual(missing["mode"], "full")
         self.assertIn("without a canonical SDK stage", missing["fallback_reasons"][0])
 
+    def test_shared_ci_executor_change_selects_full_even_when_platform_checks_read_it(self):
+        path = "scripts/ci-build.py"
+        script = self.root / path
+        script.parent.mkdir(parents=True)
+        script.write_text("original executor\n")
+        self.recipe.write_text(self.recipe.read_text() +
+            "FROM rocky AS platform-check\nCOPY " + path + " /executor.py\nRUN syntax-check\n")
+        self.graph["target"]["platform-python-check"] = {
+            "context": ".", "dockerfile": "Dockerfile", "target": "platform-check",
+            "platforms": ["linux/amd64"],
+            "contexts": {"rocky": "docker-image://rocky@sha256:" + "b" * 64}}
+        self.stages["inputs"] = ["platform-python-check"]
+        self.before = self.snapshot()
+        plan = self.change(path)
+        self.assertEqual(plan["mode"], "full")
+        self.assertEqual(plan["targets"], {name: sorted(values) for name, values in self.stages.items()})
+        self.assertEqual(plan["compiler_inputs_changed"], [])
+        self.assertIn(path, plan["fallback_reasons"][0])
+        self.assertEqual(plan["artifact_reuse"], "not-authorized-by-source-selection")
+
     def test_sdk_controller_and_real_recipe_changes_keep_both_reasons(self):
         (self.root / "cp39.patch").write_text("modified\n")
         plan = planner.select(self.before, self.snapshot(), ["cp39.patch", "scripts/ci-sdk.py"])
