@@ -244,8 +244,13 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
         for script in ("finalize-cpython-qualification.py", "python_sdk_identity.py", "python_zstd_evidence.py",
                        "target_artifact_audit.py", "python_qualification_policy.py", "release_component.py"):
             self.assertIn(script, append)
-        for stage in ("cpython-runtime-input", "cpython-row-assemble"):
-            self.assertIn("FROM python-host AS %s" % stage, self.stages[stage])
+        self.assertIn("FROM python-host AS cpython-row-assemble", self.stages["cpython-row-assemble"])
+        runtime = self.stages["cpython-runtime-input"]
+        self.assertIn("FROM python-build-host AS cpython-runtime-input", runtime)
+        self.assertIn("--qualification-component-sha256", runtime)
+        self.assertIn("ARG CPYTHON_QUALIFICATION_COMPONENT_SHA256", runtime)
+        for path in ("release.json", "release.schema.json", "release-components-core.py", "validate-release.py"):
+            self.assertNotIn(path, runtime)
         self.assertIn("FROM crossforge_host_runtime AS sdk-toolchains-dev", self.stages["sdk-toolchains-dev"])
 
     def test_static_qualifier_binds_scoped_qualification_and_source_components(self):

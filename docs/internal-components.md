@@ -486,13 +486,14 @@ fail before runtime mutation. The complete bundle is still verified before
 selecting the seven runtime RPMs; installation and inventory checks are unchanged.
 
 Overlay evidence schema 2 has an `input_binding` instead of `release_sha256`.
-Runtime and final qualification readers independently derive the expected RPM
-component from the current release and continue checking base image, target,
-lock/transaction, selected RPM bytes and actual runtime inventory. Schema 1 keeps
-its original exact full-release contract. This only scopes shared runtime-root
-inputs. Static compile schema 5 now uses the row/target policy below; runtime/final
-reports and row qualification aggregation still have broader release dependencies. Local graph and regression checks are
-separate from actual new runtime qualification, which remains pending.
+Runtime and final qualification readers authenticate the expected RPM component
+from the row/target policy, or derive it from the complete release in legacy mode.
+They continue checking base image, target, lock/transaction, selected RPM bytes
+and actual runtime inventory. Schema 1 keeps its exact full-release contract and
+cannot enter a component-only qualification. The target report chain uses the
+row/target policy below; row aggregation still binds the complete release.
+Local graph and regression checks are separate from actual new runtime
+qualification, which remains pending.
 
 The main plan also captures raw Python edges from the actual selected Bake graph.
 Each selected row needs build Python plus its reached target installation and
@@ -589,22 +590,38 @@ and its ABI inputs; it does not copy the full release, its schema, the renderer,
 or the source-to-release binding module. Legacy support is imported only for
 the explicit legacy CLI mode.
 
-Compile schema 5 replaces `release_sha256` and the all-row qualification pair
-with the scoped `input_binding`. Runtime preflight and the final validator
-independently derive this binding from their complete release, then retain all
-existing ABI, source, artifact, guard, runtime and serialized-report checks.
-Compile schema 4 continues to require its exact full-release identity. Final
-schema 4 can embed either compile version while still requiring its own full
-release and all-row qualification identities; no old runtime or final evidence
-is rebound to a different release by accepting a scoped compile report.
+Compile schema 5, runtime schema 4 and target final schema 5 use the same scoped
+`input_binding`. The runtime/final CLI accepts exactly one of `--release` or
+`--qualification-components`; component mode additionally requires the independent
+`--qualification-component-sha256` pin. Both runtime tiers validate the compile
+binding before execution. The finalizer checks all nested bindings and serialized
+report bytes along with the existing source, sysroot/transaction, ABI, ELF, guard,
+SDK tree, extension, provider, probe and private zstd evidence. ARM continues to
+require the exact pinned explicit QEMU executor; x86_64 uses native chroot.
 
-The reader, cropped producer inputs, and report consumers have passed Docker
-contract tests and Rocky platform-python checks. Real Bake material captures
-prove that product-version changes no longer invalidate static qualifiers, a
-cp39 source change affects its two static qualifiers, and x86_64 ABI changes
-leave ARM static qualifiers unchanged. These are input-scope checks, not new
-qualification execution. Runtime/final and row/SDK contract migration, actual
-new qualification runs and CI reuse acceptance remain in progress.
+The runtime Docker stage inherits the locked host tool root and explicitly copies
+its twelve support scripts. It receives the qualification projections and ABI
+files from the static stage, validates row/version/adapter against the trusted
+root pin, and does not copy the complete release, schema, renderer or source
+bridge. The finalizer can produce the scoped report without loading those files.
+
+Legacy `--release` invocation keeps runtime schema 3 and final schema 4. A legacy
+final report can embed compile schema 4 or 5, but both runtime reports must remain
+schema 3 with exact full-release identities. A scoped final report requires compile
+schema 5, runtime schema 4 and overlay schema 2 throughout; mixed chains are rejected.
+The full-release consumer independently derives each scoped policy before accepting
+a new target report. Row manifests and SDK aggregation retain their complete
+release binding and independently computed all-row qualification pair. This does
+not rebind old evidence or establish cross-machine qualification reuse.
+
+Docker contract tests cover the producer/consumer boundaries and a cropped runtime
+stage with no release renderer; Rocky platform-python compatibility is checked
+separately. Bake material captures show that changing the product version leaves
+all twelve target runtime qualification inputs unchanged, changing cp39 source
+affects only its two targets, and changing x86_64 ABI or QEMU executor affects only
+the corresponding six targets. These are input-scope checks, not new qualification
+executions or measured CI speedups. Actual new qualification runs, row/SDK input
+migration and formal CI reuse acceptance remain in progress.
 
 ## GCC qualification policy inputs
 

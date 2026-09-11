@@ -218,3 +218,30 @@ def require_binding(report, policy):
     require(READER["canonical_sha256"](report.get("input_binding")) == READER["canonical_sha256"](binding(policy)),
             "Python report input binding differs")
     require("release_sha256" not in report, "scoped Python report cannot claim a complete release binding")
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--qualification-components", type=Path, required=True)
+    parser.add_argument("--qualification-component-sha256", required=True)
+    parser.add_argument("--row", required=True)
+    parser.add_argument("--version", required=True)
+    parser.add_argument("--adapter", required=True)
+    parser.add_argument("--arch", required=True)
+    arguments = parser.parse_args()
+    policy = load(arguments.qualification_components, arguments.version, arguments.arch,
+                  arguments.qualification_component_sha256)
+    require(policy["contract"]["row"] == arguments.row and
+            policy["contract"]["adapter"] == arguments.adapter, "Python qualification row/adapter differs")
+    print("verified Python qualification inputs: %s %s" % (arguments.row, arguments.arch))
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    try:
+        raise SystemExit(main())
+    except (PolicyError, OSError, ValueError) as error:
+        print("error: %s" % error, file=sys.stderr)
+        raise SystemExit(1)

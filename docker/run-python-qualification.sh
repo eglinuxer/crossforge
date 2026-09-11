@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-if [[ $# -ne 5 && $# -ne 6 ]]; then
-  echo "usage: $0 ROW VERSION ADAPTER ARCH TARGET [QEMU]" >&2
+if [[ $# -ne 6 && $# -ne 7 ]]; then
+  echo "usage: $0 ROW VERSION ADAPTER ARCH TARGET QUALIFICATION_SHA256 [QEMU]" >&2
   exit 2
 fi
 
@@ -11,7 +11,8 @@ version=$2
 adapter=$3
 arch=$4
 target=$5
-qemu=${6:-}
+qualification_sha256=$6
+qemu=${7:-}
 minor=${version%.*}
 
 case "$arch:$target" in
@@ -33,7 +34,7 @@ case "$arch:$target" in
     ;;
 esac
 
-release=/src/config/release.json
+qualification_components=/work/config/qualification-components
 runtime_provider_policy=/src/config/python-runtime-providers.json
 python_provider_catalog=/work/config/python-provider-catalog.json
 abi_baseline=/work/config/abi-baseline.json
@@ -45,8 +46,10 @@ target_prefix=/opt/crossforge/python/$row/targets/$target
 runtime_evidence=/work/qualification/python/runtime-clean-$arch.json
 probe=/work/tests/python/runtime_probe.py
 
-/usr/libexec/platform-python /work/scripts/verify-python-row.py \
-  --release "$release" \
+/usr/libexec/platform-python /work/scripts/python_qualification_policy.py \
+  --qualification-components "$qualification_components" \
+  --qualification-component-sha256 "$qualification_sha256" \
+  --arch "$arch" \
   --row "$row" \
   --version "$version" \
   --adapter "$adapter"
@@ -66,7 +69,8 @@ extension=$work/$extension_name
 
 common=(
   --compile-report "$compile_report"
-  --release "$release"
+  --qualification-components "$qualification_components" \
+  --qualification-component-sha256 "$qualification_sha256"
   --runtime-provider-policy "$runtime_provider_policy"
   --python-provider-catalog "$python_provider_catalog"
   --target-prefix "$target_prefix"
@@ -99,7 +103,8 @@ fi
   --compile-report "$compile_report" \
   --locked-sysroot-result "$work/locked-sysroot.json" \
   --clean-runtime-result "$work/clean-rocky.json" \
-  --release "$release" \
+  --qualification-components "$qualification_components" \
+  --qualification-component-sha256 "$qualification_sha256" \
   --abi-baseline "$abi_baseline" \
   --abi-provider-manifest "$abi_provider_manifest" \
   --sysroot-abi-inventory "$sysroot_abi_inventory" \

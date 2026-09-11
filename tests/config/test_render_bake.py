@@ -160,7 +160,7 @@ class RenderBakeTests(unittest.TestCase):
                 )
                 self.assertRegex(digest, r"^[0-9a-f]{64}$")
 
-    def test_python_qualification_identities_enter_only_static_qualifiers(self):
+    def test_python_qualification_identities_enter_static_and_runtime_qualifiers(self):
         key = "CPYTHON_QUALIFICATION_COMPONENT_SHA256"
         qualifier_names = set()
         for contract in RENDERER["IMPLEMENTED_ROWS"]:
@@ -172,6 +172,9 @@ class RenderBakeTests(unittest.TestCase):
                 self.assertEqual(target["target"], "cpython-qualify-build")
                 self.assertEqual(target["args"][key], self.binding_records[
                     "python/%s-%s-qualification" % (row, arch)]["canonical_sha256"])
+                runtime_name = "cpython-%s-%s-qualify" % (row, arch)
+                qualifier_names.add(runtime_name)
+                self.assertEqual(self.targets[runtime_name]["args"][key], target["args"][key])
         for name, target in self.targets.items():
             if target.get("inherits") != ["_python_common"]:
                 continue

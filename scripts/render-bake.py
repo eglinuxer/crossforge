@@ -1018,7 +1018,7 @@ def render_python_graph(config, targets, component_arguments):
                 "cpython-qualify-%s" % arch,
                 row,
                 runtime_contexts,
-                target_args,
+                dict(target_args, CPYTHON_QUALIFICATION_COMPONENT_SHA256=qualification_digest),
             )
             qualification_names.append(qualify_name)
             final_qualification[arch] = qualify_name

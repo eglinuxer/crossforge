@@ -71,6 +71,7 @@ class FinalSdkQualificationTests(unittest.TestCase):
         self.assertIn("COPY --from=crossforge_qemu_validated", block)
         self.assertIn("/opt/crossforge/qualification/toolchain", dockerfile)
         self.assertIn("scripts/qualify-final-sdk.py", block)
+        self.assertIn("scripts/python_qualification_policy.py", block)
         self.assertIn("scripts/release-components-core.py", block)
         self.assertNotIn("scripts/render-release-components.py", block)
         self.assertIn("/opt/crossforge/qualification/final-sdk.json", block)
@@ -130,6 +131,53 @@ class FinalSdkQualificationTests(unittest.TestCase):
             with self.subTest(dynamic=dynamic):
                 with self.assertRaises(QUALIFIER["QualificationError"]):
                     invoke(dynamic)
+
+    def test_scoped_target_reports_require_independently_derived_release_policy(self):
+        release = json.loads((REPOSITORY / "config/release.json").read_text())
+        release_sha256 = QUALIFIER["canonical_sha256"](release)
+        policy_reader = QUALIFIER["PYTHON_POLICY"]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            row_prefix, reports = root / "python/cp313", root / "reports"
+            manifest = {"qualifications": {}}
+            for arch, profile in QUALIFIER["TARGETS"].items():
+                prefix = row_prefix / "targets" / profile["triple"]
+                python = prefix / "bin/python3.13"
+                python.parent.mkdir(parents=True)
+                python.write_bytes(("fixture-" + arch).encode())
+                tree = QUALIFIER["SDK_IDENTITY"]["sdk_tree_identity"](prefix)
+                digest = QUALIFIER["sha256_file"](python)
+                policy = policy_reader["from_release"](release, "3.13.15", arch,
+                    QUALIFIER["RELEASE_COMPONENTS"]["render_component_documents"])
+                # Final host integration checks the report digest bound by the
+                # already-validated row; nested qualification has separate tests.
+                report = {"qualification_schema_version": 5, "report_kind": "crossforge-cpython-qualification",
+                          "status": "passed", "target": profile["triple"], "version": "3.13.15",
+                          "input_binding": policy_reader["binding"](policy), "python_sha256": digest,
+                          "compile": {"sdk_tree": tree}}
+                path = reports / (arch + ".json")
+                self.write_json(path, report)
+                manifest["qualifications"][arch] = {"target": profile["triple"], "report_sha256": QUALIFIER["sha256_file"](path),
+                                                   "python_sha256": digest, "sdk_tree": tree}
+            function = QUALIFIER["qualify_target_pythons"]
+            arguments = (row_prefix, reports, "cp313", "3.13.15", manifest, release_sha256)
+            self.assertEqual(len(function(*arguments, release=release)), 2)
+            with self.assertRaises(QUALIFIER["QualificationError"]):
+                function(*arguments)
+            path = reports / "x86_64.json"
+            original = json.loads(path.read_text())
+            for mutation in ("pin", "mixed", "schema"):
+                value = json.loads(json.dumps(original))
+                if mutation == "pin":
+                    value["input_binding"]["policy_sha256"] = "0" * 64
+                elif mutation == "mixed":
+                    value["release_sha256"] = release_sha256
+                else:
+                    value["qualification_schema_version"] = 5.0
+                self.write_json(path, value)
+                manifest["qualifications"]["x86_64"]["report_sha256"] = QUALIFIER["sha256_file"](path)
+                with self.subTest(mutation=mutation), self.assertRaises(QUALIFIER["QualificationError"]):
+                    function(*arguments, release=release)
 
     def test_target_python_trees_and_reports_are_manifest_bound(self):
         with tempfile.TemporaryDirectory() as temporary:

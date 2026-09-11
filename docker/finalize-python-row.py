@@ -553,17 +553,25 @@ def main():
                 "%s qualification report is invalid: %s" % (arch, error)
             ) from error
         try:
-            qualification_components = RELEASE_COMPONENTS[
-                "validate_python_qualification_components"
-            ](report.get("qualification_components"), release)
+            if report["qualification_schema_version"] == 5:
+                # The target validator above derives the scoped policy from
+                # this release. The outer row remains release-bound.
+                qualification_components = RELEASE_COMPONENTS["python_qualification_components"](release)
+            else:
+                qualification_components = RELEASE_COMPONENTS[
+                    "validate_python_qualification_components"
+                ](report.get("qualification_components"), release)
         except ProjectionError as error:
             raise FinalizationError(
                 "%s qualification component identities are invalid: %s"
                 % (arch, error)
             ) from error
+        schema_version = report.get("qualification_schema_version")
+        qualification_keys = (QUALIFICATION_KEYS if schema_version == 4 else
+                              (QUALIFICATION_KEYS - {"release_sha256", "qualification_components"}) | {"input_binding"})
         require(
-            set(report) == QUALIFICATION_KEYS
-            and report.get("qualification_schema_version") == 4
+            set(report) == qualification_keys
+            and type(schema_version) is int and schema_version in (4, 5)
             and report.get("report_kind") == "crossforge-cpython-qualification"
             and report.get("status") == "passed",
             "%s qualification did not pass" % arch,
@@ -580,10 +588,11 @@ def main():
             and embedded_compile.get("adapter") == arguments.adapter,
             "%s embedded compile adapter mismatch" % arch,
         )
-        require(
-            report.get("release_sha256") == release_sha256,
-            "%s release identity mismatch" % arch,
-        )
+        if schema_version == 4:
+            require(
+                report.get("release_sha256") == release_sha256,
+                "%s release identity mismatch" % arch,
+            )
         report_source = report.get("source")
         require(
             isinstance(report_source, dict)

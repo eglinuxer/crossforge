@@ -301,12 +301,13 @@ COPY --from=crossforge_cpython_cross_output /work/build/cpython-${CPYTHON_ROW}-$
   /work/build/cpython-${CPYTHON_ROW}-${CROSSFORGE_TARGET_ARCH}/target-artifact-audit.log
 COPY --from=crossforge_cpython_cross_output /work/source/source-manifest.json /work/source/source-manifest.json
 
-FROM python-host AS cpython-runtime-input
+FROM python-build-host AS cpython-runtime-input
 ARG CPYTHON_ROW
 ARG CPYTHON_VERSION
 ARG CPYTHON_ADAPTER
 ARG CROSSFORGE_TARGET_ARCH
 ARG CROSSFORGE_TARGET_TRIPLE
+ARG CPYTHON_QUALIFICATION_COMPONENT_SHA256
 COPY config/python-runtime-providers.json \
   /src/config/python-runtime-providers.json
 COPY --from=crossforge_sysroot \
@@ -322,18 +323,23 @@ COPY --from=crossforge_cpython_qualify_build \
   /work/config/ /work/config/
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY scripts/abi_contract.py scripts/python_abi_audit.py \
-  scripts/python_runtime_providers.py /work/scripts/
+  scripts/python_runtime_providers.py scripts/python_qualification_policy.py \
+  scripts/release_component.py scripts/python_row_contract.py \
+  scripts/python_runtime_overlay.py scripts/python_zstd_evidence.py \
+  scripts/target_artifact_audit.py /work/scripts/
 COPY --chmod=0755 scripts/run-cpython-runtime.py /work/scripts/run-cpython-runtime.py
 COPY --chmod=0755 scripts/finalize-cpython-qualification.py \
   /work/scripts/finalize-cpython-qualification.py
 COPY --chmod=0755 docker/run-python-qualification.sh \
   /work/scripts/run-python-qualification.sh
 COPY tests/python/runtime_probe.py /work/tests/python/runtime_probe.py
-RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py \
-      --release /src/config/release.json \
+RUN /usr/libexec/platform-python /work/scripts/python_qualification_policy.py \
+      --qualification-components /work/config/qualification-components \
+      --qualification-component-sha256 "$CPYTHON_QUALIFICATION_COMPONENT_SHA256" \
       --row "$CPYTHON_ROW" \
       --version "$CPYTHON_VERSION" \
       --adapter "$CPYTHON_ADAPTER" \
+      --arch "$CROSSFORGE_TARGET_ARCH" \
     && mkdir -p /runtime-locked/.crossforge /runtime-clean/.crossforge
 
 FROM cpython-runtime-input AS cpython-qualify-x86_64
@@ -349,7 +355,8 @@ RUN --network=none \
     && test "$CROSSFORGE_TARGET_TRIPLE" = x86_64-unknown-linux-gnu \
     && /work/scripts/run-python-qualification.sh \
       "$CPYTHON_ROW" "$CPYTHON_VERSION" "$CPYTHON_ADAPTER" \
-      "$CROSSFORGE_TARGET_ARCH" "$CROSSFORGE_TARGET_TRIPLE"
+      "$CROSSFORGE_TARGET_ARCH" "$CROSSFORGE_TARGET_TRIPLE" \
+      "$CPYTHON_QUALIFICATION_COMPONENT_SHA256"
 
 FROM cpython-runtime-input AS cpython-qualify-aarch64
 ARG CPYTHON_ROW
@@ -368,6 +375,7 @@ RUN --network=none \
     && /work/scripts/run-python-qualification.sh \
       "$CPYTHON_ROW" "$CPYTHON_VERSION" "$CPYTHON_ADAPTER" \
       "$CROSSFORGE_TARGET_ARCH" "$CROSSFORGE_TARGET_TRIPLE" \
+      "$CPYTHON_QUALIFICATION_COMPONENT_SHA256" \
       /work/qemu-aarch64
 
 # A row export is deliberately scratch-based. Build-only RPMs, toolchains,
@@ -533,7 +541,7 @@ COPY --from=crossforge_qemu_validated \
 COPY config/release.json /opt/crossforge/release.json
 COPY --chmod=0755 scripts/qualify-final-sdk.py scripts/toolchain_report.py \
   scripts/toolchain_policy.py scripts/release_component.py \
-  scripts/loader_evidence.py scripts/python_row_contract.py \
+  scripts/loader_evidence.py scripts/python_row_contract.py scripts/python_qualification_policy.py \
   scripts/python_sdk_identity.py scripts/release-components-core.py \
   scripts/validate-release.py /work/scripts/
 RUN --network=none test ! -e /runtime-locked \

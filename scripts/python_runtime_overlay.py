@@ -45,17 +45,21 @@ def binding_from_release(release, arch, render_components):
                              "canonical_sha256": canonical_sha256(document)}, arch)
 
 
-def validate_identity_binding(evidence, release, arch, render_components):
+def validate_identity_binding(evidence, release, arch, render_components=None, expected_binding=None):
     version = evidence.get("schema_version")
     fields = identity_fields(version)
     identity = evidence.get("identity")
     require(type(identity) is dict and set(identity) == fields, "runtime overlay identity fields differ")
+    require((release is None) != (expected_binding is None),
+            "runtime overlay requires exactly one input authority")
     if version == 1:
+        require(release is not None, "legacy runtime overlay requires the complete release")
         require(identity["release_sha256"] == canonical_sha256(release), "runtime overlay release digest mismatch")
     else:
         actual = validate_binding(identity["input_binding"], arch)
-        require(actual == binding_from_release(release, arch, render_components),
-                "runtime overlay component differs from current release inputs")
+        expected = (binding_from_release(release, arch, render_components) if release is not None
+                    else validate_binding(expected_binding, arch))
+        require(actual == expected, "runtime overlay component differs from current inputs")
 
 
 def component_base(path, name, digest, arch):

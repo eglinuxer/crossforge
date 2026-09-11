@@ -593,6 +593,29 @@ class PythonRowManifestTests(unittest.TestCase):
             globals_["audit_exported_zstd_module"] = original_audit
         return SimpleNamespace(returncode=return_code, stderr=stderr.getvalue()), output
 
+    def test_scoped_target_report_dispatch_retains_complete_release_row_identity(self):
+        fixture = self.fixture("3.13", source_schema_version=2)
+        validator = FINALIZE["QUALIFICATION_VALIDATOR"]
+        policy_reader = validator["POLICY"]
+        for arch, record in fixture["reports"].items():
+            policy = policy_reader["from_release"](self.release, fixture["entry"]["version"], arch,
+                FINALIZE["RELEASE_COMPONENTS"]["render_component_documents"])
+            report = record["value"]
+            report.pop("release_sha256")
+            report.pop("qualification_components")
+            report.update(qualification_schema_version=5, input_binding=policy_reader["binding"](policy))
+            self.write_json(record["path"], report)
+        # Like the existing row fixtures, this exercises dispatch and aggregation
+        # with the target validator mocked. Complete nested validation is covered
+        # by test_python_runtime_component_inputs.
+        result, output = self.run_finalize(fixture)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        manifest = json.loads(output.read_text())
+        self.assertEqual(manifest["release_sha256"], canonical_sha256(self.release))
+        self.assertEqual(manifest["qualification_components"], self.qualification_components)
+        for arch, record in fixture["reports"].items():
+            self.assertEqual(manifest["qualifications"][arch]["report_sha256"], sha256_file(record["path"]))
+
     def test_all_implemented_source_manifests_match_exact_contract(self):
         for minor in IMPLEMENTED_MINORS:
             with self.subTest(minor=minor):

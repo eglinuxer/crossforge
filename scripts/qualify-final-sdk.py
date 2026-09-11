@@ -28,6 +28,7 @@ RELEASE_COMPONENTS = runpy.run_path(
     str(Path(__file__).with_name("release-components-core.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+PYTHON_POLICY = runpy.run_path(str(Path(__file__).with_name("python_qualification_policy.py")))
 TOOLCHAIN_REPORT = runpy.run_path(str(Path(__file__).with_name("toolchain_report.py")))
 
 
@@ -321,6 +322,7 @@ def qualify_target_pythons(
     version,
     manifest,
     release_sha256,
+    release=None,
 ):
     minor = version.rsplit(".", 1)[0]
     qualifications = manifest.get("qualifications")
@@ -361,13 +363,26 @@ def qualify_target_pythons(
             "%s %s target SDK differs from its row manifest" % (row, arch),
         )
         compile_report = report.get("compile")
+        schema_version = report.get("qualification_schema_version")
+        require(type(schema_version) is int and schema_version in (4, 5),
+                "%s %s qualification report schema differs" % (row, arch))
+        if schema_version == 5:
+            require(release is not None and canonical_sha256(release) == release_sha256,
+                    "scoped target report requires the current complete release")
+            require("qualification_components" not in report, "scoped target report contains legacy components")
+            try:
+                policy = PYTHON_POLICY["from_release"](release, version, arch, RELEASE_COMPONENTS["render_component_documents"])
+                PYTHON_POLICY["require_binding"](report, policy)
+            except (PYTHON_POLICY["PolicyError"], ProjectionError) as error:
+                raise QualificationError(str(error)) from error
+        else:
+            require("input_binding" not in report and report.get("release_sha256") == release_sha256,
+                    "%s %s qualification report release differs" % (row, arch))
         require(
-            report.get("qualification_schema_version") == 4
-            and report.get("report_kind") == "crossforge-cpython-qualification"
+            report.get("report_kind") == "crossforge-cpython-qualification"
             and report.get("status") == "passed"
             and report.get("target") == profile["triple"]
             and report.get("version") == version
-            and report.get("release_sha256") == release_sha256
             and report.get("python_sha256") == python_sha256
             and isinstance(compile_report, dict)
             and compile_report.get("sdk_tree") == tree,
@@ -798,6 +813,7 @@ def qualify(release_path, rows, qemu):
                     version,
                     manifest,
                     release_sha256,
+                    release,
                 ),
             }
         )
