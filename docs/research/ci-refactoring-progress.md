@@ -603,3 +603,15 @@ SDK job 权限继续为 contents/read 与 packages/read，新增行只保存在�
 新的重放目录 `/tmp/crossforge-runtime-replay-cb115b5/` 固定源码、1,007 项源码清单、执行脚本和输入文件摘要；`run.py --check-only` 已在无 socket 的只读 Docker 容器中实际通过。待执行阶段包括双工具链、双 GCC smoke/x86_64 full、六行 Python 及两种 SDK 集成，各阶段只使用原本地资格 API、新目录和真实 local producer。SDK 只接受该清单中已经成功的新行结果；源码或实际环境变化不能写成功。`run-authorized.sh` 是尚未执行的具体命令，使用 `crossforge-ci-review`，不操作其他 builder、不发布或伪造 GitHub 身份。
 
 此前自动审批因广泛宿主 daemon 控制拒绝挂载 Docker socket，本轮已就这份具体命令请求明确授权。未重试挂载，也未改用其他 daemon 入口。独立行安装、vcpkg upstream 强制重放、源码重建、真实 GitHub/候选/原生 ARM、恢复保留和性能验收仍是完整目标的一部分；准备清单不是资格通过记录。未改实现、生成配置或版本/ABI/GCC pin，未合入 main、推送或发布。
+
+## 已获授权：当前源码的实际 Docker 资格重放（2026-09-11，进行中）
+
+用户明确同意前一节准备的 Docker socket 挂载与本地验证，之前的授权阻碍已经解除。继续使用 `crossforge-ci-review` 和固定工具镜像，只读消费规范化的 `cb115b5` 源码归档。未操作其他 builder，未更改版本或 ABI/GCC baseline。前述章节中的“授权仍待答复”是当时的历史状态。
+
+[运行记录](runtime-replay-2026-09-11.json)保存当前已经完成的四个阶段及独立结果摘要：x86_64 工具链 20.567 秒、2 个 fresh RUN；AArch64 工具链 33.961 秒、5 个 fresh RUN；x86_64 GCC smoke 94.707 秒、2 个 fresh RUN、16 PASS；AArch64 GCC smoke 282.492 秒、3 个 fresh RUN，locked-sysroot 与 clean-rocky 各 16 PASS。原生产器执行后，原独立 consumer 重新核验 OCI、嵌入契约、报告、执行记录及当前输入，源码和实际执行环境前后匹配才写成功。
+
+首次启动发现 namespace 报告的 socket 组与宿主实际组不符，随后使用宿主组 989；第二次临时脚本的 local producer URN 多出冒号，被原 validator 正确拒绝，修正临时脚本后才执行。AArch64 首轮因外层工具容器断网，无法获取固定 QEMU 镜像的 registry token；外层改用 bridge 后通过。资格 RUN 原有的断网规则、镜像 digest、严格 producer 和证据校验均保留，失败目录独立保存。
+
+cp39 已完成静态资格、双目标 locked/clean 运行及行汇总，但外层独立产物复核尚未结束；GCC full 仍在执行，不记为通过。builder 的 worker 并行上限保持 1；这两个阶段会互相等待，外层工具容器的 CPU/内存限制也不约束外部 BuildKit worker。因此表中时间包含取得、提取、测试、封装和复核，不作为 GitHub runner 优化幅度或三次性能基线。
+
+接着完成其余五行、新 SDK 汇总以及六个独立 Python 安装门禁。独立安装准备脚本保留各行原来的 `sdk-toolchains-dev` 基座，只在完整行 receipt 经原验证器验收后交接产物，并要求原 append 的两个 RUN 新执行；当前仅通过无 socket 的准备检查，还没有取得安装通过结果。完整目标仍需源码/vcpkg 重放、真实 GitHub/候选/原生 ARM、恢复/保留和性能验收；未合入 main、推送或发布。
