@@ -685,3 +685,11 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 [本批验证](main-sdk-complete-checkpoint-2026-09-11.json)：固定、断网、非 root、无 socket 的 Docker 工具容器通过受影响的 SDK、目录、恢复和增量模块共 69 项 / 25.469 秒，无跳过；固定 Rocky 8 Python 3.6.8 编译两个生产模块并通过 48 项 / 23.645 秒，图入口使用固定工具容器实际 Bake print。main/candidate 调用方 actionlint 通过，只保留既有 concurrency.queue 兼容例外。前一批全量 1,419+40 项验证单独保留，本批只改编排、诊断和相应回归，没有重复未受影响的全量套件。新 summary 用例实际在独立 Python 进程执行 action 中的脚本，验证仅 raw、完整记录和工件缺失三种输出；源码/registry/签名/集成边界在编排测试中仍为显式 fixture。首次篡改用例误用只允许新文件的生产 JSON writer，被正确拒绝覆盖；改为测试直接篡改文件后，完整回归确认集成后的摘要复核会拒绝该变更。
 
 该接入使已认证完整输入可通过既有显式 SDK catalog 恢复接口重新取得，尚未实现主 job 的自动恢复入口或未签名本地行的持久恢复。跨 runner 环境规则仍保持全部严格字段，实际 GitHub 信任/重试、候选资格复用与原生 ARM、引用保留及三次性能/受影响变更验收仍待完成。未合入 main、推送或发布。
+
+## Docker 验收：完整 SDK 汇总通过（2026-09-11）
+
+新版 `sdk-complete-dev` 已退出 0，777.453 秒完成输入验收、累计安装和最终集成；14 条要求本次执行的原 RUN 均通过执行记录核验。捕获依赖仍是两份工具链和六份 qualified row，图及实际 RUN 名称中没有 GCC/CPython 自身源码编译入口。最终报告为 passed，覆盖 24 个 Python/架构/链接方式组合、x86_64 与 AArch64 的 DEB/RPM 打包，以及两份 launcher 消费者交叉编译；launcher 样例明确记录未执行，不作为原生目标运行证据。
+
+固定、断网、只读 Docker 工具容器随后使用原 `python_sdk.fresh_vertices` 与输入/文件校验接口独立复核两种 SDK 的已保存结果：13/14 条 fresh RUN、各八份组件依赖、六份原 row manifest 和全部导出报告摘要均匹配。完整 SDK 的 Python 最终报告还与先前 `python-dev` 导出字节一致。详见[本地运行记录](runtime-replay-a56bb29-2026-09-11.json)；这次独立复核没有生成新的资格执行或改写原 producer。
+
+顺序 batch 继续执行 vcpkg 五阶段锁定源码资格重放，之后运行 x86_64 工具链与 cp39 的强制源码重建。[验收索引](ci-refactoring-acceptance.md)集中列出六项选择的当前证据和剩余门槛，避免将历史 fixture、本地功能计时或旧源码结果当成真实 GitHub/候选验收。只读核对远程 main 仍为 `cf736ea`。未合入 main、推送或发布。

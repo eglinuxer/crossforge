@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "crossforge-local-runtime-replay-observation",
-  "observed_at": "2026-09-11T13:07:49.473533+00:00",
+  "observed_at": "2026-09-11T13:17:26.406339+00:00",
   "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
   "status": "in-progress",
   "scope": "Original local row qualification and independent append gates; not GitHub, candidate, native ARM or performance acceptance",
@@ -526,9 +526,8 @@
     "Sequential replay on one worker; max-parallelism=1. Outer Docker CPU/memory limits do not constrain external BuildKit worker",
     "No GitHub runner performance comparison or cross-run environment compatibility assertion"
   ],
-  "running_at_observation": "sdk-complete-dev integration; parent sequential batch remains active",
+  "running_at_observation": "forced vcpkg source qualification; parent sequential batch remains active",
   "pending": [
-    "sdk-complete-dev integration",
     "forced vcpkg source qualification",
     "forced x86_64 toolchain and cp39 source compilation"
   ],
@@ -682,6 +681,303 @@
           "version": "10.2.3"
         }
       }
+    },
+    {
+      "phase": "sdk-complete-dev",
+      "status": "passed",
+      "seconds": 777.453,
+      "producer": {
+        "invocation": "urn:crossforge:local:export-replay-a56bb29-sdk-complete-dev",
+        "kind": "local",
+        "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+        "source_dirty": false,
+        "started_at": "2026-09-11T13:02:59Z"
+      },
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/sdk-complete-dev/result.json",
+        "sha256": "8dafb8175f3f9f2668836ea9a28d31ce38f2155f975b9c9e89060485df547572"
+      },
+      "inputs_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/sdk-complete-dev/integration/inputs.json",
+        "sha256": "2ae35f181d52580ca514dc7bf4470a24490509bdbfea65b5e105f688cb44ed1d"
+      },
+      "execution_log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/sdk-complete-dev/integration/execution.jsonl",
+        "sha256": "20c6aa0ba2f388280c636da1c3dcae35ed405fa7305cf2a80e717f2b894d0ec1"
+      },
+      "inputs_sha256": "848fb963b8338a9618be970cf7d0e6f2ac4351242655064327396622ac412018",
+      "started_at": "2026-09-11T13:07:51Z",
+      "completed_at": "2026-09-11T13:15:54Z",
+      "fresh_runs": 14,
+      "source_compiler_RUNs_observed": 0,
+      "dependencies": [
+        {
+          "artifact_digest": "sha256:ff78bc0289382b9e14eeddacdc648aecb6a169a134dfacf514d10262155c20f3",
+          "component": "qualification/python-cp310",
+          "inputs_sha256": "c1c0b08cebbcae11f61c26e15f02e4c6ba9e9b4069ab8a1b7f6f6ad26bc30ab9"
+        },
+        {
+          "artifact_digest": "sha256:8df31c46fa79cbb02fd2d22e88bc310851891c02ad04e06172e6eea48566e52a",
+          "component": "qualification/python-cp311",
+          "inputs_sha256": "d7f7f74dc4804798dfa10e3e805814ba8e47f3b920109d313247e768bee1c284"
+        },
+        {
+          "artifact_digest": "sha256:196b96d97c7e86bb5d775b5f80b60d2bd42140f20d70c41ceff3be78c7771ffc",
+          "component": "qualification/python-cp312",
+          "inputs_sha256": "5dedc12c1e7f89594939f1181e34fcf9ea73507f594beeec4aba2c558659cd6c"
+        },
+        {
+          "artifact_digest": "sha256:ca9946741c45d6bb8b9a65bd90fd79d36a7bea3b0de0ebcf81ef95b9804b2a0a",
+          "component": "qualification/python-cp313",
+          "inputs_sha256": "e579fb379fc6769a5ba53b18faa90629ef99cb19963415850100cba2c196b215"
+        },
+        {
+          "artifact_digest": "sha256:f4ac4de00bf6027ffcd7b8f20e488ffea1c9829c4ddbd48f9b1e952ca388422a",
+          "component": "qualification/python-cp314",
+          "inputs_sha256": "3e8dcd7a59f38af637108d6de9c321e5a0fc6649dfafd9cc872960343bc4b935"
+        },
+        {
+          "artifact_digest": "sha256:e73e7fd9db8b4b76b8be190610b21f4102d096b94bce16adc132d717962c3a05",
+          "component": "qualification/python-cp39",
+          "inputs_sha256": "b8d58152a4d3fd5d6d9645a26d0fd3891164cea3b4e98f512fd30cd34a124735"
+        },
+        {
+          "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+          "component": "toolchain/aarch64-install",
+          "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+        },
+        {
+          "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+          "component": "toolchain/x86_64-install",
+          "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+        }
+      ],
+      "reports": [
+        {
+          "mode": "0644",
+          "path": "reports/complete-sdk.json",
+          "sha256": "9c1e5331f575bbcf32e5c03d5765e8d65d725062bdad6f065b82ce61c3be00d3"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp310.json",
+          "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp311.json",
+          "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp312.json",
+          "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp313.json",
+          "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp314.json",
+          "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp39.json",
+          "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/python-final-sdk.json",
+          "sha256": "6c8e196cd7870f53db8476bedad21a26e872aa374c2e340b2e189bdab0d4025f"
+        }
+      ],
+      "reused_row_receipts": {
+        "cp310": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+        "cp311": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+        "cp312": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+        "cp313": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+        "cp314": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+        "cp39": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3"
+      },
+      "final_report": {
+        "kind": "crossforge-complete-sdk-qualification",
+        "schema_version": 2,
+        "status": "passed",
+        "python_phase": 10,
+        "matrix": [
+          {
+            "linkage": "static",
+            "python": "3.9",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.9",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.10",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.10",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.11",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.11",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.12",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.12",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.13",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.13",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.14",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.14",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.9",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.9",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.10",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.10",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.11",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.11",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.12",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.12",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.13",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.13",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.14",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.14",
+            "target": "aarch64"
+          }
+        ],
+        "package_targets": {
+          "aarch64": {
+            "deb": "passed",
+            "rpm": "passed"
+          },
+          "x86_64": {
+            "deb": "passed",
+            "rpm": "passed"
+          }
+        },
+        "launcher_consumers": [
+          {
+            "binary_sha256": "32baa9d6170430fff1f000bfa95777e1680594615a3997d18bdecd8445b318f7",
+            "build_system": "cmake-ninja",
+            "executed": false,
+            "languages": [
+              "c",
+              "c++20"
+            ],
+            "target": "x86_64",
+            "triple": "x86_64-unknown-linux-gnu"
+          },
+          {
+            "binary_sha256": "a9c0b160504ebdebb0ea86adb34e1e7ada20ca564ffc4496d82c552c17289941",
+            "build_system": "cmake-ninja",
+            "executed": false,
+            "languages": [
+              "c",
+              "c++20"
+            ],
+            "target": "aarch64",
+            "triple": "aarch64-unknown-linux-gnu"
+          }
+        ],
+        "vcpkg_report": {
+          "schema_version": 2,
+          "sha256": "a2efa581269fbd606603a9144a891e66bbab2377ec900f65b7c89f9b8be3ee5e"
+        }
+      }
     }
-  ]
+  ],
+  "sdk_result_recheck": {
+    "status": "passed",
+    "exit_code": 0,
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "runner": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/verify-sdk-results.py",
+      "sha256": "bc36a6baf17ed02fbbd95163d0d26046d6406f63e3778f62e8941ddc665338c2"
+    },
+    "scope": "Read-only offline Docker recheck with original python_sdk.fresh_vertices and component input/report hash validators; 13 and 14 fresh RUNs, eight dependencies and six original row manifests per SDK. No new build or qualification execution."
+  }
 }
