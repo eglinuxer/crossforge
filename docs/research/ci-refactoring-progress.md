@@ -674,4 +674,4 @@ cp312、cp313 后续整行资格及 cp311–cp313 独立安装均已退出 0，�
 
 实际正式安装接口另消费本轮已验收的 cp39 行，完成原始组件和资格产物复核、两个 fresh append RUN 与行清单比较，外层退出 0，213.394 秒。捕获材料只有两份工具链与一份 qualified row；实际执行日志没有 GCC/CPython 源码编译 RUN。源码是基于 `fb836c5`、含本批实现的固定规范化工作副本，记录明确标为 source_dirty=true 并固定全部目录模式及文件字节/模式，未伪造 GitHub 或 clean producer。原行 receipt 与 producer 保留，未创建新行资格。首轮临时包装脚本混用物理/逻辑路径，在访问 daemon 前失败；第二轮副本目录为 0775，与原始组件的 0755 不符，原 verifier 正确拒绝。两次现场保留，第三轮使用新的规范化副本，不修改验证器或旧 receipt。
 
-新版 a56bb29 的六行完整资格现均已通过，各七个 fresh RUN；其中五个独立安装已经通过，cp313 独立安装仍在顺序 batch 中。随后继续两种 SDK 汇总及 vcpkg/源码强制重放。主行签名工作流已完成代码接入，但实际 GitHub 发布/签名/跨 run 取得、完整 SDK 恢复、候选资格交接与原生 ARM、引用保留和性能验收仍待完成。严格物理环境不匹配时，SDK 仍会补验；没有宣称跨 runner 已去重或 CI 已提速。未合入 main、推送或发布。
+新版 a56bb29 的六行完整资格现均已通过，各七个 fresh RUN；六个独立安装也均已退出 0，各两个 fresh append RUN。顺序 batch 已启动 python-dev 汇总，随后继续 sdk-complete-dev 及 vcpkg/源码强制重放。主行签名工作流已完成代码接入，但实际 GitHub 发布/签名/跨 run 取得、完整 SDK 恢复、候选资格交接与原生 ARM、引用保留和性能验收仍待完成。严格物理环境不匹配时，SDK 仍会补验；没有宣称跨 runner 已去重或 CI 已提速。未合入 main、推送或发布。

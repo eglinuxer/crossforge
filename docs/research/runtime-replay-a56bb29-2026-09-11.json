@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "crossforge-local-runtime-replay-observation",
-  "observed_at": "2026-09-11T12:52:23.829457+00:00",
+  "observed_at": "2026-09-11T12:55:35.077799+00:00",
   "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
   "status": "in-progress",
   "scope": "Original local row qualification and independent append gates; not GitHub, candidate, native ARM or performance acceptance",
@@ -496,6 +496,26 @@
         "sha256": "b4ca41fe99324132b89afef3a60a4addf6e24a7aec71a938cf96713b5944a6af"
       },
       "fresh_runs": 2
+    },
+    {
+      "row": "cp313",
+      "status": "passed",
+      "seconds": 120.006,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "row_receipt_sha256": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+      "inputs_sha256": "ebb3cede3835722f5561e1663811c4f60af9763be7b20f0b0865feecebb01bba",
+      "report": {
+        "mode": "0644",
+        "path": "row.json",
+        "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+      },
+      "started_at": "2026-09-11T12:52:14Z",
+      "completed_at": "2026-09-11T12:53:19Z",
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/independent-install/cp313/result.json",
+        "sha256": "b1b9e41f5ac211b6a4366a97f8a8dd6d543a2ec7c86bfa4f152c30c57554e8fe"
+      },
+      "fresh_runs": 2
     }
   ],
   "execution_notes": [
@@ -506,9 +526,8 @@
     "Sequential replay on one worker; max-parallelism=1. Outer Docker CPU/memory limits do not constrain external BuildKit worker",
     "No GitHub runner performance comparison or cross-run environment compatibility assertion"
   ],
-  "running_at_observation": "cp313 independent installation; parent sequential batch remains active",
+  "running_at_observation": "python-dev SDK integration; parent sequential batch remains active",
   "pending": [
-    "cp313 independent installation",
     "python-dev and sdk-complete-dev integration",
     "forced vcpkg source qualification",
     "forced x86_64 toolchain and cp39 source compilation"
