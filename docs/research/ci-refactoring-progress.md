@@ -615,3 +615,13 @@ SDK job 权限继续为 contents/read 与 packages/read，新增行只保存在�
 cp39 已完成静态资格、双目标 locked/clean 运行及行汇总，但外层独立产物复核尚未结束；GCC full 仍在执行，不记为通过。builder 的 worker 并行上限保持 1；这两个阶段会互相等待，外层工具容器的 CPU/内存限制也不约束外部 BuildKit worker。因此表中时间包含取得、提取、测试、封装和复核，不作为 GitHub runner 优化幅度或三次性能基线。
 
 接着完成其余五行、新 SDK 汇总以及六个独立 Python 安装门禁。独立安装准备脚本保留各行原来的 `sdk-toolchains-dev` 基座，只在完整行 receipt 经原验证器验收后交接产物，并要求原 append 的两个 RUN 新执行；当前仅通过无 socket 的准备检查，还没有取得安装通过结果。完整目标仍需源码/vcpkg 重放、真实 GitHub/候选/原生 ARM、恢复/保留和性能验收；未合入 main、推送或发布。
+
+## 批次 4/6：SDK 成功行的中间目录占用（2026-09-11）
+
+实际 cp39 封存目录保留了两份解压安装树，`du` 各约 669 MiB，而用于后续消费的 OCI 约 163 MiB。`ci_sdk.fresh_row` 现在先由原 producer 完成资格、封存和产物验收，确认 receipt 对应计划输入、产物与 producer，并由原诊断保存逻辑复制报告和执行记录，随后才清理本行 `payload/` 与 `extracted/`。OCI、receipt、输入记录和诊断继续保留，SDK 的原独立验收不变。资格执行失败、输入不匹配或诊断复制失败不清理；删除前同时检查两个 staging 根，拒绝符号链接根，内部安装符号链接不指向删除目标。
+
+[本地验证记录](sdk-staging-cleanup-2026-09-11.json)：固定、断网、非 root、无 socket 的工具容器完成 config 1,398 项、365.790 秒及 packaging 40 项、1.773 秒，全部通过且无跳过；定向 47 项、10.402 秒与固定 Rocky 8 Python 3.6.8 的 20 项、7.837 秒通过。四个锁定验证器、三个 renderer 与 shell syntax 通过。完整驱动最后因遗漏 actionlint 二进制退出 1，单独挂载既有工具后静态检查通过，只保留既有 concurrency.queue 兼容例外，没有重跑已经通过的测试。定向初次还分别遗漏 Docker CLI 和拼错相邻测试模块名，补全测试环境及正确模块后通过；没有放宽生产校验。
+
+新增回归实际操作临时文件和符号链接，覆盖成功清理但保留 OCI/receipt/诊断、资格与输入失败保留现场，以及诊断复制失败阻止集成；registry、产物生产和 SDK 执行仍是显式 fixture。另取本次实际 cp39 封存产物的独立副本，调用新清理函数移除 1,300,195,598 字节常规文件，原重放目录不变；原 `python_qualification.verify_local` 随后验收保留的 OCI，目前仍在等待同一 builder 的 GCC full 长步骤，未写通过结果。该探针不是新的行资格执行。
+
+GCC full 的 C++ 套件已完成，实际汇总含 232,928 项 expected PASS；C 套件仍在运行，四套件最终基线比对尚未完成。cp39 外层独立验收、上述清理后的独立验收及后续行/SDK 仍待继续。所有测试计时都与当前 GCC full 重叠，不能作为并行度实验或性能改善比例。此次清理仅减少本 job 已完成行的重复安装副本，未实现 registry 引用保留、完整恢复或去重独立 Python job，也未合入 main、推送或发布。

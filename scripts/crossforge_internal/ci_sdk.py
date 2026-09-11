@@ -6,6 +6,7 @@ catalog reader remains read-only; authentication or verification errors escape.
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
@@ -39,6 +40,18 @@ def raw_components(acquired, rows):
                 **{part: python[row + "-" + part]["subject"] for part, _, _ in python_handoff.PARTS})} for row in rows}}
 
 
+def discard_row_intermediates(data):
+    """After sealed-row acceptance and diagnostic preservation, keep its OCI and receipt."""
+    paths = [data / name for name in ("payload", "extracted")]
+    # Check both owned staging roots before deleting either. rmtree does not
+    # follow the installed tree's symlinks; no registry objects are removed.
+    require(all(not path.is_symlink() and (not path.exists() or path.is_dir()) for path in paths),
+            "SDK row intermediate must be an owned directory")
+    for path in paths:
+        if path.exists():
+            shutil.rmtree(str(path))
+
+
 def fresh_row(source, graph, row, execution, producer, subjects, expected_sha256, data, evidence, builder, docker_config):
     started = time.monotonic()
     print("SDK %s: qualifying both targets on the integration worker" % row, flush=True)
@@ -52,6 +65,7 @@ def fresh_row(source, graph, row, execution, producer, subjects, expected_sha256
             content_sha256(receipt) == built["receipt_sha256"] and receipt["artifact"] == built["artifact"] and
             receipt["contract"]["producer"] == producer,
             "fresh SDK row differs from its planned inputs, receipt or producer")
+    discard_row_intermediates(data)
     result = {"origin": "fresh-execution", "producer": producer, "seconds": round(time.monotonic() - started, 3),
               "subject": {"receipt": str(data / "receipt.json"), "receipt_sha256": built["receipt_sha256"], "layout": str(data / "oci")}}
     component_build.write_json(evidence / "result.json", result)

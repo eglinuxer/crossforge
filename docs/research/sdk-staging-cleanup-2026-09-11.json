@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-local-sdk-staging-cleanup-observation",
+  "observed_at": "2026-09-11T10:53:13.524011+00:00",
+  "base_commit": "df377458beb3e17cf951eaa5161606a681581421",
+  "status": "local regression checks passed; actual retained-OCI acceptance is running",
+  "scope": "Remove only fresh SDK rows staging copies after sealed producer acceptance, planned receipt matching and successful diagnostic preservation",
+  "source_sha256": {
+    "scripts/crossforge_internal/ci_sdk.py": "443b99622be6424aedd98a19426664f92b7af5fe68ef81290ba5697af4bdb95e",
+    "tests/config/test_ci_sdk.py": "a3c61ccf0ddad97edc045e326a190d899c3277ebccbf8c21727e697da1dc1fb1",
+    "docs/architecture.md": "69ec46ccbfac7a20ff24da986b527fd9a904dbd400dff8881418a5f8f70d7cc8",
+    "docs/internal-components.md": "8a31f7a4df0a82aa7daa84319fa07cc0157e7ad15d4616c0bb191e2660a6e753"
+  },
+  "environment": {
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "rocky_image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+    "tests": {
+      "network": "none",
+      "docker_socket_mounted": false,
+      "user": "1000:1000",
+      "cpus": 4,
+      "memory": "16g"
+    },
+    "actual_storage_probe": {
+      "network": "bridge",
+      "docker_socket_mounted": true,
+      "builder": "crossforge-ci-review",
+      "original_replay_source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7"
+    }
+  },
+  "tests": [
+    {
+      "tests": 1398,
+      "seconds": 365.79,
+      "skipped": 0,
+      "suite": "config"
+    },
+    {
+      "tests": 40,
+      "seconds": 1.773,
+      "skipped": 0,
+      "suite": "packaging"
+    },
+    {
+      "tests": 47,
+      "seconds": 10.402,
+      "skipped": 0,
+      "suite": "focused"
+    },
+    {
+      "tests": 20,
+      "seconds": 7.837,
+      "skipped": 0,
+      "suite": "rocky"
+    }
+  ],
+  "checks": {
+    "locked_release": "passed",
+    "supply_chain_evidence": "passed",
+    "frozen_abi": "passed",
+    "python_runtime_providers": "passed",
+    "render_release_components": "passed",
+    "render_vcpkg_integration": "passed",
+    "render_bake": "passed",
+    "qualification_shell_syntax": "passed",
+    "actionlint": {
+      "status": "passed in separate Docker invocation",
+      "exit_code": 0,
+      "compatibility_ignore": "unexpected key \"queue\" for \"concurrency\" section",
+      "binary_sha256": "c872d6db8c6bf83a8eaa704fc93999f027d55dffbc63b8a6abdccb47df5f4cd4"
+    }
+  },
+  "regression_coverage": [
+    "Successful missing-row path preserves diagnostic bytes, OCI and receipt while removing only payload and extracted.",
+    "Qualification failure, changed expected inputs and failed diagnostic preservation keep both intermediate trees and prevent SDK integration.",
+    "Symlink staging roots are rejected before either tree is removed; installed symlinks do not delete external files.",
+    "All six missing rows remain bounded to two workers and complete before final integration; original trust and source/host checks remain."
+  ],
+  "actual_storage_probe": {
+    "status": "copy intermediates removed; original independent OCI validation waiting on live builder",
+    "receipt_sha256": "61170e3d2b6cdeaf869be9e5dff80e5150dcf48c5d6304fb32e3e6883655c4ea",
+    "before_regular_file_bytes": {
+      "payload": 650097338,
+      "extracted": 650098260,
+      "oci": 170353262
+    },
+    "removed_regular_file_bytes": 1300195598,
+    "copy_directory": "/tmp/crossforge-runtime-replay-cb115b5/storage-cleanup-cp39",
+    "original_qualification_directory_preserved": true
+  },
+  "local_outputs": {
+    "focused.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/focused.log",
+      "sha256": "81d7d9338ae89fa204679c57148f9f8cd6f0dde129b74168e96bd2e4b181095e"
+    },
+    "initial-focused.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/initial-focused.log",
+      "sha256": "48de6e7b9af6a627d334385fe80a0b5f844d4a9db229b062b7aadac923b12d3a"
+    },
+    "rocky.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/rocky.log",
+      "sha256": "1712a629e1aeb5a280709d76da10276f946e3767dbd83774c33829a827960e72"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/full.log",
+      "sha256": "c4ec8369f381a3cfa315d97d4e4bb2309f8b106576f089cd39f9d95b29410cc5"
+    },
+    "full.py": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/full.py",
+      "sha256": "83225c71ff855365fe579b9a7461cc6d6ca95b24eacdee33d248d69f6b11fb3e"
+    },
+    "rocky.py": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/rocky.py",
+      "sha256": "13bf316db1985d1f264441aae168c951a79ea7c3ec752725ada63c54a0cbd9a3"
+    },
+    "graph.json": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/graph.json",
+      "sha256": "9b1f141995165ed8f35a59441cdd8673ec276e8d7b8b530cf083a5b83f2be93c"
+    },
+    "graph.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/graph.log",
+      "sha256": "06fbf69971e5e236c7b5683cf19aa2c6ad3d2a0ecf474cb7cd0f1f4c4c637c0c"
+    },
+    "actionlint.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/actionlint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "verify-storage.py": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/verify-storage.py",
+      "sha256": "7ee8f2b7fea83d6e1bdb9622c9a8e38f570458626cd954899ac50086891fe24f"
+    },
+    "run-storage.sh": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/run-storage.sh",
+      "sha256": "c34a3d57d3e50f4ab09225480e6007275673fe95e36debedacb2422b6b757d9e"
+    }
+  },
+  "limits": [
+    "New tests use actual filesystem operations but explicit fixtures for registry, sealed artifact production and SDK execution. The independent storage probe uses a real cp39 receipt and OCI; its final acceptance is still pending.",
+    "All configuration and packaging tests completed successfully; the aggregate driver subsequently exited 1 only because actionlint was absent. Mounting the original tool completed that remaining check separately; passed tests were not repeated.",
+    "An initial direct focused launch omitted the Docker CLI; the following launch used a nonexistent adjacent test module. With the original CLI and correct existing module, all 47 focused tests passed. No production validation was loosened.",
+    "Suite timings were observed during concurrent GCC full qualification and are not a controlled performance comparison. The cp39 size observation excludes symlinks and directory metadata; no GitHub peak disk/memory reduction is claimed.",
+    "Cleanup is local to successful fresh SDK row staging. It does not delete registry objects, supply reference-aware retention, publish/sign rows, deduplicate independent Python jobs, or implement complete CI recovery.",
+    "Original runtime replay remains on its frozen source, which is unchanged in all owning qualification modules. Broader source, GitHub, candidate/native ARM and performance acceptance remains incomplete."
+  ],
+  "merged_main": false,
+  "pushed": false,
+  "published": false
+}

@@ -56,6 +56,13 @@ class MainSdkTests(unittest.TestCase):
         self.assertEqual(subjects, self.components["rows"][row]["subjects"])
         receipt = {"artifact": {"root_digest": "sha256:" + "a" * 64}, "contract": {"producer": producer}}
         fixtures.component_build.write_json(data / "receipt.json", receipt)
+        for name, text in (("payload/component/execution.jsonl", "fixture progress\n"),
+                           ("payload/installed-tree", "fixture installed bytes"),
+                           ("extracted/files/installed-tree", "fixture extracted bytes"),
+                           ("oci/blob", "fixture sealed bytes")):
+            path = data / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text)
         return {"inputs_sha256": self.qualified[row]["inputs_sha256"], "receipt_sha256": content_sha256(receipt),
                 "artifact": receipt["artifact"]}
 
@@ -91,6 +98,12 @@ class MainSdkTests(unittest.TestCase):
         self.worker.assert_called_once()
         request = load_json(self.data / "requests/cp39.json")
         self.assertEqual(request["producer"], self.producer)
+        data = self.data / "fresh/cp39"
+        self.assertFalse((data / "payload").exists())
+        self.assertFalse((data / "extracted").exists())
+        self.assertEqual((data / "oci/blob").read_text(), "fixture sealed bytes")
+        self.assertEqual((self.evidence / "rows/cp39/payload/component/execution.jsonl").read_text(), "fixture progress\n")
+        self.assertEqual(load_json(data / "receipt.json"), load_json(self.evidence / "rows/cp39/receipt.json"))
 
     def test_all_missing_rows_keep_two_workers_and_complete_before_integration(self):
         for row in self.qualified:
@@ -147,16 +160,58 @@ class MainSdkTests(unittest.TestCase):
         with self.assertRaisesRegex(IdentityError, "planned inputs"):
             self.execute()
         self.assertTrue((self.evidence / "rows/cp39/receipt.json").is_file())
+        self.assertTrue((self.data / "fresh/cp39/payload/installed-tree").is_file())
+        self.assertTrue((self.data / "fresh/cp39/extracted/files/installed-tree").is_file())
         self.integrate.assert_not_called()
         self.assertFalse((self.evidence / "result.json").exists())
 
     def test_failed_local_qualification_does_not_integrate_or_publish_success(self):
         self.miss("cp39")
-        self.produce.side_effect = IdentityError("fixture failed runtime gate")
+        def failed(*args):
+            self.produced(*args)
+            raise IdentityError("fixture failed runtime gate")
+        self.produce.side_effect = failed
         with self.assertRaises(IdentityError):
             self.execute()
+        self.assertTrue((self.data / "fresh/cp39/payload/installed-tree").is_file())
+        self.assertTrue((self.data / "fresh/cp39/extracted/files/installed-tree").is_file())
+        self.assertTrue((self.evidence / "rows/cp39/payload/component/execution.jsonl").is_file())
         self.integrate.assert_not_called()
         self.assertFalse((self.evidence / "result.json").exists())
+
+    def test_intermediate_cleanup_rejects_symlink_roots_before_deleting_other_tree(self):
+        data = self.root / "staging"
+        (data / "payload").mkdir(parents=True)
+        (data / "payload/sentinel").write_text("keep payload")
+        outside = self.root / "outside"
+        outside.mkdir()
+        (outside / "sentinel").write_text("keep unrelated bytes")
+        (data / "extracted").symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(IdentityError, "owned directory"):
+            ci_sdk.discard_row_intermediates(data)
+        self.assertEqual((data / "payload/sentinel").read_text(), "keep payload")
+        self.assertEqual((outside / "sentinel").read_text(), "keep unrelated bytes")
+
+    def test_intermediate_cleanup_does_not_follow_installed_symlinks(self):
+        data = self.root / "staging"
+        (data / "payload").mkdir(parents=True)
+        outside = self.root / "external-sentinel"
+        outside.write_text("keep external file")
+        (data / "payload/link").symlink_to(outside)
+        (data / "receipt.json").write_text("keep receipt")
+        ci_sdk.discard_row_intermediates(data)
+        self.assertFalse((data / "payload").exists())
+        self.assertEqual(outside.read_text(), "keep external file")
+        self.assertEqual((data / "receipt.json").read_text(), "keep receipt")
+
+    def test_failed_diagnostic_preservation_keeps_row_intermediates(self):
+        self.miss("cp39")
+        with mock.patch.object(ci_sdk.ci_python_rows, "preserve_qualification", side_effect=OSError("fixture disk full")):
+            with self.assertRaisesRegex(OSError, "disk full"):
+                self.execute()
+        self.assertTrue((self.data / "fresh/cp39/payload/installed-tree").is_file())
+        self.assertTrue((self.data / "fresh/cp39/extracted/files/installed-tree").is_file())
+        self.integrate.assert_not_called()
 
     def test_final_integration_failure_does_not_write_a_success_result(self):
         self.integrate.side_effect = IdentityError("fixture failed final SDK")

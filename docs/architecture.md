@@ -194,6 +194,8 @@ SDK job 仍只有 contents/read 和 packages/read 权限；匹配的签名行保
 
 在补做资格或最终集成之前，SDK job 保存原 raw schema 的三十二份固定选择及独立 SHA256，诊断上传后的 summary 给出 run/artifact ID、摘要和文件位置。失败时可按原 raw recovery 接口及严格来源约束取回这些原始组件；这份记录不包含新执行的六行资格，不能冒充下面的完整 SDK 恢复记录。新的主 SDK job 尚无自动恢复入口，OCI blobs 与安装树也不进入诊断工件。
 
+每份新行封存成功、receipt 与计划输入及 producer 一致，并保存诊断后，SDK 控制器清理该行的 `payload/` 和 `extracted/` 两份中间安装目录，保留 OCI、receipt 和输入记录供原 SDK executor 独立验收。资格失败、输入不匹配或诊断保存失败不会触发清理；只清理本 job 的重复安装副本，不删除 registry 产物，也不替代按引用保留策略。
+
 这两个目录消费入口可用 `--record-component-recovery` 在完整取得 32 个原始组件和六行资格后、最终集成开始前写出 `component-recovery.json`；acquisition 结果给出它的 canonical SHA256。恢复时同时提供 `--component-recovery` 与独立保存的 `--component-recovery-sha256`，并使用新的数据/诊断目录。SDK 恢复 schema 1 嵌套原 raw recovery schema 1，额外固定各行的 catalog/artifact digest、输入及 receipt SHA256 和原 producer，不扩大原始组件 schema 的资格角色权限。它要求干净 Git checkout 的同一提交、SDK 根、实际来源材料与完整物理执行环境；仅部分输入就绪时不生成完整恢复记录。
 
 重试通过原目录验签、产物与资格验收函数取得所有固定引用，并逐项核对原选择；缺失、替换、来源或环境漂移均失败。最终 SDK 集成仍重新执行；失败时保留取得阶段的恢复记录，成功前再核对记录摘要、源码与环境。该入口不替代 registry 信任，不复用最终集成报告，也未接通主工作流的自动恢复。

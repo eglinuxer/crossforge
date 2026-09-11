@@ -749,6 +749,14 @@ authentication, transport or verification failure. Fresh local rows are not
 signed or published. Candidate prequalification shares this job, while candidate
 image publication retains its existing raw-component route.
 
+After a fresh row is sealed and its receipt matches the planned inputs and
+producer, the controller removes that row's `payload/` and `extracted/` staging
+directories. Diagnostic copies must have succeeded first. It retains the OCI
+layout, receipt and input records for the SDK executor's independent acceptance;
+qualification failure, mismatched inputs or failed diagnostic preservation keep
+the staging trees. This removes local duplicate installations only. It does not
+delete registry artifacts or implement reference-aware catalog retention.
+
 The SDK diagnostic artifact saves the original thirty-two raw selections and
 their independent SHA256 before row qualification/final integration. Its summary
 provides the artifact ID and document location. This supports the original raw
