@@ -227,12 +227,18 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
             resolved, binding = component_resolution.bind_toolchains(ROOT, graph, execution,
                 components["cosign"], components["directory"], directory / "components",
                 components["builder"], components["oras"])
+            if components.get("python"):
+                resolved, python_binding = component_resolution.bind_python(ROOT, graph, resolved, binding["components"], execution,
+                    components["cosign"], components["directory"] / "python", directory / "python-components",
+                    components["builder"], components["oras"])
+                binding = {"components": dict(binding["components"], **python_binding["components"]),
+                           "required_producers": sorted(set(binding["required_producers"] + python_binding["required_producers"]))}
             if components.get("required") and binding["required_producers"]:
-                raise ValueError("centralized toolchain preparation is incomplete: " + ", ".join(binding["required_producers"]))
+                raise ValueError("centralized component preparation is incomplete: " + ", ".join(binding["required_producers"]))
             resolved_path = directory / "components.bake.json"
             write_json(resolved_path, resolved)
             bake += ["--builder", components["builder"], "-f", str(resolved_path)]
-            print("%s: resolved %d toolchain components; %d producer boundaries require build" % (
+            print("%s: resolved %d build components; %d producer boundaries require build" % (
                 stage, len(binding["components"]), len(binding["required_producers"])), flush=True)
         with (directory / "build.log").open("xb"):
             for target in targets:
@@ -296,6 +302,7 @@ def main():
     run.add_argument("--component-cosign", type=Path)
     run.add_argument("--component-directory", type=Path)
     run.add_argument("--require-components", action="store_true")
+    run.add_argument("--python-components", action="store_true")
     cache = commands.add_parser("cache")
     cache.add_argument("--output", type=Path, required=True)
     cache.add_argument("targets", nargs="+")
@@ -306,7 +313,7 @@ def main():
         from crossforge_internal.identity import parse_json
         components = None
         options = (args.component_builder, args.component_oras, args.component_cosign, args.component_directory)
-        if args.require_components and not all(value is not None for value in options):
+        if (args.require_components or args.python_components) and not all(value is not None for value in options):
             raise ValueError("required component consumption needs all component options")
         if any(value is not None for value in options):
             if not all(value is not None for value in options):
@@ -314,7 +321,8 @@ def main():
             if args.cold or args.write_cache:
                 raise ValueError("incremental component consumption cannot be combined with cold or cache-writing qualification")
             components = {"builder": args.component_builder, "oras": args.component_oras,
-                "cosign": args.component_cosign, "directory": args.component_directory, "required": args.require_components}
+                "cosign": args.component_cosign, "directory": args.component_directory,
+                "required": args.require_components, "python": args.python_components}
         return run_stage(args.stage, args.directory.resolve(), args.repository,
                          args.write_cache, args.cold,
                          parse_json(args.targets_json) if args.targets_json is not None else None, components)

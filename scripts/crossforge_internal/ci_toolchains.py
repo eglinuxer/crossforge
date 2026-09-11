@@ -24,7 +24,8 @@ def plan(source, selection_text, profile, stages, directory, builder, docker_con
     targets = sorted({target for values in selection["targets"].values() for target in values})
     graph = component_ci.source_graph(source, targets, directory, builder, docker_config) if targets else {"target": {}}
     edges = component_resolution.toolchain_edges(graph)
-    return {"selection": selection, "roles": {arch: sorted(role for found, role in edges if found == arch)
+    return {"selection": selection, "python_parts": component_resolution.python_requirements(source, graph),
+            "roles": {arch: sorted(role for found, role in edges if found == arch)
                                              for arch in ARCHITECTURES}}
 
 
@@ -102,8 +103,11 @@ def check_ready(results, stages):
         exact_fields(results, ("plan",) + ARCHITECTURES, "main component preparation jobs")
         require(results["plan"].get("result") == "success", "component requirements planning failed")
         output = results["plan"].get("outputs", {})
-        exact_fields(output, ("selection", "x86_64-roles", "aarch64-roles"), "main component plan outputs")
-        ci_execution.output_values(parse_json(output["selection"]), stages)
+        exact_fields(output, ("selection", "x86_64-roles", "aarch64-roles", "python-parts"), "main component plan outputs")
+        selection = parse_json(output["selection"])
+        ci_execution.output_values(selection, stages)
+        from . import ci_python
+        ci_python.requirements(parse_json(output["python-parts"]), selection)
         for arch in ARCHITECTURES:
             selected = parse_json(output[arch + "-roles"])
             if selected != []:

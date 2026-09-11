@@ -7,6 +7,7 @@ neither a catalog signature nor an acquisition result asserts qualification.
 import copy
 import os
 from pathlib import Path
+import re
 import shutil
 
 from . import catalog_registry, component_build, component_catalog, component_inputs
@@ -16,19 +17,42 @@ from .identity import load_json, require
 
 def toolchain(source, graph, arch, role, execution, cosign, directory, builder, oras,
               docker_config=None, catalog_reference=None):
+    spec = component_build.toolchain_spec(arch, role)
+    return _build_component(source, lambda: component_build.toolchain_inputs(source, graph, arch, role, execution),
+        spec["target"], role, execution, cosign, directory, builder, oras, docker_config, catalog_reference)
+
+
+def python(source, graph, row, arch, kind, execution, subjects, cosign, directory, builder, oras,
+           docker_config=None, catalog_reference=None):
+    """Resolve a raw Python artifact only after verifying its own dependencies."""
+    from . import python_components
     directory = Path(directory).absolute()
     require(not directory.exists() and not directory.is_symlink(), "component resolution directory must be new")
-    spec = component_build.toolchain_spec(arch, role)
+    settings = python_components.spec(source, row, arch, kind)
+    require(component_build.execution_identity(builder, docker_config) == execution,
+            "Python component resolution build environment differs")
+    directory.parent.mkdir(parents=True, exist_ok=True)
+    resolved, bindings = python_components.bind_build(source, graph, settings, execution, subjects,
+        builder, docker_config, directory.parent)
+    return _build_component(source, lambda: python_components.inputs(source, resolved, settings, execution, bindings),
+        settings["target"], settings["role"], execution, cosign, directory, builder, oras, docker_config, catalog_reference)
+
+
+def _build_component(source, capture, target, role, execution, cosign, directory, builder, oras,
+                     docker_config, catalog_reference):
+    """Shared catalog/transport boundary; each domain supplies current inputs."""
+    directory = Path(directory).absolute()
+    require(not directory.exists() and not directory.is_symlink(), "component resolution directory must be new")
     require(component_build.execution_identity(builder, docker_config) == execution,
             "component resolution build environment differs")
-    expected = component_build.toolchain_inputs(source, graph, arch, role, execution)
+    expected = capture()
     component_build.write_json(directory / "inputs.json", expected)
     policy = registry_transfer.validate_tool(load_json(Path(source) / ".github/locked-tools/oras.json"))
     registry_config = Path(docker_config or os.environ.get("DOCKER_CONFIG") or Path.home() / ".docker") / "config.json"
     selected = catalog_registry.lookup(source, expected, role, cosign, directory / "catalog",
         component_catalog.REPOSITORY, oras, policy, registry_config, catalog_reference=catalog_reference)
     result = {"schema_version": 1, "kind": "crossforge-component-resolution",
-        "component": spec["component"], "role": role, "inputs_sha256": component_inputs.identity(expected)}
+        "component": expected["component"], "role": role, "inputs_sha256": component_inputs.identity(expected)}
     if selected["status"] == "missing":
         require(catalog_reference is None, "fixed recovery catalog cannot be replaced by a producer")
         result.update(status="build-required", reason=selected["reason"], input_tag=selected["input_tag"])
@@ -38,7 +62,7 @@ def toolchain(source, graph, arch, role, execution, cosign, directory, builder, 
         receipt = entry["receipt"]
         layout = directory / "oci"
         registry_transfer.fetch(entry["reference"], layout, oras, policy, registry_config)
-        frontend = expected["parameters"]["recipes"][spec["target"]]["frontend"]
+        frontend = expected["parameters"]["recipes"][target]["frontend"]
         context = component_build.verify_local(receipt, entry["receipt_sha256"], expected, role,
             layout, frontend, builder, docker_config, directory)
         receipt_path = directory / "receipt.json"
@@ -49,7 +73,7 @@ def toolchain(source, graph, arch, role, execution, cosign, directory, builder, 
             producer=receipt["contract"]["producer"], reference=entry["reference"])
     require(component_build.execution_identity(builder, docker_config) == execution,
             "component resolution build environment changed")
-    component_inputs.require_match(expected, component_build.toolchain_inputs(source, graph, arch, role, execution))
+    component_inputs.require_match(expected, capture())
     component_build.write_json(directory / "resolution.json", result)
     return result
 
@@ -115,5 +139,96 @@ def bind_toolchains(source, graph, execution, cosign, directory, evidence, build
     result = {"schema_version": 1, "kind": "crossforge-ci-component-binding",
         "components": resolutions, "required_producers": sorted(required),
         "qualification": "not asserted; selected CI roots retain their existing gates"}
+    component_build.write_json(evidence / "binding.json", result)
+    return resolved, result
+
+
+def python_edges(source, graph):
+    """Find explicit raw Python handoff boundaries without broadening row scope."""
+    from . import python_components
+    require(type(graph) is dict and type(graph.get("target")) is dict, "resolved Bake graph is required")
+    result = {}
+    for target, definition in graph["target"].items():
+        require(type(definition) is dict and type(definition.get("contexts", {})) is dict, "invalid Bake target contexts")
+        for context, reference in definition.get("contexts", {}).items():
+            require(type(reference) is str, "Bake context reference must be a string")
+            build = re.fullmatch(r"target:cpython-build-(cp[0-9]+)-export", reference)
+            cross = re.fullmatch(r"target:cpython-cross-(cp[0-9]+)-(x86_64|aarch64)-export", reference)
+            audit = re.fullmatch(r"target:cpython-(cp[0-9]+)-(x86_64|aarch64)-test-context-export", reference)
+            if build:
+                row, arch, kind = build.group(1), "build", "install"
+            elif cross or audit:
+                row, arch = (cross or audit).groups()
+                kind = "install" if cross else "test-context"
+            else:
+                require(not (reference.startswith("target:cpython-") and reference.endswith("-export")),
+                        "unsupported Python export boundary: " + reference)
+                continue
+            settings = python_components.spec(source, row, arch, kind)
+            producer = graph["target"].get(settings["target"], {})
+            require(producer.get("target") == settings["stage"] and producer.get("dockerfile") == "docker/python.Dockerfile",
+                    "Python producer stage differs from canonical boundary")
+            name = "build" if arch == "build" else arch + "-" + kind
+            result.setdefault((row, name), []).append((target, context))
+    return result
+
+
+def python_requirements(source, graph):
+    result = {}
+    for row, name in python_edges(source, graph):
+        result.setdefault(row, {"build"}).add(name)
+    return {row: sorted(names) for row, names in sorted(result.items())}
+
+
+def bind_python(source, graph, resolved, toolchains, execution, cosign, directory, evidence,
+                builder, oras, docker_config=None):
+    """Bind raw row parts against the original graph and verified toolchains.
+
+    The original graph remains authoritative for producer input capture. The
+    separately resolved graph already carries the checked toolchain contexts.
+    Neither a miss nor a dependency miss is accepted as an artifact subject.
+    """
+    from . import python_components, python_handoff
+    directory, evidence = Path(directory).absolute(), Path(evidence).absolute()
+    require(not directory.exists() and not evidence.exists(), "Python binding outputs must be new")
+    require(directory != evidence and directory not in evidence.parents and evidence not in directory.parents,
+            "Python OCI data must be outside uploaded evidence")
+    resolved = copy.deepcopy(resolved)
+    edges, requirements = python_edges(source, graph), python_requirements(source, graph)
+    results, required = {}, []
+    for row, names in requirements.items():
+        subjects = {}
+        for name, arch, kind in python_handoff.PARTS:
+            if name not in names:
+                continue
+            settings = python_components.spec(source, row, arch, kind)
+            label = row + "-" + name
+            toolchain = toolchains.get(arch + "-toolchain-install", {}) if arch != "build" else None
+            if arch != "build" and ("build" not in subjects or toolchain.get("status") != "verified-build-component"):
+                required.append(settings["target"])
+                results[label] = {"status": "dependency-build-required", "component": settings["component"],
+                                  "reason": "build Python or target toolchain requires production"}
+                continue
+            dependencies = {} if arch == "build" else {
+                "build-python": subjects["build"], "toolchain-install": toolchain["subject"]}
+            output = directory / label
+            try:
+                result = python(source, graph, row, arch, kind, execution, dependencies, cosign,
+                                output, builder, oras, docker_config)
+            finally:
+                if output.exists():
+                    preserve_evidence(output, evidence / label)
+            results[label] = result
+            if result["status"] == "build-required":
+                required.append(settings["target"])
+                continue
+            require(result["status"] == "verified-build-component", "unsupported Python resolution result")
+            subjects[name] = result["subject"]
+            for target, context in edges.get((row, name), []):
+                require(resolved.get("target", {}).get(target, {}).get("contexts", {}).get(context) ==
+                        graph["target"][target]["contexts"][context], "Python consumer boundary changed before binding")
+                resolved["target"][target]["contexts"][context] = result["context"]
+    result = {"schema_version": 1, "kind": "crossforge-ci-python-binding", "components": results,
+              "required_producers": sorted(required), "qualification": "not asserted; selected row and SDK gates remain required"}
     component_build.write_json(evidence / "binding.json", result)
     return resolved, result

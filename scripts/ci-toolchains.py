@@ -46,6 +46,7 @@ def main(argv=None):
             result = ci_toolchains.plan(ROOT, args.selection, args.profile, stages, args.output,
                                        args.builder, args.docker_config)
             print("selection=" + json.dumps(result["selection"], sort_keys=True, separators=(",", ":")))
+            print("python-parts=" + json.dumps(result["python_parts"], sort_keys=True, separators=(",", ":")))
             for arch in ci_toolchains.ARCHITECTURES:
                 print(arch + "-roles=" + json.dumps(result["roles"][arch], separators=(",", ":")))
             return 0

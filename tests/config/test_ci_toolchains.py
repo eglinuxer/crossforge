@@ -204,6 +204,7 @@ class ToolchainPreparationTests(unittest.TestCase):
                                                                   for arch in ci.ARCHITECTURES}}
             results["plan"]["outputs"]["selection"] = json.dumps({"schema_version": 1, "kind": "crossforge-ci-source-plan",
                 "mode": "incremental", "targets": {"toolchain-" + arch: ["toolchain-" + arch + "-dev"] for arch in selected}})
+            results["plan"]["outputs"]["python-parts"] = "{}"
             self.assertTrue(ci.check_ready(results, STAGES))
             self.mutate_statuses(lambda value: ci.check_ready(value, STAGES), results)
             for value in ('["qualification"]', '{}', 'null', 'false', '["toolchain-install","toolchain-install"]'):

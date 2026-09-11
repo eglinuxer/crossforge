@@ -9,6 +9,7 @@ import base64
 import copy
 import hashlib
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -25,12 +26,14 @@ ISSUER = "https://token.actions.githubusercontent.com"
 SIGNER = "https://github.com/" + GITHUB_REPOSITORY + "/" + WORKFLOW + "@refs/heads/main"
 EVENT = "workflow_dispatch"
 MAIN_WORKFLOW = ".github/workflows/produce-toolchain.yml"
+PYTHON_WORKFLOW = ".github/workflows/produce-python.yml"
 
 
-def signing_policy(value):
+def signing_policy(value, version):
     """Untrusted documents select only an exact, consumer-owned allowlist pair."""
     exact_fields(value, ("workflow", "event"), "catalog signing policy")
-    require(value["workflow"] == MAIN_WORKFLOW and value["event"] in ("push", "workflow_dispatch"),
+    require(value["workflow"] == {2: MAIN_WORKFLOW, 3: PYTHON_WORKFLOW}[version] and
+            value["event"] in ("push", "workflow_dispatch"),
             "catalog signing workflow or event is not allowed")
     return value
 
@@ -44,11 +47,11 @@ def validate(value):
     require(type(value) is dict, "component catalog must be an object")
     version = value.get("schema_version")
     exact_fields(value, ("schema_version", "kind", "producer", "entries") +
-                 (("signing",) if type(version) is int and version == 2 else ()), "component catalog")
-    require(type(version) is int and version in (1, 2) and
+                 (("signing",) if type(version) is int and version in (2, 3) else ()), "component catalog")
+    require(type(version) is int and version in (1, 2, 3) and
             value["kind"] == "crossforge-component-catalog", "unsupported component catalog schema")
-    if version == 2:
-        signing_policy(value["signing"])
+    if version in (2, 3):
+        signing_policy(value["signing"], version)
     producer = component_artifacts.validate_producer(value["producer"])
     require(producer["kind"] == "github-actions" and producer["invocation"].startswith(
         "https://github.com/" + GITHUB_REPOSITORY + "/actions/runs/"), "catalog requires a trusted repository producer")
@@ -65,6 +68,17 @@ def validate(value):
             require(any(contract["inputs"]["component"] == spec["component"] and
                         contract["inputs"]["targets"] == [spec["triple"]] for spec in allowed),
                     "main catalog must contain canonical raw toolchain receipts")
+        elif version == 3:
+            contract = receipt["contract"]
+            match = re.fullmatch(r"python/(cp[0-9]+)-(build|x86_64|aarch64)-(install|test-context)",
+                                 contract["inputs"]["component"])
+            require(match is not None, "Python catalog must contain canonical raw Python receipts")
+            _, arch, kind = match.groups()
+            require(arch != "build" or kind == "install", "build Python has no test-context artifact")
+            targets = sorted(value + "-unknown-linux-gnu" for value in (("x86_64", "aarch64") if arch == "build" else (arch,)))
+            require(contract["inputs"]["targets"] == targets and contract["role"] ==
+                    ("python-install" if kind == "install" else "python-test-context"),
+                    "Python catalog component role or target differs")
         digest_value(entry["receipt_sha256"], "catalog receipt SHA256")
         require(content_sha256(receipt) == entry["receipt_sha256"], "catalog receipt differs from its digest")
         require(receipt["contract"]["producer"] == producer, "catalog cannot relabel another producer's receipt")
@@ -77,7 +91,8 @@ def validate(value):
 
 def document(producer, entries, signing=None):
     # Validate before sorting so malformed input always fails at the boundary.
-    value = {"schema_version": 1 if signing is None else 2, "kind": "crossforge-component-catalog",
+    version = 1 if signing is None else 3 if type(signing) is dict and signing.get("workflow") == PYTHON_WORKFLOW else 2
+    value = {"schema_version": version, "kind": "crossforge-component-catalog",
              "producer": copy.deepcopy(producer), "entries": copy.deepcopy(entries)}
     if signing is not None:
         value["signing"] = copy.deepcopy(signing)

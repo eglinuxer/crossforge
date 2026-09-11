@@ -256,7 +256,8 @@ RUN /usr/libexec/platform-python ./scripts/component-artifact.py --help \
     && /usr/libexec/platform-python ./scripts/component-pilot.py --help \
     && /usr/libexec/platform-python ./scripts/component-catalog.py --help \
     && /usr/libexec/platform-python ./scripts/ci-component-plan.py --help \
-    && /usr/libexec/platform-python ./scripts/ci-toolchains.py --help
+    && /usr/libexec/platform-python ./scripts/ci-toolchains.py --help \
+    && /usr/libexec/platform-python ./scripts/ci-python.py --help
 RUN /usr/libexec/platform-python ./scripts/render-release-components.py --check
 
 # Matrix-shaped placeholder used only to verify that Bake expands the two

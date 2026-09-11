@@ -410,13 +410,13 @@ toolchain inputs and observes the build environment, authenticates a matching
 catalog, fetches its exact OCI reference, and verifies receipt metadata and image
 bytes before returning `verified-build-component`. It recaptures the inputs and
 environment before sealing the resolution record. Original producer, receipt,
-catalog digest and authentication evidence are retained. The module only resolves
+catalog digest and authentication evidence are retained. This entry point resolves
 toolchain installation/test-context build artifacts; it does not accept a
 qualification role or infer passed tests from a generic receipt.
 
 An absent discovery index returns `build-required` with an input-specific reason
 and no usable subject/context. The read-only pilot reports that reason and fails
-before consumer gates; production producer scheduling is still pending. An
+before consumer gates; main CI separately schedules missing producers. An
 explicit recovery reference, invalid signature, failed transfer or invalid
 artifact never becomes a request to silently replace the original component.
 
@@ -458,8 +458,8 @@ Existing selected roots and their gates remain required. Small original catalog,
 receipt and input records go into diagnostics; OCI layouts stay outside them.
 Component acquisition is included in the stage's recorded elapsed time.
 
-`verify-incremental.yml` enables this interface when called by the separate trusted
-main push/dispatch job. The ordinary PR/fork/non-main caller keeps contents:read
+`verify-main-builds.yml` enables this interface under the trusted main
+push/dispatch wrapper. The ordinary PR/fork/non-main caller keeps contents:read
 and disables component reading. Shared quick checks use `verify-quick.yml` without
 registry permissions, including candidate and pilot preflight. The main wrapper
 derives needed roles from the canonical graph and calls one producer per selected
@@ -473,6 +473,47 @@ receive no new registry credentials. A local Docker execution verified the bound
 toolchain stage and absence of source GCC dependencies using independently trusted
 local receipts; that execution did not exercise GitHub catalog authentication or
 claim fresh qualification from ordinary cache hits.
+
+## Prepare and consume raw Python components in main CI
+
+The main plan also captures raw Python edges from the actual selected Bake graph.
+Each selected row needs build Python plus its reached target installation and
+build-audit contexts. SDK selection may resolve to individual rows; it does not
+automatically request the full matrix. `ci-python.py execution` validates this
+plan and `ci-python.py check` rejects missing, cancelled, failed, unexpectedly
+executed, or altered matrix results.
+
+`produce-python.yml` calls `ci-python.py ensure` once per needed row, currently
+with at most two rows in parallel. It verifies the prepared toolchains, then
+resolves build Python and the target parts in dependency order. Only an absent
+authenticated input index allows production and publication. Existing components
+retain their original receipts and producer. Unlike the toolchain availability
+probe, this producer downloads and verifies dependencies because downstream
+Python input identities must bind their actual artifact digests.
+
+New raw parts cross the same-run boundary in a strict Python handoff with an
+independent SHA256 and immutable artifact ID. Catalog schema 3 permits only
+raw Python roles signed by the exact `produce-python.yml@refs/heads/main`
+push/dispatch identity. The old pilot and toolchain signing policies remain
+separate. Producer/store jobs have package write permission; only the sign job
+has OIDC permission. Consumer jobs have contents/package read permission.
+
+Python component preparation shares the inputs/toolchain prerequisites with
+GCC and vcpkg, which can continue independently. Python row consumers and the
+SDK wait for the component matrix, then use `--python-components` together with
+`--require-components` and the four component options above. Each raw part is
+verified against current inputs before all its corresponding contexts are
+replaced. The resolver captures producer inputs against the original canonical
+graph, even after verified toolchains have been bound for consumers. Missing
+dependencies cannot become accepted component subjects.
+
+This path removes source compilation from consumers but keeps their existing
+row and SDK gates. It does not reuse a formal row qualification receipt yet,
+and ordinary cached gates are not new qualification executions. A local Docker
+cp39 consumer verified seven prior local components and completed with no
+GCC/CPython source compiler in its material closure. Its registry discovery and
+transport were explicit local fixtures, so GitHub signing, remote publication
+and cross-run acceptance still require the rollout pilot.
 
 ## Durable catalog storage and discovery
 

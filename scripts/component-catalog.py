@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-from crossforge_internal import catalog_registry, component_catalog, component_ci, component_handoff
+from crossforge_internal import catalog_registry, component_catalog, component_ci, component_handoff, python_handoff
 from crossforge_internal.identity import IdentityError, canonical_bytes, load_json, require
 
 
@@ -22,7 +22,9 @@ def main(argv=None):
     create.add_argument("--handoff", type=Path, required=True)
     create.add_argument("--handoff-sha256", required=True)
     create.add_argument("--output", type=Path, required=True)
-    create.add_argument("--main-ci", action="store_true", help="sign only new raw toolchains from the exact main CI run")
+    modes = create.add_mutually_exclusive_group()
+    modes.add_argument("--main-ci", action="store_true", help="sign only new raw toolchains from the exact main CI run")
+    modes.add_argument("--python-ci", action="store_true", help="sign only new raw Python artifacts from the exact main CI run")
     for name in ("verify", "select"):
         command = commands.add_parser(name, allow_abbrev=False)
         command.add_argument("--catalog", type=Path, required=True)
@@ -50,11 +52,16 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command == "from-handoff":
-            current = component_ci.checked_source(ROOT, "main" if args.main_ci else "pilot")
-            value = component_handoff.verify(load_json(args.handoff), args.handoff_sha256,
-                current["source_commit"], current["invocation"])
-            require(value["schema_version"] == (2 if args.main_ci else 1), "handoff schema differs from signing entry point")
-            signing = {"workflow": component_catalog.MAIN_WORKFLOW, "event": os.environ["GITHUB_EVENT_NAME"]} if args.main_ci else None
+            current = component_ci.checked_source(ROOT, "main" if args.main_ci or args.python_ci else "pilot")
+            if args.python_ci:
+                value = python_handoff.verify(ROOT, load_json(args.handoff), args.handoff_sha256,
+                    current["source_commit"], current["invocation"])
+                signing = {"workflow": component_catalog.PYTHON_WORKFLOW, "event": os.environ["GITHUB_EVENT_NAME"]}
+            else:
+                value = component_handoff.verify(load_json(args.handoff), args.handoff_sha256,
+                    current["source_commit"], current["invocation"])
+                require(value["schema_version"] == (2 if args.main_ci else 1), "handoff schema differs from signing entry point")
+                signing = {"workflow": component_catalog.MAIN_WORKFLOW, "event": os.environ["GITHUB_EVENT_NAME"]} if args.main_ci else None
             catalog = component_catalog.document(value["producer"], list(value["components"].values()), signing)
             require(not args.output.exists() and not args.output.is_symlink(), "catalog output must be new")
             with args.output.open("xb") as stream:

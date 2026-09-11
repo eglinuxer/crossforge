@@ -1,0 +1,351 @@
+{
+  "actual_consumer": {
+    "components": [
+      {
+        "action": "independent-local-receipt",
+        "component": "toolchain/aarch64-install",
+        "receipt_sha256": "ba6c9de0cfe792c649cdf7ab372d5f7d2faa02f8d6fa093e28961a92293c77ec"
+      },
+      {
+        "action": "independent-local-receipt",
+        "component": "toolchain/x86_64-install",
+        "receipt_sha256": "6a9df4c724128122f70bab87f19ce1a228d9229e2bbf4613e6df510c619eb5a6"
+      },
+      {
+        "action": "independent-local-receipt",
+        "component": "python/cp39-build-install",
+        "receipt_sha256": "eb29db44dfe0284204f0c7c9591b93d0d1cf727f26f6f26f316075fa84735091"
+      },
+      {
+        "action": "independent-local-receipt",
+        "component": "python/cp39-x86_64-install",
+        "receipt_sha256": "e22a31988880075870151b21532670aef53868de09b47f547f6c9148d04c5eef"
+      },
+      {
+        "action": "independent-local-receipt",
+        "component": "python/cp39-x86_64-test-context",
+        "receipt_sha256": "98925be0f21d15ad5b4e9c1c7fd8de09a6306ae9e076fe50e89d0a444e7b8d3d"
+      },
+      {
+        "action": "independent-local-receipt",
+        "component": "python/cp39-aarch64-install",
+        "receipt_sha256": "1b22e48f2e973700b97b26276f091e77104575745fa055268d0c2a26972f0327"
+      },
+      {
+        "action": "independent-local-receipt",
+        "component": "python/cp39-aarch64-test-context",
+        "receipt_sha256": "26effbba4e53dd40e6011a0f2d64681bb4918dab5cff0ba48944d30d53e4c74a"
+      }
+    ],
+    "roots": [
+      "python-cp39-dev"
+    ],
+    "scope": "actual Docker CI consumer from seven independently trusted prior local OCI components; registry lookup/transfer are local fixture seams; not GitHub signing, publication, fresh qualification, or CI performance acceptance",
+    "seconds": 336.24,
+    "source_compilers_reachable": false,
+    "status": "passed"
+  },
+  "approval_review": {
+    "action": "supplementary raw producer availability run with Docker socket",
+    "alternative": "approved socketless graph/input comparison only",
+    "outcome": "rejected before process creation",
+    "producer_execution_claimed": false,
+    "reason": "Docker socket grants broad host daemon control"
+  },
+  "artifacts": {
+    "/tmp/crossforge-python-ci-components/consumer-normalized.log": "4d31a3900876b7f2fb2a3ff0794a737da783a0cbcae5bdf6dd70435de932b0a1",
+    "/tmp/crossforge-python-ci-components/consumer-normalized/materials.json": "073335fc2c279af972d64038534fb55a68ec356ff63b74686c5bc088c36f24b8",
+    "/tmp/crossforge-python-ci-components/consumer-normalized/observation.json": "8d0524c749fb0d2d04a37072ae22a69d1151ada14d36cd3897aa46c975fd00fd",
+    "/tmp/crossforge-python-ci-components/consumer-normalized/resolved-graph.json": "229e21de0f6d12d1f1a1fc1d32be1cc72fd70c55c648e178752b70853508617b",
+    "/tmp/crossforge-python-ci-components/consumer.log": "deeaa7f232f378eb37de9bb5266027bae680d56c83f702896d418500a31ad91d",
+    "/tmp/crossforge-python-ci-components/focused.log": "101349960d30ea0ee4acc116b4f21c3206aa5abfea00ad40e2f86799dbe65c48",
+    "/tmp/crossforge-python-ci-components/full-regressions.log": "98046ffa82cbb072bc80c157ecfa676669366e824534dc30630346e5ddbc275c",
+    "/tmp/crossforge-python-ci-components/graph-probe.log": "93c9d08ab525461308992bc5b1d971d49327b401d2f7755559a820b3782659cb",
+    "/tmp/crossforge-python-ci-components/graph-probe.py": "9ce8d11b4399704b429689279804fd022feccc5eed41c622dadaab47eac5daca",
+    "/tmp/crossforge-python-ci-components/graph-probe/result.json": "f4a01a8a0de2c87ed0d4d65395e9152134c13aaedf644376faf3e7caa799bd06",
+    "/tmp/crossforge-python-ci-components/platform-python.log": "43f742f7d7fc337e5feed77dd1e4a7f7f5970dab33234447a3036c0b14bb7f9e",
+    "/tmp/crossforge-python-ci-components/run-consumer-normalized.py": "937c32bed335722a202042848baa355c7dbd5322115e3388e06e3734a941053b",
+    "/tmp/crossforge-python-ci-components/run-consumer.py": "61ed48d7cb6482171862ae880088a071b4708f33d73952d270952bb1ab450171",
+    "/tmp/crossforge-python-ci-components/source-directory-modes-before.json": "e73d435c3df6430a4612f4b663f04503af08e4256cd28b7047d9ca18dd49d2ef",
+    "/tmp/crossforge-python-ci-components/wiring-focused.log": "ef77ed5970b233ccad3398e0515eb5bec915a399bc23bdca3091e48b5d5d7faa",
+    "/tmp/crossforge-python-ci-components/wiring-full-final.log": "28a1632ce540bb1d95cad02cf5745a544a29fa77542b113e6ecb86882912b4ac",
+    "/tmp/crossforge-python-ci-components/wiring-full.log": "5d658bcc8850461e40089c24f8f19f4e2957b9c73c3e841ed1128173edc7234c",
+    "/tmp/crossforge-python-input-probe/probe.log": "7298bf627178d0895a572a9fba9300ee4eb7c06e0096560668c1b7a1fdbc68d6",
+    "/tmp/crossforge-python-input-probe/probe.py": "0e2f7dafa99d3853cf0fdff165eb15fac6d4e6877d2589dade91ffd3a6de5fad",
+    "/tmp/crossforge-python-input-probe/result.json": "ecf5c41929ead4a70becf49b7690ee55895854209a047125c87a5d171cdf671f"
+  },
+  "base_commit": "4d62759c90da8a2ba381fbd0c54e6da38d674dbb",
+  "corrections": [
+    "Initial actual consumer rejected 0775 snapshot directories versus original 0755; preserved failed snapshot and created a new 0755 snapshot",
+    "Initial wired full regression rejected missing workflow-level default permissions; added contents:read and full retest passed"
+  ],
+  "date": "2026-09-10",
+  "docker": {
+    "actual_builder": "crossforge-ci-review",
+    "buildkit": "0.33.0",
+    "buildx": "0.36.1",
+    "cpus": 4,
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "regressions_network": "none",
+    "unrelated_builder_modified": false
+  },
+  "final_files": {
+    ".github/actions/run-build-stage/action.yml": {
+      "executable": false,
+      "sha256": "18b6a3d90e07c89930b20437ccaaf2069f0f69aa4e3ebeef30ec1ade51858636"
+    },
+    ".github/workflows/produce-python.yml": {
+      "executable": false,
+      "sha256": "513953fb67a13fb4351131b11f4ba3b6401ab9373e6b3a2b2dcd9e42d0865bd0"
+    },
+    ".github/workflows/verify-main-builds.yml": {
+      "executable": false,
+      "sha256": "c31e289785d0576155adce7e7e1faadf33886ca9e6c15440b3da4661ab5f3912"
+    },
+    ".github/workflows/verify-main-incremental.yml": {
+      "executable": false,
+      "sha256": "48072ad3c2884dcd26ac8f3320e4b91b585ab54bc4f8a307b14198de3f0ab077"
+    },
+    "docker/Dockerfile": {
+      "executable": false,
+      "sha256": "0a38eadf9f44987bbf7b8417541cc5db0688a69a734929d6c5779f9927852100"
+    },
+    "scripts/ci-build.py": {
+      "executable": false,
+      "sha256": "ab404efd10d706821e578efb893a1ec19233ee0cd6adc98b3bdf117ab7b2377f"
+    },
+    "scripts/ci-python.py": {
+      "executable": true,
+      "sha256": "55518e5dee76f571af75d36701d45786acf9811017db9f7f545890e2f52b78c4"
+    },
+    "scripts/ci-toolchains.py": {
+      "executable": true,
+      "sha256": "7b71c1216b593051bd5c0e922f266d628fa033cd65004edd1e82a4627dc0d6c7"
+    },
+    "scripts/component-catalog.py": {
+      "executable": true,
+      "sha256": "970598c7aee60433f361d799ee18e1bc7456ee09eac705454c2e2959136539d3"
+    },
+    "scripts/crossforge_internal/ci_python.py": {
+      "executable": false,
+      "sha256": "0e9db3f927cf8883a3ceeed7e80cb810f6050fab45ecc812299c7538a8e69df6"
+    },
+    "scripts/crossforge_internal/ci_toolchains.py": {
+      "executable": false,
+      "sha256": "507070f96705ef7724c80ba07faf1e555465c5b4574dc472b439eb3ae9f8baae"
+    },
+    "scripts/crossforge_internal/component_catalog.py": {
+      "executable": false,
+      "sha256": "b82f542df65dc19fdf39edcb25ba3c51fb33cc2db25b9f68cefe7e17b6fc6cd2"
+    },
+    "scripts/crossforge_internal/component_resolution.py": {
+      "executable": false,
+      "sha256": "6cea6bcfdde11c8fcbd1335a213ba2baabd1e83a48dbd8ba863fd700dfa39a62"
+    },
+    "scripts/crossforge_internal/python_handoff.py": {
+      "executable": false,
+      "sha256": "47a4412a16b6c21c89ba4b93354ec32c5341aa49b93df5e3ddeaee6bb59a666e"
+    },
+    "tests/config/test_ci_component_binding.py": {
+      "executable": false,
+      "sha256": "9a1c08e5645ddb11d83e1078cdd9223940d4f58febfb4237a37c159b2276ac8e"
+    },
+    "tests/config/test_ci_component_routing.py": {
+      "executable": false,
+      "sha256": "a678e6e084f50b0389797ad42c28afdec7cd8a5ec58ecf70a0b03ee50f2a97bf"
+    },
+    "tests/config/test_ci_python_binding.py": {
+      "executable": false,
+      "sha256": "c0f88022baebc697f98c30dc550e774e1a27b17c3148f686aef9675ad8eb19c8"
+    },
+    "tests/config/test_ci_python_execution.py": {
+      "executable": false,
+      "sha256": "f6e45a7762a102503a240c3ca2ea75aedaee4edc486a8548bcf48c407a21c176"
+    },
+    "tests/config/test_ci_toolchains.py": {
+      "executable": false,
+      "sha256": "d07545df73f95cee556f2ec9f84b0c486c7b6617546e8602111e7ce5935bfe92"
+    },
+    "tests/config/test_python_ci_components.py": {
+      "executable": false,
+      "sha256": "adc15bbb4534b0a62dd59c72c0f83b44f3458964dd27446f8dc7e9fd570cc824"
+    }
+  },
+  "graph_requirements": {
+    "cp314": {
+      "cp314": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ]
+    },
+    "cp39": {
+      "cp39": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ]
+    },
+    "docs": {},
+    "full": {
+      "cp310": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ],
+      "cp311": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ],
+      "cp312": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ],
+      "cp313": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ],
+      "cp314": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ],
+      "cp39": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ]
+    },
+    "gcc": {},
+    "inputs": {},
+    "sdk": {
+      "cp310": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ],
+      "cp311": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ],
+      "cp312": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ],
+      "cp313": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ],
+      "cp314": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ],
+      "cp39": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ]
+    },
+    "sdk-selected-row": {
+      "cp39": [
+        "aarch64-install",
+        "aarch64-test-context",
+        "build",
+        "x86_64-install",
+        "x86_64-test-context"
+      ]
+    },
+    "toolchain": {},
+    "vcpkg": {}
+  },
+  "remaining": [
+    "formal row qualification CI production and SDK reuse",
+    "qualification environment boundary decision",
+    "real GitHub signatures, package access and cross-run acceptance",
+    "candidate integration and native ARM",
+    "qualification input scope and same-digest recovery",
+    "runner replays and concurrency experiment",
+    "reference-aware retention"
+  ],
+  "remote_published": false,
+  "remote_pushed": false,
+  "scope": "local validation of raw Python production/catalog/CI binding and main workflow routing; no remote rollout",
+  "snapshot_paths": {
+    "consumer": "/tmp/crossforge-python-ci-components/source-normalized",
+    "wired_platform_and_graphs": "/tmp/crossforge-python-ci-components/source-wired"
+  },
+  "socketless_inputs": {
+    "inputs": {
+      "aarch64-install": "9bc3d223df615a6d2b8a414074e5f85c592f50aadb92cb67fd029e8a35d13a9d",
+      "aarch64-test-context": "21a38d0c020960b10b98aea72b0c33cdb2bdb74b7b681905b518095e79ca4b2b",
+      "build": "1d30c507d1c2925b38111cae8c09d0c68e577a35cfee5adab9f4d9c69aa56dcc",
+      "x86_64-install": "03634fa4d5ef6bb65e2400bd8c61a6df2cc673ea93234f822233d00c758dea91",
+      "x86_64-test-context": "fe99507c65c948db9d45e87900a5d8b69f4f3988660f42e3b0c838b73d306b81"
+    },
+    "scope": "socketless canonical producer/consumer graph comparison at recorded build environment; bindings use previously verified local receipts; no new OCI verification, producer execution, GitHub identity, or publication",
+    "status": "passed"
+  },
+  "sources": [
+    "https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations"
+  ],
+  "validation": {
+    "actionlint": "passed; existing concurrency.queue parser exception only",
+    "config": {
+      "passed": true,
+      "seconds": 154.315,
+      "skipped": 2,
+      "tests": 1161
+    },
+    "focused": {
+      "passed": true,
+      "seconds": 2.187,
+      "tests": 53
+    },
+    "locked_validators": 4,
+    "packaging": {
+      "passed": true,
+      "seconds": 0.956,
+      "skipped": 1,
+      "tests": 40
+    },
+    "platform_python": "actual Rocky 8 Python 3.6 forced stage passed; CLI/imports/89 projections",
+    "renderer_checks": 3
+  },
+  "workflow_dispatched": false
+}

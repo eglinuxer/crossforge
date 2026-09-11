@@ -6,8 +6,8 @@
 |---|---|---|
 | 1：入口与前置回归 | 本地实现及 Docker 回归通过 | 修改后工作流的真实 GitHub 事件运行 |
 | 2：组件契约与工具链交接 | 本地 OCI/registry 往返、双架构安装组件/工具链资格、x86_64 GCC full 与 cp39 消费通过；main 缺失工具链集中生产及只读消费已接线 | GitHub 实跑、真实签名与跨 run 验收 |
-| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；组件可用性决定是否生产；本地范围实验及 cp39 x86_64 受影响构建通过 | GitHub 实跑、缩小资格 COPY 范围、Python 行生产消费对接 |
-| 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过 | 生产 CI 接入与远程验收 |
+| 3：组件级增量计划 | 真实材料选择和动态 CI 已实现；main 原始工具链/Python 组件集中准备及只读消费已接线 | GitHub 实跑、缩小资格 COPY 范围、正式 Python 行资格复用接入 |
+| 4：整行 Python/SDK 交接 | 全部六行正式资格、Python SDK 与完整 SDK 本地实跑通过；原始 Python 组件 CI 消费已接线 | 正式行资格生产/SDK 复用的 CI 接入与远程验收 |
 | 5：资格复用及恢复 | 工具链与 Python 行本地显式复用通过；签名目录、持久存储及跨 run 消费接线本地验证通过 | 真实 GitHub 跨 run 信任、其他资格领域、候选集成/原生 ARM 及同 digest 恢复 |
 | 6：性能与领域重构 | 本地慢测试画像及不可变 fixture 对照完成，全量 config 约 192→141 秒 | GitHub 新基线、三次匹配输入重放和受影响变更、资源实验 |
 
@@ -294,3 +294,21 @@ main 的组件分支现经 `verify-main-incremental.yml` 先解析实际选中 B
 断网 Docker 内用固定 Buildx 对十种真实选择范围核对组件需求：文档/单纯输入检查无工具链；单架构工具链只选对应安装组件；cp39、vcpkg、SDK 需要双架构安装组件；GCC smoke 与全量 CI 需要两种角色/双架构；现有 GCC full canonical 目标只需要 x86_64 两种角色。探针最初因输入未排序、随后因误把当前 GCC full 预期设为双架构而失败；修正探针预期后全部通过，生产选择器未为探针修改。这些是依赖图与编排验证，不是新增资格结果或 GitHub 时延测量。
 
 本批未推送代码、执行远程 workflow 或发布 GHCR 内容。仍需由 manual pilot 实测 package 访问与真实 GitHub 签名，再验收 main 新工作流；Python 行组件的生产 CI 消费、资格范围收窄、候选最终集成/原生 ARM、同 digest 恢复及完整性能重放继续推进。组件保留仍不自动删除。
+
+## 批次 3/4：原始 Python 组件集中准备与 CI 消费
+
+`ci-toolchains.py plan` 现在同时从真实选中 Bake 图提取 Python 原始组件需求，`ci-python.py` 按行校验并执行该计划。`produce-python.yml` 验证所需工具链后，依次解析 build Python、两个目标安装产物及其构建审计上下文。签名索引确实缺失才生产；错误签名、权限、传输或实际字节不匹配均终止。已有组件保留原 producer；本次 handoff 只包含新产物，以独立 SHA256、不可变 artifact ID 和准确 source/run/attempt 交接。catalog schema 3 将原始 Python 角色限定到独立 `produce-python.yml@refs/heads/main` 签名身份，既有试点/工具链策略保持各自边界。
+
+新增 `verify-main-builds.yml` 保留现有选中门禁命令，用显式只读 leaf job 与有写入能力的 producer 调用区分权限。Python 原始组件准备与 GCC/vcpkg 共用输入/工具链前置，可以并行；Python 消费与 SDK 等待组件矩阵。行并行上限保持 2。PR 路径未改为有权限的 main 工作流。最终结果检查重算矩阵，并拒绝缺失、失败、取消、意外执行和被改写的输出。
+
+`ci-build.py --python-components --require-components` 复用共享目录/OCI 验证，按依赖顺序核验原始图中的精确输入，再替换消费图所有对应 context。SDK 选择若仅包含某一行，不自动扩展六行。构建产物不是资格证明，原有行/SDK 门禁仍保留。跨机器复用正式行资格时应如何处理原始生产环境身份，仍待确认；本批没有改变现有严格资格环境匹配。
+
+[本地验证记录](python-ci-components-2026-09-10.json)保留验证日志、脚本、输入快照和文件摘要。真实 Docker cp39 消费从 7 份独立可信的既有本地 receipt/OCI 取得两份工具链及五份 Python 组件，阶段执行 335.3 秒，探针完整耗时 336.24 秒；重新解析后的材料闭包无 GCC/native CPython/cross CPython 源码编译。registry 查找与下载在此探针中是明确的本地 fixture，实际 OCI 字节、receipt 与当前输入核验仍走生产代码；不宣称 GitHub 签名、远程发布、新执行资格或 CI 性能验收。
+
+第一次消费因本地新快照目录 `0775` 与原生产快照 `0755` 不同而被输入验证器拒绝。另建统一 `0755` 的快照后通过，原失败快照与日志保留，未放宽匹配规则。十种真实 Bake 范围检查通过：文档、输入、工具链、GCC、vcpkg 不安排 Python 生产；cp39/cp314 和 SDK 单行仅安排该行；完整 SDK/全量 CI 安排六行。实际 Rocky 8 / Python 3.6 强制门禁执行新 CLI 与递归模块检查，通过 89 个投影检查。
+
+最终 Docker 全量 config 1161 项、154.315 秒及 packaging 40 项、0.956 秒通过，保留既有 2/1 项跳过；四项 locked validators、三个 renderer 和 actionlint 通过。此前完整运行发现新工作流缺少默认权限声明，补上 `contents: read` 后完整复测；各 leaf job 的显式权限未放宽。定向 53 项回归还覆盖各 job 的准确 success/skipped 集合、被修改的矩阵、签名模式隔离、消费者权限，以及原门禁命令在两条 CI 路径中的一致性。
+
+补充 producer 实跑因 Docker socket 的宿主 daemon 控制能力被自动审批拒绝，没有启动。改用断网、无 socket 的图核对，在原记录环境与此前验证过的 receipt 绑定下，确认 cp39 五份原始组件在 producer 图和 consumer 图中得到相同输入身份。这个补充结果仅是输入图验证，不计为新 OCI 校验、producer 实跑或 GitHub 身份验证；此前已完成的实际消费和 Rocky 门禁独立保留。
+
+本批尚未推送或远程 dispatch。正式行资格包生产/复用接线、真实 GitHub 信任验收、候选最终集成与 native ARM、资格范围收窄及 runner 性能实验继续推进；当前实现不能作为这些事项已完成的证据。

@@ -19,6 +19,9 @@ inputs:
   component-builder:
     default: ''
     description: Pinned builder name required when component-reader is true
+  python-components:
+    default: 'false'
+    description: Require prepared raw Python components as well as toolchain components
 runs:
   using: composite
   steps:
@@ -47,6 +50,7 @@ runs:
         COLD_BUILD: ${{ inputs.cold }}
         SELECTED_TARGETS: ${{ inputs.targets-json }}
         COMPONENT_READER: ${{ inputs.component-reader }}
+        PYTHON_COMPONENTS: ${{ inputs.python-components }}
         COMPONENT_BUILDER: ${{ inputs.component-builder }}
         COMPONENT_ORAS: ${{ steps.components.outputs.oras }}
         COMPONENT_COSIGN: ${{ steps.components.outputs.cosign }}
@@ -58,6 +62,10 @@ runs:
         selection=()
         if test -n "$SELECTED_TARGETS"; then selection+=(--targets-json "$SELECTED_TARGETS"); fi
         components=()
+        if test "$PYTHON_COMPONENTS" = true; then
+          test "$COMPONENT_READER" = true
+          components+=(--python-components)
+        fi
         if test "$COMPONENT_READER" = true; then
           components+=(--require-components --component-builder "$COMPONENT_BUILDER" --component-oras "$COMPONENT_ORAS"
             --component-cosign "$COMPONENT_COSIGN" --component-directory "$RUNNER_TEMP/component-data/$BUILD_STAGE")

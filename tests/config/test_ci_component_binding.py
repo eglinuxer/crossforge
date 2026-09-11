@@ -127,7 +127,8 @@ class ComponentBindingTests(unittest.TestCase):
         self.assertEqual(stage.call_args[0][-1]["builder"], "builder")
         stage.reset_mock()
         for arguments in (common + options[:2], [common[0], "--cold"] + common[1:] + options,
-                          [common[0], "--write-cache"] + common[1:] + options, common + ["--require-components"]):
+                          [common[0], "--write-cache"] + common[1:] + options, common + ["--require-components"],
+                          common + ["--python-components"]):
             with mock.patch.dict(main.__globals__, run_stage=stage, require_writer=lambda env: None), \
                  mock.patch.object(sys, "argv", arguments), self.assertRaises(ValueError):
                 main()
@@ -145,7 +146,7 @@ class ComponentBindingTests(unittest.TestCase):
              mock.patch.object(component_build, "execution_identity", return_value={}), \
              mock.patch.object(resolution, "bind_toolchains", return_value=(graph, {"components": {},
                  "required_producers": ["toolchain-x86_64-build-export"]})), \
-             self.assertRaisesRegex(ValueError, "centralized toolchain preparation is incomplete"):
+             self.assertRaisesRegex(ValueError, "centralized component preparation is incomplete"):
             function("sdk", self.root / "diagnostics", "ghcr.io/test/cache", components=options)
         execute.assert_not_called()
         self.assertNotEqual(load_json(self.root / "diagnostics/result.json")["exit_code"], 0)

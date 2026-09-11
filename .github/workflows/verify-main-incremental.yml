@@ -21,6 +21,7 @@ jobs:
       selection: ${{ steps.plan.outputs.selection }}
       x86_64-roles: ${{ steps.plan.outputs.x86_64-roles }}
       aarch64-roles: ${{ steps.plan.outputs.aarch64-roles }}
+      python-parts: ${{ steps.plan.outputs.python-parts }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -79,15 +80,17 @@ jobs:
   builds:
     needs: [plan, ready]
     if: ${{ !cancelled() && needs.plan.result == 'success' && needs.ready.result == 'success' }}
-    # Actual consumers cannot publish artifacts or request signing identities.
+    # The nested workflow reduces leaf consumer permissions; only its raw
+    # Python producer and signer may use these separate write capabilities.
     permissions:
       contents: read
-      packages: read
-    uses: ./.github/workflows/verify-incremental.yml
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/verify-main-builds.yml
     with:
       profile: ${{ inputs.profile }}
       selection: ${{ needs.plan.outputs.selection }}
-      component-reader: true
+      python-parts: ${{ needs.plan.outputs.python-parts }}
 
   verified:
     if: always()
