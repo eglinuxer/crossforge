@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "crossforge-local-audited-affected-change-acceptance",
-  "observed_at": "2026-09-11T14:16:13.447466+00:00",
+  "observed_at": "2026-09-11T14:28:19.968266+00:00",
   "status": "running",
   "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
   "source_dirty": true,
@@ -343,7 +343,7 @@
       ]
     }
   },
-  "running_at_observation": "source-cp39",
+  "running_at_observation": "component continuation: raw-x86_64-install",
   "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
   "builder": "crossforge-ci-review",
   "timing_note": "Concurrent local builder use; not an isolated or GitHub performance baseline. Separate source-cp39 replay may build uncached prerequisites.",
@@ -392,6 +392,143 @@
           "sha256": "d80205d1f6952cbeb7c4e19c49c09bd707a96bbfdde5ab5becb58ee7886095f2"
         }
       }
+    },
+    {
+      "phase": "source-cp39",
+      "status": "passed",
+      "seconds": 477.924,
+      "driver_exit_code": 0,
+      "fresh_runs": 6,
+      "source_compile_runs": 3,
+      "row_validation_runs": 3,
+      "files": {
+        "result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime/source-cp39/result.json",
+          "sha256": "cf19515f5a70266cdf89a46bcf358043b1c0418f7a5c839825889d497277976b"
+        },
+        "driver/result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime/source-cp39/driver/result.json",
+          "sha256": "de430727e6e32970503799736dd1fe3aeb49d34d73a4895c54d75922cbc767e1"
+        },
+        "driver/replay-result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime/source-cp39/driver/replay-result.json",
+          "sha256": "e16590428b89b2bc8e340ada32889e47b419abefbd1ddf57f8a7b815a1675a88"
+        },
+        "driver/replay-plan.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime/source-cp39/driver/replay-plan.json",
+          "sha256": "ac1b152c75ca85d628f3dea439b39c10812e1307b56d19b2c967662c66f25f60"
+        },
+        "driver/replay-python-cp39-dev.jsonl": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime/source-cp39/driver/replay-python-cp39-dev.jsonl",
+          "sha256": "c16b733401381ca2d55824ea5433459efde7ad0133b768f9cdaf83dbf85d705a"
+        },
+        "driver.log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime/source-cp39/driver.log",
+          "sha256": "41c1238a4c251c691b1afeaa4b1d91288ebfe082a0aea1ca15d99b104c6b087b"
+        }
+      }
     }
-  ]
+  ],
+  "original_batch": {
+    "exit_code": 1,
+    "scope": "The original source gate and its phase result passed. The local acceptance wrapper then failed before raw component production, attempting to overwrite its new-only progress.json.",
+    "error": "FileExistsError: runtime/progress.json",
+    "log": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime.log",
+      "sha256": "e6f33b0edb5787e4d630505be7eb55c3a03069d7ff0893e613124a5f60bf9b12"
+    },
+    "original_manifest": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/acceptance-manifest.json",
+      "sha256": "b8dac22dbcfcf380083ceab80401a7238fbd4e8f2c35a4262e9cbac132a73c4f"
+    },
+    "preserved": "Original runner, source snapshots, gate results and failure log remain unchanged."
+  },
+  "component_continuation": {
+    "status": "running",
+    "manifest": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/components-manifest.json",
+      "sha256": "e47accc0000f78980cafa81efa400c2e734d01231a3e514faf532557afa44e07"
+    },
+    "runner": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/run-components.py",
+      "sha256": "cf4418de93b418284b1b856de695a482636ed75ace1c61f47d854f74a50f3f18"
+    },
+    "wrapper": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/run-components.sh",
+      "sha256": "9ebf439c7a58c479941ffa8f7a26c93dba8978a267f1286e41d6c0f78b1962a3"
+    },
+    "preflight": {
+      "exit_code": 0,
+      "log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/components-preflight.log",
+        "sha256": "a87d9eef25920f58e160e3d68f29c46960f5701eff5c50b844c4c978249e9c4c"
+      },
+      "pinned_files": 66,
+      "network": "none",
+      "socket_mounted": false
+    },
+    "prior_gate_checks": [
+      {
+        "phase": "inputs",
+        "status": "passed",
+        "verification_seconds": 1.184,
+        "mode": "verified-prior-local-gate",
+        "original_seconds": 70.287,
+        "result": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/inputs/result.json",
+          "sha256": "eef0b40b13869baf5a2d6ce51b990f75d5da4cf78abdd8e256b800c376c53aac"
+        },
+        "progress": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/progress-inputs.json",
+          "sha256": "756f638eea9d821b7358d1471ddaecaeb5c4727f491c80f4865b587889ff3cd4"
+        }
+      },
+      {
+        "phase": "source-cp39",
+        "status": "passed",
+        "verification_seconds": 1.318,
+        "mode": "verified-prior-local-gate",
+        "original_seconds": 477.924,
+        "result": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/source-cp39/result.json",
+          "sha256": "43350fcb9691e26908eb1855c17496dce10b3da563a8a19c4604f382dd68f649"
+        },
+        "progress": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/progress-source-cp39.json",
+          "sha256": "32be3677e00e449ded824e1a53727ca771ad69546a90ac86f925926e55c10517"
+        }
+      }
+    ],
+    "scope": "Original successful inputs/source gates are reverified, not rerun. All subsequent raw component, qualification, installation and SDK executors remain original production APIs; per-phase progress files are immutable and distinct.",
+    "completed_components": [
+      {
+        "part": "build",
+        "status": "passed",
+        "seconds": 69.553,
+        "inputs_sha256": "bc10d90f4af5741f755b58039c78de579aa6f1bcb91bcc045bcffc15fb7d015e",
+        "receipt_sha256": "e9146c538edfc1e81751b74b5df9449b7811f7dfb9ee0cb00566a2a04d5d90fa",
+        "artifact": {
+          "config_digest": "sha256:a2bf8ec1b928ba0ed7272f318991129d324246b341eebbcabe37fbd73be87d9f",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:ce22458a0f800b8ceff3f84767d19daa294661c81079fb776961b7af97006772",
+          "root_digest": "sha256:ce22458a0f800b8ceff3f84767d19daa294661c81079fb776961b7af97006772"
+        },
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-build/result.json",
+            "sha256": "69831ca5430f80dbebd09d0f2ceeb54c7cee4002bbedd0d485611e0ac62036ea"
+          },
+          "artifact/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-build/artifact/inputs.json",
+            "sha256": "8469b430e9b0dbf8a9b8317318e00ed83d279d13f694fda80164d8daf1bd9052"
+          },
+          "artifact/receipt.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/runtime-components/raw-build/artifact/receipt.json",
+            "sha256": "c4eca55b5873820985fba3f55cb21c1a3967d03662f4ea993e0235b85bce5c8b"
+          }
+        },
+        "scope": "Original artifact producer accepted a new cp39 build input identity; build artifact, not row qualification"
+      }
+    ]
+  }
 }

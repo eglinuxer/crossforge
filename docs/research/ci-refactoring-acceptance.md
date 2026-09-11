@@ -19,6 +19,8 @@
 
 合并与推送继续以用户要求的“全部验证通过”为门槛。表中未完成的实际验证尚不能由静态图、fixture、本地历史计时或前一个源码版本的结果代替；目前不合入 main、不推送、不发布。
 
-最新发现与修复：真实 cp39 补丁实验暴露了独立 append 对完整 release 的依赖，已改用本行固定组件，修复后的计划只选 inputs、cp39 和 SDK。[本批记录](python-append-scope-2026-09-11.json)分别保存首次完整回归的旧断言失败和修正后 75 项复验。新配方的 cp39、cp310 独立安装已通过：每行两条 fresh RUN、原行 receipt/manifest 与裁剪后的输入均经原校验器复核；其余四个独立安装与两种 SDK 正在推进，上表中的 a56bb29 历史 Docker 成功结果不代替这轮验收。
+最新发现与修复：真实 cp39 补丁实验暴露了独立 append 对完整 release 的依赖，已改用本行固定组件，修复后的计划只选 inputs、cp39 和 SDK。[本批记录](python-append-scope-2026-09-11.json)分别保存首次完整回归的旧断言失败和修正后 75 项复验。新配方的六个独立安装已全部通过：每行两条 fresh RUN、原行 receipt/manifest 与裁剪后的输入均经原校验器复核，实际安装输入均不含完整 release。两种 SDK 正在推进，上表中的 a56bb29 历史 Docker 成功结果不代替这轮累计集成验收。
 
 [受影响变更验收](cp39-affected-change-audited-2026-09-11.json)使用独立规范化的 before/after 副本，只改 cp39 补丁说明、release 摘要及独立审计摘要，未改变补丁 hunks、校验规则或仓库正式版本。第一次实验漏改独立审计摘要，被 inputs 门禁正确拒绝，[失败记录](cp39-affected-change-acceptance-2026-09-11.json)及原文件全部保留。新副本通过四个验证器与原材料计划；回归同时验证漏改审计摘要会失败、补齐后仅选 inputs/cp39/SDK。固定脚本按原计划执行 inputs，另做 cp39 强制源码重放，再生产五份新的 cp39 原始组件、重新取得本行资格，消费另外五行原 receipt 并完成独立安装及两种 SDK，实际 batch 尚未完成。各 batch 共享本地 builder；计时包含排队，不能用来声称 GitHub 已提速。
+
+补齐审计摘要后的实际 inputs 和源码门禁均已通过；外层本地实验脚本随后因重复新建同名进度文件退出。原 runner、成功门禁和失败日志均保留。新的继续执行脚本固定原成功结果的独立摘要，重新使用原 source plan/fresh RUN verifier 及当前物理环境核验后进入组件生产，每阶段使用独立进度文件，不将复核记为新源码执行。新 cp39 build-Python 组件已经通过原 artifact producer，其输入身份与旧组件不同；目标组件、本行资格及两种 SDK 尚待完成。
