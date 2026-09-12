@@ -4,6 +4,7 @@ import os
 import runpy
 import ssl
 import tempfile
+import types
 import unittest
 import urllib.error
 from unittest import mock
@@ -75,7 +76,7 @@ class MaterializeSysrootTests(unittest.TestCase):
     def test_tls_retries_are_bounded_and_other_tls_errors_fail_immediately(self):
         transient = ssl.SSLError(ssl.SSL_ERROR_SSL, "unexpected message")
         transient.reason = "UNEXPECTED_MESSAGE"
-        certificate = ssl.SSLCertVerificationError(1, "certificate verify failed")
+        certificate = ssl.CertificateError(1, "certificate verify failed")
         protocol = ssl.SSLError(ssl.SSL_ERROR_SSL, "wrong version number")
         protocol.reason = "WRONG_VERSION_NUMBER"
         unknown = ssl.SSLError(ssl.SSL_ERROR_SSL, "unknown TLS failure")
@@ -89,6 +90,19 @@ class MaterializeSysrootTests(unittest.TestCase):
                     self.assertEqual(fetch.call_count, attempts)
                     self.assertEqual(sleep.call_args_list, [mock.call(2), mock.call(4)] if attempts == 3 else [])
                     self.assertEqual(list(Path(temporary).iterdir()), [])
+
+    def test_retry_classification_supports_legacy_ssl_exceptions(self):
+        legacy_ssl = types.SimpleNamespace(
+            CertificateError=type("CertificateError", (ValueError,), {}),
+            SSLError=ssl.SSLError,
+        )
+        classify = MATERIALIZER["retryable_download_error"]
+        certificate = ssl.SSLError(ssl.SSL_ERROR_SSL, "certificate verify failed")
+        certificate.reason = "CERTIFICATE_VERIFY_FAILED"
+        with mock.patch.dict(classify.__globals__, {"ssl": legacy_ssl}):
+            self.assertTrue(classify(urllib.error.URLError(ConnectionResetError(104, "reset"))))
+            self.assertFalse(classify(urllib.error.URLError(legacy_ssl.CertificateError("hostname mismatch"))))
+            self.assertFalse(classify(urllib.error.URLError(certificate)))
 
     def test_download_restarts_after_midstream_reset_and_removes_partial(self):
         payload = b"locked-rpm"
