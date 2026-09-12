@@ -19,8 +19,9 @@ CONTROL_WORKFLOWS = {".github/workflows/" + name + ".yml" for name in (
     "replay-qualification", "verify-quick")}
 SDK_CONTROLLERS = {".github/actions/run-component-sdk/action.yml", "scripts/ci-sdk.py"} | {
     "scripts/crossforge_internal/" + name + ".py" for name in
-    ("ci_sdk", "python_sdk", "python_sdk_catalog", "python_sdk_recovery")}
+    ("ci_sdk", "local_sdk", "python_sdk", "python_sdk_catalog", "python_sdk_recovery")}
 PYTHON_INSTALL_CONTROLLERS = {"scripts/crossforge_internal/python_row_install.py"}
+SHARED_BUILD_CONTROLLERS = {"scripts/ci-build.py"}
 
 
 def quick_only(path):
@@ -104,6 +105,11 @@ def select(before, after, paths):
     relevant = [path for path in paths if not quick_only(path)]
     if not relevant:
         return _plan({}, {}, [], paths)
+    shared = sorted(set(relevant) & SHARED_BUILD_CONTROLLERS)
+    if shared:
+        # A syntax-check dependency does not describe the runtime scope of
+        # the host executor that launches every selected build stage.
+        return full(after["stages"], "shared CI build orchestration changed: " + ", ".join(shared), paths)
     known = _known_paths(before) | _known_paths(after) | GENERATORS | CONTROL_WORKFLOWS | SDK_CONTROLLERS | PYTHON_INSTALL_CONTROLLERS
     unknown = sorted(set(relevant) - known)
     if unknown:
