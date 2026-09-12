@@ -9,6 +9,10 @@ on:
       selection:
         type: string
         default: ''
+      python-parallelism:
+        description: Controlled Python row comparison; keep the baseline at two
+        type: number
+        default: 2
 
 permissions:
   contents: read
@@ -26,6 +30,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Validate Python parallelism before component planning
+        env:
+          PYTHON_PARALLELISM: ${{ inputs.python-parallelism }}
+        run: |
+          set -Eeuo pipefail
+          case "$PYTHON_PARALLELISM" in
+            2|3) ;;
+            *) echo 'Python parallelism must be exactly 2 or 3' >&2; exit 1 ;;
+          esac
       - uses: ./.github/actions/setup-locked-buildx
         id: buildx
       - name: Find raw component boundaries in the selected canonical graph
@@ -94,6 +107,7 @@ jobs:
       profile: ${{ inputs.profile }}
       selection: ${{ needs.plan.outputs.selection }}
       python-parts: ${{ needs.plan.outputs.python-parts }}
+      python-parallelism: ${{ inputs.python-parallelism }}
 
   verified:
     if: always()

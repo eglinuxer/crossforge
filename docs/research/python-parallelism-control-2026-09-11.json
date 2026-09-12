@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-python-parallelism-control-review",
+  "base_commit": "c4fb29677be75a5f0f2150a0b58c127a54ee6a21",
+  "source_dirty": true,
+  "change": "Allow manual main CI to select two or three concurrent raw/qualified Python rows on the same source commit. Preserve default two, reject other values before component planning and at the leaf workflow, and save a source/run/attempt-bound scheduling observation.",
+  "validation": {
+    "real_shell": "Both reusable workflow guards exercised with 12 values each. Only 2 and 3 pass; existing observations cannot be overwritten.",
+    "targeted_tests": 13,
+    "configuration": {
+      "status": "passed",
+      "source_sha256": "765f2caf07f78cddbd3d104a9c4efb66aa1088192d116327f60f9327c715ba18",
+      "source_unchanged": true,
+      "discovered_tests": 1476,
+      "tests_run": 1476,
+      "elapsed_seconds": 150.74436878898996,
+      "worker_tests": [
+        317,
+        403,
+        322,
+        434
+      ],
+      "outcomes": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "fixture_skips": 0,
+        "expected_failures": 0,
+        "unexpected_successes": 0
+      }
+    },
+    "packaging_tests": 40,
+    "quick_checks": {
+      "status": "passed",
+      "steps": [
+        {
+          "step": "Release configuration",
+          "seconds": 2.1097856459964532,
+          "exit_code": 0
+        },
+        {
+          "step": "RPM plans, transactions, and locks",
+          "seconds": 2.732425094000064,
+          "exit_code": 0
+        },
+        {
+          "step": "Configuration tests",
+          "seconds": 150.80903488202603,
+          "exit_code": 0
+        },
+        {
+          "step": "Packaging planner tests",
+          "seconds": 1.6628716329869349,
+          "exit_code": 0
+        },
+        {
+          "step": "Script syntax",
+          "seconds": 0.26483070000540465,
+          "exit_code": 0
+        },
+        {
+          "step": "Generated Bake definition",
+          "seconds": 0.963496939977631,
+          "exit_code": 0
+        }
+      ]
+    },
+    "docker_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "cpus": 4,
+    "memory": "16 GiB",
+    "network": "none"
+  },
+  "preserved_failures": [
+    "full/ failed the old fixed-2 qualified-row assertion in the existing dependency test.",
+    "full-v2/ then reached and failed its second fixed-2 assertion for raw producers. Both assertions now require the bounded input; 13 targeted tests and complete full-v3 passed."
+  ],
+  "evidence": {
+    "targeted.log": {
+      "sha256": "66fbd077c1e0eb477b35b53100d45a139fe484e1b6c845fb199720ebc432798b",
+      "size": 112
+    },
+    "full-v3/all-checks.json": {
+      "sha256": "9ca2da1bb505b03f3daf23b39d124e3809dee85a668d94ecbbe881b41d7d8f13",
+      "size": 710
+    },
+    "full-v3/all-checks.log": {
+      "sha256": "00095051d0a4d8d940833d50a47540e0cc0182e8a33affb1a4c1061f027b3d3e",
+      "size": 27121
+    },
+    "full-v3/runtime/config-tests/result.json": {
+      "sha256": "610e3955a8b7d52037727d0f608059bad73376fef196d7a63bf7d54a15f833e8",
+      "size": 178805
+    }
+  },
+  "reference": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax",
+  "limits": [
+    "The local result verifies scheduling controls and defaults; no concurrency-3 main execution or speedup is asserted.",
+    "Actual main component acceptance, three matching-input baseline runs and the affected-change/2-to-3 comparison remain required.",
+    "Toolchain/GCC parallelism, compiler jobs, worker controls and candidate defaults are unchanged."
+  ]
+}

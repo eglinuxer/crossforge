@@ -13,9 +13,16 @@ on:
         description: Raw Python parts from the selected canonical Bake graph
         type: string
         required: true
+      python-parallelism:
+        description: Maximum concurrent raw component rows and qualified rows; two or three
+        type: number
+        default: 2
 
 # The caller grants the maximum needed by the producer chain. Every job
 # explicitly reduces permissions; ordinary consumers cannot write or sign.
+# Toolchain, GCC and vcpkg jobs have no authenticated qualification catalog.
+# Selected gates therefore replay from verified raw components and require
+# fresh execution evidence; a normal BuildKit cache hit cannot satisfy them.
 permissions:
   contents: read
 
@@ -47,6 +54,32 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Record controlled Python parallelism
+        env:
+          PYTHON_PARALLELISM: ${{ inputs.python-parallelism }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          value = os.environ["PYTHON_PARALLELISM"]
+          if value not in ("2", "3"):
+              raise SystemExit("Python parallelism must be exactly 2 or 3")
+          result = {"schema_version": 1, "kind": "crossforge-python-scheduling-observation",
+                    "python_parallelism": int(value), "source_commit": os.environ["GITHUB_SHA"],
+                    "run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+                    "event": os.environ["GITHUB_EVENT_NAME"], "performance_result": "not asserted"}
+          path = Path(os.environ["RUNNER_TEMP"]) / "python-parallelism.json"
+          with path.open("x", encoding="utf-8") as stream:
+              json.dump(result, stream, sort_keys=True, indent=2)
+              stream.write("\n")
+          PY
+      - name: Preserve Python scheduling observation
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: python-scheduling-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/python-parallelism.json
+          if-no-files-found: error
+          retention-days: 90
       - name: Validate selected work
         id: plan
         env:
@@ -101,6 +134,7 @@ jobs:
       - uses: ./.github/actions/run-build-stage
         with:
           component-reader: true
+          replay-qualification: true
           component-builder: ${{ steps.buildx.outputs.builder }}
           stage: ${{ matrix.stage }}
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
@@ -117,7 +151,7 @@ jobs:
       id-token: write
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: ${{ inputs.python-parallelism }}
       matrix: ${{ fromJSON(needs.plan.outputs.python-components-matrix) }}
     uses: ./.github/workflows/produce-python.yml
     with:
@@ -136,7 +170,7 @@ jobs:
       !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: ${{ inputs.python-parallelism }}
       matrix: ${{ fromJSON(needs.plan.outputs.python-rows-matrix) }}
     uses: ./.github/workflows/produce-python-row.yml
     with:
@@ -161,6 +195,7 @@ jobs:
       - uses: ./.github/actions/run-build-stage
         with:
           component-reader: true
+          replay-qualification: true
           component-builder: ${{ steps.buildx.outputs.builder }}
           stage: vcpkg
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['vcpkg']) }}
@@ -189,6 +224,7 @@ jobs:
       - uses: ./.github/actions/run-build-stage
         with:
           component-reader: true
+          replay-qualification: true
           component-builder: ${{ steps.buildx.outputs.builder }}
           stage: ${{ matrix.stage }}
           targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}

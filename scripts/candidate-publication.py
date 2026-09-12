@@ -84,7 +84,7 @@ def main(argv=None):
         if args.phase == "sdk":
             result.update(candidate_sha256=content_sha256(load_json(args.output / "candidate.json")),
                           sdk_attempt=value["producer"]["attempt"], sdk_checkpoint_sha256=content_sha256(value))
-            if value["schema_version"] == 2:
+            if value["schema_version"] >= 2:
                 result["component_selection_sha256"] = content_sha256(load_json(args.output / "component-selection.json"))
         outputs(result)
         return 0

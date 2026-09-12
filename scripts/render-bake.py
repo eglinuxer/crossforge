@@ -747,6 +747,12 @@ def render_packaging_graph(
             "crossforge_gcc_testsuite_full_qualified": (
                 "target:gcc-testsuite-full-qualification-evidence"
             ),
+            "crossforge_gcc_testsuite_smoke_qualified": (
+                "target:gcc-testsuite-smoke-evidence"
+            ),
+            "crossforge_vcpkg_qualified": (
+                "target:vcpkg-upstream-tier3-qualified"
+            ),
             "crossforge_sigstore_qualified": (
                 "target:sigstore-sources-qualified"
             ),

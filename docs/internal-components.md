@@ -64,6 +64,13 @@ input set. Reading a SHA256 from the same untrusted artifact is not that handoff
 
 ## Local Docker workflow
 
+Incremental selection uses runtime source dependencies and explicit controller
+mappings. A file read only by `platform-python-check` has syntax coverage, not
+an established runtime scope. Changes to such unmapped host controllers select
+the complete CI graph. The SDK and Python installation controller mappings keep
+their narrower scope; ordinary build inputs still select their actual consumers
+even when the syntax check also reads them.
+
 Run the CLI inside the local Docker tooling environment with the Docker CLI,
 pinned Buildx plugin, and access to the task's builder. Keep source mounted read
 only. OCI paths must be visible at the same absolute paths to the producer and
@@ -784,6 +791,40 @@ independent row interpreter processes, and stops on missing raw inputs or any
 authentication, transport or verification failure. Fresh local rows are not
 signed or published. Candidate prequalification shares this job, while candidate
 image publication retains its existing raw-component route.
+
+Selected main toolchain, GCC smoke/full and vcpkg jobs use the explicit
+qualification replay path. These jobs have no authenticated qualification
+catalog, so they re-execute their canonical test stages from verified raw
+components and require fresh BuildKit RUN events. They retain the same selected
+roots and read-only permissions. Replay observations bind the physical worker
+and execution interval; they are not signed reusable qualification receipts.
+The PR source-build route continues to exercise the original source graph.
+This main-job fallback is separate from candidate publication and does not
+establish reusable signed qualification reports.
+
+Candidate publication also uses an explicit fresh-execution fallback. Its graph
+directly depends on GCC smoke/full and the complete vcpkg contract/Tier 1–3 chain,
+as well as both toolchains, all six Python rows, packaging and final SDK checks.
+The candidate consumer verifies thirty-four raw inputs: both toolchain installs,
+both GCC test contexts, and thirty Python parts. It forces the declared
+qualification stages while allowing caches for material preparation; GCC and
+CPython source compilation remain outside the component graph.
+
+`candidate-components.py build` validates the prepared component graph and
+physical environment before and after building, retains raw BuildKit execution,
+and rejects cached, failed, missing or stale qualification RUNs. Shared RUN
+digests retain every checked owning target and count as one physical execution.
+The successful execution record binds the emitted candidate digest, source
+binding, component selection, inputs and original producer. It does not mint a
+reusable component qualification receipt.
+
+SDK publication checkpoint schema 3 carries the execution record, input and
+qualification plans, and raw execution alongside the original image metadata.
+Sealing and restoration verify this payload before downstream consumer/native
+ARM work. Readers retain exact legacy schema 1/2 support; new SDK checkpoints
+require schema 3 evidence. This implementation still needs actual candidate
+execution and recovery acceptance on trusted main. Local synthetic execution
+fixtures establish the failure boundaries, not a published candidate's result.
 
 After a fresh row is sealed and its receipt matches the planned inputs and
 producer, the controller removes that row's `payload/` and `extracted/` staging

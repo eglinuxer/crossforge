@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-local-sdk-selection-validation",
+  "source_base_commit": "f502449436097dbe0d7405ed4655638b330f6d20",
+  "status": "local-validated-real-pr-pending",
+  "defect": "local_sdk.py is already a platform-check input, so an edit was recognized but omitted SDK execution roots.",
+  "fix": "Treat local_sdk.py as an SDK controller; retain platform validation, add all canonical SDK roots, and fail to full selection when the SDK stage is unavailable.",
+  "regressions": {
+    "before": {
+      "tests": 17,
+      "failures": 1
+    },
+    "after": {
+      "tests": 17,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "actual_source_probe": {
+    "status": "passed",
+    "source_commit": "f502449436097dbe0d7405ed4655638b330f6d20",
+    "changed_paths": [
+      "scripts/crossforge_internal/local_sdk.py"
+    ],
+    "source_before_sha256": "96f609b600e6d96747776b5cfb05c43315248f29239c81bbf302e3a47faeeae3",
+    "source_after_sha256": "fa1035a56fa0d21b0bc1ca3e8d104bc7e761685b899b3809364f4950f3dba4da",
+    "before_plan": {
+      "schema_version": 1,
+      "kind": "crossforge-ci-source-plan",
+      "mode": "incremental",
+      "fallback_reasons": [],
+      "changed_paths": [
+        "scripts/crossforge_internal/local_sdk.py"
+      ],
+      "targets": {
+        "inputs": [
+          "platform-python-check"
+        ]
+      },
+      "compiler_inputs_changed": [],
+      "changes": {
+        "platform-python-check": {
+          "before_sha256": "98f8b643a2632aa3c9792d95f33f7183faff0b780902506aeb472dbac9903d99",
+          "after_sha256": "59f9ee8b45c4b1dd0b4db3904a57a4d1efc78339c54dff73c903e22ed607baf0",
+          "files": [
+            "scripts/crossforge_internal/local_sdk.py"
+          ],
+          "parameters_changed": false
+        }
+      },
+      "artifact_reuse": "not-authorized-by-source-selection"
+    },
+    "after_plan": {
+      "schema_version": 1,
+      "kind": "crossforge-ci-source-plan",
+      "mode": "incremental",
+      "fallback_reasons": [],
+      "changed_paths": [
+        "scripts/crossforge_internal/local_sdk.py"
+      ],
+      "targets": {
+        "inputs": [
+          "platform-python-check"
+        ],
+        "sdk": [
+          "python-dev",
+          "sdk-complete-dev"
+        ]
+      },
+      "compiler_inputs_changed": [],
+      "changes": {
+        "platform-python-check": {
+          "before_sha256": "98f8b643a2632aa3c9792d95f33f7183faff0b780902506aeb472dbac9903d99",
+          "after_sha256": "59f9ee8b45c4b1dd0b4db3904a57a4d1efc78339c54dff73c903e22ed607baf0",
+          "files": [
+            "scripts/crossforge_internal/local_sdk.py"
+          ],
+          "parameters_changed": false
+        },
+        "python-dev": {
+          "before_sha256": "2bac49271fc8f57a6c2405c6fbefed4dfdc168d1205bb895aa98dba462b4d177",
+          "after_sha256": "2bac49271fc8f57a6c2405c6fbefed4dfdc168d1205bb895aa98dba462b4d177",
+          "files": [],
+          "parameters_changed": false,
+          "orchestration_files": [
+            "scripts/crossforge_internal/local_sdk.py"
+          ]
+        },
+        "sdk-complete-dev": {
+          "before_sha256": "1a302f676c983c58cb23d78fb321d415723fdc0fa5231a222acaeeb157d1b6d2",
+          "after_sha256": "1a302f676c983c58cb23d78fb321d415723fdc0fa5231a222acaeeb157d1b6d2",
+          "files": [],
+          "parameters_changed": false,
+          "orchestration_files": [
+            "scripts/crossforge_internal/local_sdk.py"
+          ]
+        }
+      },
+      "artifact_reuse": "not-authorized-by-source-selection"
+    },
+    "scope": "Actual canonical source inventories with one isolated controller comment edit; no build or qualification claim"
+  },
+  "runtime_changes": "No Docker recipe or execution behavior changed; this only selects affected validation.",
+  "evidence": {
+    "before.log": {
+      "path": "/tmp/crossforge-sdk-selection-validation/before.log",
+      "sha256": "05264629548e34a976a99f02d2a326017c21cab02de8d794723d15e1bfa66182"
+    },
+    "after.log": {
+      "path": "/tmp/crossforge-sdk-selection-validation/after.log",
+      "sha256": "251f354f89a751e853939b4cc58ca7cf56558c5817cad5b638206bc4bb6c9d52"
+    },
+    "actual-selection.py": {
+      "path": "/tmp/crossforge-sdk-selection-validation/actual-selection.py",
+      "sha256": "51f6797ee1deba907561f0385f06441a0d23f100363f3608735f80be82cc7e2d"
+    },
+    "actual-selection.log": {
+      "path": "/tmp/crossforge-sdk-selection-validation/actual-selection.log",
+      "sha256": "a0b2189c41fb6c2d29bcc5f1fe21dda0bec7fecb0d12d17d1439fad06410bb7e"
+    },
+    "actual-selection.json": {
+      "path": "/tmp/crossforge-sdk-selection-validation/actual-selection.json",
+      "sha256": "7da5d240c47c2609ddf3078b4c458cab0620b5e212a8a468e6f91b8eb9aec82b"
+    }
+  },
+  "implementation_files": {
+    "scripts/crossforge_internal/incremental_plan.py": "b46d0b1dee01d147559c29f77aaa727f5d5404e44715808a382f4d4fd9d34af3",
+    "tests/config/test_incremental_plan.py": "b465e7eb55d4d18ae87f08394e74e0bb2fa36ed7299e46a86de32d4ec8bb42c1"
+  }
+}

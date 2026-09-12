@@ -8,8 +8,11 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 from unittest import mock
+
+from test_ci_component_routing import job
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -200,6 +203,48 @@ class ReplayEvidenceTests(unittest.TestCase):
 
 
 class ReplayWorkflowTests(unittest.TestCase):
+    def test_main_selected_gates_route_through_fresh_replay_from_required_components(self):
+        workflow = (ROOT / ".github/workflows/verify-main-builds.yml").read_text()
+        action = (ROOT / ".github/actions/run-build-stage/action.yml").read_text()
+        script = textwrap.dedent(action.split("    - name: Build and measure\n", 1)[1]
+            .split("      run: |\n", 1)[1].split("    - name:", 1)[0])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "scripts").mkdir()
+            (root / "scripts/ci-build.py").write_text("import json, sys; print(json.dumps(sys.argv[1:]))\n")
+            for group, stages in (("toolchains", ("toolchain-x86_64", "toolchain-aarch64")),
+                                  ("gcc", ("gcc-smoke", "gcc-full")), ("vcpkg", ("vcpkg",))):
+                block = job(workflow, group)
+                # Read the actual workflow option, including the composite's
+                # default, so omitting the connection reproduces cached mode.
+                replay = "true" if "replay-qualification: true" in block else "false"
+                reader = "true" if "component-reader: true" in block else "false"
+                for stage in stages:
+                    with self.subTest(stage=stage):
+                        roots = json.dumps(BUILD["STAGES"][stage])
+                        environment = dict(os.environ, BUILD_STAGE=stage, WRITE_CACHE="false", COLD_BUILD="false",
+                            SELECTED_TARGETS=roots, COMPONENT_READER=reader, PYTHON_COMPONENTS="false",
+                            REPLAY_QUALIFICATION=replay, REBUILD_SOURCES="false", SOURCE_BUILDER="",
+                            COMPONENT_BUILDER="pinned-builder", COMPONENT_ORAS="oras", COMPONENT_COSIGN="cosign",
+                            COMPONENT_RECOVERY="", COMPONENT_RECOVERY_SHA256="", RUNNER_TEMP=temporary)
+                        result = subprocess.run(["bash", "-c", script], cwd=temporary, env=environment,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        arguments = json.loads(result.stdout)
+                        self.assertIn("--replay-qualification", arguments)
+                        self.assertIn("--require-components", arguments)
+                        self.assertNotIn("--rebuild-sources", arguments)
+                        self.assertNotIn("--write-cache", arguments)
+                        self.assertEqual(arguments[arguments.index("--targets-json") + 1], roots)
+                        main = BUILD["main"]
+                        run_stage = mock.Mock(return_value=0)
+                        with mock.patch.object(sys, "argv", ["ci-build.py"] + arguments), \
+                                mock.patch.dict(main.__globals__, run_stage=run_stage):
+                            self.assertEqual(main(), 0)
+                        self.assertEqual(run_stage.call_args[0][0], stage)
+                        self.assertTrue(run_stage.call_args[1]["replay_qualification"])
+                        self.assertFalse(run_stage.call_args[1]["rebuild_sources"])
+
     def test_manual_replay_is_read_only_and_actually_rejects_non_main_sources(self):
         text = (ROOT / ".github/workflows/replay-qualification.yml").read_text()
         self.assertIn("  workflow_dispatch:", text)

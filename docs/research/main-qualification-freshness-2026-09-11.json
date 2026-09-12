@@ -1,0 +1,152 @@
+{
+  "kind": "crossforge-main-qualification-freshness-review",
+  "schema_version": 1,
+  "base_commit": "8d545fa6311f99dcad71ad4b60b1bff5f21f9562",
+  "source_dirty": true,
+  "problem": "Selected main toolchain, GCC and vcpkg jobs authenticated raw inputs but did not enable qualification replay. Ordinary BuildKit cache hits could satisfy the jobs without matching a trusted qualification receipt to the observed worker.",
+  "change": "Enable the existing replay path for both toolchains, GCC smoke/full and vcpkg. Preserve selected canonical roots, raw component requirements and read-only permissions. Fresh RUN and unchanged physical execution checks remain mandatory.",
+  "regression": {
+    "before": "One regression failed in all five stage subcases: the composite command omitted --replay-qualification.",
+    "after": "The same regression passed through the real composite shell and CLI argument parser for all five stages. The build executor is mocked in this wiring regression."
+  },
+  "docker_validation": {
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "cpus": 4,
+    "memory": "16 GiB",
+    "network": "none",
+    "daemon_socket": false,
+    "checks": {
+      "status": "passed",
+      "steps": [
+        {
+          "step": "Release configuration",
+          "seconds": 2.0160889379912987,
+          "exit_code": 0
+        },
+        {
+          "step": "RPM plans, transactions, and locks",
+          "seconds": 2.6762147920089774,
+          "exit_code": 0
+        },
+        {
+          "step": "Configuration tests",
+          "seconds": 153.64213371899677,
+          "exit_code": 0
+        },
+        {
+          "step": "Packaging planner tests",
+          "seconds": 1.8113272500049789,
+          "exit_code": 0
+        },
+        {
+          "step": "Script syntax",
+          "seconds": 0.41051002699532546,
+          "exit_code": 0
+        },
+        {
+          "step": "Generated Bake definition",
+          "seconds": 1.0311094409844372,
+          "exit_code": 0
+        }
+      ]
+    },
+    "configuration_status": "passed",
+    "configuration_tests": 1460,
+    "discovered_tests": 1460,
+    "configuration_seconds": 153.5590211119852,
+    "source_unchanged": true,
+    "source_sha256": "cd4f0d44789059ea11fa2c8fc731ea2d01a1d98f73b1b8e041007da22fdf7425",
+    "worker_tests": [
+      270,
+      425,
+      341,
+      424
+    ],
+    "outcomes": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "fixture_skips": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    "packaging_tests": 40
+  },
+  "preserved_environment_failure": "The first complete invocation omitted the Docker CLI mount. Bake-dependent tests failed or skipped; that run remains failed under full/. The complete run was repeated under full-v2/ with the Docker CLI and pinned Buildx mounted, without changing production code.",
+  "limits": [
+    "This is local workflow/CLI and complete quick validation; the main-only authenticated execution still requires a real main run.",
+    "No new signed reusable toolchain/GCC/vcpkg qualification catalog is introduced.",
+    "The candidate publication graph still has an independent raw-component/cache route. Its qualified dependency handoff and freshness require separate completion before candidate acceptance.",
+    "No main merge, candidate publication, native ARM result or controlled performance result is asserted."
+  ],
+  "related_pr5": {
+    "status": "passed",
+    "run_id": 34646398867,
+    "head_commit": "8d545fa6311f99dcad71ad4b60b1bff5f21f9562",
+    "base_commit": "f502449436097dbe0d7405ed4655638b330f6d20",
+    "tested_merge_commit": "12ec71fe45e07462f5d3b79d6c0d2db227e01fd7",
+    "tree_sha": "ad45bf1e09dc62f7417ff655d61a006372e126fc",
+    "source_files": 875,
+    "source_sha256": "2f0e465964c146ce418cf2cd7b33a0efbc5eb61b6679e47540cb6a6dd0742fc3",
+    "configuration_tests": 1459,
+    "packaging_tests": 40,
+    "configuration_seconds": 224.318873581,
+    "configuration_skips": [
+      {
+        "reason": "real zstd release assets are unavailable",
+        "test": "test_prepare_zstd_source.PrepareZstdSourceTests.test_real_prepared_source_builds_static_host_archive"
+      },
+      {
+        "reason": "real zstd release assets are unavailable",
+        "test": "test_prepare_zstd_source.PrepareZstdSourceTests.test_tracked_component_prepares_real_signed_source_subset"
+      }
+    ],
+    "packaging_skips": 1,
+    "exact_test_identity_multiset": true,
+    "quick_job_seconds": 318.0,
+    "completed_jobs": [
+      "builds",
+      "builds-readonly / inputs",
+      "builds-readonly / plan",
+      "builds-readonly / verified",
+      "pr-required",
+      "quick / quick"
+    ],
+    "unselected_jobs": [
+      "builds-components",
+      "builds-readonly / gcc",
+      "builds-readonly / python",
+      "builds-readonly / sdk",
+      "builds-readonly / toolchains",
+      "builds-readonly / vcpkg"
+    ],
+    "selection": {
+      "inputs": [
+        "platform-python-check"
+      ]
+    },
+    "scope": "Complete PR checks against the feature base; retargeted main checks remain required",
+    "evidence_sha256": {
+      "run.json": "eba5e3d3e8ae645d4e49a0eb2cc843f5717386c966f3bb0e654c0fe4568eaf84",
+      "jobs.json": "8efafbed59955549bbe8d4c570d98b25754e72d44b0994731fcf753a4dcd5e33",
+      "tested-merge.json": "be0970c1964c25fc412da7e8099e28dcc8a7b15c809516b9925ff4e6577d69fa",
+      "head-source.tar": "5f2e115e0469f41983d7d408635c1e7960f30b4b6bfe54acf29368c3f2ccd005",
+      "configuration-tests.zip": "bbe6ac9813b1862ac0f68ea8bfa4fb08be4e993ee8e5dd50bdfb6ec1e0e2920e",
+      "component-plan.zip": "77ebe44d6c1b980cafe92a25d67627c428ad7f200b5c131a6f7c9bf3aa1416f1",
+      "quick.log": "6f9a6f5b0c50f6e6640f676823becd15e04c2b6b486ebcceec56b6bef611904a"
+    }
+  },
+  "evidence": {
+    "regression-before.log": "974c7c689b5ae73129f08ddd52718132895623ea1a4961c66646a728a39667aa",
+    "regression-after.log": "1de6ecf0d697d79c3df1c8a42338798c31313705d18a2a67f513a8f2e0925826",
+    "run-checks.sh": "d1e56774761bc769a2441b3876f49537ced94371b1b204ffe1858580536dfc96",
+    "check-all.py": "8195e19428556c35b2c35d94a1c4b60983f0f3f116d81a36458d9cb228daa1ae",
+    "full/all-checks.log": "b22db5e8c36dea06d892eb8c0de85cee2b5c341d5d3da2b97f135e241477bd8f",
+    "full/runtime/config-tests/result.json": "cc3dbaa663f8549306c96624d4f60f27b8d851b1e07740e803a7cb86a473d851",
+    "full-v2/all-checks.log": "ffe8c33876fca5a6a570b51ba6b25c674ce4b655baabb9fedb378513df2ab479",
+    "full-v2/all-checks.json": "5b770089b19e413889690b828cc8693e2026d70e3df05874b0668bab61725746",
+    "full-v2/runtime/config-tests/result.json": "c08df9b5713c3dc0ebfb9fc234ed8bcd701b87a431a9c21315c2016c09b17dbb",
+    "full-v2/runtime/config-tests/inventory.json": "b51664be46d1f067de784cd2cd616b99b059e3912cfa9c91c4b6ddf69515301e",
+    "full-v2/runtime/config-tests/source.json": "3626f7fa41b4579a42a272bbc7d27b66596b92ec4768b23284f7abe8327e2b45"
+  }
+}

@@ -82,7 +82,7 @@ def override(graph, solve):
         for target in graph["target"]}}
 
 
-def fresh_vertices(path, owners, started, completed):
+def fresh_vertices(path, owners, started, completed, allow_shared=False):
     """Use owning target timestamps, retaining cached/failed aliases as fatal."""
     owned = {(target, stage): [] for target, stages in owners.items() for stage in stages}
     bad = set()
@@ -116,6 +116,6 @@ def fresh_vertices(path, owners, started, completed):
             filtered.write_text("".join(json.dumps({"vertexes": [vertex]}) + "\n" for vertex in vertices))
             result.extend(dict(vertex, target=target) for vertex in qualification_execution.fresh_vertices(
                 filtered, {stage: owners[target][stage]["runs"]}, started, completed))
-    require(result and len({vertex["digest"] for vertex in result}) == len(result),
+    require(result and (allow_shared or len({vertex["digest"] for vertex in result}) == len(result)),
             "replay RUN evidence is empty or belongs to multiple targets")
     return result

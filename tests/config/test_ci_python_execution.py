@@ -110,7 +110,7 @@ class PythonExecutionTests(unittest.TestCase):
         self.assertIn("uses: ./.github/workflows/produce-python-row.yml", qualified)
         self.assertIn("matrix: ${{ fromJSON(needs.plan.outputs.python-rows-matrix) }}", qualified)
         self.assertIn("row: ${{ matrix.row }}", qualified)
-        self.assertIn("max-parallel: 2", qualified)
+        self.assertIn("max-parallel: ${{ inputs.python-parallelism }}", qualified)
         self.assertIn("needs: [plan, inputs, toolchains, python-components]", qualified)
         self.assertIn("packages: write", qualified)
         self.assertIn("id-token: write", qualified)
@@ -118,7 +118,7 @@ class PythonExecutionTests(unittest.TestCase):
         self.assertIn("python, vcpkg", job(workflow, "sdk"))
         producer = job(workflow, "python-components")
         self.assertIn("uses: ./.github/workflows/produce-python.yml", producer)
-        self.assertIn("max-parallel: 2", producer)
+        self.assertIn("max-parallel: ${{ inputs.python-parallelism }}", producer)
         self.assertNotIn("vcpkg", producer)
         self.assertNotIn("gcc", producer)
         self.assertIn("packages: write", producer)
@@ -126,7 +126,7 @@ class PythonExecutionTests(unittest.TestCase):
         self.assertIn("ci-python.py check", job(workflow, "verified"))
         self.assertIn("checked_source(ROOT, \"main\")", (ROOT / "scripts/ci-python.py").read_text())
 
-    def test_existing_gate_commands_match_readonly_workflow_after_permission_and_binding_changes(self):
+    def test_existing_gate_commands_match_readonly_except_explicit_binding_and_freshness(self):
         ordinary = (ROOT / ".github/workflows/verify-incremental.yml").read_text()
         main = (ROOT / ".github/workflows/verify-main-builds.yml").read_text()
         for name in ("inputs", "toolchains", "vcpkg", "gcc", "sdk"):
@@ -135,6 +135,9 @@ class PythonExecutionTests(unittest.TestCase):
             if name != "inputs":
                 after = after.replace("    permissions:\n      contents: read\n      packages: read\n", "", 1)
                 after = after.replace("component-reader: true", "component-reader: ${{ inputs.component-reader }}")
+            if name in ("toolchains", "vcpkg", "gcc"):
+                self.assertEqual(after.count("          replay-qualification: true\n"), 1)
+                after = after.replace("          replay-qualification: true\n", "", 1)
             after = after.replace(", python-components", "").replace("          python-components: true\n", "")
             if name == "sdk":
                 after = after.replace("uses: ./.github/actions/run-component-sdk", "uses: ./.github/actions/run-build-stage")

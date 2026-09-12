@@ -82,6 +82,80 @@ class IncrementalPlanTests(unittest.TestCase):
         plan = planner.select(self.before, self.snapshot(), ["scripts/ci-sdk.py", "unknown-controller.py"])
         self.assertEqual(plan["mode"], "full")
 
+    def test_local_sdk_controller_also_selects_sdk_when_platform_checks_already_read_it(self):
+        path = "scripts/crossforge_internal/local_sdk.py"
+        script = self.root / path
+        script.parent.mkdir(parents=True)
+        script.write_text("original controller\n")
+        self.recipe.write_text(self.recipe.read_text() +
+            "FROM rocky AS platform-check\nCOPY " + path + " /controller.py\nRUN syntax-check\n")
+        self.graph["target"]["platform-python-check"] = {
+            "context": ".", "dockerfile": "Dockerfile", "target": "platform-check",
+            "platforms": ["linux/amd64"],
+            "contexts": {"rocky": "docker-image://rocky@sha256:" + "b" * 64}}
+        self.stages["inputs"] = ["platform-python-check"]
+        self.before = self.snapshot()
+        plan = self.change(path)
+        self.assertEqual(plan["mode"], "incremental")
+        self.assertEqual(plan["targets"], {
+            "inputs": ["platform-python-check"], "sdk": ["sdk-complete-dev"]})
+        self.assertEqual(plan["compiler_inputs_changed"], [])
+        self.assertEqual(plan["changes"]["sdk-complete-dev"]["orchestration_files"], [path])
+        self.assertEqual(plan["changes"]["sdk-complete-dev"]["before_sha256"],
+                         plan["changes"]["sdk-complete-dev"]["after_sha256"])
+        del self.stages["sdk"]
+        script.write_text("reset controller\n")
+        self.before = self.snapshot()
+        missing = self.change(path)
+        self.assertEqual(missing["mode"], "full")
+        self.assertIn("without a canonical SDK stage", missing["fallback_reasons"][0])
+
+    def test_shared_ci_executor_change_selects_full_even_when_platform_checks_read_it(self):
+        self.check_shared_controller("scripts/ci-build.py")
+
+    def test_shared_qualification_replay_change_selects_full_even_when_platform_checks_read_it(self):
+        self.check_shared_controller("scripts/crossforge_internal/ci_replay.py")
+
+    def test_syntax_only_component_executor_does_not_establish_runtime_scope(self):
+        self.check_shared_controller("scripts/crossforge_internal/component_build.py")
+
+    def test_new_syntax_only_controller_falls_back_without_an_explicit_mapping(self):
+        self.check_shared_controller("scripts/crossforge_internal/future_controller.py")
+
+    def test_runtime_input_also_read_by_syntax_checks_keeps_its_real_dependency_scope(self):
+        self.recipe.write_text(self.recipe.read_text() +
+            "FROM rocky AS platform-check\nCOPY build.sh /build.sh\nRUN syntax-check\n")
+        self.graph["target"]["platform-python-check"] = {
+            "context": ".", "dockerfile": "Dockerfile", "target": "platform-check",
+            "platforms": ["linux/amd64"],
+            "contexts": {"rocky": "docker-image://rocky@sha256:" + "b" * 64}}
+        self.stages["inputs"] = ["platform-python-check"]
+        self.before = self.snapshot()
+        plan = self.change("build.sh")
+        self.assertEqual(plan["mode"], "incremental")
+        self.assertEqual(set(plan["targets"]), set(self.stages))
+        self.assertEqual(plan["compiler_inputs_changed"], sorted(self.compilers))
+        self.assertEqual(plan["fallback_reasons"], [])
+
+    def check_shared_controller(self, path):
+        script = self.root / path
+        script.parent.mkdir(parents=True)
+        script.write_text("original executor\n")
+        self.recipe.write_text(self.recipe.read_text() +
+            "FROM rocky AS platform-check\nCOPY " + path + " /executor.py\nRUN syntax-check\n")
+        self.graph["target"]["platform-python-check"] = {
+            "context": ".", "dockerfile": "Dockerfile", "target": "platform-check",
+            "platforms": ["linux/amd64"],
+            "contexts": {"rocky": "docker-image://rocky@sha256:" + "b" * 64}}
+        self.stages["inputs"] = ["platform-python-check"]
+        self.before = self.snapshot()
+        plan = self.change(path)
+        self.assertEqual(plan["mode"], "full")
+        self.assertEqual(plan["targets"], {name: sorted(values) for name, values in self.stages.items()})
+        self.assertEqual(plan["compiler_inputs_changed"], [])
+        self.assertIn(path, plan["fallback_reasons"][0])
+        self.assertEqual(plan["artifact_reuse"], "not-authorized-by-source-selection")
+
     def test_sdk_controller_and_real_recipe_changes_keep_both_reasons(self):
         (self.root / "cp39.patch").write_text("modified\n")
         plan = planner.select(self.before, self.snapshot(), ["cp39.patch", "scripts/ci-sdk.py"])
