@@ -82,11 +82,39 @@ def override(graph, solve):
         for target in graph["target"]}}
 
 
-def fresh_vertices(path, owners, started, completed, allow_shared=False):
+def unprefixed_target(graph, root):
+    """Buildx prefixes names only when the actual solve has multiple targets.
+
+    Follow resolved Bake context links after component replacement; stale,
+    unreachable producer definitions do not participate in this solve.
+    https://github.com/docker/buildx/blob/v0.36.1/build/build.go#L453-L508
+    """
+    targets, visited = graph.get("target", {}), set()
+
+    def visit(name, active):
+        require(name in targets and name not in active, "replay solve has a missing or cyclic Bake target")
+        if name in visited:
+            return
+        visited.add(name)
+        contexts = targets[name].get("contexts", {})
+        require(type(contexts) is dict, "replay solve contexts must be an object")
+        for reference in contexts.values():
+            require(type(reference) is str, "replay solve context must be text")
+            if reference.startswith("target:"):
+                visit(reference[len("target:"):], active | {name})
+
+    visit(root, set())
+    return root if visited == {root} else None
+
+
+def fresh_vertices(path, owners, started, completed, allow_shared=False, single_target=None):
     """Use owning target timestamps, retaining cached/failed aliases as fatal."""
     owned = {(target, stage): [] for target, stages in owners.items() for stage in stages}
+    require(single_target is None or set(owners) == {single_target},
+            "unprefixed replay events require exactly one graph-derived owner")
     bad = set()
     pattern = re.compile(r"^\[(\S+) (\S+) \d+/\d+\] RUN ")
+    unprefixed = re.compile(r"^\[(\S+) \d+/\d+\] RUN ")
     with Path(path).open(encoding="utf-8") as stream:
         for line in stream:
             if not line.strip():
@@ -101,9 +129,17 @@ def fresh_vertices(path, owners, started, completed, allow_shared=False):
                     bad.add(digest)
                 require(type(vertex.get("name", "")) is str, "replay vertex name must be text")
                 match = pattern.match(vertex.get("name", ""))
-                if not match or (match[1], match[2]) not in owned:
+                if match:
+                    target, stage = match[1], match[2]
+                    require(single_target is None or target == single_target,
+                            "prefixed replay event contradicts the single-target solve")
+                else:
+                    match = unprefixed.match(vertex.get("name", ""))
+                    if single_target is None or not match:
+                        continue
+                    target, stage = single_target, match[1]
+                if (target, stage) not in owned:
                     continue
-                target, stage = match[1], match[2]
                 marker = owners[target][stage]["marker"]
                 if marker is None or marker in vertex["name"]:
                     owned[(target, stage)].append(vertex)

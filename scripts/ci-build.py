@@ -370,15 +370,16 @@ def run_stage(stage, directory, repository, write=False, cold=False, selected_ta
                     # failed result if evidence or the observed boundary differs.
                     status = 1
                     replay_completed = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                    progress_target = ci_replay.unprefixed_target(resolved if components is not None else graph, target)
                     vertices = replay_driver.fresh_vertices(progress_path, replay_plan["solves"][target]["owners"],
-                        replay_started, replay_completed)
+                        replay_started, replay_completed, single_target=progress_target)
                     if qualification_execution.execution_identity(replay_builder) != replay_execution:
                         raise ValueError(replay_kind + " replay execution environment changed")
                     if replay_driver.plan(ROOT, selected_graph(stage, selected_targets), stage, targets,
                                       replay_execution["build"]) != replay_plan:
                         raise ValueError(replay_kind + " replay source or graph changed")
                     replay_results[target] = {"started_at": replay_started, "completed_at": replay_completed,
-                                               "vertices": vertices}
+                                               "vertices": vertices, "progress_target": progress_target}
                     write_json(directory / "replay-result.json", {
                         "schema_version": 1, "kind": "crossforge-ci-" + replay_kind + "-replay-observation",
                         "stage": stage, "execution": replay_execution, "solves": replay_results,
