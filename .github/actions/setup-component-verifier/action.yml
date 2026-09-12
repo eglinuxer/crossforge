@@ -13,7 +13,8 @@ runs:
       run: |
         set -Eeuo pipefail
         output="$RUNNER_TEMP/crossforge-catalog-verifier"
-        docker buildx bake cosign-host-tool \
+        mkdir -p "$output"
+        docker buildx bake --allow="fs.write=$output" cosign-host-tool \
           --set "cosign-host-tool.output=type=local,dest=$output" \
           --progress=plain
         expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
