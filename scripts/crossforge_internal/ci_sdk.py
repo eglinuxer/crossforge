@@ -14,7 +14,7 @@ import time
 from . import ci_python_rows, component_build, component_ci, python_components, python_handoff
 from . import component_recovery
 from . import python_qualification, python_sdk, python_sdk_catalog, qualification_execution
-from .identity import content_sha256, exact_fields, load_json, require
+from .identity import IdentityError, content_sha256, exact_fields, load_json, require
 
 
 def selected_root(targets):
@@ -50,6 +50,37 @@ def discard_row_intermediates(data):
     for path in paths:
         if path.exists():
             shutil.rmtree(str(path))
+
+
+def preserve_interrupted_rows(source, data, destination):
+    """Snapshot retained row diagnostics after a worker cannot run its finally block."""
+    data, destination = Path(data).absolute(), Path(destination).absolute()
+    require(not destination.exists() and not destination.is_symlink(), "diagnostic snapshot must be new")
+    require(not any(path.is_symlink() for path in [data] + list(data.parents)),
+            "SDK diagnostic source must not traverse symlinks")
+    resolved = destination.resolve()
+    require(data != resolved and data not in resolved.parents and resolved not in data.parents,
+            "diagnostic snapshot must be outside SDK component data")
+    destination.mkdir(parents=True)
+    result = {"schema_version": 1, "kind": "crossforge-interrupted-sdk-diagnostics", "rows": {},
+              "scope": "Diagnostic snapshot only; incomplete files are not qualification or recovery evidence."}
+    fresh = data / "fresh"
+    require(not fresh.is_symlink(), "SDK fresh-row diagnostic source must not be a symlink")
+    for row in python_sdk.matrix(source):
+        directory = fresh / row
+        if not directory.exists() and not directory.is_symlink():
+            continue
+        try:
+            require(directory.is_dir() and not directory.is_symlink(), "SDK row diagnostic source must be a directory")
+            ci_python_rows.preserve_qualification(directory, destination / row, row)
+            result["rows"][row] = {"status": "copied"}
+        except (IdentityError, OSError) as error:
+            # Keep other rows when one file changed during cancellation or is
+            # unreadable. This report cannot authorize component consumption.
+            result["rows"][row] = {"status": "partial", "error": str(error)}
+    result["status"] = "partial" if any(row["status"] == "partial" for row in result["rows"].values()) else "complete"
+    component_build.write_json(destination / "snapshot.json", result)
+    return result
 
 
 def fresh_row(source, graph, row, execution, producer, subjects, expected_sha256, data, evidence, builder, docker_config):

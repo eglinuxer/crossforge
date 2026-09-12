@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 import textwrap
+import tempfile
 import unittest
 from unittest import mock
 
@@ -23,6 +24,93 @@ from crossforge_internal.identity import IdentityError, content_sha256, load_jso
 
 ROOT = fixtures.ROOT
 CLI = runpy.run_path(str(ROOT / "scripts/ci-sdk.py"))
+
+
+class InterruptedSdkDiagnosticsTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory(prefix="interrupted-sdk-")
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.data, self.output = self.root / "data", self.root / "diagnostics"
+
+    def row(self, row):
+        path = self.data / "fresh" / row
+        (path / "payload/component").mkdir(parents=True)
+        # Interrupted raw progress can end mid-record. Preserve its bytes as
+        # diagnostics; do not parse it as a successful execution.
+        (path / "payload/component/execution.jsonl").write_bytes(b'{"vertexes": [')
+        (path / "payload/installed-file").write_text("do not upload installed trees")
+        (path / "oci").mkdir()
+        (path / "oci/blob").write_text("do not upload OCI blobs")
+        return path
+
+    def test_cli_preserves_killed_worker_progress_without_success_or_installed_tree(self):
+        row = self.row("cp314")
+        progress = row / "payload/component/execution.jsonl"
+        progress.unlink()
+        finalized = row / "worker-finally-ran"
+        worker = subprocess.run([sys.executable, "-c", textwrap.dedent("""
+            import os, signal, sys
+            from pathlib import Path
+            try:
+                Path(sys.argv[1]).write_bytes(b'{"vertexes": [')
+                os.kill(os.getpid(), signal.SIGTERM)
+            finally:
+                Path(sys.argv[2]).write_text('finally ran')
+            """), str(progress), str(finalized)], timeout=5)
+        self.assertEqual(worker.returncode, -15)
+        self.assertFalse(finalized.exists())
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/ci-sdk.py"), "preserve-diagnostics",
+            "--component-directory", str(self.data), "--output", str(self.output)],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        files = sorted(p.relative_to(self.output).as_posix() for p in self.output.rglob("*") if p.is_file())
+        self.assertEqual(files, ["cp314/payload/component/execution.jsonl", "snapshot.json"])
+        self.assertEqual((self.output / files[0]).read_bytes(), b'{"vertexes": [')
+        snapshot = load_json(self.output / "snapshot.json")
+        self.assertEqual(snapshot["kind"], "crossforge-interrupted-sdk-diagnostics")
+        self.assertNotIn("result.json", files)
+        with self.assertRaisesRegex(IdentityError, "must be new"):
+            ci_sdk.preserve_interrupted_rows(ROOT, self.data, self.output)
+
+    def test_missing_data_is_a_diagnostic_snapshot_without_fabricated_rows(self):
+        result = ci_sdk.preserve_interrupted_rows(ROOT, self.data, self.output)
+        self.assertEqual(result["rows"], {})
+
+    def test_unsafe_row_keeps_other_rows_and_reports_partial_snapshot(self):
+        path = self.row("cp314") / "payload/component/execution.jsonl"
+        path.unlink()
+        outside = self.root / "outside"
+        outside.write_text("must not copy external bytes")
+        path.symlink_to(outside)
+        self.row("cp39")
+        result = ci_sdk.preserve_interrupted_rows(ROOT, self.data, self.output)
+        self.assertEqual(result["status"], "partial")
+        self.assertEqual(result["rows"]["cp314"]["status"], "partial")
+        self.assertEqual(result["rows"]["cp39"]["status"], "copied")
+        self.assertFalse((self.output / "cp314/payload/component/execution.jsonl").exists())
+        self.assertEqual(outside.read_text(), "must not copy external bytes")
+
+    def test_rejects_linked_source_or_nested_output(self):
+        outside = self.root / "external"
+        outside.mkdir()
+        self.data.symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(IdentityError, "symlinks"):
+            ci_sdk.preserve_interrupted_rows(ROOT, self.data, self.output)
+        self.assertFalse(self.output.exists())
+        self.data.unlink()
+        self.row("cp314")
+        with self.assertRaisesRegex(IdentityError, "outside SDK"):
+            ci_sdk.preserve_interrupted_rows(ROOT, self.data, self.data / "snapshot")
+
+    def test_workflow_snapshots_before_upload_after_failure_or_cancellation(self):
+        action = (ROOT / ".github/actions/run-component-sdk/action.yml").read_text()
+        block = action.split("    - name: Snapshot interrupted Python row diagnostics\n", 1)[1]
+        block = block.split("    - name: Export BuildKit diagnostics", 1)[0]
+        self.assertIn("if: failure() || cancelled()", block)
+        self.assertIn("continue-on-error: true", block)
+        self.assertIn("timeout 30s python3 scripts/ci-sdk.py preserve-diagnostics", block)
+        self.assertLess(action.index("Snapshot interrupted Python row diagnostics"), action.index("uses: actions/upload-artifact"))
 
 
 class MainSdkTests(unittest.TestCase):
