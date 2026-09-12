@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-main-verifier-export-validation-observation",
+  "date_utc": "2026-09-12",
+  "base_commit": "472dcb9c23b8d681dcf24d300069aae3087cbdd0",
+  "failure": {
+    "run_url": "https://github.com/eglinuxer/crossforge/actions/runs/34664783290",
+    "job_id": 103475338956,
+    "source_commit": "93b98417028035c6a57632a92221bdf1327f222e",
+    "error": "ERROR: additional privileges requested",
+    "stage": "setup-component-verifier before registry authentication",
+    "reason": "Bake local output lies outside the checkout and has no explicit filesystem write entitlement"
+  },
+  "change": {
+    "local_exports": 8,
+    "cosign_exports": 7,
+    "source_bundle_identity_exports": 1,
+    "behavior": "Create each selected output directory, then grant fs.write only to that directory",
+    "unchanged_checks": [
+      "pinned binary SHA256",
+      "executable mode",
+      "original Sigstore report validator",
+      "signing and publication policy"
+    ]
+  },
+  "local_validation": {
+    "docker_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "builder": "crossforge-ci-review",
+    "buildx_version": "0.36.1",
+    "buildkit_digest": "sha256:6c2fa84a6b61ccd72899dde4239f8d5717f05f9a8ca6f3cad185fb1a95a94de3",
+    "jq_version": "1.8.1",
+    "jq_binary_sha256": "020468de7539ce70ef1bceaf7cde2e8c4f2ca6c3afb84642aabc5c97d9fc2a0d",
+    "jq_source": "https://github.com/jqlang/jq/releases/tag/jq-1.8.1",
+    "actual_action": {
+      "status": "passed",
+      "results": [
+        {
+          "case": "before",
+          "exit_code": 1,
+          "seconds": 0.139
+        },
+        {
+          "case": "after",
+          "exit_code": 0,
+          "seconds": 4.544
+        }
+      ]
+    },
+    "configuration_tests": 1478,
+    "packaging_tests": 40,
+    "skipped_tests": 0,
+    "full_checks": {
+      "status": "passed",
+      "steps": [
+        {
+          "step": "Release configuration",
+          "seconds": 1.6486720239918213,
+          "exit_code": 0
+        },
+        {
+          "step": "RPM plans, transactions, and locks",
+          "seconds": 1.7200091650011018,
+          "exit_code": 0
+        },
+        {
+          "step": "Configuration tests",
+          "seconds": 111.23531052199542,
+          "exit_code": 0
+        },
+        {
+          "step": "Packaging planner tests",
+          "seconds": 1.1516330879821908,
+          "exit_code": 0
+        },
+        {
+          "step": "Script syntax",
+          "seconds": 0.4565483020269312,
+          "exit_code": 0
+        },
+        {
+          "step": "Generated Bake definition",
+          "seconds": 0.697405721002724,
+          "exit_code": 0
+        }
+      ]
+    },
+    "workflow_actionlint": "passed with only the existing concurrency.queue compatibility exception",
+    "shell_regression": "actual seven Cosign export fragments exercise paths containing spaces and accept only their own existing output directory"
+  },
+  "preserved_unsuccessful_attempts": [
+    "Initial observer mounted the Buildx activity directory read-only.",
+    "Second actual export succeeded but the fixed tools container lacked jq.",
+    "Third export succeeded but the host jq required a newer glibc; a checksum-verified official static binary completed the unchanged action in the fourth observer.",
+    "The first full configuration run rejected a source change during testing. The final fixed source ran the complete checks in full-v2."
+  ],
+  "limits": [
+    "The actual Docker exercise exports the locked Cosign tool and runs the original validators; it does not sign or publish anything.",
+    "Passing local validation does not complete actual PR checks or main component/candidate/native ARM acceptance.",
+    "The eight-export fix is not a performance measurement."
+  ],
+  "documentation": [
+    "https://docs.docker.com/reference/cli/docker/buildx/bake/#allow-extra-privileged-entitlement---allow"
+  ],
+  "evidence": [
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/regression-before.log",
+      "sha256": "ec9e9930d60eaad89de9d25a1de21d4b730e2d4b78971307b51f3c7857e98d28"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/regression-after.log",
+      "sha256": "8c48a33d2c359464395f74f0b2034ed8bf3608b2775d4035d227ae6fba0e0ce0"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/regression-all-exports.log",
+      "sha256": "5eb0de150e139b4477dbf6dc99785b1fedd1c236475d09abe62562c451f2a7b0"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/routing.log",
+      "sha256": "91517333abf9dc3ee39f42886fc735315e00bc0fdf21d543963eafc3fc2bf846"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/actual-v4/actual-action.json",
+      "sha256": "82ba75318b07143a53e9ae7d67dd0dd15c06408ec623599172d36096909eb105"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/actual-v4/before-actual.log",
+      "sha256": "120d20f569c2c55cd489f2792a47f7910cd2a7e22825a54396bcbdd77d3e0d60"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/actual-v4/after-actual.log",
+      "sha256": "ab5c6e40dc7fd941689773c9b24ea63172095614dc471c4633c1e4e4e1998fb2"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/actual-v4/after/crossforge-catalog-verifier/sigstore-verification.json",
+      "sha256": "b8061b0fdccf61743333f51b6e1ce39cf9dfa0e21710304afce7da3ac2020c79"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/full-v2/all-checks.json",
+      "sha256": "3dcf6af7dbd22fcd53a6ad0c645d057f9891edf0271335681caa6f4403b9f350"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/full-v2/validation.log",
+      "sha256": "cc4041405032baa5c30d2532ea8a8937f648a93e4dab07b652c917a4f39cd221"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/full-v2/runtime/config-tests/result.json",
+      "sha256": "54d7d48faf79b95eef8de3168dcfa368efddf1563aadfe3f4aaea97d9386949e"
+    },
+    {
+      "path": "/tmp/crossforge-component-verifier-validation/full-v2/runtime/config-tests/source.json",
+      "sha256": "1847200ca9f431a3f743b16e5dcdb893b6af0850cf2f726bc48dd741f39264ac"
+    }
+  ]
+}

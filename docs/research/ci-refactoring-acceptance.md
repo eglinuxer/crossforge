@@ -1,15 +1,19 @@
 # CI 重构验收状态
 
-本页是六项已确认方案的验收索引，便于评审；详细历史在[实施进度](ci-refactoring-progress.md)。主实现 `f502449` 的 PR #3 仍在运行，尚未合并 main；本地 GCC full 与八阶段源码 SDK 已成功，更新 release 绑定后的 SDK 最终集成继续验证。PR #5 的增量选择修复已通过其真实检查。后续独立分支已补齐 main 资格重放、候选实际执行记录和共享控制模块选路，分别取得本地 Docker 验证；这些后续改造仍需真实 PR/main 验收。本页不构成候选或发布资格证据。
+本页是六项已确认方案的验收索引，便于评审；详细历史在[实施进度](ci-refactoring-progress.md)。截至 2026-09-12 UTC，PR #3、#5、#6 的全部已选真实检查和对应本地 Docker 门禁均通过，变更已进入远程与本地 main `472dcb9`。最终源码树 `0845cc55ac213b64e3307944309cbfe29f7a58c5` 与通过的 PR #6 测试树相同。main 的首次组件准备暴露了 Buildx 外部导出目录缺少 `fs.write` 授权的问题，[八处导出入口的修复](component-verifier-export-2026-09-12.json)已通过实际 Docker 导出与完整 1,478／40 项无跳过回归，真实 PR/main 复验继续。本页不构成候选或发布资格证据。
+
+PR #3 的 18 个已选作业通过，最终反馈 17,109 秒；PR #5 的六个已选作业通过；PR #6 的 18 个已选作业通过，最终反馈 15,898 秒。两次完整 PR 的 SDK 都完成八次 solve、七次本地 OCI 交接，保留记录、产物摘要与实际 provenance 已在断网 Docker 中复核。原控制器完成了 OCI 文件校验；文件在交接后清理，离线复核没有再次读取已删除的层。PR #6 的 SDK 内部构建 6,861.2 秒，所有已执行作业合计 10.401 job-hours；这是单次只读 PR 观察，不能据此声称 main 组件路径已提速。
+
+本地 GCC full 原校验器通过；更新 release 绑定后的两种 SDK 最终集成亦通过，分别验证十三／十四条 fresh RUN，实际集成图和日志没有 GCC/CPython 自身源码编译。main 的签名、跨 job 消费、候选、原生 ARM、恢复与受控性能对照仍待实际通过。以下较早记录保留当时状态，不覆盖本段最新结论。
 
 | 已确认方向 | 当前实现与已取得证据 | 尚待验收 |
 |---|---|---|
-| main 增量，手动生成完整候选 | main push/PR/手动入口、权限边界、required status 和候选入口已分开；工作流静态检查与事件/失败分支回归通过 | 新工作流在 GitHub 上的真实文档、Python、未知 base、PR 和手动候选事件 |
+| main 增量，手动生成完整候选 | main push/PR/手动入口、权限边界、required status 和候选入口已分开；工作流静态检查与事件/失败分支回归通过 | 新工作流在 GitHub 上的真实文档、Python、未知 base 和手动候选事件；真实 PR 已通过 |
 | Docker/Bake 固定组件交接 | 双工具链、GCC 测试上下文和全部原始 Python 组件已有本地 OCI、材料与独立消费验收；受限签名目录及 registry 接口已接入 | GitHub OIDC 签名、跨 job/run 取得与部分重试；引用保留策略的远程验收 |
 | 按组件与下游选择 | 材料闭包、领域失效、未知路径全量兜底和完整结果集合校验已接入；实际 cp39 材料变更已完成计划、源码重放、五份组件、本行资格、独立安装和两种 SDK 验收，其他五行引用保持一致 | GitHub 受影响变更与动态任务验收 |
 | 完整 Python 行与 SDK 交接 | 新报告链的六行各 7 条 fresh RUN、六个独立安装各 2 条 fresh RUN；`python-dev` 的 13 条和 `sdk-complete-dev` 的 14 条 fresh RUN 均通过原校验器复核 | 正式候选的实际执行闭环；本地通过不代替候选最终 digest 与原生 ARM 证据 |
 | 资格复用、强制重放与恢复 | 原 producer/receipt/执行记录保留；主行工作流接入签名交接，SDK 最终集成强制执行；raw 与完整 32+6 恢复记录、候选分阶段 checkpoint 和同 run 部分重试契约已有回归；本地 vcpkg、x86_64 工具链与 cp39 强制重放通过 | 真实 GitHub 恢复、候选最终集成与原生 ARM、签名及 digest-only promotion |
-| 当前 runner、并行度与领域重构 | 标准库模块边界及 Python 3.6 兼容检查已分批落实，测试 fixture 优化已有本地对照；Python 并行上限仍为 2 | 连续三次匹配输入基线、受影响变更、2→3 并行对照和 GitHub 墙钟/job-hours 数据 |
+| 当前 runner、并行度与领域重构 | 标准库模块边界及 Python 3.6 兼容检查已分批落实，测试 fixture 优化已有本地对照；Python 矩阵可手动选择 2／3，默认保持 2 | 连续三次匹配输入基线、受影响变更、2→3 并行对照和 GitHub 墙钟/job-hours 数据 |
 
 此前完整回归在固定 Docker 工具容器中通过配置 1,419 项和打包 40 项，无跳过；四个锁定验证器、三个 renderer、shell 和全部 workflow actionlint 通过。其后完整 SDK 恢复记录仅改编排与诊断，受影响 69 项及 Rocky 8 Python 3.6 的 48 项通过。各批源码摘要、日志与 fixture 边界分别见[主行接入记录](main-python-row-integration-2026-09-11.json)和[完整恢复记录验证](main-sdk-complete-checkpoint-2026-09-11.json)。这些结果不合并成一次未发生的全量测试。
 

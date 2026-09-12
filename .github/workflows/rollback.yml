@@ -242,7 +242,8 @@ jobs:
         run: |
           set -Eeuo pipefail
           output="$RUNNER_TEMP/cosign-tool"
-          docker buildx bake cosign-host-tool \
+          mkdir -p "$output"
+          docker buildx bake cosign-host-tool --allow="fs.write=$output" \
             --set "cosign-host-tool.output=type=local,dest=$output" \
             --progress=plain
           expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)

@@ -90,6 +90,8 @@ class CandidateWorkflowTests(unittest.TestCase):
             self.workflow,
         )
         self.assertIn("docker buildx bake source-bundle-identity", self.workflow)
+        self.assertIn('mkdir -p "$identity_root"', self.workflow)
+        self.assertIn('source-bundle-identity --allow="fs.write=$identity_root"', self.workflow)
         self.assertIn("anonymous-source-index.json", self.workflow)
         self.assertIn(
             "Prove the complete source payload is anonymously retrievable",

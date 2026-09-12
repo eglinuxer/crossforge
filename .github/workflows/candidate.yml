@@ -137,7 +137,8 @@ jobs:
             --set "source-bundle.attest+=type=sbom,generator=$SBOM_GENERATOR" \
             --metadata-file "$RUNNER_TEMP/source-build-metadata.json" \
             --progress=plain
-          docker buildx bake source-bundle-identity \
+          mkdir -p "$identity_root"
+          docker buildx bake source-bundle-identity --allow="fs.write=$identity_root" \
             --set "source-bundle-identity.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
             --set "source-bundle-identity.output=type=local,dest=$identity_root" \
             --progress=plain
@@ -902,7 +903,8 @@ jobs:
         run: |
           set -Eeuo pipefail
           output="$RUNNER_TEMP/cosign-tool"
-          docker buildx bake cosign-host-tool \
+          mkdir -p "$output"
+          docker buildx bake cosign-host-tool --allow="fs.write=$output" \
             --set "cosign-host-tool.output=type=local,dest=$output" \
             --progress=plain
           expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
