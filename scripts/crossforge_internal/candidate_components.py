@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 from . import bake_materials, component_build, component_ci, component_inputs, component_recovery, component_resolution
-from . import candidate_qualification, qualification_execution
+from . import candidate_qualification, candidate_rows, qualification_execution
 from .identity import content_sha256, digest_value, exact_fields, file_record, load_json, require
 
 
@@ -72,7 +72,7 @@ def capture(source, graph, execution, bindings):
             "candidate component graph still includes GCC or CPython source compilation")
     require(graph["target"][TARGET].get("target") == TARGET, "candidate publication stage changed")
     files = {item["path"]: item for item in value["files"]}
-    for name in ("candidate_components", "candidate_qualification", "ci_replay", "qualification_execution"):
+    for name in ("candidate_components", "candidate_qualification", "candidate_rows", "ci_replay", "qualification_execution"):
         path = "scripts/crossforge_internal/" + name + ".py"
         files[path] = file_record(source, path)
     value["files"] = [files[path] for path in sorted(files)]
@@ -80,11 +80,22 @@ def capture(source, graph, execution, bindings):
 
 
 def validate_selection(value, commit):
-    component_recovery.validate(value)
-    require(value["context"]["stage"] == STAGE and value["context"]["targets"] == [TARGET] and
-            value["context"]["source_commit"] == commit and value["components"],
+    raw, rows = selection_parts(value)
+    component_recovery.validate(raw)
+    candidate_rows.validate(rows)
+    require(raw["context"]["stage"] == STAGE and raw["context"]["targets"] == [TARGET] and
+            raw["context"]["source_commit"] == commit and raw["components"],
             "candidate component selection belongs to another source or stage")
     return value
+
+
+def selection_parts(value):
+    if type(value) is dict and value.get("kind") == "crossforge-candidate-component-selection":
+        exact_fields(value, ("schema_version", "kind", "raw", "rows"), "candidate component selection")
+        require(type(value["schema_version"]) is int and value["schema_version"] == 1 and value["rows"],
+                "unsupported or empty candidate row selection")
+        return value["raw"], value["rows"]
+    return value, {}
 
 
 def prepare(source, binding_path, directory, data, builder, oras, cosign, docker_config=None):
@@ -109,19 +120,31 @@ def prepare(source, binding_path, directory, data, builder, oras, cosign, docker
             "candidate requires all centrally prepared raw components; source fallback is disabled")
     results = dict(toolchains["components"], **python["components"])
     selection = validate_selection(component_recovery.document(context, results, required), commit)
+    raw_bindings = identities(resolved, results)
+    component_build.write_json(directory / "raw.bake.json", resolved)
+    raw_graph_sha256 = content_sha256(resolved)
+    resolved, row_bindings, reused = candidate_rows.bind(source, graph, resolved, raw_bindings, qualified_execution,
+        results, cosign, data / "rows", directory / "rows", builder, oras, docker_config)
+    if reused:
+        candidate_rows.check_inputs(source, qualified_execution, reused, selection)
+        selection = validate_selection({"schema_version": 1, "kind": "crossforge-candidate-component-selection",
+            "raw": selection, "rows": reused}, commit)
     # Resolve linked targets again so removed compiler subgraphs and their
     # unused contexts cannot survive in the actual publication graph.
     intermediate = directory / "resolved.bake.json"
     component_build.write_json(intermediate, resolved)
     final = reparse(source, intermediate, builder, docker_config)
     bindings = identities(final, results)
+    bindings.update(row_bindings)
     inputs = capture(source, final, qualified_execution, bindings)
-    qualification = candidate_qualification.plan(source, inputs)
+    qualification = candidate_qualification.plan(source, inputs, reused)
     final = candidate_qualification.override(final, qualification)
     ready = {"schema_version": 2, "kind": "crossforge-candidate-component-binding", "source_commit": commit,
         "source_binding_sha256": content_sha256(binding), "execution": execution, "bindings": bindings,
         "graph_sha256": content_sha256(final), "inputs": inputs, "selection": selection,
         "qualification_execution": qualified_execution, "qualification": qualification}
+    if reused:
+        ready.update(schema_version=3, raw_graph_sha256=raw_graph_sha256, raw_bindings=raw_bindings)
     component_build.write_json(directory / "components.bake.json", final)
     component_build.write_json(directory / "ready.json", ready)
     component_build.write_json(directory / "component-selection.json", selection)
@@ -133,9 +156,11 @@ def check(source, binding_path, directory, sha256, builder, docker_config=None):
     directory = Path(directory)
     digest_value(sha256, "independent candidate binding SHA256")
     ready = load_json(directory / "ready.json")
+    version = ready.get("schema_version") if type(ready) is dict else None
     exact_fields(ready, ("schema_version", "kind", "source_commit", "source_binding_sha256", "execution", "bindings",
-                        "graph_sha256", "inputs", "selection", "qualification_execution", "qualification"), "candidate component binding")
-    require(type(ready["schema_version"]) is int and ready["schema_version"] == 2 and
+                        "graph_sha256", "inputs", "selection", "qualification_execution", "qualification") +
+                 (("raw_graph_sha256", "raw_bindings") if version == 3 else ()), "candidate component binding")
+    require(type(version) is int and version in (2, 3) and
             ready["kind"] == "crossforge-candidate-component-binding" and content_sha256(ready) == sha256,
             "candidate binding document differs")
     producer = component_ci.checked_source(source, "candidate")
@@ -149,15 +174,24 @@ def check(source, binding_path, directory, sha256, builder, docker_config=None):
     with tempfile.TemporaryDirectory(prefix="candidate-source-", dir=str(directory.parent)) as temporary:
         graph = publication_graph(source, binding, commit, Path(temporary) / "source", builder, docker_config)
     context = component_recovery.context(source, graph, STAGE, [TARGET], execution, commit)
-    require(ready["selection"]["context"] == context, "candidate source graph changed")
-    component_recovery.validate(ready["selection"], component_recovery.requirements(source, graph, True))
     validate_selection(ready["selection"], commit)
+    raw, reused = selection_parts(ready["selection"])
+    require(bool(reused) == (version == 3), "candidate binding and row selection versions differ")
+    require(raw["context"] == context, "candidate source graph changed")
+    component_recovery.validate(raw, component_recovery.requirements(source, graph, True))
     require(load_json(directory / "component-selection.json") == ready["selection"], "candidate component selection changed")
     resolved = load_json(directory / "components.bake.json")
     require(content_sha256(resolved) == ready["graph_sha256"], "candidate component graph changed")
     expected = capture(source, resolved, qualified_execution, ready["bindings"])
     component_inputs.require_match(ready["inputs"], expected)
-    require(ready["qualification"] == candidate_qualification.plan(source, expected) and
+    if reused:
+        candidate_rows.check_inputs(source, qualified_execution, reused, raw)
+        raw_graph = load_json(directory / "raw.bake.json")
+        require(content_sha256(raw_graph) == ready["raw_graph_sha256"], "candidate raw graph changed")
+        for row, value in reused.items():
+            row_inputs = candidate_rows.inputs(source, raw_graph, row, qualified_execution, ready["raw_bindings"])
+            component_inputs.require_match(value["receipt"]["contract"]["inputs"], row_inputs)
+    require(ready["qualification"] == candidate_qualification.plan(source, expected, reused) and
             resolved == candidate_qualification.override(resolved, ready["qualification"]),
             "candidate qualification coverage or forced stages changed")
     return ready

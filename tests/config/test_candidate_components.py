@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 try:
     from crossforge_internal import candidate_components as candidate, component_build, component_ci, component_inputs
-    from crossforge_internal import component_recovery, component_resolution, python_components, qualification_execution
+    from crossforge_internal import component_recovery, component_resolution, python_components, python_row_resolution, qualification_execution
     from crossforge_internal.identity import IdentityError, content_sha256, load_json
 finally:
     sys.path.pop(0)
@@ -39,6 +39,7 @@ class CandidateComponentGraphTests(unittest.TestCase):
         self.directory = self.root / "prepared"
         self.producer = dict(recovery_fixtures.selection()["producer"], source_commit=self.commit)
         self.resolved = []
+        self.raw_results = {}
 
     def result(self, settings, directory):
         self.resolved.append(settings["component"])
@@ -50,6 +51,7 @@ class CandidateComponentGraphTests(unittest.TestCase):
                       reference=component_recovery.REPOSITORY + "@" + digest,
                       subject={"receipt": str(directory / "receipt.json"), "receipt_sha256": content_sha256(receipt),
                                "layout": str(directory / "oci")})
+        self.raw_results[settings["component"]] = result
         return result
 
     def toolchain(self, source, graph, arch, role, execution, cosign, directory, *args):
@@ -73,6 +75,8 @@ class CandidateComponentGraphTests(unittest.TestCase):
             return_value={"build": self.execution, "host": {"fixture": True}}))
         stack.enter_context(mock.patch.object(component_resolution, "toolchain", side_effect=self.toolchain))
         stack.enter_context(mock.patch.object(component_resolution, "python", side_effect=self.python))
+        stack.enter_context(mock.patch.object(python_row_resolution, "resolve",
+            return_value={"status": "qualification-required", "reason": "catalog-index-absent"}))
         return stack
 
     def prepare(self):

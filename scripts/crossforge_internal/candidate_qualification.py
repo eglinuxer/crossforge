@@ -1,8 +1,8 @@
-"""Require fresh qualification for the exact candidate's component graph.
+"""Require complete qualification for the exact candidate's component graph.
 
 Build caches remain useful for material preparation. They do not establish a
-qualification receipt for this worker, so every declared qualification owner
-must supply its own fresh RUN events before the candidate can be checkpointed.
+qualification receipt. Only explicitly authenticated matching rows may retain
+their original execution; every remaining owner must supply fresh RUN events.
 """
 
 import copy
@@ -12,7 +12,7 @@ from pathlib import Path
 import runpy
 import subprocess
 
-from . import ci_replay, component_build, component_inputs, component_qualification, python_qualification, python_sdk
+from . import candidate_rows, ci_replay, component_build, component_inputs, component_qualification, python_qualification, python_sdk
 from .identity import content_sha256, digest_value, exact_fields, load_json, require
 
 
@@ -46,10 +46,25 @@ def policy(source):
     return owners
 
 
-def plan(source, inputs):
+def plan(source, inputs, reused=None):
+    reused = {} if reused is None else reused
+    candidate_rows.validate(reused)
+    require(set(reused) <= set(python_sdk.matrix(source)), "candidate reuses an unsupported Python row")
     recipes = inputs["parameters"]["recipes"]
+    omitted = set()
+    for row, value in reused.items():
+        component_inputs.verify_files(value["receipt"]["contract"]["inputs"], source)
+        require(value["receipt"]["contract"]["inputs"]["parameters"].get("execution") ==
+                inputs["parameters"]["execution"], "candidate row execution environment differs")
+        omitted.update(python_qualification.spec(source, row)["replay"])
+    expected_rows = [candidate_rows.dependency(row, value) for row, value in sorted(reused.items())]
+    require([item for item in inputs["dependencies"] if item["component"].startswith("qualification/python-")] == expected_rows,
+            "candidate qualified row dependencies differ from checked reuse evidence")
+    require(not omitted & set(recipes), "candidate reused row still has qualification producers")
     owners = {}
     for target, stages in policy(source).items():
+        if target in omitted:
+            continue
         require(target in recipes, "candidate omits a qualification owner: " + target)
         owners[target] = {}
         for stage in stages:
@@ -60,7 +75,10 @@ def plan(source, inputs):
             if stage == "python-sdk-append":
                 marker = '--row "' + target[len("python-dev-append-"):] + '"'
             owners[target][stage] = {"runs": count, "marker": marker}
-    return {"schema_version": 1, "kind": "crossforge-candidate-qualification-plan", "owners": owners}
+    value = {"schema_version": 1, "kind": "crossforge-candidate-qualification-plan", "owners": owners}
+    if reused:
+        value.update(schema_version=2, reused_rows={row: item["pin"]["receipt_sha256"] for row, item in sorted(reused.items())})
+    return value
 
 
 def override(graph, selected):
@@ -80,11 +98,17 @@ def fresh_vertices(path, selected, started, completed):
     avoids claiming that the same physical RUN executed twice. The existing
     verifier still rejects cached/failed aliases and incomplete/stale events.
     """
-    exact_fields(selected, ("schema_version", "kind", "owners"), "candidate qualification plan")
-    require(type(selected["schema_version"]) is int and selected["schema_version"] == 1 and
+    version = selected.get("schema_version") if type(selected) is dict else None
+    exact_fields(selected, ("schema_version", "kind", "owners") + (("reused_rows",) if version == 2 else ()),
+                 "candidate qualification plan")
+    require(type(version) is int and version in (1, 2) and
             selected["kind"] == "crossforge-candidate-qualification-plan" and selected["owners"],
             "unsupported or empty candidate qualification plan")
     result = {}
+    if version == 2:
+        require(type(selected["reused_rows"]) is dict and selected["reused_rows"], "candidate reuse plan is empty")
+        for digest in selected["reused_rows"].values():
+            digest_value(digest, "candidate reused row receipt SHA256")
     # The GCC log can be large. Parse it once for the whole owner set.
     vertices = ci_replay.fresh_vertices(path, selected["owners"], started, completed, allow_shared=True)
     for vertex in vertices:
@@ -142,6 +166,8 @@ def execute(source, binding_path, directory, sha256, builder, output, reference,
         "component_selection_sha256": content_sha256(ready["selection"]),
         "execution": ready["qualification_execution"], "started_at": started, "completed_at": completed,
         "vertices": vertices}
+    if ready["qualification"]["schema_version"] == 2:
+        result.update(schema_version=2, reused_rows=copy.deepcopy(ready["qualification"]["reused_rows"]))
     component_build.write_json(output / FILES[0], result)
     return result
 
@@ -152,10 +178,12 @@ def verify(source, directory, owner, image_digest, selection, source_binding):
     for name in FILES:
         require((directory / name).is_file() and not (directory / name).is_symlink(), "candidate execution evidence is missing")
     result, inputs, selected = [load_json(directory / name) for name in FILES[:3]]
+    version = result.get("schema_version") if type(result) is dict else None
     exact_fields(result, ("schema_version", "kind", "status", "producer", "image_digest", "inputs_sha256",
-        "source_binding_sha256", "component_selection_sha256", "execution", "started_at", "completed_at", "vertices"),
+        "source_binding_sha256", "component_selection_sha256", "execution", "started_at", "completed_at", "vertices") +
+        (("reused_rows",) if version == 2 else ()),
         "candidate qualification execution")
-    require(type(result["schema_version"]) is int and result["schema_version"] == 1 and
+    require(type(version) is int and version in (1, 2) and
             result["kind"] == "crossforge-candidate-qualification-execution" and result["status"] == "passed",
             "candidate qualification execution did not pass")
     digest_value(image_digest, "candidate execution image digest", oci=True)
@@ -170,7 +198,14 @@ def verify(source, directory, owner, image_digest, selection, source_binding):
     exact_fields(result["execution"], ("build", "host"), "candidate qualification environment")
     require(result["execution"]["host"] and inputs["parameters"]["execution"] == result["execution"],
             "candidate qualification physical environment differs")
-    require(selected == plan(source, inputs), "candidate qualification coverage differs")
+    from . import candidate_components
+    candidate_components.validate_selection(selection, owner["source_commit"])
+    raw, reused = candidate_components.selection_parts(selection)
+    require(bool(reused) == (version == 2), "candidate execution and row selection versions differ")
+    candidate_rows.check_inputs(source, result["execution"], reused, raw)
+    require(selected == plan(source, inputs, reused), "candidate qualification coverage differs")
+    if version == 2:
+        require(result["reused_rows"] == selected["reused_rows"], "candidate prior row receipt selection differs")
     require(result["vertices"] == fresh_vertices(directory / FILES[3], selected,
             result["started_at"], result["completed_at"]), "candidate fresh execution evidence differs")
     return result
