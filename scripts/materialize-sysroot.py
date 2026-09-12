@@ -294,7 +294,9 @@ def retryable_download_error(error):
         return error.code in (408, 429, 500, 502, 503, 504)
     if isinstance(error, urllib.error.URLError):
         return retryable_download_error(error.reason)
-    if isinstance(error, ssl.SSLCertVerificationError):
+    # CertificateError exists on EL8 Python 3.6 and aliases the newer
+    # SSLCertVerificationError on Python 3.7 and later.
+    if isinstance(error, ssl.CertificateError):
         return False
     if isinstance(error, ssl.SSLError):
         # Retry the observed transport failure with a fresh, verified connection.

@@ -248,7 +248,10 @@ COPY --from=rpm-source-bundle-verified /src/locks/rpm-source-el8.json \
 FROM config-validate AS platform-python-check
 COPY scripts/ ./scripts/
 COPY docker/*.py ./docker/
+COPY tests/config/test_materialize_sysroot.py ./tests/config/test_materialize_sysroot.py
 RUN /usr/libexec/platform-python -m compileall -q ./scripts ./docker
+RUN --network=none /usr/libexec/platform-python -m unittest discover \
+    -s tests/config -p test_materialize_sysroot.py
 RUN PYTHONPATH=/src/scripts /usr/libexec/platform-python -c \
     'from crossforge_internal.component_inputs import capture, identity, verify_files; value = capture("/src", "check/platform-python", "build", ["scripts/crossforge_internal/component_inputs.py"]); verify_files(value, "/src"); assert len(identity(value)) == 64'
 RUN /usr/libexec/platform-python ./scripts/component-artifact.py --help \
