@@ -97,9 +97,56 @@ class ReplayEvidenceTests(unittest.TestCase):
         self.vertex = {"digest": "sha256:" + "a" * 64, "name": "[owner gate 1/1] RUN check",
             "started": "2026-09-10T00:00:01Z", "completed": "2026-09-10T00:00:02Z"}
 
-    def check(self, vertices):
+    def check(self, vertices, single_target=None):
         self.path.write_text("".join(json.dumps({"vertexes": [v]}) + "\n" for v in vertices))
-        return ci_replay.fresh_vertices(self.path, self.owners, "2026-09-10T00:00:00Z", "2026-09-10T00:00:03Z")
+        return ci_replay.fresh_vertices(self.path, self.owners, "2026-09-10T00:00:00Z", "2026-09-10T00:00:03Z",
+                                       single_target=single_target)
+
+    def test_unprefixed_run_requires_a_single_owner_from_the_resolved_solve(self):
+        vertex = dict(self.vertex, name="[gate 1/1] RUN check")
+        with self.assertRaises(IdentityError):
+            self.check([vertex])
+        actual = self.check([vertex], single_target="owner")[0]
+        self.assertEqual(actual["target"], "owner")
+        self.assertEqual(actual["name"], vertex["name"])
+        for owner in ("different", ""):
+            with self.assertRaises(IdentityError):
+                self.check([vertex], single_target=owner)
+        self.owners["second"] = copy.deepcopy(self.owners["owner"])
+        with self.assertRaises(IdentityError):
+            self.check([vertex], single_target="owner")
+
+    def test_unprefixed_events_retain_failure_cache_interval_and_coverage_checks(self):
+        vertex = dict(self.vertex, name="[gate 1/1] RUN check")
+        for changes in ({"cached": True}, {"error": "failed"}, {"completed": None},
+                        {"completed": "2026-09-11T00:00:00Z"}, {"name": "[other gate 1/1] RUN check"}):
+            sequences = [[vertex, dict(vertex, **changes)]]
+            if "completed" not in changes:
+                sequences.append([dict(vertex, **changes), vertex])
+            for events in sequences:
+                with self.subTest(changes=changes), self.assertRaises(IdentityError):
+                    self.check(events, single_target="owner")
+        self.assertEqual(len(self.check([dict(vertex, completed=None), vertex], single_target="owner")), 1)
+        alias = dict(self.vertex, name="[other gate 1/1] RUN check", cached=True)
+        with self.assertRaises(IdentityError):
+            self.check([vertex, alias], single_target="owner")
+        self.owners["owner"]["gate"]["runs"] = 2
+        with self.assertRaises(IdentityError):
+            self.check([vertex, vertex], single_target="owner")
+
+    def test_single_target_detection_uses_live_links_and_rejects_ambiguous_graphs(self):
+        graph = {"target": {"owner": {"contexts": {"component": "target:producer"}}, "producer": {}}}
+        self.assertIsNone(ci_replay.unprefixed_target(graph, "owner"))
+        graph["target"]["owner"]["contexts"]["component"] = "oci-layout:///component@sha256:" + "a" * 64
+        self.assertEqual(ci_replay.unprefixed_target(graph, "owner"), "owner")
+        for link in ("target:missing", "target:owner"):
+            graph["target"]["owner"]["contexts"]["component"] = link
+            with self.assertRaises(IdentityError):
+                ci_replay.unprefixed_target(graph, "owner")
+        graph["target"]["owner"]["contexts"]["component"] = "target:producer"
+        graph["target"]["producer"]["contexts"] = {"loop": "target:owner"}
+        with self.assertRaises(IdentityError):
+            ci_replay.unprefixed_target(graph, "owner")
 
     def test_owning_events_keep_original_times_and_reject_bad_aliases(self):
         alias = dict(self.vertex, name="[consumer gate 1/1] RUN check", completed="2026-09-11T00:00:00Z")
@@ -168,6 +215,12 @@ class ReplayEvidenceTests(unittest.TestCase):
         self.assertTrue(report["complete"])
         self.assertFalse(report["qualification_receipt"])
         self.assertEqual(report["solves"]["owner"]["vertices"][0]["target"], "owner")
+
+    def test_ci_component_replacement_accepts_original_unprefixed_events(self):
+        self.assertEqual(self.run_fixture({"name": "[gate 1/1] RUN check"}), 0)
+        report = load_json(self.root / "diagnostics/replay-result.json")
+        self.assertEqual(report["solves"]["owner"]["progress_target"], "owner")
+        self.assertEqual(report["solves"]["owner"]["vertices"][0]["name"], "[gate 1/1] RUN check")
 
     def test_successful_build_with_cached_evidence_is_failed_ci(self):
         with self.assertRaises(IdentityError):
