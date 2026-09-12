@@ -99,6 +99,18 @@ class CandidateRowTests(unittest.TestCase):
             self.assertEqual(candidate_components.check(ROOT, self.fixture.binding, self.fixture.directory,
                 content_sha256(ready), "fixture"), ready)
 
+    def test_row_input_capture_uses_the_original_verified_toolchain_sysroots(self):
+        ready = self.prepare()
+        _, rows = candidate_components.selection_parts(ready["selection"])
+        inputs = rows["cp39"]["receipt"]["contract"]["inputs"]
+        targets = inputs["parameters"]["bake_targets"]
+        for arch in ("x86_64", "aarch64"):
+            self.assertNotIn("sysroot-" + arch, targets)
+            runtime = targets["cpython-cp39-" + arch + "-qualify"]["contexts"]["crossforge_sysroot"]
+            self.assertEqual(runtime["component"], "toolchain/" + arch + "-install")
+            toolchain = next(item for item in inputs["dependencies"] if item["component"] == runtime["component"])
+            self.assertEqual(runtime["artifact_digest"], toolchain["artifact_digest"])
+
     def test_all_rows_reused_still_require_final_sdk_packaging_gcc_and_vcpkg(self):
         self.selected = set(python_sdk.matrix(ROOT))
         ready = self.prepare()
@@ -191,6 +203,12 @@ class CandidateRowTests(unittest.TestCase):
         with self.fixture.patches(), self.assertRaises(IdentityError):
             candidate_components.check(ROOT, self.fixture.binding, self.fixture.directory, content_sha256(altered), "fixture")
 
+    def test_fresh_build_rechecks_current_inspection_tools(self):
+        ready = self.prepare()
+        with self.fixture.patches(), mock.patch.object(python_qualification, "inspection_identity", return_value={"changed": True}), \
+                self.assertRaises(IdentityError):
+            candidate_components.check(ROOT, self.fixture.binding, self.fixture.directory, content_sha256(ready), "fixture")
+
     def test_published_sdk_checkpoint_preserves_prior_rows_across_later_attempts(self):
         ready = self.prepare()
 
@@ -216,7 +234,8 @@ class CandidateRowTests(unittest.TestCase):
         for attempt in (3, 4):
             output = self.fixture.root / ("recovery-%d" % attempt)
             current = dict(self.fixture.fixture.original, attempt=attempt)
-            restored = candidate_publication.restore(ROOT, directory, content_sha256(checkpoint), current, "sdk", output)
+            with mock.patch.object(python_qualification, "inspection_identity", side_effect=AssertionError("recovery must retain the original worker")):
+                restored = candidate_publication.restore(ROOT, directory, content_sha256(checkpoint), current, "sdk", output)
             self.assertEqual(restored["producer"]["attempt"], 2)
             self.assertEqual(load_json(output / "candidate.json"), candidate)
             self.assertEqual(load_json(output / "component-selection.json"), ready["selection"])

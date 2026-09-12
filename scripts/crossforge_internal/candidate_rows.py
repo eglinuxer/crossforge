@@ -69,7 +69,22 @@ def dependency(row, value):
 def inputs(source, graph, row, execution, raw_bindings):
     settings = python_qualification.spec(source, row)
     bindings = {key: value for key, value in raw_bindings.items() if key.split(":", 1)[0] in settings["replay"]}
-    return python_qualification.inputs(source, graph, settings, execution, bindings)
+    resolved = copy.deepcopy(graph)
+    for arch in python_components.ARCHES:
+        build = "cpython-%s-%s-qualify-build" % (row, arch)
+        runtime = "cpython-%s-%s-qualify" % (row, arch)
+        subject = bindings[build + ":crossforge_toolchain"]
+        require(subject["component"] == "toolchain/%s-install" % arch, "candidate row toolchain identity differs")
+        reference = resolved["target"][build]["contexts"]["crossforge_toolchain"]
+        contexts = resolved["target"][runtime]["contexts"]
+        require(contexts["crossforge_sysroot"] in ("target:sysroot-" + arch, reference),
+                "candidate row sysroot boundary differs")
+        # The original row resolver obtains both runtime sysroots from the
+        # verified toolchain installations. Match that seven-subject graph,
+        # rather than recapturing the separate raw SDK sysroot producers.
+        contexts["crossforge_sysroot"] = reference
+        bindings[runtime + ":crossforge_sysroot"] = subject
+    return python_qualification.inputs(source, resolved, settings, execution, bindings)
 
 
 def check_inputs(source, execution, rows, raw):
@@ -81,9 +96,11 @@ def check_inputs(source, execution, rows, raw):
         inputs = value["receipt"]["contract"]["inputs"]
         component_inputs.verify_files(inputs, source)
         require(inputs["parameters"].get("execution") == execution and
-                inputs["parameters"].get("qualification") == python_qualification.spec(source, row) and
-                inputs["parameters"].get("inspection") == python_qualification.inspection_identity(),
+                inputs["parameters"].get("qualification") == python_qualification.spec(source, row),
                 "candidate prior row policy or physical environment differs")
+        # This also reads historical SDK checkpoints on a different worker.
+        # Current inspection binaries are bound by inputs() during preparation
+        # and each pre/post-build check, not substituted during image recovery.
         auth = value["authentication"]
         require(auth["verifier_sha256"] == policy["verifier"]["binary"]["sha256"] and
                 auth["trusted_root_sha256"] == policy["trust"]["trusted_root_sha256"],
