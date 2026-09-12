@@ -501,9 +501,16 @@ CPython source compiler input. Missing components fail before SDK publication;
 they do not trigger a source fallback. `candidate-components.py` binds the
 source bundle, source inventory, graph, execution identity and original component
 selections, then rechecks them after the image build. Ordinary cache imports
-remain available for other dependencies and existing gates. This does not
-replace raw components with qualified-row receipts or change qualification policy.
-The final SDK still validates its GCC full evidence and all existing contracts.
+remain available for material preparation. Candidate preparation also looks up
+each Python row using the original signed-row resolver. Reuse requires the exact
+current inputs, seven raw subjects, inspection tools and physical execution
+environment, followed by the original OCI, installed-file and execution checks.
+Only an absent input index permits fresh row qualification; authentication,
+transfer or report failures stop preparation. A matching row replaces its append
+input and removes only that row's qualification producers from the Bake graph.
+Toolchain, GCC, vcpkg, packaging, every row append and final SDK/candidate gates
+still require fresh RUN evidence. The final SDK validates GCC full evidence and
+all existing contracts.
 Qt build/runtime evidence is optional and is not required by candidate signing
 or stable promotion. Native AArch64 compiler probes remain mandatory.
 
@@ -525,9 +532,17 @@ run/attempt, release, raw OCI index and Buildx metadata, archive identity and
 locked SBOM generator report. The SDK checkpoint embeds the original source
 checkpoint and preserves its files byte for byte. SDK checkpoint schema 2 also
 preserves `component-selection.json`, including original catalog, receipt and OCI
-digests and producers. These checkpoints record
-publication identity; qualification and anonymous byte retrieval still run in
-the downstream gates.
+digests and producers. Schema 3 additionally binds the candidate's qualification
+inputs, selected fresh owners, BuildKit events and execution result. When rows
+are reused, the component selection wraps the original raw selection and keeps
+each original row receipt, qualification report and catalog authentication record.
+The plan and execution result use schema 2 to name the reused receipt digests;
+the all-fresh formats remain unchanged. These records do not independently grant
+trust: initial consumption performs signature and byte verification, and recovery
+requires the original successful job's immutable artifact ID and checkpoint SHA.
+Recovery restores the published image without selecting new row indices or
+rebuilding it. Anonymous image checks and native ARM acceptance still run in
+their downstream gates.
 
 If SDK publication fails after the source checkpoint succeeds, or final consumer
 checks fail after the SDK checkpoint succeeds, use `gh run rerun RUN_ID --failed`
