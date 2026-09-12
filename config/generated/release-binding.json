@@ -92,10 +92,22 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "e56b894afb77f86af59a0c65b78814d5be0f5256d5e14af3edd4d1f94c146865",
+      "component": "implementation/python-cp310-qualification-policy",
+      "path": "config/generated/components/implementation/python-cp310-qualification-policy.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
       "component": "implementation/python-cp311-build-policy",
       "path": "config/generated/components/implementation/python-cp311-build-policy.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "275e4815224bc36e8e2b73c4ab97ad717ff7e02b64f15a15e3280317277be510",
+      "component": "implementation/python-cp311-qualification-policy",
+      "path": "config/generated/components/implementation/python-cp311-qualification-policy.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
@@ -104,10 +116,22 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "ce60185a7bd228615fd67bbf47c638dc9993ad647dbe31cf238490c8f449a72d",
+      "component": "implementation/python-cp312-qualification-policy",
+      "path": "config/generated/components/implementation/python-cp312-qualification-policy.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
       "component": "implementation/python-cp313-build-policy",
       "path": "config/generated/components/implementation/python-cp313-build-policy.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "fb7f3c56cabe3fd4c657a42b76d5709a29d43cd8abf1b07ed675fec3ce010705",
+      "component": "implementation/python-cp313-qualification-policy",
+      "path": "config/generated/components/implementation/python-cp313-qualification-policy.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
@@ -116,10 +140,22 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "78569657cb92355bc8bc7dbb32ca2aa4f6c2758996f82c5142d3ef1c8a2110a9",
+      "component": "implementation/python-cp314-qualification-policy",
+      "path": "config/generated/components/implementation/python-cp314-qualification-policy.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
       "component": "implementation/python-cp39-build-policy",
       "path": "config/generated/components/implementation/python-cp39-build-policy.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "1a71b1d6837f6ff62d5b50aef69200a9ce2aff07417c30cebd050df74a5afaa0",
+      "component": "implementation/python-cp39-qualification-policy",
+      "path": "config/generated/components/implementation/python-cp39-qualification-policy.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
@@ -200,10 +236,22 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "e92938a54da26289ebab4ca14020b8a01459f9bdba53119da47a66398f041257",
+      "component": "python/cp310-aarch64-qualification",
+      "path": "config/generated/components/python/cp310-aarch64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "06f91d2b66c85b20e864dbc792b44f1e17772cb865fd18d7bbea7f3f3acfa6d8",
       "component": "python/cp310-native-build",
       "path": "config/generated/components/python/cp310-native-build.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "feea6adce5bcea010ce631b67d38e78fde2d30b3e61600faab37bc44db8b6e04",
+      "component": "python/cp310-qualification",
+      "path": "config/generated/components/python/cp310-qualification.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
@@ -218,16 +266,34 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "26a6e9443ef0334da11510d524baa0a6afe249c3e0db8ee7dbb546ca5266eac6",
+      "component": "python/cp310-x86_64-qualification",
+      "path": "config/generated/components/python/cp310-x86_64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "6008a45ee300380d6c2a2da86a1297f2e0b03b04c54aabacad48b5c4d5400973",
       "component": "python/cp311-aarch64-build",
       "path": "config/generated/components/python/cp311-aarch64-build.json",
       "scope": "build"
     },
     {
+      "canonical_sha256": "557bb7db872da683874661a92ffcdabc15f908acab5408a884274af2e927cef1",
+      "component": "python/cp311-aarch64-qualification",
+      "path": "config/generated/components/python/cp311-aarch64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "d329b20de620e9d6be4d82dd847a41c2ce9a114a5754c60122af573c8e19106b",
       "component": "python/cp311-native-build",
       "path": "config/generated/components/python/cp311-native-build.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "3a6c8a5255d02182217cb7fe428d941ebcbdd320661a70c3735abe72c0d3416f",
+      "component": "python/cp311-qualification",
+      "path": "config/generated/components/python/cp311-qualification.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -242,16 +308,34 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "4478e29bb31462b25f13753faafa0ca61693848392f98f6682547519eccdc15b",
+      "component": "python/cp311-x86_64-qualification",
+      "path": "config/generated/components/python/cp311-x86_64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "2930c213e853c924bce2e112526142401fc96cbc69219a7a4c77c658e258156d",
       "component": "python/cp312-aarch64-build",
       "path": "config/generated/components/python/cp312-aarch64-build.json",
       "scope": "build"
     },
     {
+      "canonical_sha256": "1ca8b5ea846e40873452fc4d6d0dc8077056f1de5398d5569520276e72a58b9d",
+      "component": "python/cp312-aarch64-qualification",
+      "path": "config/generated/components/python/cp312-aarch64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "4152d187113fd903a542f2758c3adfca7079feb3c229b83b7c31d48d8e31e15e",
       "component": "python/cp312-native-build",
       "path": "config/generated/components/python/cp312-native-build.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "3eecd052977d8e558eb2715ee910be9291b87421e3d563c955e448df49e97cb2",
+      "component": "python/cp312-qualification",
+      "path": "config/generated/components/python/cp312-qualification.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -266,16 +350,34 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "20f9a0f3e01b8787c9d0ee062be04b6f3fdfeba3c8a4b033271589beeb1dd9bb",
+      "component": "python/cp312-x86_64-qualification",
+      "path": "config/generated/components/python/cp312-x86_64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "05889c0e1d523c7e406581871c10358ae786455514c599cc0a46fbcda81759a1",
       "component": "python/cp313-aarch64-build",
       "path": "config/generated/components/python/cp313-aarch64-build.json",
       "scope": "build"
     },
     {
+      "canonical_sha256": "e2d507932393b13956b90491c3e4d585f4db1cc2b908ea9dea83791079d8a230",
+      "component": "python/cp313-aarch64-qualification",
+      "path": "config/generated/components/python/cp313-aarch64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "a428511db9354cf7798ee6c934863cc359d1837b9dd8f90bc3bab34177ab57c0",
       "component": "python/cp313-native-build",
       "path": "config/generated/components/python/cp313-native-build.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "78257e4f1b0e2f7a300e9f2c1db9025b52824bebefd4a2b1e6ea3294743b5c90",
+      "component": "python/cp313-qualification",
+      "path": "config/generated/components/python/cp313-qualification.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -290,16 +392,34 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "3d75ce93d4bb3d7b693388fdd1a727fe354bc5caef2f5c3fdb047fc408a79aaa",
+      "component": "python/cp313-x86_64-qualification",
+      "path": "config/generated/components/python/cp313-x86_64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "f28bfec58ec2bddafe6dcace24e970db9003135fb59a2eb3c784a30dd639683d",
       "component": "python/cp314-aarch64-build",
       "path": "config/generated/components/python/cp314-aarch64-build.json",
       "scope": "build"
     },
     {
+      "canonical_sha256": "b668e8e0a24a513593546c1a3d93fae009d3bf81905230188f9f971538da86ea",
+      "component": "python/cp314-aarch64-qualification",
+      "path": "config/generated/components/python/cp314-aarch64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "ffdb1374ce4ab354e80dde8df21a15eda0875f6c0fb4fe2b10f8058986dc8202",
       "component": "python/cp314-native-build",
       "path": "config/generated/components/python/cp314-native-build.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "eda45d8290f4fc2c028239176a2f9e1ae0d0b8f204719c4095381dbac31bb7cd",
+      "component": "python/cp314-qualification",
+      "path": "config/generated/components/python/cp314-qualification.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
@@ -314,16 +434,34 @@
       "scope": "build"
     },
     {
+      "canonical_sha256": "66d955147fe39df244d27ecfed2822d51f5ee60df5256acf4fbcf1b5d087a44f",
+      "component": "python/cp314-x86_64-qualification",
+      "path": "config/generated/components/python/cp314-x86_64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "589b2b30272afe035ec513ad77b67155c3c1292bb2d3494b9477e4aa2fda9f58",
       "component": "python/cp39-aarch64-build",
       "path": "config/generated/components/python/cp39-aarch64-build.json",
       "scope": "build"
     },
     {
+      "canonical_sha256": "c2d62d2a43b8f26dc3465a9e90180ecce9bec502f146e64b797d1aeb89553ca6",
+      "component": "python/cp39-aarch64-qualification",
+      "path": "config/generated/components/python/cp39-aarch64-qualification.json",
+      "scope": "qualification"
+    },
+    {
       "canonical_sha256": "406f69d4c20198de2cd4181a31f41e79de3f15e33867f609d516e7b4fead9457",
       "component": "python/cp39-native-build",
       "path": "config/generated/components/python/cp39-native-build.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "e212748859de87c5a7f183f535e7fbd205e1c09f3c322779c365b7a52799e62a",
+      "component": "python/cp39-qualification",
+      "path": "config/generated/components/python/cp39-qualification.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
@@ -336,6 +474,12 @@
       "component": "python/cp39-x86_64-build",
       "path": "config/generated/components/python/cp39-x86_64-build.json",
       "scope": "build"
+    },
+    {
+      "canonical_sha256": "8c260833b4603ad4f93fe20a422b90a0575a7b9d310cc8a87190119ed43cf778",
+      "component": "python/cp39-x86_64-qualification",
+      "path": "config/generated/components/python/cp39-x86_64-qualification.json",
+      "scope": "qualification"
     },
     {
       "canonical_sha256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
@@ -470,7 +614,7 @@
       "scope": "qualification"
     },
     {
-      "canonical_sha256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd",
+      "canonical_sha256": "5251aa7fe706467b5854bfd70a05713f9e48ce3916cc9f69a048868d12193ae7",
       "component": "toolchain/gcc-testsuite-qualification",
       "path": "config/generated/components/toolchain/gcc-testsuite-qualification.json",
       "scope": "qualification"
@@ -538,7 +682,7 @@
   ],
   "kind": "crossforge-release-binding",
   "release": {
-    "canonical_sha256": "b58587eb3c9058ecbb858be68b9ed39817d3340b58ea3e334cfd5c5fec829e29",
+    "canonical_sha256": "c4738c1ca542877d7c9fefa183e19bea821b396cf8be8abc4c88240a24cce581",
     "schema": "./schemas/release.schema.json",
     "schema_version": 1
   },

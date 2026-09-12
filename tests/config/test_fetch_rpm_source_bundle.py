@@ -142,6 +142,7 @@ class FetchRPMSourceBundleTests(unittest.TestCase):
         )
         for workflow in (
             REPOSITORY / ".github/workflows/ci.yml",
+            REPOSITORY / ".github/workflows/verify-quick.yml",
             REPOSITORY / ".github/workflows/candidate.yml",
         ):
             self.assertNotIn(

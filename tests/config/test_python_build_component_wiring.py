@@ -223,83 +223,70 @@ class PythonBuildComponentWiringTests(unittest.TestCase):
                 )
 
     def test_full_release_bridge_enters_only_at_late_boundaries(self):
-        stages_with_release_copy = {
-            name
-            for name, block in self.stages.items()
-            if "COPY config/release.json" in block
-        }
-        self.assertEqual(
-            stages_with_release_copy,
-            {
-                "python-host",
-                "cpython-qualify-build",
-                "python-sdk-append",
-                "python-sdk-final",
-            },
-        )
+        stages_with_release_copy = {name for name, block in self.stages.items() if "COPY config/release.json" in block}
+        self.assertEqual(stages_with_release_copy, {"python-host", "python-sdk-final"})
         qualify = self.stages["cpython-qualify-build"]
-        self.assertIn("config/schemas/release.schema.json", qualify)
-        self.assertIn("python_source_release_binding.py", qualify)
-        self.assertIn("release-components-core.py", qualify)
-        self.assertNotIn("render-release-components.py", qualify)
-        self.assertIn("python_row_contract.py", qualify)
-        self.assertIn("python_zstd_evidence.py", qualify)
-        self.assertIn("validate-release.py", qualify)
+        for path in ("config/release.json", "config/schemas/release.schema.json", "python_source_release_binding.py",
+                     "release-components-core.py", "render-release-components.py", "validate-release.py"):
+            self.assertNotIn(path, qualify)
+        for path in ("python_row_contract.py", "python_zstd_evidence.py", "python_qualification_policy.py",
+                     "prepare-cpython-source.py", "release_component.py"):
+            self.assertIn(path, qualify)
         self.assertIn("--manifest /work/source/source-manifest.json", qualify)
-        self.assertLess(
-            qualify.index(
-                "RUN /usr/libexec/platform-python /work/scripts/validate-release.py"
-            ),
-            qualify.index(
-                "&& /usr/libexec/platform-python /work/scripts/verify-python-row.py"
-            ),
-        )
+        self.assertLess(qualify.index("RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py"),
+                        qualify.index("RUN --network=none minor="))
         append = self.stages["python-sdk-append"]
-        self.assertIn("config/schemas/release.schema.json", append)
-        self.assertIn("python_source_release_binding.py", append)
-        self.assertIn("release-components-core.py", append)
-        self.assertNotIn("render-release-components.py", append)
-        self.assertIn("/work/scripts/validate-release.py", append)
-        for script in (
-            "finalize-cpython-qualification.py",
-            "python_sdk_identity.py",
-            "python_zstd_evidence.py",
-            "target_artifact_audit.py",
-        ):
+        for path in ("config/release.json", "release.schema.json", "python_source_release_binding.py",
+                     "release-components-core.py", "render-release-components.py", "validate-release.py"):
+            self.assertNotIn(path, append)
+        self.assertIn("--qualification-components /work/qualification-components", append)
+        self.assertIn('--qualification-component-sha256 "$CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256"', append)
+        self.assertIn('--source-component-sha256 "$CPYTHON_SOURCE_COMPONENT_SHA256"', append)
+        self.assertIn('--policy-component-sha256 "$CPYTHON_BUILD_POLICY_COMPONENT_SHA256"', append)
+        for row in ("cp39", "cp310", "cp311", "cp312", "cp313", "cp314"):
+            for target in ("python-" + row + "-dev", "python-dev-append-" + row):
+                self.assertEqual(self.targets[target]['args']['CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256'],
+                                 self.records['python/' + row + '-qualification']['canonical_sha256'])
+        for script in ("finalize-cpython-qualification.py", "python_sdk_identity.py", "python_zstd_evidence.py",
+                       "target_artifact_audit.py", "python_qualification_policy.py", "release_component.py"):
             self.assertIn(script, append)
-        for stage in ("cpython-runtime-input", "cpython-row-assemble"):
-            self.assertIn("FROM python-host AS %s" % stage, self.stages[stage])
-        self.assertIn(
-            "FROM crossforge_host_runtime AS sdk-toolchains-dev",
-            self.stages["sdk-toolchains-dev"],
-        )
+        row = self.stages["cpython-row-assemble"]
+        self.assertIn("FROM python-build-host AS cpython-row-assemble", row)
+        self.assertIn("--qualification-component-sha256", row)
+        self.assertIn("ARG CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256", row)
+        self.assertIn("--row-manifest", append)
+        for path in ("release.json", "release.schema.json", "release-components-core.py", "python_source_release_binding.py"):
+            self.assertNotIn(path, row)
+        runtime = self.stages["cpython-runtime-input"]
+        self.assertIn("FROM python-build-host AS cpython-runtime-input", runtime)
+        self.assertIn("--qualification-component-sha256", runtime)
+        self.assertIn("ARG CPYTHON_QUALIFICATION_COMPONENT_SHA256", runtime)
+        for path in ("release.json", "release.schema.json", "release-components-core.py", "validate-release.py"):
+            self.assertNotIn(path, runtime)
+        self.assertIn("FROM crossforge_host_runtime AS sdk-toolchains-dev", self.stages["sdk-toolchains-dev"])
 
-    def test_static_qualifier_binds_both_qualification_components(self):
+    def test_static_qualifier_binds_scoped_qualification_and_source_components(self):
         qualify = self.stages["cpython-qualify-build"]
         arguments = {
-            "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": (
-                "--qualification-policy-component-sha256"
-            ),
-            "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": (
-                "--qualification-component-sha256"
-            ),
+            "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "--qualification-component-sha256",
+            "CPYTHON_SOURCE_COMPONENT_SHA256": "--source-component-sha256",
+            "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "--policy-component-sha256",
         }
         for argument, option in arguments.items():
             with self.subTest(argument=argument):
                 self.assertEqual(qualify.count("ARG " + argument), 1)
-                self.assertEqual(qualify.count(option), 1)
-                self.assertIn('"$%s"' % argument, qualify)
-
-        for stage in (
-            "cpython-source",
-            "cpython-prepared",
-            "cpython-build",
-            "cpython-cross",
-        ):
+                self.assertIn(option, qualify)
+                self.assertIn('"$' + argument + '"', qualify)
+        for name in ("python/${CPYTHON_ROW}-${CROSSFORGE_TARGET_ARCH}-qualification.json",
+                     "implementation/python-${CPYTHON_ROW}-qualification-policy.json",
+                     "python/${CPYTHON_ROW}-source.json", "implementation/python-${CPYTHON_ROW}-build-policy.json"):
+            self.assertIn("COPY config/generated/components/" + name, qualify)
+        self.assertIn("--source-manifest /work/source/source-manifest.json", qualify)
+        for stage in ("cpython-source", "cpython-prepared", "cpython-build", "cpython-cross"):
             with self.subTest(stage=stage):
-                block = self.stages[stage]
-                for argument in arguments:
-                    self.assertNotIn(argument, block)
+                self.assertNotIn("CPYTHON_QUALIFICATION_COMPONENT_SHA256", self.stages[stage])
+        self.assertNotIn("CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256", self.dockerfile)
+        self.assertNotIn("CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256", self.dockerfile)
 
     def test_cross_stage_copies_the_legacy_sysconfig_preflight(self):
         cross = self.stages["cpython-cross"]

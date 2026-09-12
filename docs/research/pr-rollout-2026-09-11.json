@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-pr-rollout-observation",
+  "pr": "https://github.com/eglinuxer/crossforge/pull/3",
+  "branch": "codex/component-ci-refactor",
+  "head_before_repair": "4b62ed145935d9f960bf7787b51633c82fbc8563",
+  "remote_main": "e8aa68adab79c0a6743a8f49d1f7923a274cefb5",
+  "tested_merge_commit": "79e9660546bad5a502b640d618ffed3d953e6a60",
+  "external_pr": {
+    "url": "https://github.com/eglinuxer/crossforge/pull/2",
+    "merged_at": "2026-09-11T15:01:02Z",
+    "resolution": "Merge upstream main into the feature branch; retain its public-consumer diagnostic steps and adapt its test to that job. Split source/SDK publication diagnostics remain intact."
+  },
+  "initial_pr_check": {
+    "run_id": 34615291010,
+    "job_id": 103315576213,
+    "status": "failed",
+    "tests": 1424,
+    "seconds": 651.362,
+    "failures": 2,
+    "errors": 1,
+    "skipped": 2,
+    "log": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/github-rollout-review-2026-09-11/pr3-quick-failed.log",
+      "sha256": "ed193edc107a6590bacad95509f763415e0eb4277e1799a942b506afeea0a234"
+    },
+    "failures_explained": [
+      "Upstream test still expected the SDK build in the old monolithic publish job",
+      "Two cropped vcpkg import tests counted interpreter-generated __pycache__ as an extra implementation dependency"
+    ],
+    "secondary_failure": "Component plan upload had no file because the preceding configuration tests failed and planning was skipped"
+  },
+  "docker_reproduction": {
+    "tests": 3,
+    "failures": 2,
+    "errors": 1,
+    "exit_code": 1,
+    "network": "none",
+    "socket_mounted": false,
+    "bytecode": "default enabled, matching PR",
+    "log": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/github-rollout-review-2026-09-11/docker-pr3-failure-reproduction.log",
+      "sha256": "53b98c3c511dceb49a7d1c59cb72781a841a143d57772eb6d4bc8602851358d7"
+    }
+  },
+  "repair": {
+    "source_files": {
+      ".github/workflows/candidate.yml": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/.github/workflows/candidate.yml",
+        "sha256": "57faeb25b68a927b878638931a588072e5230a3a7eb573329075fff457d627e2"
+      },
+      "tests/config/test_candidate_workflow.py": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/tests/config/test_candidate_workflow.py",
+        "sha256": "4119ae290707e6c90ab27a2bee6fe9632f49ec586d94daecc62a7cc330fad7f9"
+      },
+      "tests/config/test_vcpkg_policy.py": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/tests/config/test_vcpkg_policy.py",
+        "sha256": "41a7d123a7fcd151126760aa0722c932a1f280a4fb8d9774d337f1e5066dc9e4"
+      },
+      "tests/config/test_vcpkg_toolchain_inputs.py": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/tests/config/test_vcpkg_toolchain_inputs.py",
+        "sha256": "fd2a9112920b3e2a95536025ce0b2509f27443934c975d4a0caa739fab1617ad"
+      }
+    },
+    "modules": {
+      "tests": 55,
+      "seconds": 6.774,
+      "skipped": 0,
+      "exit_code": 0,
+      "log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/github-rollout-review-2026-09-11/docker-pr3-repaired-modules.log",
+        "sha256": "5e7c75fc7f4c27f33cac5c3cd2f140a951f2fbb14d6413fffb741b7ead8a5a4c"
+      },
+      "coverage": "Full candidate workflow and both vcpkg policy modules, exact six-file input sets, actual cropped CLI imports in bytecode-enabled and -B subprocesses, and actual workflow shell failure preservation"
+    },
+    "actionlint": {
+      "exit_code": 0,
+      "log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/github-rollout-review-2026-09-11/docker-candidate-actionlint.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42"
+  },
+  "controlled_cp39_serial_python_sdk": {
+    "path": "/data/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/serial-python-dev-observation.json",
+    "sha256": "33eac5c2a97c69ab0eccee33026f5866a56f21946010724539d35ffd998a5f75"
+  },
+  "remaining": [
+    "Push the locally verified native-check repair and pass every real PR check against the integrated main",
+    "Merge/push main only after local Docker and PR gates pass; then main-only signing/candidate/native ARM and remaining rollout/performance acceptance"
+  ],
+  "branch_pushed": true,
+  "merged_main": false,
+  "published_candidate": false,
+  "controlled_cp39_serial_complete_sdk": {
+    "path": "/data/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/serial-sdk-complete-dev-observation.json",
+    "sha256": "6edaba807613c02e18ee03a16ed17cfbdb751f9144c9d485c45d8fa2df77e923"
+  },
+  "second_pr_check": {
+    "head": "c8213033eab054308257fb90c9b70f367b4654c9",
+    "run_id": 34617834970,
+    "job_id": 103324070784,
+    "status": "failed",
+    "configuration": {
+      "tests": 1424,
+      "seconds": 630.435,
+      "status": "passed",
+      "skipped": 2
+    },
+    "packaging": {
+      "tests": 40,
+      "seconds": 18.329,
+      "status": "passed",
+      "skipped": 1
+    },
+    "failure": "Pinned Buildx global --check cannot resolve linked target: contexts; native Docker static check failed before component planning",
+    "log": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/github-rollout-review-2026-09-11/pr3-repaired-quick-failed.log",
+      "sha256": "941e387a199fd1bfbb8bb85ce02bc024cb362b521c5a9f23fdb5ad0938682554"
+    },
+    "resolution_record": "bake-static-check-2026-09-11.json"
+  }
+}

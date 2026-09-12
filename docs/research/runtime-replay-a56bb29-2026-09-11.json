@@ -1,0 +1,1249 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-local-runtime-replay-observation",
+  "observed_at": "2026-09-11T14:16:13.447466+00:00",
+  "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+  "status": "completed-local-batch",
+  "scope": "Completed fixed a56bb29 local batch: six row qualifications, six independent installs, two SDK integrations, vcpkg replay, x86_64 and cp39 source replays; not newer append recipe, GitHub, candidate, native ARM or performance acceptance",
+  "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+  "builder": "crossforge-ci-review",
+  "manifest": {
+    "path": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/manifest.json",
+    "sha256": "803db50ced3bbbf6a70f2367744a4ca6fc28ecb9b04640065bb73718e281fba7"
+  },
+  "prepared_files": {
+    "run.py": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/run.py",
+      "sha256": "f09353a75286e6849b89157a2b12b37866a24067c09f9daeda8d2e2389606b79"
+    },
+    "run-all.sh": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/run-all.sh",
+      "sha256": "5a459859dd72ef5364ce1fdbdc4d4a94236a975367301f42143ffba425a37be7"
+    },
+    "independent-install.py": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/independent-install.py",
+      "sha256": "13cba40f6c75077dc21db27d69da86338b28eb57b86eb2517f5015ac87a1ace8"
+    },
+    "run-forced.py": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/run-forced.py",
+      "sha256": "324496d26abd6b72d0fc49ab7050a0056e5fc4c1667c8fa97ae3830599be07ef"
+    },
+    "preflight.log": {
+      "path": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/preflight.log",
+      "sha256": "accacd1f8ac0e0601ad47359b011c75d8e370482f76596ff318b5122fc62d5f9"
+    }
+  },
+  "source_inventory_sha256": "fc3c3652e29b85a8833e554546f35aa75537cce87210b6c25ce191549b416330",
+  "completed_phases": [
+    {
+      "phase": "python-cp314",
+      "status": "passed",
+      "seconds": 286.989,
+      "result_file": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/python-cp314/result.json",
+        "sha256": "1b7028bb55966c4961f0a00721c74dd7854326b3acf82e923bfb340b4dcbb566"
+      },
+      "producer": {
+        "invocation": "urn:crossforge:local:export-replay-a56bb29-python-cp314",
+        "kind": "local",
+        "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+        "source_dirty": false,
+        "started_at": "2026-09-11T12:10:00Z"
+      },
+      "receipt_sha256": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+      "artifact": {
+        "config_digest": "sha256:647fbaf0ab6ad1ec9511b0b7e56355ef28eb230b40c544b802a823d96c323230",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:f4ac4de00bf6027ffcd7b8f20e488ffea1c9829c4ddbd48f9b1e952ca388422a",
+        "root_digest": "sha256:f4ac4de00bf6027ffcd7b8f20e488ffea1c9829c4ddbd48f9b1e952ca388422a"
+      },
+      "inputs_sha256": "3e8dcd7a59f38af637108d6de9c321e5a0fc6649dfafd9cc872960343bc4b935",
+      "started_at": "2026-09-11T12:10:24Z",
+      "completed_at": "2026-09-11T12:13:19Z",
+      "fresh_runs": 7,
+      "coverage": {
+        "build_python_sdk_tree": {
+          "canonical_sha256": "548f4fe03bc55472c80350be3bf8a5dc64a24b3b8df503934cb41d8623a44a38",
+          "entries": 3154
+        },
+        "manifest_sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045",
+        "row": "cp314",
+        "runtime_tiers": [
+          "locked-sysroot",
+          "clean-rocky"
+        ],
+        "status": "passed",
+        "targets": {
+          "aarch64": {
+            "python_sha256": "793cef6889d0429b942084108803c4f81c3aa965934d06682721eace2ddfad56",
+            "report_sha256": "50352204e837ab5a3c9d3e4e4a2863fc0f01b3c3bdee076285342db39caedb60",
+            "sdk_tree": {
+              "canonical_sha256": "609a55307c4160c07f80f0d45b521e7fd24868fb2da79d232d75e72155aca69d",
+              "entries": 3154
+            },
+            "target": "aarch64-unknown-linux-gnu"
+          },
+          "x86_64": {
+            "python_sha256": "e01058843da172be2436db7f4d60ed7c5eb7d7295fbc05abd9bded09cea5417f",
+            "report_sha256": "6fcd90a0ff30265e425e67df4d0d52ed51a1addaf0245b1832ff7fc5b8119f87",
+            "sdk_tree": {
+              "canonical_sha256": "2b825eb5bd37cd45fd29ee2b67184a6c92132eed7b18e9c2f4a742208ec15939",
+              "entries": 3154
+            },
+            "target": "x86_64-unknown-linux-gnu"
+          }
+        }
+      }
+    },
+    {
+      "phase": "python-cp39",
+      "status": "passed",
+      "seconds": 324.122,
+      "result_file": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/python-cp39/result.json",
+        "sha256": "5bc4cd4d4e13134e9e56de6d77288534aaaffc7b47d393e2b233d0a1a309971f"
+      },
+      "producer": {
+        "invocation": "urn:crossforge:local:export-replay-a56bb29-python-cp39",
+        "kind": "local",
+        "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+        "source_dirty": false,
+        "started_at": "2026-09-11T12:17:00Z"
+      },
+      "receipt_sha256": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3",
+      "artifact": {
+        "config_digest": "sha256:8dda4eac1aa549e1f0facd71dbf154c2f4c704e2d576754cc62bf155eaac9d36",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:e73e7fd9db8b4b76b8be190610b21f4102d096b94bce16adc132d717962c3a05",
+        "root_digest": "sha256:e73e7fd9db8b4b76b8be190610b21f4102d096b94bce16adc132d717962c3a05"
+      },
+      "inputs_sha256": "b8d58152a4d3fd5d6d9645a26d0fd3891164cea3b4e98f512fd30cd34a124735",
+      "started_at": "2026-09-11T12:17:22Z",
+      "completed_at": "2026-09-11T12:20:43Z",
+      "fresh_runs": 7,
+      "coverage": {
+        "build_python_sdk_tree": {
+          "canonical_sha256": "6ae0762f0beb07fcb3ce319392fa4312d5708cccb97a60da154a8643e79f1552",
+          "entries": 7652
+        },
+        "manifest_sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99",
+        "row": "cp39",
+        "runtime_tiers": [
+          "locked-sysroot",
+          "clean-rocky"
+        ],
+        "status": "passed",
+        "targets": {
+          "aarch64": {
+            "python_sha256": "2424b9b23b647499b07e974a4c0d93c2e76110f5db4443de1137c9bb2342acfa",
+            "report_sha256": "71c1992b4103368f498e7cb13ee907848c51ea99d9528c5a329a1bae7907b89a",
+            "sdk_tree": {
+              "canonical_sha256": "62b63a954cb1b277c508fe7fa3c5e2683c8b70b61b34c3abd7f1a40c6c13d36e",
+              "entries": 7652
+            },
+            "target": "aarch64-unknown-linux-gnu"
+          },
+          "x86_64": {
+            "python_sha256": "9e77297bb66344a308fab37b49227a4f94970ef3f91f285eb6891201eb417480",
+            "report_sha256": "5b97c1f664ccdbe98215dbcd0a2642bf2874d9f747d5244be728a22103308e83",
+            "sdk_tree": {
+              "canonical_sha256": "fc210f34fccf6feb291f04b4acaf84692c8405c27c6d6710962c2188e15d74ee",
+              "entries": 7652
+            },
+            "target": "x86_64-unknown-linux-gnu"
+          }
+        }
+      }
+    },
+    {
+      "phase": "python-cp310",
+      "status": "passed",
+      "seconds": 289.215,
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/python-cp310/result.json",
+        "sha256": "eaedadb208aeba874d780e31a148ac192330daa255b1460a8b4bee02ed00cc4e"
+      },
+      "producer": {
+        "invocation": "urn:crossforge:local:export-replay-a56bb29-python-cp310",
+        "kind": "local",
+        "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+        "source_dirty": false,
+        "started_at": "2026-09-11T12:24:34Z"
+      },
+      "receipt_sha256": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+      "artifact": {
+        "config_digest": "sha256:25c7c53fd66bf0693c8951b445fd8d74210a34a7d8597f54cd9ac97e4dc1b17a",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:ff78bc0289382b9e14eeddacdc648aecb6a169a134dfacf514d10262155c20f3",
+        "root_digest": "sha256:ff78bc0289382b9e14eeddacdc648aecb6a169a134dfacf514d10262155c20f3"
+      },
+      "inputs_sha256": "c1c0b08cebbcae11f61c26e15f02e4c6ba9e9b4069ab8a1b7f6f6ad26bc30ab9",
+      "started_at": "2026-09-11T12:24:58Z",
+      "completed_at": "2026-09-11T12:28:04Z",
+      "fresh_runs": 7,
+      "coverage": {
+        "build_python_sdk_tree": {
+          "canonical_sha256": "04fe376425a213743bde08182a029c297b9985247ac1f93a6abf0a9acea880a3",
+          "entries": 3272
+        },
+        "manifest_sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d",
+        "row": "cp310",
+        "runtime_tiers": [
+          "locked-sysroot",
+          "clean-rocky"
+        ],
+        "status": "passed",
+        "targets": {
+          "aarch64": {
+            "python_sha256": "6ea8dfee5813637e2697f085a7021c4c198bf410d5027571d9f89efa31b2208d",
+            "report_sha256": "294adadc747612e75cb68d2f251bdd24baaf93872172410649bd748f061b4ab1",
+            "sdk_tree": {
+              "canonical_sha256": "81890c020ec1fad25a127fa27ef6304157d534408bb7797b91c96dae9cee5fa4",
+              "entries": 3272
+            },
+            "target": "aarch64-unknown-linux-gnu"
+          },
+          "x86_64": {
+            "python_sha256": "6b81027bd4bd1577f9700276c769b4d2b1956f191a21b1641b62cf1c2b1865d1",
+            "report_sha256": "7eddd6b1137b5e8de87eb681d261889dab4870a5ce47b6fcf6a4aa75a3e48e9c",
+            "sdk_tree": {
+              "canonical_sha256": "43069b50b018d2c6686d8040f055e30632d248821c63f7381a8df73cd229e0ab",
+              "entries": 3272
+            },
+            "target": "x86_64-unknown-linux-gnu"
+          }
+        }
+      }
+    },
+    {
+      "phase": "python-cp311",
+      "status": "passed",
+      "seconds": 295.093,
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/python-cp311/result.json",
+        "sha256": "0e1f5562e65bd1473e7c1981cf8d7c6b95d37707cebec0d072dbc7fe0dbabc39"
+      },
+      "producer": {
+        "invocation": "urn:crossforge:local:export-replay-a56bb29-python-cp311",
+        "kind": "local",
+        "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+        "source_dirty": false,
+        "started_at": "2026-09-11T12:31:23Z"
+      },
+      "receipt_sha256": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+      "artifact": {
+        "config_digest": "sha256:2b070e49eb571d7730992a96dc4d0c917e34dd9423aa14492f4ef0a4c57b0904",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:8df31c46fa79cbb02fd2d22e88bc310851891c02ad04e06172e6eea48566e52a",
+        "root_digest": "sha256:8df31c46fa79cbb02fd2d22e88bc310851891c02ad04e06172e6eea48566e52a"
+      },
+      "inputs_sha256": "d7f7f74dc4804798dfa10e3e805814ba8e47f3b920109d313247e768bee1c284",
+      "started_at": "2026-09-11T12:31:47Z",
+      "completed_at": "2026-09-11T12:34:48Z",
+      "fresh_runs": 7,
+      "coverage": {
+        "build_python_sdk_tree": {
+          "canonical_sha256": "c53d04408a96a69f9ec4ccf94970d883fc1dd2fabdcb044d2d11835d5bccd515",
+          "entries": 3373
+        },
+        "manifest_sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c",
+        "row": "cp311",
+        "runtime_tiers": [
+          "locked-sysroot",
+          "clean-rocky"
+        ],
+        "status": "passed",
+        "targets": {
+          "aarch64": {
+            "python_sha256": "be37767c53d7af6bbf249d2020ffd86c9f0fdf6951e975ad65c8db902d71c849",
+            "report_sha256": "afb00593603efa1b31a8e23a550db4561cddcbd161c76ecca97593ff9ff08c80",
+            "sdk_tree": {
+              "canonical_sha256": "2e5dcb024b15802cd0e9553e4ac83d78f1b90ac6692eb71ed7e4f14229754101",
+              "entries": 3373
+            },
+            "target": "aarch64-unknown-linux-gnu"
+          },
+          "x86_64": {
+            "python_sha256": "b4bd58fadcc039a7667e5206d7391bda46381a33d0c8154e00866baa89158131",
+            "report_sha256": "1a36c36179632e9a889b2de11a9f043fc96ef59560cfd51a5955b81c45b2e7c7",
+            "sdk_tree": {
+              "canonical_sha256": "e39e1a93a631c64891033e4d54dda9cf4693f4e1f87b0deb7dbcbfb5fa58dece",
+              "entries": 3373
+            },
+            "target": "x86_64-unknown-linux-gnu"
+          }
+        }
+      }
+    },
+    {
+      "phase": "python-cp312",
+      "status": "passed",
+      "seconds": 311.89,
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/python-cp312/result.json",
+        "sha256": "65abe5e85e182df64d958aa2b4bddfa994f0e3662eb4d3596d0d2dc2277b8663"
+      },
+      "producer": {
+        "invocation": "urn:crossforge:local:export-replay-a56bb29-python-cp312",
+        "kind": "local",
+        "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+        "source_dirty": false,
+        "started_at": "2026-09-11T12:38:22Z"
+      },
+      "receipt_sha256": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+      "artifact": {
+        "config_digest": "sha256:4a582e2f19cbabd4f1be6f4b76cb171c8a9e01d45a2e952cb655746ef67cc3f6",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:196b96d97c7e86bb5d775b5f80b60d2bd42140f20d70c41ceff3be78c7771ffc",
+        "root_digest": "sha256:196b96d97c7e86bb5d775b5f80b60d2bd42140f20d70c41ceff3be78c7771ffc"
+      },
+      "inputs_sha256": "5dedc12c1e7f89594939f1181e34fcf9ea73507f594beeec4aba2c558659cd6c",
+      "started_at": "2026-09-11T12:38:44Z",
+      "completed_at": "2026-09-11T12:41:50Z",
+      "fresh_runs": 7,
+      "coverage": {
+        "build_python_sdk_tree": {
+          "canonical_sha256": "131982223253b4146b3544fcfce1b3c1f609e0dadfadec89df72c13cbd4c69ac",
+          "entries": 3202
+        },
+        "manifest_sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87",
+        "row": "cp312",
+        "runtime_tiers": [
+          "locked-sysroot",
+          "clean-rocky"
+        ],
+        "status": "passed",
+        "targets": {
+          "aarch64": {
+            "python_sha256": "a0c391c3bf46209033b0e67e413a51342352d301d4e46570d06cc4d4d074ca31",
+            "report_sha256": "3841b643e33ba53785fb6e3dfd9889be85d7ae3ec67b0a7b38e8ce7dd93782dc",
+            "sdk_tree": {
+              "canonical_sha256": "366db041ffec240e5055fae1c745a935d318ea1ed3df8360ab73d61227ddc018",
+              "entries": 3202
+            },
+            "target": "aarch64-unknown-linux-gnu"
+          },
+          "x86_64": {
+            "python_sha256": "ecdce476b5b6dcce3f449ac0f1a1063cec4cca5b28b3eecb95a7d62f218af6db",
+            "report_sha256": "fbafc206ec35820838f0afd2a9bc48df12590212f09395e367c3e49014d98292",
+            "sdk_tree": {
+              "canonical_sha256": "6160e17a1bde7b03db2e1f29ce2e39e3ad5ee53ba68ce246aeb1a6775da0dc76",
+              "entries": 3202
+            },
+            "target": "x86_64-unknown-linux-gnu"
+          }
+        }
+      }
+    },
+    {
+      "phase": "python-cp313",
+      "status": "passed",
+      "seconds": 338.883,
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/python-cp313/result.json",
+        "sha256": "57dea0aeb15ebd3c75960b4263e26994cf3f0ccd9aed72872bd406972261bfd5"
+      },
+      "producer": {
+        "invocation": "urn:crossforge:local:export-replay-a56bb29-python-cp313",
+        "kind": "local",
+        "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+        "source_dirty": false,
+        "started_at": "2026-09-11T12:45:40Z"
+      },
+      "receipt_sha256": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+      "artifact": {
+        "config_digest": "sha256:5375032360c35134c0650c19ccf8fee9301780deccb1896986e94304c129210d",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:ca9946741c45d6bb8b9a65bd90fd79d36a7bea3b0de0ebcf81ef95b9804b2a0a",
+        "root_digest": "sha256:ca9946741c45d6bb8b9a65bd90fd79d36a7bea3b0de0ebcf81ef95b9804b2a0a"
+      },
+      "inputs_sha256": "e579fb379fc6769a5ba53b18faa90629ef99cb19963415850100cba2c196b215",
+      "started_at": "2026-09-11T12:46:02Z",
+      "completed_at": "2026-09-11T12:48:58Z",
+      "fresh_runs": 7,
+      "coverage": {
+        "build_python_sdk_tree": {
+          "canonical_sha256": "91ef3892c238bac05a3ee136e52f2309eb11e6e96a03283ff23d1f441bb9bf6a",
+          "entries": 3033
+        },
+        "manifest_sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec",
+        "row": "cp313",
+        "runtime_tiers": [
+          "locked-sysroot",
+          "clean-rocky"
+        ],
+        "status": "passed",
+        "targets": {
+          "aarch64": {
+            "python_sha256": "e503bf6e76d10d5f01d75eea8a26ba64684350516806a63f3f6e6582279ac297",
+            "report_sha256": "cdffb29851d49af05ac19266689dae1a70a1057884ac8c20df3ec0cb4db38864",
+            "sdk_tree": {
+              "canonical_sha256": "5e6f2032ac9a37716c6082bd8a13dc6dc5c4536d07898f5ed908e47b6c11dbee",
+              "entries": 3033
+            },
+            "target": "aarch64-unknown-linux-gnu"
+          },
+          "x86_64": {
+            "python_sha256": "20bcc35e71059a380f967ae5a4830f816a51ffae03c52f3548af99fc7aa17804",
+            "report_sha256": "a6fd29dffcd7416be02da6375198b5b778a6d782b4c23d7e71efbd727de28af9",
+            "sdk_tree": {
+              "canonical_sha256": "8320eb16d2012a95ef90cefb5d1e56ee0c63c4b1c7deba630bd549249eb4f644",
+              "entries": 3033
+            },
+            "target": "x86_64-unknown-linux-gnu"
+          }
+        }
+      }
+    }
+  ],
+  "independent_installations": [
+    {
+      "row": "cp314",
+      "status": "passed",
+      "seconds": 131.551,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "row_receipt_sha256": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+      "inputs_sha256": "d89a94714d9e20a16a66ffd5dd8c7654e332658e5d01662f2985d701b022e725",
+      "report": {
+        "mode": "0644",
+        "path": "row.json",
+        "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+      },
+      "started_at": "2026-09-11T12:15:50Z",
+      "completed_at": "2026-09-11T12:16:59Z",
+      "result_file": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/independent-install/cp314/result.json",
+        "sha256": "14d65429d6373005e0387d6ad5a09bb2822db58b1af78a60f487d3d184278154"
+      },
+      "fresh_runs": 2
+    },
+    {
+      "row": "cp39",
+      "status": "passed",
+      "seconds": 128.966,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "row_receipt_sha256": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3",
+      "inputs_sha256": "6274c09c4def97aa573e1e7d4c5fdf05a60ac6e3a0a7c35df462b8aaa0f45d1b",
+      "report": {
+        "mode": "0644",
+        "path": "row.json",
+        "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+      },
+      "started_at": "2026-09-11T12:23:19Z",
+      "completed_at": "2026-09-11T12:24:33Z",
+      "result_file": {
+        "path": "/data/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/independent-install/cp39/result.json",
+        "sha256": "13e3260a4e19c430f5d68b5a77c7fb5fa6686602cf83cb587f0466be429692b1"
+      },
+      "fresh_runs": 2
+    },
+    {
+      "row": "cp310",
+      "status": "passed",
+      "seconds": 118.691,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "row_receipt_sha256": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+      "inputs_sha256": "a5db8698aca9be522eb46755a0fd07ad0d7cfca0ac506cabe66247c178bdfc3c",
+      "report": {
+        "mode": "0644",
+        "path": "row.json",
+        "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+      },
+      "started_at": "2026-09-11T12:30:11Z",
+      "completed_at": "2026-09-11T12:31:22Z",
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/independent-install/cp310/result.json",
+        "sha256": "8d4d25dee8eacbc7ee4972299901f5822f0b6053259cb2ddc6675b9e17722f03"
+      },
+      "fresh_runs": 2
+    },
+    {
+      "row": "cp311",
+      "status": "passed",
+      "seconds": 122.698,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "row_receipt_sha256": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+      "inputs_sha256": "0e5f838bcbde7dadcc6cf546ac707c098b8a0e375009c0aa7935003bf65c0c53",
+      "report": {
+        "mode": "0644",
+        "path": "row.json",
+        "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+      },
+      "started_at": "2026-09-11T12:37:11Z",
+      "completed_at": "2026-09-11T12:38:20Z",
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/independent-install/cp311/result.json",
+        "sha256": "85b4d97b20f4ac86c3968aaad88d106497bc483a8b3dad7a50cd64a5e2ecc8b7"
+      },
+      "fresh_runs": 2
+    },
+    {
+      "row": "cp312",
+      "status": "passed",
+      "seconds": 125.037,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "row_receipt_sha256": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+      "inputs_sha256": "9037a63ecae6b625a786495081a45e16bc9fc28f36bee3a885f7b6e4d893f6da",
+      "report": {
+        "mode": "0644",
+        "path": "row.json",
+        "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+      },
+      "started_at": "2026-09-11T12:44:29Z",
+      "completed_at": "2026-09-11T12:45:39Z",
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/independent-install/cp312/result.json",
+        "sha256": "b4ca41fe99324132b89afef3a60a4addf6e24a7aec71a938cf96713b5944a6af"
+      },
+      "fresh_runs": 2
+    },
+    {
+      "row": "cp313",
+      "status": "passed",
+      "seconds": 120.006,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "row_receipt_sha256": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+      "inputs_sha256": "ebb3cede3835722f5561e1663811c4f60af9763be7b20f0b0865feecebb01bba",
+      "report": {
+        "mode": "0644",
+        "path": "row.json",
+        "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+      },
+      "started_at": "2026-09-11T12:52:14Z",
+      "completed_at": "2026-09-11T12:53:19Z",
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/independent-install/cp313/result.json",
+        "sha256": "b1b9e41f5ac211b6a4366a97f8a8dd6d543a2ec7c86bfa4f152c30c57554e8fe"
+      },
+      "fresh_runs": 2
+    }
+  ],
+  "execution_notes": [
+    "Normalized clean Git archive mounted read-only; inputs and actual physical execution environment compared before and after success",
+    "New source identity requires new row receipts; previous failed cp314 phase remains failed and its original directory is preserved",
+    "Every accepted row used seven fresh original qualification RUNs, followed by independent OCI/contract/file/report verification",
+    "Independent installations use the canonical sdk-toolchains-dev base and two fresh append RUNs",
+    "Sequential replay on one worker; max-parallelism=1. Outer Docker CPU/memory limits do not constrain external BuildKit worker",
+    "No GitHub runner performance comparison or cross-run environment compatibility assertion",
+    "The source-python-cp39 replay also encountered an ordinary AArch64 toolchain cache miss and is compiling its GCC prerequisite; source replay permits unselected prerequisites to use or miss ordinary caches. This is distinct from the artifact-bound SDK path."
+  ],
+  "running_at_observation": [],
+  "pending": [],
+  "merged_main": false,
+  "pushed": false,
+  "published": false,
+  "sdk_integrations": [
+    {
+      "phase": "python-dev",
+      "status": "passed",
+      "seconds": 577.654,
+      "producer": {
+        "invocation": "urn:crossforge:local:export-replay-a56bb29-python-dev",
+        "kind": "local",
+        "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+        "source_dirty": false,
+        "started_at": "2026-09-11T12:53:20Z"
+      },
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/python-dev/result.json",
+        "sha256": "69068d133abf0db2048e3307f94a815a91d0ded107102af17961bb93cd607c5d"
+      },
+      "inputs_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/python-dev/integration/inputs.json",
+        "sha256": "33b31e73f3ee7ca9b36e9be661ab8a5fec8e2e42d7fbd7c4a96743e9f9228472"
+      },
+      "execution_log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/python-dev/integration/execution.jsonl",
+        "sha256": "440623ce0f40d19d9d5c6d301802d7dcc1cf62074ea2f3af37359ad48905d8dc"
+      },
+      "inputs_sha256": "60a351da3d313628fb583fd163cbbbf6d3abbb96efdadaa8961fb83dd6393490",
+      "started_at": "2026-09-11T12:58:19Z",
+      "completed_at": "2026-09-11T13:02:56Z",
+      "fresh_runs": 13,
+      "source_compiler_RUNs_observed": 0,
+      "dependencies": [
+        {
+          "artifact_digest": "sha256:ff78bc0289382b9e14eeddacdc648aecb6a169a134dfacf514d10262155c20f3",
+          "component": "qualification/python-cp310",
+          "inputs_sha256": "c1c0b08cebbcae11f61c26e15f02e4c6ba9e9b4069ab8a1b7f6f6ad26bc30ab9"
+        },
+        {
+          "artifact_digest": "sha256:8df31c46fa79cbb02fd2d22e88bc310851891c02ad04e06172e6eea48566e52a",
+          "component": "qualification/python-cp311",
+          "inputs_sha256": "d7f7f74dc4804798dfa10e3e805814ba8e47f3b920109d313247e768bee1c284"
+        },
+        {
+          "artifact_digest": "sha256:196b96d97c7e86bb5d775b5f80b60d2bd42140f20d70c41ceff3be78c7771ffc",
+          "component": "qualification/python-cp312",
+          "inputs_sha256": "5dedc12c1e7f89594939f1181e34fcf9ea73507f594beeec4aba2c558659cd6c"
+        },
+        {
+          "artifact_digest": "sha256:ca9946741c45d6bb8b9a65bd90fd79d36a7bea3b0de0ebcf81ef95b9804b2a0a",
+          "component": "qualification/python-cp313",
+          "inputs_sha256": "e579fb379fc6769a5ba53b18faa90629ef99cb19963415850100cba2c196b215"
+        },
+        {
+          "artifact_digest": "sha256:f4ac4de00bf6027ffcd7b8f20e488ffea1c9829c4ddbd48f9b1e952ca388422a",
+          "component": "qualification/python-cp314",
+          "inputs_sha256": "3e8dcd7a59f38af637108d6de9c321e5a0fc6649dfafd9cc872960343bc4b935"
+        },
+        {
+          "artifact_digest": "sha256:e73e7fd9db8b4b76b8be190610b21f4102d096b94bce16adc132d717962c3a05",
+          "component": "qualification/python-cp39",
+          "inputs_sha256": "b8d58152a4d3fd5d6d9645a26d0fd3891164cea3b4e98f512fd30cd34a124735"
+        },
+        {
+          "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+          "component": "toolchain/aarch64-install",
+          "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+        },
+        {
+          "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+          "component": "toolchain/x86_64-install",
+          "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+        }
+      ],
+      "reports": [
+        {
+          "mode": "0644",
+          "path": "reports/cp310.json",
+          "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp311.json",
+          "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp312.json",
+          "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp313.json",
+          "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp314.json",
+          "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp39.json",
+          "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/python-final-sdk.json",
+          "sha256": "6c8e196cd7870f53db8476bedad21a26e872aa374c2e340b2e189bdab0d4025f"
+        }
+      ],
+      "reused_row_receipts": {
+        "cp310": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+        "cp311": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+        "cp312": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+        "cp313": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+        "cp314": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+        "cp39": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3"
+      },
+      "final_report": {
+        "status": "passed",
+        "schema_version": 1,
+        "kind": "crossforge-final-sdk-qualification",
+        "phase": 10,
+        "build_python_rows": [
+          "cp313",
+          "cp311",
+          "cp312",
+          "cp314",
+          "cp310",
+          "cp39"
+        ],
+        "target_python_rows": [
+          "cp313",
+          "cp311",
+          "cp312",
+          "cp314",
+          "cp310",
+          "cp39"
+        ],
+        "target_compilers": [
+          "x86_64-unknown-linux-gnu",
+          "aarch64-unknown-linux-gnu"
+        ],
+        "qemu": {
+          "path": "/usr/local/libexec/crossforge/qemu-aarch64",
+          "sha256": "1ad17b7bd5e15ce60075d0994d5c5e3914d16899a1e3119040b5c9e76e067f24",
+          "version": "10.2.3"
+        }
+      }
+    },
+    {
+      "phase": "sdk-complete-dev",
+      "status": "passed",
+      "seconds": 777.453,
+      "producer": {
+        "invocation": "urn:crossforge:local:export-replay-a56bb29-sdk-complete-dev",
+        "kind": "local",
+        "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+        "source_dirty": false,
+        "started_at": "2026-09-11T13:02:59Z"
+      },
+      "result_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/sdk-complete-dev/result.json",
+        "sha256": "8dafb8175f3f9f2668836ea9a28d31ce38f2155f975b9c9e89060485df547572"
+      },
+      "inputs_file": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/sdk-complete-dev/integration/inputs.json",
+        "sha256": "2ae35f181d52580ca514dc7bf4470a24490509bdbfea65b5e105f688cb44ed1d"
+      },
+      "execution_log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/runtime/sdk-complete-dev/integration/execution.jsonl",
+        "sha256": "20c6aa0ba2f388280c636da1c3dcae35ed405fa7305cf2a80e717f2b894d0ec1"
+      },
+      "inputs_sha256": "848fb963b8338a9618be970cf7d0e6f2ac4351242655064327396622ac412018",
+      "started_at": "2026-09-11T13:07:51Z",
+      "completed_at": "2026-09-11T13:15:54Z",
+      "fresh_runs": 14,
+      "source_compiler_RUNs_observed": 0,
+      "dependencies": [
+        {
+          "artifact_digest": "sha256:ff78bc0289382b9e14eeddacdc648aecb6a169a134dfacf514d10262155c20f3",
+          "component": "qualification/python-cp310",
+          "inputs_sha256": "c1c0b08cebbcae11f61c26e15f02e4c6ba9e9b4069ab8a1b7f6f6ad26bc30ab9"
+        },
+        {
+          "artifact_digest": "sha256:8df31c46fa79cbb02fd2d22e88bc310851891c02ad04e06172e6eea48566e52a",
+          "component": "qualification/python-cp311",
+          "inputs_sha256": "d7f7f74dc4804798dfa10e3e805814ba8e47f3b920109d313247e768bee1c284"
+        },
+        {
+          "artifact_digest": "sha256:196b96d97c7e86bb5d775b5f80b60d2bd42140f20d70c41ceff3be78c7771ffc",
+          "component": "qualification/python-cp312",
+          "inputs_sha256": "5dedc12c1e7f89594939f1181e34fcf9ea73507f594beeec4aba2c558659cd6c"
+        },
+        {
+          "artifact_digest": "sha256:ca9946741c45d6bb8b9a65bd90fd79d36a7bea3b0de0ebcf81ef95b9804b2a0a",
+          "component": "qualification/python-cp313",
+          "inputs_sha256": "e579fb379fc6769a5ba53b18faa90629ef99cb19963415850100cba2c196b215"
+        },
+        {
+          "artifact_digest": "sha256:f4ac4de00bf6027ffcd7b8f20e488ffea1c9829c4ddbd48f9b1e952ca388422a",
+          "component": "qualification/python-cp314",
+          "inputs_sha256": "3e8dcd7a59f38af637108d6de9c321e5a0fc6649dfafd9cc872960343bc4b935"
+        },
+        {
+          "artifact_digest": "sha256:e73e7fd9db8b4b76b8be190610b21f4102d096b94bce16adc132d717962c3a05",
+          "component": "qualification/python-cp39",
+          "inputs_sha256": "b8d58152a4d3fd5d6d9645a26d0fd3891164cea3b4e98f512fd30cd34a124735"
+        },
+        {
+          "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+          "component": "toolchain/aarch64-install",
+          "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+        },
+        {
+          "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+          "component": "toolchain/x86_64-install",
+          "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+        }
+      ],
+      "reports": [
+        {
+          "mode": "0644",
+          "path": "reports/complete-sdk.json",
+          "sha256": "9c1e5331f575bbcf32e5c03d5765e8d65d725062bdad6f065b82ce61c3be00d3"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp310.json",
+          "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp311.json",
+          "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp312.json",
+          "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp313.json",
+          "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp314.json",
+          "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/cp39.json",
+          "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/python-final-sdk.json",
+          "sha256": "6c8e196cd7870f53db8476bedad21a26e872aa374c2e340b2e189bdab0d4025f"
+        }
+      ],
+      "reused_row_receipts": {
+        "cp310": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+        "cp311": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+        "cp312": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+        "cp313": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+        "cp314": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+        "cp39": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3"
+      },
+      "final_report": {
+        "kind": "crossforge-complete-sdk-qualification",
+        "schema_version": 2,
+        "status": "passed",
+        "python_phase": 10,
+        "matrix": [
+          {
+            "linkage": "static",
+            "python": "3.9",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.9",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.10",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.10",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.11",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.11",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.12",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.12",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.13",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.13",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.14",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.14",
+            "target": "x86_64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.9",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.9",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.10",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.10",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.11",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.11",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.12",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.12",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.13",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.13",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "static",
+            "python": "3.14",
+            "target": "aarch64"
+          },
+          {
+            "linkage": "dynamic",
+            "python": "3.14",
+            "target": "aarch64"
+          }
+        ],
+        "package_targets": {
+          "aarch64": {
+            "deb": "passed",
+            "rpm": "passed"
+          },
+          "x86_64": {
+            "deb": "passed",
+            "rpm": "passed"
+          }
+        },
+        "launcher_consumers": [
+          {
+            "binary_sha256": "32baa9d6170430fff1f000bfa95777e1680594615a3997d18bdecd8445b318f7",
+            "build_system": "cmake-ninja",
+            "executed": false,
+            "languages": [
+              "c",
+              "c++20"
+            ],
+            "target": "x86_64",
+            "triple": "x86_64-unknown-linux-gnu"
+          },
+          {
+            "binary_sha256": "a9c0b160504ebdebb0ea86adb34e1e7ada20ca564ffc4496d82c552c17289941",
+            "build_system": "cmake-ninja",
+            "executed": false,
+            "languages": [
+              "c",
+              "c++20"
+            ],
+            "target": "aarch64",
+            "triple": "aarch64-unknown-linux-gnu"
+          }
+        ],
+        "vcpkg_report": {
+          "schema_version": 2,
+          "sha256": "a2efa581269fbd606603a9144a891e66bbab2377ec900f65b7c89f9b8be3ee5e"
+        }
+      }
+    }
+  ],
+  "sdk_result_recheck": {
+    "status": "passed",
+    "exit_code": 0,
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "runner": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/verify-sdk-results.py",
+      "sha256": "bc36a6baf17ed02fbbd95163d0d26046d6406f63e3778f62e8941ddc665338c2"
+    },
+    "scope": "Read-only offline Docker recheck with original python_sdk.fresh_vertices and component input/report hash validators; 13 and 14 fresh RUNs, eight dependencies and six original row manifests per SDK. No new build or qualification execution."
+  },
+  "forced_replays": [
+    {
+      "phase": "vcpkg",
+      "status": "passed",
+      "seconds": 1355.23,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "scope": "local forced RUN observation; not reusable qualification receipt, CI, candidate or native ARM evidence",
+      "inputs_sha256": "1213bd098e9c0dda7d82a137e488b7e1b03e74334b9a7fe2798d3662bd6ffd5d",
+      "started_at": "2026-09-11T13:16:01Z",
+      "completed_at": "2026-09-11T13:38:31Z",
+      "fresh_runs": 4,
+      "reports": [
+        {
+          "mode": "0644",
+          "path": "reports/sdk.json",
+          "sha256": "a2efa581269fbd606603a9144a891e66bbab2377ec900f65b7c89f9b8be3ee5e"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/contract.json",
+          "sha256": "c12c806b70f151223beca1c8395c836f3ef2ef9c76d011324fbe34e682c1d74c"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/upstream-tier1.json",
+          "sha256": "6b16e3049b9436871e67452ab8b80c96f6028c259e4ede57183951b7549e31fb"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/upstream-tier2.json",
+          "sha256": "730e229b868f454f94d7518c0f209ce02daf5a8e6b7e2e55cbb6f7612a5ba93e"
+        },
+        {
+          "mode": "0644",
+          "path": "reports/upstream-tier3.json",
+          "sha256": "b45d3945eff4ff410fce22f51813a9f4f9432924ac58cd4bd90d2905c7ac0ad9"
+        }
+      ],
+      "files": {
+        "result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/vcpkg/result.json",
+          "sha256": "15b6cb1a10cb4e2d73f213964a1cfd2f2c787341dbb262449fb17a4e39486cf5"
+        },
+        "inputs.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/vcpkg/inputs.json",
+          "sha256": "c6cb8d53aad15dab9598dbca52addc8eee713a1cbb37a8fc7ff3d6a4e8d95047"
+        },
+        "execution.jsonl": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/vcpkg/execution.jsonl",
+          "sha256": "bc05db8897fdcd29d42f1629cc09c397e922ab80070c980e9b4d00858239f3f5"
+        },
+        "replay-plan.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/vcpkg/replay-plan.json",
+          "sha256": "cc592e7b95d2d93c75e56bd0723622331cf9b2ef4dc4af7f8f81938cae48abe1"
+        },
+        "execution.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/vcpkg/execution.json",
+          "sha256": "e9971aee1f91793e70c6425e4474f38776737ef020644ce82b079923144481a9"
+        }
+      },
+      "independent_recheck": {
+        "status": "passed",
+        "exit_code": 0,
+        "runner": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/verify-vcpkg-result.py",
+          "sha256": "c67f130a632383c19e8266d54a305dcc4b3fb10ded5b00f3b78226b85050e566"
+        },
+        "scope": "Original fresh RUN and five report binding/file validators in offline read-only Docker; no new source build"
+      },
+      "tier_cases": {
+        "tier1": [
+          {
+            "triplet": "crossforge-host-x64-el8",
+            "linkage": "static",
+            "cross_compiling": false
+          },
+          {
+            "triplet": "crossforge-x64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-x64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          }
+        ],
+        "tier2": [
+          {
+            "triplet": "crossforge-host-x64-el8",
+            "linkage": "static",
+            "cross_compiling": false
+          },
+          {
+            "triplet": "crossforge-x64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-x64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          }
+        ],
+        "tier3": [
+          {
+            "triplet": "crossforge-host-x64-el8",
+            "linkage": "static",
+            "cross_compiling": false
+          },
+          {
+            "triplet": "crossforge-x64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-x64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8",
+            "linkage": "static",
+            "cross_compiling": true
+          },
+          {
+            "triplet": "crossforge-arm64-el8-dynamic",
+            "linkage": "dynamic",
+            "cross_compiling": true
+          }
+        ]
+      }
+    },
+    {
+      "phase": "source-toolchain-x86_64",
+      "status": "passed",
+      "seconds": 776.038,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "scope": "local forced RUN observation; not reusable qualification receipt, CI, candidate or native ARM evidence",
+      "started_at": "2026-09-11T13:38:35Z",
+      "completed_at": "2026-09-11T13:51:27Z",
+      "fresh_runs": 2,
+      "compiler_stages": [
+        "binutils-x86_64",
+        "gcc-x86_64-built"
+      ],
+      "files": {
+        "result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-toolchain-x86_64/result.json",
+          "sha256": "7210254d5a63971636f3613457b3ac4ff19f0a4c8e47da59da5fa26a63f0c3ea"
+        },
+        "driver/result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-toolchain-x86_64/driver/result.json",
+          "sha256": "e5d0d5848d639288eed5b11bc37a1dd6e30b18c98b95506844b08bee6eab00b2"
+        },
+        "driver/graph.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-toolchain-x86_64/driver/graph.json",
+          "sha256": "7c54028797fd56d86bc9044b5747d783f40d347e00a9f861644912012fc51a5c"
+        },
+        "driver/replay-plan.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-toolchain-x86_64/driver/replay-plan.json",
+          "sha256": "984e21fbf24970b778f1105d23be200053a38116fd409cb739f498f95d3b7336"
+        },
+        "driver/replay-result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-toolchain-x86_64/driver/replay-result.json",
+          "sha256": "935fcf9fe84090c66c60261ac71e919d75a88f8e51f704c34cd8a6d550dc66b5"
+        },
+        "driver/replay-toolchain-x86_64-dev.jsonl": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-toolchain-x86_64/driver/replay-toolchain-x86_64-dev.jsonl",
+          "sha256": "b392ad8b0c6b8318ddd38aa9ea4df80398b31abf7ce52823c7680c42222e83b9"
+        },
+        "driver.log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-toolchain-x86_64/driver.log",
+          "sha256": "c3128abe6d299d64015b57764688c710649ecd2eac484701790d34fa6f9a2baa"
+        }
+      },
+      "independent_recheck": {
+        "status": "passed",
+        "exit_code": 0,
+        "runner": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/verify-source-results.py",
+          "sha256": "ef4c586d862258576c411cda3866be4436259d3401f8bfd337870bceb6182dc1"
+        },
+        "log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/verify-source-x86_64.log",
+          "sha256": "ea2b50ec3f8ddf07c200413c6c282ee6a9e0ea6af49040af7216af9fac6504db"
+        },
+        "scope": "Original source closure/plan and fresh RUN verifier; offline read-only Docker"
+      }
+    },
+    {
+      "phase": "source-python-cp39",
+      "status": "passed",
+      "seconds": 1240.976,
+      "source_commit": "a56bb29b4aca1cf45922906c0d0537863791feba",
+      "scope": "local forced RUN observation; not reusable qualification receipt, CI, candidate or native ARM evidence",
+      "started_at": "2026-09-11T13:51:32Z",
+      "completed_at": "2026-09-11T14:12:08Z",
+      "fresh_runs": 6,
+      "source_compile_runs": 3,
+      "row_validation_runs": 3,
+      "files": {
+        "result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/result.json",
+          "sha256": "f51a964a2dd745938c1cf519e32b00b2fd22913837fb642261c6f76c46ad1010"
+        },
+        "driver/result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver/result.json",
+          "sha256": "4ec0060aa6ca36b39ce1b7284014a21049663a0d969daa7eda057f58ff8e9e63"
+        },
+        "driver/graph.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver/graph.json",
+          "sha256": "0cb7aad4a43667776ba49ef2d88e3a802f3842c1bd221050faecef10610abd68"
+        },
+        "driver/replay-plan.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver/replay-plan.json",
+          "sha256": "adbf5cccd1ec6e692206df908878653faf957411922c54faeedbdb57bc893128"
+        },
+        "driver/replay-result.json": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver/replay-result.json",
+          "sha256": "8c78608ba3cfc994e70955b15a0733b8a2b55a3c45d5c871d10c888397cae9a2"
+        },
+        "driver/replay-python-cp39-dev.jsonl": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver/replay-python-cp39-dev.jsonl",
+          "sha256": "ef6c119c5bc6ceec0139287104c7da5057e4751b33cde6368dc05ac46030fe7b"
+        },
+        "driver.log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/forced-replay/source-python-cp39/driver.log",
+          "sha256": "b2592cb980a71a4fefc77501260b27e14fc4211f3e22f873a94ee05dc9fbdbcb"
+        }
+      },
+      "independent_recheck": {
+        "status": "passed",
+        "exit_code": 0,
+        "runner": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/verify-source-results.py",
+          "sha256": "ef4c586d862258576c411cda3866be4436259d3401f8bfd337870bceb6182dc1"
+        },
+        "log": {
+          "path": "/home/eg/workspace/github/eglinux/crossforge/build/runtime-replay-a56bb29/verify-source-cp39.log",
+          "sha256": "a5b6e812f5912ab441b81ea534e334cedb787e6118e63521204acccad7609b89"
+        },
+        "scope": "Original source closure/plan and fresh RUN verifier; offline read-only Docker"
+      },
+      "prerequisite_note": "The ordinary source graph rebuilt uncached AArch64 binutils/GCC prerequisites. The selected forced scope contains three CPython compiler RUNs and three row-validation RUNs, not six compiler invocations."
+    }
+  ],
+  "batch_exit_code": 0
+}

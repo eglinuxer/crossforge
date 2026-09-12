@@ -1,0 +1,330 @@
+name: internal component handoff pilot
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Build and publish pilot components, or consume a previously signed catalog
+        type: choice
+        options: [build, reuse]
+        default: build
+      catalog-reference:
+        description: Optional digest-only catalog for reuse; empty discovers exact current inputs
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    uses: ./.github/workflows/verify-quick.yml
+    with:
+      plan-components: false
+
+  produce:
+    needs: preflight
+    if: github.repository == 'eglinuxer/crossforge' && github.ref == 'refs/heads/main' && inputs.mode == 'build'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      handoff-sha256: ${{ steps.produce.outputs.handoff_sha256 }}
+      handoff-artifact-id: ${{ steps.handoff.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Reject recovery inputs in build mode
+        env:
+          CATALOG_REFERENCE: ${{ inputs.catalog-reference }}
+        run: test -z "$CATALOG_REFERENCE"
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - name: Authenticate internal component writer
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - name: Build and transfer exact x86_64 component artifacts
+        id: produce
+        env:
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/component-pilot.py produce \
+            --output "$RUNNER_TEMP/component-producer" \
+            --builder "$COMPONENT_BUILDER" --oras "$COMPONENT_ORAS" \
+            > "$RUNNER_TEMP/component-producer-result.json"
+          python3 -c 'import json,sys; print("handoff_sha256=" + json.load(open(sys.argv[1]))["handoff_sha256"])' \
+            "$RUNNER_TEMP/component-producer-result.json" >> "$GITHUB_OUTPUT"
+      - name: Preserve the immutable handoff document
+        id: handoff
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-producer/handoff.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Log out component writer
+        if: always()
+        run: docker logout ghcr.io
+
+  consume:
+    needs: produce
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.produce.outputs.handoff-artifact-id }}
+          path: ${{ runner.temp }}/component-handoff
+          merge-multiple: true
+      - name: Authenticate internal component reader
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - name: Verify transferred subjects and run existing gates
+        env:
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+          HANDOFF_SHA256: ${{ needs.produce.outputs.handoff-sha256 }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/component-pilot.py consume \
+            --handoff "$RUNNER_TEMP/component-handoff/handoff.json" \
+            --handoff-sha256 "$HANDOFF_SHA256" \
+            --output "$RUNNER_TEMP/component-consumer" \
+            --builder "$COMPONENT_BUILDER" --oras "$COMPONENT_ORAS"
+      - name: Preserve report and consumer diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-consumer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-consumer/report/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Log out component reader
+        if: always()
+        run: docker logout ghcr.io
+
+  catalog:
+    needs: [produce, consume]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      artifact-id: ${{ steps.signed.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.produce.outputs.handoff-artifact-id }}
+          path: ${{ runner.temp }}/component-handoff
+          merge-multiple: true
+      - name: Export the existing TUF-authenticated signing tool
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/cosign-tool"
+          docker buildx bake cosign-host-tool \
+            --set "cosign-host-tool.output=type=local,dest=$output" \
+            --progress=plain
+          expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
+          test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
+          test -x "$output/cosign"
+          ./scripts/validate-sigstore-report.py "$output/sigstore-verification.json"
+      - name: Sign exact producer receipts after consumer gates succeed
+        env:
+          HANDOFF_SHA256: ${{ needs.produce.outputs.handoff-sha256 }}
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/component-catalog"
+          mkdir "$output"
+          python3 scripts/component-catalog.py from-handoff \
+            --handoff "$RUNNER_TEMP/component-handoff/handoff.json" \
+            --handoff-sha256 "$HANDOFF_SHA256" --output "$output/catalog.json"
+          "$RUNNER_TEMP/cosign-tool/cosign" sign-blob --yes \
+            --bundle "$output/catalog.sigstore.json" "$output/catalog.json"
+          python3 scripts/component-catalog.py verify \
+            --catalog "$output/catalog.json" --bundle "$output/catalog.sigstore.json" \
+            --cosign "$RUNNER_TEMP/cosign-tool/cosign" > "$output/authentication.json"
+      - name: Preserve the signed catalog and verification bundle
+        id: signed
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-catalog-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-catalog/
+          retention-days: 7
+          if-no-files-found: error
+
+  catalog-store:
+    needs: catalog
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      reference: ${{ steps.store.outputs.reference }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.catalog.outputs.artifact-id }}
+          path: ${{ runner.temp }}/component-catalog
+          merge-multiple: true
+      - name: Export the pinned catalog verifier
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/cosign-tool"
+          docker buildx bake cosign-host-tool \
+            --set "cosign-host-tool.output=type=local,dest=$output" \
+            --progress=plain
+          expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
+          test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
+          test -x "$output/cosign"
+          ./scripts/validate-sigstore-report.py "$output/sigstore-verification.json"
+      - name: Authenticate the catalog writer
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - name: Reverify and persist the signed catalog before updating input indexes
+        id: store
+        env:
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/component-catalog.py publish \
+            --catalog "$RUNNER_TEMP/component-catalog/catalog.json" \
+            --bundle "$RUNNER_TEMP/component-catalog/catalog.sigstore.json" \
+            --cosign "$RUNNER_TEMP/cosign-tool/cosign" --oras "$COMPONENT_ORAS" \
+            --registry-config "$HOME/.docker/config.json" \
+            --output "$RUNNER_TEMP/catalog-store" > "$RUNNER_TEMP/catalog-store-result.json"
+          python3 -c 'import json,sys; print("reference=" + json.load(open(sys.argv[1]))["reference"])' \
+            "$RUNNER_TEMP/catalog-store-result.json" >> "$GITHUB_OUTPUT"
+      - name: Preserve the immutable catalog reference
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-catalog-reference-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-store-result.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Log out the catalog writer
+        if: always()
+        run: docker logout ghcr.io
+
+  reuse:
+    needs: preflight
+    if: github.repository == 'eglinuxer/crossforge' && github.ref == 'refs/heads/main' && inputs.mode == 'reuse'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - name: Export the pinned catalog verifier
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/cosign-tool"
+          docker buildx bake cosign-host-tool \
+            --set "cosign-host-tool.output=type=local,dest=$output" \
+            --progress=plain
+          expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
+          test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
+          test -x "$output/cosign"
+          ./scripts/validate-sigstore-report.py "$output/sigstore-verification.json"
+      - name: Authenticate the read-only component consumer
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io \
+            --username "$GITHUB_ACTOR" --password-stdin
+      - name: Authenticate prior components and execute fresh consumer gates
+        env:
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+          CATALOG_REFERENCE: ${{ inputs.catalog-reference }}
+        run: |
+          set -Eeuo pipefail
+          options=()
+          if test -n "$CATALOG_REFERENCE"; then options+=(--catalog-reference "$CATALOG_REFERENCE"); fi
+          python3 scripts/component-pilot.py consume-catalog \
+            --cosign "$RUNNER_TEMP/cosign-tool/cosign" "${options[@]}" \
+            --output "$RUNNER_TEMP/component-reuse" \
+            --builder "$COMPONENT_BUILDER" --oras "$COMPONENT_ORAS"
+      - name: Preserve original catalog evidence and fresh consumer reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-reuse-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-reuse/report/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Log out the component consumer
+        if: always()
+        run: docker logout ghcr.io
+
+  verified:
+    if: always()
+    needs: [preflight, produce, consume, catalog, catalog-store, reuse]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every selected pilot job to succeed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          results = json.loads(os.environ["RESULTS"])
+          modes = {"build": {"produce", "consume", "catalog", "catalog-store"}, "reuse": {"reuse"}}
+          mode = os.environ["MODE"]
+          jobs = {"preflight", "produce", "consume", "catalog", "catalog-store", "reuse"}
+          valid = mode in modes and set(results) == jobs
+          if valid:
+              selected = modes[mode] | {"preflight"}
+              valid = all(results[name].get("result") == ("success" if name in selected else "skipped") for name in jobs)
+          sys.exit(0 if valid else 1)
+          PY

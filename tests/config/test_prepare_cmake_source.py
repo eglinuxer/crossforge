@@ -158,7 +158,7 @@ class PrepareCMakeSourceTests(unittest.TestCase):
         self.assertIn(
             "cmake-source",
             (
-                (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+                (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(encoding="utf-8")
                 + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
             ),
         )

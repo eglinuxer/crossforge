@@ -5,8 +5,6 @@ concurrency:
   cancel-in-progress: false
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -20,22 +18,30 @@ jobs:
   quick:
     permissions:
       contents: read
-    uses: ./.github/workflows/ci.yml
+    uses: ./.github/workflows/verify-quick.yml
     with:
-      quick-only: true
+      plan-components: false
 
   qualify:
     needs: quick
-    uses: ./.github/workflows/qualification.yml
+    # All canonical release gates still run. Missing raw components are
+    # prepared once; this candidate does not join the shared cache-writer queue.
+    permissions:
+      contents: read
+      actions: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/verify-main-incremental.yml
+    with:
+      profile: full
 
-  publish:
+  source-publication:
     needs: qualify
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     outputs:
-      candidate_digest: ${{ steps.digest.outputs.digest }}
-      platform_digest: ${{ steps.digest.outputs.platform_digest }}
-      probe_bundle_sha256: ${{ steps.native_probe.outputs.bundle_sha256 }}
+      checkpoint_artifact_id: ${{ steps.checkpoint_artifact.outputs.artifact-id }}
+      checkpoint_sha256: ${{ steps.checkpoint.outputs.checkpoint_sha256 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
@@ -84,6 +90,7 @@ jobs:
           source_tag="source-$tag"
           source_reference="$CANDIDATE_REPOSITORY:$source_tag"
           printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          printf 'attempt=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
           printf 'reference=%s\n' "$reference" >> "$GITHUB_OUTPUT"
           printf 'source_tag=%s\n' "$source_tag" >> "$GITHUB_OUTPUT"
           printf 'source_reference=%s\n' "$source_reference" >> "$GITHUB_OUTPUT"
@@ -118,8 +125,10 @@ jobs:
         run: |
           set -Eeuo pipefail
           identity_root="$RUNNER_TEMP/source-bundle-identity"
+          mkdir -p "$RUNNER_TEMP/candidate-build-diagnostics"
           python3 ./scripts/run-with-heartbeat.py \
-            --label source-bundle-publish --interval 60 -- \
+            --label source-bundle-publish --interval 60 \
+            --log "$RUNNER_TEMP/candidate-build-diagnostics/build.log" -- \
             docker buildx bake source-bundle \
             --set "source-bundle.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
             --set "source-bundle.tags=$SOURCE_REFERENCE" \
@@ -158,6 +167,94 @@ jobs:
           printf 'platform_digest=%s\n' "$source_platform_digest" >> "$GITHUB_OUTPUT"
           printf 'archive_sha256=%s\n' "$source_archive_sha256" >> "$GITHUB_OUTPUT"
           printf 'archive_size=%s\n' "$source_archive_size" >> "$GITHUB_OUTPUT"
+      - name: Seal source publication checkpoint
+        id: checkpoint
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-publication.py seal --phase source \
+            --root "$RUNNER_TEMP" \
+            --output "$RUNNER_TEMP/source-publication-checkpoint"
+      - name: Upload source publication checkpoint
+        id: checkpoint_artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: source-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/source-publication-checkpoint/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Export publication BuildKit diagnostics
+        if: always()
+        run: ./scripts/collect-buildkit-diagnostics.sh "$RUNNER_TEMP/candidate-build-diagnostics"
+      - name: Preserve source publication build diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-source-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/candidate-build-diagnostics/
+            ${{ runner.temp }}/source-build-metadata.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Log out the publication writer
+        if: always()
+        run: docker logout ghcr.io >/dev/null 2>&1 || true
+
+  sdk-publication:
+    needs: [source-publication]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      actions: read
+      contents: read
+      packages: write
+    outputs:
+      checkpoint_artifact_id: ${{ steps.checkpoint_artifact.outputs.artifact-id }}
+      checkpoint_sha256: ${{ steps.checkpoint.outputs.checkpoint_sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/configure-build-cache
+      - name: Require the original source publication
+        env:
+          PUBLICATION_NEEDS: ${{ toJSON(needs) }}
+        run: python3 scripts/candidate-publication.py upstream --phase source --needs-json "$PUBLICATION_NEEDS"
+      - name: Download original source publication checkpoint
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.source-publication.outputs.checkpoint_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/source-checkpoint
+      - name: Restore and verify the original source publication
+        id: source
+        env:
+          CHECKPOINT_SHA256: ${{ needs.source-publication.outputs.checkpoint_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-publication.py restore --phase source \
+            --directory "$RUNNER_TEMP/source-checkpoint" \
+            --sha256 "$CHECKPOINT_SHA256" --output "$RUNNER_TEMP"
+      - name: Resolve unique public candidate tag
+        id: identity
+        env:
+          ORIGINAL_SOURCE_REFERENCE: ${{ steps.source.outputs.source_reference }}
+        run: |
+          set -Eeuo pipefail
+          tag=$(./scripts/candidate_manifest.py tag \
+            --source-commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT")
+          reference="$CANDIDATE_REPOSITORY:$tag"
+          source_reference="$ORIGINAL_SOURCE_REFERENCE"
+          source_tag=${source_reference#"$CANDIDATE_REPOSITORY:"}
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          printf 'attempt=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          printf 'reference=%s\n' "$reference" >> "$GITHUB_OUTPUT"
+          printf 'source_tag=%s\n' "$source_tag" >> "$GITHUB_OUTPUT"
+          printf 'source_reference=%s\n' "$source_reference" >> "$GITHUB_OUTPUT"
       - name: Prove the complete source payload is anonymously retrievable
         env:
           SOURCE_DIGEST: ${{ steps.source.outputs.digest }}
@@ -201,15 +298,44 @@ jobs:
           set -Eeuo pipefail
           printf '%s' "$GHCR_TOKEN" \
             | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - uses: ./.github/actions/setup-component-transport
+        id: transport
+      - uses: ./.github/actions/setup-component-verifier
+        id: verifier
+      - name: Bind the complete candidate to authenticated raw components
+        id: components
+        env:
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          COMPONENT_ORAS: ${{ steps.transport.outputs.binary }}
+          COMPONENT_COSIGN: ${{ steps.verifier.outputs.binary }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-components.py prepare \
+            --source-binding "$RUNNER_TEMP/source-binding.json" \
+            --directory "$RUNNER_TEMP/candidate-components" --data "$RUNNER_TEMP/candidate-component-data" \
+            --builder "$COMPONENT_BUILDER" --oras "$COMPONENT_ORAS" --cosign "$COMPONENT_COSIGN"
+      - name: Reject an existing SDK publication tag
+        env:
+          CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
+        run: |
+          set -Eeuo pipefail
+          if docker buildx imagetools inspect "$CANDIDATE_REFERENCE" >/dev/null 2>&1; then
+            echo "candidate tag already exists: $CANDIDATE_REFERENCE" >&2
+            exit 1
+          fi
       - name: Build once and push the source-bound candidate
         env:
           CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
-          SBOM_GENERATOR: ${{ steps.release_inputs.outputs.sbom_generator }}
+          SBOM_GENERATOR: ${{ steps.source.outputs.sbom_generator }}
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
         run: |
           set -Eeuo pipefail
+          mkdir -p "$RUNNER_TEMP/candidate-build-diagnostics"
           python3 ./scripts/run-with-heartbeat.py \
-            --label sdk-candidate-publish --interval 60 -- \
-            docker buildx bake sdk-candidate \
+            --label sdk-candidate-publish --interval 60 \
+            --log "$RUNNER_TEMP/candidate-build-diagnostics/build.log" -- \
+            docker buildx bake --builder "$COMPONENT_BUILDER" \
+            -f "$RUNNER_TEMP/candidate-components/components.bake.json" sdk-candidate \
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_COMMIT=$GITHUB_SHA" \
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_BUNDLE_DIGEST=${{ steps.source.outputs.digest }}" \
             --set "sdk-candidate.args.CROSSFORGE_SOURCE_BUNDLE_PLATFORM_MANIFEST_DIGEST=${{ steps.source.outputs.platform_digest }}" \
@@ -258,13 +384,120 @@ jobs:
             "$RUNNER_TEMP/candidate-source-binding.json"
           printf 'digest=%s\n' "$candidate_digest" >> "$GITHUB_OUTPUT"
           printf 'platform_digest=%s\n' "$platform_digest" >> "$GITHUB_OUTPUT"
+          python3 - "$RUNNER_TEMP/candidate.json" >> "$GITHUB_OUTPUT" <<'PY'
+          import sys
+          sys.path.insert(0, 'scripts')
+          from crossforge_internal.identity import content_sha256, load_json
+          print('candidate_sha256=' + content_sha256(load_json(sys.argv[1])))
+          PY
           test "$CANDIDATE_REFERENCE" = \
             "$CANDIDATE_REPOSITORY:${{ steps.identity.outputs.tag }}"
           test "${{ steps.identity.outputs.source_reference }}" = \
             "$CANDIDATE_REPOSITORY:${{ steps.identity.outputs.source_tag }}"
+      - name: Recheck the exact component binding after publication
+        env:
+          COMPONENT_BUILDER: ${{ steps.buildx.outputs.builder }}
+          BINDING_SHA256: ${{ steps.components.outputs.binding_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-components.py check \
+            --source-binding "$RUNNER_TEMP/source-binding.json" \
+            --directory "$RUNNER_TEMP/candidate-components" \
+            --builder "$COMPONENT_BUILDER" --sha256 "$BINDING_SHA256"
+          cp "$RUNNER_TEMP/candidate-components/component-selection.json" "$RUNNER_TEMP/component-selection.json"
+      - name: Seal sdk publication checkpoint
+        id: checkpoint
+        env:
+          SOURCE_CHECKPOINT_SHA256: ${{ needs.source-publication.outputs.checkpoint_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-publication.py seal --phase sdk \
+            --root "$RUNNER_TEMP" \
+            --source-checkpoint "$RUNNER_TEMP/source-checkpoint" \
+            --source-sha256 "$SOURCE_CHECKPOINT_SHA256" \
+            --output "$RUNNER_TEMP/sdk-publication-checkpoint"
+      - name: Upload sdk publication checkpoint
+        id: checkpoint_artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sdk-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/sdk-publication-checkpoint/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Export publication BuildKit diagnostics
+        if: always()
+        run: ./scripts/collect-buildkit-diagnostics.sh "$RUNNER_TEMP/candidate-build-diagnostics"
+      - name: Preserve sdk publication build diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-sdk-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/candidate-build-diagnostics/
+            ${{ runner.temp }}/build-metadata.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Preserve candidate component identities and diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-component-inputs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/candidate-components/
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Log out the publication writer
+        if: always()
+        run: docker logout ghcr.io >/dev/null 2>&1 || true
+
+  publish:
+    needs: [sdk-publication]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+    outputs:
+      candidate_digest: ${{ steps.inputs.outputs.digest }}
+      platform_digest: ${{ steps.inputs.outputs.platform_digest }}
+      probe_bundle_sha256: ${{ steps.native_probe.outputs.bundle_sha256 }}
+      candidate_sha256: ${{ steps.inputs.outputs.candidate_sha256 }}
+      publish_attempt: ${{ steps.inputs.outputs.attempt }}
+      identity_artifact_id: ${{ steps.identity_artifact.outputs.artifact-id }}
+      probe_artifact_id: ${{ steps.probe_artifact.outputs.artifact-id }}
+      source_attempt: ${{ steps.inputs.outputs.source_attempt }}
+      source_checkpoint_sha256: ${{ steps.inputs.outputs.source_checkpoint_sha256 }}
+      sdk_attempt: ${{ steps.inputs.outputs.sdk_attempt }}
+      sdk_checkpoint_sha256: ${{ steps.inputs.outputs.sdk_checkpoint_sha256 }}
+      component_selection_sha256: ${{ steps.inputs.outputs.component_selection_sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Require the original sdk publication
+        env:
+          PUBLICATION_NEEDS: ${{ toJSON(needs) }}
+        run: python3 scripts/candidate-publication.py upstream --phase sdk --needs-json "$PUBLICATION_NEEDS"
+      - name: Download original sdk publication checkpoint
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.sdk-publication.outputs.checkpoint_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/sdk-checkpoint
+      - name: Restore and verify the original sdk publication
+        id: inputs
+        env:
+          CHECKPOINT_SHA256: ${{ needs.sdk-publication.outputs.checkpoint_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/candidate-publication.py restore --phase sdk \
+            --directory "$RUNNER_TEMP/sdk-checkpoint" \
+            --sha256 "$CHECKPOINT_SHA256" --output "$RUNNER_TEMP"
       - name: Prove anonymous public availability
         env:
-          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+          CANDIDATE_DIGEST: ${{ steps.inputs.outputs.digest }}
         run: |
           set -Eeuo pipefail
           docker logout ghcr.io
@@ -275,22 +508,22 @@ jobs:
             --index "$RUNNER_TEMP/anonymous-candidate-index.json" \
             --expected-digest "$CANDIDATE_DIGEST")
           test "$anonymous_platform" = \
-            "${{ steps.digest.outputs.platform_digest }}"
+            "${{ steps.inputs.outputs.platform_digest }}"
           docker buildx imagetools inspect \
-            "$CANDIDATE_REPOSITORY@${{ steps.source.outputs.digest }}" --raw \
+            "$CANDIDATE_REPOSITORY@${{ steps.inputs.outputs.source_digest }}" --raw \
             > "$RUNNER_TEMP/anonymous-source-index.json"
           anonymous_source_platform=$(./scripts/resolve_candidate_image.py \
             platform-digest --index "$RUNNER_TEMP/anonymous-source-index.json" \
-            --expected-digest "${{ steps.source.outputs.digest }}")
+            --expected-digest "${{ steps.inputs.outputs.source_digest }}")
           test "$anonymous_source_platform" = \
-            "${{ steps.source.outputs.platform_digest }}"
+            "${{ steps.inputs.outputs.source_platform_digest }}"
       - name: Validate public source provenance and SBOM
         uses: ./.github/actions/validate-public-attestations
         with:
           repository: ${{ env.CANDIDATE_REPOSITORY }}
           index: ${{ runner.temp }}/anonymous-source-index.json
-          index-digest: ${{ steps.source.outputs.digest }}
-          platform-digest: ${{ steps.source.outputs.platform_digest }}
+          index-digest: ${{ steps.inputs.outputs.source_digest }}
+          platform-digest: ${{ steps.inputs.outputs.source_platform_digest }}
           image-kind: source-bundle
           source-commit: ${{ github.sha }}
           output: ${{ runner.temp }}/source-attestations.json
@@ -299,14 +532,14 @@ jobs:
         with:
           repository: ${{ env.CANDIDATE_REPOSITORY }}
           index: ${{ runner.temp }}/anonymous-candidate-index.json
-          index-digest: ${{ steps.digest.outputs.digest }}
-          platform-digest: ${{ steps.digest.outputs.platform_digest }}
+          index-digest: ${{ steps.inputs.outputs.digest }}
+          platform-digest: ${{ steps.inputs.outputs.platform_digest }}
           image-kind: sdk-candidate
           source-commit: ${{ github.sha }}
           output: ${{ runner.temp }}/sdk-attestations.json
       - name: Run the anonymous non-root candidate
         env:
-          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+          CANDIDATE_DIGEST: ${{ steps.inputs.outputs.digest }}
         run: |
           set -Eeuo pipefail
           image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
@@ -317,9 +550,9 @@ jobs:
             "$RUNNER_TEMP/candidate-sources.json"
           docker run --rm "$image" cat /opt/crossforge/SOURCE-OFFER \
             > "$RUNNER_TEMP/candidate-source-offer.txt"
-          grep -F "${{ steps.source.outputs.digest }}" \
+          grep -F "${{ steps.inputs.outputs.source_digest }}" \
             "$RUNNER_TEMP/candidate-source-offer.txt"
-          grep -F "${{ steps.source.outputs.archive_sha256 }}" \
+          grep -F "${{ steps.inputs.outputs.archive_sha256 }}" \
             "$RUNNER_TEMP/candidate-source-offer.txt"
           docker run --rm "$image" cat /opt/crossforge/LICENSES.json \
             > "$RUNNER_TEMP/candidate-licenses.json"
@@ -351,7 +584,7 @@ jobs:
             "$RUNNER_TEMP/candidate-environment.json"
       - name: Build downstream consumers through the public launcher
         env:
-          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+          CANDIDATE_DIGEST: ${{ steps.inputs.outputs.digest }}
         run: |
           set -Eeuo pipefail
           image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
@@ -396,7 +629,7 @@ jobs:
       - name: Build native AArch64 probes from the immutable candidate
         id: native_probe
         env:
-          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
+          CANDIDATE_DIGEST: ${{ steps.inputs.outputs.digest }}
         run: |
           set -Eeuo pipefail
           image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
@@ -452,9 +685,12 @@ jobs:
             "$IDENTITY_ROOT/sdk-attestations.json"
           install -m 0644 "$RUNNER_TEMP/sbom-generator-image.json" \
             "$IDENTITY_ROOT/sbom-generator-image.json"
+          install -m 0644 "$RUNNER_TEMP/component-selection.json" \
+            "$IDENTITY_ROOT/component-selection.json"
           test "$(find "$IDENTITY_ROOT" -mindepth 1 -maxdepth 1 \
-            -type f | wc -l)" -eq 6
+            -type f | wc -l)" -eq 7
       - name: Upload immutable candidate identity
+        id: identity_artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: candidate-identity-${{ github.run_id }}-${{ github.run_attempt }}
@@ -462,6 +698,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Upload native AArch64 probe bundle
+        id: probe_artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: native-aarch64-probes-${{ github.run_id }}-${{ github.run_attempt }}
@@ -472,11 +709,11 @@ jobs:
           retention-days: 90
       - name: Report public candidate
         env:
-          CANDIDATE_DIGEST: ${{ steps.digest.outputs.digest }}
-          CANDIDATE_REFERENCE: ${{ steps.identity.outputs.reference }}
-          PLATFORM_DIGEST: ${{ steps.digest.outputs.platform_digest }}
-          SOURCE_DIGEST: ${{ steps.source.outputs.digest }}
-          SOURCE_REFERENCE: ${{ steps.identity.outputs.source_reference }}
+          CANDIDATE_DIGEST: ${{ steps.inputs.outputs.digest }}
+          CANDIDATE_REFERENCE: ${{ steps.inputs.outputs.reference }}
+          PLATFORM_DIGEST: ${{ steps.inputs.outputs.platform_digest }}
+          SOURCE_DIGEST: ${{ steps.inputs.outputs.source_digest }}
+          SOURCE_REFERENCE: ${{ steps.inputs.outputs.source_reference }}
         run: |
           set -Eeuo pipefail
           {
@@ -487,8 +724,8 @@ jobs:
             echo "- linux/amd64 manifest: \`$PLATFORM_DIGEST\`"
             echo "- Source tag: \`$SOURCE_REFERENCE\`"
             echo "- Source OCI index: \`$CANDIDATE_REPOSITORY@$SOURCE_DIGEST\`"
-            echo "- Source archive SHA256: \`${{ steps.source.outputs.archive_sha256 }}\`"
-            echo "- Source archive bytes: \`${{ steps.source.outputs.archive_size }}\`"
+            echo "- Source archive SHA256: \`${{ steps.inputs.outputs.archive_sha256 }}\`"
+            echo "- Source archive bytes: \`${{ steps.inputs.outputs.archive_size }}\`"
             echo '- Status: public candidate; no stable or SemVer tag was created'
           } >> "$GITHUB_STEP_SUMMARY"
       # Dockerfile frontend stderr goes to the BuildKit daemon, so the Bake
@@ -511,15 +748,28 @@ jobs:
     needs: [publish]
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
+    outputs:
+      native_attempt: ${{ steps.native_identity.outputs.attempt }}
+      native_report_sha256: ${{ steps.native_identity.outputs.report_sha256 }}
+      native_artifact_id: ${{ steps.native_artifact.outputs.artifact-id }}
     permissions:
+      actions: read
       contents: read
       packages: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Require the original successful publisher
+        env:
+          UPSTREAM_JOBS: ${{ toJSON(needs) }}
+        run: python3 scripts/candidate-recovery.py upstream --stage native --needs-json "$UPSTREAM_JOBS"
       - name: Download immutable native probe bundle
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: native-aarch64-probes-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.publish.outputs.probe_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/native-aarch64-input
       - name: Execute probes in pinned native Rocky AArch64
         env:
@@ -580,7 +830,14 @@ jobs:
           done
           test "$(find "$EVIDENCE_ROOT" -mindepth 1 -maxdepth 1 \
             -type f | wc -l)" -eq 2
+      - name: Preserve the native report producer
+        id: native_identity
+        run: |
+          set -Eeuo pipefail
+          printf 'attempt=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          printf 'report_sha256=%s\n' "$(sha256sum "$RUNNER_TEMP/native-aarch64-release-evidence/native-aarch64.json" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
       - name: Upload native AArch64 release evidence
+        id: native_artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: native-aarch64-evidence-${{ github.run_id }}-${{ github.run_attempt }}
@@ -614,16 +871,37 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-locked-buildx
       - uses: ./.github/actions/configure-build-cache
+      - name: Require the original successful candidate producers
+        env:
+          UPSTREAM_JOBS: ${{ toJSON(needs) }}
+        run: python3 scripts/candidate-recovery.py upstream --stage sign --needs-json "$UPSTREAM_JOBS"
       - name: Download immutable native probe bundle
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: native-aarch64-probes-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.publish.outputs.probe_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/native-aarch64-probes
       - name: Download native release evidence
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: native-aarch64-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.native-aarch64.outputs.native_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/native-aarch64-evidence
+      - name: Download the original candidate component selection
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.publish.outputs.identity_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/candidate-identity
       - name: Export the TUF-authenticated Cosign tool
         run: |
           set -Eeuo pipefail
@@ -640,11 +918,13 @@ jobs:
         env:
           CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
           EXPECTED_BUNDLE_SHA256: ${{ needs.publish.outputs.probe_bundle_sha256 }}
+          UPSTREAM_JOBS: ${{ toJSON(needs) }}
         run: |
           set -Eeuo pipefail
           probes="$RUNNER_TEMP/native-aarch64-probes"
           evidence="$RUNNER_TEMP/native-aarch64-evidence"
           cmp "$probes/candidate.json" "$evidence/candidate.json"
+          cmp "$RUNNER_TEMP/candidate-identity/candidate.json" "$evidence/candidate.json"
           ./scripts/candidate_manifest.py validate \
             "$evidence/candidate.json" \
             --expected-source-commit "$GITHUB_SHA"
@@ -655,6 +935,12 @@ jobs:
             --bundle "$probes/native-aarch64-probes.tar" \
             --expected-bundle-sha256 "$EXPECTED_BUNDLE_SHA256" \
             --report "$evidence/native-aarch64.json"
+          python3 scripts/candidate-recovery.py create \
+            --needs-json "$UPSTREAM_JOBS" \
+            --candidate "$evidence/candidate.json" \
+            --native-report "$evidence/native-aarch64.json" \
+            --component-selection "$RUNNER_TEMP/candidate-identity/component-selection.json" \
+            --output "$RUNNER_TEMP/candidate-recovery.json"
       - name: Sign and anonymously verify the qualified candidate
         env:
           CANDIDATE_DIGEST: ${{ needs.publish.outputs.candidate_digest }}
@@ -717,6 +1003,7 @@ jobs:
           install -d -m 0755 "$SIGNATURE_ROOT"
           for file in \
             "$RUNNER_TEMP/native-aarch64-evidence/candidate.json" \
+            "$RUNNER_TEMP/candidate-recovery.json" \
             "$RUNNER_TEMP/candidate-signature.json" \
             "$RUNNER_TEMP/source-bundle-signature.json" \
             "$RUNNER_TEMP/cosign-tool/sigstore-verification.json"; do
@@ -724,7 +1011,7 @@ jobs:
             install -m 0644 "$file" "$SIGNATURE_ROOT/$(basename "$file")"
           done
           test "$(find "$SIGNATURE_ROOT" -mindepth 1 -maxdepth 1 \
-            -type f | wc -l)" -eq 4
+            -type f | wc -l)" -eq 5
       - name: Upload candidate signature evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

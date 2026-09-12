@@ -1,0 +1,233 @@
+name: verify selected main stages with prepared Python components
+
+on:
+  workflow_call:
+    inputs:
+      profile:
+        type: string
+        default: full
+      selection:
+        type: string
+        default: ''
+      python-parts:
+        description: Raw Python parts from the selected canonical Bake graph
+        type: string
+        required: true
+
+# The caller grants the maximum needed by the producer chain. Every job
+# explicitly reduces permissions; ordinary consumers cannot write or sign.
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      selection: ${{ steps.plan.outputs.selection }}
+      python-parts: ${{ steps.plan.outputs.python-parts }}
+      python-components: ${{ steps.plan.outputs.python-components }}
+      python-components-matrix: ${{ steps.plan.outputs.python-components-matrix }}
+      inputs: ${{ steps.plan.outputs.inputs }}
+      inputs-matrix: ${{ steps.plan.outputs.inputs-matrix }}
+      toolchains: ${{ steps.plan.outputs.toolchains }}
+      toolchains-matrix: ${{ steps.plan.outputs.toolchains-matrix }}
+      python: ${{ steps.plan.outputs.python }}
+      python-matrix: ${{ steps.plan.outputs.python-matrix }}
+      python-rows-matrix: ${{ steps.plan.outputs.python-rows-matrix }}
+      vcpkg: ${{ steps.plan.outputs.vcpkg }}
+      vcpkg-matrix: ${{ steps.plan.outputs.vcpkg-matrix }}
+      gcc: ${{ steps.plan.outputs.gcc }}
+      gcc-matrix: ${{ steps.plan.outputs.gcc-matrix }}
+      sdk: ${{ steps.plan.outputs.sdk }}
+      sdk-matrix: ${{ steps.plan.outputs.sdk-matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Validate selected work
+        id: plan
+        env:
+          PROFILE: ${{ inputs.profile }}
+          SELECTION: ${{ inputs.selection }}
+          PYTHON_PARTS: ${{ inputs.python-parts }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/ci-python.py execution \
+            --profile "$PROFILE" --selection "$SELECTION" --parts "$PYTHON_PARTS" >> "$GITHUB_OUTPUT"
+
+  inputs:
+    permissions:
+      contents: read
+    needs: [plan]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.inputs == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: inputs
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['inputs']) }}
+
+  toolchains:
+    permissions:
+      contents: read
+      packages: read
+    needs: [plan, inputs]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.toolchains == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        stage: ${{ fromJSON(needs.plan.outputs.toolchains-matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          component-reader: true
+          component-builder: ${{ steps.buildx.outputs.builder }}
+          stage: ${{ matrix.stage }}
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
+
+  python-components:
+    needs: [plan, inputs, toolchains]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.python-components == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    permissions:
+      contents: read
+      actions: read
+      packages: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix: ${{ fromJSON(needs.plan.outputs.python-components-matrix) }}
+    uses: ./.github/workflows/produce-python.yml
+    with:
+      row: ${{ matrix.row }}
+      parts: ${{ toJSON(matrix.parts) }}
+
+  python:
+    permissions:
+      contents: read
+      actions: read
+      packages: write
+      id-token: write
+    needs: [plan, inputs, toolchains, python-components]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.python == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix: ${{ fromJSON(needs.plan.outputs.python-rows-matrix) }}
+    uses: ./.github/workflows/produce-python-row.yml
+    with:
+      row: ${{ matrix.row }}
+
+  vcpkg:
+    permissions:
+      contents: read
+      packages: read
+    needs: [plan, inputs, toolchains]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.vcpkg == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          component-reader: true
+          component-builder: ${{ steps.buildx.outputs.builder }}
+          stage: vcpkg
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['vcpkg']) }}
+
+  gcc:
+    permissions:
+      contents: read
+      packages: read
+    needs: [plan, inputs, toolchains]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.gcc == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        stage: ${{ fromJSON(needs.plan.outputs.gcc-matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          component-reader: true
+          component-builder: ${{ steps.buildx.outputs.builder }}
+          stage: ${{ matrix.stage }}
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
+
+  sdk:
+    permissions:
+      contents: read
+      packages: read
+    needs: [plan, inputs, toolchains, python-components, python, vcpkg]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.sdk == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/run-component-sdk
+        with:
+          component-builder: ${{ steps.buildx.outputs.builder }}
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['sdk']) }}
+
+  verified:
+    permissions:
+      contents: read
+    if: always()
+    needs: [plan, inputs, toolchains, python-components, python, vcpkg, gcc, sdk]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Reject incomplete or unplanned results
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/ci-python.py check "$RESULTS"

@@ -1,0 +1,247 @@
+{
+  "artifacts": {
+    "/tmp/crossforge-candidate-components/focused-final.log": "7fedb2723d91c6c97478ab8e3ab6ec942dc6cbf8b6e4ec15e27ed8bb75d34da3",
+    "/tmp/crossforge-candidate-components/focused-lineage.log": "b6d1fad1bf20248c107fedb6f79ac2c1760a8b2986f50f37d8718599a63a4b6a",
+    "/tmp/crossforge-candidate-components/focused.log": "408cda00c2188cf354a8432ba9be609513153ff6676c288334035ec5366de611",
+    "/tmp/crossforge-candidate-components/full-result.json": "59f4efe6dc30347e01da6d59ee78574cb78507dfd80faf8f19faebdab887541f",
+    "/tmp/crossforge-candidate-components/full.log": "755f11c3a5756a4cf37d70bc0cc6775fdaf90ed458273755acabb9b5c38bd417",
+    "/tmp/crossforge-candidate-components/full.py": "808675a7851310b88607d4ddc4452af7f406f8cdbf7ee0c4714eeeb65178234f",
+    "/tmp/crossforge-candidate-components/rocky-check.py": "64c945a6885ead77b81fb0ec8ae9f54482c72c3a468a557b1ea4443829c7f645",
+    "/tmp/crossforge-candidate-components/rocky.log": "e1a72bb90b38ef33e05544ddc94549189dd789bad26675f381a33927c965bf44"
+  },
+  "base_commit": "c6d90b1db5cdeb7ae37e9c7d484bc38ed0ab9e40",
+  "boundaries": [
+    "Candidate selects unconditional full canonical gates through centralized raw component preparation",
+    "Candidate no longer calls the shared qualification cache writer; periodic qualification remains unchanged",
+    "Only exact main CI push/dispatch and exact manual main candidate callers can use existing raw producers",
+    "SDK publishing authenticates catalogs and verifies raw artifacts; any missing component fails without source fallback",
+    "Consumer graph is reparsed and inventoried; remaining GCC or CPython source compilation is rejected",
+    "Independent binding digest rechecks source, source bundle, execution identity, graph, inputs and selected pins after publishing",
+    "SDK checkpoint schema 2 carries component selection; signing verifies its original digest before external signatures",
+    "Recovery schema 3 embeds original catalog/receipt/OCI pins and producers into existing promotion schema 2 durable evidence",
+    "Raw artifacts and component selections do not establish qualification; legacy schemas keep their original contracts"
+  ],
+  "date": "2026-09-10",
+  "docker": {
+    "cpus": 4,
+    "daemon_socket_mounted": false,
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "network": "none",
+    "user": "1000:1000"
+  },
+  "files": {
+    ".github/workflows/candidate.yml": {
+      "executable": false,
+      "sha256": "52650910a60c988cb2e3dae77b2ce67fc2a056423e16de7c85b666ebbeb0cebc"
+    },
+    "README.md": {
+      "executable": false,
+      "sha256": "a41db68568da9c80df4658675677676b5e306eda68565f1fb2fd2c72cf098c18"
+    },
+    "docs/architecture.md": {
+      "executable": false,
+      "sha256": "6b10279a5c29fb28c8bf168bd240caf1c0cfe861db3f0e7fb3f75b79ae88868f"
+    },
+    "docs/github-actions.md": {
+      "executable": false,
+      "sha256": "9bbae156dedbba505e6a0572479979020f4396e029382cb01c40a5c967350165"
+    },
+    "docs/research/ci-refactoring-progress.md": {
+      "executable": false,
+      "sha256": "d081acd1cb7b3bc2ed769831c570dc13b18541458913bd4773027f1c8f3ef98a"
+    },
+    "scripts/candidate-components.py": {
+      "executable": false,
+      "sha256": "64d908cb5cf27cafac892beaf4dee5fc33ecf82ae505067d3696bc22df2c84e5"
+    },
+    "scripts/candidate-publication.py": {
+      "executable": false,
+      "sha256": "733a1d70102694e06f448622a93848ee5c3a66ef9475a749c737ceeffacb4693"
+    },
+    "scripts/candidate-recovery.py": {
+      "executable": false,
+      "sha256": "34e89bcbeb03bb478054a8a3ce85f127d949d85c292a7d82f2cab2225dbb3b84"
+    },
+    "scripts/crossforge_internal/candidate_components.py": {
+      "executable": false,
+      "sha256": "2232af36e8de94124f6d769cd56ce621bddec58477f8234d681229809a4a507d"
+    },
+    "scripts/crossforge_internal/candidate_publication.py": {
+      "executable": false,
+      "sha256": "8b1a4824efc39ec50c755dcf14080b1970659d30bd2735e8fca5b8f5f9258e0f"
+    },
+    "scripts/crossforge_internal/candidate_recovery.py": {
+      "executable": false,
+      "sha256": "be0e1b913f2c5488399a726cc72d4b0c5bd07cee78850a10cab0543ff0c6f75f"
+    },
+    "scripts/crossforge_internal/component_ci.py": {
+      "executable": false,
+      "sha256": "8103b1a5266ba003f4d21d1e8d608187da159f303ea7e827781ecd774232a421"
+    },
+    "tests/config/test_candidate_components.py": {
+      "executable": false,
+      "sha256": "548620683fcaa398daddec1695886eb1a0e5d65cfc72142a32f2678ea45fd1d3"
+    },
+    "tests/config/test_candidate_publication.py": {
+      "executable": false,
+      "sha256": "d283bcf4c0a87f5052dd105bd5fe6efad7f7e5ae8384e1e4fba00c84436f7ca2"
+    },
+    "tests/config/test_candidate_recovery.py": {
+      "executable": false,
+      "sha256": "a457107d3267f212952029284f7411945c0623f0338c3b1aaafd691db1a3a90d"
+    },
+    "tests/config/test_candidate_workflow.py": {
+      "executable": false,
+      "sha256": "04c97d6488f82540820634c0b50fa5d63a1c10c1e377ffd40ccfba8592238add"
+    },
+    "tests/config/test_ci_toolchains.py": {
+      "executable": false,
+      "sha256": "dac4ca9584f8dbc02fd5e58c5d57afea43114998583926ab22368736d96d7d20"
+    }
+  },
+  "fixture_corrections": [
+    "Pass toolchain role explicitly instead of assuming toolchain_spec includes it",
+    "Use fixture byte mutation instead of the production write-once JSON helper when testing tampering"
+  ],
+  "kind": "local-candidate-raw-component-integration-validation",
+  "pending": [
+    "Live GitHub caller, permission, catalog signature and artifact handoff acceptance",
+    "Actual candidate SDK solve with authenticated components and anonymous native/final consumer verification",
+    "Formal qualified-row CI production/reuse and its physical execution boundary",
+    "Raw component producer partial reruns and cross-candidate-run recovery",
+    "Controlled runner replays, OCI transfer/disk capacity and performance acceptance",
+    "Previously rejected Docker socket replay remains unexecuted pending explicit authorization",
+    "Merge to main and remote push only after required acceptance"
+  ],
+  "verification": {
+    "actionlint_exception": "Only the existing concurrency.queue compatibility exception",
+    "config": {
+      "seconds": 169.964,
+      "skipped": 0,
+      "tests": 1220
+    },
+    "durable_archive": "Created, read embedded component selection and revalidated the fourteen-payload archive using synthetic native evidence fixtures",
+    "focused": {
+      "seconds": 5.501,
+      "skipped": 0,
+      "tests": 53
+    },
+    "full_commands": {
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/config",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 171.714
+        },
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/packaging",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 1.249
+        },
+        {
+          "command": [
+            "./scripts/validate-release.py",
+            "--require-locked"
+          ],
+          "seconds": 0.023
+        },
+        {
+          "command": [
+            "./scripts/validate-supply-chain-evidence.py"
+          ],
+          "seconds": 0.36
+        },
+        {
+          "command": [
+            "./scripts/validate-frozen-abi.py"
+          ],
+          "seconds": 0.406
+        },
+        {
+          "command": [
+            "./scripts/validate-python-runtime-providers.py"
+          ],
+          "seconds": 0.244
+        },
+        {
+          "command": [
+            "./scripts/render-release-components.py",
+            "--check"
+          ],
+          "seconds": 0.14
+        },
+        {
+          "command": [
+            "./scripts/render-vcpkg-integration.py",
+            "--check"
+          ],
+          "seconds": 0.14
+        },
+        {
+          "command": [
+            "./scripts/render-bake.py",
+            "--check"
+          ],
+          "seconds": 0.271
+        },
+        {
+          "command": [
+            "actionlint",
+            "-ignore",
+            "unexpected key \"queue\" for \"concurrency\" section"
+          ],
+          "seconds": 0.009
+        }
+      ],
+      "status": "passed"
+    },
+    "graph": {
+      "authentication_and_acquisition": "explicit resolver fixtures; not real signatures or OCI verification",
+      "compiler_source_inputs": [],
+      "preserved_checks": [
+        "complete SDK",
+        "Python SDK",
+        "GCC full report binding"
+      ],
+      "raw_components": 33,
+      "real_canonical_bake_print_and_reparse": true
+    },
+    "packaging": {
+      "seconds": 1.185,
+      "skipped": 0,
+      "tests": 40
+    },
+    "rocky": {
+      "compiled": [
+        "scripts/candidate-components.py",
+        "scripts/crossforge_internal/candidate_components.py",
+        "scripts/crossforge_internal/component_ci.py",
+        "scripts/candidate-publication.py",
+        "scripts/crossforge_internal/candidate_publication.py",
+        "scripts/candidate-recovery.py",
+        "scripts/crossforge_internal/candidate_recovery.py"
+      ],
+      "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+      "scope": "socketless Rocky 8 Python 3.6 regression fixtures; no OCI acquisition, native ARM or GitHub execution",
+      "status": "passed",
+      "tests": 24
+    }
+  }
+}

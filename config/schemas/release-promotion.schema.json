@@ -20,7 +20,7 @@
     "$schema": {
       "const": "https://crossforge.dev/schemas/release-promotion.schema.json"
     },
-    "schema_version": {"const": 1},
+    "schema_version": {"type": "integer", "enum": [1, 2]},
     "kind": {"const": "crossforge-release-promotion"},
     "candidate_run": {
       "type": "object",
@@ -60,6 +60,7 @@
       }
     },
     "candidate_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "candidate_recovery": {"type": "object"},
     "candidate": {"$ref": "#/$defs/promoted_image"},
     "source_bundle": {"$ref": "#/$defs/promoted_image"},
     "artifacts": {

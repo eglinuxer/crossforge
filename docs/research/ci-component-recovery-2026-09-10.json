@@ -1,0 +1,672 @@
+{
+  "artifacts": {
+    "/tmp/crossforge-component-recovery/focused-final.log": "37325f6244a6506d860896629380ce486698ce07ece7d65402dfd8f3a837ba3a",
+    "/tmp/crossforge-component-recovery/focused.log": "f3b48a322d848ee1154154d30a2c5be46a4a088f4bd061bd1f0fd9df6c3c267a",
+    "/tmp/crossforge-component-recovery/full-result.json": "886556585b7b1cdc205ce7ee4def936802b0a08734fa528a1bc027a1dcd76363",
+    "/tmp/crossforge-component-recovery/full.log": "00ec4608799e233fc4fd7c5ebe741c925794de1c72e0f21ba2cd688db4f8a530",
+    "/tmp/crossforge-component-recovery/full.py": "808675a7851310b88607d4ddc4452af7f406f8cdbf7ee0c4714eeeb65178234f",
+    "/tmp/crossforge-component-recovery/graphs.json": "c923a7b17116744f514000d9c85d3a5d5662752128794a0cc262b308becb416a",
+    "/tmp/crossforge-component-recovery/graphs.log": "fd8d00994d5a66c3de7b64c0865d31535a2e981fc9f9917da00516bc742757ba",
+    "/tmp/crossforge-component-recovery/graphs.py": "6837804d6c29b75b5a3fbcfd765499c4603ad1308903573935a3bf431ab13695",
+    "/tmp/crossforge-component-recovery/platform.log": "ba9f4b677d8e6f081252f5c80069f77e45f9ba752bd2bcc8250a148d20635d62",
+    "/tmp/crossforge-component-recovery/platform.py": "91252b2cada113b054d75af728550b0c3d13da905bcb8f79d930f3cd872b8832"
+  },
+  "base_commit": "c8b8f98ce8c689f510355e4af98ce9f86d17f859",
+  "boundaries": [
+    "Exact independent canonical SHA256, source material inventory, build execution inputs, stage, roots and component set required",
+    "Original producer, catalog, OCI and receipt identities survive retry; new local download paths are allowed",
+    "Every fixed catalog still requires authentication and current-input/actual-OCI verification; no replacement producer on failure",
+    "Complete selection exported before first build; incomplete acquisition never exports recovery",
+    "Source and execution inputs checked after acquisition and successful stage; build failures retain selection",
+    "GitHub recovery is limited to the same current main commit and identical stage roots; no older checkout or partial-to-full replay",
+    "CI recovery is not qualification evidence, candidate/source-image recovery or native ARM acceptance"
+  ],
+  "corrections": [
+    "Two initial binder tests reused diagnostics directories and hit the existing new-directory guard; each test attempt now has a separate directory"
+  ],
+  "date": "2026-09-10",
+  "docker": {
+    "cpus": 4,
+    "daemon_socket_mounted": false,
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "network": "none"
+  },
+  "files": {
+    ".github/actions/run-build-stage/action.yml": {
+      "executable": false,
+      "sha256": "455893e980275277547e58902c83a2fac5442c89c4e4e74a44d16fec52fa2261"
+    },
+    ".github/workflows/replay-qualification.yml": {
+      "executable": false,
+      "sha256": "b3c5e4085a6bfceb0d7d02d2658b030b60c4d40f1b4c44d0f51bd20c96180238"
+    },
+    "docs/github-actions.md": {
+      "executable": false,
+      "sha256": "17eb0fa7a3e7f9e93232af454ca753211ebde64c97e17f9175bc5ab8322e1f58"
+    },
+    "scripts/ci-build.py": {
+      "executable": false,
+      "sha256": "6d0094ca7d426748f157e5012905d86aac2f6d5a19b192bb90d7ebaf28551f42"
+    },
+    "scripts/crossforge_internal/component_recovery.py": {
+      "executable": false,
+      "sha256": "5aaed0f6d3a8950fe7e46f7d185890d6c30bc13e2fdc1e52d0b942b848029472"
+    },
+    "scripts/crossforge_internal/component_resolution.py": {
+      "executable": false,
+      "sha256": "b09c8e36d8cf278bae1f096f3f983f23285cb21e5fd45dfee3be8f998fff70cb"
+    },
+    "tests/config/test_ci_replay.py": {
+      "executable": false,
+      "sha256": "9e08cd65ba2ed5035c065c426f8d349aa0cbec4bad564164ff68d24912a8ec43"
+    },
+    "tests/config/test_component_recovery.py": {
+      "executable": false,
+      "sha256": "4b1d221f4d6ec9c22ddd5c91e1858876e4e051c2442aca1fad80f8b1f10324b3"
+    }
+  },
+  "graphs": {
+    "scope": "actual socketless Bake parsing and source closure only; no authentication or qualification execution",
+    "stages": {
+      "gcc-full": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "4b9439a405f18c35691670f2bb5c71dd6e4fbe985fd84eea5ff45d210f5a8e22",
+          "stage": "gcc-full",
+          "targets": [
+            "gcc-testsuite-full-qualification-evidence"
+          ]
+        },
+        "requirements": {
+          "x86_64-gcc-test-context": {
+            "component": "toolchain/x86_64-test-context",
+            "role": "gcc-test-context"
+          },
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "gcc-smoke": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "bf5a6f8bdb3c3e8edb3caf7c85a363d3345ba8ac112d5f48dddc2cebf925a847",
+          "stage": "gcc-smoke",
+          "targets": [
+            "gcc-testsuite-smoke-evidence"
+          ]
+        },
+        "requirements": {
+          "aarch64-gcc-test-context": {
+            "component": "toolchain/aarch64-test-context",
+            "role": "gcc-test-context"
+          },
+          "aarch64-toolchain-install": {
+            "component": "toolchain/aarch64-install",
+            "role": "toolchain-install"
+          },
+          "x86_64-gcc-test-context": {
+            "component": "toolchain/x86_64-test-context",
+            "role": "gcc-test-context"
+          },
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "python-cp310": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "3c65f48175b20e84f4c7f969248190470252a4f51d3cf94ecb536cc82263d853",
+          "stage": "python-cp310",
+          "targets": [
+            "python-cp310-dev"
+          ]
+        },
+        "requirements": {
+          "aarch64-toolchain-install": {
+            "component": "toolchain/aarch64-install",
+            "role": "toolchain-install"
+          },
+          "cp310-aarch64-install": {
+            "component": "python/cp310-aarch64-install",
+            "role": "python-install"
+          },
+          "cp310-aarch64-test-context": {
+            "component": "python/cp310-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp310-build": {
+            "component": "python/cp310-build-install",
+            "role": "python-install"
+          },
+          "cp310-x86_64-install": {
+            "component": "python/cp310-x86_64-install",
+            "role": "python-install"
+          },
+          "cp310-x86_64-test-context": {
+            "component": "python/cp310-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "python-cp311": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "3d130a2f658f863a3b5c4c58b80902dab85fa32e874f4708b49cf2dfa15b2a9e",
+          "stage": "python-cp311",
+          "targets": [
+            "python-cp311-dev"
+          ]
+        },
+        "requirements": {
+          "aarch64-toolchain-install": {
+            "component": "toolchain/aarch64-install",
+            "role": "toolchain-install"
+          },
+          "cp311-aarch64-install": {
+            "component": "python/cp311-aarch64-install",
+            "role": "python-install"
+          },
+          "cp311-aarch64-test-context": {
+            "component": "python/cp311-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp311-build": {
+            "component": "python/cp311-build-install",
+            "role": "python-install"
+          },
+          "cp311-x86_64-install": {
+            "component": "python/cp311-x86_64-install",
+            "role": "python-install"
+          },
+          "cp311-x86_64-test-context": {
+            "component": "python/cp311-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "python-cp312": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "ba011b7c95c36f8df3c06ae30dcdeba3f1c825079f1f6853d6a1a9e732597df4",
+          "stage": "python-cp312",
+          "targets": [
+            "python-cp312-dev"
+          ]
+        },
+        "requirements": {
+          "aarch64-toolchain-install": {
+            "component": "toolchain/aarch64-install",
+            "role": "toolchain-install"
+          },
+          "cp312-aarch64-install": {
+            "component": "python/cp312-aarch64-install",
+            "role": "python-install"
+          },
+          "cp312-aarch64-test-context": {
+            "component": "python/cp312-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp312-build": {
+            "component": "python/cp312-build-install",
+            "role": "python-install"
+          },
+          "cp312-x86_64-install": {
+            "component": "python/cp312-x86_64-install",
+            "role": "python-install"
+          },
+          "cp312-x86_64-test-context": {
+            "component": "python/cp312-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "python-cp313": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "40d8b1ac31f1302df395f73d0745f0e43a77e8dbb4ef601915cc6145fe60d379",
+          "stage": "python-cp313",
+          "targets": [
+            "python-cp313-dev"
+          ]
+        },
+        "requirements": {
+          "aarch64-toolchain-install": {
+            "component": "toolchain/aarch64-install",
+            "role": "toolchain-install"
+          },
+          "cp313-aarch64-install": {
+            "component": "python/cp313-aarch64-install",
+            "role": "python-install"
+          },
+          "cp313-aarch64-test-context": {
+            "component": "python/cp313-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp313-build": {
+            "component": "python/cp313-build-install",
+            "role": "python-install"
+          },
+          "cp313-x86_64-install": {
+            "component": "python/cp313-x86_64-install",
+            "role": "python-install"
+          },
+          "cp313-x86_64-test-context": {
+            "component": "python/cp313-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "python-cp314": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "ee0295f98c88be8dd687ff0e95e6bacba76d441fef14a951e0ddeac504df9d65",
+          "stage": "python-cp314",
+          "targets": [
+            "python-cp314-dev"
+          ]
+        },
+        "requirements": {
+          "aarch64-toolchain-install": {
+            "component": "toolchain/aarch64-install",
+            "role": "toolchain-install"
+          },
+          "cp314-aarch64-install": {
+            "component": "python/cp314-aarch64-install",
+            "role": "python-install"
+          },
+          "cp314-aarch64-test-context": {
+            "component": "python/cp314-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp314-build": {
+            "component": "python/cp314-build-install",
+            "role": "python-install"
+          },
+          "cp314-x86_64-install": {
+            "component": "python/cp314-x86_64-install",
+            "role": "python-install"
+          },
+          "cp314-x86_64-test-context": {
+            "component": "python/cp314-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "python-cp39": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "29a10d9fc8e0194e3ecdba52e65f0a4e3a5aca3a9fc839284fbb152f007cedb4",
+          "stage": "python-cp39",
+          "targets": [
+            "python-cp39-dev"
+          ]
+        },
+        "requirements": {
+          "aarch64-toolchain-install": {
+            "component": "toolchain/aarch64-install",
+            "role": "toolchain-install"
+          },
+          "cp39-aarch64-install": {
+            "component": "python/cp39-aarch64-install",
+            "role": "python-install"
+          },
+          "cp39-aarch64-test-context": {
+            "component": "python/cp39-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp39-build": {
+            "component": "python/cp39-build-install",
+            "role": "python-install"
+          },
+          "cp39-x86_64-install": {
+            "component": "python/cp39-x86_64-install",
+            "role": "python-install"
+          },
+          "cp39-x86_64-test-context": {
+            "component": "python/cp39-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "sdk": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "7393bd03673cfecd2e4bf67276de5e91cd1dc7b66c3d9936d024e2ea2908169f",
+          "stage": "sdk",
+          "targets": [
+            "python-dev",
+            "sdk-complete-dev"
+          ]
+        },
+        "requirements": {
+          "aarch64-toolchain-install": {
+            "component": "toolchain/aarch64-install",
+            "role": "toolchain-install"
+          },
+          "cp310-aarch64-install": {
+            "component": "python/cp310-aarch64-install",
+            "role": "python-install"
+          },
+          "cp310-aarch64-test-context": {
+            "component": "python/cp310-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp310-build": {
+            "component": "python/cp310-build-install",
+            "role": "python-install"
+          },
+          "cp310-x86_64-install": {
+            "component": "python/cp310-x86_64-install",
+            "role": "python-install"
+          },
+          "cp310-x86_64-test-context": {
+            "component": "python/cp310-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "cp311-aarch64-install": {
+            "component": "python/cp311-aarch64-install",
+            "role": "python-install"
+          },
+          "cp311-aarch64-test-context": {
+            "component": "python/cp311-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp311-build": {
+            "component": "python/cp311-build-install",
+            "role": "python-install"
+          },
+          "cp311-x86_64-install": {
+            "component": "python/cp311-x86_64-install",
+            "role": "python-install"
+          },
+          "cp311-x86_64-test-context": {
+            "component": "python/cp311-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "cp312-aarch64-install": {
+            "component": "python/cp312-aarch64-install",
+            "role": "python-install"
+          },
+          "cp312-aarch64-test-context": {
+            "component": "python/cp312-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp312-build": {
+            "component": "python/cp312-build-install",
+            "role": "python-install"
+          },
+          "cp312-x86_64-install": {
+            "component": "python/cp312-x86_64-install",
+            "role": "python-install"
+          },
+          "cp312-x86_64-test-context": {
+            "component": "python/cp312-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "cp313-aarch64-install": {
+            "component": "python/cp313-aarch64-install",
+            "role": "python-install"
+          },
+          "cp313-aarch64-test-context": {
+            "component": "python/cp313-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp313-build": {
+            "component": "python/cp313-build-install",
+            "role": "python-install"
+          },
+          "cp313-x86_64-install": {
+            "component": "python/cp313-x86_64-install",
+            "role": "python-install"
+          },
+          "cp313-x86_64-test-context": {
+            "component": "python/cp313-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "cp314-aarch64-install": {
+            "component": "python/cp314-aarch64-install",
+            "role": "python-install"
+          },
+          "cp314-aarch64-test-context": {
+            "component": "python/cp314-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp314-build": {
+            "component": "python/cp314-build-install",
+            "role": "python-install"
+          },
+          "cp314-x86_64-install": {
+            "component": "python/cp314-x86_64-install",
+            "role": "python-install"
+          },
+          "cp314-x86_64-test-context": {
+            "component": "python/cp314-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "cp39-aarch64-install": {
+            "component": "python/cp39-aarch64-install",
+            "role": "python-install"
+          },
+          "cp39-aarch64-test-context": {
+            "component": "python/cp39-aarch64-test-context",
+            "role": "python-test-context"
+          },
+          "cp39-build": {
+            "component": "python/cp39-build-install",
+            "role": "python-install"
+          },
+          "cp39-x86_64-install": {
+            "component": "python/cp39-x86_64-install",
+            "role": "python-install"
+          },
+          "cp39-x86_64-test-context": {
+            "component": "python/cp39-x86_64-test-context",
+            "role": "python-test-context"
+          },
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "toolchain-aarch64": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "ecf29e51b1f07bfd3c58e3210c16223cf27057b68eb5a56dd8f2e7a72fdd5deb",
+          "stage": "toolchain-aarch64",
+          "targets": [
+            "toolchain-aarch64-dev"
+          ]
+        },
+        "requirements": {
+          "aarch64-toolchain-install": {
+            "component": "toolchain/aarch64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "toolchain-x86_64": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "149bcb89209afe67fda11ee38e230501c45dcc58f8ae38e38b09db293db0f88b",
+          "stage": "toolchain-x86_64",
+          "targets": [
+            "toolchain-x86_64-dev"
+          ]
+        },
+        "requirements": {
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      },
+      "vcpkg": {
+        "context": {
+          "source_commit": null,
+          "source_inventory_sha256": "2359fe352cf90802d6a819126e4cf7e336a3c47b793d803d5aa11b690c268bb5",
+          "stage": "vcpkg",
+          "targets": [
+            "vcpkg-upstream-tier3-qualified"
+          ]
+        },
+        "requirements": {
+          "aarch64-toolchain-install": {
+            "component": "toolchain/aarch64-install",
+            "role": "toolchain-install"
+          },
+          "x86_64-toolchain-install": {
+            "component": "toolchain/x86_64-install",
+            "role": "toolchain-install"
+          }
+        }
+      }
+    },
+    "status": "passed"
+  },
+  "kind": "crossforge-local-ci-recovery-observation",
+  "not_executed": [
+    "Actual fixed-catalog registry recovery or GitHub workflow acceptance",
+    "GCC smoke/full Docker replay awaiting explicit host socket authorization after auto-review denial",
+    "Complete candidate/source image recovery, final integration and native ARM",
+    "Runner parallelism experiment or remote publication"
+  ],
+  "schema_version": 1,
+  "validation": {
+    "config": {
+      "seconds": 165.554,
+      "skipped": 0,
+      "tests": 1192
+    },
+    "focused_recovery_tests": 13,
+    "full_commands": {
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/config",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 167.172
+        },
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/packaging",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 1.243
+        },
+        {
+          "command": [
+            "./scripts/validate-release.py",
+            "--require-locked"
+          ],
+          "seconds": 0.025
+        },
+        {
+          "command": [
+            "./scripts/validate-supply-chain-evidence.py"
+          ],
+          "seconds": 0.367
+        },
+        {
+          "command": [
+            "./scripts/validate-frozen-abi.py"
+          ],
+          "seconds": 0.388
+        },
+        {
+          "command": [
+            "./scripts/validate-python-runtime-providers.py"
+          ],
+          "seconds": 0.23
+        },
+        {
+          "command": [
+            "./scripts/render-release-components.py",
+            "--check"
+          ],
+          "seconds": 0.133
+        },
+        {
+          "command": [
+            "./scripts/render-vcpkg-integration.py",
+            "--check"
+          ],
+          "seconds": 0.233
+        },
+        {
+          "command": [
+            "./scripts/render-bake.py",
+            "--check"
+          ],
+          "seconds": 0.172
+        },
+        {
+          "command": [
+            "actionlint",
+            "-ignore",
+            "unexpected key \"queue\" for \"concurrency\" section"
+          ],
+          "seconds": 0.008
+        }
+      ],
+      "status": "passed"
+    },
+    "packaging": {
+      "seconds": 1.163,
+      "skipped": 0,
+      "tests": 40
+    },
+    "platform": {
+      "compiled": [
+        "scripts/ci-build.py",
+        "scripts/crossforge_internal/component_recovery.py",
+        "scripts/crossforge_internal/component_resolution.py"
+      ],
+      "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+      "scope": "socketless Rocky 8 Python 3.6 compatibility and synthetic recovery document; no authenticated component acquisition",
+      "status": "passed"
+    }
+  }
+}

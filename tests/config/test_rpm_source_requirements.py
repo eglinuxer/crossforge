@@ -143,7 +143,7 @@ class RPMSourceRequirementsTests(unittest.TestCase):
             bake,
         )
         ci = (
-            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(encoding="utf-8")
             + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         self.assertIn("rpm-source-lock-validated", ci)

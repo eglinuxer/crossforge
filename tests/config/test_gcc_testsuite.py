@@ -331,6 +331,44 @@ class GccTestsuiteContractTests(unittest.TestCase):
                     {},
                 )
 
+    def test_native_diagnostic_fix_still_rejects_excess_errors_and_runtime_failures(self):
+        baseline = self.full_contract["baselines"][(
+            "x86_64-unknown-linux-gnu", "host-direct"
+        )]["document"]
+        cases = [
+            ("g++.full", "g++.dg/pr90773-1d.C  -std=" + standard
+             + " (test for excess errors)")
+            for standard in ("gnu++17", "gnu++26", "gnu++98")
+        ] + [
+            ("gcc.full", "gcc.target/i386/" + name
+             + " (test for excess errors)")
+            for name in ("pr101395-2.c", "pr101395-3.c", "pr115978-1.c",
+                         "pr115978-2.c", "pr57275.c")
+        ] + [("gcc.full", "gcc.target/i386/pr57275.c execution test")]
+        with tempfile.TemporaryDirectory() as directory:
+            for failing_suite, test in cases:
+                with self.subTest(suite=failing_suite, test=test):
+                    summaries = {}
+                    for suite in self.full_plan["suites"]:
+                        name = suite["id"]
+                        lines = ["PASS: diagnostic regression control"]
+                        for record in baseline["unexpected"]:
+                            if record["suite"] == name:
+                                lines.extend([
+                                    record["status"] + ": " + record["test"]
+                                ] * record["count"])
+                        if name == failing_suite:
+                            lines.append("FAIL: " + test)
+                        path = Path(directory) / (name + ".sum")
+                        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+                        summaries[name] = path
+                    with self.assertRaises(CONTRACT["ValidationError"]) as error:
+                        CONTRACT["normalize_summaries"](
+                            self.full_plan, baseline, summaries, {}
+                        )
+                    self.assertIn(test, str(error.exception))
+                    self.assertIn("resolved=[]", str(error.exception))
+
     def test_unknown_status_empty_summary_and_wrong_plan_digest_fail_closed(self):
         baseline = self.contract["baselines"][(
             "x86_64-unknown-linux-gnu", "host-direct"
@@ -546,7 +584,7 @@ class GccTestsuiteContractTests(unittest.TestCase):
             CONTRACT["file_sha256"](REPOSITORY / "tests/gcc/full-site.exp"),
             self.full_plan["site"]["sha256"],
         )
-        self.assertEqual(len(self.full_plan["source_patches"]), 5)
+        self.assertEqual(len(self.full_plan["source_patches"]), 7)
         for patch in self.full_plan["source_patches"]:
             self.assertEqual(
                 CONTRACT["file_sha256"](REPOSITORY / patch["file"]),

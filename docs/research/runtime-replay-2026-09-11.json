@@ -1,0 +1,1508 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-local-runtime-replay-observation",
+  "observed_at": "2026-09-11T07:58:59.895145-04:00",
+  "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+  "status": "stopped-after-cp314-local-export-failure",
+  "authorization": "User explicitly approved prepared local Docker socket qualification replay; prior approval blocker is resolved.",
+  "scope": "Local scoped-report qualification and immutable component acceptance; not CI, candidate, native ARM, source rebuild, or performance acceptance.",
+  "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+  "builder": "crossforge-ci-review",
+  "attempt4_manifest": {
+    "files_sha256": {
+      "gcc-contexts.json": "edf2b3b49bc3102a3ede35eeb8482fb74e0ae08508bd4fae6e5eeb8cee12750c",
+      "preflight-graph.json": "245f62e2892874649a557daf74f7a09ce416a039239b08ae324a84aa5683cb80",
+      "preflight.json": "194b43d67ef01300f79668de15c970e70d6fd15ffce104b584fc49ff1410a6b5",
+      "raw-components.json": "387aa4473e290bd56592cee6040a71b04f2bbaa99ab61623aca20199f3461645"
+    },
+    "runner_sha256": "e4e8dd43f024097422c4abde06ac1f8c4aed5ea08944f03d82e291a546e45e32",
+    "source_archive_sha256": "f1a356e78f617c3b75b2d7b64cdfa9494eb16a3c609e0a50ef88255322678809",
+    "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+    "source_inventory_sha256": "523e6a92b5bba84efd06be704d4c845f91e377d0402cc71768ddd646dd066f41"
+  },
+  "attempt4_manifest_file_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+  "execution_notes": [
+    "Source is a read-only normalized clean Git archive. Source inventory and actual build/host identities must match before and after each successful phase.",
+    "Qualification stages use the original local APIs and enforce fresh RUN events plus sealed files/reports/OCI receipt verification.",
+    "Wrapper container CPU and memory limits do not constrain the external BuildKit worker. Worker configuration was not changed; max-parallelism remains 1.",
+    "Attempt3 x86_64 toolchain wrapper used network none. Attempt4 wrapper uses bridge for pinned registry metadata; qualification RUN network policies and pinned inputs are unchanged.",
+    "GCC full and cp39 overlap on one builder; wall times include queueing, extraction, sealing and independent verification. These observations are not runner performance comparisons.",
+    "After cp39 reached final receipt verification, cp310 was launched as a second Python row alongside GCC full. cp311–cp314 follow sequentially. Python concurrency never exceeds two; the same BuildKit worker remains at max-parallelism=1."
+  ],
+  "completed_phases": [
+    {
+      "phase": "toolchain-x86_64",
+      "attempt": 3,
+      "status": "passed",
+      "seconds": 20.567,
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt3/toolchain-x86_64/result.json",
+      "result_file_sha256": "139b6062b269946938db51fdc12d5e78a9cc24a4e9e396cc3e7ad7892d4c316f",
+      "manifest_sha256": "1f51b647a3eaa11fb6261db35ed04eaef6494f2230c65b0035a1761d734ca6fe",
+      "producer": {
+        "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt3-toolchain-x86_64",
+        "kind": "local",
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "source_dirty": false,
+        "started_at": "2026-09-11T10:03:36Z"
+      },
+      "result": {
+        "artifact": {
+          "config_digest": "sha256:f82dc29afb16a1f727dabe5bc5ae89f9769c242d16c1c3e30d5a12cc65fb25c6",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:4eba209cceefcdb986a6dce24a082833203db7c7d05a47801959caa7e15e9349",
+          "root_digest": "sha256:4eba209cceefcdb986a6dce24a082833203db7c7d05a47801959caa7e15e9349"
+        },
+        "inputs_sha256": "36dbaf1240626217ee8b79b07bb077d860cfcb2dad5f6c5f7c56f6801f0611a4",
+        "qualification": {
+          "completed_at": "2026-09-11T10:03:50Z",
+          "coverage": [
+            {
+              "profile": "toolchain",
+              "report": {
+                "component": {
+                  "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
+                  "component": "toolchain/x86_64-qualification"
+                },
+                "report_sha256": "55fb3fa84c548fce9db2283e20e845df63233e5f0bc144a4484bd458e38dcfd8"
+              },
+              "status": "passed",
+              "target": "x86_64-unknown-linux-gnu"
+            }
+          ],
+          "inputs_sha256": "36dbaf1240626217ee8b79b07bb077d860cfcb2dad5f6c5f7c56f6801f0611a4",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt3-toolchain-x86_64",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T10:03:36Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T10:03:39Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:03:48.611309284Z",
+              "digest": "sha256:9fb8450448cfb6594f9f805433286a9de583f08424699ef080059bc34b90e5dd",
+              "name": "[component-qualification-reports runtime-smoke-x86_64 3/3] RUN --network=none /work/qualification/x86_64/hello     && /work/qualification/x86_64/modern     && /work/qualification/x86_64/lto     && /work/qualification/x86_64/lto-archive     && /work/qualification/x86_64/libgcc-helper     && /work/qualification/x86_64/catch     && printf '%s\\n' 'passed' > /work/qualification/clean-rocky.ok",
+              "stage": "runtime-smoke-x86_64",
+              "started": "2026-09-11T10:03:48.381160979Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:03:48.005424461Z",
+              "digest": "sha256:3962fe767b5a9d5c40d61105c78e38dc502030c383ea6588ed9b133ab54afcf6",
+              "name": "[component-qualification-reports toolchain-x86_64-qualify-build 9/9] RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu       --sysroot /opt/crossforge/sysroots/el8/x86_64       --target x86_64-unknown-linux-gnu       --work /work/qualification/x86_64       --report /work/qualification/x86_64.json       --components /work/config/components       --abi-baseline /src/abi/el8/x86_64.json       --qualification-component-sha256         \"b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c\"",
+              "stage": "toolchain-x86_64-qualify-build",
+              "started": "2026-09-11T10:03:46.053352429Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt3/toolchain-x86_64/qualified/receipt.json",
+        "receipt_sha256": "a27f4cfb3a80a34c0d56ff058699a58be5716dd8526c802b2a9410dd764913ac"
+      }
+    },
+    {
+      "phase": "toolchain-aarch64",
+      "attempt": 4,
+      "status": "passed",
+      "seconds": 33.961,
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/toolchain-aarch64/result.json",
+      "result_file_sha256": "a83f85a9ffc32e996a1f25f8a6e330f72eb441ddbf3d4ef2881bf53590985ffb",
+      "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+      "producer": {
+        "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-toolchain-aarch64",
+        "kind": "local",
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "source_dirty": false,
+        "started_at": "2026-09-11T10:07:29Z"
+      },
+      "result": {
+        "artifact": {
+          "config_digest": "sha256:2e4182cedad54a7966de7fbad65c9451cc708b8f5af256b95da4748e28092599",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:e5884665e24ab8fd5eeb0c7d95f799ea9212c7760bbc5270b23ec1aeed4e3ef7",
+          "root_digest": "sha256:e5884665e24ab8fd5eeb0c7d95f799ea9212c7760bbc5270b23ec1aeed4e3ef7"
+        },
+        "inputs_sha256": "6bf766b6ae2aa5855545441b2b6448f2efe619ba89b009072d2df28dfb4818e4",
+        "qualification": {
+          "completed_at": "2026-09-11T10:07:57Z",
+          "coverage": [
+            {
+              "profile": "toolchain",
+              "report": {
+                "component": {
+                  "canonical_sha256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
+                  "component": "toolchain/aarch64-qualification"
+                },
+                "report_sha256": "3053687c27b38816e9a2189e12232b543e6da96b8f1af89924805b06be937ed8"
+              },
+              "status": "passed",
+              "target": "aarch64-unknown-linux-gnu"
+            }
+          ],
+          "inputs_sha256": "6bf766b6ae2aa5855545441b2b6448f2efe619ba89b009072d2df28dfb4818e4",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-toolchain-aarch64",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T10:07:29Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T10:07:33Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:07:55.611134541Z",
+              "digest": "sha256:934b45b148ed593d4c4e67966266ee962d53571bfd38ae35578f4a3ee2fa15df",
+              "name": "[toolchain-aarch64-dev runtime-smoke-aarch64 10/13] RUN mkdir -p       /sysroot/.crossforge       /sysroot/opt/crossforge-qualification       /runtime-root/.crossforge       /runtime-root/opt/crossforge-qualification     && cp -a /work/qualification/aarch64/.       /sysroot/opt/crossforge-qualification/     && cp -a /work/qualification/aarch64/.       /runtime-root/opt/crossforge-qualification/",
+              "stage": "runtime-smoke-aarch64",
+              "started": "2026-09-11T10:07:55.259517894Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:07:53.819206784Z",
+              "digest": "sha256:93a17f81efca622e062074cd9abc0d3757182a99bfe788c2725d50bd1223338a",
+              "name": "[component-qualification-reports runtime-smoke-aarch64 12/13] RUN --network=none     --mount=type=bind,from=qemu-aarch64-validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-root/.crossforge/qemu-aarch64,ro     /work/scripts/run-aarch64-smoke.sh         /runtime-root         /.crossforge/qemu-aarch64         \"cortex-a53\"         \"4.18.0\"         clean-rocky         /work/qualification/clean-rocky-aarch64.result",
+              "stage": "runtime-smoke-aarch64",
+              "started": "2026-09-11T10:07:53.442524341Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:07:56.611939329Z",
+              "digest": "sha256:a8137882c29a2471f0cba48fac80de1f4d8d10d4de035d775a3c6b0eedea8071",
+              "name": "[toolchain-aarch64-dev runtime-smoke-aarch64 13/13] RUN --network=none     --mount=type=bind,from=qemu-aarch64-validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/work/qemu-aarch64,ro     /usr/libexec/platform-python       /work/scripts/finalize-aarch64-qualification.py       --compile-report /work/qualification/aarch64-compile.json       --components /work/config/components       --qualification-component-sha256         \"69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3\"       --artifacts /work/qualification/aarch64       --locked-sysroot-result         /work/qualification/locked-sysroot-aarch64.result       --clean-runtime-result /work/qualification/clean-rocky-aarch64.result       --qemu /work/qemu-aarch64       --output /work/qualification/aarch64.json",
+              "stage": "runtime-smoke-aarch64",
+              "started": "2026-09-11T10:07:56.379755138Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:07:55.989879858Z",
+              "digest": "sha256:c64901d4c6ad38d57d90bd0e200027696c7e8f1fe3e6b3cc49f5c60ab6193a44",
+              "name": "[toolchain-aarch64-dev runtime-smoke-aarch64 11/13] RUN --network=none     --mount=type=bind,from=qemu-aarch64-validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/sysroot/.crossforge/qemu-aarch64,ro     /work/scripts/run-aarch64-smoke.sh         /sysroot         /.crossforge/qemu-aarch64         \"cortex-a53\"         \"4.18.0\"         locked-sysroot         /work/qualification/locked-sysroot-aarch64.result",
+              "stage": "runtime-smoke-aarch64",
+              "started": "2026-09-11T10:07:55.620518696Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:07:51.46266899Z",
+              "digest": "sha256:67c5cc1a3d12be67849a35d7ff8045262262e5f21f96c6f9ac21643053b2b7a2",
+              "name": "[component-qualification-reports toolchain-aarch64-qualify-build 9/9] RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py       --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu       --sysroot /opt/crossforge/sysroots/el8/aarch64       --target aarch64-unknown-linux-gnu       --work /work/qualification/aarch64       --report /work/qualification/aarch64-compile.json       --components /work/config/components       --abi-baseline /src/abi/el8/aarch64.json       --qualification-component-sha256         \"69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3\"       --skip-sysroot-execution",
+              "stage": "toolchain-aarch64-qualify-build",
+              "started": "2026-09-11T10:07:49.498843729Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/toolchain-aarch64/qualified/receipt.json",
+        "receipt_sha256": "1bce84e328ce2c02134c48a0e3b3757ae5ecfcfd14115d8b80ff570e76931a7c"
+      }
+    },
+    {
+      "phase": "gcc-smoke-x86_64",
+      "attempt": 4,
+      "status": "passed",
+      "seconds": 94.707,
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/gcc-smoke-x86_64/result.json",
+      "result_file_sha256": "492e4c739360412274f10985ac191ffa2f35a8e527c09c6696a2abc0fed7ebce",
+      "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+      "producer": {
+        "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-gcc-smoke-x86_64",
+        "kind": "local",
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "source_dirty": false,
+        "started_at": "2026-09-11T10:09:00Z"
+      },
+      "result": {
+        "artifact": {
+          "config_digest": "sha256:b7572181e5cd63ff64bb8a73231d9cc8f9154fbfa8e04363b934b65f4e54d75a",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:4aca78057d67787626ec5b1028fc7f8eca732b156fad57680487b9620bbe7c94",
+          "root_digest": "sha256:4aca78057d67787626ec5b1028fc7f8eca732b156fad57680487b9620bbe7c94"
+        },
+        "inputs_sha256": "5d65c5a3901d6c00496c3c7cc84ba63cd2db4da51dcccd21e1ba6fb14c0db5fc",
+        "qualification": {
+          "completed_at": "2026-09-11T10:10:26Z",
+          "coverage": [
+            {
+              "profile": "gcc-smoke",
+              "report_sha256": "0fd3e9a4d3b1fe029f8f83f3b843340cb55ca79f770cbf9fe0f0692ec03edbb1",
+              "status": "passed",
+              "status_counts": {
+                "PASS": 16
+              },
+              "target": "x86_64-unknown-linux-gnu",
+              "tier": "host-direct"
+            }
+          ],
+          "inputs_sha256": "5d65c5a3901d6c00496c3c7cc84ba63cd2db4da51dcccd21e1ba6fb14c0db5fc",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-gcc-smoke-x86_64",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T10:09:00Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T10:09:05Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:10:20.192659797Z",
+              "digest": "sha256:454ac66e5605ad82cbe0c530deb5dfde396f9f850d2d159960b98227df168538",
+              "name": "[gcc-testsuite-x86_64-smoke gcc-testsuite-x86_64-base 11/11] RUN --network=none     /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc       -O2 -fgraphite-identity       /work/prepared/gcc/gcc/testsuite/gcc.dg/graphite/id-1.c       -S -o /work/gcc-graphite-probe.s     && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc       -O2 -ftrampoline-impl=heap       /work/prepared/gcc/gcc/testsuite/gcc.dg/heap-trampoline-1.c       -o /work/gcc-heap-trampoline-probe     && /work/gcc-heap-trampoline-probe     && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcov       --version",
+              "stage": "gcc-testsuite-x86_64-base",
+              "started": "2026-09-11T10:10:19.786615569Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:10:25.414274351Z",
+              "digest": "sha256:ff0ac5ee6f90140e9be1b18dc3f28b9f72ad2db3eae8d26548e276ac1a881dfb",
+              "name": "[gcc-testsuite-x86_64-smoke gcc-testsuite-x86_64-smoke 2/2] RUN --network=none /usr/libexec/platform-python       /work/scripts/run-gcc-testsuite.py       --components /work/config/generated/components       --build /work/build/gcc-x86_64/gcc-build       --source /work/prepared/gcc       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu       --sysroot /opt/crossforge/sysroots/el8/x86_64       --target x86_64-unknown-linux-gnu       --runtime-tier host-direct       --site /work/tests/gcc/site.exp       --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json       --qualification-component         /work/config/generated/components/toolchain/gcc-testsuite-qualification.json       --qualification-component-sha256         \"bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd\"       --output /work/qualification/gcc-testsuite/x86_64-host-direct       --report         /work/qualification/gcc-testsuite/x86_64-host-direct.json",
+              "stage": "gcc-testsuite-x86_64-smoke",
+              "started": "2026-09-11T10:10:20.292217159Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/gcc-smoke-x86_64/qualified/receipt.json",
+        "receipt_sha256": "b957cea504c182c67e3c516814273174771f0f6ba4640d634c4008497210d741"
+      }
+    },
+    {
+      "phase": "gcc-smoke-aarch64",
+      "attempt": 4,
+      "status": "passed",
+      "seconds": 282.492,
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/gcc-smoke-aarch64/result.json",
+      "result_file_sha256": "e3b06cfe1d585039f79c65711c99ed8f869afa72439d99768331fe8e162d5b43",
+      "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+      "producer": {
+        "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-gcc-smoke-aarch64",
+        "kind": "local",
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "source_dirty": false,
+        "started_at": "2026-09-11T10:10:35Z"
+      },
+      "result": {
+        "artifact": {
+          "config_digest": "sha256:6a994152030248c4bc3c7d290683f683e92ed7e7bb335852265c71077fc3eacf",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:88aa0abce8a4218dcb58755c889658055832d721105d2e54889862024c6eb28a",
+          "root_digest": "sha256:88aa0abce8a4218dcb58755c889658055832d721105d2e54889862024c6eb28a"
+        },
+        "inputs_sha256": "d719dee313e74631265e1b4cc34f497d3ff13b56bed61930c0d10c29c46662d5",
+        "qualification": {
+          "completed_at": "2026-09-11T10:14:51Z",
+          "coverage": [
+            {
+              "profile": "gcc-smoke",
+              "report_sha256": "65741d9f6ea492b700420fc7c0f8f4fc24e4036b6433b473da15dd067b7afa6d",
+              "status": "passed",
+              "status_counts": {
+                "PASS": 16
+              },
+              "target": "aarch64-unknown-linux-gnu",
+              "tier": "locked-sysroot"
+            },
+            {
+              "profile": "gcc-smoke",
+              "report_sha256": "376b985db32bdbf91948416c754d5b107bc6c4ad0786aad54d2c5334e0ed0f6b",
+              "status": "passed",
+              "status_counts": {
+                "PASS": 16
+              },
+              "target": "aarch64-unknown-linux-gnu",
+              "tier": "clean-rocky"
+            }
+          ],
+          "inputs_sha256": "d719dee313e74631265e1b4cc34f497d3ff13b56bed61930c0d10c29c46662d5",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-gcc-smoke-aarch64",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T10:10:35Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T10:12:01Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:14:33.523165197Z",
+              "digest": "sha256:dfc49b9b56b343f359ce70ee9375c2fc6741f63d5e68994d22dfb74bf2811036",
+              "name": "[gcc-testsuite-aarch64-smoke gcc-testsuite-aarch64-base 14/14] RUN --network=none     /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc       -O2 -fgraphite-identity       /work/prepared/gcc/gcc/testsuite/gcc.dg/graphite/id-1.c       -S -o /work/gcc-graphite-probe.s     && /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc       -O2 -ftrampoline-impl=heap       /work/prepared/gcc/gcc/testsuite/gcc.dg/heap-trampoline-1.c       -o /work/gcc-heap-trampoline-probe     && /usr/local/libexec/crossforge/qemu-aarch64       -L /opt/crossforge/sysroots/el8/aarch64       /work/gcc-heap-trampoline-probe     && /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcov       --version",
+              "stage": "gcc-testsuite-aarch64-base",
+              "started": "2026-09-11T10:14:33.237120512Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:14:46.712765279Z",
+              "digest": "sha256:1fbc1f60505e96b3af0af30bff77c7a0f4639ff7b259e029001d2a8af84fb820",
+              "name": "[gcc-testsuite-aarch64-smoke gcc-testsuite-aarch64-smoke 3/3] RUN --network=none /usr/libexec/platform-python       /work/scripts/run-gcc-testsuite.py       --components /work/config/generated/components       --build /work/build/gcc-aarch64/gcc-build       --source /work/prepared/gcc       --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu       --sysroot /opt/crossforge/sysroots/el8/aarch64       --target aarch64-unknown-linux-gnu       --runtime-tier clean-rocky       --site /work/tests/gcc/site.exp       --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json       --qualification-component         /work/config/generated/components/toolchain/gcc-testsuite-qualification.json       --qualification-component-sha256         \"bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd\"       --qemu /usr/local/libexec/crossforge/qemu-aarch64       --runtime-root /runtime-root       --output /work/qualification/gcc-testsuite/aarch64-clean-rocky       --report /work/qualification/gcc-testsuite/aarch64-clean-rocky.json",
+              "stage": "gcc-testsuite-aarch64-smoke",
+              "started": "2026-09-11T10:14:40.822099013Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:14:39.43205735Z",
+              "digest": "sha256:25663c810d9c2a71dc7fb5e84032a79a46ecfdc296c1a6c20981e6b0c7a908a9",
+              "name": "[gcc-testsuite-aarch64-smoke gcc-testsuite-aarch64-smoke 2/3] RUN --network=none /usr/libexec/platform-python       /work/scripts/run-gcc-testsuite.py       --components /work/config/generated/components       --build /work/build/gcc-aarch64/gcc-build       --source /work/prepared/gcc       --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu       --sysroot /opt/crossforge/sysroots/el8/aarch64       --target aarch64-unknown-linux-gnu       --runtime-tier locked-sysroot       --site /work/tests/gcc/site.exp       --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json       --qualification-component         /work/config/generated/components/toolchain/gcc-testsuite-qualification.json       --qualification-component-sha256         \"bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd\"       --qemu /usr/local/libexec/crossforge/qemu-aarch64       --runtime-root /opt/crossforge/sysroots/el8/aarch64       --output /work/qualification/gcc-testsuite/aarch64-locked-sysroot       --report         /work/qualification/gcc-testsuite/aarch64-locked-sysroot.json",
+              "stage": "gcc-testsuite-aarch64-smoke",
+              "started": "2026-09-11T10:14:33.617891803Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/gcc-smoke-aarch64/qualified/receipt.json",
+        "receipt_sha256": "952826fc7a4034be8a3bebd9cd9df6c03441eb450715faa45caf5ccbda298129"
+      }
+    },
+    {
+      "phase": "gcc-full-x86_64",
+      "attempt": 4,
+      "status": "passed",
+      "seconds": 3392.617,
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/gcc-full-x86_64/result.json",
+      "result_file_sha256": "52396c1d57ff61cbe80218d0a61829535d62d91ab2105b8902afb9230ac484bc",
+      "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+      "producer": {
+        "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-gcc-full-x86_64",
+        "kind": "local",
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "source_dirty": false,
+        "started_at": "2026-09-11T10:16:14Z"
+      },
+      "result": {
+        "artifact": {
+          "config_digest": "sha256:df673775f463e95669aa22aec2626484c953525729b3c3e40648edfe7c76bbe9",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:b1bcafb54d75343b29b14851c589dda75e7c22efb657657a1771d61ea92cab11",
+          "root_digest": "sha256:b1bcafb54d75343b29b14851c589dda75e7c22efb657657a1771d61ea92cab11"
+        },
+        "inputs_sha256": "08c1f221d1c1682a1b2f441dd99b57ff75a5fe66b14be3be83ae03cb07bc0c06",
+        "qualification": {
+          "completed_at": "2026-09-11T11:11:19Z",
+          "coverage": [
+            {
+              "profile": "gcc-full",
+              "report_sha256": "ae866da168d7ed2d334e25f011b4f20ffdb6393794d11ed67518872c14e65e1c",
+              "status": "passed",
+              "status_counts": {
+                "FAIL": 87,
+                "PASS": 454053,
+                "UNSUPPORTED": 5902,
+                "XFAIL": 3367
+              },
+              "target": "x86_64-unknown-linux-gnu",
+              "tier": "host-direct"
+            }
+          ],
+          "inputs_sha256": "08c1f221d1c1682a1b2f441dd99b57ff75a5fe66b14be3be83ae03cb07bc0c06",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-gcc-full-x86_64",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T10:16:14Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T10:16:19Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:17:42.882181727Z",
+              "digest": "sha256:5e256159a6828224138c286ed23f7e87eb54d927a5c93e4d5eaa27c49bb4c5f2",
+              "name": "[gcc-testsuite-x86_64-full-qualified gcc-testsuite-x86_64-base 11/11] RUN --network=none     /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc       -O2 -fgraphite-identity       /work/prepared/gcc/gcc/testsuite/gcc.dg/graphite/id-1.c       -S -o /work/gcc-graphite-probe.s     && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc       -O2 -ftrampoline-impl=heap       /work/prepared/gcc/gcc/testsuite/gcc.dg/heap-trampoline-1.c       -o /work/gcc-heap-trampoline-probe     && /work/gcc-heap-trampoline-probe     && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcov       --version",
+              "stage": "gcc-testsuite-x86_64-base",
+              "started": "2026-09-11T10:17:42.603141741Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:11:04.351225581Z",
+              "digest": "sha256:1efc9a9f0e4dadf2fc46e50cca40d0632738e5a589451d9ff7fc91e1acc383da",
+              "name": "[gcc-testsuite-x86_64-full-qualified gcc-testsuite-x86_64-full-qualified 2/2] RUN --network=none /usr/libexec/platform-python       /work/scripts/run-gcc-testsuite.py       --profile full       --components /work/config/generated/components       --build /work/build/gcc-x86_64/gcc-build       --source /work/prepared/gcc       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu       --sysroot /opt/crossforge/sysroots/el8/x86_64       --target x86_64-unknown-linux-gnu       --runtime-tier host-direct       --site /work/tests/gcc/full-site.exp       --host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json       --qualification-component         /work/config/generated/components/toolchain/gcc-testsuite-qualification.json       --qualification-component-sha256         \"bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd\"       --output /work/qualification/gcc-testsuite/x86_64-host-direct-full       --report         /work/qualification/gcc-testsuite/x86_64-host-direct-full.json",
+              "stage": "gcc-testsuite-x86_64-full-qualified",
+              "started": "2026-09-11T10:17:42.97211838Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/gcc-full-x86_64/qualified/receipt.json",
+        "receipt_sha256": "dae27b79a3720a199830fe9fdf7caae730854d57e5f8b0b4757506b5058d4650"
+      },
+      "qualification_solve_interval_seconds": 3300.0,
+      "fresh_run_seconds_sum": 3201.658
+    },
+    {
+      "phase": "python-cp39",
+      "attempt": 4,
+      "status": "passed",
+      "seconds": 3678.896,
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/python-cp39/result.json",
+      "result_file_sha256": "64bd5da4a6455412abd6babcbcc1f41b0df61e9b909be29240102cf8f6db8c14",
+      "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+      "producer": {
+        "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp39",
+        "kind": "local",
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "source_dirty": false,
+        "started_at": "2026-09-11T10:10:23Z"
+      },
+      "result": {
+        "artifact": {
+          "config_digest": "sha256:2f25333bb5d842c28603696400bdae412e97471e5ab376ce2f373bf0557cbe1a",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:82de523c574c58023ffc90740bd23aebf010b4a979fc81eab6deac89a2338d70",
+          "root_digest": "sha256:82de523c574c58023ffc90740bd23aebf010b4a979fc81eab6deac89a2338d70"
+        },
+        "inputs_sha256": "728e44831a80dc6b8af20b074cfc01d8beea13e0e49d088e9062c6fa065c7867",
+        "qualification": {
+          "completed_at": "2026-09-11T10:15:37Z",
+          "coverage": {
+            "build_python_sdk_tree": {
+              "canonical_sha256": "6ae0762f0beb07fcb3ce319392fa4312d5708cccb97a60da154a8643e79f1552",
+              "entries": 7652
+            },
+            "manifest_sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99",
+            "row": "cp39",
+            "runtime_tiers": [
+              "locked-sysroot",
+              "clean-rocky"
+            ],
+            "status": "passed",
+            "targets": {
+              "aarch64": {
+                "python_sha256": "2424b9b23b647499b07e974a4c0d93c2e76110f5db4443de1137c9bb2342acfa",
+                "report_sha256": "71c1992b4103368f498e7cb13ee907848c51ea99d9528c5a329a1bae7907b89a",
+                "sdk_tree": {
+                  "canonical_sha256": "62b63a954cb1b277c508fe7fa3c5e2683c8b70b61b34c3abd7f1a40c6c13d36e",
+                  "entries": 7652
+                },
+                "target": "aarch64-unknown-linux-gnu"
+              },
+              "x86_64": {
+                "python_sha256": "9e77297bb66344a308fab37b49227a4f94970ef3f91f285eb6891201eb417480",
+                "report_sha256": "5b97c1f664ccdbe98215dbcd0a2642bf2874d9f747d5244be728a22103308e83",
+                "sdk_tree": {
+                  "canonical_sha256": "fc210f34fccf6feb291f04b4acaf84692c8405c27c6d6710962c2188e15d74ee",
+                  "entries": 7652
+                },
+                "target": "x86_64-unknown-linux-gnu"
+              }
+            }
+          },
+          "inputs_sha256": "728e44831a80dc6b8af20b074cfc01d8beea13e0e49d088e9062c6fa065c7867",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp39",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T10:10:23Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T10:10:50Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:14:09.211398134Z",
+              "digest": "sha256:e895446fa0a3360365731f6ec162981f690dfafe559bd53c6bf59515a9e714f8",
+              "name": "[cpython-cp39-aarch64-qualify cpython-qualify-aarch64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-locked/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-clean/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/work/qemu-aarch64,ro     test \"aarch64\" = aarch64     && test \"aarch64-unknown-linux-gnu\" = aarch64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp39\" \"3.9.25\" \"legacy\"       \"aarch64\" \"aarch64-unknown-linux-gnu\"       \"c2d62d2a43b8f26dc3465a9e90180ecce9bec502f146e64b797d1aeb89553ca6\"       /work/qemu-aarch64",
+              "stage": "cpython-qualify-aarch64",
+              "started": "2026-09-11T10:13:47.226305533Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:13:02.365155239Z",
+              "digest": "sha256:5790f5e6b5e5d3a2331d2a576a7e70abe072bc861290f94fdd05027ddb29c07f",
+              "name": "[cpython-cp39-x86_64-qualify cpython-qualify-build 19/19] RUN --network=none minor=\"3.9\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp39/targets/x86_64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp39/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp39-x86_64\"       --toolchain \"/opt/crossforge/targets/x86_64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/x86_64\"       --target \"x86_64-unknown-linux-gnu\"       --version \"3.9.25\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp39/x86_64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"8c260833b4603ad4f93fe20a422b90a0575a7b9d310cc8a87190119ed43cf778\"       --report \"/work/qualification/python/cp39/x86_64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T10:12:48.712967297Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:12:35.253308763Z",
+              "digest": "sha256:70e5e0263a654651a7b5b60c0f57c1bd58847222a8cc606d63afc3e3d90e0cf4",
+              "name": "[python-row-cp39 cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp39-source.json\"       --source-component-sha256 \"73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3\"       --policy-component \"/work/config/qualification-components/implementation/python-cp39-build-policy.json\"       --policy-component-sha256 \"216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755\"       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T10:12:34.800421048Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:12:35.539416685Z",
+              "digest": "sha256:aa06016e04fae9f37d8ed874a3bf6bfd22f1b673183362b8d306970b5ca16189",
+              "name": "[python-row-cp39 cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp39-source.json\"       --source-component-sha256 \"73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3\"       --policy-component \"/work/config/qualification-components/implementation/python-cp39-build-policy.json\"       --policy-component-sha256 \"216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755\"       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T10:12:35.253471206Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:12:48.712809963Z",
+              "digest": "sha256:d1420347f10d49602ff78b420cbc46540db429817d74466f5e4d9667d9c6de2e",
+              "name": "[cpython-cp39-aarch64-qualify cpython-qualify-build 19/19] RUN --network=none minor=\"3.9\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp39/targets/aarch64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp39/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp39-aarch64\"       --toolchain \"/opt/crossforge/targets/aarch64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/aarch64\"       --target \"aarch64-unknown-linux-gnu\"       --version \"3.9.25\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp39/aarch64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"c2d62d2a43b8f26dc3465a9e90180ecce9bec502f146e64b797d1aeb89553ca6\"       --report \"/work/qualification/python/cp39/aarch64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T10:12:35.539585501Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:14:30.791085807Z",
+              "digest": "sha256:65c8636ab1544232688cba6f1fd4822df89e8d3d9c7f7313f2dae5013c9643b2",
+              "name": "[cpython-cp39-x86_64-qualify cpython-qualify-x86_64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     test \"x86_64\" = x86_64     && test \"x86_64-unknown-linux-gnu\" = x86_64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp39\" \"3.9.25\" \"legacy\"       \"x86_64\" \"x86_64-unknown-linux-gnu\"       \"8c260833b4603ad4f93fe20a422b90a0575a7b9d310cc8a87190119ed43cf778\"",
+              "stage": "cpython-qualify-x86_64",
+              "started": "2026-09-11T10:14:09.211564321Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:15:10.495284804Z",
+              "digest": "sha256:21bc967e07cfec61f44f1906df6783794efdad886f635b308d13bb7069d01623",
+              "name": "[python-row-cp39 cpython-row-assemble 14/14] RUN /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /row-export       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"       --qualification-components /work/config/qualification-components       --qualification-component-sha256 \"e212748859de87c5a7f183f535e7fbd205e1c09f3c322779c365b7a52799e62a\"       --source-manifest \"/row-export/opt/crossforge/qualification/python/cp39/source.json\"       --abi-input-root /work/abi-inputs       --output \"/row-export/opt/crossforge/qualification/python/cp39/row.json\"",
+              "stage": "cpython-row-assemble",
+              "started": "2026-09-11T10:14:49.235517333Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/python-cp39/qualified/receipt.json",
+        "receipt_sha256": "61170e3d2b6cdeaf869be9e5dff80e5150dcf48c5d6304fb32e3e6883655c4ea"
+      },
+      "qualification_solve_interval_seconds": 287.0,
+      "fresh_run_seconds_sum": 92.389,
+      "report_formats": {
+        "row": 3,
+        "targets": {
+          "x86_64": {
+            "final": 5,
+            "compile": 5,
+            "runtime": {
+              "clean-rocky": 4,
+              "locked-sysroot": 4
+            }
+          },
+          "aarch64": {
+            "final": 5,
+            "compile": 5,
+            "runtime": {
+              "clean-rocky": 4,
+              "locked-sysroot": 4
+            }
+          }
+        }
+      }
+    },
+    {
+      "phase": "python-cp310",
+      "attempt": 4,
+      "status": "passed",
+      "seconds": 1011.199,
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/python-cp310/result.json",
+      "result_file_sha256": "6f258cc87234bb5587555ca02127fccd8df934884bf3c17bd2b7d13fc902dbc6",
+      "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+      "producer": {
+        "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp310",
+        "kind": "local",
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "source_dirty": false,
+        "started_at": "2026-09-11T11:00:14Z"
+      },
+      "result": {
+        "artifact": {
+          "config_digest": "sha256:0771bf4ef004ca5f01087f852be159f697f6eedd39bffd2248992b9fcc883b7a",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:78b47d5c37d33c4aa13fabf08fce267c72535733e489b5405c40c06ee5205503",
+          "root_digest": "sha256:78b47d5c37d33c4aa13fabf08fce267c72535733e489b5405c40c06ee5205503"
+        },
+        "inputs_sha256": "4c90e34ac634e5ee2d2128b298119785ea5734c6b673cf18e4a64874828095e7",
+        "qualification": {
+          "completed_at": "2026-09-11T11:14:55Z",
+          "coverage": {
+            "build_python_sdk_tree": {
+              "canonical_sha256": "04fe376425a213743bde08182a029c297b9985247ac1f93a6abf0a9acea880a3",
+              "entries": 3272
+            },
+            "manifest_sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d",
+            "row": "cp310",
+            "runtime_tiers": [
+              "locked-sysroot",
+              "clean-rocky"
+            ],
+            "status": "passed",
+            "targets": {
+              "aarch64": {
+                "python_sha256": "6ea8dfee5813637e2697f085a7021c4c198bf410d5027571d9f89efa31b2208d",
+                "report_sha256": "294adadc747612e75cb68d2f251bdd24baaf93872172410649bd748f061b4ab1",
+                "sdk_tree": {
+                  "canonical_sha256": "81890c020ec1fad25a127fa27ef6304157d534408bb7797b91c96dae9cee5fa4",
+                  "entries": 3272
+                },
+                "target": "aarch64-unknown-linux-gnu"
+              },
+              "x86_64": {
+                "python_sha256": "6b81027bd4bd1577f9700276c769b4d2b1956f191a21b1641b62cf1c2b1865d1",
+                "report_sha256": "7eddd6b1137b5e8de87eb681d261889dab4870a5ce47b6fcf6a4aa75a3e48e9c",
+                "sdk_tree": {
+                  "canonical_sha256": "43069b50b018d2c6686d8040f055e30632d248821c63f7381a8df73cd229e0ab",
+                  "entries": 3272
+                },
+                "target": "x86_64-unknown-linux-gnu"
+              }
+            }
+          },
+          "inputs_sha256": "4c90e34ac634e5ee2d2128b298119785ea5734c6b673cf18e4a64874828095e7",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp310",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T11:00:14Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T11:11:51Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:13:55.846626369Z",
+              "digest": "sha256:bbb52ba27a55c52c3a7bf57728ff39a0b2fbfc72b4d99592aae0efb656466bac",
+              "name": "[python-row-cp310 cpython-qualify-aarch64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-locked/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-clean/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/work/qemu-aarch64,ro     test \"aarch64\" = aarch64     && test \"aarch64-unknown-linux-gnu\" = aarch64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp310\" \"3.10.21\" \"legacy\"       \"aarch64\" \"aarch64-unknown-linux-gnu\"       \"e92938a54da26289ebab4ca14020b8a01459f9bdba53119da47a66398f041257\"       /work/qemu-aarch64",
+              "stage": "cpython-qualify-aarch64",
+              "started": "2026-09-11T11:13:35.146448362Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:13:17.187319922Z",
+              "digest": "sha256:356ee5e23037d27b260334d5176930e3efee9fb7c1317acaf2471e837aacef85",
+              "name": "[python-row-cp310 cpython-qualify-build 19/19] RUN --network=none minor=\"3.10\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp310/targets/aarch64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp310/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp310-aarch64\"       --toolchain \"/opt/crossforge/targets/aarch64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/aarch64\"       --target \"aarch64-unknown-linux-gnu\"       --version \"3.10.21\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp310/aarch64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"e92938a54da26289ebab4ca14020b8a01459f9bdba53119da47a66398f041257\"       --report \"/work/qualification/python/cp310/aarch64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:13:06.617740869Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:13:27.414356522Z",
+              "digest": "sha256:6c45b37313c3e13248e5678fc7d61bf7f5d7622c4f2b8af94ab633132a9fb9d2",
+              "name": "[cpython-cp310-x86_64-qualify cpython-qualify-build 19/19] RUN --network=none minor=\"3.10\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp310/targets/x86_64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp310/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp310-x86_64\"       --toolchain \"/opt/crossforge/targets/x86_64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/x86_64\"       --target \"x86_64-unknown-linux-gnu\"       --version \"3.10.21\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp310/x86_64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"26a6e9443ef0334da11510d524baa0a6afe249c3e0db8ee7dbb546ca5266eac6\"       --report \"/work/qualification/python/cp310/x86_64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:13:17.187500253Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:13:06.022365504Z",
+              "digest": "sha256:8f5fcbf11cfd1bf441bdb18def0bcae4698d65be49d5c2585f7576d5da38acba",
+              "name": "[python-row-cp310 cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp310-source.json\"       --source-component-sha256 \"bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093\"       --policy-component \"/work/config/qualification-components/implementation/python-cp310-build-policy.json\"       --policy-component-sha256 \"d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47\"       --row \"cp310\"       --version \"3.10.21\"       --adapter \"legacy\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:13:05.722586485Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:13:06.614914599Z",
+              "digest": "sha256:b94f395f7d265372980a48875b71c641a397efdee7997d40e11416968c592bfd",
+              "name": "[python-row-cp310 cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp310-source.json\"       --source-component-sha256 \"bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093\"       --policy-component \"/work/config/qualification-components/implementation/python-cp310-build-policy.json\"       --policy-component-sha256 \"d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47\"       --row \"cp310\"       --version \"3.10.21\"       --adapter \"legacy\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:13:06.022553593Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:14:14.731980185Z",
+              "digest": "sha256:b4a064c2fb6bfc67eec7d0cc9210d8b601988bf483a94ac4a02a8f0b785a0a7c",
+              "name": "[python-row-cp310 cpython-qualify-x86_64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     test \"x86_64\" = x86_64     && test \"x86_64-unknown-linux-gnu\" = x86_64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp310\" \"3.10.21\" \"legacy\"       \"x86_64\" \"x86_64-unknown-linux-gnu\"       \"26a6e9443ef0334da11510d524baa0a6afe249c3e0db8ee7dbb546ca5266eac6\"",
+              "stage": "cpython-qualify-x86_64",
+              "started": "2026-09-11T11:13:55.84681256Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:14:39.006434232Z",
+              "digest": "sha256:d2f970023a36fe2fb6734f1f4eaaaba4b15350af0f5a93542ea12b26d12151a3",
+              "name": "[python-row-cp310 cpython-row-assemble 14/14] RUN /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /row-export       --row \"cp310\"       --version \"3.10.21\"       --adapter \"legacy\"       --qualification-components /work/config/qualification-components       --qualification-component-sha256 \"feea6adce5bcea010ce631b67d38e78fde2d30b3e61600faab37bc44db8b6e04\"       --source-manifest \"/row-export/opt/crossforge/qualification/python/cp310/source.json\"       --abi-input-root /work/abi-inputs       --output \"/row-export/opt/crossforge/qualification/python/cp310/row.json\"",
+              "stage": "cpython-row-assemble",
+              "started": "2026-09-11T11:14:19.567362241Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/python-cp310/qualified/receipt.json",
+        "receipt_sha256": "bddce3ff9ba901a83f4fb2a677ac31345e082c41cde9c7f31fd1b7f0af74cc45"
+      },
+      "qualification_solve_interval_seconds": 184.0,
+      "fresh_run_seconds_sum": 80.713,
+      "report_formats": {
+        "row": 3,
+        "targets": {
+          "x86_64": {
+            "final": 5,
+            "compile": 5,
+            "runtime": {
+              "clean-rocky": 4,
+              "locked-sysroot": 4
+            }
+          },
+          "aarch64": {
+            "final": 5,
+            "compile": 5,
+            "runtime": {
+              "clean-rocky": 4,
+              "locked-sysroot": 4
+            }
+          }
+        }
+      }
+    },
+    {
+      "phase": "python-cp311",
+      "attempt": 4,
+      "status": "passed",
+      "seconds": 358.596,
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/python-cp311/result.json",
+      "result_file_sha256": "ed4b5a4d5f0191f32c8fac492137a981f78ee6b6ce0856d5cbd40411e3fd22ec",
+      "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+      "producer": {
+        "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp311",
+        "kind": "local",
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "source_dirty": false,
+        "started_at": "2026-09-11T11:17:06Z"
+      },
+      "result": {
+        "artifact": {
+          "config_digest": "sha256:41a42b32e2cefd16d49cd631419a79cb560e7713269e6c2ad19d42d1ea8e2eb6",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:72b38674e4d590d4cc2d0d649bd45e717204b88fce2968f4d8a531530b1c792f",
+          "root_digest": "sha256:72b38674e4d590d4cc2d0d649bd45e717204b88fce2968f4d8a531530b1c792f"
+        },
+        "inputs_sha256": "85a08f66de3bcf205e8dd99b37b155a17c51c302509c44ecad0a0a1abacd656e",
+        "qualification": {
+          "completed_at": "2026-09-11T11:20:44Z",
+          "coverage": {
+            "build_python_sdk_tree": {
+              "canonical_sha256": "c53d04408a96a69f9ec4ccf94970d883fc1dd2fabdcb044d2d11835d5bccd515",
+              "entries": 3373
+            },
+            "manifest_sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c",
+            "row": "cp311",
+            "runtime_tiers": [
+              "locked-sysroot",
+              "clean-rocky"
+            ],
+            "status": "passed",
+            "targets": {
+              "aarch64": {
+                "python_sha256": "be37767c53d7af6bbf249d2020ffd86c9f0fdf6951e975ad65c8db902d71c849",
+                "report_sha256": "afb00593603efa1b31a8e23a550db4561cddcbd161c76ecca97593ff9ff08c80",
+                "sdk_tree": {
+                  "canonical_sha256": "2e5dcb024b15802cd0e9553e4ac83d78f1b90ac6692eb71ed7e4f14229754101",
+                  "entries": 3373
+                },
+                "target": "aarch64-unknown-linux-gnu"
+              },
+              "x86_64": {
+                "python_sha256": "b4bd58fadcc039a7667e5206d7391bda46381a33d0c8154e00866baa89158131",
+                "report_sha256": "1a36c36179632e9a889b2de11a9f043fc96ef59560cfd51a5955b81c45b2e7c7",
+                "sdk_tree": {
+                  "canonical_sha256": "e39e1a93a631c64891033e4d54dda9cf4693f4e1f87b0deb7dbcbfb5fa58dece",
+                  "entries": 3373
+                },
+                "target": "x86_64-unknown-linux-gnu"
+              }
+            }
+          },
+          "inputs_sha256": "85a08f66de3bcf205e8dd99b37b155a17c51c302509c44ecad0a0a1abacd656e",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp311",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T11:17:06Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T11:17:48Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:20:00.780479731Z",
+              "digest": "sha256:86e9ea3b242cede9e53b65c098955c7117f7304b7278bee3c83c00588c73f90e",
+              "name": "[cpython-cp311-aarch64-qualify cpython-qualify-aarch64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-locked/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-clean/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/work/qemu-aarch64,ro     test \"aarch64\" = aarch64     && test \"aarch64-unknown-linux-gnu\" = aarch64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp311\" \"3.11.16\" \"transition\"       \"aarch64\" \"aarch64-unknown-linux-gnu\"       \"557bb7db872da683874661a92ffcdabc15f908acab5408a884274af2e927cef1\"       /work/qemu-aarch64",
+              "stage": "cpython-qualify-aarch64",
+              "started": "2026-09-11T11:19:40.598562351Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:19:14.11890233Z",
+              "digest": "sha256:11f99214aec47bb61b91ef375a4c4683edde76a855a1556156c11636411ecb30",
+              "name": "[python-row-cp311 cpython-qualify-build 19/19] RUN --network=none minor=\"3.11\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp311/targets/aarch64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp311/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp311-aarch64\"       --toolchain \"/opt/crossforge/targets/aarch64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/aarch64\"       --target \"aarch64-unknown-linux-gnu\"       --version \"3.11.16\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp311/aarch64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"557bb7db872da683874661a92ffcdabc15f908acab5408a884274af2e927cef1\"       --report \"/work/qualification/python/cp311/aarch64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:19:03.943292915Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:19:03.942771135Z",
+              "digest": "sha256:429e43b41eff774a43fb4ab22b178169a8d13c511496a639a8753841d4a30962",
+              "name": "[cpython-cp311-x86_64-qualify cpython-qualify-build 19/19] RUN --network=none minor=\"3.11\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp311/targets/x86_64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp311/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp311-x86_64\"       --toolchain \"/opt/crossforge/targets/x86_64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/x86_64\"       --target \"x86_64-unknown-linux-gnu\"       --version \"3.11.16\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp311/x86_64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"4478e29bb31462b25f13753faafa0ca61693848392f98f6682547519eccdc15b\"       --report \"/work/qualification/python/cp311/x86_64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:18:54.511208423Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:18:54.178152189Z",
+              "digest": "sha256:9473b3307f7faeaf0bcf6e9dc0187510bdd0caad65fc34738f4ca13d4833e16d",
+              "name": "[cpython-cp311-x86_64-qualify-build cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp311-source.json\"       --source-component-sha256 \"b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce\"       --policy-component \"/work/config/qualification-components/implementation/python-cp311-build-policy.json\"       --policy-component-sha256 \"7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1\"       --row \"cp311\"       --version \"3.11.16\"       --adapter \"transition\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:18:53.83939827Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:18:54.511319596Z",
+              "digest": "sha256:b4bdcd75c0139e95e341df524c960ffd6f56e0e82b8e3e10e0f0f46d49f6f712",
+              "name": "[python-row-cp311 cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp311-source.json\"       --source-component-sha256 \"b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce\"       --policy-component \"/work/config/qualification-components/implementation/python-cp311-build-policy.json\"       --policy-component-sha256 \"7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1\"       --row \"cp311\"       --version \"3.11.16\"       --adapter \"transition\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:18:54.178384036Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:19:39.966442365Z",
+              "digest": "sha256:2b5cdc0fa5a1e335ad0c44151b771419e25cc77dbff0c98ed2a2d49336ec6dee",
+              "name": "[python-row-cp311 cpython-qualify-x86_64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     test \"x86_64\" = x86_64     && test \"x86_64-unknown-linux-gnu\" = x86_64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp311\" \"3.11.16\" \"transition\"       \"x86_64\" \"x86_64-unknown-linux-gnu\"       \"4478e29bb31462b25f13753faafa0ca61693848392f98f6682547519eccdc15b\"",
+              "stage": "cpython-qualify-x86_64",
+              "started": "2026-09-11T11:19:20.601572578Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:20:23.416363368Z",
+              "digest": "sha256:8bda0e3a589d3b2d8722bab18200acd27d9a4b853d5bd9ca08ecb4766e665e10",
+              "name": "[python-row-cp311 cpython-row-assemble 14/14] RUN /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /row-export       --row \"cp311\"       --version \"3.11.16\"       --adapter \"transition\"       --qualification-components /work/config/qualification-components       --qualification-component-sha256 \"3a6c8a5255d02182217cb7fe428d941ebcbdd320661a70c3735abe72c0d3416f\"       --source-manifest \"/row-export/opt/crossforge/qualification/python/cp311/source.json\"       --abi-input-root /work/abi-inputs       --output \"/row-export/opt/crossforge/qualification/python/cp311/row.json\"",
+              "stage": "cpython-row-assemble",
+              "started": "2026-09-11T11:20:05.401594714Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/python-cp311/qualified/receipt.json",
+        "receipt_sha256": "fac28b532b786b67ab6588412b28d96d2a4fbf60834aa27ab8dd6357f1e220c2"
+      },
+      "qualification_solve_interval_seconds": 176.0,
+      "fresh_run_seconds_sum": 77.84,
+      "report_formats": {
+        "row": 3,
+        "targets": {
+          "x86_64": {
+            "final": 5,
+            "compile": 5,
+            "runtime": {
+              "clean-rocky": 4,
+              "locked-sysroot": 4
+            }
+          },
+          "aarch64": {
+            "final": 5,
+            "compile": 5,
+            "runtime": {
+              "clean-rocky": 4,
+              "locked-sysroot": 4
+            }
+          }
+        }
+      }
+    },
+    {
+      "phase": "python-cp312",
+      "status": "passed",
+      "seconds": 356.443,
+      "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+      "producer": {
+        "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp312",
+        "kind": "local",
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "source_dirty": false,
+        "started_at": "2026-09-11T11:23:05Z"
+      },
+      "result": {
+        "artifact": {
+          "config_digest": "sha256:82820694eb057e5badede357395a70e6a28b926ab38d447a93563d9cab8c1821",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:f9a35bbaa51ac7f50b61ec3b8d3ff93aec88623f61ba06c78c3b91035e30bd17",
+          "root_digest": "sha256:f9a35bbaa51ac7f50b61ec3b8d3ff93aec88623f61ba06c78c3b91035e30bd17"
+        },
+        "inputs_sha256": "5c0625607bfed98e8a737c922f7bf6c08a62cd79468ae19de6324265caff4290",
+        "qualification": {
+          "completed_at": "2026-09-11T11:26:42Z",
+          "coverage": {
+            "build_python_sdk_tree": {
+              "canonical_sha256": "131982223253b4146b3544fcfce1b3c1f609e0dadfadec89df72c13cbd4c69ac",
+              "entries": 3202
+            },
+            "manifest_sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87",
+            "row": "cp312",
+            "runtime_tiers": [
+              "locked-sysroot",
+              "clean-rocky"
+            ],
+            "status": "passed",
+            "targets": {
+              "aarch64": {
+                "python_sha256": "a0c391c3bf46209033b0e67e413a51342352d301d4e46570d06cc4d4d074ca31",
+                "report_sha256": "3841b643e33ba53785fb6e3dfd9889be85d7ae3ec67b0a7b38e8ce7dd93782dc",
+                "sdk_tree": {
+                  "canonical_sha256": "366db041ffec240e5055fae1c745a935d318ea1ed3df8360ab73d61227ddc018",
+                  "entries": 3202
+                },
+                "target": "aarch64-unknown-linux-gnu"
+              },
+              "x86_64": {
+                "python_sha256": "ecdce476b5b6dcce3f449ac0f1a1063cec4cca5b28b3eecb95a7d62f218af6db",
+                "report_sha256": "fbafc206ec35820838f0afd2a9bc48df12590212f09395e367c3e49014d98292",
+                "sdk_tree": {
+                  "canonical_sha256": "6160e17a1bde7b03db2e1f29ce2e39e3ad5ee53ba68ce246aeb1a6775da0dc76",
+                  "entries": 3202
+                },
+                "target": "x86_64-unknown-linux-gnu"
+              }
+            }
+          },
+          "inputs_sha256": "5c0625607bfed98e8a737c922f7bf6c08a62cd79468ae19de6324265caff4290",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp312",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T11:23:05Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T11:23:42Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:25:56.319924656Z",
+              "digest": "sha256:b61e03fd98de0694885ea56c75789a672421289fac516b464b904cc7fd46890a",
+              "name": "[python-row-cp312 cpython-qualify-aarch64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-locked/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-clean/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/work/qemu-aarch64,ro     test \"aarch64\" = aarch64     && test \"aarch64-unknown-linux-gnu\" = aarch64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp312\" \"3.12.14\" \"modern\"       \"aarch64\" \"aarch64-unknown-linux-gnu\"       \"1ca8b5ea846e40873452fc4d6d0dc8077056f1de5398d5569520276e72a58b9d\"       /work/qemu-aarch64",
+              "stage": "cpython-qualify-aarch64",
+              "started": "2026-09-11T11:25:36.188945016Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:25:09.649015104Z",
+              "digest": "sha256:1ebe1fa91164229ae5dbd4cf61d61f1b0407bf4697f7f19dfbe83e8f585537eb",
+              "name": "[cpython-cp312-aarch64-qualify-build cpython-qualify-build 19/19] RUN --network=none minor=\"3.12\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp312/targets/aarch64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp312/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp312-aarch64\"       --toolchain \"/opt/crossforge/targets/aarch64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/aarch64\"       --target \"aarch64-unknown-linux-gnu\"       --version \"3.12.14\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp312/aarch64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"1ca8b5ea846e40873452fc4d6d0dc8077056f1de5398d5569520276e72a58b9d\"       --report \"/work/qualification/python/cp312/aarch64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:24:58.937440952Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:24:58.937187278Z",
+              "digest": "sha256:57681ac802e8a28dff97ee10fcf32e81839dd35539898e2f3cfae197aee0550b",
+              "name": "[python-row-cp312 cpython-qualify-build 19/19] RUN --network=none minor=\"3.12\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp312/targets/x86_64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp312/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp312-x86_64\"       --toolchain \"/opt/crossforge/targets/x86_64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/x86_64\"       --target \"x86_64-unknown-linux-gnu\"       --version \"3.12.14\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp312/x86_64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"20f9a0f3e01b8787c9d0ee062be04b6f3fdfeba3c8a4b033271589beeb1dd9bb\"       --report \"/work/qualification/python/cp312/x86_64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:24:49.008687691Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:24:48.964897794Z",
+              "digest": "sha256:69b7ba5ca638d86417e14c810bf04843b675ac14816e11987c0f20ddb02c8e13",
+              "name": "[python-row-cp312 cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp312-source.json\"       --source-component-sha256 \"22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651\"       --policy-component \"/work/config/qualification-components/implementation/python-cp312-build-policy.json\"       --policy-component-sha256 \"c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23\"       --row \"cp312\"       --version \"3.12.14\"       --adapter \"modern\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:24:48.621272751Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:24:48.62109308Z",
+              "digest": "sha256:eab911c12cd50b4658a44f57727ecef3edfe91059b7ed6c03e273e224cd3b950",
+              "name": "[python-row-cp312 cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp312-source.json\"       --source-component-sha256 \"22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651\"       --policy-component \"/work/config/qualification-components/implementation/python-cp312-build-policy.json\"       --policy-component-sha256 \"c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23\"       --row \"cp312\"       --version \"3.12.14\"       --adapter \"modern\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:24:48.095881116Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:25:35.671903128Z",
+              "digest": "sha256:08abdc293b9bc0022c6bd03dddc9c6a47348f37a1fd9b176d618b7634f53c97f",
+              "name": "[python-row-cp312 cpython-qualify-x86_64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     test \"x86_64\" = x86_64     && test \"x86_64-unknown-linux-gnu\" = x86_64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp312\" \"3.12.14\" \"modern\"       \"x86_64\" \"x86_64-unknown-linux-gnu\"       \"20f9a0f3e01b8787c9d0ee062be04b6f3fdfeba3c8a4b033271589beeb1dd9bb\"",
+              "stage": "cpython-qualify-x86_64",
+              "started": "2026-09-11T11:25:17.217041063Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:26:20.686687655Z",
+              "digest": "sha256:063c937f8c003a0422240e169257ad5b93ae49188c442368fb05022fde2f28dc",
+              "name": "[python-row-cp312 cpython-row-assemble 14/14] RUN /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /row-export       --row \"cp312\"       --version \"3.12.14\"       --adapter \"modern\"       --qualification-components /work/config/qualification-components       --qualification-component-sha256 \"3eecd052977d8e558eb2715ee910be9291b87421e3d563c955e448df49e97cb2\"       --source-manifest \"/row-export/opt/crossforge/qualification/python/cp312/source.json\"       --abi-input-root /work/abi-inputs       --output \"/row-export/opt/crossforge/qualification/python/cp312/row.json\"",
+              "stage": "cpython-row-assemble",
+              "started": "2026-09-11T11:26:00.671398278Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/python-cp312/qualified/receipt.json",
+        "receipt_sha256": "e4bd96751bb37e5b853f5a4488991f67f8ff91b698396efbc24cd3360037e3b2"
+      },
+      "attempt": 4,
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/python-cp312/result.json",
+      "result_file_sha256": "7a89d3f027d03369e545b403fcda95160c60fb51519df791adf447fca7c5d481",
+      "qualification_solve_interval_seconds": 180.0,
+      "fresh_run_seconds_sum": 80.11,
+      "report_formats": {
+        "row": 3,
+        "targets": {
+          "x86_64": {
+            "final": 5,
+            "compile": 5,
+            "runtime": {
+              "clean-rocky": 4,
+              "locked-sysroot": 4
+            }
+          },
+          "aarch64": {
+            "final": 5,
+            "compile": 5,
+            "runtime": {
+              "clean-rocky": 4,
+              "locked-sysroot": 4
+            }
+          }
+        }
+      }
+    },
+    {
+      "phase": "python-cp313",
+      "status": "passed",
+      "seconds": 354.969,
+      "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+      "producer": {
+        "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp313",
+        "kind": "local",
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "source_dirty": false,
+        "started_at": "2026-09-11T11:29:02Z"
+      },
+      "result": {
+        "artifact": {
+          "config_digest": "sha256:4016076ec60a972b53f44a2ece884c98c28f9daf98270f4d305d555c1acf0983",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:c022e6c61feb36548979fb669af301a59e09ef6bf4ce6728f85d74eb591a3a48",
+          "root_digest": "sha256:c022e6c61feb36548979fb669af301a59e09ef6bf4ce6728f85d74eb591a3a48"
+        },
+        "inputs_sha256": "a0d8b6e9088f260591cf9cc0c465826def70af78d323c288a9b434f04d4a7e4e",
+        "qualification": {
+          "completed_at": "2026-09-11T11:32:40Z",
+          "coverage": {
+            "build_python_sdk_tree": {
+              "canonical_sha256": "91ef3892c238bac05a3ee136e52f2309eb11e6e96a03283ff23d1f441bb9bf6a",
+              "entries": 3033
+            },
+            "manifest_sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec",
+            "row": "cp313",
+            "runtime_tiers": [
+              "locked-sysroot",
+              "clean-rocky"
+            ],
+            "status": "passed",
+            "targets": {
+              "aarch64": {
+                "python_sha256": "e503bf6e76d10d5f01d75eea8a26ba64684350516806a63f3f6e6582279ac297",
+                "report_sha256": "cdffb29851d49af05ac19266689dae1a70a1057884ac8c20df3ec0cb4db38864",
+                "sdk_tree": {
+                  "canonical_sha256": "5e6f2032ac9a37716c6082bd8a13dc6dc5c4536d07898f5ed908e47b6c11dbee",
+                  "entries": 3033
+                },
+                "target": "aarch64-unknown-linux-gnu"
+              },
+              "x86_64": {
+                "python_sha256": "20bcc35e71059a380f967ae5a4830f816a51ffae03c52f3548af99fc7aa17804",
+                "report_sha256": "a6fd29dffcd7416be02da6375198b5b778a6d782b4c23d7e71efbd727de28af9",
+                "sdk_tree": {
+                  "canonical_sha256": "8320eb16d2012a95ef90cefb5d1e56ee0c63c4b1c7deba630bd549249eb4f644",
+                  "entries": 3033
+                },
+                "target": "x86_64-unknown-linux-gnu"
+              }
+            }
+          },
+          "inputs_sha256": "a0d8b6e9088f260591cf9cc0c465826def70af78d323c288a9b434f04d4a7e4e",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp313",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T11:29:02Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T11:29:39Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:31:53.156302589Z",
+              "digest": "sha256:1043882f35b9f470ff7af36bd54fdabe6c46013c8f0e6923c9741675bc6ac6b3",
+              "name": "[python-row-cp313 cpython-qualify-aarch64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-locked/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-clean/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/work/qemu-aarch64,ro     test \"aarch64\" = aarch64     && test \"aarch64-unknown-linux-gnu\" = aarch64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp313\" \"3.13.15\" \"modern\"       \"aarch64\" \"aarch64-unknown-linux-gnu\"       \"e2d507932393b13956b90491c3e4d585f4db1cc2b908ea9dea83791079d8a230\"       /work/qemu-aarch64",
+              "stage": "cpython-qualify-aarch64",
+              "started": "2026-09-11T11:31:33.474710028Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:30:48.180315634Z",
+              "digest": "sha256:2752a95d154ea6660124d295fc1e6f9798a0af247d24a5f76840b2471819b01a",
+              "name": "[cpython-cp313-x86_64-qualify-build cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp313-source.json\"       --source-component-sha256 \"645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652\"       --policy-component \"/work/config/qualification-components/implementation/python-cp313-build-policy.json\"       --policy-component-sha256 \"5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576\"       --row \"cp313\"       --version \"3.13.15\"       --adapter \"modern\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:30:47.762810258Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:31:08.065465791Z",
+              "digest": "sha256:792863771a39aa2c04af8cdfbda7d71da4cf7cfd98efdf2dc87c3bc6e86ab93e",
+              "name": "[python-row-cp313 cpython-qualify-build 19/19] RUN --network=none minor=\"3.13\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp313/targets/aarch64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp313/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp313-aarch64\"       --toolchain \"/opt/crossforge/targets/aarch64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/aarch64\"       --target \"aarch64-unknown-linux-gnu\"       --version \"3.13.15\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp313/aarch64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"e2d507932393b13956b90491c3e4d585f4db1cc2b908ea9dea83791079d8a230\"       --report \"/work/qualification/python/cp313/aarch64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:30:58.159650297Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:30:48.510064533Z",
+              "digest": "sha256:8b575efe9be4c3469a5242103c32259a31df73ff64be9fe3b8e970ebe7ef70c0",
+              "name": "[cpython-cp313-aarch64-qualify cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp313-source.json\"       --source-component-sha256 \"645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652\"       --policy-component \"/work/config/qualification-components/implementation/python-cp313-build-policy.json\"       --policy-component-sha256 \"5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576\"       --row \"cp313\"       --version \"3.13.15\"       --adapter \"modern\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:30:48.180473266Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:30:58.159615917Z",
+              "digest": "sha256:bb2e529992464b542bb3d5567c4d5fd02c6093d031faf5e0760f4955043f3b71",
+              "name": "[cpython-cp313-x86_64-qualify-build cpython-qualify-build 19/19] RUN --network=none minor=\"3.13\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp313/targets/x86_64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp313/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp313-x86_64\"       --toolchain \"/opt/crossforge/targets/x86_64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/x86_64\"       --target \"x86_64-unknown-linux-gnu\"       --version \"3.13.15\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp313/x86_64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"3d75ce93d4bb3d7b693388fdd1a727fe354bc5caef2f5c3fdb047fc408a79aaa\"       --report \"/work/qualification/python/cp313/x86_64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T11:30:48.510280443Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:31:33.474538097Z",
+              "digest": "sha256:b2a8290f55d6324db6c1e6aed77cb5a56393fff0a27706509b53283761c753d7",
+              "name": "[python-row-cp313 cpython-qualify-x86_64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     test \"x86_64\" = x86_64     && test \"x86_64-unknown-linux-gnu\" = x86_64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp313\" \"3.13.15\" \"modern\"       \"x86_64\" \"x86_64-unknown-linux-gnu\"       \"3d75ce93d4bb3d7b693388fdd1a727fe354bc5caef2f5c3fdb047fc408a79aaa\"",
+              "stage": "cpython-qualify-x86_64",
+              "started": "2026-09-11T11:31:16.417215042Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T11:32:16.668139399Z",
+              "digest": "sha256:5437314bc65f1cc9508ecff36cd90180fd756523dce8b04de73cbc2e473b9d61",
+              "name": "[python-row-cp313 cpython-row-assemble 14/14] RUN /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /row-export       --row \"cp313\"       --version \"3.13.15\"       --adapter \"modern\"       --qualification-components /work/config/qualification-components       --qualification-component-sha256 \"78257e4f1b0e2f7a300e9f2c1db9025b52824bebefd4a2b1e6ea3294743b5c90\"       --source-manifest \"/row-export/opt/crossforge/qualification/python/cp313/source.json\"       --abi-input-root /work/abi-inputs       --output \"/row-export/opt/crossforge/qualification/python/cp313/row.json\"",
+              "stage": "cpython-row-assemble",
+              "started": "2026-09-11T11:31:57.718766603Z"
+            }
+          ]
+        },
+        "receipt": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/python-cp313/qualified/receipt.json",
+        "receipt_sha256": "e43c39ecb8092d7d42ff5d5d08fc7825acd4e0312134e7f8adf08990c229c24d"
+      },
+      "attempt": 4,
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4/python-cp313/result.json",
+      "result_file_sha256": "6648ea39634bb0c6e10c13efb9ef77b6f41378a0d161fba58df0e7eab0bd7e5b",
+      "qualification_solve_interval_seconds": 181.0,
+      "fresh_run_seconds_sum": 75.991,
+      "report_formats": {
+        "row": 3,
+        "targets": {
+          "x86_64": {
+            "final": 5,
+            "compile": 5,
+            "runtime": {
+              "clean-rocky": 4,
+              "locked-sysroot": 4
+            }
+          },
+          "aarch64": {
+            "final": 5,
+            "compile": 5,
+            "runtime": {
+              "clean-rocky": 4,
+              "locked-sysroot": 4
+            }
+          }
+        }
+      }
+    }
+  ],
+  "active_phases": [],
+  "preserved_failed_attempts": [
+    {
+      "directory": "runtime/toolchain-x86_64",
+      "reason": "Host socket group was 989; namespace-reported gid 65534 caused socket permission denied before builder inspection."
+    },
+    {
+      "directory": "runtime-attempt2/toolchain-x86_64",
+      "reason": "Temporary local producer URN contained a forbidden colon. Original producer validator correctly rejected it before qualification; harness fixed without relaxing validation."
+    },
+    {
+      "directory": "runtime-attempt3/toolchain-aarch64",
+      "reason": "Network-none wrapper could not obtain registry authentication for digest-pinned QEMU metadata. No ARM test ran. Bridge networking in attempt4 resolved the metadata transport failure."
+    },
+    {
+      "directory": "runtime-attempt4/python-cp314",
+      "reason": "Seven qualification RUNs and row finalization completed, but original OCI local export stopped progressing. Same pinned OCI exported to a separate directory in 19.7 seconds. The original client remained idle with unchanged partial files; SIGQUIT captured the Go traceback and terminated only that client. Parent batch exited 1. No final receipt or result exists and this phase is not counted as passed.",
+      "build_record": "crossforge-ci-review/crossforge-ci-review0/q8b00t2gq3h9zkspuu35f8cab",
+      "log_file": "/tmp/crossforge-runtime-replay-cb115b5/runtime-attempt4-python-cp314.log",
+      "log_file_sha256": "21e5b8c5538ce8da3fb7749edbe949d3ae42da876a824d6c80054220d03bd8dc"
+    }
+  ],
+  "pending_phases": [
+    "python-cp314 retry after export timeout fix",
+    "independent-cp314",
+    "python-dev",
+    "sdk-complete-dev"
+  ],
+  "independent_append_preparation": {
+    "runner_sha256": "673291623c6bfb250fb53aa36dd931fd4932f533585b3de1d67c73c3248328fb",
+    "status": "5 of 6 independent installations passed"
+  },
+  "remaining_acceptance": [
+    "Independent Python installation and explicit vcpkg upstream source qualification replay",
+    "Forced compiler source rebuild replay",
+    "Real GitHub event, signature/catalog, cross-run, partial retry and required-status acceptance",
+    "Main signed row production and complete SDK recovery integration",
+    "Candidate final integration, native ARM and digest-only promotion",
+    "Reference-aware retention",
+    "Three matching-input runs, affected change, and controlled parallelism comparison"
+  ],
+  "merged_main": false,
+  "pushed": false,
+  "published": false,
+  "independent_append_results": [
+    {
+      "row": "cp39",
+      "result": {
+        "completed_at": "2026-09-11T11:17:14Z",
+        "inputs_sha256": "36bdc555dd1d543734dd5e557f1e2ead4b61f6be0d4ec830c845d5f3afadda4d",
+        "kind": "crossforge-local-independent-python-install-observation",
+        "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+        },
+        "row": "cp39",
+        "row_receipt_sha256": "61170e3d2b6cdeaf869be9e5dff80e5150dcf48c5d6304fb32e3e6883655c4ea",
+        "row_result_sha256": "64bd5da4a6455412abd6babcbcc1f41b0df61e9b909be29240102cf8f6db8c14",
+        "runner_sha256": "673291623c6bfb250fb53aa36dd931fd4932f533585b3de1d67c73c3248328fb",
+        "schema_version": 1,
+        "scope": "local independent append using original canonical Docker gate; not a reusable receipt or CI status",
+        "seconds": 230.025,
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "started_at": "2026-09-11T11:15:32Z",
+        "status": "passed",
+        "target": "python-cp39-dev",
+        "vertices": [
+          {
+            "cached": false,
+            "completed": "2026-09-11T11:17:11.60756649Z",
+            "digest": "sha256:7598f07342a9d18b0c0cc5105b1b3494cd717787f98c0745683b18dbe9f9a3be",
+            "name": "[python-cp39-dev python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"       --manifest \"/opt/crossforge/qualification/python/cp39/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp39/source.json\"       --abi-input-root /work/abi-inputs       --row-manifest \"/opt/crossforge/qualification/python/cp39/row.json\"       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp39/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+            "stage": "python-sdk-append",
+            "started": "2026-09-11T11:16:47.024401525Z",
+            "target": "python-cp39-dev"
+          },
+          {
+            "cached": false,
+            "completed": "2026-09-11T11:16:42.257182322Z",
+            "digest": "sha256:d87facd711cfb50c5bb28b711407005e8da759807f2f9a826a5f317209419d45",
+            "name": "[python-cp39-dev python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"     && test ! -e \"/opt/crossforge/python/cp39\"     && test ! -e \"/opt/crossforge/qualification/python/cp39\"",
+            "stage": "python-sdk-append",
+            "started": "2026-09-11T11:16:41.578917305Z",
+            "target": "python-cp39-dev"
+          }
+        ]
+      },
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/independent-install/cp39/result.json",
+      "result_file_sha256": "54fea7bd9ac672eb09dc94be14489a98c502e78114e751497c6cf28500e75de2"
+    },
+    {
+      "row": "cp310",
+      "result": {
+        "completed_at": "2026-09-11T11:22:36Z",
+        "inputs_sha256": "18cc51b5614236b735de741a810e9f5a4e714e3973db8616b1da5ecc5d4f1926",
+        "kind": "crossforge-local-independent-python-install-observation",
+        "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+        },
+        "row": "cp310",
+        "row_receipt_sha256": "bddce3ff9ba901a83f4fb2a677ac31345e082c41cde9c7f31fd1b7f0af74cc45",
+        "row_result_sha256": "6f258cc87234bb5587555ca02127fccd8df934884bf3c17bd2b7d13fc902dbc6",
+        "runner_sha256": "673291623c6bfb250fb53aa36dd931fd4932f533585b3de1d67c73c3248328fb",
+        "schema_version": 1,
+        "scope": "local independent append using original canonical Docker gate; not a reusable receipt or CI status",
+        "seconds": 129.259,
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "started_at": "2026-09-11T11:21:26Z",
+        "status": "passed",
+        "target": "python-cp310-dev",
+        "vertices": [
+          {
+            "cached": false,
+            "completed": "2026-09-11T11:22:34.575915261Z",
+            "digest": "sha256:34a4e4fb2a2bc5ff977ea3238436cc511e6f594f99fd408e3207fffd351bc828",
+            "name": "[python-cp310-dev python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp310\"       --version \"3.10.21\"       --adapter \"legacy\"       --manifest \"/opt/crossforge/qualification/python/cp310/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp310\"       --version \"3.10.21\"       --adapter \"legacy\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp310/source.json\"       --abi-input-root /work/abi-inputs       --row-manifest \"/opt/crossforge/qualification/python/cp310/row.json\"       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp310/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+            "stage": "python-sdk-append",
+            "started": "2026-09-11T11:22:11.08931874Z",
+            "target": "python-cp310-dev"
+          },
+          {
+            "cached": false,
+            "completed": "2026-09-11T11:22:08.646751122Z",
+            "digest": "sha256:38bda169ea252047f1bdb6fa8e5acd157c158ae36f966786a5a024da4de2bee8",
+            "name": "[python-cp310-dev python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp310\"       --version \"3.10.21\"       --adapter \"legacy\"     && test ! -e \"/opt/crossforge/python/cp310\"     && test ! -e \"/opt/crossforge/qualification/python/cp310\"",
+            "stage": "python-sdk-append",
+            "started": "2026-09-11T11:22:08.320863814Z",
+            "target": "python-cp310-dev"
+          }
+        ]
+      },
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/independent-install/cp310/result.json",
+      "result_file_sha256": "79e16b8e7eb1dd5615d71359601391c88f7f93cf9af93f127f8204fe38c5f711"
+    },
+    {
+      "row": "cp311",
+      "result": {
+        "completed_at": "2026-09-11T11:28:28Z",
+        "inputs_sha256": "24bc7151b323b0d228b6507a126d93e55a0cce10d463d273bba126d49d316e79",
+        "kind": "crossforge-local-independent-python-install-observation",
+        "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+        },
+        "row": "cp311",
+        "row_receipt_sha256": "fac28b532b786b67ab6588412b28d96d2a4fbf60834aa27ab8dd6357f1e220c2",
+        "row_result_sha256": "ed4b5a4d5f0191f32c8fac492137a981f78ee6b6ce0856d5cbd40411e3fd22ec",
+        "runner_sha256": "673291623c6bfb250fb53aa36dd931fd4932f533585b3de1d67c73c3248328fb",
+        "schema_version": 1,
+        "scope": "local independent append using original canonical Docker gate; not a reusable receipt or CI status",
+        "seconds": 227.34,
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "started_at": "2026-09-11T11:27:17Z",
+        "status": "passed",
+        "target": "python-cp311-dev",
+        "vertices": [
+          {
+            "cached": false,
+            "completed": "2026-09-11T11:28:27.245550533Z",
+            "digest": "sha256:0e693e4b5b67483379ff22d6ddf342a27732d16ee66c504c61abd02abaea72e4",
+            "name": "[python-cp311-dev python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp311\"       --version \"3.11.16\"       --adapter \"transition\"       --manifest \"/opt/crossforge/qualification/python/cp311/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp311\"       --version \"3.11.16\"       --adapter \"transition\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp311/source.json\"       --abi-input-root /work/abi-inputs       --row-manifest \"/opt/crossforge/qualification/python/cp311/row.json\"       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp311/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+            "stage": "python-sdk-append",
+            "started": "2026-09-11T11:28:02.42004915Z",
+            "target": "python-cp311-dev"
+          },
+          {
+            "cached": false,
+            "completed": "2026-09-11T11:27:59.737428158Z",
+            "digest": "sha256:28703d7d50ef8ebb53d2c7086695bb256c3277337cb1f958a1ec9220f335781f",
+            "name": "[python-cp311-dev python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp311\"       --version \"3.11.16\"       --adapter \"transition\"     && test ! -e \"/opt/crossforge/python/cp311\"     && test ! -e \"/opt/crossforge/qualification/python/cp311\"",
+            "stage": "python-sdk-append",
+            "started": "2026-09-11T11:27:59.487761475Z",
+            "target": "python-cp311-dev"
+          }
+        ]
+      },
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/independent-install/cp311/result.json",
+      "result_file_sha256": "d548ca31fb6456b10d7eb03e5288f156d35e7a5e125f939f75c13adf32f44a5f"
+    },
+    {
+      "row": "cp312",
+      "result": {
+        "completed_at": "2026-09-11T11:34:26Z",
+        "inputs_sha256": "0ed343848fa2a3393ec25559af7040d7a56af684afd3f3acdda8ca060b9b8e4d",
+        "kind": "crossforge-local-independent-python-install-observation",
+        "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+        },
+        "row": "cp312",
+        "row_receipt_sha256": "e4bd96751bb37e5b853f5a4488991f67f8ff91b698396efbc24cd3360037e3b2",
+        "row_result_sha256": "7a89d3f027d03369e545b403fcda95160c60fb51519df791adf447fca7c5d481",
+        "runner_sha256": "673291623c6bfb250fb53aa36dd931fd4932f533585b3de1d67c73c3248328fb",
+        "schema_version": 1,
+        "scope": "local independent append using original canonical Docker gate; not a reusable receipt or CI status",
+        "seconds": 210.84,
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "started_at": "2026-09-11T11:33:16Z",
+        "status": "passed",
+        "target": "python-cp312-dev",
+        "vertices": [
+          {
+            "cached": false,
+            "completed": "2026-09-11T11:33:57.779096348Z",
+            "digest": "sha256:313ce0a8889b92f90c57410b7e6d95f1fc5b36fa7db581b142e7c5179c1bc5d9",
+            "name": "[python-cp312-dev python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp312\"       --version \"3.12.14\"       --adapter \"modern\"     && test ! -e \"/opt/crossforge/python/cp312\"     && test ! -e \"/opt/crossforge/qualification/python/cp312\"",
+            "stage": "python-sdk-append",
+            "started": "2026-09-11T11:33:57.395335551Z",
+            "target": "python-cp312-dev"
+          },
+          {
+            "cached": false,
+            "completed": "2026-09-11T11:34:25.226403572Z",
+            "digest": "sha256:44e40057d237f496d009abb1df8f64057eea1499938bef1912f9d2b02d28042c",
+            "name": "[python-cp312-dev python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp312\"       --version \"3.12.14\"       --adapter \"modern\"       --manifest \"/opt/crossforge/qualification/python/cp312/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp312\"       --version \"3.12.14\"       --adapter \"modern\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp312/source.json\"       --abi-input-root /work/abi-inputs       --row-manifest \"/opt/crossforge/qualification/python/cp312/row.json\"       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp312/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+            "stage": "python-sdk-append",
+            "started": "2026-09-11T11:34:00.355844956Z",
+            "target": "python-cp312-dev"
+          }
+        ]
+      },
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/independent-install/cp312/result.json",
+      "result_file_sha256": "2aa167511e258c5cd62c267febe58d6e758831497816cb2d565f9771e3752fad"
+    },
+    {
+      "row": "cp313",
+      "result": {
+        "completed_at": "2026-09-11T11:38:58Z",
+        "inputs_sha256": "2a2a03738f67a2c3ad3cb5687eb3a94e871ba13529d2ec12b807e7b548966400",
+        "kind": "crossforge-local-independent-python-install-observation",
+        "manifest_sha256": "6a5e5bf785e978f6031a9b084f9f7d895d75be222aa9530588c131018356e2c7",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+        },
+        "row": "cp313",
+        "row_receipt_sha256": "e43c39ecb8092d7d42ff5d5d08fc7825acd4e0312134e7f8adf08990c229c24d",
+        "row_result_sha256": "6648ea39634bb0c6e10c13efb9ef77b6f41378a0d161fba58df0e7eab0bd7e5b",
+        "runner_sha256": "673291623c6bfb250fb53aa36dd931fd4932f533585b3de1d67c73c3248328fb",
+        "schema_version": 1,
+        "scope": "local independent append using original canonical Docker gate; not a reusable receipt or CI status",
+        "seconds": 225.642,
+        "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+        "started_at": "2026-09-11T11:36:48Z",
+        "status": "passed",
+        "target": "python-cp313-dev",
+        "vertices": [
+          {
+            "cached": false,
+            "completed": "2026-09-11T11:38:32.333571051Z",
+            "digest": "sha256:0256e5565229c17b8bfcfe45aacf803a0f9d9f8029c1e12c680e4e7042ecce6c",
+            "name": "[python-cp313-dev python-sdk-append 17/21] RUN /usr/libexec/platform-python /work/scripts/validate-release.py       /src/config/release.json       --schema /src/config/schemas/release.schema.json     && /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp313\"       --version \"3.13.15\"       --adapter \"modern\"     && test ! -e \"/opt/crossforge/python/cp313\"     && test ! -e \"/opt/crossforge/qualification/python/cp313\"",
+            "stage": "python-sdk-append",
+            "started": "2026-09-11T11:38:31.539787608Z",
+            "target": "python-cp313-dev"
+          },
+          {
+            "cached": false,
+            "completed": "2026-09-11T11:38:55.526280073Z",
+            "digest": "sha256:174fe0b94a26e30bef5135cc65ea6d9734c8354cef54738e7c630dc365e53f06",
+            "name": "[python-cp313-dev python-sdk-append 20/21] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --release /src/config/release.json       --row \"cp313\"       --version \"3.13.15\"       --adapter \"modern\"       --manifest \"/opt/crossforge/qualification/python/cp313/source.json\"     && /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /       --row \"cp313\"       --version \"3.13.15\"       --adapter \"modern\"       --release /src/config/release.json       --source-manifest \"/opt/crossforge/qualification/python/cp313/source.json\"       --abi-input-root /work/abi-inputs       --row-manifest \"/opt/crossforge/qualification/python/cp313/row.json\"       --output /tmp/python-row.json     && cmp -s /tmp/python-row.json       \"/opt/crossforge/qualification/python/cp313/row.json\"     && rm -f /tmp/python-row.json     && rm -rf /work/abi-inputs",
+            "stage": "python-sdk-append",
+            "started": "2026-09-11T11:38:35.636743399Z",
+            "target": "python-cp313-dev"
+          }
+        ]
+      },
+      "result_file": "/tmp/crossforge-runtime-replay-cb115b5/independent-install/cp313/result.json",
+      "result_file_sha256": "4c07a08157b9fe82b29ff1862d12407f1a6880d01fbbc936d9c15abb76aa0a86"
+    }
+  ],
+  "followup": "Bounded local-export repair is being validated against the actual OCI. Its Python qualification implementation change requires fresh current-input row receipts; prior completed observations remain historical evidence, not rewritten current qualifications.",
+  "successor_observation": "runtime-replay-a56bb29-2026-09-11.json"
+}

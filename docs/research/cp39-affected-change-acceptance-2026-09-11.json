@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-local-affected-change-acceptance",
+  "observed_at": "2026-09-11T14:16:13.447466+00:00",
+  "status": "failed",
+  "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
+  "source_dirty": true,
+  "change": "cp39 patch description and pinned SHA256; patch hunks unchanged",
+  "scope": "isolated normalized fixture with the committed append scope fix; local only",
+  "manifest": {
+    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/acceptance-manifest.json",
+    "sha256": "8d47a6241afcaa33e1839ead766a9c01742bf74417fb22ea11d61c40d8d51f09"
+  },
+  "runner": {
+    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/run-acceptance.py",
+    "sha256": "2a6322fc34d484fe916adc16853d14bbb000059ebcb7bd7bc091941da4a72d8b"
+  },
+  "wrapper": {
+    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/run-acceptance.sh",
+    "sha256": "58a7088e7049a6124b8ab72a96431558bf006c9d1685a09773292d7fd92ea537"
+  },
+  "prepared_files": {
+    "before-inventory.json": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/before-inventory.json",
+      "sha256": "95073751b0997f8c353601de65863d558dc77e1e3cd7cba2ee0d182aec6b6986"
+    },
+    "after-inventory.json": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/after-inventory.json",
+      "sha256": "dea0df7b5129e61c14a02ecffe145f3f4bf5ef2e7b009049a808f6e48001164b"
+    },
+    "before-snapshot.json": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/before-snapshot.json",
+      "sha256": "be530ef33d8f11e38575bdb74f198f73e631556fd0b3a77ffebe23e223ef9867"
+    },
+    "after-snapshot.json": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/after-snapshot.json",
+      "sha256": "a6bbf56a98f7f7248c888d3216b53cd492663349fe16f207a771d72b898303ff"
+    },
+    "plan.json": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/plan.json",
+      "sha256": "de0c35e136b09d914026a649edd67816484a09c4d01c096bc8025bc13c3e8ed3"
+    },
+    "prepared.json": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/prepared.json",
+      "sha256": "5bc165d82b35f69ec8753e00a93cb1880b53a0fb6659f6916c13117ff1a71331"
+    }
+  },
+  "production_overlay_sha256": {
+    "docker/python.Dockerfile": "df3421a429a12d570ec792329aea9a3435ae56e86a45f96683e3ec065938947d",
+    "scripts/render-bake.py": "219bf72bb73f52205ef7170fd1156ad97d380711bf498fa22f944457f00eb5b3",
+    "docker-bake.override.json": "8228ed9a109f2d849d092427fa6424a8dbc25264544a8c172821934d5835258e"
+  },
+  "preflight": {
+    "status": "passed",
+    "exit_code": 0,
+    "network": "none",
+    "socket_mounted": false,
+    "scope": "Original saved plan, all 51 pinned input file hashes, runner and both source inventories including modes; no daemon access"
+  },
+  "plan": {
+    "artifact_reuse": "not-authorized-by-source-selection",
+    "changed_paths": [
+      "config/generated/components/product/sdk-qualification.json",
+      "config/generated/components/python/cp39-aarch64-build.json",
+      "config/generated/components/python/cp39-aarch64-qualification.json",
+      "config/generated/components/python/cp39-native-build.json",
+      "config/generated/components/python/cp39-qualification.json",
+      "config/generated/components/python/cp39-source.json",
+      "config/generated/components/python/cp39-x86_64-build.json",
+      "config/generated/components/python/cp39-x86_64-qualification.json",
+      "config/generated/components/python/qualification.json",
+      "config/generated/release-binding.json",
+      "config/release.json",
+      "docker-bake.override.json",
+      "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+    ],
+    "changes": {
+      "cpython-build-cp39": {
+        "after_sha256": "0f0e255986d56442323fa2a15df4bf7218822de3d30df59cae6f644a0e72aa4f",
+        "before_sha256": "91ae02cdc87b79287a1adadd54d6a6a62292958d5244222570662151df88cb0f",
+        "files": [
+          "config/generated/components/python/cp39-source.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": true
+      },
+      "cpython-cross-cp39-aarch64": {
+        "after_sha256": "9aaeda8c857c51115c8c31b3f501a3008ef1c32d7c220028e600b3caa917047f",
+        "before_sha256": "e4b68d7996c3e96c92baf76545f2b3adcecdb8af2302357f0850a52b43b41dc2",
+        "files": [
+          "config/generated/components/python/cp39-source.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": true
+      },
+      "cpython-cross-cp39-x86_64": {
+        "after_sha256": "172e3dc08a6a5e747afabb8d0d4be753a9d364ac0b9c8581419ae0b89a2f65f3",
+        "before_sha256": "f116c48b4fdad51a74b0c7cc9df2f314114e120b126eede65e7d0b80fc4e855e",
+        "files": [
+          "config/generated/components/python/cp39-source.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": true
+      },
+      "platform-python-check": {
+        "after_sha256": "48397de6c8aaa188ddf2aa5161c73f380319460e6e8e1155ab4da6d0adab504e",
+        "before_sha256": "ef8ec3be7e70cefffce53ec21961017c18a86974acb662af16973de860bbde6f",
+        "files": [
+          "config/generated/components/product/sdk-qualification.json",
+          "config/generated/components/python/cp39-aarch64-build.json",
+          "config/generated/components/python/cp39-aarch64-qualification.json",
+          "config/generated/components/python/cp39-native-build.json",
+          "config/generated/components/python/cp39-qualification.json",
+          "config/generated/components/python/cp39-source.json",
+          "config/generated/components/python/cp39-x86_64-build.json",
+          "config/generated/components/python/cp39-x86_64-qualification.json",
+          "config/generated/components/python/qualification.json",
+          "config/generated/release-binding.json",
+          "config/release.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": false
+      },
+      "python-cp39-dev": {
+        "after_sha256": "0476ecae1aae324def6c100dcdff4903a29aa7c72ee01de80026e69d895efb3e",
+        "before_sha256": "ad58c1afc345ccbd92310b6eec0aaa9b1a9626598d9a497f0f3e01d669951599",
+        "files": [
+          "config/generated/components/python/cp39-aarch64-qualification.json",
+          "config/generated/components/python/cp39-qualification.json",
+          "config/generated/components/python/cp39-source.json",
+          "config/generated/components/python/cp39-x86_64-qualification.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": true
+      },
+      "python-dev": {
+        "after_sha256": "56df3c8d70797551f637b3e1c64b8f51d22842e6abb18de20f001f8307c9a238",
+        "before_sha256": "0057596c1620e736af778e57cb1a6b4f68bc21c6d2c4b4939e869673437b1d38",
+        "files": [
+          "config/generated/components/python/cp39-aarch64-qualification.json",
+          "config/generated/components/python/cp39-qualification.json",
+          "config/generated/components/python/cp39-source.json",
+          "config/generated/components/python/cp39-x86_64-qualification.json",
+          "config/release.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": true
+      },
+      "qemu-source-qualified": {
+        "after_sha256": "dbe33a5dd0c1b44b8a06b023a03720ee7da10f2b8ce49ab2e7280d7cc1698356",
+        "before_sha256": "107e21dc39bf53482c6bfb0a7d296a97257eb87433c82d9f4e1a86317796d6e3",
+        "files": [
+          "config/generated/components/product/sdk-qualification.json",
+          "config/generated/components/python/cp39-aarch64-build.json",
+          "config/generated/components/python/cp39-aarch64-qualification.json",
+          "config/generated/components/python/cp39-native-build.json",
+          "config/generated/components/python/cp39-qualification.json",
+          "config/generated/components/python/cp39-source.json",
+          "config/generated/components/python/cp39-x86_64-build.json",
+          "config/generated/components/python/cp39-x86_64-qualification.json",
+          "config/generated/components/python/qualification.json",
+          "config/generated/release-binding.json",
+          "config/release.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": false
+      },
+      "qt-aarch64-runtime-qualified": {
+        "after_sha256": "19dd937ee2477e3ae94a3e5c85e4594eb2c78c0d193820fae332d3c5071f5dbe",
+        "before_sha256": "8b05a696a427b6ce872a8dc803863bbebb0dff287e37494461c8ef5583c7b197",
+        "files": [
+          "config/release.json"
+        ],
+        "parameters_changed": false
+      },
+      "qt-runtime-rpms-aarch64": {
+        "after_sha256": "c9094086ede9544839a5423d48ef4238fc9fddc69a815e39b663d33d2914c706",
+        "before_sha256": "1a91cb884117095249361a554e633ea783cda175c3aeeaad27e1c708683b722a",
+        "files": [
+          "config/release.json"
+        ],
+        "parameters_changed": false
+      },
+      "qt-runtime-rpms-x86_64": {
+        "after_sha256": "22ebcbb463248b4c638dd89db01feeb9af07079bfce5f492b4a80465b905523b",
+        "before_sha256": "8d87e88618db8adcb3dda3267aeb6af4a73faecb06ca08295f32a17a0874eb9c",
+        "files": [
+          "config/release.json"
+        ],
+        "parameters_changed": false
+      },
+      "qt-x86_64-runtime-qualified": {
+        "after_sha256": "dbb45b7f294df566b209e3b15ffabd8b99a1fa91aea6e98974fbb41146fc1122",
+        "before_sha256": "15408bcbc7b6318696f44f43939af54c5ab6eb9bd0b8ba7a38f20509bbc71a28",
+        "files": [
+          "config/release.json"
+        ],
+        "parameters_changed": false
+      },
+      "rpm-source-lock-validated": {
+        "after_sha256": "bdd3cb61e9df58afc5193bef9cc80e7ca1490c4f3832f263e153d574d072e026",
+        "before_sha256": "ceb51017a449203a9d8c4c5feac4bb0be3e65496fa9609933882e1608c6d0821",
+        "files": [
+          "config/generated/components/product/sdk-qualification.json",
+          "config/generated/components/python/cp39-aarch64-build.json",
+          "config/generated/components/python/cp39-aarch64-qualification.json",
+          "config/generated/components/python/cp39-native-build.json",
+          "config/generated/components/python/cp39-qualification.json",
+          "config/generated/components/python/cp39-source.json",
+          "config/generated/components/python/cp39-x86_64-build.json",
+          "config/generated/components/python/cp39-x86_64-qualification.json",
+          "config/generated/components/python/qualification.json",
+          "config/generated/release-binding.json",
+          "config/release.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": false
+      },
+      "sdk-complete-dev": {
+        "after_sha256": "400e888a80b602b44a7f2333b845defea095c8e44a6a182da775a474de27f92a",
+        "before_sha256": "58a2c38309bf9acae8fb53eeaca76e9af15f71c63af2db83e806c73412808337",
+        "files": [
+          "config/generated/components/product/sdk-qualification.json",
+          "config/generated/components/python/cp39-aarch64-qualification.json",
+          "config/generated/components/python/cp39-qualification.json",
+          "config/generated/components/python/cp39-source.json",
+          "config/generated/components/python/cp39-x86_64-qualification.json",
+          "config/generated/components/python/qualification.json",
+          "config/release.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": true
+      },
+      "sigstore-sources-qualified": {
+        "after_sha256": "8ee5923332181ec42564eb35ee5c10dcf9f1d4540a46b71f50d6211db6f5388e",
+        "before_sha256": "4568eb63d4cee3d241d4a578a7c204e1def9de9407304f83e031b2c58a220463",
+        "files": [
+          "config/generated/components/product/sdk-qualification.json",
+          "config/generated/components/python/cp39-aarch64-build.json",
+          "config/generated/components/python/cp39-aarch64-qualification.json",
+          "config/generated/components/python/cp39-native-build.json",
+          "config/generated/components/python/cp39-qualification.json",
+          "config/generated/components/python/cp39-source.json",
+          "config/generated/components/python/cp39-x86_64-build.json",
+          "config/generated/components/python/cp39-x86_64-qualification.json",
+          "config/generated/components/python/qualification.json",
+          "config/generated/release-binding.json",
+          "config/release.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": false
+      },
+      "validate": {
+        "after_sha256": "a2dadceee80c1f153afb9edc6b81d125af891283b3eaa864ca0c9d1e1769c172",
+        "before_sha256": "f4a8cf80ec73e195287ddf491d27b0d2cbac34a4032edf587c0ff02f138fc10e",
+        "files": [
+          "config/generated/components/product/sdk-qualification.json",
+          "config/generated/components/python/cp39-aarch64-build.json",
+          "config/generated/components/python/cp39-aarch64-qualification.json",
+          "config/generated/components/python/cp39-native-build.json",
+          "config/generated/components/python/cp39-qualification.json",
+          "config/generated/components/python/cp39-source.json",
+          "config/generated/components/python/cp39-x86_64-build.json",
+          "config/generated/components/python/cp39-x86_64-qualification.json",
+          "config/generated/components/python/qualification.json",
+          "config/generated/release-binding.json",
+          "config/release.json",
+          "patches/cpython/3.9/0001-gh-115382-isolate-target-sysconfig.patch"
+        ],
+        "parameters_changed": false
+      }
+    },
+    "compiler_inputs_changed": [
+      "cpython-build-cp39",
+      "cpython-cross-cp39-aarch64",
+      "cpython-cross-cp39-x86_64"
+    ],
+    "fallback_reasons": [],
+    "kind": "crossforge-ci-source-plan",
+    "mode": "incremental",
+    "schema_version": 1,
+    "targets": {
+      "inputs": [
+        "platform-python-check",
+        "qemu-source-qualified",
+        "rpm-source-lock-validated",
+        "sigstore-sources-qualified",
+        "validate"
+      ],
+      "python-cp39": [
+        "python-cp39-dev"
+      ],
+      "sdk": [
+        "python-dev",
+        "sdk-complete-dev"
+      ]
+    }
+  },
+  "phases": [
+    "inputs",
+    "source-cp39",
+    "raw-build",
+    "raw-x86_64-install",
+    "raw-x86_64-test-context",
+    "raw-aarch64-install",
+    "raw-aarch64-test-context",
+    "qualify-cp39",
+    "install-cp39",
+    "python-dev",
+    "sdk-complete-dev"
+  ],
+  "running_at_observation": null,
+  "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+  "builder": "crossforge-ci-review",
+  "qualification_boundary": "Only cp39 raw components and qualified row are newly produced; original five row receipt references and both original toolchain subjects remain selected. Every downstream consumer uses original verification APIs. No GitHub producer is claimed.",
+  "timing_note": "Concurrent local builder use; not an isolated or GitHub performance baseline. The separate source-cp39 phase forces the original three compiler stages and may build uncached prerequisites.",
+  "merged_main": false,
+  "pushed": false,
+  "published": false,
+  "experiment_generated_bake": {
+    "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/after/docker-bake.override.json",
+    "sha256": "c54ea922c43e303834d048d2ef0dfcc7c0dd35c65b01455620e6bfb901d0f0be"
+  },
+  "record_check_note": "Initial record check rejected comparison of the experiment-regenerated Bake pin file with the unchanged repository file. Production overlay hashes now identify the before snapshot; the after renderer output has a separate explicit digest. No source snapshot, build input or verifier was modified.",
+  "failure": {
+    "phase": "inputs",
+    "exit_code": 1,
+    "elapsed_seconds": 564.4,
+    "error": "CPython 3.9 patch digest policy mismatch",
+    "cause": "The experimental patch/release digest changed but the independent audited pin in validate-supply-chain-evidence.py was not updated. Original supply-chain validation correctly rejected the fixture before raw component production.",
+    "files": {
+      "runtime.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/runtime.log",
+        "sha256": "9086c0448964004a50bda0094e3cc69c8e3f9fc9f5568298c857504011f5cc64"
+      },
+      "runtime/inputs/driver.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/runtime/inputs/driver.log",
+        "sha256": "048171d62c4a29582030b1392c017cedbf94ff100ccebd00f4024a18085649b5"
+      },
+      "runtime/inputs/driver/result.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/runtime/inputs/driver/result.json",
+        "sha256": "a1031ea03e2a7a37ba5e5133c9fe39de5496b4e52e0c6be0388e11520e9e2274"
+      },
+      "runtime/inputs/driver/build.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/runtime/inputs/driver/build.log",
+        "sha256": "fd24740be31645ceaf6809b8ac232d9261af20ecaf8e3908cb2ee1e05e8946a5"
+      }
+    },
+    "retry_record": "cp39-affected-change-audited-2026-09-11.json",
+    "preserved": "All original source snapshots, manifest, inputs and failed diagnostics remain unchanged."
+  }
+}

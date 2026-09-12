@@ -26,6 +26,14 @@ COMPONENT_ARGUMENT_RE = re.compile(
     r"^CROSSFORGE_COMPONENT_[A-Z0-9_]+_SHA256\Z"
 )
 SHA256_RE = re.compile(r"^[0-9a-f]{64}\Z")
+TOOLCHAIN_CONTEXT_TARGETS = {
+    "crossforge_toolchain_%s_%s" % (arch, role): target
+    for arch in ("x86_64", "aarch64")
+    for role, target in (
+        ("install", "toolchain-%s-build-export" % arch),
+        ("test_context", "gcc-%s-test-context-export" % arch),
+    )
+}
 
 
 def component_argument_name(component):
@@ -125,6 +133,8 @@ def main_docker_stage_contract(repository):
                 | {match.group(1)}
                 if dependency in {item.group(2) for item in matches}
             },
+            "contexts": (set(re.findall(r"(?:--from=|,from=)([a-zA-Z0-9_.-]+)", block))
+                         | {match.group(1)}) & set(TOOLCHAIN_CONTEXT_TARGETS),
         }
     return stages
 
@@ -206,6 +216,27 @@ def scoped_main_component_arguments(repository, component_arguments):
             result[target] = {
                 name: component_arguments[name] for name in sorted(arguments)
             }
+    return result
+
+
+def scoped_main_toolchain_contexts(repository):
+    """Bind only contexts reached by a target; never add producer self-edges."""
+    stages = main_docker_stage_contract(repository)
+    result = {}
+    for target, root in main_bake_target_stages(repository).items():
+        pending, visited, contexts = [root], set(), set()
+        while pending:
+            stage = pending.pop()
+            if stage in visited:
+                continue
+            if stage not in stages:
+                raise ValueError("unknown Docker stage: %s" % stage)
+            visited.add(stage)
+            contexts.update(stages[stage]["contexts"])
+            pending.extend(stages[stage]["dependencies"])
+        if contexts:
+            result[target] = {name: "target:" + TOOLCHAIN_CONTEXT_TARGETS[name]
+                              for name in sorted(contexts)}
     return result
 
 
@@ -472,6 +503,8 @@ def render_vcpkg_graph(
                 "implementation/vcpkg-integration"
             ),
             "VCPKG_SDK_COMPONENT_SHA256": digest("vcpkg/sdk-build"),
+            "TOOLCHAIN_X86_64_QUALIFICATION_COMPONENT_SHA256": digest("toolchain/x86_64-qualification"),
+            "TOOLCHAIN_AARCH64_QUALIFICATION_COMPONENT_SHA256": digest("toolchain/aarch64-qualification"),
             "NINJA_TOOL_COMPONENT_SHA256": digest("host-tools/ninja"),
             "CMAKE_TOOL_COMPONENT_SHA256": digest("host-tools/cmake"),
         },
@@ -774,19 +807,6 @@ def cacheonly_python_target(target, row, contexts=None, extra_args=None):
 def render_python_graph(config, targets, component_arguments):
     rows = []
     zstd_version = config["python"]["zstd"]["version"]
-    qualification_arguments = {}
-    for component in (
-        "implementation/python-qualification-policy",
-        "python/qualification",
-    ):
-        argument = component_argument_name(component)
-        try:
-            qualification_arguments[argument] = component_arguments[argument]
-        except KeyError as error:
-            raise ValueError(
-                "missing Python qualification component digest: %s"
-                % component
-            ) from error
     for record in IMPLEMENTED_ROWS:
         try:
             binding = bind_python_row(config, row=record["row"])
@@ -893,6 +913,7 @@ def render_python_graph(config, targets, component_arguments):
         source_name = "cpython-source-%s" % row_name
         prepared_name = "cpython-prepared-%s" % row_name
         build_name = "cpython-build-%s" % row_name
+        build_export_name = build_name + "-export"
         export_name = "python-row-%s" % row_name
         dev_name = "python-%s-dev" % row_name
 
@@ -925,6 +946,8 @@ def render_python_graph(config, targets, component_arguments):
         )
 
         qualification_names = []
+        targets[build_export_name] = cacheonly_python_target(
+            "cpython-build-export", row, {"crossforge_cpython_build_output": "target:" + build_name})
         final_qualification = {}
         for arch, triple in PYTHON_TARGETS.items():
             cross_name = "cpython-cross-%s-%s" % (row_name, arch)
@@ -943,7 +966,7 @@ def render_python_graph(config, targets, component_arguments):
                 {
                     "crossforge_host_python": "target:host-python-build-locked",
                     "crossforge_cpython_prepared": "target:%s" % prepared_name,
-                    "crossforge_cpython_build": "target:%s" % build_name,
+                    "crossforge_cpython_build": "target:%s" % build_export_name,
                     "crossforge_toolchain": (
                         "target:toolchain-%s-build-export" % arch
                     ),
@@ -958,11 +981,26 @@ def render_python_graph(config, targets, component_arguments):
                     CPYTHON_ZSTD_VERSION=row["zstd_version"],
                 ),
             )
+            install_name = cross_name + "-export"
+            test_context_name = "cpython-%s-%s-test-context-export" % (row_name, arch)
+            for name, stage in ((install_name, "cpython-cross-export"),
+                                (test_context_name, "cpython-test-context-export")):
+                targets[name] = cacheonly_python_target(stage, row,
+                    {"crossforge_cpython_cross_output": "target:" + cross_name}, target_args)
+            qualification_component = "python/%s-%s-qualification" % (row_name, arch)
+            try:
+                qualification_digest = component_arguments[component_argument_name(qualification_component)]
+            except KeyError as error:
+                raise ValueError("missing Python qualification component digest: %s" % qualification_component) from error
             targets[qualify_build_name] = cacheonly_python_target(
                 "cpython-qualify-build",
                 row,
-                {"crossforge_cpython_cross": "target:%s" % cross_name},
-                dict(target_args, **qualification_arguments),
+                {"crossforge_host_python": "target:host-python-build-locked",
+                 "crossforge_toolchain": "target:toolchain-%s-build-export" % arch,
+                 "crossforge_cpython_build": "target:" + build_export_name,
+                 "crossforge_cpython_install": "target:" + install_name,
+                 "crossforge_cpython_test_context": "target:" + test_context_name},
+                dict(target_args, CPYTHON_QUALIFICATION_COMPONENT_SHA256=qualification_digest),
             )
             runtime_contexts = {
                 "crossforge_host_python": "target:host-python-build-locked",
@@ -982,17 +1020,22 @@ def render_python_graph(config, targets, component_arguments):
                 "cpython-qualify-%s" % arch,
                 row,
                 runtime_contexts,
-                target_args,
+                dict(target_args, CPYTHON_QUALIFICATION_COMPONENT_SHA256=qualification_digest),
             )
             qualification_names.append(qualify_name)
             final_qualification[arch] = qualify_name
 
+        row_qualification_component = "python/%s-qualification" % row_name
+        try:
+            row_qualification_digest = component_arguments[component_argument_name(row_qualification_component)]
+        except KeyError as error:
+            raise ValueError("missing Python row qualification component digest: %s" % row_qualification_component) from error
         targets[export_name] = cacheonly_python_target(
             "cpython-row-export",
             row,
             {
                 "crossforge_host_python": "target:host-python-build-locked",
-                "crossforge_cpython_build": "target:%s" % build_name,
+                "crossforge_cpython_build": "target:%s" % build_export_name,
                 "crossforge_cpython_x86_64": (
                     "target:%s" % final_qualification["x86_64"]
                 ),
@@ -1000,6 +1043,7 @@ def render_python_graph(config, targets, component_arguments):
                     "target:%s" % final_qualification["aarch64"]
                 ),
             },
+            {"CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": row_qualification_digest},
         )
         targets[dev_name] = cacheonly_python_target(
             "python-sdk-append",
@@ -1008,6 +1052,7 @@ def render_python_graph(config, targets, component_arguments):
                 "crossforge_sdk_base": "target:sdk-toolchains-dev",
                 "crossforge_python_row": "target:%s" % export_name,
             },
+            {"CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": row_qualification_digest},
         )
         groups["python-%s" % row_name] = {
             "targets": [prepared_name, build_name]
@@ -1038,6 +1083,8 @@ def render_python_graph(config, targets, component_arguments):
                 "crossforge_sdk_base": "target:%s" % aggregate_base,
                 "crossforge_python_row": "target:python-row-%s" % row["row"],
             },
+            {"CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": component_arguments[
+                component_argument_name("python/%s-qualification" % row["row"])]},
         )
         aggregate_base = append_name
         append_targets[row["row"]] = append_name
@@ -1667,6 +1714,11 @@ def render(repository):
         component_renderer["CROSSPACK_QUALIFICATION_POLICY"],
     )
     python_groups = render_python_graph(config, targets, component_arguments)
+    for name, contexts in scoped_main_toolchain_contexts(repository).items():
+        existing = targets.setdefault(name, {}).setdefault("contexts", {})
+        if set(existing) & set(contexts):
+            raise ValueError("duplicate toolchain context binding: %s" % name)
+        existing.update(contexts)
     for name, scoped_arguments in scoped_main_component_arguments(
         repository, component_arguments
     ).items():

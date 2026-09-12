@@ -134,7 +134,7 @@ class QtQualificationPlanTests(unittest.TestCase):
             VALIDATOR["STRICT"]["validate"](plan, schema, schema, "$")
 
     def test_ci_requires_the_locked_plan(self):
-        workflow = (REPOSITORY / ".github/workflows/ci.yml").read_text(
+        workflow = (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(
             encoding="utf-8"
         )
         self.assertIn("./scripts/validate-qt-qualification.py", workflow)

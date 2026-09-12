@@ -1,0 +1,307 @@
+{
+  "base_commit": "0b39c2a8284b5485ab83838f0e19aa9de2de69ee",
+  "checks": [
+    {
+      "command": [
+        "./scripts/validate-release.py",
+        "--require-locked"
+      ],
+      "seconds": 0.021
+    },
+    {
+      "command": [
+        "./scripts/validate-supply-chain-evidence.py"
+      ],
+      "seconds": 0.365
+    },
+    {
+      "command": [
+        "./scripts/validate-frozen-abi.py"
+      ],
+      "seconds": 0.312
+    },
+    {
+      "command": [
+        "./scripts/validate-python-runtime-providers.py"
+      ],
+      "seconds": 0.325
+    },
+    {
+      "command": [
+        "./scripts/render-release-components.py",
+        "--check"
+      ],
+      "seconds": 0.207
+    },
+    {
+      "command": [
+        "./scripts/render-vcpkg-integration.py",
+        "--check"
+      ],
+      "seconds": 0.18
+    },
+    {
+      "command": [
+        "./scripts/render-bake.py",
+        "--check"
+      ],
+      "seconds": 0.222
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "docker/run-python-qualification.sh"
+      ],
+      "seconds": 0.001
+    },
+    {
+      "command": [
+        "actionlint",
+        "-ignore",
+        "unexpected key \"queue\" for \"concurrency\" section"
+      ],
+      "seconds": 0.009
+    }
+  ],
+  "date": "2026-09-11",
+  "environment": {
+    "bake": "Actual CLI print; no BuildKit solve",
+    "cpus": 4,
+    "docker_socket_mounted": false,
+    "memory": "16g",
+    "network": "none",
+    "platform_python": "3.6.8",
+    "rocky_image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+    "tool_image_id": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "user": "1000:1000"
+  },
+  "kind": "crossforge-local-refactoring-observation",
+  "limits": [
+    "New reports are synthetic fixtures. Domain policy loading and report validation execute for real; only the two CLI dispatch tests mock the qualification body. No target compiler, runtime or vcpkg port qualification executed.",
+    "Normalized source-closure comparison and graph parsing are not BuildKit solve or CI speed measurements. Parallel local validation timings are not the planned runner benchmark.",
+    "The vcpkg SDK and four downstream reports still bind the complete release. Product version or Python configuration changes continue to invalidate the chain; this step only removes irrelevant runtime module inputs.",
+    "Strict physical execution identity remains unchanged; the cross-runner reuse boundary decision remains pending.",
+    "Main qualified-row/SDK matrix and recovery wiring, real GitHub signing/retries, candidate/native ARM, source replay, retention and matched performance experiments remain incomplete.",
+    "Earlier automatic approval review rejected mounting the host Docker socket inside an orchestration container because of broad daemon control. Explicit authorization remains pending; this run used no socket and did not bypass the rejection.",
+    "No merge to main, remote push or image publication."
+  ],
+  "local_outputs": {
+    "focused.log": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/focused.log",
+      "sha256": "a5864fcffb85b6b844f566947f470ffd0f2dc4f213d0d74aab59ba502f89bcb6"
+    },
+    "full-result.json": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/full-result.json",
+      "sha256": "2fbcc27f97163fcae4f2577d328e468ede4f6f992a1c6fcde67177f42eda3ab1"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/full.log",
+      "sha256": "5d02953580303a6189102902ac98f5c1b712199814a750c3656c5e71fa9c0811"
+    },
+    "full.py": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/full.py",
+      "sha256": "83225c71ff855365fe579b9a7461cc6d6ca95b24eacdee33d248d69f6b11fb3e"
+    },
+    "graph.json": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/graph.json",
+      "sha256": "1d29e8b2dcdb371fcea2628350cebb16ebbd191adb12134a4ba2c0f3f698fa10"
+    },
+    "material-check.py": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/material-check.py",
+      "sha256": "a524814ae058205c97628c820f6ae0403db137cd7f0cc228bf7e4010d71c9569"
+    },
+    "material-result.json": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/material-result.json",
+      "sha256": "d9bb609799e4d9dd41e7e9e0dbbfe6edc3d99b00c6f30469352dccae93d00d63"
+    },
+    "material.log": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/material.log",
+      "sha256": "3df43fb1787e3a9a7e447b016d1f56a407f3950ffb3ec7a8e55e045825b794d4"
+    },
+    "render.log": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/render.log",
+      "sha256": "43a0eeb5dee2116f4e6ef23e84b8cdc8e226de580b6904b270c0c6f12cc69aac"
+    },
+    "rocky.log": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/rocky.log",
+      "sha256": "b82ab0e4e9a9d9ef75bd3b602713477a01389f6bb02645f25640319fd1f437ee"
+    },
+    "rocky.py": {
+      "path": "/tmp/crossforge-vcpkg-toolchain-inputs/rocky.py",
+      "sha256": "c0ba8673f824b4015112d23477b1f14208966173f106dc394785b8e81d1585c1"
+    }
+  },
+  "material_observation": {
+    "after": {
+      "cpython-build-cp310-export": "13c00908f1b83a7572880bbfe9029ecb1053d829264ea5e9d2b5754f7551eed2",
+      "cpython-build-cp311-export": "b3e3cfcaaa69a04da20b0dce556f278cea4838e887b9a79f6ffdffee70ed1e8b",
+      "cpython-build-cp312-export": "15187d8330a637e4ff6326f4b8fba63bcf50ef6e2becd10a94dcbdc39f957c3b",
+      "cpython-build-cp313-export": "a404c9e1081dedca72d690cf29bf9ee19873abdfa8d09e8ca38d385121e6e9cf",
+      "cpython-build-cp314-export": "78486e44ee0896bff5a49c021d12f87e1ff363b707263f7f426f5d85df28d05b",
+      "cpython-build-cp39-export": "b134c5640eefe2e0e88383b721ba17b8943ac7c32c755174f1cb8f70cd6bc5fd",
+      "cpython-cp310-aarch64-test-context-export": "42d0d6a6b7f5beacf3ee9b76af31351de51911178c5ba0371469240e4a3acb3b",
+      "cpython-cp310-x86_64-test-context-export": "608813906bdd6d08d33858c04279d0f5b18f5d254a608025f4fda48a18738341",
+      "cpython-cp311-aarch64-test-context-export": "feb45be0742e23134cbcaaf91d1d2729d705d65bc7481fb170b3d6c2c294f041",
+      "cpython-cp311-x86_64-test-context-export": "dc2d4e573bc9ce4b8acd258d3ce0ad8179bfad591d1ab600c13476d0f9997b16",
+      "cpython-cp312-aarch64-test-context-export": "5d8d278688d0f827cc206b712ef844997ff5ca82044705541675bbb5157612ec",
+      "cpython-cp312-x86_64-test-context-export": "a9d3da6797323d2c526d3e8170b8c8a439d8a174d8a8a310c599b3cac50a0179",
+      "cpython-cp313-aarch64-test-context-export": "b430b8b951be5d07ab7de0d0d1a5e92b56973769a3404ee8618df2b918109223",
+      "cpython-cp313-x86_64-test-context-export": "f9a7d52e9e41b6703f5ece08b2d8b621ee9c0e4e7ff8a7c61645a58235ed1ca5",
+      "cpython-cp314-aarch64-test-context-export": "9d48d8a105eb82858d066afd9944aadd632385d0fdb4097e506e401bac17baca",
+      "cpython-cp314-x86_64-test-context-export": "ba2f1122a58799d8d231de5f5c8120d4364ed334a51957e0da1c197c3f422ecf",
+      "cpython-cp39-aarch64-test-context-export": "7643426697016dfc6c1b407038f1f41826ddc515c5ecd35cf978c731aed69d78",
+      "cpython-cp39-x86_64-test-context-export": "7362e7721c9cb6ca0c67bbe3a660480aefc7def7713b45da09e34d15de3bf2ec",
+      "cpython-cross-cp310-aarch64-export": "94e0216f3431b66449c5cb4175d347ce00eba3fb4d0a45df30b55b7dfabf3aa4",
+      "cpython-cross-cp310-x86_64-export": "9a99611a0734ebc8ffc3a37c8b0e93d110529dd885c8555d352a0a09a9eb1a9f",
+      "cpython-cross-cp311-aarch64-export": "1df71348a25290651a9683fb4d92a1d4492adeb008a1a8a5f03d98c4a23e0f7b",
+      "cpython-cross-cp311-x86_64-export": "c38e17b32156e2650dfadf10ad9034ddc8173e5bf80c07b8f973d08b05d593ac",
+      "cpython-cross-cp312-aarch64-export": "fcdb7be8b33399700a6dffc4e17063f0733c2ad501bba973f9b84f45aaf61fa3",
+      "cpython-cross-cp312-x86_64-export": "fc1986ecc881b694d0b613894e645d186100995cd91b7aeb1db6e7be3e5c1ad6",
+      "cpython-cross-cp313-aarch64-export": "abe40241278bffe70baccc782d8aa6c211fd9e1a28753093fbfd4cb0d6d48abd",
+      "cpython-cross-cp313-x86_64-export": "8d4a57c56e866be4beac0eb5b661682c46e2f7e88d6af55565f734b85cc6c622",
+      "cpython-cross-cp314-aarch64-export": "08d6e47bd1618cfa59bd479fecc882a7e25510ba49a8a53e2090b914137e65f5",
+      "cpython-cross-cp314-x86_64-export": "ca47d98930104791f14d455864eb7826ed0bc49cead7acab56a548eddc80bf9b",
+      "cpython-cross-cp39-aarch64-export": "713f09cdbaf88ed73aa0ee5fd6f9cf27c5c7aa5f50245082831d333178998d7b",
+      "cpython-cross-cp39-x86_64-export": "15d1b99310a872c4dc94d7b97e4fb00de36a8b28907116d0ef9464d4ebf494a6",
+      "gcc-aarch64-test-context-export": "6b4e79e866efd1d6f9ef8ed690909e02cbb784607baa3cf0bdeae62d56e27fd0",
+      "gcc-testsuite-aarch64-smoke": "223babe53c1f65a35712206ec2c6e2644c06ebc47dd40702e48929571aa54d78",
+      "gcc-testsuite-x86_64-full-qualified": "2027cc067b37662975ffa96e1282528e083854130bc7f5e2e3a0d14935e72ff9",
+      "gcc-testsuite-x86_64-smoke": "2cb2b3a33f7cd6b2a7991542a18d97bd9efae981df99ed3d213572c7847fbc9c",
+      "gcc-x86_64-test-context-export": "ad16aeaa4f6217924ff16917d10637e0a6b54cfe4a6e8a9479050d196af07c15",
+      "sdk-phase13-base": "5c941653bfc4e779efe0ec8204ef4bf73e764512a6d16d3f499bcac1fe2324f5",
+      "toolchain-aarch64-build-export": "0d036ff020e0d8a2c9d3f1295a9e6f8787489c65f8a98e68a237b1874fa60193",
+      "toolchain-x86_64-build-export": "f29a97f5a9f7ca1585cfb29438011a6140e5469c91cd953a1a838bf614d2fc2e",
+      "vcpkg-contract-qualified": "19acd88a6af33782eb60ddc513db0309887ec3fb4c5b7fc069a70454bd2b91c8",
+      "vcpkg-upstream-tier1-qualified": "1fff77c4207b2e82441492e4fd2fc5c6c7350ab6416cd6a175ea59871b891cb3",
+      "vcpkg-upstream-tier2-qualified": "feac6b547e6a88914b5af05580ffd41b13a18cb999f6157442b4c00249c6798c",
+      "vcpkg-upstream-tier3-qualified": "78639e7d8b0d34040800f6398b6253fa4fe5aced238747a33c47de0a3c47ccb2"
+    },
+    "base_commit": "0b39c2a8284b5485ab83838f0e19aa9de2de69ee",
+    "before": {
+      "cpython-build-cp310-export": "13c00908f1b83a7572880bbfe9029ecb1053d829264ea5e9d2b5754f7551eed2",
+      "cpython-build-cp311-export": "b3e3cfcaaa69a04da20b0dce556f278cea4838e887b9a79f6ffdffee70ed1e8b",
+      "cpython-build-cp312-export": "15187d8330a637e4ff6326f4b8fba63bcf50ef6e2becd10a94dcbdc39f957c3b",
+      "cpython-build-cp313-export": "a404c9e1081dedca72d690cf29bf9ee19873abdfa8d09e8ca38d385121e6e9cf",
+      "cpython-build-cp314-export": "78486e44ee0896bff5a49c021d12f87e1ff363b707263f7f426f5d85df28d05b",
+      "cpython-build-cp39-export": "b134c5640eefe2e0e88383b721ba17b8943ac7c32c755174f1cb8f70cd6bc5fd",
+      "cpython-cp310-aarch64-test-context-export": "42d0d6a6b7f5beacf3ee9b76af31351de51911178c5ba0371469240e4a3acb3b",
+      "cpython-cp310-x86_64-test-context-export": "608813906bdd6d08d33858c04279d0f5b18f5d254a608025f4fda48a18738341",
+      "cpython-cp311-aarch64-test-context-export": "feb45be0742e23134cbcaaf91d1d2729d705d65bc7481fb170b3d6c2c294f041",
+      "cpython-cp311-x86_64-test-context-export": "dc2d4e573bc9ce4b8acd258d3ce0ad8179bfad591d1ab600c13476d0f9997b16",
+      "cpython-cp312-aarch64-test-context-export": "5d8d278688d0f827cc206b712ef844997ff5ca82044705541675bbb5157612ec",
+      "cpython-cp312-x86_64-test-context-export": "a9d3da6797323d2c526d3e8170b8c8a439d8a174d8a8a310c599b3cac50a0179",
+      "cpython-cp313-aarch64-test-context-export": "b430b8b951be5d07ab7de0d0d1a5e92b56973769a3404ee8618df2b918109223",
+      "cpython-cp313-x86_64-test-context-export": "f9a7d52e9e41b6703f5ece08b2d8b621ee9c0e4e7ff8a7c61645a58235ed1ca5",
+      "cpython-cp314-aarch64-test-context-export": "9d48d8a105eb82858d066afd9944aadd632385d0fdb4097e506e401bac17baca",
+      "cpython-cp314-x86_64-test-context-export": "ba2f1122a58799d8d231de5f5c8120d4364ed334a51957e0da1c197c3f422ecf",
+      "cpython-cp39-aarch64-test-context-export": "7643426697016dfc6c1b407038f1f41826ddc515c5ecd35cf978c731aed69d78",
+      "cpython-cp39-x86_64-test-context-export": "7362e7721c9cb6ca0c67bbe3a660480aefc7def7713b45da09e34d15de3bf2ec",
+      "cpython-cross-cp310-aarch64-export": "94e0216f3431b66449c5cb4175d347ce00eba3fb4d0a45df30b55b7dfabf3aa4",
+      "cpython-cross-cp310-x86_64-export": "9a99611a0734ebc8ffc3a37c8b0e93d110529dd885c8555d352a0a09a9eb1a9f",
+      "cpython-cross-cp311-aarch64-export": "1df71348a25290651a9683fb4d92a1d4492adeb008a1a8a5f03d98c4a23e0f7b",
+      "cpython-cross-cp311-x86_64-export": "c38e17b32156e2650dfadf10ad9034ddc8173e5bf80c07b8f973d08b05d593ac",
+      "cpython-cross-cp312-aarch64-export": "fcdb7be8b33399700a6dffc4e17063f0733c2ad501bba973f9b84f45aaf61fa3",
+      "cpython-cross-cp312-x86_64-export": "fc1986ecc881b694d0b613894e645d186100995cd91b7aeb1db6e7be3e5c1ad6",
+      "cpython-cross-cp313-aarch64-export": "abe40241278bffe70baccc782d8aa6c211fd9e1a28753093fbfd4cb0d6d48abd",
+      "cpython-cross-cp313-x86_64-export": "8d4a57c56e866be4beac0eb5b661682c46e2f7e88d6af55565f734b85cc6c622",
+      "cpython-cross-cp314-aarch64-export": "08d6e47bd1618cfa59bd479fecc882a7e25510ba49a8a53e2090b914137e65f5",
+      "cpython-cross-cp314-x86_64-export": "ca47d98930104791f14d455864eb7826ed0bc49cead7acab56a548eddc80bf9b",
+      "cpython-cross-cp39-aarch64-export": "713f09cdbaf88ed73aa0ee5fd6f9cf27c5c7aa5f50245082831d333178998d7b",
+      "cpython-cross-cp39-x86_64-export": "15d1b99310a872c4dc94d7b97e4fb00de36a8b28907116d0ef9464d4ebf494a6",
+      "gcc-aarch64-test-context-export": "6b4e79e866efd1d6f9ef8ed690909e02cbb784607baa3cf0bdeae62d56e27fd0",
+      "gcc-testsuite-aarch64-smoke": "223babe53c1f65a35712206ec2c6e2644c06ebc47dd40702e48929571aa54d78",
+      "gcc-testsuite-x86_64-full-qualified": "2027cc067b37662975ffa96e1282528e083854130bc7f5e2e3a0d14935e72ff9",
+      "gcc-testsuite-x86_64-smoke": "2cb2b3a33f7cd6b2a7991542a18d97bd9efae981df99ed3d213572c7847fbc9c",
+      "gcc-x86_64-test-context-export": "ad16aeaa4f6217924ff16917d10637e0a6b54cfe4a6e8a9479050d196af07c15",
+      "sdk-phase13-base": "c08ef563fc10f46fdc28403cdf9eb84aac3272365257b38ad3e6aa1c6f8096da",
+      "toolchain-aarch64-build-export": "0d036ff020e0d8a2c9d3f1295a9e6f8787489c65f8a98e68a237b1874fa60193",
+      "toolchain-x86_64-build-export": "f29a97f5a9f7ca1585cfb29438011a6140e5469c91cd953a1a838bf614d2fc2e",
+      "vcpkg-contract-qualified": "063e72d90410beee02989a5e8beb3a3b461048b955e86950c181dce85807806b",
+      "vcpkg-upstream-tier1-qualified": "a5a33f9c5fe94d0da988e4f9e2a0b8fe8fdd20c415c294c695b3c7a0ed3b4f02",
+      "vcpkg-upstream-tier2-qualified": "5a864e755c627177f55c2836072c685eb98749b51f38641d09f54c5d02ecd018",
+      "vcpkg-upstream-tier3-qualified": "e1372b7b42a89cb61d4232b3a982408fa84410be05eedfeb1fef3fad10ad4ed9"
+    },
+    "component_documents_unchanged": 113,
+    "gcc_qualification_closures_unchanged": 3,
+    "mutations": {
+      "new-product-version": [
+        "sdk-phase13-base",
+        "vcpkg-contract-qualified",
+        "vcpkg-upstream-tier1-qualified",
+        "vcpkg-upstream-tier2-qualified",
+        "vcpkg-upstream-tier3-qualified"
+      ],
+      "new-python-module": [],
+      "old-product-version": [
+        "sdk-phase13-base",
+        "vcpkg-contract-qualified",
+        "vcpkg-upstream-tier1-qualified",
+        "vcpkg-upstream-tier2-qualified",
+        "vcpkg-upstream-tier3-qualified"
+      ],
+      "old-python-module": [
+        "sdk-phase13-base",
+        "vcpkg-contract-qualified",
+        "vcpkg-upstream-tier1-qualified",
+        "vcpkg-upstream-tier2-qualified",
+        "vcpkg-upstream-tier3-qualified"
+      ]
+    },
+    "raw_closures_unchanged": 34,
+    "scope": "Real Bake print and normalized material capture only; no BuildKit solve, real report execution or timing acceptance",
+    "status": "passed",
+    "vcpkg_closures_changed": 5
+  },
+  "regression_scope": [
+    "Both architectures use the same report checks from an authenticated component policy or complete-release compatibility adapter; scoped entry rejects legacy and mixed reports.",
+    "Compiler/binutils version and source, sysroot, ABI, qualification component, explicit QEMU and runtime-base identities remain checked, together with both required runtime successes and the x86 clean marker.",
+    "Both root pins, transitive GCC/ABI documents, exact policy schema and safe report/marker files are required.",
+    "The vcpkg component-mode path compares the authenticated policy to its complete-release expectation; changing relevant release inputs is still rejected.",
+    "A trimmed stage with five runtime modules and eight component documents validates synthetic reports without any release renderer or Python row module.",
+    "CLI preserves the legacy mode, forwards both supplied root pins and rejects incomplete options before invoking qualification.",
+    "Actual Bake graph checks confirm both root pins, exact script copies and the eight input projections; the full release dependency remains explicit."
+  ],
+  "rocky_graph": "Tests read the current saved Bake print from the tool container; only the class graph-acquisition hook is replaced.",
+  "rocky_syntax_files": [
+    "scripts/toolchain_report.py",
+    "scripts/qualify-vcpkg-sdk.py"
+  ],
+  "schema_version": 1,
+  "scope": "Direct authenticated toolchain-policy report acceptance and vcpkg SDK stage module isolation",
+  "source_sha256": {
+    "docker-bake.override.json": "68edfbcee903542452e40eb9edafa019e693afc13867ff45c4a495c5517216b2",
+    "docker/vcpkg.Dockerfile": "1e7fb04a9f8a3d945da2f7380f2efd7b0472579f6be1b76b5e0a1ef7b06a9d46",
+    "scripts/qualify-vcpkg-sdk.py": "f10e7c1d6b945bdbcb9e51f600b4fb920b489ab1494c552deeb8a532dd8e3a70",
+    "scripts/render-bake.py": "20a3079f5f455749b2645b5d2eb260b5de24d2ec483341bcf300e3713c0a4216",
+    "scripts/toolchain_report.py": "7ad6f62b2059e6278ddd9fd9111dcf158657dca900a2a06484cb5814aa1f36d8",
+    "tests/config/test_vcpkg_toolchain_inputs.py": "dca843b6c49e03d7756d3ebd8c43a540b7fcc7995c8067ba57996c6a9337e61b"
+  },
+  "status": "local-contract-checks-passed; full vcpkg policy migration and actual execution acceptance pending",
+  "tests": [
+    {
+      "seconds": 277.919,
+      "skipped": 0,
+      "suite": "config",
+      "tests": 1335
+    },
+    {
+      "seconds": 1.3,
+      "skipped": 0,
+      "suite": "packaging",
+      "tests": 40
+    },
+    {
+      "seconds": 4.698,
+      "skipped": 0,
+      "suite": "focused",
+      "tests": 70
+    },
+    {
+      "seconds": 0.387,
+      "skipped": 0,
+      "suite": "rocky",
+      "tests": 13
+    }
+  ]
+}

@@ -1,0 +1,282 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-local-sdk-staging-cleanup-observation",
+  "observed_at": "2026-09-11T07:18:25.163605-04:00",
+  "base_commit": "df377458beb3e17cf951eaa5161606a681581421",
+  "status": "local regressions and actual retained-OCI acceptance passed",
+  "scope": "Remove only fresh SDK rows staging copies after sealed producer acceptance, planned receipt matching and successful diagnostic preservation",
+  "source_sha256": {
+    "scripts/crossforge_internal/ci_sdk.py": "443b99622be6424aedd98a19426664f92b7af5fe68ef81290ba5697af4bdb95e",
+    "tests/config/test_ci_sdk.py": "a3c61ccf0ddad97edc045e326a190d899c3277ebccbf8c21727e697da1dc1fb1",
+    "docs/architecture.md": "69ec46ccbfac7a20ff24da986b527fd9a904dbd400dff8881418a5f8f70d7cc8",
+    "docs/internal-components.md": "8a31f7a4df0a82aa7daa84319fa07cc0157e7ad15d4616c0bb191e2660a6e753"
+  },
+  "environment": {
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "rocky_image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+    "tests": {
+      "network": "none",
+      "docker_socket_mounted": false,
+      "user": "1000:1000",
+      "cpus": 4,
+      "memory": "16g"
+    },
+    "actual_storage_probe": {
+      "network": "bridge",
+      "docker_socket_mounted": true,
+      "builder": "crossforge-ci-review",
+      "original_replay_source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7"
+    }
+  },
+  "tests": [
+    {
+      "tests": 1398,
+      "seconds": 365.79,
+      "skipped": 0,
+      "suite": "config"
+    },
+    {
+      "tests": 40,
+      "seconds": 1.773,
+      "skipped": 0,
+      "suite": "packaging"
+    },
+    {
+      "tests": 47,
+      "seconds": 10.402,
+      "skipped": 0,
+      "suite": "focused"
+    },
+    {
+      "tests": 20,
+      "seconds": 7.837,
+      "skipped": 0,
+      "suite": "rocky"
+    }
+  ],
+  "checks": {
+    "locked_release": "passed",
+    "supply_chain_evidence": "passed",
+    "frozen_abi": "passed",
+    "python_runtime_providers": "passed",
+    "render_release_components": "passed",
+    "render_vcpkg_integration": "passed",
+    "render_bake": "passed",
+    "qualification_shell_syntax": "passed",
+    "actionlint": {
+      "status": "passed in separate Docker invocation",
+      "exit_code": 0,
+      "compatibility_ignore": "unexpected key \"queue\" for \"concurrency\" section",
+      "binary_sha256": "c872d6db8c6bf83a8eaa704fc93999f027d55dffbc63b8a6abdccb47df5f4cd4"
+    }
+  },
+  "regression_coverage": [
+    "Successful missing-row path preserves diagnostic bytes, OCI and receipt while removing only payload and extracted.",
+    "Qualification failure, changed expected inputs and failed diagnostic preservation keep both intermediate trees and prevent SDK integration.",
+    "Symlink staging roots are rejected before either tree is removed; installed symlinks do not delete external files.",
+    "All six missing rows remain bounded to two workers and complete before final integration; original trust and source/host checks remain."
+  ],
+  "actual_storage_probe": {
+    "status": "passed",
+    "result": {
+      "before_bytes": {
+        "extracted": 650098260,
+        "oci": 170353262,
+        "payload": 650097338
+      },
+      "diagnostics_preserved": true,
+      "helper_sha256": "443b99622be6424aedd98a19426664f92b7af5fe68ef81290ba5697af4bdb95e",
+      "kind": "crossforge-local-sdk-staging-cleanup-observation",
+      "original_preserved": true,
+      "receipt_sha256": "61170e3d2b6cdeaf869be9e5dff80e5150dcf48c5d6304fb32e3e6883655c4ea",
+      "removed_bytes": 1300195598,
+      "retained_oci_bytes": 170353262,
+      "row": "cp39",
+      "schema_version": 1,
+      "scope": "Actual sealed row consumed after removing only a separate copy staging trees; not fresh row execution, CI or performance acceptance",
+      "seconds": 1511.967,
+      "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+      "status": "passed",
+      "verification": {
+        "mode": "verified-prior-execution",
+        "qualification": {
+          "completed_at": "2026-09-11T10:15:37Z",
+          "coverage": {
+            "build_python_sdk_tree": {
+              "canonical_sha256": "6ae0762f0beb07fcb3ce319392fa4312d5708cccb97a60da154a8643e79f1552",
+              "entries": 7652
+            },
+            "manifest_sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99",
+            "row": "cp39",
+            "runtime_tiers": [
+              "locked-sysroot",
+              "clean-rocky"
+            ],
+            "status": "passed",
+            "targets": {
+              "aarch64": {
+                "python_sha256": "2424b9b23b647499b07e974a4c0d93c2e76110f5db4443de1137c9bb2342acfa",
+                "report_sha256": "71c1992b4103368f498e7cb13ee907848c51ea99d9528c5a329a1bae7907b89a",
+                "sdk_tree": {
+                  "canonical_sha256": "62b63a954cb1b277c508fe7fa3c5e2683c8b70b61b34c3abd7f1a40c6c13d36e",
+                  "entries": 7652
+                },
+                "target": "aarch64-unknown-linux-gnu"
+              },
+              "x86_64": {
+                "python_sha256": "9e77297bb66344a308fab37b49227a4f94970ef3f91f285eb6891201eb417480",
+                "report_sha256": "5b97c1f664ccdbe98215dbcd0a2642bf2874d9f747d5244be728a22103308e83",
+                "sdk_tree": {
+                  "canonical_sha256": "fc210f34fccf6feb291f04b4acaf84692c8405c27c6d6710962c2188e15d74ee",
+                  "entries": 7652
+                },
+                "target": "x86_64-unknown-linux-gnu"
+              }
+            }
+          },
+          "inputs_sha256": "728e44831a80dc6b8af20b074cfc01d8beea13e0e49d088e9062c6fa065c7867",
+          "kind": "crossforge-component-qualification",
+          "mode": "executed",
+          "producer": {
+            "invocation": "urn:crossforge:local:scoped-replay-cb115b5-attempt4-python-cp39",
+            "kind": "local",
+            "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+            "source_dirty": false,
+            "started_at": "2026-09-11T10:10:23Z"
+          },
+          "schema_version": 1,
+          "started_at": "2026-09-11T10:10:50Z",
+          "vertices": [
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:14:09.211398134Z",
+              "digest": "sha256:e895446fa0a3360365731f6ec162981f690dfafe559bd53c6bf59515a9e714f8",
+              "name": "[cpython-cp39-aarch64-qualify cpython-qualify-aarch64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-locked/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/runtime-clean/.crossforge/qemu-aarch64,ro     --mount=type=bind,from=crossforge_qemu_validated,source=/usr/local/libexec/crossforge/qemu-aarch64,target=/work/qemu-aarch64,ro     test \"aarch64\" = aarch64     && test \"aarch64-unknown-linux-gnu\" = aarch64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp39\" \"3.9.25\" \"legacy\"       \"aarch64\" \"aarch64-unknown-linux-gnu\"       \"c2d62d2a43b8f26dc3465a9e90180ecce9bec502f146e64b797d1aeb89553ca6\"       /work/qemu-aarch64",
+              "stage": "cpython-qualify-aarch64",
+              "started": "2026-09-11T10:13:47.226305533Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:13:02.365155239Z",
+              "digest": "sha256:5790f5e6b5e5d3a2331d2a576a7e70abe072bc861290f94fdd05027ddb29c07f",
+              "name": "[cpython-cp39-x86_64-qualify cpython-qualify-build 19/19] RUN --network=none minor=\"3.9\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp39/targets/x86_64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp39/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp39-x86_64\"       --toolchain \"/opt/crossforge/targets/x86_64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/x86_64\"       --target \"x86_64-unknown-linux-gnu\"       --version \"3.9.25\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp39/x86_64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"8c260833b4603ad4f93fe20a422b90a0575a7b9d310cc8a87190119ed43cf778\"       --report \"/work/qualification/python/cp39/x86_64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T10:12:48.712967297Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:12:35.253308763Z",
+              "digest": "sha256:70e5e0263a654651a7b5b60c0f57c1bd58847222a8cc606d63afc3e3d90e0cf4",
+              "name": "[python-row-cp39 cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp39-source.json\"       --source-component-sha256 \"73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3\"       --policy-component \"/work/config/qualification-components/implementation/python-cp39-build-policy.json\"       --policy-component-sha256 \"216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755\"       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T10:12:34.800421048Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:12:35.539416685Z",
+              "digest": "sha256:aa06016e04fae9f37d8ed874a3bf6bfd22f1b673183362b8d306970b5ca16189",
+              "name": "[python-row-cp39 cpython-qualify-build 18/19] RUN /usr/libexec/platform-python /work/scripts/verify-python-row.py       --source-component \"/work/config/qualification-components/python/cp39-source.json\"       --source-component-sha256 \"73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3\"       --policy-component \"/work/config/qualification-components/implementation/python-cp39-build-policy.json\"       --policy-component-sha256 \"216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755\"       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"       --manifest /work/source/source-manifest.json",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T10:12:35.253471206Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:12:48.712809963Z",
+              "digest": "sha256:d1420347f10d49602ff78b420cbc46540db429817d74466f5e4d9667d9c6de2e",
+              "name": "[cpython-cp39-aarch64-qualify cpython-qualify-build 19/19] RUN --network=none minor=\"3.9\"     && /usr/libexec/platform-python /work/scripts/qualify-cpython.py       --prefix \"/opt/crossforge/python/cp39/targets/aarch64-unknown-linux-gnu\"       --build-python \"/opt/crossforge/python/cp39/build/bin/python$minor\"       --build-directory \"/work/build/cpython-cp39-aarch64\"       --toolchain \"/opt/crossforge/targets/aarch64-unknown-linux-gnu\"       --sysroot \"/opt/crossforge/sysroots/el8/aarch64\"       --target \"aarch64-unknown-linux-gnu\"       --version \"3.9.25\"       --extension-source /work/tests/python/minimal_extension.c       --work \"/work/qualification/python/cp39/aarch64\"       --qualification-components /work/config/qualification-components       --source-manifest /work/source/source-manifest.json       --abi-baseline /work/config/abi-baseline.json       --abi-provider-manifest /work/config/abi-providers.json       --sysroot-abi-inventory /work/config/abi-sysroot-inventory.json       --runtime-provider-policy /work/config/python-runtime-providers.json       --python-provider-catalog /work/config/python-provider-catalog.json       --qualification-component-sha256         \"c2d62d2a43b8f26dc3465a9e90180ecce9bec502f146e64b797d1aeb89553ca6\"       --report \"/work/qualification/python/cp39/aarch64/compile.json\"",
+              "stage": "cpython-qualify-build",
+              "started": "2026-09-11T10:12:35.539585501Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:14:30.791085807Z",
+              "digest": "sha256:65c8636ab1544232688cba6f1fd4822df89e8d3d9c7f7313f2dae5013c9643b2",
+              "name": "[cpython-cp39-x86_64-qualify cpython-qualify-x86_64 1/1] RUN --network=none     --mount=type=tmpfs,target=/runtime-locked/dev/shm     --mount=type=tmpfs,target=/runtime-clean/dev/shm     test \"x86_64\" = x86_64     && test \"x86_64-unknown-linux-gnu\" = x86_64-unknown-linux-gnu     && /work/scripts/run-python-qualification.sh       \"cp39\" \"3.9.25\" \"legacy\"       \"x86_64\" \"x86_64-unknown-linux-gnu\"       \"8c260833b4603ad4f93fe20a422b90a0575a7b9d310cc8a87190119ed43cf778\"",
+              "stage": "cpython-qualify-x86_64",
+              "started": "2026-09-11T10:14:09.211564321Z"
+            },
+            {
+              "cached": false,
+              "completed": "2026-09-11T10:15:10.495284804Z",
+              "digest": "sha256:21bc967e07cfec61f44f1906df6783794efdad886f635b308d13bb7069d01623",
+              "name": "[python-row-cp39 cpython-row-assemble 14/14] RUN /usr/libexec/platform-python /work/scripts/finalize-python-row.py       --root /row-export       --row \"cp39\"       --version \"3.9.25\"       --adapter \"legacy\"       --qualification-components /work/config/qualification-components       --qualification-component-sha256 \"e212748859de87c5a7f183f535e7fbd205e1c09f3c322779c365b7a52799e62a\"       --source-manifest \"/row-export/opt/crossforge/qualification/python/cp39/source.json\"       --abi-input-root /work/abi-inputs       --output \"/row-export/opt/crossforge/qualification/python/cp39/row.json\"",
+              "stage": "cpython-row-assemble",
+              "started": "2026-09-11T10:14:49.235517333Z"
+            }
+          ]
+        },
+        "receipt_sha256": "61170e3d2b6cdeaf869be9e5dff80e5150dcf48c5d6304fb32e3e6883655c4ea",
+        "reference": "oci-layout:///tmp/crossforge-runtime-replay-cb115b5/storage-cleanup-cp39/oci@sha256:82de523c574c58023ffc90740bd23aebf010b4a979fc81eab6deac89a2338d70"
+      }
+    },
+    "original_qualification_directory_preserved": true,
+    "result_file": "/tmp/crossforge-sdk-staging-cleanup/storage-result.json",
+    "result_file_sha256": "2ec1c2fe240b8a7ae08fcea31f7551f15c6c94764d7551dcd690336a37b4ab4c",
+    "comparison": "Verified qualification equals the original successful cp39 phase exactly; original producer and receipt SHA256 are preserved."
+  },
+  "local_outputs": {
+    "focused.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/focused.log",
+      "sha256": "81d7d9338ae89fa204679c57148f9f8cd6f0dde129b74168e96bd2e4b181095e"
+    },
+    "initial-focused.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/initial-focused.log",
+      "sha256": "48de6e7b9af6a627d334385fe80a0b5f844d4a9db229b062b7aadac923b12d3a"
+    },
+    "rocky.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/rocky.log",
+      "sha256": "1712a629e1aeb5a280709d76da10276f946e3767dbd83774c33829a827960e72"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/full.log",
+      "sha256": "c4ec8369f381a3cfa315d97d4e4bb2309f8b106576f089cd39f9d95b29410cc5"
+    },
+    "full.py": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/full.py",
+      "sha256": "83225c71ff855365fe579b9a7461cc6d6ca95b24eacdee33d248d69f6b11fb3e"
+    },
+    "rocky.py": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/rocky.py",
+      "sha256": "13bf316db1985d1f264441aae168c951a79ea7c3ec752725ada63c54a0cbd9a3"
+    },
+    "graph.json": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/graph.json",
+      "sha256": "9b1f141995165ed8f35a59441cdd8673ec276e8d7b8b530cf083a5b83f2be93c"
+    },
+    "graph.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/graph.log",
+      "sha256": "06fbf69971e5e236c7b5683cf19aa2c6ad3d2a0ecf474cb7cd0f1f4c4c637c0c"
+    },
+    "actionlint.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/actionlint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "verify-storage.py": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/verify-storage.py",
+      "sha256": "7ee8f2b7fea83d6e1bdb9622c9a8e38f570458626cd954899ac50086891fe24f"
+    },
+    "run-storage.sh": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/run-storage.sh",
+      "sha256": "c34a3d57d3e50f4ab09225480e6007275673fe95e36debedacb2422b6b757d9e"
+    },
+    "storage.log": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/storage.log",
+      "sha256": "e30d7ea319f271f0078d4d19c7126c415a7b17be155c9477c5894ec17ba6f2d2"
+    },
+    "storage-result.json": {
+      "path": "/tmp/crossforge-sdk-staging-cleanup/storage-result.json",
+      "sha256": "2ec1c2fe240b8a7ae08fcea31f7551f15c6c94764d7551dcd690336a37b4ab4c"
+    }
+  },
+  "limits": [
+    "New tests use actual filesystem operations with explicit fixtures for registry, sealed artifact production and SDK execution. The separate storage probe uses the real cp39 receipt and OCI, and the original independent validator successfully rechecks sealed bytes, reports, installed trees and fresh original execution records after staging removal. It does not execute a new row qualification.",
+    "All configuration and packaging tests completed successfully; the aggregate driver subsequently exited 1 only because actionlint was absent. Mounting the original tool completed that remaining check separately; passed tests were not repeated.",
+    "An initial direct focused launch omitted the Docker CLI; the following launch used a nonexistent adjacent test module. With the original CLI and correct existing module, all 47 focused tests passed. No production validation was loosened.",
+    "Suite timings were observed during concurrent GCC full qualification and are not a controlled performance comparison. The cp39 size observation excludes symlinks and directory metadata; no GitHub peak disk/memory reduction is claimed.",
+    "Cleanup is local to successful fresh SDK row staging. It does not delete registry objects, supply reference-aware retention, publish/sign rows, deduplicate independent Python jobs, or implement complete CI recovery.",
+    "Original runtime replay remains on its frozen source, which is unchanged in all owning qualification modules. Broader source, GitHub, candidate/native ARM and performance acceptance remains incomplete."
+  ],
+  "merged_main": false,
+  "pushed": false,
+  "published": false
+}

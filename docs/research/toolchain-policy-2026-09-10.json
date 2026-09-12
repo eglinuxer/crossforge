@@ -1,0 +1,466 @@
+{
+  "arm_prerequisites": {
+    "raw_directory": "/tmp/crossforge-arm-components",
+    "results": {
+      "gcc-smoke-qualification-result": {
+        "artifact": {
+          "config_digest": "sha256:ee61adc4fb46c8b200c80f6fdb65414e03d39ad09a2e4cea75bcd4548e7061c9",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:307b06e6c06601c6296c629bf22fb25c232642bdf1bd76bb5ed47f406868fff1",
+          "root_digest": "sha256:307b06e6c06601c6296c629bf22fb25c232642bdf1bd76bb5ed47f406868fff1"
+        },
+        "execution": {
+          "completed_at": "2026-09-10T19:36:49Z",
+          "coverage": [
+            {
+              "profile": "gcc-smoke",
+              "report_sha256": "01c57b5bc55360b32d6bdc07abce7870ef0f603680d5bb8154f56c737b512e20",
+              "status": "passed",
+              "status_counts": {
+                "PASS": 16
+              },
+              "target": "aarch64-unknown-linux-gnu",
+              "tier": "locked-sysroot"
+            },
+            {
+              "profile": "gcc-smoke",
+              "report_sha256": "1be6c06c858c5b8a0724c8494149c2e638cc074ec0f3c55a3bb17012d209a5da",
+              "status": "passed",
+              "status_counts": {
+                "PASS": 16
+              },
+              "target": "aarch64-unknown-linux-gnu",
+              "tier": "clean-rocky"
+            }
+          ],
+          "fresh_runs": {
+            "gcc-testsuite-aarch64-base": 1,
+            "gcc-testsuite-aarch64-smoke": 2
+          },
+          "producer": {
+            "invocation": "urn:crossforge:local:arm-components-20260910",
+            "kind": "local",
+            "source_commit": "cf9acf67c560fc4cf0aed66efb2a65d3a6d6bbbf",
+            "source_dirty": false,
+            "started_at": "2026-09-10T19:25:06Z"
+          },
+          "record_sha256": "361fbc21a22ea184969fcfa60c8e68212398b479cd67ad804330b2b4f1535a61",
+          "started_at": "2026-09-10T19:36:20Z"
+        },
+        "inputs_sha256": "99992c3c4ee7738e94f9e7df4a60bf55df2cd8f086606a4ead56478722e1f8eb",
+        "producer_seconds": 51.09,
+        "receipt_sha256": "244f06f50cae7f9af87a111560952f91c95d497f7eb35d8b83322d7439713e82",
+        "verification_seconds": 0.42
+      },
+      "gcc-test-context-result": {
+        "artifact": {
+          "config_digest": "sha256:919ddd9f87b934f396da95d614aa822929dcb8ebcc502eb872f06c67c3a2fea8",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:e4fae8559a663b81227283a31023dfb9603f53be77ab62391bed9ccb22f14227",
+          "root_digest": "sha256:e4fae8559a663b81227283a31023dfb9603f53be77ab62391bed9ccb22f14227"
+        },
+        "inputs_sha256": "e95c7c25c544b6dbdaa87e85168b8ed936ed1c68504b7bf17eebff22cc825a0b",
+        "producer_seconds": 103.51,
+        "receipt_sha256": "a75e681948d53a049e6e5290787e7ebae9f385bf79240a5d0ceec8e9fc214d0d"
+      },
+      "toolchain-install-result": {
+        "artifact": {
+          "config_digest": "sha256:172590eb196f220ad5aefcc3a294ae65061f3f98be2d9d25ec85564334a6ea57",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+          "root_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6"
+        },
+        "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4",
+        "producer_seconds": 487.73,
+        "receipt_sha256": "ba6c9de0cfe792c649cdf7ab372d5f7d2faa02f8d6fa093e28961a92293c77ec"
+      },
+      "toolchain-qualification-result": {
+        "artifact": {
+          "config_digest": "sha256:4b960daa0b994b13445ce9a414fdbd000da365998ccc74af70c8667aa5c483e2",
+          "platform": "linux/amd64",
+          "platform_digest": "sha256:c49cf957a1590a7bceceaf21d5f69a5db5ab08dd76b36fdfbf7a2c2939045dce",
+          "root_digest": "sha256:c49cf957a1590a7bceceaf21d5f69a5db5ab08dd76b36fdfbf7a2c2939045dce"
+        },
+        "execution": {
+          "completed_at": "2026-09-10T19:35:57Z",
+          "coverage": [
+            {
+              "profile": "toolchain",
+              "report": {
+                "component": {
+                  "canonical_sha256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
+                  "component": "toolchain/aarch64-qualification"
+                },
+                "report_sha256": "edd8722ef29861d4ef3e9e56df7bb49c1f27e6d43ad096f4e46a6e9465fc863b"
+              },
+              "status": "passed",
+              "target": "aarch64-unknown-linux-gnu"
+            }
+          ],
+          "fresh_runs": {
+            "runtime-smoke-aarch64": 4,
+            "toolchain-aarch64-qualify-build": 1
+          },
+          "producer": {
+            "invocation": "urn:crossforge:local:arm-components-20260910",
+            "kind": "local",
+            "source_commit": "cf9acf67c560fc4cf0aed66efb2a65d3a6d6bbbf",
+            "source_dirty": false,
+            "started_at": "2026-09-10T19:25:06Z"
+          },
+          "record_sha256": "0198594858a962ba35953501fdd1684af7099266787fc8302a88e03572a504e9",
+          "started_at": "2026-09-10T19:35:09Z"
+        },
+        "inputs_sha256": "962d337e05796d68367a786f86fa157d283015df3c7be5edbfb5cbc4291dd67a",
+        "producer_seconds": 59.87,
+        "receipt_sha256": "14f65f0d039d5408e5e82a8995ff5d75a5690fb736a658a3aa6b7207fc27f8dc",
+        "verification_seconds": 0.42
+      }
+    },
+    "source_commit": "cf9acf67c560fc4cf0aed66efb2a65d3a6d6bbbf",
+    "source_dirty": false
+  },
+  "date": "2026-09-10",
+  "execution_environment": {
+    "build": {
+      "buildkit_config_sha256": "2bc5c1722ec69771690d68328915a0b80f5d936134f910285b8a960c85fc2b23",
+      "buildkit_image": "moby/buildkit:v0.33.0@sha256:6c2fa84a6b61ccd72899dde4239f8d5717f05f9a8ca6f3cad185fb1a95a94de3",
+      "buildx_version": "github.com/docker/buildx v0.36.1 1d8dde89b8aba914e05e45366770736fea1fd690",
+      "gomemlimit": "4GiB"
+    },
+    "host": {
+      "Architecture": "x86_64",
+      "CgroupDriver": "systemd",
+      "CgroupVersion": "2",
+      "Driver": "overlayfs",
+      "KernelVersion": "6.12.107+deb13-amd64",
+      "MemTotal": 134738935808,
+      "NCPU": 32,
+      "OSType": "linux",
+      "OperatingSystem": "Debian GNU/Linux 13 (trixie)",
+      "ServerVersion": "29.8.0",
+      "buildkit_host_config": {
+        "CapAdd": null,
+        "CapDrop": null,
+        "CgroupnsMode": "private",
+        "CpuPeriod": 0,
+        "CpuQuota": 0,
+        "CpuShares": 0,
+        "CpusetCpus": "",
+        "CpusetMems": "",
+        "Memory": 0,
+        "MemoryReservation": 0,
+        "MemorySwap": 0,
+        "NanoCpus": 0,
+        "PidsLimit": null,
+        "Privileged": true,
+        "ReadonlyRootfs": false,
+        "SecurityOpt": [
+          "label=disable"
+        ],
+        "ShmSize": 67108864,
+        "Ulimits": null,
+        "UsernsMode": ""
+      },
+      "cpu_identity_sha256": "1b73692be6f50a2328135559b46e0641fb6bac2f9015b31cc358a3bbc3414273"
+    }
+  },
+  "final_consumer_source_snapshot": "/tmp/crossforge-toolchain-policy/source-final",
+  "implementation_files": {
+    "docker/Dockerfile": "20f8396ead84ac752a9e9c1d8906485aceb3bf0132130e6cb27b8cd6045428ea",
+    "docker/python.Dockerfile": "3984d51e8b1c63b5e537429c049b87aad6e9a93e4013d1e334768b11228e0791",
+    "docker/vcpkg.Dockerfile": "b29fa3ce3e0b16616f210d6afd8772c8666a6c8ab7077364065f413576c6805a",
+    "scripts/crossforge_internal/component_qualification.py": "993c5bb53279e6238c8557a81dd7a60af972f515b890190a3b75c8df34c55b34",
+    "scripts/finalize-aarch64-qualification.py": "e2e94af13fd4cd2750851961a302728ac38322baa5707af19760888761728aa9",
+    "scripts/qualify-toolchain.py": "49715ed1bd351958a30291d2b365b1064fce2f2be6abb37231f1d8a8de8c5cdd",
+    "scripts/qualify-vcpkg-contract.py": "72d9ffecddae67f3f30808cbbed89045959dcf86b8c1f3848835aa1f28fb4ab1",
+    "scripts/qualify-vcpkg-sdk.py": "f993cef6c00d2e1f85187db337f37f1b5d3d5f6186f43d4b0221ed828cf27d8a",
+    "scripts/toolchain_policy.py": "e3801dd7d9876c40b46a92f651b9e3f508efb60fcce9a9fbdae188f023df9fbc",
+    "scripts/toolchain_report.py": "13665f01cc9f6220e7ce9e2d364cdc7e1597a7e2c0b61823ee15f7f1547aa453"
+  },
+  "incremental_cp39_patch": {
+    "compiler_inputs_changed": [
+      "cpython-build-cp39",
+      "cpython-cross-cp39-aarch64",
+      "cpython-cross-cp39-x86_64"
+    ],
+    "fallback_reasons": [],
+    "mode": "incremental",
+    "selected_toolchain_roots": [],
+    "targets": {
+      "gcc-full": [
+        "gcc-testsuite-full-qualification-evidence"
+      ],
+      "gcc-smoke": [
+        "gcc-testsuite-smoke-evidence"
+      ],
+      "inputs": [
+        "platform-python-check",
+        "python-runtime-clean-aarch64",
+        "python-runtime-clean-x86_64",
+        "qemu-source-qualified",
+        "rpm-source-lock-validated",
+        "sigstore-sources-qualified",
+        "validate"
+      ],
+      "python-cp310": [
+        "python-cp310-dev"
+      ],
+      "python-cp311": [
+        "python-cp311-dev"
+      ],
+      "python-cp312": [
+        "python-cp312-dev"
+      ],
+      "python-cp313": [
+        "python-cp313-dev"
+      ],
+      "python-cp314": [
+        "python-cp314-dev"
+      ],
+      "python-cp39": [
+        "python-cp39-dev"
+      ],
+      "sdk": [
+        "python-dev",
+        "sdk-complete-dev"
+      ],
+      "vcpkg": [
+        "vcpkg-upstream-tier3-qualified"
+      ]
+    }
+  },
+  "kind": "crossforge-local-scoped-toolchain-observation",
+  "limits": [
+    "Local Docker/Bake observations, not GitHub runner timing or signed candidate/release evidence",
+    "ARM runtime gates use explicit pinned QEMU on amd64; native ARM candidate validation remains required",
+    "Qualification producers reuse verified compiler install OCI and warmed prerequisites; elapsed times are not a cold-build benchmark",
+    "Actual toolchain execution and OCI reuse passed; final SDK/vcpkg report acceptance is not a new full product integration run",
+    "GCC, Python and other product qualification still have full-release inputs; production CI component consumption, complete Python rows, SDK handoff and cross-run trust/recovery remain pending"
+  ],
+  "product_report_consumers": {
+    "original": {
+      "aarch64": {
+        "component": {
+          "canonical_sha256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
+          "component": "toolchain/aarch64-qualification"
+        },
+        "report_sha256": "3053687c27b38816e9a2189e12232b543e6da96b8f1af89924805b06be937ed8"
+      },
+      "x86_64": {
+        "component": {
+          "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
+          "component": "toolchain/x86_64-qualification"
+        },
+        "report_sha256": "55fb3fa84c548fce9db2283e20e845df63233e5f0bc144a4484bd458e38dcfd8"
+      }
+    },
+    "unrelated_release": {
+      "aarch64": {
+        "component": {
+          "canonical_sha256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
+          "component": "toolchain/aarch64-qualification"
+        },
+        "report_sha256": "3053687c27b38816e9a2189e12232b543e6da96b8f1af89924805b06be937ed8"
+      },
+      "x86_64": {
+        "component": {
+          "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
+          "component": "toolchain/x86_64-qualification"
+        },
+        "report_sha256": "55fb3fa84c548fce9db2283e20e845df63233e5f0bc144a4484bd458e38dcfd8"
+      }
+    }
+  },
+  "qualification_materials": {
+    "aarch64": {
+      "contains_complete_release_file": false,
+      "contains_gcc_build_script": false,
+      "file_count": 41,
+      "policy_components": [
+        "config/generated/components/abi/aarch64-baseline.json",
+        "config/generated/components/sources/binutils.json",
+        "config/generated/components/sources/gcc.json",
+        "config/generated/components/toolchain/aarch64-build.json",
+        "config/generated/components/toolchain/aarch64-qualification.json"
+      ]
+    },
+    "x86_64": {
+      "contains_complete_release_file": false,
+      "contains_gcc_build_script": false,
+      "file_count": 39,
+      "policy_components": [
+        "config/generated/components/abi/x86_64-baseline.json",
+        "config/generated/components/sources/binutils.json",
+        "config/generated/components/sources/gcc.json",
+        "config/generated/components/toolchain/x86_64-build.json",
+        "config/generated/components/toolchain/x86_64-qualification.json"
+      ]
+    }
+  },
+  "qualification_source_snapshot": "/tmp/crossforge-toolchain-policy/source",
+  "raw_directory": "/tmp/crossforge-toolchain-policy",
+  "reuse_after_cp39_patch": {
+    "aarch64": {
+      "inputs_sha256": "5a2dfd6cff7d0e51c89d808a78ec0749f78538cfb047cc29b2126994a2274eca",
+      "mode": "verified-prior-execution",
+      "preserved_producer": {
+        "invocation": "urn:crossforge:local:scoped-toolchain-20260910",
+        "kind": "local",
+        "source_commit": "cf9acf67c560fc4cf0aed66efb2a65d3a6d6bbbf",
+        "source_dirty": true,
+        "started_at": "2026-09-10T19:45:48Z"
+      },
+      "receipt_sha256": "17b84e4ed0d4bcba110c71c1aeb839c2a76e1c4367d47bd75c2583ad012545a9",
+      "seconds": 2.05
+    },
+    "x86_64": {
+      "inputs_sha256": "2caac8f4657f4d4ec90c6fd34b5fd826889645abcbd4f574acfca096825378f1",
+      "mode": "verified-prior-execution",
+      "preserved_producer": {
+        "invocation": "urn:crossforge:local:scoped-toolchain-20260910",
+        "kind": "local",
+        "source_commit": "cf9acf67c560fc4cf0aed66efb2a65d3a6d6bbbf",
+        "source_dirty": true,
+        "started_at": "2026-09-10T19:45:48Z"
+      },
+      "receipt_sha256": "78e133ea2f073638fd0a77e99bd5ac03864a5bad638044058646a1f6eb821c1e",
+      "seconds": 1.95
+    }
+  },
+  "schema_version": 1,
+  "source_dirty": true,
+  "source_parent": "cf9acf67c560fc4cf0aed66efb2a65d3a6d6bbbf",
+  "toolchain_qualifications": {
+    "aarch64": {
+      "artifact": {
+        "config_digest": "sha256:cdd9565416433df07380d9d0735b02ccfb065c991b47189d548de5c75466962d",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:f7b8fbb993bbc21db5530ace98d69a86f6e79fb55bcc09891428395c9e93e220",
+        "root_digest": "sha256:f7b8fbb993bbc21db5530ace98d69a86f6e79fb55bcc09891428395c9e93e220"
+      },
+      "execution": {
+        "completed_at": "2026-09-10T19:46:20Z",
+        "coverage": [
+          {
+            "profile": "toolchain",
+            "report": {
+              "component": {
+                "canonical_sha256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
+                "component": "toolchain/aarch64-qualification"
+              },
+              "report_sha256": "3053687c27b38816e9a2189e12232b543e6da96b8f1af89924805b06be937ed8"
+            },
+            "status": "passed",
+            "target": "aarch64-unknown-linux-gnu"
+          }
+        ],
+        "fresh_runs": {
+          "runtime-smoke-aarch64": 4,
+          "toolchain-aarch64-qualify-build": 1
+        },
+        "producer": {
+          "invocation": "urn:crossforge:local:scoped-toolchain-20260910",
+          "kind": "local",
+          "source_commit": "cf9acf67c560fc4cf0aed66efb2a65d3a6d6bbbf",
+          "source_dirty": true,
+          "started_at": "2026-09-10T19:45:48Z"
+        },
+        "record_sha256": "367e4c10dfccc86ff1c9ba3982c102d94ff50f2b3fc21f062bf5e1fead672477",
+        "started_at": "2026-09-10T19:46:09Z"
+      },
+      "inputs_sha256": "5a2dfd6cff7d0e51c89d808a78ec0749f78538cfb047cc29b2126994a2274eca",
+      "producer_seconds": 14.52,
+      "receipt_sha256": "17b84e4ed0d4bcba110c71c1aeb839c2a76e1c4367d47bd75c2583ad012545a9",
+      "reused_install_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+      "reused_install_inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4",
+      "verification_seconds": 0.46
+    },
+    "x86_64": {
+      "artifact": {
+        "config_digest": "sha256:710eff7b99dc3878570da7671378f9574cd9e35a348b79b910d64743cf0f64d0",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:83e289db44582fd65ce816a2b2d932f42f69158b61f5bb74e409580849985dee",
+        "root_digest": "sha256:83e289db44582fd65ce816a2b2d932f42f69158b61f5bb74e409580849985dee"
+      },
+      "execution": {
+        "completed_at": "2026-09-10T19:46:04Z",
+        "coverage": [
+          {
+            "profile": "toolchain",
+            "report": {
+              "component": {
+                "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
+                "component": "toolchain/x86_64-qualification"
+              },
+              "report_sha256": "55fb3fa84c548fce9db2283e20e845df63233e5f0bc144a4484bd458e38dcfd8"
+            },
+            "status": "passed",
+            "target": "x86_64-unknown-linux-gnu"
+          }
+        ],
+        "fresh_runs": {
+          "runtime-smoke-x86_64": 1,
+          "toolchain-x86_64-qualify-build": 1
+        },
+        "producer": {
+          "invocation": "urn:crossforge:local:scoped-toolchain-20260910",
+          "kind": "local",
+          "source_commit": "cf9acf67c560fc4cf0aed66efb2a65d3a6d6bbbf",
+          "source_dirty": true,
+          "started_at": "2026-09-10T19:45:48Z"
+        },
+        "record_sha256": "11a2cbb468f2028b54672dac7a4cb4d09cb3234ded38345a4f5ef2555c8e6adf",
+        "started_at": "2026-09-10T19:45:52Z"
+      },
+      "inputs_sha256": "2caac8f4657f4d4ec90c6fd34b5fd826889645abcbd4f574acfca096825378f1",
+      "producer_seconds": 17.04,
+      "receipt_sha256": "78e133ea2f073638fd0a77e99bd5ac03864a5bad638044058646a1f6eb821c1e",
+      "reused_install_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+      "reused_install_inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d",
+      "verification_seconds": 0.45
+    }
+  },
+  "validation": {
+    "actual_rocky_platform_python_36": "passed; recursive compilation, component CLI parsing, 89 projections",
+    "config": {
+      "errors": 0,
+      "failures": 0,
+      "seconds": 186.021,
+      "skipped": 2,
+      "tests": 1044
+    },
+    "locked_validators": [
+      "release",
+      "supply-chain-evidence",
+      "frozen-abi",
+      "python-runtime-providers"
+    ],
+    "logs": {
+      "platform-python.log": {
+        "path": "/tmp/crossforge-toolchain-policy/platform-python.log",
+        "sha256": "e0b5d19d5ca4ecfb6e52e92d3bc7bfc68138464339127c9e09e7aa3d12a87555"
+      },
+      "regressions-final.log": {
+        "path": "/tmp/crossforge-toolchain-policy/regressions-final.log",
+        "sha256": "085c049cd2cc609758248d0adcad1ad4934f734699c59af08a2dbb08700767c3"
+      },
+      "targeted-final.log": {
+        "path": "/tmp/crossforge-toolchain-policy/targeted-final.log",
+        "sha256": "78db95548370407c06057bc664d61b19e31c22226ee4c73c0c938fd5f1715602"
+      }
+    },
+    "packaging": {
+      "errors": 0,
+      "failures": 0,
+      "seconds": 0.77,
+      "skipped": 1,
+      "tests": 40
+    },
+    "renderer_checks": [
+      "release-components",
+      "vcpkg-integration",
+      "bake"
+    ]
+  }
+}

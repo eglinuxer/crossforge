@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -19,6 +20,7 @@ class CandidateWorkflowTests(unittest.TestCase):
         cls.ci = (REPOSITORY / ".github/workflows/ci.yml").read_text(
             encoding="utf-8"
         )
+        cls.quick = (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(encoding="utf-8")
         cls.setup = (
             REPOSITORY / ".github/actions/setup-locked-buildx/action.yml"
         ).read_text(encoding="utf-8")
@@ -27,14 +29,22 @@ class CandidateWorkflowTests(unittest.TestCase):
             / ".github/actions/validate-public-attestations/action.yml"
         ).read_text(encoding="utf-8")
 
-    def test_candidate_publishes_main_and_manual_public_digest_only_output(self):
+    def test_candidate_is_explicit_and_main_push_runs_incremental_ci(self):
         self.assertIn("workflow_dispatch:", self.workflow)
         self.assertNotIn("pull_request:", self.workflow)
-        self.assertIn("  push:\n    branches: [main]", self.workflow)
-        self.assertNotIn("  push:", self.ci)
-        self.assertIn("quick-only: true", self.workflow)
+        self.assertNotIn("  push:", self.workflow)
+        self.assertIn("  push:\n    branches: [main]", self.ci)
+        self.assertIn('test "$GITHUB_REF" = refs/heads/main', self.workflow)
+        self.assertIn("uses: ./.github/workflows/verify-quick.yml", self.workflow)
+        self.assertIn("plan-components: false", self.workflow)
+        qualification = self.workflow.split("  qualify:\n", 1)[1].split("  source-publication:\n", 1)[0]
+        self.assertIn("uses: ./.github/workflows/verify-main-incremental.yml", qualification)
+        self.assertIn("profile: full", qualification)
+        self.assertNotIn("selection:", qualification)
+        self.assertNotIn("uses: ./.github/workflows/qualification.yml", self.workflow)
         self.assertIn("    needs: quick\n", self.workflow)
-        self.assertIn("inputs.quick-only && 'none'", self.ci)
+        self.assertIn("uses: ./.github/workflows/verify-quick.yml", self.ci)
+        self.assertNotIn("workflow_call:", self.ci)
         self.assertIn("packages: write", self.workflow)
         self.assertIn("sdk-candidate.output=type=image,push=true", self.workflow)
         self.assertIn(
@@ -109,27 +119,40 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("source-bundle-signature.json", self.workflow)
         self.assertNotIn("source-bundle", self.ci)
 
-    def test_source_digest_command_resolves_source_bake_metadata(self):
-        command = re.search(r"source_digest=\$\((.*?)\)", self.workflow, re.S)
-        self.assertIsNotNone(command)
-        digest = "sha256:" + "1" * 64
+    def test_publish_digest_commands_select_their_own_bake_target(self):
+        digests = {"source-bundle": "sha256:" + "1" * 64,
+                   "sdk-candidate": "sha256:" + "2" * 64}
         with tempfile.TemporaryDirectory() as directory:
-            metadata = Path(directory) / "source-build-metadata.json"
-            metadata.write_text(json.dumps({
-                "source-bundle": {"containerimage.digest": digest}
-            }), encoding="utf-8")
-            arguments = shlex.split(command.group(1).replace("\\\n", ""))
-            arguments = [arg.replace("$RUNNER_TEMP", directory) for arg in arguments]
-            result = subprocess.run(
-                arguments, cwd=REPOSITORY, text=True, capture_output=True
-            )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.strip(), digest)
+            for variable, target in (("source_digest", "source-bundle"),
+                                     ("candidate_digest", "sdk-candidate")):
+                command = re.search(variable + r"=\$\((.*?)\)", self.workflow, re.S)
+                self.assertIsNotNone(command)
+                arguments = shlex.split(command.group(1).replace("\\\n", ""))
+                arguments = [arg.replace("$RUNNER_TEMP", directory) for arg in arguments]
+                metadata = Path(arguments[arguments.index("--metadata") + 1])
+                # Give both targets distinct identities so a wrong/default
+                # target cannot accidentally pass with a shared fixture digest.
+                metadata.write_text(json.dumps({
+                    name: {"containerimage.digest": digest}
+                    for name, digest in digests.items()
+                }), encoding="utf-8")
+                with self.subTest(target=target):
+                    result = subprocess.run(
+                        arguments, cwd=REPOSITORY, text=True, capture_output=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.stdout.strip(), digests[target])
+                    for invalid in ({}, {target: {}},
+                                    {target: {"containerimage.digest": "latest"}}):
+                        metadata.write_text(json.dumps(invalid), encoding="utf-8")
+                        result = subprocess.run(
+                            arguments, cwd=REPOSITORY, text=True, capture_output=True)
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertEqual(result.stdout, "")
 
     def test_public_availability_is_checked_without_registry_credentials(self):
         logout = self.workflow.index("docker logout ghcr.io")
         anonymous = self.workflow.index("anonymous-candidate-index.json")
-        upload = self.workflow.index("actions/upload-artifact@")
+        upload = self.workflow.index("- name: Upload immutable candidate identity")
         self.assertLess(logout, anonymous)
         self.assertLess(anonymous, upload)
         self.assertIn("if-no-files-found: error", self.workflow)
@@ -148,7 +171,7 @@ class CandidateWorkflowTests(unittest.TestCase):
             self.workflow.count("scripts/run-with-heartbeat.py"), 2
         )
 
-    def test_publish_preserves_buildkit_diagnostics_after_failure(self):
+    def test_public_consumer_job_preserves_buildkit_diagnostics_after_failure(self):
         publish = self.workflow.split("\n  publish:", 1)[1].split(
             "\n  native-aarch64:", 1
         )[0]
@@ -166,7 +189,7 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("${{ runner.temp }}/build-diagnostics/publish/", upload)
         self.assertIn("${{ github.run_id }}-${{ github.run_attempt }}", upload)
         self.assertLess(
-            publish.index("Build once and push the source-bound candidate"),
+            publish.index("Build downstream consumers through the public launcher"),
             publish.index("Collect publish build diagnostics"),
         )
 
@@ -190,6 +213,45 @@ class CandidateWorkflowTests(unittest.TestCase):
             'startswith("/opt/crossforge/share/licenses/crossforge/")',
             self.workflow,
         )
+
+    def test_publication_failure_preserves_full_log_and_original_exit_status(self):
+        for label in ("corresponding source bundle", "source-bound candidate"):
+            block = self.workflow.split("      - name: Build once and push the " + label + "\n", 1)[1]
+            block = block.split("      - name:", 1)[0]
+            script = block.split("        run: |\n", 1)[1]
+            script = "\n".join(line[10:] for line in script.splitlines())
+            # The GitHub expression values are inert fixture identities. The
+            # workflow shell and heartbeat are real; only Docker is substituted.
+            script = re.sub(r"\$\{\{ steps\.source\.outputs\.[a-z0-9_]+ \}\}", "fixture", script)
+            with self.subTest(publication=label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                binary = root / "docker"
+                binary.write_text("#!/bin/sh\necho fixture-build-output\necho fixture-frontend-error >&2\nexit 2\n")
+                binary.chmod(0o755)
+                result = subprocess.run(["bash", "-c", script], cwd=REPOSITORY,
+                    env={**os.environ, "PATH": directory + ":" + os.environ["PATH"],
+                         "RUNNER_TEMP": directory, "GITHUB_SHA": "a" * 40,
+                         "SOURCE_REFERENCE": "fixture/source", "CANDIDATE_REFERENCE": "fixture/sdk",
+                         "SBOM_GENERATOR": "fixture/generator", "COMPONENT_BUILDER": "fixture-builder"},
+                    text=True, capture_output=True)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertEqual((root / "candidate-build-diagnostics/build.log").read_text(),
+                                 "fixture-build-output\nfixture-frontend-error\n")
+                self.assertFalse((root / "source-binding.json").exists())
+                self.assertFalse((root / "candidate.json").exists())
+
+    def test_each_publication_collects_and_uploads_diagnostics_after_failure(self):
+        for phase, next_job, metadata in (("source", "sdk-publication", "source-build-metadata.json"),
+                                          ("sdk", "publish", "build-metadata.json")):
+            block = self.workflow.split("  " + phase + "-publication:\n", 1)[1].split("  " + next_job + ":\n", 1)[0]
+            with self.subTest(phase=phase):
+                self.assertIn('      - name: Export publication BuildKit diagnostics\n        if: always()\n'
+                              '        run: ./scripts/collect-buildkit-diagnostics.sh "$RUNNER_TEMP/candidate-build-diagnostics"', block)
+                self.assertIn("      - name: Preserve " + phase + " publication build diagnostics\n        if: always()", block)
+                self.assertIn("name: candidate-" + phase + "-build-${{ github.run_id }}-${{ github.run_attempt }}", block)
+                self.assertIn("${{ runner.temp }}/" + metadata, block)
+                self.assertLess(block.index("Export publication BuildKit diagnostics"),
+                                block.index("Preserve " + phase + " publication build diagnostics"))
 
     def test_public_launcher_builds_real_downstream_consumers(self):
         self.assertIn(
@@ -280,8 +342,8 @@ class CandidateWorkflowTests(unittest.TestCase):
 
     def test_public_identity_and_signature_artifacts_have_flat_layouts(self):
         for root, count in (
-            ("candidate-identity", 6),
-            ("candidate-signature-evidence", 4),
+            ("candidate-identity", 7),
+            ("candidate-signature-evidence", 5),
         ):
             with self.subTest(root=root):
                 self.assertIn("${{ runner.temp }}/%s/" % root, self.workflow)
@@ -291,8 +353,8 @@ class CandidateWorkflowTests(unittest.TestCase):
 
     def test_every_ci_and_candidate_job_uses_the_locked_buildx_setup(self):
         local_action = "uses: ./.github/actions/setup-locked-buildx"
-        self.assertEqual(self.ci.count(local_action), 1)
-        self.assertEqual(self.workflow.count(local_action), 2)
+        self.assertEqual(self.quick.count(local_action), 1)
+        self.assertEqual(self.workflow.count(local_action), 4)
         self.assertIn("buildx-v0.36.1.linux-amd64", self.setup)
         self.assertIn("--retry 5 --retry-all-errors", self.setup)
         self.assertIn("--retry-delay 2 --connect-timeout 30", self.setup)
@@ -309,18 +371,19 @@ class CandidateWorkflowTests(unittest.TestCase):
             self.setup,
         )
 
-    def test_main_qualification_is_not_cancelled_by_a_later_push(self):
+    def test_candidate_qualification_is_not_cancelled_by_development_pushes(self):
         self.assertIn(
             "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
             self.ci,
         )
         self.assertIn("cancel-in-progress: false", self.workflow)
+        self.assertIn("group: candidate-${{ github.ref }}-${{ github.sha }}", self.workflow)
 
     def test_qt_runtime_probe_is_compiled_with_strict_warnings(self):
         self.assertIn(
             "gcc -fsyntax-only -Wall -Wextra -Werror "
             "scripts/qt-plugin-probe.c",
-            self.ci,
+            self.quick,
         )
 
 

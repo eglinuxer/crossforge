@@ -156,7 +156,7 @@ class VcpkgContractTests(unittest.TestCase):
         ):
             self.assertIn(required, source)
         workflow = (
-            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(encoding="utf-8")
             + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         self.assertIn("vcpkg-upstream-tier3-qualified", workflow)

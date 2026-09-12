@@ -14,10 +14,19 @@ class FinalizationError(RuntimeError):
     pass
 
 
-RELEASE_COMPONENTS = runpy.run_path(
-    str(Path(__file__).with_name("release-components-core.py"))
-)
-ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+POLICY = runpy.run_path(str(Path(__file__).with_name("toolchain_policy.py")))
+
+
+def qualification_policy(arguments):
+    if arguments.components is not None:
+        return POLICY["load"](arguments.components, "aarch64", arguments.qualification_component_sha256), None
+    release = load_json(arguments.release)
+    components = runpy.run_path(str(Path(__file__).with_name("release-components-core.py")))
+    try:
+        identity = components["toolchain_qualification_component"](release, "aarch64")
+    except components["ProjectionError"] as error:
+        raise FinalizationError(str(error)) from error
+    return POLICY["from_release"](release, "aarch64", identity), release
 
 
 RESULT_KEYS = {
@@ -146,7 +155,10 @@ def parse_runtime_result(path, expected_tier):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--compile-report", type=Path, required=True)
-    parser.add_argument("--release", type=Path, required=True)
+    policy_source = parser.add_mutually_exclusive_group(required=True)
+    policy_source.add_argument("--release", type=Path)
+    policy_source.add_argument("--components", type=Path)
+    parser.add_argument("--qualification-component-sha256")
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--locked-sysroot-result", type=Path, required=True)
     parser.add_argument("--clean-runtime-result", type=Path, required=True)
@@ -155,33 +167,28 @@ def main():
     arguments = parser.parse_args()
 
     compile_report = load_json(arguments.compile_report)
-    release = load_json(arguments.release)
-    try:
-        qualification_component = RELEASE_COMPONENTS[
-            "toolchain_qualification_component"
-        ](release, "aarch64")
-    except ProjectionError as error:
-        raise FinalizationError(str(error)) from error
-    executor = release["qemu"]["executor"]
+    policy, release = qualification_policy(arguments)
+    executor = policy["runtime_executor"]
     require(
         compile_report.get("target") == "aarch64-unknown-linux-gnu",
         "compile report target mismatch",
     )
-    release_canonical = json.dumps(
-        release, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-    )
-    require(
-        compile_report.get("release_sha256")
-        == hashlib.sha256(release_canonical.encode("utf-8")).hexdigest(),
-        "compile report release digest mismatch",
-    )
+    if release is None:
+        POLICY["require_binding"](compile_report, policy)
+        require(type(compile_report.get("qualification_schema_version")) is int and
+                compile_report["qualification_schema_version"] == 2 and
+                compile_report.get("report_kind") == "crossforge-toolchain-compile",
+                "compile report schema differs from scoped qualification")
+    else:
+        require(compile_report.get("release_sha256") == POLICY["component"].canonical_sha256(release) and
+                "input_binding" not in compile_report, "compile report release digest mismatch")
     require(
         compile_report.get("qualification_component")
-        == qualification_component,
+        == policy["component"],
         "compile report qualification component mismatch",
     )
     require(
-        release["abi"]["targets"]["aarch64"]["baseline"]
+        policy["abi_baseline"]
         == {
             "file": "abi/el8/aarch64.json",
             "canonical_sha256": compile_report.get("abi_baseline", {}).get(
@@ -191,15 +198,12 @@ def main():
         "compile report ABI baseline differs from release.json",
     )
     require(
-        compile_report.get("runtime_executor") == executor,
+        compile_report.get("runtime_executor") == (executor if release is None else release["qemu"]["executor"]),
         "compile report QEMU identity mismatch",
     )
     require(
         compile_report.get("runtime_base")
-        == {
-            "index_digest": release["base_image"]["digest"],
-            "manifest_digest": release["base_image"]["manifests"]["arm64"],
-        },
+        == policy["runtime_base"],
         "compile report runtime base mismatch",
     )
     for field in ("locked_sysroot_execution", "clean_runtime_execution"):
@@ -219,7 +223,7 @@ def main():
             result["qemu"]
             == {
                 "binary_sha256": executor["binary_sha256"],
-                "version": release["qemu"]["version"],
+                "version": executor["version"],
                 "cpu": executor["cpu"],
                 "uname_release": executor["uname_release"],
             },
@@ -241,7 +245,7 @@ def main():
     require(process.returncode == 0, "mounted QEMU executor did not run")
     version_line = process.stdout.splitlines()[0] if process.stdout.splitlines() else ""
     require(
-        version_line.startswith("qemu-aarch64 version %s" % release["qemu"]["version"]),
+        version_line.startswith("qemu-aarch64 version %s" % executor["version"]),
         "mounted QEMU executor version mismatch",
     )
 
@@ -255,7 +259,7 @@ def main():
     final_report.update(
         {
             "report_kind": "crossforge-toolchain-qualification",
-            "qualification_schema_version": 1,
+            "qualification_schema_version": 2 if release is None else 1,
             "compile_report_sha256": sha256_file(arguments.compile_report),
             "artifact_sha256": artifact_sha256,
             "locked_sysroot_execution": locked,
@@ -280,6 +284,6 @@ def main():
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except (FinalizationError, KeyError) as error:
+    except (FinalizationError, KeyError, ValueError, OSError) as error:
         print("error: %s" % error, file=sys.stderr)
         raise SystemExit(1)

@@ -170,11 +170,37 @@ CPython source
 
 当前已完成 CPython 3.9.25、3.10.21 legacy、3.11.16 transition 以及 3.12.14、3.13.15、3.14.7 modern 六行：每行各有 amd64 build Python、两个真正 cross target SDK、最小 C extension、全量 `lib-dynload` ELF 审计，以及 locked-sysroot/clean-Rocky 双运行时探针。通用 Python Dockerfile 只描述一条 row pipeline；Bake 生成独立版本/target DAG。资格化完成的 row 经 scratch 导出，再由 append-only 层聚合。Phase 5 固定 cp313，Phase 6 固定 cp313+cp311，Phase 7 固定 cp313+cp311+cp312，Phase 8 固定 cp313+cp311+cp312+cp314，Phase 9 固定追加 cp310；Phase 10 与最新 `python-dev`/`python-matrix` 再追加 cp39。
 
+内部交接将 build Python 和两个 target 的安装目录分别 scratch 导出，构建 guard 日志与 source manifest 另作两份审计组件。静态资格阶段从锁定 host 出发，显式消费这些安装/审计输入与相应工具链，不继承 CPython 编译阶段。默认 Bake 的 context 仍指向源码 export；`python_components.py` 先独立重算 producer 输入、核验 receipt 和 OCI 字节，再将对应 target 的 context 替换为固定 digest。同名 context 的身份按 Bake target 限定，禁止跨架构混用。`python_qualification.py` 对整行强制执行现有门禁，并把安装树、报告、真实执行日志和原 producer 封装为 qualification 组件；显式复用通过独立预期输入和可信 receipt SHA256 核验，再调用原 row finalizer 检查实际安装文件。六行正式 receipt、显式组件消费、六行 Python SDK 与完整 SDK 组装均已通过本地 Docker 实跑。SDK 对每行重新核验原资格和实际文件，强制执行既有 append/final 集成，消费图不包含 GCC/CPython 源码编译；原 producer 与行执行区间保持不变。生产 CI 接入、跨 run 信任和新候选原生 ARM 的验收状态见[重构进度](research/ci-refactoring-progress.md)。
+
 3.9–3.12 均以各自文件路径和 SHA256 锁定 gh-115382 backport，显式把 target sysconfigdata 与 build Python 的 `PYTHONPATH` 隔离；3.12 保持 modern adapter，因为其扩展已由 configure/Makefile 构建。3.9–3.10 上游没有 `--with-build-python`、`--with-pkg-config` 或 `HOSTRUNNER`，legacy adapter 必须显式注入精确 `PYTHON_FOR_BUILD`/`PYTHON_FOR_REGEN`，用 `setup.py` 构建扩展，并以 `siphash24` 作为运行时 hash contract。3.9 还没有 `--disable-test-modules`，因此保留上游测试模块，但不据此承诺 EOL 安全支持。其 `setup.py` 使用独立 `distutils.sysconfig`；3.9 补丁必须把该初始化原子委托给 source-only stdlib loader。`sharedmods` 前的动态门禁要求两套 sysconfig 的 `CC`、`AR`、`LDSHARED`、`SOABI`、`EXT_SUFFIX`、`MULTIARCH` 和 `CONFIG_ARGS` 完全一致，且 target build/lib 不得进入 build Python 的 `sys.path`，从而同时阻止 aarch64 显式失败和 x86_64 同 SOABI 静默回退。
 
 cross build 在 configure 前用目标 ELF canary 实测 `execve`/`execv`、PATH 与 varargs exec、`fexecve`、`execveat`、`posix_spawn(p)`、`dlopen` 和 `dlmopen`，构建后拒绝 canary/`conftest` 之外的记录；它是动态 libc/loader 的可审计策略护栏，不是覆盖直接 syscall 或静态程序的安全沙箱。3.9–3.10 要求 `HOSTRUNNER` 不存在，3.11+ 要求其为空；无 QEMU 的 cross stage、精确 build Python patch version 和 sysconfig 隔离仍是主正确性契约。
 
 clean-Rocky tier 从固定 OCI child 出发，只叠加同一 target lock 中七个精确验签 runtime RPM；因 OCI 与 sysroot errata 版本可不同，该 `--nodeps` overlay 仅验证精确 DSO 字节兼容性，不是可部署的 RPM transaction，也不进入 SDK。两套 runtime tier 都把真实 tmpfs 挂到 `/dev/shm`，并实际执行 `multiprocessing.Lock()` 与 libc unnamed semaphore。aarch64 只使用固定 QEMU，发布前仍需原生 ARM 终检。
+
+两个 `python-runtime-clean-<arch>` 构建阶段只读取已认证的 `rpm/sysroot-<arch>` 投影、原 lock/transaction/metadata 和信任根，不再依赖整份 release、release schema 或维护用 RPM plan。原 materializer 仍核对完整锁事务、全部 RPM 字节及签名，然后选择原七个 runtime RPM，保留两次 transaction 检查和前后 rpmdb/os-release 约束。overlay schema 2 用明确的 `input_binding` 记录组件摘要，不声明完整 release 摘要；runtime reader 和目标最终验证器从已认证的行/目标 policy 获取预期组件，旧模式则从完整 release 推导，并检查原镜像、target、sysroot、包摘要及实际运行时证据。旧 schema 1 继续严格绑定原完整 release，不能进入只带组件的资格阶段。
+
+目标报告链使用 compile schema 5、runtime schema 4 和 final schema 5，三者核对同一份行/目标 `input_binding`；两个 runtime tier 在执行前认证根投影与 compile binding，最终报告继续校验源码、ABI、产物、guard、私有 zstd、运行库及嵌套报告的精确序列化摘要。runtime stage 从锁定 host 工具根出发，只显式复制十二个脚本和静态阶段传入的配置，不再复制 release/schema/renderer/source bridge。原 `--release` 模式保留 runtime schema 3、final schema 4 和完整 release 校验，禁止把两种 runtime 格式混入同一最终报告。真实 Bake 输入捕获已证明产品版本变化不再影响十二个目标 runtime 资格输入；这是材料范围检查，实际新报告链执行及正式 CI 复用仍待验收。
+
+行汇总通过独立可信的 `python/<row>-qualification` 根摘要认证两份目标策略，再复用 prepared-source reader 核对共同的 source/build-policy 与精确源码清单，总计六份投影。`cpython-row-assemble` 从锁定 host 工具根出发，显式复制十四个 Python 文件，不继承完整 release host；原安装树、ABI、ELF、build Python、zstd 和嵌套报告检查继续执行。新行清单 schema 3 用行 `input_binding` 替代完整 release SHA256 与全行 qualification pair，要求 source schema 2 和 target final schema 5。原 `--release` 调用仍产生 schema 2；SDK append 和正式 receipt 验收使用 `--row-manifest`，检查实际文件并比较整份清单，不能信任清单自报摘要。append 只复制本行六份投影并以 renderer 提供的 source/build-policy/row 根摘要校验，保留安装前重复目录拒绝和安装后完整 finalizer；不再读取完整 release，因此其他行的版本或补丁不会使本行独立安装失效。正式 receipt 验收仍按当前材料独立重算策略。最终 SDK 同样核对行策略后重新执行 host 集成，自身继续绑定完整 release。材料实验显示产品版本不再使六行资格输入失效，cp39 source 和私有 zstd 各只影响自身行；这不代表取得了实际新资格或跨机器复用证据。
+
+正式行 CI 的生产/签名工作流和目录查找接口已接入 main 动态 matrix；候选 SDK 发布自身仍使用独立路径。被选中的每行均须在原 `sdk-toolchains-dev` 基座完成两个新的独立 append RUN，安装后的 row manifest 与资格产物一致。原始组件和资格产物经原验证器复核，安装失败不得发布新产物或交接签名。查找方重新绑定七个上游组件、当前构建及物理环境，只有目录输入索引缺失才请求新资格；签名、传输或实际行验收失败均报错。新 catalog schema 4 只授权固定 `produce-python-row.yml` 的完整行资格 receipt，原始组件 signer 权限保持原范围。复用保留原 producer；新生产必须通过既有正式资格执行器并在发布前核对输入、receipt、环境与 clean source，重试沿用原 run/attempt 和精确交接摘要。实际 GitHub 签名、跨 run/跨机器环境验收仍未完成。
+
+完整 SDK 另提供 `acquire-python-sdk` 与 `execute-python-sdk-catalog` CLI：前者从签名目录取得两份共享工具链、六行原始组件及六份行资格，只有完整就绪才输出可消费的组件清单；后者随后调用原 SDK executor，独立重验实际文件并重新执行最终集成。目录缺失显式列出待生产组件/行，验签或产物核验失败则报错，不隐式重编译。OCI 数据与上传诊断目录严格分离，旧本地组件清单接口保持。main SDK 已通过下述过渡控制器调用 acquisition，独立目录执行 CLI 和候选发布路径保持原接口，严格物理环境匹配未放宽。
+
+`verify-main-builds.yml` 的 SDK job 使用 `run-component-sdk` 与标准库 `ci_sdk.py`。它要求两份工具链和三十份 Python 原始组件全部已验收，仅在当前输入对应的资格索引缺失时，在 SDK 所在 worker 补做该行双目标完整资格；验签、传输或既有证据失败不能触发回退。父进程最多调度两个独立 Python 子进程，共享原 builder，并在子进程前后及最终集成前后复核源码、调用身份与完整物理环境。子进程请求另绑定独立 canonical SHA256。使用独立解释器避免既有资格模块通过 `runpy.run_path` 修改共享解释器状态时发生并发冲突；依据见 [Python 官方文档](https://docs.python.org/3/library/runpy.html)。六行全部通过后，原 SDK executor 重新检查实际 receipt/文件，并强制执行 append/final 门禁。
+
+SDK job 仍只有 contents/read 和 packages/read 权限；匹配的签名行保留原 producer，新行只留在本 job，不发布或签名。被选中的独立 Python 任务通过行生产/签名工作流交接资格产物，required status 校验完整行 matrix；严格物理环境不匹配时，SDK 仍可能补验同一行。candidate 前置资格调用同一工作流，候选镜像发布本身仍走原始组件绑定路径。SDK 编排与目录/恢复实现变更由增量选择器显式选择 canonical SDK roots，诊断区分编排原因与真实源码输入变化。实际新 Docker 运行、GitHub 事件和性能仍待验收。
+
+在补做资格或最终集成之前，SDK job 保存原 raw schema 的三十二份固定选择及独立 SHA256，诊断上传后的 summary 给出 run/artifact ID、摘要和文件位置。失败时可按原 raw recovery 接口及严格来源约束取回这些原始组件；这份记录不包含新执行的六行资格，不能冒充下面的完整 SDK 恢复记录。当六行全部来自已认证目录时，主 SDK acquisition 另在最终集成前保存完整的 32+6 恢复记录，summary 单独报告其摘要和路径；集成成功后再次核对完整记录、源码材料与物理环境，集成失败则保留原记录供显式 SDK catalog 恢复接口使用。本 job 新补验的未签名行不产生完整记录。主 SDK job 尚无自动恢复入口，OCI blobs 与安装树也不进入诊断工件。
+
+每份新行封存成功、receipt 与计划输入及 producer 一致，并保存诊断后，SDK 控制器清理该行的 `payload/` 和 `extracted/` 两份中间安装目录，保留 OCI、receipt 和输入记录供原 SDK executor 独立验收。资格失败、输入不匹配或诊断保存失败不会触发清理；只清理本 job 的重复安装副本，不删除 registry 产物，也不替代按引用保留策略。
+
+本地 OCI 元数据及整行安装树的导出通过 `local_export.py` 限制每次传输为十分钟。超时后终止该 Docker 客户端及其 Buildx 子进程，保留未完成目录，使用相同固定 digest 和仅含 COPY 的配方向新目录重试一次；普通导出错误直接失败。只有成功目录进入原字节、契约、报告及安装树验收，第二次超时仍失败。行 CI 在正常中间目录清理前保存两次导出配方及超时记录。该机制不重跑资格，也不把中断的 producer 标记为成功。
+
+这两个目录消费入口可用 `--record-component-recovery` 在完整取得 32 个原始组件和六行资格后、最终集成开始前写出 `component-recovery.json`；acquisition 结果给出它的 canonical SHA256。恢复时同时提供 `--component-recovery` 与独立保存的 `--component-recovery-sha256`，并使用新的数据/诊断目录。SDK 恢复 schema 1 嵌套原 raw recovery schema 1，额外固定各行的 catalog/artifact digest、输入及 receipt SHA256 和原 producer，不扩大原始组件 schema 的资格角色权限。它要求干净 Git checkout 的同一提交、SDK 根、实际来源材料与完整物理执行环境；仅部分输入就绪时不生成完整恢复记录。
+
+重试通过原目录验签、产物与资格验收函数取得所有固定引用，并逐项核对原选择；缺失、替换、来源或环境漂移均失败。最终 SDK 集成仍重新执行；失败时保留取得阶段的恢复记录，成功前再核对记录摘要、源码与环境。该入口不替代 registry 信任，不复用最终集成报告，也未接通主工作流的自动恢复。
 
 target SDK 包含解释器、stdlib、headers、`pyconfig.h`、`_sysconfigdata_*`、扩展模块和构建元数据。即使 x86_64 build/target 架构相同，也不得复用。每个 target 必须验证 zlib、bz2、lzma、ctypes、ssl、hashlib、sqlite3、uuid 等约定模块，以及最小 C extension 的编译、ELF 架构和 import；3.14 另验 `compression.zstd`。
 
@@ -217,6 +243,8 @@ $ docker buildx bake phase10
 ```
 
 cp39 的 source、build-policy、native 与两套 target build identity 独立新增，原五行对应 identity 保持不变；共享 qualification policy 与 aggregate identity 按设计重新绑定六行。compile/final 报告、runtime preflight 和双架构 row manifest 都重新从 release/policy 计算该身份，而不信任传入摘要。完整 Phase 10 已实际通过 6 个 build Python、12 个 cross SDK、两套 target 的 locked-sysroot/clean-Rocky 运行时资格化及六行 append-only 聚合。
+
+CI 重构已另增六个行级 qualification policy、十二个行/目标输入投影及六个双目标汇总。`python_qualification_policy.py` 可通过独立固定的目标投影 digest 验证并读取当前行的配置；最终消费者可从完整 release 重新计算预期。原 89 个组件文档保持不变。静态编译资格阶段现已消费新投影及其认证的 source/build-policy 依赖，schema 5 用明确的 input binding 代替完整 release 和全行 qualification 身份；该阶段不再复制完整 release、schema 或 renderer。runtime preflight 与最终验证器从完整 release 独立推导预期，再进行原有 source、sysroot、ABI、ELF、guard 和原始序列化校验；schema 4 编译报告继续按旧完整 release 精确校验。最终报告仍保留完整 release 和全行 qualification 身份，不因嵌套新编译报告而允许跨 release 重用旧执行记录。这些配置身份不能替代实际产物、测试代码、环境和执行证据。正式资格报告链的迁移与实跑仍在进行，详见[内部组件说明](internal-components.md#python-row-qualification-policy-inputs)。
 
 Python 契约是“支持交叉编译扩展”，不是 PEP 517/wheel 编排器。Crossforge 不做 wheel retag、vendoring、manylinux repair，也不支持 PyPy、free-threaded 或 debug Python。
 
@@ -380,9 +408,19 @@ UID/GID 时，不可写的 inherited home 会安全回退到该 UID 专用的 `/
 source commit → build once → candidate digest → 原物验收 → registry-side promotion
 ```
 
-所有测试通过完整 OCI digest 拉取候选镜像。Release 不重建，只给已资格化 digest 增加不可变版本标签并更新稳定通道。手动 `stable promotion` 工作流以成功的 public-candidate run ID 和 `PROMOTE-v<version>` 双重输入为入口，并使用 `production` environment 作为运维审批边界；它从 GitHub API 重新约束 workflow path、main head、run attempt 与成功结论，再 checkout 候选的精确 source commit。四组不可变 workflow artifact 必须仍可下载，所有 `candidate.json` 副本逐字节相同，source binding、原生 AArch64 compiler/Qt 证据及其原始输入、固定 TUF root 下的 candidate/source 签名均重新验证后才允许写 tag。
+所有测试通过完整 OCI digest 拉取候选镜像。Release 不重建，只给已资格化 digest 增加不可变版本标签并更新稳定通道。手动 `stable promotion` 工作流以成功的 public-candidate run ID 和 `PROMOTE-v<version>` 双重输入为入口，并使用 `production` environment 作为运维审批边界；它从 GitHub API 重新约束 workflow path、main head、run attempt 与成功结论，再 checkout 候选的精确 source commit。四组不可变 workflow artifact 必须仍可下载，所有 `candidate.json` 副本逐字节相同，source binding、原生 AArch64 compiler 证据及其原始输入、固定 TUF root 下的 candidate/source 签名均重新验证后才允许写 tag。
 
-晋升仅通过 registry-side manifest copy 给 candidate digest 增加 `v<version>` 和 `gts15-el8`，并给其绑定的 source digest 增加 `source-v<version>` 和 `source-gts15-el8`。stable promotion 只接受不含 prerelease/build metadata 的三段 SemVer。版本 tag 不存在时才可创建；已存在时必须已指向完全相同 digest，否则失败，稳定通道在两份版本 tag 就绪后才移动。注销 registry 后必须匿名重新解析四个 tag 的原始 manifest 字节并得到预期 digest，随后生成符合严格 schema、跨重试字节稳定的 `release-promotion.json`。十七份 candidate/source/native ARM/Qt/Sigstore/OCI-attestation/SBOM-generator/promotion 原始证据同时进入固定名称、顺序、owner、mode 和零时间戳的 USTAR，内层严格 manifest 逐文件绑定 SHA256/大小，外层另有 SHA256 sidecar；验证器从归档安全流式解出临时文件并重新运行原始语义门禁，不能只信任内层 manifest。
+候选的来源镜像发布、SDK 发布和最终匿名消费者检查分别运行。两个发布 job 在推送并绑定身份后保存严格 checkpoint，下游按成功上游的不可变 artifact ID 下载，并验证独立 canonical SHA256、原 source/run/attempt、当前 release、OCI 原始 index、Buildx metadata、来源归档身份及固定 SBOM generator 报告。SDK checkpoint 嵌入原来源 checkpoint，五份来源文件保持原字节。checkpoint 只记录发布身份；SDK 构建前仍匿名验证完整来源归档，最终消费者仍重新验证公开证明与镜像集成，且仅有 packages:read 权限。
+
+候选前置验证现在以固定 `profile: full` 调用组件工作流，覆盖全部 canonical release stages，并集中生产、签名和保存缺失的原始工具链/Python 组件。候选不进入周期性资格缓存 writer 队列。原始组件 producer 的调用者只增加 main 上的明确手动 candidate workflow，仍要求 clean checkout、workflow/source SHA 相同，并保留 raw role 范围和 writer/signer 权限分离。SDK 发布再次认证目录、核对当前输入及实际 OCI，绑定 33 份原始组件后重新解析实际消费图；若仍包含 GCC/CPython 源码编译则失败。发布后重新检查源码、来源归档、图和执行环境。此接口保留既有资格门禁，不是正式行资格 receipt 复用；真实 GitHub 执行和性能尚待验收。
+
+部分重试可复用成功上游的 source/SDK checkpoint 或最终消费者/native artifact。签名 artifact 中的 `candidate-recovery.json` 绑定完整 candidate manifest 摘要、probe/report 字节摘要和原 artifact ID/name/attempt；recovery schema 2 追加来源/SDK 的原 attempt 和 checkpoint SHA256，要求 source ≤ SDK ≤ 最终消费者 ≤ native ≤ signing。promotion schema 2 将恢复记录嵌入 `release-promotion.json`，经 GitHub 同 run/source 元数据和既有语义验证后进入持久归档。旧 promotion schema 1 保持所有 artifact 同 attempt 的严格契约。推送成功但尚未成功封存上传 checkpoint 的失败、跨 candidate run 恢复及实际 GitHub 部分重试验收尚未完成；不能通过 tag 推断缺失的 checkpoint。
+
+SDK checkpoint schema 2 另保存 `component-selection.json`。最终消费者转交其独立 SHA256，签名前按这个摘要和候选 source commit 检查原组件选择，再以 recovery schema 3 将其完整嵌入恢复记录；原 catalog/receipt/OCI digest 与 producer 随 promotion 进入已有十四份 payload 的持久归档。诊断文件过期不会抹去这些原组件引用；记录本身仍不授予资格。旧 checkpoint/recovery schema 保持原严格读取契约。
+
+原始工具链/Python producer 的部分重试另以成功上游 job 输出约束交接：签名接收原 producer invocation、handoff SHA256 和 artifact ID；存储接收原签名 artifact ID、catalog/bundle 原始字节 SHA256 及 signer invocation。同一可信 run/source 内要求 producer ≤ signer ≤ 当前重试，下载前拒绝缺失、失败或不完整的上游输出。签名重试不改写原 receipt/catalog producer；存储重试保留原签名字节，并继续执行固定 verifier，不重新编译或签名。相关嵌套 caller 只补齐 artifact 下载所需 actions:read，writer 与 signer 权限仍分开。成功上传前的中途失败、跨 run 恢复和真实 GitHub 重试验收仍未完成。
+
+晋升仅通过 registry-side manifest copy 给 candidate digest 增加 `v<version>` 和 `gts15-el8`，并给其绑定的 source digest 增加 `source-v<version>` 和 `source-gts15-el8`。stable promotion 只接受不含 prerelease/build metadata 的三段 SemVer。版本 tag 不存在时才可创建；已存在时必须已指向完全相同 digest，否则失败，稳定通道在两份版本 tag 就绪后才移动。注销 registry 后必须匿名重新解析四个 tag 的原始 manifest 字节并得到预期 digest，随后生成符合严格 schema、跨重试字节稳定的 `release-promotion.json`。十四份 candidate/source/native ARM/Sigstore/OCI-attestation/SBOM-generator/promotion 原始证据同时进入固定名称、顺序、owner、mode 和零时间戳的 USTAR，内层严格 manifest 逐文件绑定 SHA256/大小，外层另有 SHA256 sidecar；验证器从归档安全流式解出临时文件并重新运行原始语义门禁，不能只信任内层 manifest。
 
 GitHub repository 必须在首次发布前启用 immutable releases 和 Private Vulnerability Reporting。`production` environment 必须只允许 `main` deployment、要求唯一的 repository-owner reviewer，并在单维护者模型下允许 self-review；仓库默认 `GITHUB_TOKEN` 必须保持 read-only 且不能批准 PR。promotion/rollback 共用的 control-plane action 从只读管理 API 取得上述五份状态并通过严格 schema 验证，缺失 environment 或任一弱化都会在任何 Release/OCI 写入前失败。晋升随后创建或幂等恢复 draft，上传 evidence tar、sidecar、`candidate.json` 与 `release-promotion.json`；只有 OCI 版本/通道 tag 全部精确解析后才发布 draft，并要求 Release API 返回 `immutable:true` 和四份带 SHA256 digest 的完整资产。由此 Git tag 和 release assets 在 Actions 90 天工件过期后仍受 GitHub 不可变发布与 release attestation 保护，未公开的安全报告也有私密入口。该工作流不得构建 SDK/source、不得重新签名，也不能把成功 job status 当作资格证据。首次 public candidate 和首次 stable promotion 尚未实际运行，因此当前仍是 implemented/unproven。
 
@@ -399,14 +437,14 @@ evidence tar 重新验证 native ARM、Qt、source、SLSA/SPDX、SBOM generator 
 rollback 不创建/移动版本 tag、不重建、不重签，失败后的已完成 source-channel 更新可由
 同一幂等 workflow 安全重试。
 
-全部构建与测试运行于 GitHub 托管 runner。具体执行图、缓存权限、冷构建测量和
+托管 CI 与发布资格运行于 GitHub runner；本地开发验证使用同一 Docker/Bake 图。具体执行图、缓存权限、冷构建测量和
 失败诊断见 [`github-actions.md`](github-actions.md)。受信 main 资格化通过独立 GHCR
 registry cache 复用中间层；PR 只能读缓存。缓存不改变资格化与发布身份，candidate
 必须先通过相同提交的完整分阶段资格化，再沿原有图生成和验证公开 digest。
 
 测试分层如下：
 
-- PR：JSON/Schema、逐文件 Bash/Python syntax、Python 单测、Docker/Bake 与 Actions 静态检查，以及按变更范围保守选择的真实构建；未知或公共输入变化执行 full profile。`pr-required` 汇总必要检查，意外 skip/cancel 不得放行；
+- PR：JSON/Schema、逐文件 Bash/Python syntax、Python 单测、Docker/Bake 与 Actions 静态检查，以及比较 checked Bake 材料闭包后选择的真实构建；共享输入沿实际下游传播，未知路径、缺失 base 或不支持的材料解析执行 full 兜底。`pr-required` 汇总必要检查，意外 skip/cancel 不得放行；
 - candidate：双 target C/C++/ABI、代表 Python、vcpkg ports、DEB/RPM 安装测试；
 - nightly/full：双 target 的 `gcc/` 下 `check-gcc` 与 `check-g++`、针对最终 compiler/runtime 的 installed `runtest --tool libstdc++`、`check-target-libgomp`，完整 Python 矩阵，以及 Qt 6.8.4 双 target；语言测试必须直接从 `gcc/` 子目录启动，使 GNU Make 的 jobserver 分片真正分配给对应 DejaGNU worker，禁止从顶层 `check-gcc` 间接重跑全部语言；GCC 15 的顶层 `check-target-libgcc` 是无测试、无 summary 的空目标，不能作为资格化证据；libgcc 由 compiler testsuite 与最终 hybrid runtime 门禁覆盖；
 - release：同一 digest 的原生 aarch64 终检和资格化证明检查。
@@ -454,9 +492,19 @@ Qt target 源树固定回移 XNNPACK `1b11a8b0620afe8c047304273674c4c57c289755` 
 
 Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单一供应链。所有源码、RPM、工具和基础镜像均固定 hash 或 digest；禁止 `curl | sh`。BuildKit cache 只用于加速，不构成发布身份或测试证据。
 
-`release.json` 是唯一人工维护的版本源。`config/generated/` 将它投影为 build、qualification、supply 与 future 四类组件身份，并用单向 `release-binding.json` 绑定完整 release digest；共享 Python 实现策略另有显式投影。生成器要求每个 release 叶字段有明确分类，并保证版本行、架构及 host closure 的无关变化不会污染其他 build identity。ABI 输入只生成 `abi/{x86_64,aarch64}-baseline` 与 `abi/python-providers` 三个 qualification component：对应 toolchain qualification 依赖各自 baseline，Python aggregate 直接依赖三者。ABI pin 更新因此不会改变 GCC、Python row 或 zstd 的任何 build component。维护与资格化边界继续显式读取完整 release identity，因此无关 future 元数据只会触发重验，不会重编 GCC/binutils。
+`release.json` 是唯一人工维护的版本源。`config/generated/` 将它投影为 build、qualification、supply 与 future 四类组件身份，并用单向 `release-binding.json` 绑定完整 release digest；共享 Python 实现策略另有显式投影。生成器要求每个 release 叶字段有明确分类，并保证版本行、架构及 host closure 的无关变化不会污染其他 build identity。ABI 输入只生成 `abi/{x86_64,aarch64}-baseline` 与 `abi/python-providers` 三个 qualification component：对应 toolchain qualification 依赖各自 baseline，Python aggregate 直接依赖三者。ABI pin 更新因此不会改变 GCC、Python row 或 zstd 的任何 build component。维护、GCC/Python 资格化和最终产品集成仍有完整 release 输入；工具链 smoke/runtime 资格化按以下独立策略绑定。
 
-组件实现也遵循同一边界：`release-components-core.py` 只包含 toolchain、ABI、Python 等稳定核心，`release-components-vcpkg.py` 是 CMake/Ninja/vcpkg 扩展，`render-release-components.py` 仅组合两者并写入完整 component graph。Python 和 toolchain 的 Docker 资格 stage 只复制核心文件；vcpkg policy 或 fixture 变化因此只能改变 vcpkg 组件身份与门禁层，不再因共享渲染脚本的字节变化重跑 12 套 Python target 资格化。回归测试同时锁定共享组件摘要不变性和 Docker COPY 边界。
+组件实现也遵循同一边界：`release-components-core.py` 只包含 toolchain、ABI、Python 等稳定核心，`release-components-vcpkg.py` 是 CMake/Ninja/vcpkg 扩展，`render-release-components.py` 仅组合两者并写入完整 component graph。Python 的 Docker 资格 stage 只复制核心文件；工具链 smoke/runtime stage 只需要 `toolchain_policy.py`、严格的 component reader 和实际探针辅助文件。vcpkg policy 或 fixture 变化因此不会因共享渲染脚本字节变化重跑 12 套 Python target 资格化。回归测试同时锁定共享组件摘要不变性和 Docker COPY 边界。
+
+工具链策略以 `toolchain/<arch>-qualification` 的可信 canonical SHA256 为根，校验其 build、ABI baseline 及 build 下 GCC/binutils source 共五份已有投影。策略绑定 target/sysroot、版本与来源、冻结 ABI、干净 Rocky runtime 以及原生 x86_64 或显式固定 QEMU 执行器。Docker 资格阶段使用 `--components`，不复制完整 release；schema 2 报告的 `input_binding.policy_sha256` 绑定该策略，并禁止同时声称 `release_sha256`。旧 `--release` CLI 仍保留完整 release 报告和原校验语义。
+
+最终 SDK 从当前完整 release 独立推导工具链策略，vcpkg SDK 则使用已认证组件策略；二者检查原报告、资格组件与 locked/clean runtime 成功状态。vcpkg 契约还要求工具链报告字节与已资格化 vcpkg SDK 记录的 SHA256 一致。无关 Python 变更可以保持工具链报告的原身份；组件 receipt 复用另外要求产物、完整实际资格材料、校验实现和执行环境严格匹配，并保留原 producer 与执行区间。任何新候选仍须执行最终镜像集成及原生 ARM 门禁。
+
+共享 `toolchain_report.py` 提供直接消费已认证 toolchain policy 的入口；它要求 scoped 报告，不能把旧 release 报告改写成组件报告。完整 release 适配器保留旧格式及相同运行时校验。`vcpkg_policy.py` 认证 SDK build 根、两个独立工具链资格根，以及 CMake/Ninja 的来源输入；后续契约和 tier1–3 根逐层绑定 SDK、工具链与前序资格。每层 schema 2 报告使用自身输入 binding，后续阶段核对前序报告；SDK 与契约阶段仍重新验收实际工具链报告，tier2/3 还核对提供 patchelf 身份的契约报告。五个 Docker 阶段均只复制六个运行模块，不复制完整 release 或组件生成器，保留的投影位于 `/opt/crossforge/qualification/vcpkg/inputs`。
+
+原 vcpkg `--release` CLI 继续生成 schema 1 报告并绑定精确完整 release；其消费者可从完整 release 独立推导预期，验收新 scoped 前序报告。`packaging-sdk` 在自己的消费边界复制当前 release，供 launcher、分包和完整 SDK 使用。完整 SDK 在最终集成时也从完整 release 独立推导 vcpkg SDK 策略，验收新报告或精确匹配的旧报告，其 schema 2 集成报告记录 vcpkg 报告格式和文件 SHA256。产品版本或单行 Python 输入变化可以保留 vcpkg 资格配置身份，最终 SDK 集成仍须重新执行。这些配置与图检查不是新执行 receipt、跨 runner 资格复用授权或 CI 耗时证明。
+
+`replay-sources.yml` 提供独立的手动源码编译重放范围：单架构 binutils/GCC，或单行 build/x86_64/aarch64 CPython。`ci_source_replay.py` 从真实可达 recipe 核对原编译 RUN，仅对相应 owning stage 设置 `no-cache-filter`，并用结构化事件、实际环境和构建后材料复核确认新执行。CLI 要求显式固定 builder、新诊断目录，拒绝组件替换、资格重放和缓存写入组合，全部输出限制为 cache-only。既有 canonical 阶段门禁保留，但重放记录只证明选中编译阶段；源码取得、prepared 输入、其他编译器和资格步骤仍可使用普通缓存，未命中时也可能重新编译前置工具链。`cold` 继续只控制远程缓存导入，不能单独证明重建。本地固定 a56bb29 源码的 x86_64 binutils/GCC 两条强制编译 RUN 已通过原计划与执行记录复核；cp39 和实际 GitHub 验收进度见[验收索引](research/ci-refactoring-acceptance.md)。本地重放记录不构成可复用资格 receipt 或候选证据。
 
 Rocky OCI index、QEMU index/manifest/attestation/SLSA predicate、QEMU Git tag/commit，以及 Ninja GitHub tag-ref/release 与 commit 原始字节以 base64 envelope 签入 `evidence/`。离线 validator 必须重算 OCI/GitHub evidence digest 与 Git object ID，并验证 platform child manifest、attestation subject、provenance builder/build arguments 和源码 tag→commit 关系。QEMU 10.2.3 官方源码归档、分离签名和官网链接的发布经理公钥也已固定；`qemu-source-qualified` 在断网阶段核对 84,628 个成员、版本、许可证、唯一一个已审核绝对 symlink，并要求 GPG 同时产生精确 `VALIDSIG` 与 `EXPKEYSIG`。执行器并非 pristine QEMU 直接产物，因此同一 export 还锁定 provenance 指向的 tonistiigi/binfmt builder commit 源码、764 个成员、Dockerfile/configure、MIT 许可和实际启用的 `cpu-max-arm`/`preserve-argv0` 补丁。该 QEMU 签名创建于公钥 2026-05-11 到期之后，因此只能标记为 `cryptographically-valid-expired-key`，不能宣传为有效期内的维护者签名；正式发布仍需法律/安全评审接受此明确例外或取得上游更新的可信证据。Ninja lightweight tag 也无独立签名，因此依赖完整 commit 与多重内容摘要。
 

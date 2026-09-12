@@ -108,7 +108,7 @@ class ToolchainBuildExportTests(unittest.TestCase):
             self.assertIn('target   = "%s"' % name, body)
             self.assertIn('output   = ["type=cacheonly"]', body)
 
-    def test_every_python_cross_uses_build_export_but_final_sdk_uses_dev(self):
+    def test_builds_and_qualifiers_use_exports_but_final_sdk_uses_dev(self):
         reverse_consumers = {"x86_64": set(), "aarch64": set()}
         for contract in RENDERER["IMPLEMENTED_ROWS"]:
             row = contract["row"]
@@ -124,13 +124,22 @@ class ToolchainBuildExportTests(unittest.TestCase):
                     if value == "target:toolchain-%s-build-export" % arch:
                         reverse_consumers[arch].add(name)
         for arch, consumers in reverse_consumers.items():
+            qualifiers = {"toolchain-%s-dev" % arch, "runtime-smoke-%s" % arch,
+                          "gcc-testsuite-%s-smoke" % arch, "gcc-testsuite-smoke-evidence"}
+            if arch == "x86_64":
+                qualifiers.update({"gcc-testsuite-x86_64-full-observe",
+                                   "gcc-testsuite-x86_64-full-qualified",
+                                   "gcc-testsuite-full-observation-evidence",
+                                   "gcc-testsuite-full-qualification-evidence"})
             self.assertEqual(
                 consumers,
                 {
                     "cpython-cross-%s-%s" % (contract["row"], arch)
                     for contract in RENDERER["IMPLEMENTED_ROWS"]
                 }
-                | {"zstd-%s-build" % arch},
+                | {"cpython-%s-%s-qualify-build" % (contract["row"], arch)
+                   for contract in RENDERER["IMPLEMENTED_ROWS"]}
+                | {"zstd-%s-build" % arch} | qualifiers,
             )
         sdk = self.targets["sdk-toolchains-dev"]["contexts"]
         self.assertEqual(

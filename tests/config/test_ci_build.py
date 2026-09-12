@@ -252,7 +252,7 @@ class HostedBuildTests(unittest.TestCase):
                         "cache_catalog": lambda: ["sdk"], "HEARTBEAT": heartbeat}
         ), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
             root = Path(directory)
-            result = function("sdk", root, "ghcr.io/test/cache")
+            result = function("inputs", root, "ghcr.io/test/cache")
             self.assertEqual(result, 23)
             self.assertIn("compiler-failed", (root / "build.log").read_text())
             self.assertEqual(json.loads((root / "result.json").read_text())["exit_code"], 23)
@@ -273,7 +273,7 @@ class HostedBuildTests(unittest.TestCase):
                     "cache_catalog": lambda: ["sdk"],
                     "HEARTBEAT": {"execute": execute},
                 }), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
-                    self.assertEqual(function("sdk", Path(directory), "ghcr.io/test/cache"),
+                    self.assertEqual(function("inputs", Path(directory), "ghcr.io/test/cache"),
                                      expected)
                 roots = [command[command.index("--progress=plain") - 1] for command in calls]
                 self.assertEqual(roots, ["evidence", "sdk"][:len(statuses)])
@@ -302,7 +302,7 @@ class HostedBuildTests(unittest.TestCase):
                 "HEARTBEAT": {"execute": execute},
             }
         ), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
-            self.assertEqual(function("sdk", Path(directory), "ghcr.io/test/cache", write=True), 0)
+            self.assertEqual(function("inputs", Path(directory), "ghcr.io/test/cache", write=True), 0)
         self.assertEqual(observed, ["evidence", "sdk"])
 
     def test_stage_budget_does_not_restart_for_each_root(self):
@@ -317,9 +317,47 @@ class HostedBuildTests(unittest.TestCase):
                                   monotonic=mock.Mock(side_effect=[0, 1, 19801, 19802])),
             }
         ), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
-            self.assertEqual(function("sdk", Path(directory), "ghcr.io/test/cache"), 124)
+            self.assertEqual(function("inputs", Path(directory), "ghcr.io/test/cache"), 124)
             self.assertEqual(execute.call_count, 1)
             self.assertIn("19799s", execute.call_args.args[0])
+
+    def test_sdk_uses_local_handoff_and_preserves_its_failure_status(self):
+        function = BUILD["run_stage"]
+        handoff = mock.Mock(return_value=31)
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            function.__globals__, {
+                "read_graph": lambda targets: self.graph(),
+                "cache_catalog": lambda: ["sdk"], "run_local_sdk": handoff,
+            }
+        ), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}):
+            root = Path(directory)
+            self.assertEqual(function("sdk", root, "ghcr.io/test/cache"), 31)
+            self.assertEqual(handoff.call_count, 1)
+            self.assertEqual(json.loads((root / "result.json").read_text())["exit_code"], 31)
+            self.assertTrue((root / "build.log").is_file())
+
+    def test_local_sdk_steps_share_the_stage_timeout_budget(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        try:
+            from crossforge_internal import local_sdk
+        finally:
+            sys.path.pop(0)
+        function = BUILD["run_local_sdk"]
+        heartbeat = mock.Mock(return_value=0)
+
+        def execute(source, graph, roots, cache, directory, solve):
+            recipe, metadata = directory / "graph.json", directory / "metadata.json"
+            self.assertEqual(solve("first", recipe, metadata, directory), 0)
+            return solve("second", recipe, metadata, directory)
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(local_sdk, "execute", execute), \
+                mock.patch.dict(function.__globals__, {
+                    "HEARTBEAT": {"execute": heartbeat},
+                    "time": mock.Mock(monotonic=mock.Mock(side_effect=[1, 19801])),
+                }):
+            self.assertEqual(function({}, [], {}, Path(directory), 0), 124)
+        self.assertEqual(heartbeat.call_count, 1)
+        self.assertIn("19799s", heartbeat.call_args.args[0])
 
     def test_profiles_fail_open_to_more_testing_for_unknown_or_shared_changes(self):
         select = PLAN["select_profile"]
@@ -360,11 +398,14 @@ class HostedBuildTests(unittest.TestCase):
         concurrency = workflow.split("\nconcurrency:\n", 1)[1].split("\non:\n", 1)[0]
         self.assertIn("github.sha", concurrency)
         self.assertIn("github.event_name == 'pull_request' && 'pr'", concurrency)
-        builds = workflow.split("\n  builds:\n", 1)[1].split("\n  pr-required:", 1)[0]
-        self.assertIn("group: ci-builds-${{ github.ref }}", builds)
-        self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", builds)
-        self.assertNotIn("github.sha", builds)
-        self.assertIn("inputs.quick-only && '-quick' || ''", builds)
+        for job in ("builds-readonly", "builds-components"):
+            builds = workflow.split("\n  " + job + ":\n", 1)[1].split("\n  builds", 1)[0]
+            self.assertIn("group: ci-builds-${{ github.ref }}-${{ github.event_name }}", builds)
+            self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}", builds)
+            self.assertNotIn("github.sha", builds)
+        candidate = (ROOT / ".github/workflows/candidate.yml").read_text()
+        self.assertIn("uses: ./.github/workflows/verify-quick.yml", candidate)
+        self.assertNotIn("uses: ./.github/workflows/ci.yml", candidate)
 
     def test_qualification_queue_keeps_waiting_candidates(self):
         workflow = (ROOT / ".github/workflows/qualification.yml").read_text()
@@ -400,7 +441,7 @@ class HostedBuildTests(unittest.TestCase):
             self.assertIn("toolchain-" + arch + "-dev", graph["target"])
 
     def test_shell_syntax_checks_the_second_file_too(self):
-        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        workflow = (ROOT / ".github/workflows/verify-quick.yml").read_text()
         loop = workflow.split("          for script in scripts/*.sh docker/*.sh; do", 1)[1]
         loop = "for script in scripts/*.sh docker/*.sh; do" + loop.split("          done", 1)[0] + "done"
         with tempfile.TemporaryDirectory() as directory:

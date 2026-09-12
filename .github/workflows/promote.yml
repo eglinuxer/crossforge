@@ -119,10 +119,45 @@ jobs:
         with:
           admin-token: ${{ secrets.RELEASE_ADMIN_TOKEN }}
           output: ${{ runner.temp }}/release-control-plane.json
+      - name: Download candidate signature evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: candidate-signature-${{ inputs.candidate_run_id }}-${{ steps.candidate_run.outputs.attempt }}
+          path: ${{ runner.temp }}/candidate-signature
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.candidate_run_id }}
+      - name: Resolve the original candidate artifact producers
+        id: recovery
+        env:
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_ATTEMPT: ${{ steps.candidate_run.outputs.attempt }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          if test -f scripts/candidate-recovery.py; then
+            gh api --paginate --slurp \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "/repos/$GITHUB_REPOSITORY/actions/runs/$CANDIDATE_RUN_ID/artifacts?per_page=100" \
+              > "$RUNNER_TEMP/candidate-artifacts.json"
+            python3 scripts/candidate-recovery.py select \
+              --signature-directory "$RUNNER_TEMP/candidate-signature" \
+              --candidate-run "$RUNNER_TEMP/candidate-run.json" \
+              --artifacts "$RUNNER_TEMP/candidate-artifacts.json" \
+              --expected-run-id "$CANDIDATE_RUN_ID"
+          else
+            # Legacy candidate source predates explicit producer lineage.
+            printf 'identity_name=candidate-identity-%s-%s\n' "$CANDIDATE_RUN_ID" "$CANDIDATE_ATTEMPT" >> "$GITHUB_OUTPUT"
+            printf 'probes_name=native-aarch64-probes-%s-%s\n' "$CANDIDATE_RUN_ID" "$CANDIDATE_ATTEMPT" >> "$GITHUB_OUTPUT"
+            printf 'native_name=native-aarch64-evidence-%s-%s\n' "$CANDIDATE_RUN_ID" "$CANDIDATE_ATTEMPT" >> "$GITHUB_OUTPUT"
+          fi
       - name: Download immutable candidate identity
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: candidate-identity-${{ inputs.candidate_run_id }}-${{ steps.candidate_run.outputs.attempt }}
+          name: ${{ steps.recovery.outputs.identity_name }}
+          artifact-ids: ${{ steps.recovery.outputs.identity_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/candidate-identity
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
@@ -130,7 +165,9 @@ jobs:
       - name: Download immutable native probe bundle
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: native-aarch64-probes-${{ inputs.candidate_run_id }}-${{ steps.candidate_run.outputs.attempt }}
+          name: ${{ steps.recovery.outputs.probes_name }}
+          artifact-ids: ${{ steps.recovery.outputs.probes_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/native-aarch64-probes
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
@@ -138,16 +175,10 @@ jobs:
       - name: Download native release evidence
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: native-aarch64-evidence-${{ inputs.candidate_run_id }}-${{ steps.candidate_run.outputs.attempt }}
+          name: ${{ steps.recovery.outputs.native_name }}
+          artifact-ids: ${{ steps.recovery.outputs.native_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/native-aarch64-evidence
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          run-id: ${{ inputs.candidate_run_id }}
-      - name: Download candidate signature evidence
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: candidate-signature-${{ inputs.candidate_run_id }}-${{ steps.candidate_run.outputs.attempt }}
-          path: ${{ runner.temp }}/candidate-signature
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ inputs.candidate_run_id }}
@@ -315,11 +346,16 @@ jobs:
           CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
         run: |
           set -Eeuo pipefail
+          recovery=()
+          if test -f "$RUNNER_TEMP/candidate-signature/candidate-recovery.json"; then
+            recovery+=(--candidate-recovery "$RUNNER_TEMP/candidate-signature/candidate-recovery.json")
+          fi
           ./scripts/release_promotion.py create \
             --candidate "$RUNNER_TEMP/candidate-identity/candidate.json" \
             --candidate-run "$RUNNER_TEMP/candidate-run.json" \
             --expected-github-repository "$GITHUB_REPOSITORY" \
             --expected-candidate-run-id "$CANDIDATE_RUN_ID" \
+            "${recovery[@]}" \
             --output "$RUNNER_TEMP/release-promotion.json"
           ./scripts/release_promotion.py validate \
             "$RUNNER_TEMP/release-promotion.json"

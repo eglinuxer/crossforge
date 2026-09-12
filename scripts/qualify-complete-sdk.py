@@ -209,6 +209,27 @@ def component_record(document):
     }
 
 
+def qualify_vcpkg_report(release_path, report_path):
+    """Independently bind the inherited vcpkg SDK report to this full release."""
+    release_path, report_path = Path(release_path), Path(report_path)
+    require(release_path.is_file() and not release_path.is_symlink() and
+            report_path.is_file() and not report_path.is_symlink(), "complete SDK vcpkg input is missing or unsafe")
+    release, report = load_json(release_path), load_json(report_path)
+    require(report.get("kind") == "crossforge-vcpkg-sdk-qualification" and report.get("status") == "passed",
+            "complete SDK vcpkg qualification did not pass")
+    if "input_binding" in report:
+        policy = runpy.run_path(str(SCRIPT_DIRECTORY / "vcpkg_policy.py"))
+        try:
+            policy["require_binding"](report, policy["from_release"](release, "sdk"))
+        except policy["PolicyError"] as error:
+            raise QualificationError(str(error)) from error
+    else:
+        require(type(report.get("schema_version")) is int and report["schema_version"] == 1 and
+                report.get("release_sha256") == COMPONENT_READER["canonical_sha256"](release),
+                "legacy vcpkg SDK release binding differs")
+    return {"schema_version": report["schema_version"], "sha256": sha256_file(report_path)}
+
+
 def qualify(arguments):
     policy = load_component(
         arguments.policy_component,
@@ -271,6 +292,7 @@ def qualify(arguments):
         "Python final SDK qualification report differs",
     )
 
+    vcpkg_report = qualify_vcpkg_report(arguments.release, arguments.vcpkg_report)
     info = json.loads(run([arguments.crossforge, "info", "--json"]))
     require(
         info.get("kind") == "crossforge-info"
@@ -361,7 +383,7 @@ def qualify(arguments):
         "launcher consumer target set differs",
     )
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "crossforge-complete-sdk-qualification",
         "status": "passed",
         "components": {
@@ -375,6 +397,7 @@ def qualify(arguments):
         "launcher_consumers": launcher_consumers,
         "python_phase": python_report["phase"],
         "package_targets": packaging_report["targets"],
+        "vcpkg_report": vcpkg_report,
     }
 
 
@@ -385,6 +408,8 @@ def main():
         parser.add_argument("--%s-component-sha256" % role, required=True)
     parser.add_argument("--packaging-report", type=Path, required=True)
     parser.add_argument("--python-report", type=Path, required=True)
+    parser.add_argument("--release", type=Path, default=Path("/opt/crossforge/release.json"))
+    parser.add_argument("--vcpkg-report", type=Path, default=Path("/opt/crossforge/qualification/vcpkg/sdk.json"))
     parser.add_argument("--crossforge", type=Path, required=True)
     parser.add_argument("--consumer-source", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)

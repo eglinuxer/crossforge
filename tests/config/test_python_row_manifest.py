@@ -68,7 +68,7 @@ class PythonRowManifestTests(unittest.TestCase):
         self.component_records = {
             record["component"]: record for record in binding["components"]
         }
-        self.qualification_components = FINALIZE["RELEASE_COMPONENTS"][
+        self.qualification_components = FINALIZE["release_components"]()[
             "python_qualification_components"
         ](self.release)
         self.abi_input_root = self.directory / "abi-inputs"
@@ -532,7 +532,7 @@ class PythonRowManifestTests(unittest.TestCase):
             self.write_json(record["path"], record["value"])
         return tree
 
-    def run_finalize(self, fixture, output=None, strict=False):
+    def run_finalize(self, fixture, output=None, strict=False, components=None, component_digest=None, row_manifest=None):
         if output is None:
             output = self.directory / (fixture["row"] + "-row.json")
         argv = [
@@ -554,12 +554,27 @@ class PythonRowManifestTests(unittest.TestCase):
                 "--output",
                 str(output),
             ]
+        if components is not None:
+            index = argv.index("--release")
+            del argv[index:index + 2]
+            argv.extend(["--qualification-components", str(components), "--qualification-component-sha256", component_digest])
+        if row_manifest is not None:
+            argv.extend(["--row-manifest", str(row_manifest)])
         globals_ = FINALIZE["main"].__globals__
         validator = globals_["QUALIFICATION_VALIDATOR"]
         original = validator["validate_final_report"]
+        original_context_validator = validator["validate_context_report"]
         original_collect = validator["collect_actual_elf_evidence"]
         original_audit = globals_["audit_exported_zstd_module"]
         if not strict:
+            # Row fixtures omit complete runtime bodies; enforce the scoped
+            # binding here while the full target-validator tests cover them.
+            def scoped_fixture(report, context, target, version, *unused):
+                validator["POLICY"]["require_binding"](report, context["policy"])
+                if report["qualification_schema_version"] != 5:
+                    raise validator["FinalizationError"]("scoped fixture schema differs")
+                return report
+            validator["validate_context_report"] = scoped_fixture
             validator["validate_final_report"] = (
                 lambda report, release, target, version, abi_context,
                 actual_elf_evidence, require_qualification_artifact: report
@@ -589,9 +604,103 @@ class PythonRowManifestTests(unittest.TestCase):
             stderr.write(str(error))
         finally:
             validator["validate_final_report"] = original
+            validator["validate_context_report"] = original_context_validator
             validator["collect_actual_elf_evidence"] = original_collect
             globals_["audit_exported_zstd_module"] = original_audit
         return SimpleNamespace(returncode=return_code, stderr=stderr.getvalue()), output
+
+    def scoped_fixture(self, minor):
+        fixture = self.fixture(minor, source_schema_version=2)
+        policy = FINALIZE["ROW_POLICY"]["from_release"](self.release, fixture["row"], fixture["entry"]["version"],
+            fixture["entry"]["adapter"], FINALIZE["release_components"]()["render_component_documents"])
+        for arch, record in fixture["reports"].items():
+            report = record["value"]
+            binding = FINALIZE["QUALIFICATION_VALIDATOR"]["POLICY"]["binding"](policy["targets"][arch])
+            report.pop("release_sha256")
+            report.pop("qualification_components")
+            report.update(qualification_schema_version=5, input_binding=binding)
+            report["compile"].update(qualification_schema_version=5, input_binding=binding)
+            self.write_json(record["path"], report)
+        return fixture, policy
+
+    def test_six_scoped_rows_round_trip_through_complete_release_consumer(self):
+        for minor in IMPLEMENTED_MINORS:
+            with self.subTest(minor=minor):
+                fixture, policy = self.scoped_fixture(minor)
+                result, output = self.run_finalize(fixture, components=REPOSITORY / "config/generated/components",
+                    component_digest=policy["component"]["canonical_sha256"])
+                self.assertEqual(result.returncode, 0, result.stderr)
+                manifest = json.loads(output.read_text())
+                self.assertEqual(manifest["schema_version"], 3)
+                self.assertNotIn("release_sha256", manifest)
+                self.assertNotIn("qualification_components", manifest)
+                FINALIZE["ROW_POLICY"]["require_binding"](manifest, policy)
+                result, verified = self.run_finalize(fixture, output=self.directory / (fixture["row"] + "-verified.json"),
+                                                    row_manifest=output)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(verified.read_bytes(), output.read_bytes())
+
+    def test_scoped_row_survives_product_change_but_rejects_source_change(self):
+        fixture, policy = self.scoped_fixture("3.13")
+        result, output = self.run_finalize(fixture, components=REPOSITORY / "config/generated/components",
+            component_digest=policy["component"]["canonical_sha256"])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.release["product"]["version"] = "0.1.1"
+        self.write_json(self.release_path, self.release)
+        result, verified = self.run_finalize(fixture, output=self.directory / "verified.json", row_manifest=output)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(verified.read_bytes(), output.read_bytes())
+        self.entry("3.13")["source"]["sha256"] = "0" * 64
+        self.write_json(self.release_path, self.release)
+        result, _ = self.run_finalize(fixture, output=self.directory / "rejected.json", row_manifest=output)
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_scoped_row_rechecks_files_and_exact_existing_manifest(self):
+        fixture, policy = self.scoped_fixture("3.13")
+        result, output = self.run_finalize(fixture, components=REPOSITORY / "config/generated/components",
+            component_digest=policy["component"]["canonical_sha256"])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        original = json.loads(output.read_text())
+        for mutate in (
+            lambda m: m.update(extra=True),
+            lambda m: m.update(release_sha256=canonical_sha256(self.release)),
+            lambda m: m.update(schema_version=3.0),
+            lambda m: m["input_binding"].update(policy_sha256="0" * 64),
+            lambda m: m["qualifications"]["aarch64"].update(report_sha256="0" * 64),
+        ):
+            manifest = copy.deepcopy(original)
+            mutate(manifest)
+            self.write_json(output, manifest)
+            result, _ = self.run_finalize(fixture, output=self.directory / "verified.json", row_manifest=output)
+            with self.subTest(mutate=mutate):
+                self.assertNotEqual(result.returncode, 0)
+        self.write_json(output, original)
+        fixture["target_pythons"]["x86_64"].write_bytes(b"tampered")
+        result, _ = self.run_finalize(fixture, output=self.directory / "verified.json", row_manifest=output)
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_scoped_target_report_dispatch_retains_complete_release_row_identity(self):
+        fixture = self.fixture("3.13", source_schema_version=2)
+        validator = FINALIZE["QUALIFICATION_VALIDATOR"]
+        policy_reader = validator["POLICY"]
+        for arch, record in fixture["reports"].items():
+            policy = policy_reader["from_release"](self.release, fixture["entry"]["version"], arch,
+                FINALIZE["release_components"]()["render_component_documents"])
+            report = record["value"]
+            report.pop("release_sha256")
+            report.pop("qualification_components")
+            report.update(qualification_schema_version=5, input_binding=policy_reader["binding"](policy))
+            self.write_json(record["path"], report)
+        # Like the existing row fixtures, this exercises dispatch and aggregation
+        # with the target validator mocked. Complete nested validation is covered
+        # by test_python_runtime_component_inputs.
+        result, output = self.run_finalize(fixture)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        manifest = json.loads(output.read_text())
+        self.assertEqual(manifest["release_sha256"], canonical_sha256(self.release))
+        self.assertEqual(manifest["qualification_components"], self.qualification_components)
+        for arch, record in fixture["reports"].items():
+            self.assertEqual(manifest["qualifications"][arch]["report_sha256"], sha256_file(record["path"]))
 
     def test_all_implemented_source_manifests_match_exact_contract(self):
         for minor in IMPLEMENTED_MINORS:
@@ -1037,7 +1146,7 @@ class PythonRowManifestTests(unittest.TestCase):
 
     def test_reusable_bridge_accepts_loaded_v2_manifest_and_release(self):
         manifest = self.source_contract_v2("3.12")
-        context = FINALIZE["SOURCE_BINDING"]["bind_source_manifest"](
+        context = FINALIZE["source_binding"]()["bind_source_manifest"](
             manifest,
             self.release,
             "cp312",
@@ -1107,7 +1216,7 @@ class PythonRowManifestTests(unittest.TestCase):
 
     def test_v1_maintenance_validation_does_not_require_component_renderer(self):
         manifest = self.source_contract("3.11")
-        bridge = FINALIZE["SOURCE_BINDING"]
+        bridge = FINALIZE["source_binding"]()
         globals_ = bridge["bind_source_manifest"].__globals__
         original = globals_["component_renderer"]
 

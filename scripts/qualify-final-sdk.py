@@ -28,6 +28,9 @@ RELEASE_COMPONENTS = runpy.run_path(
     str(Path(__file__).with_name("release-components-core.py"))
 )
 ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+PYTHON_POLICY = runpy.run_path(str(Path(__file__).with_name("python_qualification_policy.py")))
+PYTHON_ROW_POLICY = runpy.run_path(str(Path(__file__).with_name("python_row_policy.py")))
+TOOLCHAIN_REPORT = runpy.run_path(str(Path(__file__).with_name("toolchain_report.py")))
 
 
 class QualificationError(RuntimeError):
@@ -189,7 +192,23 @@ def audit_dynamic_elf(readelf, path, expected_interpreter):
     return {"interpreter": expected_interpreter, "needed": needed}
 
 
-def qualify_build_python(prefix, row, version, manifest, release_sha256):
+def validate_row_input_binding(manifest, release, row, version, release_sha256):
+    require(release is not None and canonical_sha256(release) == release_sha256,
+            "scoped row requires the current complete release")
+    try:
+        adapter = ROW_CONTRACT["contract_for_version"](version)["adapter"]
+        policy = PYTHON_ROW_POLICY["from_release"](release, row, version, adapter,
+                                                 RELEASE_COMPONENTS["render_component_documents"])
+        PYTHON_ROW_POLICY["require_binding"](manifest, policy)
+    except (PYTHON_ROW_POLICY["RowPolicyError"], ContractError, ProjectionError) as error:
+        raise QualificationError(str(error)) from error
+
+
+def qualify_build_python(prefix, row, version, manifest, release_sha256, release=None):
+    if manifest.get("schema_version") == 3:
+        validate_row_input_binding(manifest, release, row, version, release_sha256)
+    else:
+        require(manifest.get("release_sha256") == release_sha256, "%s row release differs" % row)
     minor = version.rsplit(".", 1)[0]
     python = prefix / "bin" / ("python" + minor)
     require(python.is_file() and not python.is_symlink(), "%s build Python is missing" % row)
@@ -202,7 +221,6 @@ def qualify_build_python(prefix, row, version, manifest, release_sha256):
         manifest.get("kind") == "crossforge-cpython-row"
         and manifest.get("row") == row
         and manifest.get("version") == version
-        and manifest.get("release_sha256") == release_sha256
         and manifest.get("build_python_sha256") == python_sha256
         and manifest.get("build_python_sdk_tree") == tree,
         "%s build Python differs from its row manifest" % row,
@@ -320,6 +338,7 @@ def qualify_target_pythons(
     version,
     manifest,
     release_sha256,
+    release=None,
 ):
     minor = version.rsplit(".", 1)[0]
     qualifications = manifest.get("qualifications")
@@ -360,13 +379,26 @@ def qualify_target_pythons(
             "%s %s target SDK differs from its row manifest" % (row, arch),
         )
         compile_report = report.get("compile")
+        schema_version = report.get("qualification_schema_version")
+        require(type(schema_version) is int and schema_version in (4, 5),
+                "%s %s qualification report schema differs" % (row, arch))
+        if schema_version == 5:
+            require(release is not None and canonical_sha256(release) == release_sha256,
+                    "scoped target report requires the current complete release")
+            require("qualification_components" not in report, "scoped target report contains legacy components")
+            try:
+                policy = PYTHON_POLICY["from_release"](release, version, arch, RELEASE_COMPONENTS["render_component_documents"])
+                PYTHON_POLICY["require_binding"](report, policy)
+            except (PYTHON_POLICY["PolicyError"], ProjectionError) as error:
+                raise QualificationError(str(error)) from error
+        else:
+            require("input_binding" not in report and report.get("release_sha256") == release_sha256,
+                    "%s %s qualification report release differs" % (row, arch))
         require(
-            report.get("qualification_schema_version") == 4
-            and report.get("report_kind") == "crossforge-cpython-qualification"
+            report.get("report_kind") == "crossforge-cpython-qualification"
             and report.get("status") == "passed"
             and report.get("target") == profile["triple"]
             and report.get("version") == version
-            and report.get("release_sha256") == release_sha256
             and report.get("python_sha256") == python_sha256
             and isinstance(compile_report, dict)
             and compile_report.get("sdk_tree") == tree,
@@ -502,66 +534,15 @@ def qualify_host_runtime(release, report_path, marker_path=None):
 
 
 def qualify_prior_toolchain_report(
-    arch,
-    target,
-    report_path,
-    release,
-    release_sha256,
-    sysroot_sha256,
+    arch, target, report_path, release, release_sha256, sysroot_sha256,
 ):
-    require(
-        report_path.is_file() and not report_path.is_symlink(),
-        "%s toolchain qualification report is missing or unsafe" % arch,
-    )
-    report = load_json(report_path)
     try:
-        component = RELEASE_COMPONENTS["toolchain_qualification_component"](
-            release, arch
+        component = RELEASE_COMPONENTS["toolchain_qualification_component"](release, arch)
+        return TOOLCHAIN_REPORT["qualify_prior_toolchain_report"](
+            arch, target, report_path, release, release_sha256, sysroot_sha256, component
         )
-    except ProjectionError as error:
+    except (ProjectionError, TOOLCHAIN_REPORT["QualificationError"]) as error:
         raise QualificationError(str(error)) from error
-    require(
-        report.get("target") == target
-        and report.get("release_sha256") == release_sha256
-        and report.get("sysroot_sha256") == sysroot_sha256
-        and report.get("compiler_version") == release["gts"]["gcc_version"]
-        and re.search(
-            r"(?<![0-9.])%s(?![0-9.])"
-            % re.escape(release["binutils"]["version"]),
-            report.get("binutils_version", ""),
-        )
-        is not None
-        and report.get("sources")
-        == {
-            "gcc": release["gts"]["source"],
-            "binutils": release["binutils"]["source"],
-        }
-        and report.get("qualification_component") == component,
-        "%s prior toolchain qualification is not release-bound" % arch,
-    )
-    if arch == "aarch64":
-        require(
-            report.get("qualification_schema_version") == 1
-            and report.get("report_kind")
-            == "crossforge-toolchain-qualification"
-            and report.get("locked_sysroot_execution", {}).get("status")
-            == "passed"
-            and report.get("clean_runtime_execution", {}).get("status")
-            == "passed",
-            "aarch64 prior runtime qualification did not pass",
-        )
-    else:
-        clean_marker = report_path.with_name("x86_64-clean-runtime.ok")
-        require(
-            clean_marker.is_file()
-            and not clean_marker.is_symlink()
-            and clean_marker.read_bytes() == b"passed\n",
-            "x86_64 clean-runtime qualification marker differs",
-        )
-    return {
-        "component": component,
-        "report_sha256": sha256_file(report_path),
-    }
 
 
 def qualify_target_compilers(work, qemu, release):
@@ -821,9 +802,12 @@ def qualify(release_path, rows, qemu):
         manifest = load_json(manifest_path)
         manifest_sha256 = sha256_file(manifest_path)
         version = entries[row]["version"]
+        schema_version = manifest.get("schema_version")
+        row_keys = (ROW_MANIFEST_KEYS if schema_version == 2 else
+                    (ROW_MANIFEST_KEYS - {"release_sha256", "qualification_components"}) | {"input_binding"})
         require(
-            set(manifest) == ROW_MANIFEST_KEYS
-            and manifest.get("schema_version") == 2
+            set(manifest) == row_keys
+            and type(schema_version) is int and schema_version in (2, 3)
             and manifest.get("adapter") == entries[row]["adapter"],
             "%s row manifest shape or adapter differs" % row,
         )
@@ -834,6 +818,7 @@ def qualify(release_path, rows, qemu):
                 version,
                 manifest,
                 release_sha256,
+                release,
             )
         )
         target_pythons.append(
@@ -848,6 +833,7 @@ def qualify(release_path, rows, qemu):
                     version,
                     manifest,
                     release_sha256,
+                    release,
                 ),
             }
         )

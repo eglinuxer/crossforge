@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-main-sdk-complete-checkpoint-observation",
+  "observed_at": "2026-09-11T13:07:49.448262+00:00",
+  "base_commit": "ca13687b56adbd3c523650c9c4246c37c0629e7e",
+  "scope": "Persist complete authenticated SDK selections in main diagnostics; no remote acquisition, signature or automated job recovery claim",
+  "source_sha256": {
+    ".github/actions/run-component-sdk/action.yml": "b28a43b2d2f61ddb8e5fe64533b7c8b744f943d8747ce8178bd92666a8dbbbe0",
+    "scripts/crossforge_internal/ci_sdk.py": "ca544cfe64706029d2f2091f9de6d1e81436c7067c8c355308d937f901ffc5a6",
+    "scripts/crossforge_internal/python_sdk_catalog.py": "25d8a84f746ff7627a7b565041227049ffc217f17bbbc49e1112a98a8088820f",
+    "tests/config/test_ci_sdk.py": "c7adfee3dc1f2c9f442ae91d739a0ecb61c9575f1f1365c2f53bfaf0f3f40fd9"
+  },
+  "behavior": [
+    "When acquisition verifies all 32 raw components and six signed rows, persist complete recovery document before final integration",
+    "Preserve raw-only recovery separately; an unsigned SDK-local qualification cannot be called complete recovery",
+    "Store an independent checkpoint SHA256 and exact document path in the uploaded diagnostic artifact summary",
+    "After successful integration, recheck complete checkpoint, current source/root/materials and full physical execution identity",
+    "Keep the complete checkpoint if final integration fails, for the existing explicit SDK catalog recovery interface"
+  ],
+  "validation": {
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "environment": "Docker, offline, non-root, source read-only, no daemon socket",
+    "focused": {
+      "tests": 69,
+      "seconds": 25.469,
+      "status": "passed",
+      "skipped": 0
+    },
+    "rocky": {
+      "status": "passed",
+      "tests": 48,
+      "skipped": 0,
+      "seconds": 23.646,
+      "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+      "scope": "Python 3.6 compatibility; original fixture boundaries retained, graph from actual pinned tooling Docker print",
+      "image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+    },
+    "actionlint": "passed for main/candidate callers; only existing concurrency.queue compatibility ignore",
+    "notes": [
+      "All affected SDK/CLI/acquisition/recovery and selector suites ran in the fixed tooling container. Previous full 1419 config + 40 packaging acceptance is recorded separately; it was not rerun for this orchestration-only change.",
+      "Rocky compiled both changed production modules and ran 48 tests, using an actual pinned tooling Bake graph for graph entry points.",
+      "Registry, signature, source observation and final integration remain explicit fixtures in orchestration cases. The summary test executes the actual action Python snippet in a separate process.",
+      "Regression coverage includes complete 32+6 cardinality, preserving a failed integration checkpoint, no complete checkpoint after local unsigned rows, changed checkpoint rejection after integration, and raw/full/absent-artifact summary behavior.",
+      "Initial tampering fixture used the production create-only JSON writer, which correctly rejected overwrite; the test now modifies the file directly to exercise post-integration digest rejection. No production validation was weakened."
+    ],
+    "logs": {
+      "focused.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-sdk-complete-checkpoint/focused.log",
+        "sha256": "57abe8e9648586f78a5e1fdad03518ad5e3c0ff6db762bcbcd695cf2df5c3b45"
+      },
+      "final-focused.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-sdk-complete-checkpoint/final-focused.log",
+        "sha256": "e4a5ae6fba3511d237db888027e18200ae15653ba4260b5696f84725e3bb3e20"
+      },
+      "rocky.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-sdk-complete-checkpoint/rocky.log",
+        "sha256": "11ddff58dafebc34149ef20b90086d174e303304fef856ee6d3aaed1bfaad607"
+      },
+      "rocky-result.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-sdk-complete-checkpoint/rocky-result.json",
+        "sha256": "abc7f703c3066b5ce578a133be2351faf010cdce5f362552b4b849ac13af7793"
+      },
+      "sdk-graph.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-sdk-complete-checkpoint/sdk-graph.json",
+        "sha256": "dcdf336199f85092cd4a3ef3958c328bca3cce8815b79c9069ed2c5fa6631cfa"
+      },
+      "actionlint.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-sdk-complete-checkpoint/actionlint.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  },
+  "remaining": [
+    "Automatic main-job recovery entry point",
+    "Recovery of SDK-local unsigned rows",
+    "Actual GitHub signing and cross-run tests",
+    "Environment compatibility decision and validation",
+    "Candidate/native ARM, retention and performance acceptance"
+  ],
+  "merged_main": false,
+  "pushed": false,
+  "published": false
+}

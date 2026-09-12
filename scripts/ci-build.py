@@ -2,6 +2,7 @@
 """Run bounded hosted-runner Bake stages; caches are never release evidence."""
 
 import argparse
+from datetime import datetime
 import json
 import os
 from pathlib import Path
@@ -182,17 +183,75 @@ def monitor_resources(path, stop):
             return
 
 
-def stream_build_command(command, log_path):
+def stream_build_command(command, log_path, progress_path=None):
     # Pass paths and argv as positional arguments, never as shell source.
     # pipefail retains a failed build's status even when tee succeeds.
+    if progress_path is not None:
+        # Buildx emits rawjson on stderr. Keep stdout separately so an ordinary
+        # stdout message cannot corrupt evidence; tee completion is awaited by
+        # the pipeline and pipefail preserves the actual build failure.
+        return ["bash", "-o", "pipefail", "-c",
+                'progress_file=$1; log_file=$2; stdout_file=$3; shift 3; '
+                '"$@" 2>&1 1>"$stdout_file" | tee -a "$progress_file" "$log_file"',
+                "crossforge-replay-log", str(progress_path), str(log_path),
+                str(progress_path.with_suffix(".stdout.log")), *command]
     return ["bash", "-o", "pipefail", "-c",
             'log_file=$1; shift; "$@" 2>&1 | tee -a "$log_file"',
             "crossforge-build-log", str(log_path), *command]
 
 
-def run_stage(stage, directory, repository, write=False, cold=False):
-    directory.mkdir(parents=True, exist_ok=True)
+def selected_graph(stage, targets=None):
     graph = read_graph(STAGES[stage])
+    if targets is None:
+        return graph
+    if not isinstance(targets, list) or not targets or any(not isinstance(target, str) for target in targets):
+        raise ValueError("selected stage targets must be a nonempty array of strings")
+    if len(set(targets)) != len(targets) or set(targets) - (set(graph_roots(graph)) | set(STAGES[stage])):
+        raise ValueError("selected targets are outside this hosted stage")
+    # Re-resolve through Bake so linked dependencies retain the canonical graph.
+    return read_graph(targets)
+
+
+def run_local_sdk(graph, targets, cache, directory, started):
+    from crossforge_internal import local_sdk
+
+    def solve(target, recipe, metadata, data):
+        remaining = int(330 * 60 - (time.monotonic() - started))
+        if remaining <= 0:
+            return 124
+        command = [*BAKE, "--allow=fs.read=" + str(data),
+                   "--allow=fs.write=" + str(data), "-f", str(recipe), target,
+                   "--progress=plain", "--metadata-file", str(metadata)]
+        return HEARTBEAT["execute"](
+            ["timeout", "--signal=TERM", "--kill-after=60s", str(remaining) + "s"]
+            + stream_build_command(command, directory / "build.log"),
+            "sdk/" + target, 60, log_path=directory / "build.log")
+
+    return local_sdk.execute(ROOT, graph, targets, cache, directory, solve)
+
+
+def run_stage(stage, directory, repository, write=False, cold=False, selected_targets=None, components=None,
+              replay_qualification=False, rebuild_sources=False, source_builder=None):
+    if rebuild_sources:
+        if replay_qualification or components is not None or write or not source_builder:
+            raise ValueError("source replay requires its own builder without component consumption, qualification replay or cache writes")
+        from crossforge_internal import ci_source_replay
+        ci_source_replay.policy(stage)
+    elif source_builder is not None:
+        raise ValueError("source builder requires --rebuild-sources")
+    replay = replay_qualification or rebuild_sources
+    if replay_qualification and (not components or not components.get("required") or write or cold):
+        raise ValueError("qualification replay requires authenticated components without cache writes or cold mode")
+    if replay and (directory.exists() or directory.is_symlink()):
+        raise ValueError("replay requires a new diagnostics directory")
+    recovery_mode = components is not None and (components.get("record_recovery") or components.get("recovery") is not None)
+    if recovery_mode:
+        if not components.get("required") or write or cold:
+            raise ValueError("component recovery requires authenticated components without cold mode or cache writes")
+        if directory.exists() or directory.is_symlink():
+            raise ValueError("component recovery requires a new diagnostics directory")
+    graph = selected_graph(stage, selected_targets)
+    directory.mkdir(parents=True, exist_ok=True)
     write_json(directory / "graph.json", graph)
     override = directory / "cache.json"
     cache = cache_override(graph, repository, write, cold, cache_catalog())
@@ -206,9 +265,74 @@ def run_stage(stage, directory, repository, write=False, cold=False):
                                args=(directory / "resources.jsonl", stopped), daemon=True)
     started = time.monotonic()
     status = 127
+    replay_plan, replay_results, replay_execution = None, {}, None
+    recovery_sha256 = None
     monitor.start()
     try:
+        bake = list(BAKE)
+        if replay:
+            from crossforge_internal import ci_replay, qualification_execution
+            if replay_qualification and (stage.startswith("python-") or stage == "sdk") and not components.get("python"):
+                raise ValueError("Python/SDK replay requires authenticated raw Python components")
+            replay_driver = ci_source_replay if rebuild_sources else ci_replay
+            replay_builder = source_builder if rebuild_sources else components["builder"]
+            replay_kind = "source" if rebuild_sources else "qualification"
+            replay_execution = qualification_execution.execution_identity(replay_builder)
+            replay_plan = replay_driver.plan(ROOT, graph, stage, targets, replay_execution["build"])
+            write_json(directory / "replay-plan.json", replay_plan)
+            if rebuild_sources:
+                bake += ["--builder", source_builder]
+        if components is not None:
+            from crossforge_internal import component_build, component_resolution
+            execution = component_build.execution_identity(components["builder"])
+            pins = None
+            if recovery_mode:
+                from crossforge_internal import component_recovery
+                from crossforge_internal.identity import content_sha256, load_json
+                recovery_context = component_recovery.context(ROOT, graph, stage, targets, execution, os.environ.get("GITHUB_SHA"))
+                recovery_requirements = component_recovery.requirements(ROOT, graph, components.get("python", False))
+                if components.get("recovery") is not None:
+                    recovery = components["recovery"]
+                    pins = component_recovery.verify(load_json(recovery["path"]), recovery["sha256"],
+                        recovery_context, recovery_requirements)
+            toolchain_recovery = {} if pins is None else {"recovery": {name: value for name, value in pins.items()
+                if value["role"] in ("toolchain-install", "gcc-test-context")}}
+            resolved, binding = component_resolution.bind_toolchains(ROOT, graph, execution,
+                components["cosign"], components["directory"], directory / "components",
+                components["builder"], components["oras"], **toolchain_recovery)
+            if components.get("python"):
+                python_recovery = {} if pins is None else {"recovery": {name: value for name, value in pins.items()
+                    if value["role"] in ("python-install", "python-test-context")}}
+                resolved, python_binding = component_resolution.bind_python(ROOT, graph, resolved, binding["components"], execution,
+                    components["cosign"], components["directory"] / "python", directory / "python-components",
+                    components["builder"], components["oras"], **python_recovery)
+                binding = {"components": dict(binding["components"], **python_binding["components"]),
+                           "required_producers": sorted(set(binding["required_producers"] + python_binding["required_producers"]))}
+            if components.get("required") and binding["required_producers"]:
+                raise ValueError("centralized component preparation is incomplete: " + ", ".join(binding["required_producers"]))
+            if recovery_mode:
+                def check_recovery_context():
+                    current = component_recovery.context(ROOT, selected_graph(stage, selected_targets), stage, targets,
+                        component_build.execution_identity(components["builder"]), os.environ.get("GITHUB_SHA"))
+                    if current != recovery_context:
+                        raise ValueError("component recovery source, graph or execution inputs changed")
+                check_recovery_context()
+                recovery_document = component_recovery.document(recovery_context, binding["components"], recovery_requirements)
+                if pins is not None and recovery_document["components"] != pins:
+                    raise ValueError("component recovery changed the original selected pins")
+                recovery_sha256 = content_sha256(recovery_document)
+                write_json(directory / "component-recovery.json", recovery_document)
+                print("%s: component recovery SHA256 %s" % (stage, recovery_sha256), flush=True)
+            resolved_path = directory / "components.bake.json"
+            write_json(resolved_path, resolved)
+            bake += ["--builder", components["builder"], "-f", str(resolved_path)]
+            print("%s: resolved %d build components; %d producer boundaries require build" % (
+                stage, len(binding["components"]), len(binding["required_producers"])), flush=True)
         with (directory / "build.log").open("xb"):
+            if stage == "sdk" and components is None and not replay:
+                status = 1
+                status = run_local_sdk(graph, targets, cache, directory, started)
+                return status
             for target in targets:
                 # Linked roots can be solved again by a later consumer. Export
                 # only the current root, preserving every dependency import.
@@ -223,15 +347,48 @@ def run_stage(stage, directory, repository, write=False, cold=False):
                     status = 124
                     break
                 command = ["timeout", "--signal=TERM", "--kill-after=60s",
-                           str(remaining) + "s", *BAKE, "-f", str(solve_override),
-                           target, "--progress=plain", "--metadata-file",
+                           str(remaining) + "s", *bake, "-f", str(solve_override),
+                           target, "--progress=" + ("rawjson" if replay else "plain"), "--metadata-file",
                            str(directory / ("metadata-" + target + ".json"))]
+                progress_path = None
+                if replay:
+                    replay_override = directory / ("replay-" + target + ".json")
+                    write_json(replay_override, replay_driver.override(graph, replay_plan["solves"][target]))
+                    command += ["-f", str(replay_override)]
+                    progress_path = directory / ("replay-" + target + ".jsonl")
+                    with progress_path.open("x"):
+                        pass
+                    replay_started = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
                 status = HEARTBEAT["execute"](
-                    command[:4] + stream_build_command(command[4:], directory / "build.log"),
+                    command[:4] + stream_build_command(command[4:], directory / "build.log", progress_path),
                     stage + "/" + target, 60,
                     log_path=directory / "build.log")
                 if status:
                     break
+                if replay:
+                    # A successful Docker exit alone is insufficient. Leave a
+                    # failed result if evidence or the observed boundary differs.
+                    status = 1
+                    replay_completed = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                    vertices = replay_driver.fresh_vertices(progress_path, replay_plan["solves"][target]["owners"],
+                        replay_started, replay_completed)
+                    if qualification_execution.execution_identity(replay_builder) != replay_execution:
+                        raise ValueError(replay_kind + " replay execution environment changed")
+                    if replay_driver.plan(ROOT, selected_graph(stage, selected_targets), stage, targets,
+                                      replay_execution["build"]) != replay_plan:
+                        raise ValueError(replay_kind + " replay source or graph changed")
+                    replay_results[target] = {"started_at": replay_started, "completed_at": replay_completed,
+                                               "vertices": vertices}
+                    write_json(directory / "replay-result.json", {
+                        "schema_version": 1, "kind": "crossforge-ci-" + replay_kind + "-replay-observation",
+                        "stage": stage, "execution": replay_execution, "solves": replay_results,
+                        "complete": set(replay_results) == set(targets),
+                        "qualification_receipt": False})
+                    status = 0
+        if recovery_mode and status == 0:
+            status = 1
+            check_recovery_context()
+            status = 0
         return status
     finally:
         stopped.set()
@@ -239,10 +396,13 @@ def run_stage(stage, directory, repository, write=False, cold=False):
         sample_resources(directory / "resources.jsonl")
         elapsed = round(time.monotonic() - started, 1)
         write_json(directory / "result.json", {
-            "stage": stage, "targets": STAGES[stage], "exit_code": status,
+            "stage": stage, "targets": selected_targets if selected_targets is not None else STAGES[stage], "exit_code": status,
             "elapsed_seconds": elapsed, "cold": cold, "cache_write": write,
             "source_commit": os.environ.get("GITHUB_SHA", ""),
             "kind": "crossforge-ci-build-observation",
+            "replay_qualification": replay_qualification,
+            "rebuild_sources": rebuild_sources,
+            "component_recovery_sha256": recovery_sha256,
         })
         print("%s: exit=%d elapsed=%.1fs" % (stage, status, elapsed), flush=True)
         if status and (directory / "build.log").exists():
@@ -264,6 +424,19 @@ def main():
     run = commands.add_parser("run")
     run.add_argument("stage", choices=STAGES)
     run.add_argument("--directory", type=Path, required=True)
+    run.add_argument("--targets-json")
+    run.add_argument("--component-builder")
+    run.add_argument("--component-oras", type=Path)
+    run.add_argument("--component-cosign", type=Path)
+    run.add_argument("--component-directory", type=Path)
+    run.add_argument("--require-components", action="store_true")
+    run.add_argument("--python-components", action="store_true")
+    run.add_argument("--replay-qualification", action="store_true")
+    run.add_argument("--rebuild-sources", action="store_true", help="force this toolchain or Python row's compiler RUNs")
+    run.add_argument("--source-builder", help="explicit pinned builder for source replay")
+    run.add_argument("--record-component-recovery", action="store_true")
+    run.add_argument("--component-recovery", type=Path)
+    run.add_argument("--component-recovery-sha256")
     cache = commands.add_parser("cache")
     cache.add_argument("--output", type=Path, required=True)
     cache.add_argument("targets", nargs="+")
@@ -271,8 +444,32 @@ def main():
     if args.write_cache:
         require_writer(os.environ)
     if args.command == "run":
+        from crossforge_internal.identity import parse_json
+        components = None
+        options = (args.component_builder, args.component_oras, args.component_cosign, args.component_directory)
+        if (args.component_recovery is None) != (args.component_recovery_sha256 is None):
+            raise ValueError("component recovery requires both a document and its independent SHA256")
+        recovery_mode = args.record_component_recovery or args.component_recovery is not None
+        if recovery_mode and not args.require_components:
+            raise ValueError("component recovery requires --require-components")
+        if (args.require_components or args.python_components or recovery_mode) and not all(value is not None for value in options):
+            raise ValueError("required component consumption needs all component options")
+        if any(value is not None for value in options):
+            if not all(value is not None for value in options):
+                raise ValueError("component consumption requires builder, ORAS, Cosign and a separate OCI directory")
+            if args.cold or args.write_cache:
+                raise ValueError("incremental component consumption cannot be combined with cold or cache-writing qualification")
+            components = {"builder": args.component_builder, "oras": args.component_oras,
+                "cosign": args.component_cosign, "directory": args.component_directory,
+                "required": args.require_components, "python": args.python_components,
+                "record_recovery": args.record_component_recovery,
+                "recovery": {"path": args.component_recovery, "sha256": args.component_recovery_sha256}
+                            if args.component_recovery is not None else None}
         return run_stage(args.stage, args.directory.resolve(), args.repository,
-                         args.write_cache, args.cold)
+                         args.write_cache, args.cold,
+                         parse_json(args.targets_json) if args.targets_json is not None else None, components,
+                         replay_qualification=args.replay_qualification,
+                         rebuild_sources=args.rebuild_sources, source_builder=args.source_builder)
     write_json(args.output, cache_override(read_graph(args.targets), args.repository,
                                           args.write_cache, args.cold, cache_catalog()))
     return 0

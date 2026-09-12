@@ -192,7 +192,7 @@ class HostRuntimeQualificationTests(unittest.TestCase):
         self.assertIn('target   = "host-runtime-qualified"', bake)
 
         workflow = (
-            (REPOSITORY / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+            (REPOSITORY / ".github/workflows/verify-quick.yml").read_text(encoding="utf-8")
             + (REPOSITORY / "scripts/ci-build.py").read_text(encoding="utf-8")
         )
         self.assertGreaterEqual(workflow.count("host-runtime-qualified"), 2)

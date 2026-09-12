@@ -1,0 +1,27 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp39-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "c2d62d2a43b8f26dc3465a9e90180ecce9bec502f146e64b797d1aeb89553ca6",
+      "component": "python/cp39-aarch64-qualification"
+    },
+    {
+      "canonical_sha256": "8c260833b4603ad4f93fe20a422b90a0575a7b9d310cc8a87190119ed43cf778",
+      "component": "python/cp39-x86_64-qualification"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/python/versions/0/adapter",
+      "value": "legacy"
+    },
+    {
+      "path": "/python/versions/0/version",
+      "value": "3.9.25"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

@@ -248,7 +248,17 @@ COPY --from=rpm-source-bundle-verified /src/locks/rpm-source-el8.json \
 FROM config-validate AS platform-python-check
 COPY scripts/ ./scripts/
 COPY docker/*.py ./docker/
-RUN /usr/libexec/platform-python -m py_compile ./scripts/*.py ./docker/*.py
+RUN /usr/libexec/platform-python -m compileall -q ./scripts ./docker
+RUN PYTHONPATH=/src/scripts /usr/libexec/platform-python -c \
+    'from crossforge_internal.component_inputs import capture, identity, verify_files; value = capture("/src", "check/platform-python", "build", ["scripts/crossforge_internal/component_inputs.py"]); verify_files(value, "/src"); assert len(identity(value)) == 64'
+RUN /usr/libexec/platform-python ./scripts/component-artifact.py --help \
+    && /usr/libexec/platform-python ./scripts/component-registry.py --help \
+    && /usr/libexec/platform-python ./scripts/component-pilot.py --help \
+    && /usr/libexec/platform-python ./scripts/component-catalog.py --help \
+    && /usr/libexec/platform-python ./scripts/ci-component-plan.py --help \
+    && /usr/libexec/platform-python ./scripts/ci-toolchains.py --help \
+    && /usr/libexec/platform-python ./scripts/ci-python.py --help \
+    && /usr/libexec/platform-python ./scripts/ci-tests.py --help
 RUN /usr/libexec/platform-python ./scripts/render-release-components.py --check
 
 # Matrix-shaped placeholder used only to verify that Bake expands the two
@@ -896,15 +906,13 @@ RUN --network=none \
 # re-verified before those RPMs are selected.
 FROM host-build-common-locked AS python-runtime-clean-x86_64
 ARG ROCKY_AMD64_MANIFEST_DIGEST
-COPY --from=release-validate /src/config/release.json /src/config/release.json
-COPY --from=release-validate /src/config/schemas/release.schema.json /src/config/schemas/release.schema.json
-COPY --from=release-validate /src/config/schemas/rpm-plan.schema.json /src/config/schemas/rpm-plan.schema.json
-COPY --from=release-validate /src/config/rpm/sysroot-el8-x86_64.plan.json /src/config/rpm/sysroot-el8-x86_64.plan.json
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256
+COPY config/generated/components/rpm/sysroot-x86_64.json ./config/components/rpm-sysroot-x86_64.json
 COPY --from=rocky-runtime-x86_64-source / /runtime-root/
 COPY locks/sysroot-el8-x86_64.json ./locks/sysroot-el8-x86_64.json
 COPY locks/transactions/sysroot-el8-x86_64.json ./locks/transactions/sysroot-el8-x86_64.json
 COPY locks/metadata/sysroot-el8-x86_64/ ./locks/metadata/sysroot-el8-x86_64/
-COPY scripts/assemble-python-runtime.py ./scripts/assemble-python-runtime.py
+COPY scripts/assemble-python-runtime.py scripts/python_runtime_overlay.py ./scripts/
 RUN --network=none \
     --mount=type=bind,from=sysroot-rpms-x86_64,source=/rpm-bundle,target=/rpm-bundle,ro \
     /usr/libexec/platform-python ./scripts/assemble-python-runtime.py \
@@ -913,19 +921,20 @@ RUN --network=none \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --runtime-root /runtime-root \
       --base-image-manifest-digest "$ROCKY_AMD64_MANIFEST_DIGEST" \
+      --release-component ./config/components/rpm-sysroot-x86_64.json \
+      --release-component-name rpm/sysroot-x86_64 \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256" \
       --evidence /work/qualification/python/runtime-clean-x86_64.json
 
 FROM host-build-common-locked AS python-runtime-clean-aarch64
 ARG ROCKY_ARM64_MANIFEST_DIGEST
-COPY --from=release-validate /src/config/release.json /src/config/release.json
-COPY --from=release-validate /src/config/schemas/release.schema.json /src/config/schemas/release.schema.json
-COPY --from=release-validate /src/config/schemas/rpm-plan.schema.json /src/config/schemas/rpm-plan.schema.json
-COPY --from=release-validate /src/config/rpm/sysroot-el8-aarch64.plan.json /src/config/rpm/sysroot-el8-aarch64.plan.json
+ARG CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256
+COPY config/generated/components/rpm/sysroot-aarch64.json ./config/components/rpm-sysroot-aarch64.json
 COPY --from=rocky-runtime-aarch64-source / /runtime-root/
 COPY locks/sysroot-el8-aarch64.json ./locks/sysroot-el8-aarch64.json
 COPY locks/transactions/sysroot-el8-aarch64.json ./locks/transactions/sysroot-el8-aarch64.json
 COPY locks/metadata/sysroot-el8-aarch64/ ./locks/metadata/sysroot-el8-aarch64/
-COPY scripts/assemble-python-runtime.py ./scripts/assemble-python-runtime.py
+COPY scripts/assemble-python-runtime.py scripts/python_runtime_overlay.py ./scripts/
 RUN --network=none \
     --mount=type=bind,from=sysroot-rpms-aarch64,source=/rpm-bundle,target=/rpm-bundle,ro \
     /usr/libexec/platform-python ./scripts/assemble-python-runtime.py \
@@ -934,6 +943,9 @@ RUN --network=none \
       --key ./keys/RPM-GPG-KEY-rockyofficial \
       --runtime-root /runtime-root \
       --base-image-manifest-digest "$ROCKY_ARM64_MANIFEST_DIGEST" \
+      --release-component ./config/components/rpm-sysroot-aarch64.json \
+      --release-component-name rpm/sysroot-aarch64 \
+      --release-component-sha256 "$CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256" \
       --evidence /work/qualification/python/runtime-clean-aarch64.json
 
 # Maintenance-only canonical resolvers. They are not dependencies of normal
@@ -1414,21 +1426,49 @@ COPY --from=sysroot-aarch64 \
 COPY --from=binutils-aarch64 /work/binutils-stage/opt/ /opt/
 COPY --from=gcc-aarch64 /work/gcc-stage/opt/ /opt/
 
+# Source/build trees are separate from the installation consumed by Python and
+# SDK assembly. A full GCC replay needs both independently pinned components.
+FROM scratch AS gcc-x86_64-test-context-export
+COPY --from=gcc-x86_64-built /work/prepared/gcc/ /work/prepared/gcc/
+COPY --from=gcc-x86_64-built /work/build/gcc-x86_64/ /work/build/gcc-x86_64/
+
+FROM scratch AS gcc-aarch64-test-context-export
+COPY --from=gcc-aarch64-built /work/prepared/gcc/ /work/prepared/gcc/
+COPY --from=gcc-aarch64-built /work/build/gcc-aarch64/ /work/build/gcc-aarch64/
+
+# Bake supplies source-built exports by default. Verified component consumers
+# replace these named contexts with immutable image references.
+FROM crossforge_toolchain_x86_64_install AS toolchain-x86_64-install-input
+FROM crossforge_toolchain_aarch64_install AS toolchain-aarch64-install-input
+FROM crossforge_toolchain_x86_64_test_context AS gcc-x86_64-test-input
+FROM crossforge_toolchain_aarch64_test_context AS gcc-aarch64-test-input
+
+# Qualification consumes only its authenticated component closure. Product
+# release binding is checked independently when the final SDK is assembled.
+FROM scratch AS toolchain-x86_64-policy
+COPY config/generated/components/toolchain/x86_64-qualification.json \
+  config/generated/components/toolchain/x86_64-build.json /components/toolchain/
+COPY config/generated/components/abi/x86_64-baseline.json /components/abi/
+COPY config/generated/components/sources/gcc.json \
+  config/generated/components/sources/binutils.json /components/sources/
+
+FROM scratch AS toolchain-aarch64-policy
+COPY config/generated/components/toolchain/aarch64-qualification.json \
+  config/generated/components/toolchain/aarch64-build.json /components/toolchain/
+COPY config/generated/components/abi/aarch64-baseline.json /components/abi/
+COPY config/generated/components/sources/gcc.json \
+  config/generated/components/sources/binutils.json /components/sources/
+
 # Real compiler smoke gate. This target remains non-publishable until frozen
 # ABI sets, full tests and the release supply chain exist.
 FROM host-build-common-locked AS toolchain-x86_64-qualify-build
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256
-COPY --from=release-validate /src/config/release.json /src/config/release.json
+COPY --from=toolchain-x86_64-policy /components/ /work/config/components/
 COPY abi/el8/x86_64.json /src/abi/el8/x86_64.json
-COPY --from=sysroot-x86_64 \
-  /opt/crossforge/sysroots/el8/x86_64/ \
-  /opt/crossforge/sysroots/el8/x86_64/
-COPY --from=binutils-x86_64 /work/binutils-stage/ /
-COPY --from=gcc-x86_64 /work/gcc-stage/ /
+COPY --from=toolchain-x86_64-install-input /opt/crossforge/ /opt/crossforge/
 COPY scripts/qualify-toolchain.py /work/scripts/qualify-toolchain.py
 COPY scripts/abi_contract.py /work/scripts/abi_contract.py
-COPY scripts/python_row_contract.py scripts/release-components-core.py \
-  scripts/validate-release.py /work/scripts/
+COPY scripts/toolchain_policy.py scripts/release_component.py /work/scripts/
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY tests/smoke/ /work/tests/smoke/
 RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py \
@@ -1437,24 +1477,19 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
       --target x86_64-unknown-linux-gnu \
       --work /work/qualification/x86_64 \
       --report /work/qualification/x86_64.json \
-      --release /src/config/release.json \
+      --components /work/config/components \
       --abi-baseline /src/abi/el8/x86_64.json \
       --qualification-component-sha256 \
         "$CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256"
 
 FROM host-build-common-locked AS toolchain-aarch64-qualify-build
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256
-COPY --from=release-validate /src/config/release.json /src/config/release.json
+COPY --from=toolchain-aarch64-policy /components/ /work/config/components/
 COPY abi/el8/aarch64.json /src/abi/el8/aarch64.json
-COPY --from=sysroot-aarch64 \
-  /opt/crossforge/sysroots/el8/aarch64/ \
-  /opt/crossforge/sysroots/el8/aarch64/
-COPY --from=binutils-aarch64 /work/binutils-stage/ /
-COPY --from=gcc-aarch64 /work/gcc-stage/ /
+COPY --from=toolchain-aarch64-install-input /opt/crossforge/ /opt/crossforge/
 COPY scripts/qualify-toolchain.py /work/scripts/qualify-toolchain.py
 COPY scripts/abi_contract.py /work/scripts/abi_contract.py
-COPY scripts/python_row_contract.py scripts/release-components-core.py \
-  scripts/validate-release.py /work/scripts/
+COPY scripts/toolchain_policy.py scripts/release_component.py /work/scripts/
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY tests/smoke/ /work/tests/smoke/
 RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.py \
@@ -1463,7 +1498,7 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
       --target aarch64-unknown-linux-gnu \
       --work /work/qualification/aarch64 \
       --report /work/qualification/aarch64-compile.json \
-      --release /src/config/release.json \
+      --components /work/config/components \
       --abi-baseline /src/abi/el8/aarch64.json \
       --qualification-component-sha256 \
         "$CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256" \
@@ -1473,11 +1508,12 @@ RUN --network=none /usr/libexec/platform-python /work/scripts/qualify-toolchain.
 # root through an explicit, content-locked static QEMU binary. No binfmt
 # registration is used. The finalizer binds both observations into JSON.
 FROM host-build-common-locked AS runtime-smoke-aarch64
+ARG CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256
 ARG QEMU_EXECUTOR_CPU
 ARG QEMU_EXECUTOR_UNAME_RELEASE
-COPY --from=release-validate /src/config/release.json /src/config/release.json
+COPY --from=toolchain-aarch64-policy /components/ /work/config/components/
 COPY --from=rocky-runtime-aarch64-source / /runtime-root/
-COPY --from=sysroot-aarch64 \
+COPY --from=toolchain-aarch64-install-input \
   /opt/crossforge/sysroots/el8/aarch64/ /sysroot/
 COPY --from=toolchain-aarch64-qualify-build \
   /work/qualification/aarch64/ /work/qualification/aarch64/
@@ -1488,8 +1524,7 @@ COPY scripts/run-aarch64-smoke.sh /work/scripts/run-aarch64-smoke.sh
 COPY scripts/loader_evidence.py /work/scripts/loader_evidence.py
 COPY scripts/finalize-aarch64-qualification.py \
   /work/scripts/finalize-aarch64-qualification.py
-COPY scripts/python_row_contract.py scripts/release-components-core.py \
-  scripts/validate-release.py /work/scripts/
+COPY scripts/toolchain_policy.py scripts/release_component.py /work/scripts/
 RUN mkdir -p \
       /sysroot/.crossforge \
       /sysroot/opt/crossforge-qualification \
@@ -1522,7 +1557,9 @@ RUN --network=none \
     /usr/libexec/platform-python \
       /work/scripts/finalize-aarch64-qualification.py \
       --compile-report /work/qualification/aarch64-compile.json \
-      --release /src/config/release.json \
+      --components /work/config/components \
+      --qualification-component-sha256 \
+        "$CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256" \
       --artifacts /work/qualification/aarch64 \
       --locked-sysroot-result \
         /work/qualification/locked-sysroot-aarch64.result \
@@ -1550,15 +1587,11 @@ RUN --network=none /work/qualification/x86_64/hello \
 # remain outside every SDK ancestry. Qualification and observation branch from
 # the same assembly so an observation can never inherit a passing smoke result.
 FROM host-gcc-test-locked AS gcc-testsuite-x86_64-base
-COPY --from=gcc-x86_64-built /work/prepared/gcc/ /work/prepared/gcc/
-COPY --from=gcc-x86_64-built /work/build/gcc-x86_64/ /work/build/gcc-x86_64/
-COPY --from=sysroot-x86_64 \
-  /opt/crossforge/sysroots/el8/x86_64/ \
-  /opt/crossforge/sysroots/el8/x86_64/
-COPY --from=binutils-x86_64 /work/binutils-stage/ /
-COPY --from=gcc-x86_64 /work/gcc-stage/ /
-COPY config/release.json /work/config/release.json
-COPY config/schemas/release.schema.json /work/config/schemas/release.schema.json
+COPY --from=gcc-x86_64-test-input /work/prepared/gcc/ /work/prepared/gcc/
+COPY --from=gcc-x86_64-test-input /work/build/gcc-x86_64/ /work/build/gcc-x86_64/
+COPY --from=toolchain-x86_64-install-input /opt/crossforge/ /opt/crossforge/
+COPY config/generated/components/sources/gcc.json \
+  /work/config/generated/components/sources/gcc.json
 COPY config/schemas/gcc-testsuite-plan.schema.json \
   /work/config/schemas/gcc-testsuite-plan.schema.json
 COPY config/schemas/gcc-testsuite-baseline.schema.json \
@@ -1567,7 +1600,7 @@ COPY config/gcc-testsuite-smoke.json config/gcc-testsuite-full.json \
   /work/config/
 COPY patches/gcc/ /work/patches/gcc/
 COPY tests/gcc/ /work/tests/gcc/
-COPY scripts/validate-release.py scripts/release_component.py \
+COPY scripts/validate-release.py scripts/release_component.py scripts/gcc_testsuite_policy.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
 RUN --network=none \
     /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc \
@@ -1590,7 +1623,7 @@ COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
   /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
-      --release /work/config/release.json \
+      --components /work/config/generated/components \
       --build /work/build/gcc-x86_64/gcc-build \
       --source /work/prepared/gcc \
       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
@@ -1608,6 +1641,8 @@ RUN --network=none /usr/libexec/platform-python \
         /work/qualification/gcc-testsuite/x86_64-host-direct.json
 
 FROM gcc-testsuite-x86_64-base AS gcc-testsuite-x86_64-full-libstdcxx-observe
+COPY config/release.json /work/config/release.json
+COPY config/schemas/release.schema.json /work/config/schemas/release.schema.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
       --mode observation \
@@ -1638,7 +1673,7 @@ COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
       --profile full \
-      --release /work/config/release.json \
+      --components /work/config/generated/components \
       --build /work/build/gcc-x86_64/gcc-build \
       --source /work/prepared/gcc \
       --prefix /opt/crossforge/targets/x86_64-unknown-linux-gnu \
@@ -1718,19 +1753,17 @@ RUN --network=none /usr/libexec/platform-python \
         /work/observation/gcc-testsuite/x86_64-host-direct.candidate.json
 
 FROM host-gcc-test-locked AS gcc-testsuite-aarch64-base
-COPY --from=gcc-aarch64-built /work/prepared/gcc/ /work/prepared/gcc/
-COPY --from=gcc-aarch64-built /work/build/gcc-aarch64/ /work/build/gcc-aarch64/
-COPY --from=sysroot-aarch64 \
-  /opt/crossforge/sysroots/el8/aarch64/ \
-  /opt/crossforge/sysroots/el8/aarch64/
-COPY --from=binutils-aarch64 /work/binutils-stage/ /
-COPY --from=gcc-aarch64 /work/gcc-stage/ /
+COPY --from=gcc-aarch64-test-input /work/prepared/gcc/ /work/prepared/gcc/
+COPY --from=gcc-aarch64-test-input /work/build/gcc-aarch64/ /work/build/gcc-aarch64/
+COPY --from=toolchain-aarch64-install-input /opt/crossforge/ /opt/crossforge/
 COPY --from=rocky-runtime-aarch64-source / /runtime-root/
 COPY --from=qemu-aarch64-validated \
   /usr/local/libexec/crossforge/qemu-aarch64 \
   /usr/local/libexec/crossforge/qemu-aarch64
-COPY config/release.json /work/config/release.json
-COPY config/schemas/release.schema.json /work/config/schemas/release.schema.json
+COPY config/generated/components/toolchain/aarch64-qualification.json \
+  /work/config/generated/components/toolchain/aarch64-qualification.json
+COPY config/generated/components/sources/gcc.json \
+  /work/config/generated/components/sources/gcc.json
 COPY config/schemas/gcc-testsuite-plan.schema.json \
   /work/config/schemas/gcc-testsuite-plan.schema.json
 COPY config/schemas/gcc-testsuite-baseline.schema.json \
@@ -1739,7 +1772,7 @@ COPY config/gcc-testsuite-smoke.json config/gcc-testsuite-full.json \
   /work/config/
 COPY patches/gcc/ /work/patches/gcc/
 COPY tests/gcc/ /work/tests/gcc/
-COPY scripts/validate-release.py scripts/release_component.py \
+COPY scripts/validate-release.py scripts/release_component.py scripts/gcc_testsuite_policy.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
 RUN --network=none \
     /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc \
@@ -1762,7 +1795,7 @@ COPY config/generated/components/toolchain/gcc-testsuite-qualification.json \
   /work/config/generated/components/toolchain/gcc-testsuite-qualification.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
-      --release /work/config/release.json \
+      --components /work/config/generated/components \
       --build /work/build/gcc-aarch64/gcc-build \
       --source /work/prepared/gcc \
       --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu \
@@ -1782,7 +1815,7 @@ RUN --network=none /usr/libexec/platform-python \
         /work/qualification/gcc-testsuite/aarch64-locked-sysroot.json
 RUN --network=none /usr/libexec/platform-python \
       /work/scripts/run-gcc-testsuite.py \
-      --release /work/config/release.json \
+      --components /work/config/generated/components \
       --build /work/build/gcc-aarch64/gcc-build \
       --source /work/prepared/gcc \
       --prefix /opt/crossforge/targets/aarch64-unknown-linux-gnu \
@@ -1854,21 +1887,13 @@ COPY --from=gcc-testsuite-aarch64-smoke \
 # Inspectable dev toolchain that depends on both the exact-sysroot qualification
 # and the clean-Rocky portability gate. It remains cache-only and unpublished.
 FROM host-build-common-locked AS toolchain-x86_64-dev
-COPY --from=sysroot-x86_64 \
-  /opt/crossforge/sysroots/el8/x86_64/ \
-  /opt/crossforge/sysroots/el8/x86_64/
-COPY --from=binutils-x86_64 /work/binutils-stage/ /
-COPY --from=gcc-x86_64 /work/gcc-stage/ /
+COPY --from=toolchain-x86_64-install-input /opt/crossforge/ /opt/crossforge/
 COPY --from=runtime-smoke-x86_64 \
   /work/qualification/ /work/qualification/
 RUN test ! -e /rpm-bundle && test ! -e /rpm-bundle-gcc
 
 FROM host-build-common-locked AS toolchain-aarch64-dev
-COPY --from=sysroot-aarch64 \
-  /opt/crossforge/sysroots/el8/aarch64/ \
-  /opt/crossforge/sysroots/el8/aarch64/
-COPY --from=binutils-aarch64 /work/binutils-stage/ /
-COPY --from=gcc-aarch64 /work/gcc-stage/ /
+COPY --from=toolchain-aarch64-install-input /opt/crossforge/ /opt/crossforge/
 COPY --from=runtime-smoke-aarch64 \
   /work/qualification/ /work/qualification/
 RUN test ! -e /rpm-bundle \

@@ -1,0 +1,257 @@
+{
+  "base_commit": "d5ed6d6d65f552228ff8fd4fd2c09f439967e7fb",
+  "checks": [
+    {
+      "command": [
+        "./scripts/validate-release.py",
+        "--require-locked"
+      ],
+      "seconds": 0.027
+    },
+    {
+      "command": [
+        "./scripts/validate-supply-chain-evidence.py"
+      ],
+      "seconds": 0.37
+    },
+    {
+      "command": [
+        "./scripts/validate-frozen-abi.py"
+      ],
+      "seconds": 0.387
+    },
+    {
+      "command": [
+        "./scripts/validate-python-runtime-providers.py"
+      ],
+      "seconds": 0.248
+    },
+    {
+      "command": [
+        "./scripts/render-release-components.py",
+        "--check"
+      ],
+      "seconds": 0.183
+    },
+    {
+      "command": [
+        "./scripts/render-vcpkg-integration.py",
+        "--check"
+      ],
+      "seconds": 0.277
+    },
+    {
+      "command": [
+        "./scripts/render-bake.py",
+        "--check"
+      ],
+      "seconds": 0.216
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "docker/run-python-qualification.sh"
+      ],
+      "seconds": 0.001
+    },
+    {
+      "command": [
+        "actionlint",
+        "-ignore",
+        "unexpected key \"queue\" for \"concurrency\" section"
+      ],
+      "seconds": 0.009
+    }
+  ],
+  "date": "2026-09-11",
+  "environment": {
+    "bake": "CLI print only; no BuildKit solve",
+    "cpus": 4,
+    "docker_socket_mounted": false,
+    "memory": "16g",
+    "network": "none",
+    "platform_python": "3.6.8",
+    "rocky_image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+    "tool_image_id": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "user": "1000:1000"
+  },
+  "initial_findings": [
+    "Two initial focused runs used stale fixture access/expectations; these were corrected without weakening production gates.",
+    "New negative coverage found legacy final schema could accept scoped runtime reports. Runtime/final format pairing is now exact.",
+    "Final SDK integration retained a schema-4-only check; added independent schema-5 policy validation and repeated the full suite after that change.",
+    "A supplementary material comparison initially mixed working-directory and normalized archive modes. Repeating with identical Git export/mode normalization passed all 60 closures."
+  ],
+  "kind": "crossforge-local-refactoring-observation",
+  "limits": [
+    "Runtime/ELF/probe records in new tests are fixtures, not freshly executed qualification evidence.",
+    "No actual new clean-runtime installation, compile qualification, x86/ARM runtime solve, GCC source replay or candidate/native ARM execution occurred.",
+    "Row/SDK inputs still bind the complete release. Formal qualified-row CI production/consumption and cross-machine execution identity are not completed.",
+    "GitHub trust/retry/cross-run acceptance, retention policy and matched performance replays remain pending.",
+    "Earlier automatic approval review rejected mounting the host Docker socket inside the orchestration container for broad daemon control; that explicit approval is still pending and was not bypassed.",
+    "No merge to main, remote push or image publication."
+  ],
+  "local_outputs": {
+    "final-material-snapshot-normalized.log": {
+      "path": "/tmp/crossforge-python-runtime-inputs/final-material-snapshot-normalized.log",
+      "sha256": "5c1636a07740d56ba7457ec816f9d94a7fabef20aa5c20a20afc4f59d2091186"
+    },
+    "final-material-snapshot.json": {
+      "path": "/tmp/crossforge-python-runtime-inputs/final-material-snapshot.json",
+      "sha256": "1ec4fa316dcf596a98aec8203f2d127107bd3695614f0102b54663e3e940ac92"
+    },
+    "full-result.json": {
+      "path": "/tmp/crossforge-python-runtime-inputs/full-result.json",
+      "sha256": "50859b6470ab27d76f3b01115cd14d89246a2c9d92838f7089ade5691bff3cdc"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-python-runtime-inputs/full.log",
+      "sha256": "3d10614ed5c36138bbdb6aab76412bd45ff7837950f260daa71b5fb51d3ed686"
+    },
+    "material-check.py": {
+      "path": "/tmp/crossforge-python-runtime-inputs/material-check.py",
+      "sha256": "4d382a1c68daada3a3c60d118c6e53791f8f9862191c5c55c812387539a08ef6"
+    },
+    "material-result.json": {
+      "path": "/tmp/crossforge-python-runtime-inputs/material-result.json",
+      "sha256": "156afe18169eb3fd5b1590d57289c1e33bb5e51e2e07268a352d7654e56be213"
+    },
+    "rocky-sdk.log": {
+      "path": "/tmp/crossforge-python-runtime-inputs/rocky-sdk.log",
+      "sha256": "8c4aba4686004091230355e2700abd3221685abc29a406425c8fb3cde452435f"
+    },
+    "rocky.log": {
+      "path": "/tmp/crossforge-python-runtime-inputs/rocky.log",
+      "sha256": "4ebea6f7b606d419a7ecd6eff5fc856b8afcfba968258bb77d6499827d40c402"
+    },
+    "verify-material-snapshot.py": {
+      "path": "/tmp/crossforge-python-runtime-inputs/verify-material-snapshot.py",
+      "sha256": "bc8caed3524001b0af238d535202f534f2395e60a1cb591496a97372f6485a12"
+    }
+  },
+  "materials": {
+    "base_commit": "d5ed6d6d65f552228ff8fd4fd2c09f439967e7fb",
+    "component_documents_changed": 0,
+    "component_documents_unchanged": 113,
+    "configuration_mutations": {
+      "new-cp39-source": [
+        "cpython-cp39-aarch64-qualify",
+        "cpython-cp39-x86_64-qualify"
+      ],
+      "new-product-version": [],
+      "new-qemu-executor": [
+        "cpython-cp310-aarch64-qualify",
+        "cpython-cp311-aarch64-qualify",
+        "cpython-cp312-aarch64-qualify",
+        "cpython-cp313-aarch64-qualify",
+        "cpython-cp314-aarch64-qualify",
+        "cpython-cp39-aarch64-qualify"
+      ],
+      "new-x86-abi": [
+        "cpython-cp310-x86_64-qualify",
+        "cpython-cp311-x86_64-qualify",
+        "cpython-cp312-x86_64-qualify",
+        "cpython-cp313-x86_64-qualify",
+        "cpython-cp314-x86_64-qualify",
+        "cpython-cp39-x86_64-qualify"
+      ],
+      "old-product-version": [
+        "cpython-cp310-aarch64-qualify",
+        "cpython-cp310-x86_64-qualify",
+        "cpython-cp311-aarch64-qualify",
+        "cpython-cp311-x86_64-qualify",
+        "cpython-cp312-aarch64-qualify",
+        "cpython-cp312-x86_64-qualify",
+        "cpython-cp313-aarch64-qualify",
+        "cpython-cp313-x86_64-qualify",
+        "cpython-cp314-aarch64-qualify",
+        "cpython-cp314-x86_64-qualify",
+        "cpython-cp39-aarch64-qualify",
+        "cpython-cp39-x86_64-qualify"
+      ]
+    },
+    "final_source_matches_measured_closures": 60,
+    "interpretation": "Real Bake print/source capture over equally normalized Git snapshots with an explicit execution fixture. Shared overlay/qualification implementation changes invalidate those stages once. This is not execution or a measured speedup.",
+    "raw_component_closures_unchanged": 34,
+    "runtime_qualification_closures_changed": 12,
+    "runtime_root_closures_changed": 2,
+    "static_qualification_closures_changed": 12
+  },
+  "regression_scope": [
+    "All twelve runtime input selectors match independently rendered release policy and ABI identities.",
+    "Six x86_64 fixture report chains pass scoped production finalization and full-release final consumption; artifact, provider, probe and serialization tampering fail.",
+    "AArch64 locked-runtime fixture validates exact QEMU binary/version/CPU/uname/kind. This does not claim an actual ARM compile or execution.",
+    "Cropped cp314 runtime stage uses the twelve copied scripts and two policy documents without loading release, schema, renderer or source bridge; static source authentication remains in the static qualifier.",
+    "Missing/mixed authorities, wrong digest, unsupported/type-confused schemas, legacy nested reports and legacy overlay in a scoped chain fail.",
+    "Row dispatch fixture retains complete release and all-row qualification identities. Its target validator is mocked; complete nested target validation is separately covered.",
+    "Final SDK fixture requires the current complete release and independently derives the scoped binding even when report bytes and the row digest are updated together."
+  ],
+  "rocky_tests": {
+    "final_sdk_consumer": 1,
+    "final_sdk_seconds": 0.524,
+    "runtime_contracts": 9,
+    "runtime_seconds": 49.046,
+    "skipped": 0,
+    "syntax_files": [
+      "scripts/run-cpython-runtime.py",
+      "scripts/finalize-cpython-qualification.py",
+      "scripts/python_runtime_overlay.py",
+      "scripts/python_qualification_policy.py",
+      "docker/finalize-python-row.py",
+      "scripts/qualify-final-sdk.py"
+    ]
+  },
+  "schema_version": 1,
+  "schemas": {
+    "component_mode": {
+      "compile": 5,
+      "final": 5,
+      "overlay": 2,
+      "runtime": 4
+    },
+    "final_sdk_manifest": 1,
+    "legacy_mode": {
+      "compile": [
+        4,
+        5
+      ],
+      "final": 4,
+      "release_identity": "exact complete release; no input_binding on legacy runtime/final",
+      "runtime": 3
+    },
+    "row_manifest": 2
+  },
+  "scope": "Scoped Python target runtime/final producers and full-release row/SDK consumers; contract and material validation only",
+  "source_sha256": {
+    "docker-bake.override.json": "ef7d7a0600d02720a5f688724cec86a1c564e956276fc3320b584475ecf3609e",
+    "docker/finalize-python-row.py": "682fbb24707b324ac3bd8fe33da7ff1c8fd0e247f701f1b2f3629d327c89a5eb",
+    "docker/python.Dockerfile": "4dbdbdd5c19a361fffa237003a2309f9f054e0f60f9019b80fae719159823c25",
+    "docker/run-python-qualification.sh": "82ebe25bb426376bf08edb88ab80705016c19b3cf4a19107e3b37e2368eae41f",
+    "scripts/finalize-cpython-qualification.py": "b9dbfd0dd1b9998132a8fde32262bb27273c1f78ade9fc9104a80c3676bb8d2e",
+    "scripts/python_qualification_policy.py": "474e18c249b00244d4104b1f87a1cd8bea92d5080ec77a92b85990336efbfd9e",
+    "scripts/python_runtime_overlay.py": "25d43870ed870191b83c6f4f6b8c31c6bcee5298ea2c05547ac4da24497876f5",
+    "scripts/qualify-final-sdk.py": "2369529a7aed773e97153e8083731ac4517d66c692a652998d01568514a2fe3a",
+    "scripts/render-bake.py": "bf3bfa8fcc1fd021896937f7cd2946771065b1f72553dfaed070d1a35b1a93c3",
+    "scripts/run-cpython-runtime.py": "891cd6003d11acc106b2486265993c9ed1c10273285ca54f676b005a1b8ce0b1",
+    "tests/config/test_final_sdk_qualification.py": "ad4483a9407bc5fe8085a9b43e21da76868f5ef5e5728fda67bb49a93d1267b3",
+    "tests/config/test_python_build_component_wiring.py": "c8d93520cbfa6195f7c79b9393e5f1bf73294043262daa15b96061a55f15a2e9",
+    "tests/config/test_python_row_manifest.py": "a703e2f1035c71ed2ba3a722618772ca33278ddbafd2cbd0728c583fa396c129",
+    "tests/config/test_python_runtime_component_inputs.py": "665db1a98df18f518511574a2c48b361ddb355fd45f91e8d3ba402cdac657222",
+    "tests/config/test_render_bake.py": "b60845e5797f09807d2e3e68557b4d030a6028b575b3a5a8aa3f95b68f67e6b7"
+  },
+  "status": "local-contract-checks-passed; actual qualification and CI acceptance pending",
+  "tests": [
+    {
+      "seconds": 257.5,
+      "skipped": 0,
+      "suite": "config",
+      "tests": 1279
+    },
+    {
+      "seconds": 1.161,
+      "skipped": 0,
+      "suite": "packaging",
+      "tests": 40
+    }
+  ]
+}

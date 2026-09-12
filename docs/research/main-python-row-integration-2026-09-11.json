@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-main-python-row-integration-observation",
+  "observed_at": "2026-09-11T12:52:23.804422+00:00",
+  "base_commit": "fb836c50180445d0df04fb313ed1229e35a847d5",
+  "scope": "Main workflow wiring, original independent append executor, and Docker regression acceptance; no GitHub producer/signing claim",
+  "source_sha256": {
+    ".github/workflows/produce-python-row.yml": "d413c707f3ecaef450a96356bccb1dacfb27d1721b3d63cc1753dc95dbd162d3",
+    ".github/workflows/verify-main-builds.yml": "db32cab11685406f624b6618153d76167604a93b1d96c718fc1a718557f232d2",
+    "scripts/crossforge_internal/ci_python.py": "2ddbbef93a26a6dc48765bd3a77d458c386795ba3c536f00cc7429540c13861e",
+    "scripts/crossforge_internal/ci_python_rows.py": "08fb356de5625ab8f99bd70d0c6b8edab781225105271774ae01a4058ed17722",
+    "scripts/crossforge_internal/incremental_plan.py": "dd37b38b6aceb8e7342f6941a4b4a972144b6563983cdb4be873042d3401531c",
+    "scripts/crossforge_internal/python_row_install.py": "15b6acb98a6527aaf66868b1c610968149d06aec1714fa630a34d4347156953c",
+    "tests/config/test_ci_python_execution.py": "e15052f458a67099de41ca804add9ee99ebaadccf4248adf6ac2d8b2da17c189",
+    "tests/config/test_incremental_plan.py": "b6927576b3edaa005b208c504270b49dd20367b0bedcfbe01364fcfdae7ce214",
+    "tests/config/test_python_row_ci.py": "9a660fa0c7ddb449e54eb16bd69f5e13605014d6db1feb9a06ca0d99955b1e55",
+    "tests/config/test_python_row_install.py": "e58c296d798e9d2725b889b74b29688a4a5c6ea881f84e09c6f5d5343d5d0e74"
+  },
+  "behavior": [
+    "Main selected Python jobs call the existing producer/sign/store reusable workflow at parallelism 2",
+    "Exact selected row matrix is checked by required status; each row retains its canonical python-<row>-dev root",
+    "Fresh and reused qualifications both undergo original raw/row acceptance and two freshly executed independent append RUNs on sdk-toolchains-dev",
+    "Installed row manifest must equal the qualified row; failed installation prevents publication, handoff and successful row job",
+    "SDK retains independent cumulative append/final gates and read-only permissions; strict physical environment matching can still trigger SDK-local requalification",
+    "Changing the new independent installation controller selects row gates without claiming compiler input changes; unknown changes still fall back to full"
+  ],
+  "validation": {
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "environment": "Docker, offline, user 1000, 4 CPUs, 16 GiB, no daemon socket; verified pinned zstd/nFPM assets",
+    "config": {
+      "tests": 1419,
+      "seconds": 412.167,
+      "skipped": 0,
+      "status": "passed"
+    },
+    "packaging": {
+      "tests": 40,
+      "seconds": 1.759,
+      "skipped": 0,
+      "status": "passed"
+    },
+    "focused": {
+      "tests": 101,
+      "seconds": 20.732,
+      "skipped": 0,
+      "status": "passed"
+    },
+    "rocky": {
+      "status": "passed",
+      "tests": 46,
+      "skipped": 0,
+      "seconds": 4.599,
+      "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+      "scope": "Python 3.6 regressions; graph from actual pinned tooling Docker Bake print, domain execution/signing fixtures remain explicit",
+      "image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+    },
+    "checks": {
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/config",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 415.384
+        },
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/packaging",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 1.87
+        },
+        {
+          "command": [
+            "./scripts/validate-release.py",
+            "--require-locked"
+          ],
+          "seconds": 0.057
+        },
+        {
+          "command": [
+            "./scripts/validate-supply-chain-evidence.py"
+          ],
+          "seconds": 0.514
+        },
+        {
+          "command": [
+            "./scripts/validate-frozen-abi.py"
+          ],
+          "seconds": 0.505
+        },
+        {
+          "command": [
+            "./scripts/validate-python-runtime-providers.py"
+          ],
+          "seconds": 0.385
+        },
+        {
+          "command": [
+            "./scripts/render-release-components.py",
+            "--check"
+          ],
+          "seconds": 0.316
+        },
+        {
+          "command": [
+            "./scripts/render-vcpkg-integration.py",
+            "--check"
+          ],
+          "seconds": 0.307
+        },
+        {
+          "command": [
+            "./scripts/render-bake.py",
+            "--check"
+          ],
+          "seconds": 0.359
+        },
+        {
+          "command": [
+            "bash",
+            "-n",
+            "docker/run-python-qualification.sh"
+          ],
+          "seconds": 0.002
+        },
+        {
+          "command": [
+            "actionlint",
+            "-ignore",
+            "unexpected key \"queue\" for \"concurrency\" section",
+            ".github/workflows/candidate.yml",
+            ".github/workflows/ci.yml",
+            ".github/workflows/component-pilot.yml",
+            ".github/workflows/produce-python-row.yml",
+            ".github/workflows/produce-python.yml",
+            ".github/workflows/produce-toolchain.yml",
+            ".github/workflows/promote.yml",
+            ".github/workflows/qualification.yml",
+            ".github/workflows/release-control-plane.yml",
+            ".github/workflows/release-request.yml",
+            ".github/workflows/replay-qualification.yml",
+            ".github/workflows/replay-sources.yml",
+            ".github/workflows/rollback.yml",
+            ".github/workflows/verify-builds.yml",
+            ".github/workflows/verify-incremental.yml",
+            ".github/workflows/verify-main-builds.yml",
+            ".github/workflows/verify-main-incremental.yml",
+            ".github/workflows/verify-quick.yml"
+          ],
+          "seconds": 0.008
+        }
+      ],
+      "status": "passed"
+    },
+    "notes": [
+      "Actionlint checked all workflow files explicitly and retained only the pre-existing concurrency.queue compatibility ignore",
+      "Rocky Python 3.6 compiled four changed production files and ran 46 tests using a graph actually printed by pinned Docker tooling",
+      "New installer graph tests cover all six canonical rows with mocked raw/row acceptance and BuildKit RUNs. Real capture and progress validators check dependency boundaries, failed/cached/missing/wrong-row records, manifest mismatch, material/environment drift and output reuse.",
+      "CI tests mock registry/GitHub/execution boundaries, preserving production ordering and failure propagation; they are not signed or remotely executed evidence",
+      "Regressions overlapped current local qualification work; their timing is not a GitHub performance comparison"
+    ],
+    "logs": {
+      "focused.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/focused.log",
+        "sha256": "2061fe55da4348e495f74bcca1ba9a1928e8d1709141684a593f2253a8883972"
+      },
+      "full.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/full.log",
+        "sha256": "c7537e1f3bed834962171a6ea7511ff54600c3025e21867ea168609c8668f2f6"
+      },
+      "full-result.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/full-result.json",
+        "sha256": "27c53dae0e0d161be61f9d9f4f6d27dbd9a3a1c95a46f0d1fdb110214c4cb97b"
+      },
+      "rocky.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/rocky.log",
+        "sha256": "16b014f8106fba5b027f02d98474c1078ebfe4d1fa61408302d497da88d490ef"
+      },
+      "rocky-result.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/rocky-result.json",
+        "sha256": "8c857b11216ecbeeef0eb5f4ef79776ce32d011eaa69f2fb0e29e85656f012e4"
+      },
+      "independent-graph.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/independent-graph.json",
+        "sha256": "52aad385158b003992b494c96a79e40832fa26095a0354bbacb5182672d98116"
+      }
+    }
+  },
+  "actual_probe": {
+    "status": "passed",
+    "manifest": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/install-manifest-attempt3.json",
+      "sha256": "2357aa3fccad646048d76a0b0a77af6f600ef52fafd070da1c03cc4fa19d0974"
+    },
+    "runner": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/run-install-attempt3.py",
+      "sha256": "bb3130922b783ac1eb9878b644c0902819fa78bec1bc36d29422677df69a3083"
+    },
+    "wrapper": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/run-install-attempt3.sh",
+      "sha256": "c94615299a707a907275fb05601398d462db7e18e15b747a78ad1c06929b6a86"
+    },
+    "source": "frozen normalized working snapshot based on fb836c5; includes tested uncommitted implementation, explicitly source_dirty=true",
+    "input": "original accepted local cp39 row from a56bb29, original receipt/producer preserved",
+    "preparation_failures": [
+      "First wrapper mixed physical /data and logical /home paths and failed before daemon access",
+      "Second snapshot used 0775 directories where original inputs require 0755; original raw consumer rejected it before installation",
+      "Both failures retained. Third attempt uses a new normalized source directory and pins directory modes as well as file bytes/modes; no verifier or receipt was relaxed"
+    ],
+    "prior_logs": {
+      "actual-install.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/actual-install.log",
+        "sha256": "1e5e5433e69f038f26edd8458d9760024f13cd415c21bd10ff34a3f0f715b224"
+      },
+      "actual-install-attempt2.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/actual-install-attempt2.log",
+        "sha256": "3e41822814e6bb1cee5c7c62449f754ce02f3a942b558bc222d84df2c2a17162"
+      }
+    },
+    "seconds": 213.394,
+    "result_file": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/actual-install-cp39-attempt3/result.json",
+      "sha256": "da7259bdfd9209d97bcbaf08b0a7ad562c73038646860752e85a755510e894eb"
+    },
+    "inputs_file": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/actual-install-cp39-attempt3/installation/inputs.json",
+      "sha256": "6e0b6e361e7f7af2df418bf19903f7e8d138b59ec8712ee6486f1ea041ee6b8a"
+    },
+    "inputs_sha256": "5587739b70d5f0988791bd7a411efdb11c6117f37ef1a578ee2e2ff35cebc8d0",
+    "row_receipt_sha256": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3",
+    "fresh_runs": 2,
+    "dependencies": [
+      {
+        "artifact_digest": "sha256:e73e7fd9db8b4b76b8be190610b21f4102d096b94bce16adc132d717962c3a05",
+        "component": "qualification/python-cp39",
+        "inputs_sha256": "b8d58152a4d3fd5d6d9645a26d0fd3891164cea3b4e98f512fd30cd34a124735"
+      },
+      {
+        "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+        "component": "toolchain/aarch64-install",
+        "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+      },
+      {
+        "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+        "component": "toolchain/x86_64-install",
+        "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+      }
+    ],
+    "report": {
+      "mode": "0644",
+      "path": "row.json",
+      "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+    },
+    "log": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/actual-install-attempt3.log",
+      "sha256": "cc4dddd5f81336a300a1756b5016b742e830a8e1f829b3704f88747c68dddf04"
+    },
+    "execution_log": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/main-python-row-integration/actual-install-cp39-attempt3/installation/execution.jsonl",
+      "sha256": "08b3cafdd9e4fc874839ab48e00c4ed088d43a51162dca09b41aa7ee5ce32256"
+    },
+    "source_compiler_RUNs_observed": 0
+  },
+  "remaining": [
+    "Actual GitHub events, signing, cross-run reuse/retry and required status",
+    "Complete SDK recovery for freshly produced rows",
+    "Candidate qualified-row consumption, fresh final/native ARM and digest promotion",
+    "Reference-aware retention and three matching-input plus affected-change performance runs"
+  ],
+  "merged_main": false,
+  "pushed": false,
+  "published": false
+}

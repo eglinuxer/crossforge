@@ -17,12 +17,17 @@ class GitHubActionsSecurityTests(unittest.TestCase):
         for path in workflows:
             with self.subTest(path=path.name):
                 content = path.read_text(encoding="utf-8")
-                if path.name == "verify-builds.yml":
+                if path.name in ("verify-builds.yml", "verify-incremental.yml"):
                     self.assertIn("workflow_call:", content)
                     for standalone in ("pull_request:", "push:", "schedule:", "workflow_dispatch:"):
                         self.assertNotIn(standalone, content)
-                    self.assertNotIn("permissions:", content)
-                    self.assertIn("Permissions intentionally inherit from the caller", content)
+                    self.assertNotIn("\npermissions:\n", content)
+                    if path.name == "verify-builds.yml":
+                        self.assertNotIn("permissions:", content)
+                        self.assertIn("Permissions intentionally inherit from the caller", content)
+                    else:
+                        self.assertIn("Build jobs inherit the caller's permission boundary", content)
+                        self.assertEqual(content.count("permissions:\n      contents: read"), 3)
                     continue
                 permissions = content.index("\npermissions:\n")
                 jobs = content.index("\njobs:\n")

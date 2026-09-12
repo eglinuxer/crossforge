@@ -13,6 +13,9 @@ from pathlib import Path
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
+if str(REPOSITORY / "scripts") not in sys.path:
+    sys.path.insert(0, str(REPOSITORY / "scripts"))
+from crossforge_internal import candidate_recovery
 SCHEMA_ID = "https://crossforge.dev/schemas/release-promotion.schema.json"
 CANDIDATE_WORKFLOW = ".github/workflows/candidate.yml"
 GIT_SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
@@ -136,11 +139,19 @@ def artifact_names(run_id, attempt):
     )
 
 
+def bind_recovery(recovery, candidate_sha256, candidate_run):
+    try:
+        return candidate_recovery.bind(recovery, candidate_sha256, candidate_run)
+    except ValueError as error:
+        raise PromotionError("candidate recovery is invalid: %s" % error) from error
+
+
 def promotion_document(
     release,
     candidate,
     candidate_sha256,
     candidate_run,
+    recovery=None,
 ):
     require(
         candidate["source_commit"] == candidate_run["head_sha"],
@@ -148,7 +159,7 @@ def promotion_document(
     )
     product = release["product"]
     source = candidate["source_bundle"]
-    return {
+    document = {
         "$schema": SCHEMA_ID,
         "schema_version": 1,
         "kind": "crossforge-release-promotion",
@@ -182,6 +193,11 @@ def promotion_document(
             "registry": "anonymous-exact-digest",
         },
     }
+    if recovery is not None:
+        document["schema_version"] = 2
+        document["candidate_recovery"] = bind_recovery(recovery, candidate_sha256, candidate_run)
+        document["artifacts"] = candidate_recovery.artifact_names(recovery)
+    return document
 
 
 def validate_document(document, release, schema):
@@ -201,8 +217,15 @@ def validate_document(document, release, schema):
         "promotion release identity differs",
     )
     run = document["candidate_run"]
+    if document["schema_version"] == 2:
+        require("candidate_recovery" in document, "promotion requires candidate artifact lineage")
+        recovery = bind_recovery(document["candidate_recovery"], document["candidate_manifest_sha256"], run)
+        expected_artifacts = candidate_recovery.artifact_names(recovery)
+    else:
+        require("candidate_recovery" not in document, "legacy promotion cannot contain candidate artifact lineage")
+        expected_artifacts = artifact_names(run["id"], run["attempt"])
     require(
-        document["artifacts"] == artifact_names(run["id"], run["attempt"]),
+        document["artifacts"] == expected_artifacts,
         "promotion artifact set differs",
     )
     for name, source in (("candidate", False), ("source_bundle", True)):
@@ -272,6 +295,7 @@ def parser():
     add_common(create)
     create.add_argument("--candidate", type=Path, required=True)
     create.add_argument("--candidate-run", type=Path, required=True)
+    create.add_argument("--candidate-recovery", type=Path)
     create.add_argument("--expected-github-repository", required=True)
     create.add_argument("--expected-candidate-run-id", type=int, required=True)
     create.add_argument("--output", type=Path, required=True)
@@ -313,6 +337,7 @@ def main(argv=None):
             candidate,
             candidate_sha256,
             candidate_run,
+            STRICT["load_json"](arguments.candidate_recovery) if arguments.candidate_recovery is not None else None,
         )
         validate_document(document, release, schema)
         state = "wrote" if write_json_once(arguments.output, document) else "current"
@@ -325,6 +350,7 @@ def main(argv=None):
         PromotionError,
         TypeError,
         ValidationError,
+        ValueError,
     ) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1

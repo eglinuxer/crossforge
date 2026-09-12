@@ -1,0 +1,47 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/python-cp39-qualification-policy",
+  "dependencies": [
+    {
+      "canonical_sha256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
+      "component": "implementation/python-cp39-build-policy"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/python_rows/cp39/adapter",
+      "value": "legacy"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/gil_policy",
+      "value": "absent"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/hash_algorithm",
+      "value": "siphash24"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/introduced_phase",
+      "value": 10
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/minor",
+      "value": "3.9"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/row",
+      "value": "cp39"
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/sysconfig_isolation",
+      "value": true
+    },
+    {
+      "path": "/@implementation/python_rows/cp39/zstd",
+      "value": false
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

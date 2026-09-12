@@ -62,7 +62,7 @@ class RenderBakeTests(unittest.TestCase):
 
     def test_component_arguments_cover_the_complete_release_binding(self):
         records = self.binding["components"]
-        self.assertEqual(len(records), 89)
+        self.assertEqual(len(records), 113)
         expected = {
             RENDERER["component_argument_name"](record["component"]): record[
                 "canonical_sha256"
@@ -96,6 +96,27 @@ class RenderBakeTests(unittest.TestCase):
             "toolchain-aarch64-dev",
         ):
             self.assertNotIn(runtime, self.targets[name]["args"])
+
+    def test_toolchain_consumers_have_scoped_install_and_test_context_inputs(self):
+        bindings = RENDERER["scoped_main_toolchain_contexts"](REPOSITORY)
+        for arch in ("x86_64", "aarch64"):
+            install = "crossforge_toolchain_%s_install" % arch
+            context = "crossforge_toolchain_%s_test_context" % arch
+            self.assertEqual(bindings["toolchain-%s-dev" % arch], {
+                install: "target:toolchain-%s-build-export" % arch})
+            self.assertEqual(bindings["gcc-testsuite-%s-smoke" % arch], {
+                install: "target:toolchain-%s-build-export" % arch,
+                context: "target:gcc-%s-test-context-export" % arch})
+            for producer in ("toolchain-%s-build-export" % arch, "gcc-%s-test-context-export" % arch):
+                self.assertNotIn(producer, bindings, "a producer must not depend on its own component context")
+            for name in ("toolchain-%s-dev" % arch, "gcc-testsuite-%s-smoke" % arch):
+                for key, value in bindings[name].items():
+                    self.assertEqual(self.targets[name]["contexts"][key], value)
+
+    def test_full_gcc_gate_keeps_both_component_inputs(self):
+        self.assertEqual(self.targets["gcc-testsuite-x86_64-full-qualified"]["contexts"], {
+            "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+            "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"})
 
     def test_qt_build_lock_targets_exclude_runtime_component_identity(self):
         qualification = RENDERER["component_argument_name"](
@@ -139,19 +160,8 @@ class RenderBakeTests(unittest.TestCase):
                 )
                 self.assertRegex(digest, r"^[0-9a-f]{64}$")
 
-    def test_python_qualification_identities_enter_only_static_qualifiers(self):
-        expected = {
-            RENDERER["component_argument_name"](
-                "implementation/python-qualification-policy"
-            ): self.binding_records[
-                "implementation/python-qualification-policy"
-            ]["canonical_sha256"],
-            RENDERER["component_argument_name"](
-                "python/qualification"
-            ): self.binding_records["python/qualification"][
-                "canonical_sha256"
-            ],
-        }
+    def test_python_qualification_identities_enter_static_and_runtime_qualifiers(self):
+        key = "CPYTHON_QUALIFICATION_COMPONENT_SHA256"
         qualifier_names = set()
         for contract in RENDERER["IMPLEMENTED_ROWS"]:
             row = contract["row"]
@@ -160,39 +170,45 @@ class RenderBakeTests(unittest.TestCase):
                 qualifier_names.add(name)
                 target = self.targets[name]
                 self.assertEqual(target["target"], "cpython-qualify-build")
-                self.assertEqual(
-                    {
-                        key: target["args"][key]
-                        for key in expected
-                    },
-                    expected,
-                )
-
+                self.assertEqual(target["args"][key], self.binding_records[
+                    "python/%s-%s-qualification" % (row, arch)]["canonical_sha256"])
+                runtime_name = "cpython-%s-%s-qualify" % (row, arch)
+                qualifier_names.add(runtime_name)
+                self.assertEqual(self.targets[runtime_name]["args"][key], target["args"][key])
         for name, target in self.targets.items():
             if target.get("inherits") != ["_python_common"]:
                 continue
-            present = set(target.get("args", {})) & set(expected)
             with self.subTest(target=name):
-                self.assertEqual(
-                    present,
-                    set(expected) if name in qualifier_names else set(),
-                )
+                self.assertEqual(key in target.get("args", {}), name in qualifier_names)
+                self.assertNotIn("CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256", target.get("args", {}))
+                self.assertNotIn("CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256", target.get("args", {}))
 
-    def test_python_qualification_identity_arguments_fail_closed(self):
-        for component in (
-            "implementation/python-qualification-policy",
-            "python/qualification",
-        ):
+    def test_row_qualification_pins_enter_only_row_producers_and_append_consumers(self):
+        key = "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256"
+        names = {name for row in RENDERER["IMPLEMENTED_ROWS"] for name in
+                 ("python-row-" + row["row"], "python-" + row["row"] + "-dev", "python-dev-append-" + row["row"])}
+        for name, target in self.targets.items():
+            if target.get("inherits") == ["_python_common"]:
+                with self.subTest(target=name):
+                    self.assertEqual(key in target.get("args", {}), name in names)
+
+    def test_row_qualification_pin_is_required_for_each_row(self):
+        for row in RENDERER["IMPLEMENTED_ROWS"]:
+            component = "python/%s-qualification" % row["row"]
             arguments = copy.deepcopy(self.component_arguments)
             del arguments[RENDERER["component_argument_name"](component)]
-            with self.subTest(component=component):
-                with self.assertRaisesRegex(
-                    ValueError,
-                    "missing Python qualification component digest",
-                ):
-                    RENDERER["render_python_graph"](
-                        copy.deepcopy(self.release), {}, arguments
-                    )
+            with self.subTest(component=component), self.assertRaisesRegex(ValueError, "missing Python row qualification component digest"):
+                RENDERER["render_python_graph"](copy.deepcopy(self.release), {}, arguments)
+
+    def test_python_qualification_identity_arguments_fail_closed(self):
+        for row in RENDERER["IMPLEMENTED_ROWS"]:
+            for arch in RENDERER["PYTHON_TARGETS"]:
+                component = "python/%s-%s-qualification" % (row["row"], arch)
+                arguments = copy.deepcopy(self.component_arguments)
+                del arguments[RENDERER["component_argument_name"](component)]
+                with self.subTest(component=component):
+                    with self.assertRaisesRegex(ValueError, "missing Python qualification component digest"):
+                        RENDERER["render_python_graph"](copy.deepcopy(self.release), {}, arguments)
 
     def test_only_explicitly_planned_qt_remains_future(self):
         future = {
@@ -263,7 +279,11 @@ class RenderBakeTests(unittest.TestCase):
                 "python-row-%s" % row,
                 "python-%s-dev" % row,
             ):
-                self.assertEqual(self.targets[name]["args"], expected)
+                target_expected = dict(expected)
+                if name in ("python-row-" + row, "python-" + row + "-dev"):
+                    target_expected["CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256"] = self.binding_records[
+                        "python/%s-qualification" % row]["canonical_sha256"]
+                self.assertEqual(self.targets[name]["args"], target_expected)
             build_expected = dict(expected)
             build_expected["CPYTHON_ZSTD_VERSION"] = (
                 self.release["python"]["zstd"]["version"]
@@ -444,7 +464,7 @@ class RenderBakeTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         cross["contexts"]["crossforge_cpython_build"],
-                        "target:cpython-build-%s" % row,
+                        "target:cpython-build-%s-export" % row,
                     )
                     self.assertEqual(
                         cross["args"]["CROSSFORGE_TARGET_TRIPLE"], triple
@@ -462,6 +482,14 @@ class RenderBakeTests(unittest.TestCase):
                         qualify["contexts"]["crossforge_cpython_qualify_build"],
                         "target:cpython-%s-%s-qualify-build" % (row, arch),
                     )
+                    compile_gate = self.targets["cpython-%s-%s-qualify-build" % (row, arch)]
+                    self.assertEqual(compile_gate["contexts"], {
+                        "crossforge_host_python": "target:host-python-build-locked",
+                        "crossforge_toolchain": "target:toolchain-%s-build-export" % arch,
+                        "crossforge_cpython_build": "target:cpython-build-%s-export" % row,
+                        "crossforge_cpython_install": "target:cpython-cross-%s-%s-export" % (row, arch),
+                        "crossforge_cpython_test_context": "target:cpython-%s-%s-test-context-export" % (row, arch),
+                    })
 
     def test_source_fetch_is_independent_and_prepare_uses_locked_host(self):
         source = self.targets["cpython-source-cp311"]
@@ -558,7 +586,7 @@ class RenderBakeTests(unittest.TestCase):
                 )
         cross_block = self.python_dockerfile.split(
             "FROM python-build-host AS cpython-cross", 1
-        )[1].split("FROM crossforge_cpython_cross AS cpython-qualify-build", 1)[0]
+        )[1].split("FROM python-build-host AS cpython-qualify-build", 1)[0]
         self.assertNotIn("crossforge_qemu", cross_block)
         self.assertNotIn("qemu-aarch64", cross_block)
         self.assertNotIn("HOSTRUNNER", cross_block)

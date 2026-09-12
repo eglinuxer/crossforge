@@ -1,0 +1,67 @@
+{
+  "corrections": [
+    "First actionlint run found a YAML indentation mistake in the modified composite action; corrected before regression acceptance",
+    "Quick-check location assertions were updated to follow the extracted workflow without changing their validation requirements",
+    "The first full run found one security test that assumed only verify-builds could inherit permissions; it now checks both explicit reusable build workflows and the three permission-reduced control jobs; the final full run passed"
+  ],
+  "date": "2026-09-10",
+  "files": {
+    ".github/actions/run-build-stage/action.yml": "1294a3c0aacbfd1e066159f555d6fc37c5621007422dd16f7adba1686f819d1d",
+    ".github/actions/setup-component-reader/action.yml": "0b1d8ef0da56bac03d4fa851bcbe58007b308ae28c5ece4303c8163d7bf1e78a",
+    ".github/workflows/candidate.yml": "0d02f8e61969787c47915107da69f9e6e7d49f4d9ca739e4726d9aca6f397465",
+    ".github/workflows/ci.yml": "a79bfe6cc6c95c9096e3e9254e98e41142caf556226fd4b4a39a875a7db330cb",
+    ".github/workflows/component-pilot.yml": "d3073f5ab72dec22043259535111de66fc536eea6ce9f89e77cb966406683f68",
+    ".github/workflows/verify-incremental.yml": "c7aba464905fc210c367fb973dd618f7bd063f1529fb49b777cd331c20c1bb92",
+    ".github/workflows/verify-quick.yml": "c920254799d9d67c845e6562e78813e35fb63dc9a169c7598bede505e8d905ae",
+    "scripts/ci-component-plan.py": "5d9a8b28026698ccfa918e09cf2218817331882fbc7e756242b4cfd5668550af",
+    "scripts/crossforge_internal/ci_execution.py": "ede1f95a117cb5adc4ab68823870dc22ac421876714abfdf6bb6ef4a2b5181c7",
+    "tests/config/test_ci_component_routing.py": "5fa2ff27d5c418dff983a08e758746b1ad07fceb0348b00e95fe35b5c8dafc76",
+    "tests/config/test_github_actions_security.py": "af399a6a25fb5ad5f5111ca502c89b1c274354d2b95b99ea69d35073aea1d630"
+  },
+  "kind": "crossforge-local-main-component-routing-observation",
+  "limits": [
+    "Implementation and local validation only; no push, workflow dispatch, live GitHub signature or permission execution observed",
+    "Main push/dispatch enables authenticated raw toolchain reads; missing component indexes still leave explicit source producers inside each selected stage",
+    "PR/fork/non-main routes receive contents:read only and never enable the registry reader",
+    "Production centralized missing-producer publication and Python-row component routing remain pending",
+    "The manual pilot must establish internal package access and pass an actual signed build/reuse cycle before remote rollout",
+    "Full candidate qualification, native ARM execution, recovery and GitHub performance acceptance remain required"
+  ],
+  "logs": {
+    "/tmp/crossforge-main-component-routing/actionlint-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/crossforge-main-component-routing/actionlint.log": "a5e76c34a9a60eb0f77b534a57c9aa38a33f49f8306e809859c49b0d3efb0518",
+    "/tmp/crossforge-main-component-routing/full-regressions-final.log": "b5160b21a0105c016c8a3f534a3265e8b7db1cff885d51f543ec086dc06d3079",
+    "/tmp/crossforge-main-component-routing/full-regressions.log": "ae80bf6e45635a637de473ff842d5c98d7eafd1798b40a8e2d2d0663c0cf79dc",
+    "/tmp/crossforge-main-component-routing/platform-python.log": "60491dfb7d4de5121af547758d343bc90038f995958eb0f7d1f9ae6a1377b1f8",
+    "/tmp/crossforge-main-component-routing/regressions.log": "92b14ad037a422568b07ae5fb86c8371576bdf805ff9afd4615a49501501b8f1"
+  },
+  "quick_checks": {
+    "scope": "Quick job and all validation steps before optional daily source selection",
+    "sha256": "a5499d9c8bdeac78c25eeb9dc16ccaebb6c74faee7f75189619c7b119c9b8243",
+    "unchanged": true
+  },
+  "regressions": {
+    "actionlint": "1.7.12 passed with existing concurrency.queue syntax exception",
+    "config": {
+      "seconds": 148.309,
+      "skipped": 2,
+      "tests": 1113
+    },
+    "locked_validators": 4,
+    "packaging": {
+      "seconds": 0.853,
+      "skipped": 1,
+      "tests": 40
+    },
+    "platform_python": "actual Rocky 8 Python 3.6 forced stage passed",
+    "renderer_checks": 3
+  },
+  "schema_version": 1,
+  "source_commit": "2d6645da3b9d3fb6a936556c09eb4d8f9c8ecb5a",
+  "source_dirty": true,
+  "sources": [
+    "https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations",
+    "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
+  ],
+  "status": "local-validation-passed"
+}

@@ -1,0 +1,227 @@
+{
+  "artifacts": {
+    "/tmp/crossforge-central-toolchains/graph-probe-final/result.json": "0c7d552143d3f0215f0349cae4be201bae5d15cd79ee641fb81f825ac82e6407",
+    "/tmp/crossforge-central-toolchains/graph-probe.py": "76a7928e7f9407a1d17fa28319b34523dba89ff524b938ecb76d562e88d24d64"
+  },
+  "corrections": [
+    "Local graph probe initially supplied unsorted selected roots; corrected the probe",
+    "Local graph probe initially expected both architectures for the current GCC full canonical target; observed x86_64-only component edges and corrected the probe without changing the selector"
+  ],
+  "date": "2026-09-10",
+  "docker": {
+    "buildx": "0.36.1",
+    "cpus": 4,
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "regressions_network": "none"
+  },
+  "final_files": {
+    ".github/actions/run-build-stage/action.yml": {
+      "executable": false,
+      "sha256": "f813f795c6b4363214d33b95303d6e028b05034d978baa9b0d408711fc2f454b"
+    },
+    ".github/actions/setup-component-reader/action.yml": {
+      "executable": false,
+      "sha256": "d22f500acacb72b1d2a27cae492c5c098260fd494f020e98f6bdba17ff032cd7"
+    },
+    ".github/actions/setup-component-verifier/action.yml": {
+      "executable": false,
+      "sha256": "cd98c39e29a0c35081d828b33662eab400fcc66bd20e161c247c52dfd52f49b9"
+    },
+    ".github/workflows/ci.yml": {
+      "executable": false,
+      "sha256": "b9b624cbe4a42268bf306fe8dd69cc4595cd7fd8cce31bd9fe142efaf5b3ecf3"
+    },
+    ".github/workflows/produce-toolchain.yml": {
+      "executable": false,
+      "sha256": "3e1cf2d2a56ad68b5636862f21a88648ae2bb5844e5f56a67e632794f2f1aed1"
+    },
+    ".github/workflows/verify-main-incremental.yml": {
+      "executable": false,
+      "sha256": "fdb24cfdb7fb1eb3fff709f9301e6dd423c77eb9e757eb7b1c846ddfce6004a4"
+    },
+    "docker/Dockerfile": {
+      "executable": false,
+      "sha256": "69a71f487ee32fd8f6e39fadaf4b824e54b3d519b75404e0f1ae26054a07ed5a"
+    },
+    "scripts/ci-build.py": {
+      "executable": false,
+      "sha256": "1009b0ec12baf9f15e0d0d04e3560b7aa21fa6d78f888631314e2e79605a81a8"
+    },
+    "scripts/ci-toolchains.py": {
+      "executable": true,
+      "sha256": "23a7f98c49a2fb0ebe89a6a342b8aeaf728592be40bdb125f919c7c4a7a44a47"
+    },
+    "scripts/component-catalog.py": {
+      "executable": true,
+      "sha256": "02ce8c8a814a208b6b0e97216c87c582af7a1f68b4321f74156aa4eb2d93e686"
+    },
+    "scripts/component-pilot.py": {
+      "executable": true,
+      "sha256": "5c127d5f5daf044e1daf58e3bf8cbef4f28e408eddf36c34f8b387391b55b996"
+    },
+    "scripts/crossforge_internal/ci_toolchains.py": {
+      "executable": false,
+      "sha256": "66d59c4e2656e4df2c24e5d0e228e8e1734f04860c13bfd498faaa72f626c90a"
+    },
+    "scripts/crossforge_internal/component_catalog.py": {
+      "executable": false,
+      "sha256": "1acf6dc18ad8e3bbf84888fd4b1f1a59500800731eefcfe1ea2495cddc8ba1a6"
+    },
+    "scripts/crossforge_internal/component_ci.py": {
+      "executable": false,
+      "sha256": "7b5d25707f1d52f2df14af15df7a291bad57487939021c28445638ea6a2159ae"
+    },
+    "scripts/crossforge_internal/component_handoff.py": {
+      "executable": false,
+      "sha256": "704c9aea03275d994d30c6a1822df208ebc1242b32c7e1d65f303cecbc45e660"
+    },
+    "tests/config/test_ci_component_binding.py": {
+      "executable": false,
+      "sha256": "d8c1fd7ca5c918cc5a11424d82271650832136543dd2c1d24d0c9c0000395a5a"
+    },
+    "tests/config/test_ci_component_routing.py": {
+      "executable": false,
+      "sha256": "e5dd67ac44c309742fedf0f1b448e426b8183db8e80c3d8aa15db500812875ae"
+    },
+    "tests/config/test_ci_toolchains.py": {
+      "executable": false,
+      "sha256": "893a78008135199e032ecb5400cc137cbb3b33f683f0cfcf87e4c3956f784c81"
+    },
+    "tests/config/test_component_catalog.py": {
+      "executable": false,
+      "sha256": "09e666c09e80d51de3c03ea476085be1918e534633bf586f518062e5c9bee266"
+    },
+    "tests/config/test_component_handoff.py": {
+      "executable": false,
+      "sha256": "44f365b932ee345c4498c23e18a261102ef1bc651ca1bec61e13d20b232b5060"
+    }
+  },
+  "graph_requirements": {
+    "arm-toolchain": {
+      "aarch64": [
+        "toolchain-install"
+      ],
+      "x86_64": []
+    },
+    "cp39": {
+      "aarch64": [
+        "toolchain-install"
+      ],
+      "x86_64": [
+        "toolchain-install"
+      ]
+    },
+    "docs": {
+      "aarch64": [],
+      "x86_64": []
+    },
+    "full": {
+      "aarch64": [
+        "gcc-test-context",
+        "toolchain-install"
+      ],
+      "x86_64": [
+        "gcc-test-context",
+        "toolchain-install"
+      ]
+    },
+    "gcc-full": {
+      "aarch64": [],
+      "x86_64": [
+        "gcc-test-context",
+        "toolchain-install"
+      ]
+    },
+    "gcc-smoke": {
+      "aarch64": [
+        "gcc-test-context",
+        "toolchain-install"
+      ],
+      "x86_64": [
+        "gcc-test-context",
+        "toolchain-install"
+      ]
+    },
+    "inputs": {
+      "aarch64": [],
+      "x86_64": []
+    },
+    "sdk": {
+      "aarch64": [
+        "toolchain-install"
+      ],
+      "x86_64": [
+        "toolchain-install"
+      ]
+    },
+    "vcpkg": {
+      "aarch64": [
+        "toolchain-install"
+      ],
+      "x86_64": [
+        "toolchain-install"
+      ]
+    },
+    "x86-toolchain": {
+      "aarch64": [],
+      "x86_64": [
+        "toolchain-install"
+      ]
+    }
+  },
+  "kind": "crossforge-local-central-toolchain-production-observation",
+  "limits": [
+    "Local orchestration and dependency graph validation; no live GitHub run, positive GitHub signature, GHCR upload, push or dispatch",
+    "A catalog availability observation does not assert downloaded OCI verification or qualification; downstream consumers must verify the artifact and execute their selected gates",
+    "Manual pilot package bootstrap and a real signed build/reuse cycle remain prerequisite to rollout acceptance",
+    "Production Python-row binding, qualification scope isolation, candidate final integration/native ARM, recovery and GitHub performance acceptance remain incomplete"
+  ],
+  "logs": {
+    "/tmp/crossforge-central-toolchains/focused-final.log": "5a0fcd11a8792202232e4803b009f4720f1a6d89054badc9ef30326fec81cff0",
+    "/tmp/crossforge-central-toolchains/focused-reviewed.log": "e76e90969c5ae3d79e48edace679044c7630dc399beb674241b643c0e59c3617",
+    "/tmp/crossforge-central-toolchains/focused.log": "7a6a865af46849d3f60ab5b9ba4aa90fe61f37841bd1a414e9cbdc6bdf74346f",
+    "/tmp/crossforge-central-toolchains/full-regressions.log": "cffa1e203cad9133587a067098e0f478412d0b2f4c424f7cfde98edd5bb7a12f",
+    "/tmp/crossforge-central-toolchains/graph-probe-accepted.log": "282fed2a0006b609e355052e2ff2fbed3f5810a448449a12883af5bfb002c6bc",
+    "/tmp/crossforge-central-toolchains/graph-probe-final.log": "7cc6c71d2240262bba061db3e74652463bec52bd684b6e9da010d9c0399938ea",
+    "/tmp/crossforge-central-toolchains/graph-probe.log": "95a47a1f5b5b8d4e825fd422a1b28fbdfb0e43e1c46f8005ac3f920d6693cf28",
+    "/tmp/crossforge-central-toolchains/platform-python-reviewed.log": "9ddf194d29beed6838b2da2d588d8c0afccace48ae64fdfb542c2b549353e7cf",
+    "/tmp/crossforge-central-toolchains/platform-python.log": "bdf55dcda9eeba96f6dfdab3551428c98e917b704ba5b8c3d87e2c752a133950"
+  },
+  "regressions": {
+    "actionlint": "1.7.12 passed with the existing concurrency.queue exception",
+    "config": {
+      "seconds": 149.053,
+      "skipped": 2,
+      "tests": 1129
+    },
+    "final_focused": {
+      "includes_two_additional_signing_boundary_tests": true,
+      "seconds": 3.254,
+      "tests": 64
+    },
+    "locked_validators": 4,
+    "packaging": {
+      "seconds": 0.885,
+      "skipped": 1,
+      "tests": 40
+    },
+    "platform_python": "actual Rocky 8 Python 3.6 forced compile/import/CLI stage passed, including new ci-toolchains.py",
+    "renderer_checks": 3
+  },
+  "schema_version": 1,
+  "source_commit": "9c8f792a8668d66c6ee69fc9a667422c41d43bc7",
+  "source_dirty": true,
+  "sources": [
+    "https://github.com/sigstore/fulcio/blob/main/docs/oidc.md",
+    "https://github.com/sigstore/fulcio/blob/main/config/identity/config.yaml",
+    "https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations"
+  ],
+  "status": "local-validation-passed",
+  "validation_order": [
+    "Full 1129-test configuration suite and packaging/validators/renderers/actionlint passed",
+    "Added new CLI --help to the platform-python Docker stage and forced it successfully",
+    "Added two signing boundary tests and ran the final 64-test focused suite plus renderers/actionlint successfully",
+    "Final review made plan outputs exact and required a valid nonempty selection JSON; repeated 64 focused tests/actionlint and forced Rocky 8 CLI compatibility successfully"
+  ]
+}

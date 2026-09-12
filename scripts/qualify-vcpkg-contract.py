@@ -19,6 +19,8 @@ COMPONENT_READER = runpy.run_path(
 COMMON = runpy.run_path(
     str(SCRIPT_DIRECTORY / "vcpkg_qualification.py")
 )
+TOOLCHAIN_REPORT = runpy.run_path(str(SCRIPT_DIRECTORY / "toolchain_report.py"))
+VCPKG_POLICY = runpy.run_path(str(SCRIPT_DIRECTORY / "vcpkg_policy.py"))
 ComponentError = COMPONENT_READER["ComponentError"]
 QualificationError = COMMON["QualificationError"]
 require = COMMON["require"]
@@ -167,7 +169,8 @@ def validate_component_closure(
     contract_component,
     policy_component_sha256,
     sdk_report,
-    toolchain_reports,
+    toolchain_paths,
+    input_policy=None,
 ):
     dependencies = {
         item["component"]: item["canonical_sha256"]
@@ -185,26 +188,45 @@ def validate_component_closure(
         == policy_component_sha256,
         "vcpkg contract component dependency closure differs",
     )
-    release_sha256 = canonical_sha256(release)
+    release_sha256 = canonical_sha256(release) if release is not None else None
+    scoped = input_policy is not None or "input_binding" in sdk_report
+    if scoped:
+        if input_policy is None:
+            input_policy = VCPKG_POLICY["from_release"](release, "contract")
+        try:
+            VCPKG_POLICY["require_binding"](sdk_report, VCPKG_POLICY["prior"](input_policy, "sdk"))
+            require(input_policy["components"]["contract"] == {
+                "component": "vcpkg/contract-qualification", "canonical_sha256": canonical_sha256(contract_component)},
+                "vcpkg contract policy root differs")
+        except VCPKG_POLICY["PolicyError"] as error:
+            raise QualificationError(str(error)) from error
+    else:
+        require(sdk_report.get("schema_version", 1) == 1, "unsupported vcpkg SDK prerequisite schema")
     require(
         sdk_report.get("status") == "passed"
-        and sdk_report.get("release_sha256") == release_sha256
+        and (scoped or sdk_report.get("release_sha256") == release_sha256)
         and sdk_report.get("integration", {}).get("sdk_component_sha256")
         == dependencies["vcpkg/sdk-build"],
         "vcpkg SDK prerequisite qualification differs",
     )
-    for arch, report in toolchain_reports.items():
-        require(
-            report.get("release_sha256") == release_sha256
-            and report.get("qualification_component")
-            == {
-                "component": "toolchain/%s-qualification" % arch,
-                "canonical_sha256": dependencies[
-                    "toolchain/%s-qualification" % arch
-                ],
-            },
-            "%s toolchain prerequisite qualification differs" % arch,
-        )
+    require(set(toolchain_paths) == {"x86_64", "aarch64"}, "toolchain prerequisite targets differ")
+    for arch, path in toolchain_paths.items():
+        identity = {"component": "toolchain/%s-qualification" % arch,
+                    "canonical_sha256": dependencies["toolchain/%s-qualification" % arch]}
+        try:
+            if scoped:
+                require(input_policy["toolchains"][arch]["component"] == identity, "vcpkg toolchain policy root differs")
+                checked = TOOLCHAIN_REPORT["qualify_policy_toolchain_report"](path, input_policy["toolchains"][arch])
+            else:
+                targets = [target for target in release["targets"] if target["arch"] == arch]
+                require(len(targets) == 1, "toolchain release target is not unique")
+                checked = TOOLCHAIN_REPORT["qualify_prior_toolchain_report"](
+                    arch, targets[0]["triple"], path, release, release_sha256,
+                    targets[0]["sysroot"]["canonical_sha256"], identity)
+        except TOOLCHAIN_REPORT["QualificationError"] as error:
+            raise QualificationError(str(error)) from error
+        require(sdk_report.get("toolchain_report_sha256", {}).get(arch) == checked["report_sha256"],
+                "%s toolchain report differs from the qualified vcpkg SDK" % arch)
     return dependencies
 
 
@@ -227,7 +249,7 @@ def cmake_bool(value):
     raise QualificationError("invalid CMake boolean: %r" % value)
 
 
-def build_consumer(profile, include, library, work, qemu, release):
+def build_consumer(profile, include, library, work, qemu, executor):
     compiler, _cxx, readelf, sysroot = profile_tools(profile)
     source = work / "consumer.c"
     executable = work / "consumer"
@@ -264,7 +286,6 @@ def build_consumer(profile, include, library, work, qemu, release):
     if profile["linkage"] == "dynamic":
         environment["LD_LIBRARY_PATH"] = str(library)
     if profile["arch"] == "aarch64":
-        executor = release["qemu"]["executor"]
         command = [
             qemu,
             "-cpu",
@@ -295,7 +316,7 @@ def qualify_triplet(
     triplet,
     profile,
     qemu,
-    release,
+    executor,
     work,
 ):
     roots = isolated_install(
@@ -383,7 +404,7 @@ def qualify_triplet(
         target_root / "lib",
         consumer_work,
         qemu,
-        release,
+        executor,
     )
     return {
         "triplet": triplet,
@@ -408,8 +429,17 @@ def qualify(
     policy_sha256,
     contract_component_path,
     contract_sha256,
+    components=None,
 ):
-    release = load_json(release_path)
+    require((release_path is None) != (components is None), "provide exactly one vcpkg policy source")
+    if components is not None:
+        input_policy = VCPKG_POLICY["load"](components, "contract", contract_sha256)
+        release = None
+        executor = input_policy["toolchains"]["aarch64"]["runtime_executor"]
+    else:
+        input_policy = None
+        release = load_json(release_path)
+        executor = release["qemu"]["executor"]
     policy_component = load_component(
         policy_component_path,
         "implementation/vcpkg-contract-qualification",
@@ -436,11 +466,8 @@ def qualify(
     sdk_report = load_json(
         Path("/opt/crossforge/qualification/vcpkg/sdk.json")
     )
-    toolchain_reports = {
-        arch: load_json(
-            Path("/opt/crossforge/qualification/toolchain")
-            / (arch + ".json")
-        )
+    toolchain_paths = {
+        arch: Path("/opt/crossforge/qualification/toolchain") / (arch + ".json")
         for arch in ("x86_64", "aarch64")
     }
     dependencies = validate_component_closure(
@@ -448,7 +475,8 @@ def qualify(
         contract_component,
         policy_sha256,
         sdk_report,
-        toolchain_reports,
+        toolchain_paths,
+        input_policy,
     )
     require(
         os.environ.get("VCPKG_DEFAULT_HOST_TRIPLET") == HOST_TRIPLET
@@ -467,7 +495,7 @@ def qualify(
                 triplet,
                 TRIPLETS[triplet],
                 qemu,
-                release,
+                executor,
                 work,
             )
             for triplet in (
@@ -480,11 +508,10 @@ def qualify(
         ]
     for name in ("downloads", "buildtrees", "packages", "installed", "vcpkg_installed"):
         require(not (vcpkg_root / name).exists(), "vcpkg root was polluted: %s" % name)
-    return {
-        "schema_version": 1,
+    report = {
+        "schema_version": 2 if input_policy is not None else 1,
         "kind": "crossforge-vcpkg-contract-qualification",
         "status": "passed",
-        "release_sha256": canonical_sha256(release),
         "components": {
             "policy": {
                 "component": "implementation/vcpkg-contract-qualification",
@@ -500,11 +527,16 @@ def qualify(
         "patchelf_asset": PATCHELF_ASSET,
         "results": results,
     }
+    report.update({"input_binding": VCPKG_POLICY["binding"](input_policy)} if input_policy is not None else
+                  {"release_sha256": canonical_sha256(release)})
+    return report
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
-    parser.add_argument("--release", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--release", type=Path)
+    source.add_argument("--components", type=Path)
     parser.add_argument("--vcpkg-root", type=Path, required=True)
     parser.add_argument("--fixture-root", type=Path, required=True)
     parser.add_argument("--patchelf-archive", type=Path, required=True)
@@ -525,6 +557,7 @@ def main():
         arguments.policy_component_sha256,
         arguments.contract_component,
         arguments.contract_component_sha256,
+        components=arguments.components,
     )
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.output.with_name(arguments.output.name + ".tmp")

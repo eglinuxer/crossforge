@@ -1,0 +1,176 @@
+{
+  "base_commit": "fb5d98e82832bb99bfe36fbd1660e16c64ab18f8",
+  "checks": [
+    {
+      "command": [
+        "./scripts/validate-release.py",
+        "--require-locked"
+      ],
+      "seconds": 0.031
+    },
+    {
+      "command": [
+        "./scripts/validate-supply-chain-evidence.py"
+      ],
+      "seconds": 0.364
+    },
+    {
+      "command": [
+        "./scripts/validate-frozen-abi.py"
+      ],
+      "seconds": 0.424
+    },
+    {
+      "command": [
+        "./scripts/validate-python-runtime-providers.py"
+      ],
+      "seconds": 0.232
+    },
+    {
+      "command": [
+        "./scripts/render-release-components.py",
+        "--check"
+      ],
+      "seconds": 0.173
+    },
+    {
+      "command": [
+        "./scripts/render-vcpkg-integration.py",
+        "--check"
+      ],
+      "seconds": 0.176
+    },
+    {
+      "command": [
+        "./scripts/render-bake.py",
+        "--check"
+      ],
+      "seconds": 0.216
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "docker/run-python-qualification.sh"
+      ],
+      "seconds": 0.001
+    },
+    {
+      "command": [
+        "actionlint",
+        "-ignore",
+        "unexpected key \"queue\" for \"concurrency\" section"
+      ],
+      "seconds": 0.008
+    }
+  ],
+  "date": "2026-09-11",
+  "environment": {
+    "cpus": 4,
+    "docker_socket_mounted": false,
+    "memory": "16g",
+    "network": "none",
+    "platform_python": "3.6.8",
+    "rocky_image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+    "tool_image_id": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "user": "1000:1000"
+  },
+  "kind": "crossforge-local-refactoring-observation",
+  "limits": [
+    "Registry transport/signing, domain artifact verification, environment observation and final SDK execution are explicit mocks in SDK orchestration tests.",
+    "Most recovery orchestration tests use a synthetic source context. One source-inventory test uses actual Bake/source material capture, mocking only Git revision discovery.",
+    "Rocky compiles all three changed production modules and runs sixteen selected new tests. Its minimal image lacks Git; the real Git test runs in the tool-container focused and full suites instead.",
+    "No Docker recipe, generated configuration, compiler/source version or ABI/GCC baseline changed. Graph parsing does not prove an actual BuildKit solve or performance gain.",
+    "Initial focused failures came from incomplete pre-existing SDK raw-subject fixtures and a nonexistent test module name; these were corrected without changing production validation.",
+    "No main/candidate recovery caller integration, real GitHub trust/retry, new qualification/source replay, native ARM/candidate, reference-aware retention or performance acceptance was completed.",
+    "Strict physical execution matching remains unchanged; the cross-runner policy choice is pending.",
+    "Prior automatic review rejected mounting the host Docker socket inside an orchestration container because it grants broad daemon control. Explicit authorization remains pending; no retry or bypass occurred.",
+    "No merge to main, remote push or publication."
+  ],
+  "local_outputs": {
+    "focused.log": {
+      "path": "/tmp/crossforge-sdk-recovery/focused.log",
+      "sha256": "a9ac403c57b3a842f3688bfbebf8be0a79e14ff5b1d4a06d71c7dd0bba56f271"
+    },
+    "full-result.json": {
+      "path": "/tmp/crossforge-sdk-recovery/full-result.json",
+      "sha256": "5aaa84ec0a34a7f9f33e20ff1e20616da2491ae35d0f8c48d7d9cafc9568bdcd"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-sdk-recovery/full.log",
+      "sha256": "e0f663024dd5d44731230d698381b56c29454ab15d3917b2cbe5abeef6bd89ba"
+    },
+    "full.py": {
+      "path": "/tmp/crossforge-sdk-recovery/full.py",
+      "sha256": "83225c71ff855365fe579b9a7461cc6d6ca95b24eacdee33d248d69f6b11fb3e"
+    },
+    "graph.json": {
+      "path": "/tmp/crossforge-sdk-recovery/graph.json",
+      "sha256": "9b1f141995165ed8f35a59441cdd8673ec276e8d7b8b530cf083a5b83f2be93c"
+    },
+    "graph.log": {
+      "path": "/tmp/crossforge-sdk-recovery/graph.log",
+      "sha256": "06fbf69971e5e236c7b5683cf19aa2c6ad3d2a0ecf474cb7cd0f1f4c4c637c0c"
+    },
+    "graph.py": {
+      "path": "/tmp/crossforge-sdk-recovery/graph.py",
+      "sha256": "87ea5732e6f989f26d36b976ae712f74017bc3b9263af4867cf33ef474463574"
+    },
+    "initial-focused.log": {
+      "path": "/tmp/crossforge-sdk-recovery/initial-focused.log",
+      "sha256": "252540417a94628718b7b3f2145349903f1aa2fe65bc293616189398b90cfb5e"
+    },
+    "rocky.log": {
+      "path": "/tmp/crossforge-sdk-recovery/rocky.log",
+      "sha256": "0b30f78759549368fe329d01a79464200d0b3a366b741d24c906a6d0d3dfac78"
+    },
+    "rocky.py": {
+      "path": "/tmp/crossforge-sdk-recovery/rocky.py",
+      "sha256": "7ad45db3a88d966685d1dbf42f12a184406e5d8208f97bda2dba62bb2479937d"
+    }
+  },
+  "regression_scope": [
+    "SDK schema 1 nests unchanged raw recovery schema 1 and pins six qualified rows without expanding raw-role authorization.",
+    "Records 32 raw selections and six row selections only when complete, before fresh final integration; failed integration retains the selected digest for retry.",
+    "Fixed catalog references pass through the original raw and qualified-row readers; original producer, receipt, input and artifact identities must remain exact.",
+    "Wrong source/root/materials, rewritten documents, missing or replaced rows, registry/role/schema drift, invalid paired CLI options and unsafe files fail.",
+    "Source/physical environment changes before readiness or after final integration prevent a success record.",
+    "A real temporary Git repository test verifies clean commit discovery and rejection after file edits.",
+    "Actual Bake print and source inventory capture verify that full physical execution fields affect the SDK recovery context."
+  ],
+  "schema_version": 1,
+  "scope": "Exact SDK raw-component and qualified-row selections retained across final-integration retries",
+  "source_sha256": {
+    "scripts/component-artifact.py": "05c44951b4827fa0ed84028eb935828e253f37a3afde97f49cd2113b5b781636",
+    "scripts/crossforge_internal/python_sdk_catalog.py": "6c84e260d98cc7043e205477b0f913c95967bef57ac4af493dd3e915aed83298",
+    "scripts/crossforge_internal/python_sdk_recovery.py": "fb0a065df09940e94f39a8c78ca748994b947c0b977733ada159299fe1f58621",
+    "tests/config/test_python_sdk_recovery.py": "7b22d3d9c8ea4c8d2eb90ab9a7fc64be1c16d9cb1ce9ce05ba265c6a1a2c9e2e"
+  },
+  "status": "local contract checks passed; real workflow and runtime acceptance pending",
+  "tests": [
+    {
+      "seconds": 284.673,
+      "skipped": 0,
+      "suite": "config",
+      "tests": 1376
+    },
+    {
+      "seconds": 1.265,
+      "skipped": 0,
+      "suite": "packaging",
+      "tests": 40
+    },
+    {
+      "seconds": 6.778,
+      "skipped": 0,
+      "suite": "focused",
+      "tests": 62
+    },
+    {
+      "seconds": 2.926,
+      "skipped": 0,
+      "suite": "rocky",
+      "tests": 16
+    }
+  ]
+}

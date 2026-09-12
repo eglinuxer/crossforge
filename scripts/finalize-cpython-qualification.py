@@ -24,10 +24,18 @@ ROW_CONTRACT = runpy.run_path(
     str(Path(__file__).with_name("python_row_contract.py"))
 )
 ContractError = ROW_CONTRACT["ContractError"]
-RELEASE_COMPONENTS = runpy.run_path(
-    str(Path(__file__).with_name("release-components-core.py"))
-)
-ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+RELEASE_COMPONENTS = None
+
+
+def release_components():
+    global RELEASE_COMPONENTS
+    if RELEASE_COMPONENTS is None:
+        RELEASE_COMPONENTS = runpy.run_path(str(Path(__file__).with_name("release-components-core.py")))
+    return RELEASE_COMPONENTS
+
+
+POLICY = runpy.run_path(str(Path(__file__).with_name("python_qualification_policy.py")))
+OVERLAY = runpy.run_path(str(Path(__file__).with_name("python_runtime_overlay.py")))
 ZSTD_EVIDENCE = runpy.run_path(
     str(Path(__file__).with_name("python_zstd_evidence.py"))
 )
@@ -428,19 +436,49 @@ def expected_zstd_components(release, target_arch):
         return ZSTD_EVIDENCE["expected_components"](
             release,
             target_arch,
-            RELEASE_COMPONENTS["render_component_documents"],
+            release_components()["render_component_documents"],
         )
     except ZstdEvidenceError as error:
         raise FinalizationError(str(error)) from error
 
 
 def validate_python_qualification_components(value, release, path):
+    core = release_components()
     try:
-        return RELEASE_COMPONENTS["validate_python_qualification_components"](
+        return core["validate_python_qualification_components"](
             value, release
         )
-    except ProjectionError as error:
+    except core["ProjectionError"] as error:
         raise FinalizationError("%s: %s" % (path, error)) from error
+
+
+def policy_context(policy):
+    """Normalize authenticated component inputs without synthesizing a release."""
+    context = {key: policy["contract"][key] for key in ("adapter", "gil_policy", "zstd", "hash_algorithm")}
+    context.update(policy=policy, scoped=True, source=policy["source"],
+                   sysroot_sha256=policy["target"]["sysroot"]["canonical_sha256"])
+    return context
+
+
+def context_policy(context, target, version):
+    if "policy" not in context:
+        core = release_components()
+        try:
+            context["policy"] = POLICY["from_release"](context["release"], version, target.split("-", 1)[0],
+                                                        core["render_component_documents"])
+        except (POLICY["PolicyError"], core["ProjectionError"]) as error:
+            raise FinalizationError(str(error)) from error
+    policy = context["policy"]
+    require(policy["target"]["triple"] == target and policy["version"] == version,
+            "qualification policy target/version mismatch")
+    return policy
+
+
+def validate_scoped_binding(report, context, target, version, label):
+    try:
+        POLICY["require_binding"](report, context_policy(context, target, version))
+    except POLICY["PolicyError"] as error:
+        raise FinalizationError("%s input binding: %s" % (label, error)) from error
 
 
 def load_abi_context(
@@ -769,6 +807,10 @@ def validate_release_abi_context(release, context):
         expected = ABI_CONTRACT["release_abi_inputs"](release, arch)
     except AbiContractError as error:
         raise FinalizationError(str(error)) from error
+    return validate_abi_context(expected, context)
+
+
+def validate_abi_context(expected, context):
     identities = context["expected_identities"]
     observed = {
         "provider_manifest": {
@@ -1117,7 +1159,8 @@ def validate_compile_zstd_evidence(value, context, report, target, version):
     machine = (
         "Advanced Micro Devices X86-64" if target_arch == "x86_64" else "AArch64"
     )
-    components = expected_zstd_components(context["release"], target_arch)
+    components = (context["policy"]["zstd_components"] if "policy" in context
+                  else expected_zstd_components(context["release"], target_arch))
     host = validate_zstd_build_evidence(
         value["builds"]["host"],
         "host",
@@ -1165,7 +1208,22 @@ def validate_overlay_evidence(
         },
         path,
     )
-    require(value["schema_version"] == 1, "%s schema mismatch" % path)
+    expected_arch = TARGETS[target]
+    target_arch = "x86_64" if expected_arch == "amd64" else "aarch64"
+    release = context.get("release")
+    try:
+        if context.get("scoped"):
+            policy = context_policy(context, target, compile_report["version"])
+            OVERLAY["validate_identity_binding"](value, None, target_arch,
+                                                expected_binding=policy["runtime_overlay_binding"])
+            expected_base = policy["runtime_base"]
+        else:
+            core = release_components()
+            OVERLAY["validate_identity_binding"](value, release, target_arch, core["render_component_documents"])
+            expected_base = {"index_digest": release["base_image"]["digest"],
+                             "manifest_digest": release["base_image"]["manifests"][expected_arch]}
+    except OVERLAY["OverlayError"] as error:
+        raise FinalizationError("%s: %s" % (path, error)) from error
     require(
         value["kind"] == "crossforge-python-runtime-overlay"
         and value["qualification_only"] is True,
@@ -1173,38 +1231,16 @@ def validate_overlay_evidence(
     )
     identity = value["identity"]
     require_exact_keys(
-        identity,
-        {
-            "base_image",
-            "release_sha256",
-            "target",
-            "sysroot",
-            "selected_packages",
-            "selected_packages_sha256",
-        },
-        path + " identity",
-    )
-    require_exact_keys(
         identity["base_image"],
         {"index_digest", "manifest_digest"},
         path + " base_image",
     )
-    expected_arch = TARGETS[target]
-    release = context["release"]
     require(
         identity["base_image"]
-        == {
-            "index_digest": release["base_image"]["digest"],
-            "manifest_digest": release["base_image"]["manifests"][expected_arch],
-        },
+        == expected_base,
         "%s base image mismatch" % path,
     )
-    require(
-        identity["release_sha256"] == context["release_sha256"],
-        "%s release digest mismatch" % path,
-    )
     require_exact_keys(identity["target"], {"arch", "triple"}, path + " target")
-    target_arch = "x86_64" if expected_arch == "amd64" else "aarch64"
     require(
         identity["target"] == {"arch": target_arch, "triple": target},
         "%s target mismatch" % path,
@@ -1295,11 +1331,13 @@ def validate_compile_report(
     actual_elf_evidence,
     require_qualification_artifact,
 ):
-    require_exact_keys(report, COMPILE_KEYS, "compile report")
+    schema_version = report.get("qualification_schema_version") if isinstance(report, dict) else None
     require(
-        report["qualification_schema_version"] == 4,
+        type(schema_version) is int and schema_version in (4, 5),
         "compile report schema version mismatch",
     )
+    fields = COMPILE_KEYS if schema_version == 4 else (COMPILE_KEYS - {"release_sha256", "qualification_components"}) | {"input_binding"}
+    require_exact_keys(report, fields, "compile report")
     require(
         report["report_kind"] == "crossforge-cpython-compile",
         "compile report kind mismatch",
@@ -1307,16 +1345,15 @@ def validate_compile_report(
     require(report["target"] == target, "compile report target mismatch")
     require(report["version"] == version, "compile report version mismatch")
     require(report["adapter"] == context["adapter"], "compile report adapter mismatch")
-    require_sha256(report["release_sha256"], "compile report release_sha256")
-    require(
-        report["release_sha256"] == context["release_sha256"],
-        "compile report release digest mismatch",
-    )
-    validate_python_qualification_components(
-        report["qualification_components"],
-        context["release"],
-        "compile report qualification_components",
-    )
+    require(not context.get("scoped") or schema_version == 5,
+            "component qualification requires a scoped compile report")
+    if schema_version == 4:
+        require_sha256(report["release_sha256"], "compile report release_sha256")
+        require(report["release_sha256"] == context["release_sha256"], "compile report release digest mismatch")
+        validate_python_qualification_components(report["qualification_components"], context["release"],
+                                                 "compile report qualification_components")
+    else:
+        validate_scoped_binding(report, context, target, version, "compile report")
     require_sha256(report["sysroot_sha256"], "compile report sysroot_sha256")
     require(
         report["sysroot_sha256"] == context["sysroot_sha256"],
@@ -1334,7 +1371,10 @@ def validate_compile_report(
         == context["sysroot_sha256"],
         "compile report ABI inputs differ from the release sysroot",
     )
-    validate_release_abi_context(context["release"], abi_context)
+    if context.get("scoped"):
+        validate_abi_context(context["policy"]["abi"], abi_context)
+    else:
+        validate_release_abi_context(context["release"], abi_context)
     require_sha256(
         report["sysroot_transaction_sha256"],
         "compile report sysroot_transaction_sha256",
@@ -1811,8 +1851,18 @@ def validate_runtime_result(
     abi_context,
 ):
     path = "%s runtime result" % expected_tier
-    require_exact_keys(report, RUNTIME_KEYS, path)
-    require(report["qualification_schema_version"] == 3, "%s schema mismatch" % path)
+    schema_version = report.get("qualification_schema_version") if isinstance(report, dict) else None
+    require(type(schema_version) is int and schema_version in (3, 4), "%s schema mismatch" % path)
+    fields = RUNTIME_KEYS if schema_version == 3 else (RUNTIME_KEYS - {"release_sha256"}) | {"input_binding"}
+    require_exact_keys(report, fields, path)
+    require(schema_version == (4 if context.get("scoped") else 3),
+            "%s input mode differs from final qualification" % path)
+    if schema_version == 4:
+        require(compile_report["qualification_schema_version"] == 5, "%s requires a scoped compile report" % path)
+        validate_scoped_binding(report, context, target, version, path)
+    else:
+        require_sha256(report["release_sha256"], "%s release_sha256" % path)
+        require(report["release_sha256"] == context["release_sha256"], "%s release_sha256 mismatch" % path)
     require(report["report_kind"] == "crossforge-cpython-runtime", "%s kind mismatch" % path)
     require(report["target"] == target, "%s target mismatch" % path)
     require(report["version"] == version, "%s version mismatch" % path)
@@ -1821,7 +1871,6 @@ def validate_runtime_result(
     require(report["status"] == "passed", "%s did not pass" % path)
 
     hashes = (
-        ("release_sha256", context["release_sha256"]),
         ("compile_report_sha256", compile_report_sha256),
         ("python_sha256", compile_report["python_sha256"]),
         ("extension_sha256", compile_report["extension"]["sha256"]),
@@ -1883,16 +1932,20 @@ def validate_runtime_result(
         for name in ("kind", "version", "cpu", "uname_release"):
             require_string(executor[name], "%s executor %s" % (path, name))
         require_sha256(executor["binary_sha256"], "%s executor binary_sha256" % path)
-        try:
-            release_executor = context["release"]["qemu"]["executor"]
-            expected_executor = {
-                "binary_sha256": release_executor["binary_sha256"],
-                "version": context["release"]["qemu"]["version"],
-                "cpu": release_executor["cpu"],
-                "uname_release": release_executor["uname_release"],
-            }
-        except (KeyError, TypeError) as error:
-            raise FinalizationError("release QEMU executor is incomplete") from error
+        if context.get("scoped"):
+            policy = context_policy(context, target, version)["runtime_executor"]
+            expected_executor = {key: policy[key] for key in ("binary_sha256", "version", "cpu", "uname_release")}
+        else:
+            try:
+                release_executor = context["release"]["qemu"]["executor"]
+                expected_executor = {
+                    "binary_sha256": release_executor["binary_sha256"],
+                    "version": context["release"]["qemu"]["version"],
+                    "cpu": release_executor["cpu"],
+                    "uname_release": release_executor["uname_release"],
+                }
+            except (KeyError, TypeError) as error:
+                raise FinalizationError("release QEMU executor is incomplete") from error
         require(executor["kind"] == "explicit-qemu", "%s must use explicit QEMU" % path)
         for name, expected in expected_executor.items():
             require(executor[name] == expected, "%s executor %s mismatch" % (path, name))
@@ -2032,6 +2085,10 @@ def validate_qualification_zstd(report, release, target, version):
     require("compile" in report and "zstd" in report, "qualification zstd evidence is missing")
     context = release_context(release, target, version)
     context["release"] = release
+    return validate_context_zstd(report, context, target, version)
+
+
+def validate_context_zstd(report, context, target, version):
     evidence = validate_compile_zstd_evidence(
         report["compile"].get("zstd"),
         context,
@@ -2069,20 +2126,32 @@ def validate_final_report(
     actual_elf_evidence=None,
     require_qualification_artifact=True,
 ):
+    require(isinstance(report, dict), "qualification report must be an object")
+    context = release_context(release, target, version)
+    context["release"] = release
+    if report.get("qualification_schema_version") == 5:
+        context.update(policy_context(context_policy(context, target, version)))
     if abi_context is None:
         abi_context = default_abi_context(target)
-    require_exact_keys(report, FINAL_REPORT_KEYS, "qualification report")
+    return validate_context_report(report, context, target, version, abi_context,
+                                   actual_elf_evidence, require_qualification_artifact)
+
+
+def validate_context_report(report, context, target, version, abi_context,
+                            actual_elf_evidence, require_qualification_artifact):
+    schema_version = report.get("qualification_schema_version") if isinstance(report, dict) else None
+    require(type(schema_version) is int and schema_version in (4, 5), "qualification report schema mismatch")
+    fields = FINAL_REPORT_KEYS if schema_version == 4 else (FINAL_REPORT_KEYS - {"release_sha256", "qualification_components"}) | {"input_binding"}
+    require_exact_keys(report, fields, "qualification report")
+    require(bool(context.get("scoped")) == (schema_version == 5), "qualification report input mode mismatch")
     require(
-        report["qualification_schema_version"] == 4
-        and report["report_kind"] == "crossforge-cpython-qualification"
+        report["report_kind"] == "crossforge-cpython-qualification"
         and report["status"] == "passed",
         "qualification report identity mismatch",
     )
     require(report["target"] == target, "qualification report target mismatch")
     require(report["version"] == version, "qualification report version mismatch")
 
-    context = release_context(release, target, version)
-    context["release"] = release
     compile_report = validate_compile_report(
         report["compile"],
         context,
@@ -2096,21 +2165,20 @@ def validate_final_report(
         report["abi"] == compile_report["abi"],
         "qualification report ABI evidence differs from compile report",
     )
-    qualification_components = validate_python_qualification_components(
-        report["qualification_components"],
-        release,
-        "qualification report qualification_components",
-    )
-    require(
-        qualification_components == compile_report["qualification_components"],
-        "qualification report component identities differ from compile report",
-    )
+    if schema_version == 5:
+        validate_scoped_binding(report, context, target, version, "qualification report")
+    else:
+        qualification_components = validate_python_qualification_components(
+            report["qualification_components"], context["release"], "qualification report qualification_components")
+        if compile_report["qualification_schema_version"] == 4:
+            require(qualification_components == compile_report["qualification_components"],
+                    "qualification report component identities differ from compile report")
     compile_digest = serialized_sha256(compile_report)
     require(
         report["compile_report_sha256"] == compile_digest,
         "qualification report compile serialization mismatch",
     )
-    validate_qualification_zstd(report, release, target, version)
+    validate_context_zstd(report, context, target, version)
     require_exact_keys(report["executions"], RUNTIME_TIERS, "qualification executions")
     locked = validate_runtime_result(
         report["executions"]["locked-sysroot"],
@@ -2154,13 +2222,14 @@ def validate_final_report(
     )
     expected = {
         "adapter": context["adapter"],
-        "release_sha256": context["release_sha256"],
         "source": compile_report["source"],
         "sysroot_sha256": context["sysroot_sha256"],
         "python_sha256": compile_report["python_sha256"],
         "extension_sha256": compile_report["extension"]["sha256"],
         "probe_sha256": locked["probe_sha256"],
     }
+    if schema_version == 4:
+        expected["release_sha256"] = context["release_sha256"]
     for name, value in expected.items():
         require(report[name] == value, "qualification report %s mismatch" % name)
     return report
@@ -2183,10 +2252,27 @@ def finalize(
     readelf=None,
     actual_elf_evidence=None,
     abi_context_override=None,
+    qualification_components=None,
+    qualification_component_sha256=None,
 ):
-    release = load_json(release_path)
-    context = release_context(release, target, version)
-    context["release"] = release
+    require(target in TARGETS, "unsupported CPython target: %s" % target)
+    require((release_path is None) != (qualification_components is None),
+            "select exactly one of --release or --qualification-components")
+    if qualification_components is not None:
+        try:
+            policy = POLICY["load"](qualification_components, version, target.split("-", 1)[0],
+                                    qualification_component_sha256)
+        except POLICY["PolicyError"] as error:
+            raise FinalizationError(str(error)) from error
+        context = policy_context(policy)
+        identity = {"qualification_schema_version": 5, "input_binding": POLICY["binding"](policy)}
+    else:
+        require(qualification_component_sha256 is None, "--release cannot receive a component pin")
+        release = load_json(release_path)
+        context = release_context(release, target, version)
+        context["release"] = release
+        identity = {"qualification_schema_version": 4, "release_sha256": context["release_sha256"],
+                    "qualification_components": release_components()["python_qualification_components"](release)}
     if abi_context_override is not None:
         abi_context = abi_context_override
     elif abi_baseline_path is None:
@@ -2264,16 +2350,11 @@ def finalize(
     )
 
     report = {
-        "qualification_schema_version": 4,
         "report_kind": "crossforge-cpython-qualification",
         "status": "passed",
         "target": target,
         "version": version,
         "adapter": context["adapter"],
-        "release_sha256": context["release_sha256"],
-        "qualification_components": compile_report[
-            "qualification_components"
-        ],
         "source": compile_report["source"],
         "sysroot_sha256": context["sysroot_sha256"],
         "python_sha256": compile_report["python_sha256"],
@@ -2292,9 +2373,10 @@ def finalize(
             "clean-rocky": clean,
         },
     }
-    return validate_final_report(
+    report.update(identity)
+    return validate_context_report(
         report,
-        release,
+        context,
         target,
         version,
         abi_context,
@@ -2308,7 +2390,9 @@ def main():
     parser.add_argument("--compile-report", type=Path, required=True)
     parser.add_argument("--locked-sysroot-result", type=Path, required=True)
     parser.add_argument("--clean-runtime-result", type=Path, required=True)
-    parser.add_argument("--release", type=Path, required=True)
+    parser.add_argument("--release", type=Path)
+    parser.add_argument("--qualification-components", type=Path)
+    parser.add_argument("--qualification-component-sha256")
     parser.add_argument("--abi-baseline", type=Path, required=True)
     parser.add_argument("--abi-provider-manifest", type=Path, required=True)
     parser.add_argument("--sysroot-abi-inventory", type=Path, required=True)
@@ -2337,6 +2421,8 @@ def main():
         arguments.target_prefix,
         arguments.qualification_extension,
         arguments.readelf,
+        qualification_components=arguments.qualification_components,
+        qualification_component_sha256=arguments.qualification_component_sha256,
     )
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.output.with_name(arguments.output.name + ".tmp")

@@ -1,0 +1,669 @@
+{
+  "append_bases": {
+    "cp310": {
+      "cumulative_base": "target:python-dev-append-cp314",
+      "independent_base": "target:sdk-toolchains-dev"
+    },
+    "cp311": {
+      "cumulative_base": "target:python-dev-append-cp313",
+      "independent_base": "target:sdk-toolchains-dev"
+    },
+    "cp312": {
+      "cumulative_base": "target:python-dev-append-cp311",
+      "independent_base": "target:sdk-toolchains-dev"
+    },
+    "cp313": {
+      "cumulative_base": "target:sdk-toolchains-dev",
+      "independent_base": "target:sdk-toolchains-dev"
+    },
+    "cp314": {
+      "cumulative_base": "target:python-dev-append-cp312",
+      "independent_base": "target:sdk-toolchains-dev"
+    },
+    "cp39": {
+      "cumulative_base": "target:python-dev-append-cp310",
+      "independent_base": "target:sdk-toolchains-dev"
+    }
+  },
+  "build_environment_basis": "recorded prior build identity, not a new observation",
+  "components": {
+    "python/cp310-aarch64-install": {
+      "artifact": {
+        "config_digest": "sha256:726eaf596e629456bcec5be27fe32baba1956d8038a7108c3e5613dcebe0dbfa",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:8c3c466c1d371ef1e25c70ce1fa2ed10c71bb0df1e0948c0c141e7cce2420c90",
+        "root_digest": "sha256:8c3c466c1d371ef1e25c70ce1fa2ed10c71bb0df1e0948c0c141e7cce2420c90"
+      },
+      "inputs_sha256": "30e02382ddf5fd990efe0e54b55ccbe53963b23c2dee479d9a45d21fc0938821",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "1b3bcd54b177821eda02ad09262287122409139311b396ad411a4f6d1c689794",
+      "seconds": 0.024,
+      "source_inputs_match": true
+    },
+    "python/cp310-aarch64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:de732e215cb924bbbbd2879c824a7146b3c6c793dead32f97c908d785bd90da2",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:68305d44a27de92efbfd1d9ec914fb7fd9a7e0dc52563b003bf0701c7ed8503a",
+        "root_digest": "sha256:68305d44a27de92efbfd1d9ec914fb7fd9a7e0dc52563b003bf0701c7ed8503a"
+      },
+      "inputs_sha256": "58c48b160b1c13756e648db820787800ff97eab405ee487266d81ea1bc083e03",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "93b756d278e53342d356becc5f4d6c4b229da4e610de8592015211e583f277b6",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "python/cp310-build-install": {
+      "artifact": {
+        "config_digest": "sha256:b30526475487b940b49d3aa8f9e1da7e2a98f26193cf2b879aee4eb27676dfc9",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:832fcdf13f64332760a3fa201653d1f907158cfab4ce6a72675f1e53209dda50",
+        "root_digest": "sha256:832fcdf13f64332760a3fa201653d1f907158cfab4ce6a72675f1e53209dda50"
+      },
+      "inputs_sha256": "64c3e739eea1fc4c73de595fab086bf42f898154aec8ff192d3271717b5da6d5",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "ebab234dbf73009d121b15e6ef46e81aa50a225559f3acbedd81225bbcec21a9",
+      "seconds": 0.023,
+      "source_inputs_match": true
+    },
+    "python/cp310-x86_64-install": {
+      "artifact": {
+        "config_digest": "sha256:d9e7250dd9412c15df3d6477c3352815a2a59b89b12d15c44df8311cbcb3b647",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:cba3c8aeb6a7a5b3598018dc97f8efe9f2c012c7fb06b44791994e772bc7b28e",
+        "root_digest": "sha256:cba3c8aeb6a7a5b3598018dc97f8efe9f2c012c7fb06b44791994e772bc7b28e"
+      },
+      "inputs_sha256": "e483e046a1ad82f79b93a84ad02ab0e95633d4f96f3801b860899493a1c204d9",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "a4c2faceca1d060d4a5fdcac1d3b791d8e097811a86936cdd2c2cc104a491745",
+      "seconds": 0.023,
+      "source_inputs_match": true
+    },
+    "python/cp310-x86_64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:d6285b689af120961272a18d85fe773e6963bfa0974b41a4c82ec2b633bbe6fa",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:bc8ed7726f02976ab4f98385bb2ec6b5f8c5248d348387f97af506585137b7f6",
+        "root_digest": "sha256:bc8ed7726f02976ab4f98385bb2ec6b5f8c5248d348387f97af506585137b7f6"
+      },
+      "inputs_sha256": "1edb990704012d28467087406a3a111821cf3607732e1291e69879371f5f16b0",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "df2360eb9f84e5c0b4e2bce3a3ae7a41c65d1860a672a33d524d36d2ddf511d2",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "python/cp311-aarch64-install": {
+      "artifact": {
+        "config_digest": "sha256:e362e2d06d1a752ce491a2c7518b648b889f5a36874f97adb67a7fd1ae641f4a",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:502b13e673d2d7169c55c56adbf8005017fce1afc2b8fd7fbe9558ba16af653e",
+        "root_digest": "sha256:502b13e673d2d7169c55c56adbf8005017fce1afc2b8fd7fbe9558ba16af653e"
+      },
+      "inputs_sha256": "24a2b01b807a0642c810b640d5367804f6edeaf3572aa121d489bb909cd5f92a",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "abfa2a686836f9671f61b1697a2e38489be5bf71f3fe5d608573ade5cff473fa",
+      "seconds": 0.047,
+      "source_inputs_match": true
+    },
+    "python/cp311-aarch64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:05405b62a5ced74a792fe1543a1d6cfece11bd5489c892f3597e1269d6affa27",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:0c6cf484c4ae638e62bc57a8970af755f5e6ab51a7365c6189ca9f1d27fa629e",
+        "root_digest": "sha256:0c6cf484c4ae638e62bc57a8970af755f5e6ab51a7365c6189ca9f1d27fa629e"
+      },
+      "inputs_sha256": "9f283a6ab6be6cb05df7f704e478067f3106e2259d1326235ff4051683dd39f5",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "3a641c5bcca1f61e6a1a00c098e54bc1b41de7836606c0df80a98a2101ad8c91",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "python/cp311-build-install": {
+      "artifact": {
+        "config_digest": "sha256:cba8fbe389688c202013f961c0faea64adf5ab4a1a7306f7782f6188258c6748",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:26f19a87c03088498e1e9b94548e752e173201f47b3edb4bca5868f53686a9c5",
+        "root_digest": "sha256:26f19a87c03088498e1e9b94548e752e173201f47b3edb4bca5868f53686a9c5"
+      },
+      "inputs_sha256": "a4e10e108279fdb217fff1c47c014f31d09164cce327f34757c548916655fe68",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "90d2551b1bff0d5fb6904d8d561bc50057a4530e04ae84d6924ae7e38a541045",
+      "seconds": 0.03,
+      "source_inputs_match": true
+    },
+    "python/cp311-x86_64-install": {
+      "artifact": {
+        "config_digest": "sha256:479e21f6a55b847e615014178538221411512f57b814eb6f36ddfa8301573166",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:fc0c2642ae08c2f1f0c8a76c48990beb59c0a2884da416960a8a8e5b131c4b59",
+        "root_digest": "sha256:fc0c2642ae08c2f1f0c8a76c48990beb59c0a2884da416960a8a8e5b131c4b59"
+      },
+      "inputs_sha256": "44553bdcbd19e8dc22ede4b66a98da444d3dd9ae8397f98c1733c572fa0ffc67",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "381b449b4120790cc62acc40852e88595885adfa789b077a15bd1585f9c9b7e2",
+      "seconds": 0.029,
+      "source_inputs_match": true
+    },
+    "python/cp311-x86_64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:03d00745ab2266b7e6f04ec9728e9b73f84b664bca0c22bc419c83e383757e03",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:35dd91be17265ecb4af83f682536d3afb7da1729f1b961a14aa71fedc2fa8a76",
+        "root_digest": "sha256:35dd91be17265ecb4af83f682536d3afb7da1729f1b961a14aa71fedc2fa8a76"
+      },
+      "inputs_sha256": "a101005dd447ccb437a74e729aca6b60d5d3d12c7302e1737c93157eae4d901a",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "b363bdd5c1a331361f73d701d2ee96d099ad031f0e8919983dcb45473a102311",
+      "seconds": 0.003,
+      "source_inputs_match": true
+    },
+    "python/cp312-aarch64-install": {
+      "artifact": {
+        "config_digest": "sha256:f66f75f1b71a7d16dc51ad8f9d4f01aaa5a1b5b4c973b0324389e99e12874e23",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:657899a04c5789deec3e4784c05086119d357379763d49615e91a60ad8426c58",
+        "root_digest": "sha256:657899a04c5789deec3e4784c05086119d357379763d49615e91a60ad8426c58"
+      },
+      "inputs_sha256": "de5ede64aab23db67d435e024b4dc6c40754230a295d0ed7aca5059cec00d40e",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "d45ca6b237253369676c133e8c734762e81a42eda0060efd335a6011a156b3c7",
+      "seconds": 0.033,
+      "source_inputs_match": true
+    },
+    "python/cp312-aarch64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:d0af9614c7fb42d26aa779d4222291bc2e295146706879cc259d3fc3362e15f2",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:c67f18055e71767c309836a7b8ab594f132ae0e5794a41364a2f297a741d72c2",
+        "root_digest": "sha256:c67f18055e71767c309836a7b8ab594f132ae0e5794a41364a2f297a741d72c2"
+      },
+      "inputs_sha256": "356de5831b8c6d02daf57765cb7cdcf0761ab4da190b38cfaf02b1c572a1d4c6",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "1d6ec39a29707aaea66d5427be8edfe2762b9102e2f51e70f0112a601d99f154",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "python/cp312-build-install": {
+      "artifact": {
+        "config_digest": "sha256:29fae5b21697218e12ff813f4326e91bc20e392f23a9b5a53de37e5acd387192",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:65187ef20245371baec4f8d24e4fd55727eb64e6ebf35597feee5967263a0814",
+        "root_digest": "sha256:65187ef20245371baec4f8d24e4fd55727eb64e6ebf35597feee5967263a0814"
+      },
+      "inputs_sha256": "0f607ef811b48ab0458c4e6f2e66c9e0fb5deafa886c387db88eaf8d660fcb7c",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "62d82a340b8b250a7d28a50607a170a4546b206ed84b071515d8f5b00b310b94",
+      "seconds": 0.033,
+      "source_inputs_match": true
+    },
+    "python/cp312-x86_64-install": {
+      "artifact": {
+        "config_digest": "sha256:094e057595e6980d922204167e86576f925e3a4f9be37dc522d1dbe7a44faa1e",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:903f892834bf813f98804a9bf0d6aec1d0fd409c9d72bf7447d3056af28989ff",
+        "root_digest": "sha256:903f892834bf813f98804a9bf0d6aec1d0fd409c9d72bf7447d3056af28989ff"
+      },
+      "inputs_sha256": "3610b63b8dae9df1ef847bd53e6041079fff318a4b11d8d1973ad7bd1347d2e3",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "e537812bd5bfb0a36177ff06854ccf754e15c3af562fd15c1818ac9b775be383",
+      "seconds": 0.033,
+      "source_inputs_match": true
+    },
+    "python/cp312-x86_64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:701ac0483787689185010c6b5f9d08261211f77213361dd19d74a21964050c6f",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:1faad312743dc306da1bfdb369deadeeb6ee6fe15ea760961155846a6e341b7e",
+        "root_digest": "sha256:1faad312743dc306da1bfdb369deadeeb6ee6fe15ea760961155846a6e341b7e"
+      },
+      "inputs_sha256": "5fe6d1108d92d9b242a2b7e781605d01dcf1520103e21021179c428dde947850",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "1eafc56128a890ffc66c08ffda22e61b7cdb627126edc59ae24e6cbec206a4f5",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "python/cp313-aarch64-install": {
+      "artifact": {
+        "config_digest": "sha256:6b3772aff9688c155ea6a75eb76858afbec50876e97dc2477dc4baf1f47889d1",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:97d7bd5ab7876ae633a51642ccb80be34a15fd8de5040cd06e440584b9a2bd8c",
+        "root_digest": "sha256:97d7bd5ab7876ae633a51642ccb80be34a15fd8de5040cd06e440584b9a2bd8c"
+      },
+      "inputs_sha256": "31cb82a361a09ea2f23555c7cc51cd8667e90f4b1529af9e2516265532509ac5",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "756f40f6aa119729739b73455b5b18681fc2ff13a287d23479973c6ede175536",
+      "seconds": 0.036,
+      "source_inputs_match": true
+    },
+    "python/cp313-aarch64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:083baa693bb9c5ed190ca19ef9136cf46b80fa3aaf956f4665b18eefcf436bac",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:91f3cc60e0a21ff04e0179195b7d0ad448678a26e37239e7d05a3d46ccac6d45",
+        "root_digest": "sha256:91f3cc60e0a21ff04e0179195b7d0ad448678a26e37239e7d05a3d46ccac6d45"
+      },
+      "inputs_sha256": "88db5010511678043ffcf786a79ce79cde3e4573ca69575ae5f0e5d3bbc8a393",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "3a41c08855726d41799779ebcdfc7812d3af8d06dd7eb631e2c96e39341195a9",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "python/cp313-build-install": {
+      "artifact": {
+        "config_digest": "sha256:93ea2e9469994ea97abf662c0a0735c6a6ef3866f3325a2e5f54f8bf3822cff4",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:c475d02e76cd3254cc33538ab6ee0b25a6d6305b7619c684353e0f2cffb194da",
+        "root_digest": "sha256:c475d02e76cd3254cc33538ab6ee0b25a6d6305b7619c684353e0f2cffb194da"
+      },
+      "inputs_sha256": "a2b5f4743d2310f49101a021a899effdb0c7a93bfca3447feffe7a361b142294",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "2f681cd79533754e4bc260a4f2778d6755e6a5da6f7f69fc2a1790985e518a29",
+      "seconds": 0.036,
+      "source_inputs_match": true
+    },
+    "python/cp313-x86_64-install": {
+      "artifact": {
+        "config_digest": "sha256:f7cf52613eb0ad20755208793379364a2335f3b970b32a324d47547308ffb455",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:cb6340f23f385336a66d5f8a698d4e7b70e6cb03fb190f9dbf205aa5a7ce2abc",
+        "root_digest": "sha256:cb6340f23f385336a66d5f8a698d4e7b70e6cb03fb190f9dbf205aa5a7ce2abc"
+      },
+      "inputs_sha256": "ef40c02a0d53ad8fee5b28f4a8f259a1e786923a8c24fee2bee64d0ea4d5812e",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "a9a1adc1069aa6a23a22b102b96a714276e34d2250d6fc8a0e88d37987253e19",
+      "seconds": 0.036,
+      "source_inputs_match": true
+    },
+    "python/cp313-x86_64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:ab6b1e3597a87ce1f7618fe9ad2826a4d9d5da378b5533e2bd4a572706062ff9",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:10afe36f1252ffc769f30354b755e3b1e816be595f6aac2c9881b9f7631fe0de",
+        "root_digest": "sha256:10afe36f1252ffc769f30354b755e3b1e816be595f6aac2c9881b9f7631fe0de"
+      },
+      "inputs_sha256": "ab491f4169ac44375a9e522af7b97495e72183e3262db1365b9c8f88bb7beaac",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "d0e8d8d3851d61800f6a7fd47cf1474e0d5d837a35513a68c480a6ee0c404b6b",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "python/cp314-aarch64-install": {
+      "artifact": {
+        "config_digest": "sha256:56c5a9d9c9baae109d9a6511decddf27f81035d8faa0657c9ea9f3550b522cbb",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:e77d4ab79aafe574fd3878b88a883b9f75bb7ef415197871435ba9536cb18c96",
+        "root_digest": "sha256:e77d4ab79aafe574fd3878b88a883b9f75bb7ef415197871435ba9536cb18c96"
+      },
+      "inputs_sha256": "3f14d0cbf9f044784e33fbeefd891657982371dee768db2611c5eb2a58c4795a",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "5f043f38e212c2c6ea9d11e68f60da37290af04831b82f700d1951d614c710c6",
+      "seconds": 0.04,
+      "source_inputs_match": true
+    },
+    "python/cp314-aarch64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:cdd99099b3656a0950141e81cdca7441e13e7560ed92000efb464a26a7582317",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:c0e0d69f388ffbdb15c0694ca4cd78cafe55dc13372f3a32b5990fea74f95f5a",
+        "root_digest": "sha256:c0e0d69f388ffbdb15c0694ca4cd78cafe55dc13372f3a32b5990fea74f95f5a"
+      },
+      "inputs_sha256": "287cce43e8fd232833172be260eb6bf85911454e2d80cffd155142b45d5354bb",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "9e5083867a8187d493898e9a6c02241d469734a4ab4aa8eb973b91acce8163d1",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "python/cp314-build-install": {
+      "artifact": {
+        "config_digest": "sha256:1b422ca013b74763c1234dc328b5ed230472131e1fcc8dc37c97b4a5f6e15895",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:df56a3351f0a10d680d1d3eb402b0b40910f35c8f4459e2280591e54b26772c8",
+        "root_digest": "sha256:df56a3351f0a10d680d1d3eb402b0b40910f35c8f4459e2280591e54b26772c8"
+      },
+      "inputs_sha256": "bbad65564d9581f3edcb169e9bdc423d798f4e63e3b6c2b064bb138d2756828c",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "d72e0c2431e24196b82d4de48e48bd0f150aca7ae1ef9c6bda2268367084fc26",
+      "seconds": 0.037,
+      "source_inputs_match": true
+    },
+    "python/cp314-x86_64-install": {
+      "artifact": {
+        "config_digest": "sha256:471ced06717571e62028374000419618e90a1f45194c60ed518df1b2677d6928",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:0b0884f3d928f00632f8e30a96a92132df8123022749bd62fa0086ce3e37ac77",
+        "root_digest": "sha256:0b0884f3d928f00632f8e30a96a92132df8123022749bd62fa0086ce3e37ac77"
+      },
+      "inputs_sha256": "e1ae3a7e59b6657ee32a3417b255683f0918ef9f8dc090dffecd0b6a73040f57",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "560c86078a957d2c37e04da7e9652d2ad8349a52bc8c61bd4f1e4445af4fff6a",
+      "seconds": 0.127,
+      "source_inputs_match": true
+    },
+    "python/cp314-x86_64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:108f8a2d90928e1b0993f45ec37434a2394ccabd5fb9514006fa024852a848c8",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:88f95d25c96749f59255c641f77da2bee24aeeb735f55e7777bd36a71d54aa50",
+        "root_digest": "sha256:88f95d25c96749f59255c641f77da2bee24aeeb735f55e7777bd36a71d54aa50"
+      },
+      "inputs_sha256": "84090022b90a59d10ace2627f8cb2a3e60acf141e3b7a4215a1af8e48968c57c",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-matrix-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "d6e89e1d9ad9534d5dff5c875c3b9f70b66f6c0ade8bff2921ae705783e73b4e",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "python/cp39-aarch64-install": {
+      "artifact": {
+        "config_digest": "sha256:b0cf0e724c975448df011697843004b3f4151c811e126b1432e5cd8a7294bb96",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:093f4383500220c4ae9d70709ed96e8a60dd3244c7509f3fbffd02702422dff2",
+        "root_digest": "sha256:093f4383500220c4ae9d70709ed96e8a60dd3244c7509f3fbffd02702422dff2"
+      },
+      "inputs_sha256": "9bc3d223df615a6d2b8a414074e5f85c592f50aadb92cb67fd029e8a35d13a9d",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-component-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "1b22e48f2e973700b97b26276f091e77104575745fa055268d0c2a26972f0327",
+      "seconds": 0.049,
+      "source_inputs_match": true
+    },
+    "python/cp39-aarch64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:a888c208d74f787002064e0a3ab114ede91aed9eb0304e418efa9d8f963e5d02",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:b6644375469b6c820965b7bd3f4713ff11b68f00911892d38f45b4617a2a26aa",
+        "root_digest": "sha256:b6644375469b6c820965b7bd3f4713ff11b68f00911892d38f45b4617a2a26aa"
+      },
+      "inputs_sha256": "21a38d0c020960b10b98aea72b0c33cdb2bdb74b7b681905b518095e79ca4b2b",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-component-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "26effbba4e53dd40e6011a0f2d64681bb4918dab5cff0ba48944d30d53e4c74a",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "python/cp39-build-install": {
+      "artifact": {
+        "config_digest": "sha256:d54e2cd7f5bed5cc9222dd73c534b444748884f13717d2a14f50c791ad3d9dc6",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:3a99c04fc60fa6c6025b4f9cdba134d9cb590866604527927f751a6a9ed6726e",
+        "root_digest": "sha256:3a99c04fc60fa6c6025b4f9cdba134d9cb590866604527927f751a6a9ed6726e"
+      },
+      "inputs_sha256": "1d30c507d1c2925b38111cae8c09d0c68e577a35cfee5adab9f4d9c69aa56dcc",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-component-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "eb29db44dfe0284204f0c7c9591b93d0d1cf727f26f6f26f316075fa84735091",
+      "seconds": 0.029,
+      "source_inputs_match": true
+    },
+    "python/cp39-x86_64-install": {
+      "artifact": {
+        "config_digest": "sha256:460232faff26bb3adde0d4296d24e6cbaa2d68d8cef86c81b36fb86be28d967f",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:0c2b8ef3888fa7e54d2e2f971b49124eaffd49564f8a1587044c70dddf70ef25",
+        "root_digest": "sha256:0c2b8ef3888fa7e54d2e2f971b49124eaffd49564f8a1587044c70dddf70ef25"
+      },
+      "inputs_sha256": "03634fa4d5ef6bb65e2400bd8c61a6df2cc673ea93234f822233d00c758dea91",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-component-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "e22a31988880075870151b21532670aef53868de09b47f547f6c9148d04c5eef",
+      "seconds": 0.029,
+      "source_inputs_match": true
+    },
+    "python/cp39-x86_64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:909cda894e75d3a1b061f4fa8002d07f57d00405b0397aecd47d1083df81e8a5",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:6c20c7f028cfb6bee67bcf9f4c736074af4aeeaf915f29b1561758c160eb3cc0",
+        "root_digest": "sha256:6c20c7f028cfb6bee67bcf9f4c736074af4aeeaf915f29b1561758c160eb3cc0"
+      },
+      "inputs_sha256": "fe99507c65c948db9d45e87900a5d8b69f4f3988660f42e3b0c838b73d306b81",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/python-component-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "98925be0f21d15ad5b4e9c1c7fd8de09a6306ae9e076fe50e89d0a444e7b8d3d",
+      "seconds": 0.001,
+      "source_inputs_match": true
+    },
+    "toolchain/aarch64-install": {
+      "artifact": {
+        "config_digest": "sha256:172590eb196f220ad5aefcc3a294ae65061f3f98be2d9d25ec85564334a6ea57",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+        "root_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6"
+      },
+      "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/toolchain-policy-2026-09-10.json"
+      ],
+      "receipt_sha256": "ba6c9de0cfe792c649cdf7ab372d5f7d2faa02f8d6fa093e28961a92293c77ec",
+      "seconds": 0.436,
+      "source_inputs_match": true
+    },
+    "toolchain/aarch64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:919ddd9f87b934f396da95d614aa822929dcb8ebcc502eb872f06c67c3a2fea8",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:e4fae8559a663b81227283a31023dfb9603f53be77ab62391bed9ccb22f14227",
+        "root_digest": "sha256:e4fae8559a663b81227283a31023dfb9603f53be77ab62391bed9ccb22f14227"
+      },
+      "inputs_sha256": "e95c7c25c544b6dbdaa87e85168b8ed936ed1c68504b7bf17eebff22cc825a0b",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/toolchain-policy-2026-09-10.json"
+      ],
+      "receipt_sha256": "a75e681948d53a049e6e5290787e7ebae9f385bf79240a5d0ceec8e9fc214d0d",
+      "seconds": 4.262,
+      "source_inputs_match": true
+    },
+    "toolchain/x86_64-install": {
+      "artifact": {
+        "config_digest": "sha256:7604377932a63d06794cc47f01578156a57c01e7f705cfaa84020e5cba2e3592",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+        "root_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f"
+      },
+      "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/qualification-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "6a9df4c724128122f70bab87f19ce1a228d9229e2bbf4613e6df510c619eb5a6",
+      "seconds": 0.414,
+      "source_inputs_match": true
+    },
+    "toolchain/x86_64-test-context": {
+      "artifact": {
+        "config_digest": "sha256:92709be2d34e6a6ccb9f97584477068ccf71bf8a24b0c4c84175ceead8e968d1",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:b638a7a57917bcd13dac88a4f537eaaba4ce28a4848ec47a4f2d85bc9c14c48d",
+        "root_digest": "sha256:b638a7a57917bcd13dac88a4f537eaaba4ce28a4848ec47a4f2d85bc9c14c48d"
+      },
+      "inputs_sha256": "a034ba7e96064f069fec553125390cc642d98c82f6b3c1a7aab919852aaa3516",
+      "oci_blobs_checked": true,
+      "pin_sources": [
+        "docs/research/qualification-handoff-2026-09-10.json"
+      ],
+      "receipt_sha256": "c6434e2d0a0a3ca8cf6a63e772ff15e6d984f8df96af071849655fd2c32d2514",
+      "seconds": 0.607,
+      "source_inputs_match": true
+    }
+  },
+  "date": "2026-09-11",
+  "environment": {
+    "cpus": 4,
+    "docker_socket_mounted": false,
+    "memory": "16g",
+    "network": "none",
+    "tool_image_id": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "user": "1000:1000"
+  },
+  "kind": "crossforge-offline-runtime-replay-preflight",
+  "limits": [
+    "No Docker socket or daemon access; no embedded contract extraction, installed file acceptance or target execution.",
+    "Python dependency binding replaces only its verification callback for source capture; actual local verification remains mandatory.",
+    "Old row qualification receipts are deliberately excluded; all changed qualification/report paths still require fresh execution.",
+    "No GitHub signatures, candidate/native ARM validation, new-builder replay or performance measurement.",
+    "The prepared runtime command has not run. Prior automatic review denied the Docker socket mount because it grants broad host daemon control; no retry or alternative daemon access occurred.",
+    "No implementation, baseline, version pin or generated configuration changed in this follow-up. No main merge, remote push or publication."
+  ],
+  "local_outputs": {
+    "README.md": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/README.md",
+      "sha256": "0e2dff6f7d40a13dc9e35bc70ee378133e13b26c8be62dd3287c6706233f3a68"
+    },
+    "check-only.log": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/check-only.log",
+      "sha256": "adc0e18719efe05f501d81d58d2a65885bf48b3d4468ddffaa7948807f3dc374"
+    },
+    "gcc-contexts.json": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/gcc-contexts.json",
+      "sha256": "edf2b3b49bc3102a3ede35eeb8482fb74e0ae08508bd4fae6e5eeb8cee12750c"
+    },
+    "manifest.json": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/manifest.json",
+      "sha256": "aec2c06e238732eea41a0f81d4447a04c80548f676fe9d636f624535b3786f8a"
+    },
+    "preflight-graph.json": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/preflight-graph.json",
+      "sha256": "245f62e2892874649a557daf74f7a09ce416a039239b08ae324a84aa5683cb80"
+    },
+    "preflight.json": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/preflight.json",
+      "sha256": "194b43d67ef01300f79668de15c970e70d6fd15ffce104b584fc49ff1410a6b5"
+    },
+    "preflight.log": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/preflight.log",
+      "sha256": "c2a763c737cf78ac9cc6827cdbfe83de9b4ba0330e5e0330967d7b25d01e6c22"
+    },
+    "preflight.py": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/preflight.py",
+      "sha256": "e6589b8b3725fa631a827b5532cf794d1cc8e5a661999600304278525245235d"
+    },
+    "raw-components.json": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/raw-components.json",
+      "sha256": "387aa4473e290bd56592cee6040a71b04f2bbaa99ab61623aca20199f3461645"
+    },
+    "run-authorized.sh": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/run-authorized.sh",
+      "sha256": "e20ea07a02249fe842761ee5544a1f3510bdd18ba1e3e770384bc14fff00efdd"
+    },
+    "run.py": {
+      "path": "/tmp/crossforge-runtime-replay-cb115b5/run.py",
+      "sha256": "296995a9eb74fc29f39f7d5636c2a8fb195f9b2ee02ffb4ad5905edc716185b4"
+    }
+  },
+  "prepared_runtime": {
+    "builder": "crossforge-ci-review",
+    "check_only_result": {
+      "phase": "python-cp39",
+      "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+      "status": "prepared inputs match; no daemon access or qualification"
+    },
+    "entry": "/tmp/crossforge-runtime-replay-cb115b5/run-authorized.sh",
+    "manifest_sha256": "aec2c06e238732eea41a0f81d4447a04c80548f676fe9d636f624535b3786f8a",
+    "phases": [
+      "toolchain-x86_64",
+      "toolchain-aarch64",
+      "gcc-smoke-x86_64",
+      "gcc-smoke-aarch64",
+      "gcc-full-x86_64",
+      "python-cp39",
+      "python-cp310",
+      "python-cp311",
+      "python-cp312",
+      "python-cp313",
+      "python-cp314",
+      "python-dev",
+      "sdk-complete-dev"
+    ],
+    "source_inventory_entries": 1007,
+    "status": "not started; explicit Docker socket authorization pending"
+  },
+  "schema_version": 1,
+  "source_commit": "cb115b51a3038a9d84c68c0e98a2f255379da4f7",
+  "status": "source inputs and local OCI blob identities match prior records"
+}

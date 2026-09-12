@@ -1,0 +1,47 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "implementation/python-cp312-qualification-policy",
+  "dependencies": [
+    {
+      "canonical_sha256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+      "component": "implementation/python-cp312-build-policy"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/@implementation/python_rows/cp312/adapter",
+      "value": "modern"
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/gil_policy",
+      "value": "absent"
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/hash_algorithm",
+      "value": "siphash13"
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/introduced_phase",
+      "value": 7
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/minor",
+      "value": "3.12"
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/row",
+      "value": "cp312"
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/sysconfig_isolation",
+      "value": true
+    },
+    {
+      "path": "/@implementation/python_rows/cp312/zstd",
+      "value": false
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

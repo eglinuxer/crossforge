@@ -1,0 +1,23 @@
+name: Set up the pinned component catalog verifier
+description: Export and validate the existing TUF-authenticated Cosign executable
+outputs:
+  binary:
+    description: Verified Cosign executable
+    value: ${{ steps.verifier.outputs.binary }}
+runs:
+  using: composite
+  steps:
+    - name: Export and check the pinned catalog verifier
+      id: verifier
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        output="$RUNNER_TEMP/crossforge-catalog-verifier"
+        docker buildx bake cosign-host-tool \
+          --set "cosign-host-tool.output=type=local,dest=$output" \
+          --progress=plain
+        expected=$(jq -r .sigstore.verifier.binary.sha256 config/release.json)
+        test "$(sha256sum "$output/cosign" | awk '{print $1}')" = "$expected"
+        test -x "$output/cosign"
+        ./scripts/validate-sigstore-report.py "$output/sigstore-verification.json"
+        printf 'binary=%s\n' "$output/cosign" >> "$GITHUB_OUTPUT"

@@ -19,6 +19,7 @@ COMPONENT_READER = runpy.run_path(
     str(SCRIPT_DIRECTORY / "release_component.py")
 )
 ComponentError = COMPONENT_READER["ComponentError"]
+VCPKG_POLICY = runpy.run_path(str(SCRIPT_DIRECTORY / "vcpkg_policy.py"))
 HISTORY = runpy.run_path(str(SCRIPT_DIRECTORY / "fetch-vcpkg-history.py"))
 HistoryError = HISTORY["FetchError"]
 SHA256_RE = re.compile(r"^[0-9a-f]{64}\Z")
@@ -509,7 +510,7 @@ def write_project(source):
     )
 
 
-def cmake_smoke(cmake_root, qemu, release, work):
+def cmake_smoke(cmake_root, qemu, executor, work):
     source = work / "source"
     write_project(source)
     configurations = [
@@ -622,7 +623,6 @@ def cmake_smoke(cmake_root, qemu, release, work):
             if name == "x86_64":
                 command = [executable]
             else:
-                executor = release["qemu"]["executor"]
                 command = [
                     qemu,
                     "-cpu",
@@ -650,13 +650,12 @@ def cmake_smoke(cmake_root, qemu, release, work):
     return results
 
 
-def qualify_ninja(root, release, component_path, component_sha256, report_path):
+def qualify_ninja(root, identity, component_path, component_sha256, report_path):
     component = load_component(
         component_path, "host-tools/ninja", component_sha256
     )
     report = load_json(report_path)
-    release_ninja = release["host_tools"]["ninja"]
-    version = release_ninja["version"]
+    version = identity["version"]
     ninja_root = Path("/opt/crossforge/host-tools/ninja") / version
     tool = ninja_root / "bin/ninja"
     license_path = ninja_root / "share/licenses/ninja/COPYING"
@@ -684,11 +683,11 @@ def qualify_ninja(root, release, component_path, component_sha256, report_path):
         tool.is_file()
         and not tool.is_symlink()
         and sha256_file(tool)
-        == release_ninja["binary"]["extracted_sha256"]
+        == identity["binary_sha256"]
         and version_stdout == version + "\n"
         and license_path.is_file()
         and not license_path.is_symlink()
-        and sha256_file(license_path) == release_ninja["license"]["sha256"],
+        and sha256_file(license_path) == identity["license_sha256"],
         "installed Ninja host-tool identity differs",
     )
     fetched, _stderr = run(
@@ -709,13 +708,12 @@ def qualify_ninja(root, release, component_path, component_sha256, report_path):
     }
 
 
-def qualify_cmake(root, release, component_path, component_sha256, report_path):
+def qualify_cmake(root, identity, component_path, component_sha256, report_path):
     component = load_component(
         component_path, "host-tools/cmake", component_sha256
     )
     report = load_json(report_path)
-    release_cmake = release["host_tools"]["cmake"]
-    version = release_cmake["version"]
+    version = identity["version"]
     cmake_root = Path("/opt/crossforge/host-tools/cmake") / version
     tool = cmake_root / "bin/cmake"
     require(
@@ -739,9 +737,6 @@ def qualify_cmake(root, release, component_path, component_sha256, report_path):
         "CMake host-tool PATH selection differs",
     )
     version_stdout, _stderr = run([tool, "--version"])
-    payload = next(
-        item for item in release_cmake["payloads"] if item["path"] == "bin/cmake"
-    )
     tools = load_json(root / "scripts/vcpkg-tools.json")
     selections = [
         item
@@ -753,16 +748,19 @@ def qualify_cmake(root, release, component_path, component_sha256, report_path):
     require(
         tool.is_file()
         and not tool.is_symlink()
-        and sha256_file(tool) == payload["sha256"]
+        and sha256_file(tool) == identity["binary_sha256"]
         and version_stdout.splitlines()[0] == "cmake version " + version,
         "installed CMake host-tool identity differs",
     )
     require(
         len(selections) == 1
         and selections[0].get("version") == version
-        and selections[0].get("url") == release_cmake["binary"]["url"]
-        and selections[0].get("sha512") == release_cmake["binary"]["sha512"]
-        and selections[0].get("archive")
+        and selections[0].get("url") == identity["url"]
+        and selections[0].get("sha512") == identity["sha512"],
+        "vcpkg CMake download identity differs",
+    )
+    require(
+        selections[0].get("archive")
         == "cmake-4.4.0-linux-x86_64.tar.gz"
         and selections[0].get("executable")
         == "cmake-4.4.0-linux-x86_64/bin/cmake",
@@ -787,6 +785,43 @@ def qualify_cmake(root, release, component_path, component_sha256, report_path):
     }
 
 
+def qualify_toolchain_reports(release, release_sha256, directory,
+                              component_directory=None, component_sha256=None):
+    scoped = component_directory is not None
+    require(scoped == (component_sha256 is not None), "toolchain component directory and pins must be supplied together")
+    if scoped:
+        require(type(component_sha256) is dict and set(component_sha256) == set(TARGETS),
+                "toolchain component pins must cover both targets")
+    else:
+        # Retain the complete-release CLI without loading its renderer in the
+        # component-mode Docker stage.
+        components = runpy.run_path(str(SCRIPT_DIRECTORY / "release-components-core.py"))
+    validator = runpy.run_path(str(SCRIPT_DIRECTORY / "toolchain_report.py"))
+    errors = (validator["QualificationError"], ValueError)
+    if not scoped:
+        errors += (components["ProjectionError"],)
+    results = {}
+    for arch in TARGETS:
+        if release is not None:
+            targets = [target for target in release["targets"] if target["arch"] == arch]
+            require(len(targets) == 1, "toolchain release target is not unique")
+        try:
+            if scoped:
+                policy = validator["POLICY"]["load"](component_directory, arch, component_sha256[arch])
+                if release is not None:
+                    expected = validator["POLICY"]["from_release"](release, arch, policy["component"])
+                    require(policy == expected, "%s toolchain components differ from the vcpkg release inputs" % arch)
+                results[arch] = validator["qualify_policy_toolchain_report"](directory / (arch + ".json"), policy)
+            else:
+                results[arch] = validator["qualify_prior_toolchain_report"](
+                    arch, TARGETS[arch]["triple"], directory / (arch + ".json"), release, release_sha256,
+                    targets[0]["sysroot"]["canonical_sha256"],
+                    components["toolchain_qualification_component"](release, arch))
+        except errors as error:
+            raise QualificationError(str(error)) from error
+    return results
+
+
 def qualify(
     release_path,
     root,
@@ -799,25 +834,26 @@ def qualify(
     cmake_report_path,
     component_paths,
     component_sha256,
+    toolchain_components=None,
+    toolchain_component_sha256=None,
+    components=None,
 ):
-    release = load_json(release_path)
-    release_sha256 = hashlib.sha256(
-        json.dumps(
-            release, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-        ).encode("utf-8")
-    ).hexdigest()
-    toolchain_reports = {
-        arch: load_json(
-            Path("/opt/crossforge/qualification/toolchain") / (arch + ".json")
-        )
-        for arch in ("x86_64", "aarch64")
-    }
-    for arch, report in toolchain_reports.items():
-        require(
-            report.get("release_sha256") == release_sha256
-            and report.get("target") == TARGETS[arch]["triple"],
-            "%s base toolchain qualification is absent or stale" % arch,
-        )
+    require((release_path is None) != (components is None), "provide exactly one vcpkg policy source")
+    if components is not None:
+        require(toolchain_components is None, "--components supplies the toolchain projection directory")
+        policy = VCPKG_POLICY["load"](components, "sdk", component_sha256["sdk"], toolchain_component_sha256)
+        release, release_sha256 = None, None
+        toolchain_components = components
+        host_tools = policy["host_tools"]
+        executor = policy["toolchains"]["aarch64"]["runtime_executor"]
+    else:
+        policy = None
+        release = load_json(release_path)
+        release_sha256 = COMPONENT_READER["canonical_sha256"](release)
+        host_tools = VCPKG_POLICY["host_tools_from_release"](release)
+        executor = release["qemu"]["executor"]
+    qualify_toolchain_reports(release, release_sha256, Path("/opt/crossforge/qualification/toolchain"),
+                              toolchain_components, toolchain_component_sha256)
     source_component = load_component(
         component_paths["source"],
         "sources/vcpkg",
@@ -865,14 +901,14 @@ def qualify(
     )
     ninja = qualify_ninja(
         root,
-        release,
+        host_tools["ninja"],
         component_paths["ninja"],
         component_sha256["ninja"],
         ninja_report_path,
     )
     cmake_host_tool = qualify_cmake(
         root,
-        release,
+        host_tools["cmake"],
         component_paths["cmake"],
         component_sha256["cmake"],
         cmake_report_path,
@@ -915,15 +951,14 @@ def qualify(
     )
     with tempfile.TemporaryDirectory(prefix="crossforge-vcpkg-sdk-") as temporary:
         cmake = cmake_smoke(
-            cmake_root, qemu, release, Path(temporary)
+            cmake_root, qemu, executor, Path(temporary)
         )
     for name in ("downloads", "buildtrees", "packages", "installed", "vcpkg_installed"):
         require(not (root / name).exists(), "vcpkg probe polluted its root")
-    return {
-        "schema_version": 1,
+    report = {
+        "schema_version": 2 if policy is not None else 1,
         "kind": "crossforge-vcpkg-sdk-qualification",
         "status": "passed",
-        "release_sha256": release_sha256,
         "environment": expected_environment,
         "source": source,
         "ninja": ninja,
@@ -939,11 +974,16 @@ def qualify(
             for arch in ("x86_64", "aarch64")
         },
     }
+    report.update({"input_binding": VCPKG_POLICY["binding"](policy)} if policy is not None else
+                  {"release_sha256": release_sha256})
+    return report
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
-    parser.add_argument("--release", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--release", type=Path)
+    source.add_argument("--components", type=Path)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--source-manifest", type=Path, required=True)
     parser.add_argument("--integration-manifest", type=Path, required=True)
@@ -952,11 +992,24 @@ def main():
     parser.add_argument("--qemu", type=Path, required=True)
     parser.add_argument("--ninja-report", type=Path, required=True)
     parser.add_argument("--cmake-report", type=Path, required=True)
+    parser.add_argument("--toolchain-components", type=Path)
+    for arch in TARGETS:
+        parser.add_argument("--toolchain-%s-component-sha256" % arch)
     for role in ("source", "integration", "sdk", "ninja", "cmake"):
         parser.add_argument("--%s-component" % role, type=Path, required=True)
         parser.add_argument("--%s-component-sha256" % role, required=True)
     parser.add_argument("--output", type=Path, required=True)
     arguments = parser.parse_args()
+    toolchain_pins = {arch: getattr(arguments, "toolchain_%s_component_sha256" % arch) for arch in TARGETS}
+    require(arguments.components is None or arguments.toolchain_components is None,
+            "--components cannot be combined with --toolchain-components")
+    if arguments.toolchain_components is None and arguments.components is None:
+        require(not any(value is not None for value in toolchain_pins.values()),
+                "toolchain component pins require --toolchain-components")
+        toolchain_pins = None
+    else:
+        require(all(value is not None for value in toolchain_pins.values()),
+                "toolchain components require both target pins")
     report = qualify(
         arguments.release,
         arguments.root,
@@ -981,6 +1034,9 @@ def main():
             "ninja": arguments.ninja_component_sha256,
             "cmake": arguments.cmake_component_sha256,
         },
+        arguments.toolchain_components,
+        toolchain_pins,
+        components=arguments.components,
     )
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.output.with_name(arguments.output.name + ".tmp")

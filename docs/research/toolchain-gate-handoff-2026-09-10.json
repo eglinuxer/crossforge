@@ -1,0 +1,122 @@
+{
+  "kind": "crossforge-local-toolchain-gate-handoff-observation",
+  "schema_version": 1,
+  "date": "2026-09-10",
+  "producer": {
+    "toolchain-install": {
+      "artifact": {
+        "config_digest": "sha256:13ace15030a2c2e5c5fec3d55a8963d8daef9ba20e2ad1486a18b0d7236b51b9",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:6f37f761a84be709150b00c7930990c06a4b3d3c0a9ad1e33ddfa06d37b526bb",
+        "root_digest": "sha256:6f37f761a84be709150b00c7930990c06a4b3d3c0a9ad1e33ddfa06d37b526bb"
+      },
+      "inputs_sha256": "c1d369d24841e0928e553fef19a4de0cf54df2dd558ce402d9bbf813b0023a0a",
+      "qualification": "not asserted by an artifact receipt",
+      "receipt": "/tmp/crossforge-toolchain-gates/toolchain-install/receipt.json",
+      "receipt_sha256": "1bc9743fc3d3ca26968acda9caa5eb69fdde1b46f4259915b88a644e5a76be85",
+      "seconds": 7.51,
+      "compressed_layer_bytes": 746948386,
+      "layer_count": 2
+    },
+    "gcc-test-context": {
+      "artifact": {
+        "config_digest": "sha256:e3dd566b63a05a72f0bd3e4465202ef2593b0e9f381de6a03d3c363a00d592cb",
+        "platform": "linux/amd64",
+        "platform_digest": "sha256:325bb53b0877f106cece5523402006d6892705deb1c8f1ce2461ed14fffff117",
+        "root_digest": "sha256:325bb53b0877f106cece5523402006d6892705deb1c8f1ce2461ed14fffff117"
+      },
+      "inputs_sha256": "7b674dd8246d59a9727e8e0e8d81ae11734a34e6396f46108c23de25d9c30363",
+      "qualification": "not asserted by an artifact receipt",
+      "receipt": "/tmp/crossforge-toolchain-gates/gcc-test-context/receipt.json",
+      "receipt_sha256": "eb1906214b8aff5150e706de97bd8f7ff413a00ea2dbdb3306f627e62e08cf92",
+      "seconds": 90.75,
+      "compressed_layer_bytes": 1310689927,
+      "layer_count": 3
+    }
+  },
+  "consumer": {
+    "component_receipts": {
+      "toolchain-install": "1bc9743fc3d3ca26968acda9caa5eb69fdde1b46f4259915b88a644e5a76be85",
+      "gcc-test-context": "eb1906214b8aff5150e706de97bd8f7ff413a00ea2dbdb3306f627e62e08cf92"
+    },
+    "component_digests": {
+      "toolchain-install": "sha256:6f37f761a84be709150b00c7930990c06a4b3d3c0a9ad1e33ddfa06d37b526bb",
+      "gcc-test-context": "sha256:325bb53b0877f106cece5523402006d6892705deb1c8f1ce2461ed14fffff117"
+    },
+    "input_digests": {
+      "toolchain-install": "c1d369d24841e0928e553fef19a4de0cf54df2dd558ce402d9bbf813b0023a0a",
+      "gcc-test-context": "7b674dd8246d59a9727e8e0e8d81ae11734a34e6396f46108c23de25d9c30363"
+    },
+    "verification_seconds": 27.52,
+    "qualification_build_seconds": 48.56,
+    "toolchain_report": {
+      "component": {
+        "component": "toolchain/x86_64-qualification",
+        "canonical_sha256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c"
+      },
+      "report_sha256": "a866e4b44ffd0c70f5fc33a5957f20d2ecccfa8c19525c090cb02cdc2705ea8f"
+    },
+    "gcc_profile": "smoke",
+    "gcc_status_counts": {
+      "PASS": 16
+    },
+    "gcc_report_sha256": "fe94c75345b1cc8497c57277fd80622e6b474128f27da93f119edd3fe51d1860",
+    "graph_targets": [
+      "component-gate-evidence",
+      "gcc-testsuite-x86_64-smoke",
+      "toolchain-x86_64-dev"
+    ],
+    "has_gcc_source_build": false,
+    "no_cache_filter": {
+      "toolchain-x86_64-dev": [
+        "toolchain-x86_64-qualify-build",
+        "runtime-smoke-x86_64"
+      ],
+      "gcc-testsuite-x86_64-smoke": [
+        "gcc-testsuite-x86_64-base",
+        "gcc-testsuite-x86_64-smoke"
+      ]
+    },
+    "scope": "toolchain x86_64 ABI/locked and clean runtime smoke plus GCC smoke; GCC full and ARM remain pending",
+    "exit_code": 0
+  },
+  "actual_gate_execution": {
+    "toolchain-x86_64-qualify-build": {
+      "step": "#102",
+      "cached": false,
+      "completion": "#102 DONE 3.1s"
+    },
+    "runtime-smoke-x86_64": {
+      "step": "#109",
+      "cached": false,
+      "completion": "#109 DONE 0.2s"
+    },
+    "gcc-testsuite-x86_64-base": {
+      "step": "#128",
+      "cached": false,
+      "completion": "#128 DONE 0.4s"
+    },
+    "gcc-testsuite-x86_64-smoke": {
+      "step": "#130",
+      "cached": false,
+      "completion": "#130 DONE 7.4s"
+    }
+  },
+  "regression": {
+    "config_tests": 976,
+    "config_seconds": 182.946,
+    "skipped": 2,
+    "locked_release": true,
+    "supply_chain": true,
+    "frozen_abi": true,
+    "python_runtime_providers": true,
+    "renderers_checked": 3
+  },
+  "limits": [
+    "GCC smoke is not GCC full qualification",
+    "ARM runtime is not exercised in this observation",
+    "Report bindings here are local observations; candidate evidence reuse and registry trust transport are not enabled",
+    "Other build dependencies may use read-only remote cache imports"
+  ],
+  "local_evidence_directory": "/tmp/crossforge-toolchain-gates"
+}

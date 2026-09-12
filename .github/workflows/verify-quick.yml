@@ -1,0 +1,152 @@
+name: verify quick checks
+
+on:
+  workflow_call:
+    inputs:
+      plan-components:
+        description: Also select affected daily build roots
+        type: boolean
+        default: true
+    outputs:
+      profile:
+        value: ${{ jobs.quick.outputs.profile || 'none' }}
+      selection:
+        value: ${{ jobs.quick.outputs.selection }}
+
+permissions:
+  contents: read
+
+jobs:
+  quick:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      profile: ${{ steps.plan.outputs.profile }}
+      selection: ${{ steps.components.outputs.plan }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/lint-workflows
+      - uses: ./.github/actions/setup-locked-buildx
+      - name: Release configuration
+        run: |
+          ./scripts/validate-release.py
+          ./scripts/validate-gcc-testsuite.py --plan config/gcc-testsuite-full.json
+          ./scripts/validate-qt-qualification.py --require-locked
+          ./scripts/validate-qt-runtime-qualification.py
+          ./scripts/validate-supply-chain-evidence.py
+          ./scripts/validate-frozen-abi.py
+          ./scripts/validate-python-runtime-providers.py
+      - name: RPM plans, transactions, and locks
+        run: |
+          ./scripts/validate-rpm-lock.py config/rpm/sysroot-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/sysroot-el8-aarch64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/host-build-common-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/host-gcc-build-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/host-gcc-test-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/host-python-build-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/host-runtime-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/host-qt-build-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/qt-target-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/qt-target-el8-aarch64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/qt-runtime-el8-x86_64.plan.json
+          ./scripts/validate-rpm-lock.py config/rpm/qt-runtime-el8-aarch64.plan.json
+          ./scripts/validate-rpm-lock.py locks/sysroot-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/sysroot-el8-aarch64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/host-build-common-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/host-gcc-build-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/host-gcc-test-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/host-python-build-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/host-runtime-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/host-qt-build-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/qt-target-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/qt-target-el8-aarch64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/qt-runtime-el8-x86_64.json --require-lock
+          ./scripts/validate-rpm-lock.py locks/qt-runtime-el8-aarch64.json --require-lock
+      - name: Configuration tests
+        run: python3 scripts/ci-tests.py run --jobs 4 --output "$RUNNER_TEMP/config-tests"
+      - name: Preserve configuration test coverage and timings
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: configuration-tests-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/config-tests/*.json
+            ${{ runner.temp }}/config-tests/*.log
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Packaging planner tests
+        run: python3 -m unittest discover -s tests/packaging -p 'test_*.py'
+      - name: Script syntax
+        run: |
+          python3 -m compileall -q scripts docker tools/crossforge
+          for script in scripts/*.sh docker/*.sh; do
+            bash -n "$script"
+          done
+          gcc -fsyntax-only -fPIC -Wall -Wextra -Werror scripts/deny-target-exec.c
+          gcc -fsyntax-only -Wall -Wextra -Werror scripts/target-exec-canary.c
+          gcc -fsyntax-only -Wall -Wextra -Werror scripts/target-artifact-canary.c
+          gcc -fsyntax-only -Wall -Wextra -Werror scripts/qt-plugin-probe.c
+      - name: Generated Bake definition
+        run: |
+          ./scripts/render-release-components.py --check
+          ./scripts/render-vcpkg-integration.py --check
+          ./scripts/render-bake.py --check
+      - name: Docker/Bake static checks
+        run: |
+          python3 scripts/check-bake.py phase4 host-runtime-qualified
+          docker buildx bake --print phase5 phase6 phase7 phase8 phase9 phase10 \
+            phase13-source phase13-host-tools phase13-integration \
+            phase13-contract phase13-ports phase14 phase15 phase16 \
+            qt-source-qualified qt-target-runtime-qualified candidate >/dev/null
+      - name: Select affected build profile
+        id: plan
+        if: inputs.plan-components
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        run: |
+          set -Eeuo pipefail
+          if test "$EVENT_NAME" = pull_request; then
+            if ! base=$(git merge-base "$PR_BASE" "$GITHUB_SHA"); then
+              echo 'profile=full' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          elif test "$EVENT_NAME" = push && git cat-file -e "$PUSH_BASE^{commit}"; then
+            base=$PUSH_BASE
+          else
+            echo 'profile=full' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 scripts/ci-plan.py plan --base "$base" --head "$GITHUB_SHA" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: Select component roots from checked source inventories
+        id: components
+        if: inputs.plan-components
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        run: |
+          set -Eeuo pipefail
+          options=()
+          if test "$EVENT_NAME" = pull_request; then
+            if base=$(git merge-base "$PR_BASE" "$GITHUB_SHA"); then options+=(--base "$base"); fi
+          elif test "$EVENT_NAME" = push; then
+            options+=(--base "$PUSH_BASE")
+          fi
+          python3 scripts/ci-component-plan.py select "${options[@]}" \
+            --head "$GITHUB_SHA" --output "$RUNNER_TEMP/component-plan.json" \
+            >> "$GITHUB_OUTPUT"
+      - name: Preserve component selection reasons
+        if: always() && inputs.plan-components
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: component-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/component-plan.json
+          retention-days: 7
+          if-no-files-found: error

@@ -31,10 +31,10 @@ class ReleaseEvidenceTests(unittest.TestCase):
         files = schema["properties"]["files"]
         self.assertEqual(files["minItems"], 14)
         self.assertEqual(files["maxItems"], 14)
-        self.assertIn("Seventeen original evidence files", (
+        self.assertIn("Fourteen original evidence files", (
             REPOSITORY / "README.md"
         ).read_text(encoding="utf-8"))
-        self.assertIn("十七份", (
+        self.assertIn("十四份", (
             REPOSITORY / "docs/architecture.md"
         ).read_text(encoding="utf-8"))
 

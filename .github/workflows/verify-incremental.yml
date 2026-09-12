@@ -1,0 +1,207 @@
+name: verify selected component stages
+
+on:
+  workflow_call:
+    inputs:
+      profile:
+        type: string
+        default: full
+      selection:
+        type: string
+        default: ''
+      component-reader:
+        description: Trusted main reader; the caller must supply packages:read
+        type: boolean
+        default: false
+
+# Build jobs inherit the caller's permission boundary. Read-only CI supplies
+# contents:read only; the separate trusted main caller adds packages:read.
+
+jobs:
+  plan:
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      selection: ${{ steps.plan.outputs.selection }}
+      inputs: ${{ steps.plan.outputs.inputs }}
+      inputs-matrix: ${{ steps.plan.outputs.inputs-matrix }}
+      toolchains: ${{ steps.plan.outputs.toolchains }}
+      toolchains-matrix: ${{ steps.plan.outputs.toolchains-matrix }}
+      python: ${{ steps.plan.outputs.python }}
+      python-matrix: ${{ steps.plan.outputs.python-matrix }}
+      vcpkg: ${{ steps.plan.outputs.vcpkg }}
+      vcpkg-matrix: ${{ steps.plan.outputs.vcpkg-matrix }}
+      gcc: ${{ steps.plan.outputs.gcc }}
+      gcc-matrix: ${{ steps.plan.outputs.gcc-matrix }}
+      sdk: ${{ steps.plan.outputs.sdk }}
+      sdk-matrix: ${{ steps.plan.outputs.sdk-matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Validate selected work
+        id: plan
+        env:
+          PROFILE: ${{ inputs.profile }}
+          SELECTION: ${{ inputs.selection }}
+          COMPONENT_READER: ${{ inputs.component-reader }}
+        run: |
+          set -Eeuo pipefail
+          options=()
+          if test "$COMPONENT_READER" = true; then options+=(--component-reader); fi
+          python3 scripts/ci-component-plan.py execution \
+            --profile "$PROFILE" --selection "$SELECTION" "${options[@]}" >> "$GITHUB_OUTPUT"
+
+  inputs:
+    permissions:
+      contents: read
+    needs: [plan]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.inputs == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          stage: inputs
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['inputs']) }}
+
+  toolchains:
+    needs: [plan, inputs]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.toolchains == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        stage: ${{ fromJSON(needs.plan.outputs.toolchains-matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          component-reader: ${{ inputs.component-reader }}
+          component-builder: ${{ steps.buildx.outputs.builder }}
+          stage: ${{ matrix.stage }}
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
+
+  python:
+    needs: [plan, inputs, toolchains]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.python == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        stage: ${{ fromJSON(needs.plan.outputs.python-matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          component-reader: ${{ inputs.component-reader }}
+          component-builder: ${{ steps.buildx.outputs.builder }}
+          stage: ${{ matrix.stage }}
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
+
+  vcpkg:
+    needs: [plan, inputs, toolchains]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.vcpkg == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          component-reader: ${{ inputs.component-reader }}
+          component-builder: ${{ steps.buildx.outputs.builder }}
+          stage: vcpkg
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['vcpkg']) }}
+
+  gcc:
+    needs: [plan, inputs, toolchains]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.gcc == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        stage: ${{ fromJSON(needs.plan.outputs.gcc-matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          component-reader: ${{ inputs.component-reader }}
+          component-builder: ${{ steps.buildx.outputs.builder }}
+          stage: ${{ matrix.stage }}
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets[matrix.stage]) }}
+
+  sdk:
+    needs: [plan, inputs, toolchains, python, vcpkg]
+    if: >-
+      always() && !cancelled() && needs.plan.outputs.sdk == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-locked-buildx
+        id: buildx
+      - uses: ./.github/actions/run-build-stage
+        with:
+          component-reader: ${{ inputs.component-reader }}
+          component-builder: ${{ steps.buildx.outputs.builder }}
+          stage: sdk
+          targets-json: ${{ toJSON(fromJSON(needs.plan.outputs.selection).targets['sdk']) }}
+
+  verified:
+    permissions:
+      contents: read
+    if: always()
+    needs: [plan, inputs, toolchains, python, vcpkg, gcc, sdk]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Reject incomplete or unplanned results
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/ci-component-plan.py check "$RESULTS"

@@ -1,0 +1,177 @@
+{
+  "base_commit": "54eeff321e9f7347a0a221756b917e1220a742f2",
+  "checks": [
+    {
+      "command": [
+        "./scripts/validate-release.py",
+        "--require-locked"
+      ],
+      "seconds": 0.024
+    },
+    {
+      "command": [
+        "./scripts/validate-supply-chain-evidence.py"
+      ],
+      "seconds": 0.364
+    },
+    {
+      "command": [
+        "./scripts/validate-frozen-abi.py"
+      ],
+      "seconds": 0.314
+    },
+    {
+      "command": [
+        "./scripts/validate-python-runtime-providers.py"
+      ],
+      "seconds": 0.332
+    },
+    {
+      "command": [
+        "./scripts/render-release-components.py",
+        "--check"
+      ],
+      "seconds": 0.18
+    },
+    {
+      "command": [
+        "./scripts/render-vcpkg-integration.py",
+        "--check"
+      ],
+      "seconds": 0.175
+    },
+    {
+      "command": [
+        "./scripts/render-bake.py",
+        "--check"
+      ],
+      "seconds": 0.233
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "docker/run-python-qualification.sh"
+      ],
+      "seconds": 0.001
+    },
+    {
+      "command": [
+        "actionlint",
+        "-ignore",
+        "unexpected key \"queue\" for \"concurrency\" section"
+      ],
+      "seconds": 0.008
+    }
+  ],
+  "date": "2026-09-11",
+  "environment": {
+    "bake": "CLI print inside existing graph tests; no BuildKit solve",
+    "cpus": 4,
+    "docker_socket_mounted": false,
+    "memory": "16g",
+    "network": "none",
+    "platform_python": "3.6.8",
+    "rocky_image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e",
+    "tool_image_id": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "user": "1000:1000"
+  },
+  "kind": "crossforge-local-refactoring-observation",
+  "limits": [
+    "New tests are orchestration/contract fixtures. Raw-subject domain binding, registry transport, target execution, formal row verification and Cosign execution are explicit mocked boundaries; no new qualification or signature was obtained.",
+    "The new reusable producer workflow is not yet called by the main dynamic matrix or candidate SDK. Qualified-row SDK wiring and dynamic required-status acceptance remain to be completed.",
+    "Strict physical execution-environment matching remains unchanged; cross-machine reuse policy is still awaiting a decision.",
+    "No new clean-runtime installation, source compiler replay, full row/SDK Docker solve, GitHub signing/retry/cross-run acceptance or candidate/native ARM execution occurred.",
+    "Reference-aware retention and matched performance/concurrency experiments remain pending.",
+    "Earlier automatic approval review rejected mounting the host Docker socket inside the orchestration container for broad daemon control; explicit approval is still pending and was not bypassed.",
+    "No merge to main, remote push or image publication."
+  ],
+  "local_outputs": {
+    "check-rocky.py": {
+      "path": "/tmp/crossforge-python-row-ci/check-rocky.py",
+      "sha256": "4fb8dab94cc570b3293a49cd7caa124f04f1d844ecd11db122143fc3ad5816a8"
+    },
+    "focused.log": {
+      "path": "/tmp/crossforge-python-row-ci/focused.log",
+      "sha256": "23a7da14d0aa8ec65339ab9c1f971f05c37cf3bd31e6fa518c13f7a737fdd033"
+    },
+    "full-result.json": {
+      "path": "/tmp/crossforge-python-row-ci/full-result.json",
+      "sha256": "779fa2c7dbb591e03975d6897c16ed7675db2706ac96b7606ef2c09cac29a1d2"
+    },
+    "full.log": {
+      "path": "/tmp/crossforge-python-row-ci/full.log",
+      "sha256": "75e650763e05e39fd4f09175a8c7603ad363a8e72fa2e2827fb5ab6175a9fc67"
+    },
+    "full.py": {
+      "path": "/tmp/crossforge-python-row-ci/full.py",
+      "sha256": "83225c71ff855365fe579b9a7461cc6d6ca95b24eacdee33d248d69f6b11fb3e"
+    },
+    "rocky.log": {
+      "path": "/tmp/crossforge-python-row-ci/rocky.log",
+      "sha256": "612488dcb2c7c02c38490003a9649876b8e5b9d8b26e7f12453803dd189e1d29"
+    }
+  },
+  "regression_scope": [
+    "The row handoff binds the exact source/run/attempt, complete physical environment, canonical row and target settings, qualified artifact digest and complete metadata inventory.",
+    "Catalog schema 4 has an exact distinct row workflow signer and allowed event. Existing raw signers cannot authorize qualified rows, and the row signer cannot authorize raw artifacts.",
+    "The verifier receives the exact row certificate identity, original source SHA and trigger, retaining the existing repository/ref/issuer and pinned upstream verifier checks.",
+    "Only --python-row-ci accepts the row handoff. Same-run retry preserves the original producer and exact signed catalog bytes.",
+    "Resolution orders seven-subject binding before catalog lookup, transport and formal row verification. Only an absent input index requests qualification; fixed recovery misses and all verification/transport errors fail.",
+    "Execution environment or captured input changes, existing output paths and incorrect role/scope/metadata are rejected.",
+    "Prior verified rows produce neither a new artifact nor a new handoff. A genuine miss invokes the existing formal producer and validates its planned inputs, receipt, source and environment before publication.",
+    "Raw dependencies must already exist; their acquisition follows build-Python and per-architecture toolchain dependency order. There is no raw source-build fallback.",
+    "Failed execution cannot publish success; explicit progress and reports are preserved without copying installed payloads, and symlink diagnostics are rejected.",
+    "Workflow fixtures cover separate registry/signing privileges, exact artifact IDs, original attempt/digests, predecessor checks and complete publication result gating."
+  ],
+  "rocky_syntax_files": [
+    "scripts/ci-python-row.py",
+    "scripts/component-catalog.py",
+    "scripts/crossforge_internal/ci_python_rows.py",
+    "scripts/crossforge_internal/python_row_handoff.py",
+    "scripts/crossforge_internal/python_row_resolution.py",
+    "scripts/crossforge_internal/component_catalog.py",
+    "scripts/crossforge_internal/component_retry.py"
+  ],
+  "schema_version": 1,
+  "scope": "Formal Python row CI producer, authenticated resolution and distinct signed catalog handoff; main matrix and SDK rollout pending",
+  "source_sha256": {
+    ".github/workflows/produce-python-row.yml": "4925bd29f394b279973f5770ddb54ad63fe3b092b5083964cc6f2032b347a697",
+    "scripts/ci-python-row.py": "e0c51833dba715640580619f0e095024c29db3dcae3b74277e4fe760a7e55a01",
+    "scripts/component-catalog.py": "86740ade8b6c93762ef4cd9a5fbc43d080167c9cf68dfa543c5352cd2add976f",
+    "scripts/crossforge_internal/ci_python_rows.py": "e51bc1e520f591cb9d1b133e9445f96269f5aef6ad12392cf180371863f175af",
+    "scripts/crossforge_internal/component_catalog.py": "bcff323e0e37c152033336099e3b531a89669caadbb7d83a550cf6da8101c5ca",
+    "scripts/crossforge_internal/component_retry.py": "de73fa0b1683f54617bc57e06ce16964c353a0b3f0438fca743d39b4342d2b5e",
+    "scripts/crossforge_internal/python_row_handoff.py": "a5d66eaec0532fda090e7da55fcb27e5cf026cd00053b0aec166f0c15e81247e",
+    "scripts/crossforge_internal/python_row_resolution.py": "b60bb356b8a17374c459edc3fa535699f80ce4ef376bd698ed4664228ab21b67",
+    "tests/config/test_component_retry.py": "9ecd2a15a7465e146ce8eac08badc0bfeeee434577c9ff3ee6b5a55745550bb0",
+    "tests/config/test_python_row_ci.py": "df43c754cdbd33bf011da062e2c6266e6f449f724ea32a26c2a61707d77c9dcd"
+  },
+  "status": "local-contract-checks-passed; actual execution and CI acceptance pending",
+  "tests": [
+    {
+      "seconds": 273.949,
+      "skipped": 0,
+      "suite": "config",
+      "tests": 1308
+    },
+    {
+      "seconds": 1.271,
+      "skipped": 0,
+      "suite": "packaging",
+      "tests": 40
+    },
+    {
+      "seconds": 0.714,
+      "skipped": 0,
+      "suite": "focused",
+      "tests": 71
+    },
+    {
+      "seconds": 0.134,
+      "skipped": 0,
+      "suite": "rocky",
+      "tests": 18
+    }
+  ]
+}

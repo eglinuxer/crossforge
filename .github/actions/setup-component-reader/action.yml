@@ -1,0 +1,38 @@
+name: Set up authenticated component reading
+description: Prepare pinned ORAS and Cosign, then authenticate a trusted main reader
+inputs:
+  registry-token:
+    required: true
+    description: Read-only package token from the trusted calling job
+outputs:
+  oras:
+    description: Verified ORAS executable
+    value: ${{ steps.transport.outputs.binary }}
+  cosign:
+    description: Verified Cosign executable
+    value: ${{ steps.verifier.outputs.binary }}
+runs:
+  using: composite
+  steps:
+    - name: Check the trusted reader boundary
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        PYTHONPATH=scripts python3 - <<'PY'
+        import os
+        from crossforge_internal.ci_execution import component_reader_allowed
+        from crossforge_internal.identity import require
+        require(component_reader_allowed(os.environ), "component credentials require trusted main CI")
+        PY
+    - uses: ./.github/actions/setup-component-transport
+      id: transport
+    - uses: ./.github/actions/setup-component-verifier
+      id: verifier
+    - name: Authenticate the component reader
+      shell: bash
+      env:
+        REGISTRY_TOKEN: ${{ inputs.registry-token }}
+      run: |
+        set -Eeuo pipefail
+        printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io \
+          --username "$GITHUB_ACTOR" --password-stdin

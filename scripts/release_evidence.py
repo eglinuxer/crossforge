@@ -165,6 +165,12 @@ def validate_inputs(paths, release, schema):
         promotion["candidate_manifest_sha256"] == candidate_sha256,
         "promotion candidate manifest digest differs",
     )
+    if promotion["schema_version"] == 2:
+        recovery = promotion["candidate_recovery"]
+        require(sha256_file(paths["native-aarch64.json"]) == recovery["native_report_sha256"],
+                "native report differs from its original candidate producer")
+        require(sha256_file(paths["native-aarch64-probes.tar"]) == recovery["probe_bundle_sha256"],
+                "native probes differ from the original candidate publisher")
     for name, selected in (
         ("candidate", candidate),
         ("source_bundle", candidate["source_bundle"]),

@@ -32,14 +32,23 @@ QualificationError = QUALIFICATION_VALIDATOR["FinalizationError"]
 SDK_IDENTITY = runpy.run_path(str(support_script("python_sdk_identity.py")))
 SDKIdentityError = SDK_IDENTITY["IdentityError"]
 sdk_tree_identity = SDK_IDENTITY["sdk_tree_identity"]
-SOURCE_BINDING = runpy.run_path(
-    str(support_script("python_source_release_binding.py"))
-)
-SourceBindingError = SOURCE_BINDING["BindingError"]
-RELEASE_COMPONENTS = runpy.run_path(
-    str(support_script("release-components-core.py"))
-)
-ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+SOURCE_BINDING = None
+RELEASE_COMPONENTS = None
+ROW_POLICY = runpy.run_path(str(support_script("python_row_policy.py")))
+
+
+def source_binding():
+    global SOURCE_BINDING
+    if SOURCE_BINDING is None:
+        SOURCE_BINDING = runpy.run_path(str(support_script("python_source_release_binding.py")))
+    return SOURCE_BINDING
+
+
+def release_components():
+    global RELEASE_COMPONENTS
+    if RELEASE_COMPONENTS is None:
+        RELEASE_COMPONENTS = runpy.run_path(str(support_script("release-components-core.py")))
+    return RELEASE_COMPONENTS
 
 
 TARGETS = {
@@ -454,13 +463,70 @@ def aggregate_qualification_components(components_by_arch):
     return components
 
 
+def row_inputs(arguments):
+    """Preserve legacy output, or authenticate a scoped producer/consumer row."""
+    require((arguments.release is None) != (arguments.qualification_components is None),
+            "select exactly one of --release or --qualification-components")
+    source_manifest = load_json(arguments.source_manifest)
+    expected_manifest = load_json(arguments.row_manifest) if arguments.row_manifest is not None else None
+    if expected_manifest is not None:
+        require(type(expected_manifest) is dict, "row manifest must be an object")
+        schema = expected_manifest.get("schema_version")
+        require(type(schema) is int and schema in (2, 3), "unsupported row manifest schema")
+    else:
+        schema = 3 if arguments.qualification_components is not None else 2
+    release = None
+    policy = None
+    if arguments.qualification_components is not None:
+        require(schema == 3, "legacy row manifest requires the complete release")
+        try:
+            policy = ROW_POLICY["load"](arguments.qualification_components, arguments.row, arguments.version,
+                                        arguments.adapter, arguments.qualification_component_sha256)
+        except ROW_POLICY["RowPolicyError"] as error:
+            raise FinalizationError(str(error)) from error
+    else:
+        require(arguments.qualification_component_sha256 is None, "--release cannot receive a component pin")
+        release = load_json(arguments.release)
+        bridge = source_binding()
+        try:
+            source_context = bridge["bind_source_manifest"](source_manifest, release, arguments.row,
+                                                            arguments.version, arguments.adapter)
+        except bridge["BindingError"] as error:
+            raise FinalizationError("prepared source manifest is not release-bound: %s" % error) from error
+        require(source_context["release_sha256"] == canonical_sha256(release),
+                "prepared source bridge release identity differs")
+        if schema == 3:
+            core = release_components()
+            try:
+                policy = ROW_POLICY["from_release"](release, arguments.row, arguments.version, arguments.adapter,
+                                                    core["render_component_documents"])
+            except (ROW_POLICY["RowPolicyError"], core["ProjectionError"]) as error:
+                raise FinalizationError(str(error)) from error
+    if policy is not None:
+        try:
+            ROW_POLICY["require_source"](source_manifest, policy)
+            if expected_manifest is not None:
+                ROW_POLICY["require_binding"](expected_manifest, policy)
+        except ROW_POLICY["RowPolicyError"] as error:
+            raise FinalizationError(str(error)) from error
+        source_context = dict(policy["source_manifest"], support=policy["support"])
+        identity = {"schema_version": 3, "input_binding": ROW_POLICY["binding"](policy)}
+    else:
+        identity = {"schema_version": 2, "release_sha256": canonical_sha256(release)}
+    return {"release": release, "policy": policy, "source_context": source_context,
+            "identity": identity, "expected_manifest": expected_manifest}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--row", required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--adapter", required=True)
-    parser.add_argument("--release", type=Path, required=True)
+    parser.add_argument("--release", type=Path)
+    parser.add_argument("--qualification-components", type=Path)
+    parser.add_argument("--qualification-component-sha256")
+    parser.add_argument("--row-manifest", type=Path)
     parser.add_argument("--source-manifest", type=Path, required=True)
     parser.add_argument("--abi-input-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -469,25 +535,10 @@ def main():
     require(re.fullmatch(r"cp[0-9]+", arguments.row), "invalid CPython row")
     minor = arguments.version.rsplit(".", 1)[0]
     require(arguments.row == "cp" + minor.replace(".", ""), "row/version mismatch")
-    release = load_json(arguments.release)
-    release_sha256 = canonical_sha256(release)
-    source_manifest = load_json(arguments.source_manifest)
-    try:
-        source_context = SOURCE_BINDING["bind_source_manifest"](
-            source_manifest,
-            release,
-            arguments.row,
-            arguments.version,
-            arguments.adapter,
-        )
-    except SourceBindingError as error:
-        raise FinalizationError(
-            "prepared source manifest is not release-bound: %s" % error
-        ) from error
-    require(
-        source_context["release_sha256"] == release_sha256,
-        "prepared source bridge release identity differs",
-    )
+    inputs = row_inputs(arguments)
+    release = inputs["release"]
+    policy = inputs["policy"]
+    source_context = inputs["source_context"]
     source = source_context["source"]
     patches = source_context["patches"]
     build_python = (
@@ -536,34 +587,34 @@ def main():
             None,
         )
         try:
-            QUALIFICATION_VALIDATOR["validate_final_report"](
-                report,
-                release,
-                target,
-                arguments.version,
-                abi_context,
-                actual_elf_evidence,
-                False,
-            )
-            validated_zstd = QUALIFICATION_VALIDATOR[
-                "validate_qualification_zstd"
-            ](report, release, target, arguments.version)
+            if policy is not None:
+                context = QUALIFICATION_VALIDATOR["policy_context"](policy["targets"][arch])
+                QUALIFICATION_VALIDATOR["validate_context_report"](report, context, target, arguments.version,
+                    abi_context, actual_elf_evidence, False)
+                validated_zstd = QUALIFICATION_VALIDATOR["validate_context_zstd"](report, context, target, arguments.version)
+            else:
+                QUALIFICATION_VALIDATOR["validate_final_report"](report, release, target, arguments.version,
+                    abi_context, actual_elf_evidence, False)
+                validated_zstd = QUALIFICATION_VALIDATOR["validate_qualification_zstd"](report, release, target, arguments.version)
         except QualificationError as error:
-            raise FinalizationError(
-                "%s qualification report is invalid: %s" % (arch, error)
-            ) from error
-        try:
-            qualification_components = RELEASE_COMPONENTS[
-                "validate_python_qualification_components"
-            ](report.get("qualification_components"), release)
-        except ProjectionError as error:
-            raise FinalizationError(
-                "%s qualification component identities are invalid: %s"
-                % (arch, error)
-            ) from error
+            raise FinalizationError("%s qualification report is invalid: %s" % (arch, error)) from error
+        if policy is None:
+            core = release_components()
+            try:
+                if report["qualification_schema_version"] == 5:
+                    qualification_components = core["python_qualification_components"](release)
+                else:
+                    qualification_components = core["validate_python_qualification_components"](
+                        report.get("qualification_components"), release)
+            except core["ProjectionError"] as error:
+                raise FinalizationError("%s qualification component identities are invalid: %s" % (arch, error)) from error
+            qualification_components_by_arch[arch] = qualification_components
+        schema_version = report.get("qualification_schema_version")
+        qualification_keys = (QUALIFICATION_KEYS if schema_version == 4 else
+                              (QUALIFICATION_KEYS - {"release_sha256", "qualification_components"}) | {"input_binding"})
         require(
-            set(report) == QUALIFICATION_KEYS
-            and report.get("qualification_schema_version") == 4
+            set(report) == qualification_keys
+            and type(schema_version) is int and schema_version in (4, 5)
             and report.get("report_kind") == "crossforge-cpython-qualification"
             and report.get("status") == "passed",
             "%s qualification did not pass" % arch,
@@ -580,10 +631,11 @@ def main():
             and embedded_compile.get("adapter") == arguments.adapter,
             "%s embedded compile adapter mismatch" % arch,
         )
-        require(
-            report.get("release_sha256") == release_sha256,
-            "%s release identity mismatch" % arch,
-        )
+        if schema_version == 4:
+            require(
+                report.get("release_sha256") == inputs["identity"].get("release_sha256"),
+                "%s release identity mismatch" % arch,
+            )
         report_source = report.get("source")
         require(
             isinstance(report_source, dict)
@@ -660,7 +712,6 @@ def main():
             validated_zstd, build_prefix, target_prefix, arch
         )
         zstd_evidence[arch] = validated_zstd
-        qualification_components_by_arch[arch] = qualification_components
         reports[arch] = {
             "target": target,
             "report_sha256": sha256_file(report_path),
@@ -668,23 +719,19 @@ def main():
             "sdk_tree": target_tree,
         }
 
-    qualification_components = aggregate_qualification_components(
-        qualification_components_by_arch
-    )
+    if policy is None:
+        inputs["identity"]["qualification_components"] = aggregate_qualification_components(qualification_components_by_arch)
     host_zstd_module = audit_build_zstd_module(
         build_prefix, zstd_evidence, minor
     )
     zstd = aggregate_zstd(zstd_evidence, host_zstd_module)
 
     manifest = {
-        "schema_version": 2,
         "kind": "crossforge-cpython-row",
         "row": arguments.row,
         "version": arguments.version,
         "adapter": arguments.adapter,
         "support": source_context["support"],
-        "release_sha256": release_sha256,
-        "qualification_components": qualification_components,
         "source": source,
         "source_manifest_sha256": sha256_file(arguments.source_manifest),
         "patches": patches,
@@ -693,6 +740,10 @@ def main():
         "zstd": zstd,
         "qualifications": reports,
     }
+    manifest.update(inputs["identity"])
+    if inputs["expected_manifest"] is not None:
+        require(canonical_sha256(manifest) == canonical_sha256(inputs["expected_manifest"]),
+                "row manifest differs from installed files and current qualification policy")
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.output.with_name(arguments.output.name + ".tmp")
     temporary.write_text(

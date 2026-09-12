@@ -207,6 +207,54 @@ FULL_SOURCE_PATCH_CONTRACT = [
             }
         ],
     },
+    {
+        "id": "gxx-native-avx10-alias",
+        "suite": "g++.full",
+        "file": "patches/gcc/0006-gxx-expect-native-avx10-alias.patch",
+        "sha256": "77ef391d5c06f7862d81d82177131d3632150ef09ee66b24cd4aa92a2137e7e7",
+        "strip": 1,
+        "targets": [
+            {
+                "file": "gcc/testsuite/g++.dg/pr90773-1d.C",
+                "before_sha256": "0ea7fa2f6428cf6cce3e4c0ef971c32ee346e673f75e01084c6950faf71115e6",
+                "after_sha256": "0b4807dcc307f9d4db7f1d4c1ae7dd56e277cfdea8a7df281abc9476accfef17"
+            }
+        ]
+    },
+    {
+        "id": "gcc-native-avx10-alias",
+        "suite": "gcc.full",
+        "file": "patches/gcc/0007-gcc-expect-native-avx10-alias.patch",
+        "sha256": "e24535b988304f04a0738f27607f5eab4486098bcdaf1fa9bac51657365e65df",
+        "strip": 1,
+        "targets": [
+            {
+                "file": "gcc/testsuite/gcc.target/i386/pr101395-2.c",
+                "before_sha256": "487a8417b74e8acba5d75f670ebd376ee6ceb6c2d9d33f590f3b189fd3e23e6d",
+                "after_sha256": "103fb18ef3ddd887903dbeb04f573f2539a5c01f9bd192ed69db34d2abc23b73"
+            },
+            {
+                "file": "gcc/testsuite/gcc.target/i386/pr101395-3.c",
+                "before_sha256": "f6e0e1d7053f39690668c438e95deee058541c2dd929421b7fb3012d6a5be392",
+                "after_sha256": "2a83fb4ee1cd084efcfdf8c59ca8116e6a5f0e305d43d0712636b06979f0ec90"
+            },
+            {
+                "file": "gcc/testsuite/gcc.target/i386/pr115978-1.c",
+                "before_sha256": "6acb318297466bb32fcb4576ddf218074f58ed6404c90ea6d8f5ccf95db2a4bd",
+                "after_sha256": "ebd218d98ce58989314303f0e59ba9c86f18082a3dedb30addfd22869ef8fbad"
+            },
+            {
+                "file": "gcc/testsuite/gcc.target/i386/pr115978-2.c",
+                "before_sha256": "006c5b0ed4574552272a0512d2cb5975e77ac976d7bda0b2779f4921a5805e3d",
+                "after_sha256": "e7c6b59698ed6e7baaca3bcfabccc479360378bf000cb010ed77eb36793db59e"
+            },
+            {
+                "file": "gcc/testsuite/gcc.target/i386/pr57275.c",
+                "before_sha256": "8a08207008a685652f10111c2475b4f1eaba541b902a3ceb21e17203c1bfc798",
+                "after_sha256": "89a183d50749b692aec8e2f5f1d7cda27d772062515689e3df50fd354ef597b5"
+            }
+        ]
+    },
 ]
 
 
@@ -342,6 +390,10 @@ def validate_baseline(baseline, plan, target, runtime_tier):
 
 
 def validate_profile_contract(release, contract, expected_pairs):
+    return validate_profile_policy(release["gts"]["gcc_version"], contract, expected_pairs)
+
+
+def validate_profile_policy(gcc_version, contract, expected_pairs):
     plan_path = repository_file(contract["plan"]["file"], "GCC testsuite plan")
     plan = validate_plan(load_json(plan_path))
     plan_sha256 = canonical_sha256(plan)
@@ -349,7 +401,7 @@ def validate_profile_contract(release, contract, expected_pairs):
         raise ValidationError("release GCC testsuite plan digest differs")
     if plan["profile"] != contract["profile"]:
         raise ValidationError("release GCC testsuite profile differs")
-    if plan["gcc_version"] != release["gts"]["gcc_version"]:
+    if plan["gcc_version"] != gcc_version:
         raise ValidationError("GCC testsuite compiler version differs from release")
     records = contract["baselines"]
     pairs = [(record["target"], record["runtime_tier"]) for record in records]
@@ -374,6 +426,18 @@ def validate_profile_contract(release, contract, expected_pairs):
         "plan_sha256": plan_sha256,
         "baselines": baselines,
     }
+
+
+def validate_component_contract(directory, arch, trusted_sha256):
+    policy_reader = runpy.run_path(str(Path(__file__).with_name("gcc_testsuite_policy.py")))
+    try:
+        policy = policy_reader["load"](directory, arch, trusted_sha256)
+    except policy_reader["PolicyError"] as error:
+        raise ValidationError(str(error)) from error
+    profiles = {name: validate_profile_policy(policy["gcc_version"], policy["profiles"][name],
+        [(target["triple"], tier["name"]) for target in PROFILE_TARGET_CONTRACTS[name]
+         for tier in target["runtime_tiers"]]) for name in ("smoke", "full")}
+    return {"policy": policy, "profiles": profiles}
 
 
 def validate_release_contract(release_path):

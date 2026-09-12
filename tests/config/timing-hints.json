@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "module_seconds": {
+    "test_candidate_components": 6,
+    "test_ci_sdk": 13,
+    "test_frozen_abi": 6,
+    "test_prepare_zstd_source": 8,
+    "test_python_append_scope": 7,
+    "test_python_compile_component_inputs": 34,
+    "test_python_qualification": 62,
+    "test_python_row_manifest": 75,
+    "test_python_row_policy": 5,
+    "test_python_runtime_component": 7,
+    "test_python_runtime_component_inputs": 38,
+    "test_python_sdk_catalog": 4,
+    "test_release_components": 13,
+    "test_release_validation": 16,
+    "test_vcpkg_policy": 4
+  }
+}

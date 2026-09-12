@@ -34,10 +34,18 @@ ROW_CONTRACT = runpy.run_path(
     str(Path(__file__).with_name("python_row_contract.py"))
 )
 ContractError = ROW_CONTRACT["ContractError"]
-RELEASE_COMPONENTS = runpy.run_path(
-    str(Path(__file__).with_name("release-components-core.py"))
-)
-ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+RELEASE_COMPONENTS = None
+
+
+def release_components():
+    global RELEASE_COMPONENTS
+    if RELEASE_COMPONENTS is None:
+        RELEASE_COMPONENTS = runpy.run_path(str(Path(__file__).with_name("release-components-core.py")))
+    return RELEASE_COMPONENTS
+
+
+POLICY = runpy.run_path(str(Path(__file__).with_name("python_qualification_policy.py")))
+OVERLAY = runpy.run_path(str(Path(__file__).with_name("python_runtime_overlay.py")))
 RUNTIME_PROVIDERS = runpy.run_path(
     str(Path(__file__).with_name("python_runtime_providers.py"))
 )
@@ -106,18 +114,72 @@ def require_sha256(value, label):
 
 
 def validate_compile_qualification_components(compile_report, release):
+    core = release_components()
+    version = compile_report.get("qualification_schema_version")
     require(
-        compile_report.get("qualification_schema_version") == 4,
+        type(version) is int and version in (4, 5),
         "compile report schema version mismatch",
     )
     try:
-        return RELEASE_COMPONENTS["validate_python_qualification_components"](
+        if version == 5:
+            require("qualification_components" not in compile_report, "scoped compile report contains legacy qualification components")
+            profile = TARGETS.get(compile_report.get("target"))
+            require(profile is not None, "compile report target mismatch")
+            policy = POLICY["from_release"](release, compile_report.get("version"), profile["arch"],
+                                            core["render_component_documents"])
+            POLICY["require_binding"](compile_report, policy)
+            return POLICY["binding"](policy)
+        require("input_binding" not in compile_report, "legacy compile report contains a scoped input binding")
+        return core["validate_python_qualification_components"](
             compile_report.get("qualification_components"), release
         )
-    except ProjectionError as error:
+    except (core["ProjectionError"], POLICY["PolicyError"]) as error:
         raise RuntimeError_(
             "compile report qualification_components: %s" % error
         ) from error
+
+
+def runtime_inputs(arguments, compile_report):
+    """Select one trusted authority before running either runtime tier."""
+    profile = TARGETS.get(arguments.target)
+    require(profile is not None, "unsupported CPython runtime target")
+    require((arguments.release is None) != (arguments.qualification_components is None),
+            "select exactly one of --release or --qualification-components")
+    try:
+        if arguments.qualification_components is not None:
+            policy = POLICY["load"](arguments.qualification_components, arguments.version,
+                                    profile["arch"], arguments.qualification_component_sha256)
+            require(type(compile_report.get("qualification_schema_version")) is int and
+                    compile_report["qualification_schema_version"] == 5,
+                    "component runtime requires a scoped compile report")
+            require("qualification_components" not in compile_report,
+                    "scoped compile report contains legacy qualification components")
+            POLICY["require_binding"](compile_report, policy)
+            inputs = {"release": None, "policy": policy, "contract": policy["contract"], "abi": policy["abi"],
+                      "runtime_executor": policy["runtime_executor"],
+                      "report_identity": {"qualification_schema_version": 4, "input_binding": POLICY["binding"](policy)}}
+        else:
+            require(arguments.qualification_component_sha256 is None,
+                    "--release cannot receive a component pin")
+            release = load_json(arguments.release)
+            contract = ROW_CONTRACT["bind_release"](release, version=arguments.version)["contract"]
+            validate_compile_qualification_components(compile_report, release)
+            if compile_report["qualification_schema_version"] == 4:
+                require(compile_report.get("release_sha256") == canonical_sha256(release), "compile report release mismatch")
+            executor = {"kind": "native"}
+            if profile["arch"] == "aarch64":
+                executor = {key: release["qemu"]["executor"][key] for key in ("binary_sha256", "cpu", "uname_release")}
+                executor.update(kind="qemu", version=release["qemu"]["version"])
+            inputs = {"release": release, "policy": None, "contract": contract,
+                      "abi": ABI_CONTRACT["release_abi_inputs"](release, profile["arch"]), "runtime_executor": executor,
+                      "report_identity": {"qualification_schema_version": 3, "release_sha256": canonical_sha256(release)}}
+    except (POLICY["PolicyError"], ContractError, AbiContractError) as error:
+        raise RuntimeError_(str(error)) from error
+    require(compile_report.get("report_kind") == "crossforge-cpython-compile", "compile report kind mismatch")
+    require(compile_report.get("target") == arguments.target, "compile report target mismatch")
+    require(compile_report.get("version") == arguments.version, "compile report version mismatch")
+    require(compile_report.get("adapter") == inputs["contract"]["adapter"], "compile report adapter mismatch")
+    return inputs
 
 
 def validate_overlay_evidence(
@@ -128,6 +190,7 @@ def validate_overlay_evidence(
     compile_report,
     root,
     runtime_package_names,
+    policy=None,
 ):
     require_exact_keys(
         value,
@@ -141,25 +204,21 @@ def validate_overlay_evidence(
         },
         "clean runtime evidence",
     )
-    require(value["schema_version"] == 1, "clean runtime evidence schema mismatch")
+    try:
+        if policy is None:
+            OVERLAY["validate_identity_binding"](value, release, profile["arch"], release_components()["render_component_documents"])
+        else:
+            require(release is None, "component runtime cannot mix release and policy inputs")
+            OVERLAY["validate_identity_binding"](value, None, profile["arch"],
+                                                expected_binding=policy["runtime_overlay_binding"])
+    except OVERLAY["OverlayError"] as error:
+        raise RuntimeError_(str(error)) from error
     require(
         value["kind"] == "crossforge-python-runtime-overlay"
         and value["qualification_only"] is True,
         "clean runtime evidence kind mismatch",
     )
     identity = value["identity"]
-    require_exact_keys(
-        identity,
-        {
-            "base_image",
-            "release_sha256",
-            "target",
-            "sysroot",
-            "selected_packages",
-            "selected_packages_sha256",
-        },
-        "clean runtime identity",
-    )
     require_exact_keys(
         identity["base_image"],
         {"index_digest", "manifest_digest"},
@@ -168,15 +227,11 @@ def validate_overlay_evidence(
     oci_arch = "amd64" if profile["arch"] == "x86_64" else "arm64"
     require(
         identity["base_image"]
-        == {
+        == (policy["runtime_base"] if policy is not None else {
             "index_digest": release["base_image"]["digest"],
             "manifest_digest": release["base_image"]["manifests"][oci_arch],
-        },
+        }),
         "clean runtime base image differs from release",
-    )
-    require(
-        identity["release_sha256"] == canonical_sha256(release),
-        "clean runtime release digest mismatch",
     )
     require_exact_keys(identity["target"], {"arch", "triple"}, "clean runtime target")
     require(
@@ -643,7 +698,9 @@ def reject_dynamic_zstd(values, label):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--compile-report", type=Path, required=True)
-    parser.add_argument("--release", type=Path, required=True)
+    parser.add_argument("--release", type=Path)
+    parser.add_argument("--qualification-components", type=Path)
+    parser.add_argument("--qualification-component-sha256")
     parser.add_argument("--runtime-root", type=Path, required=True)
     parser.add_argument("--runtime-provider-policy", type=Path, required=True)
     parser.add_argument("--python-provider-catalog", type=Path, required=True)
@@ -665,8 +722,10 @@ def main():
         "runtime root is missing or is a symlink",
     )
     require(arguments.runtime_root.resolve() != Path("/"), "unsafe runtime root")
-    release = load_json(arguments.release)
-    release_sha256 = canonical_sha256(release)
+    compile_report = load_json(arguments.compile_report)
+    inputs = runtime_inputs(arguments, compile_report)
+    release = inputs["release"]
+    contract = inputs["contract"]
     require(
         arguments.runtime_provider_policy
         == Path("/src/config/python-runtime-providers.json"),
@@ -689,21 +748,7 @@ def main():
     runtime_package_names = [
         owner["name"] for owner in provider_target["owners"]
     ]
-    try:
-        binding = ROW_CONTRACT["bind_release"](
-            release, version=arguments.version
-        )
-    except ContractError as error:
-        raise RuntimeError_(str(error)) from error
-    contract = binding["contract"]
     zstd_policy = "required" if contract["zstd"] else "absent"
-    compile_report = load_json(arguments.compile_report)
-    require(compile_report.get("report_kind") == "crossforge-cpython-compile", "compile report kind mismatch")
-    require(compile_report.get("target") == arguments.target, "compile report target mismatch")
-    require(compile_report.get("version") == arguments.version, "compile report version mismatch")
-    require(compile_report.get("adapter") == contract["adapter"], "compile report adapter mismatch")
-    require(compile_report.get("release_sha256") == release_sha256, "compile report release mismatch")
-    validate_compile_qualification_components(compile_report, release)
     compile_abi = compile_report.get("abi")
     require(isinstance(compile_abi, dict), "compile report ABI evidence is missing")
     compile_provider_policy = compile_abi.get("runtime_provider_policy")
@@ -732,12 +777,7 @@ def main():
         "compile report runtime provider policy differs from runtime",
     )
     arch = profile["arch"]
-    try:
-        expected_abi_inputs = ABI_CONTRACT["release_abi_inputs"](
-            release, arch
-        )
-    except AbiContractError as error:
-        raise RuntimeError_(str(error)) from error
+    expected_abi_inputs = inputs["abi"]
     observed_abi_inputs = {
         "provider_manifest": compile_abi["provider_manifest"],
         "baseline": {
@@ -833,6 +873,7 @@ def main():
             compile_report,
             arguments.runtime_root,
             runtime_package_names,
+            policy=inputs["policy"],
         )
         identity_sha256 = runtime_evidence["identity_sha256"]
         runtime_kind = "clean-rocky-overlay"
@@ -947,14 +988,13 @@ def main():
         ]
     else:
         require(arguments.qemu is not None and arguments.qemu.is_file(), "locked QEMU is required")
-        qemu_release = release["qemu"]
-        qemu_policy = qemu_release["executor"]
+        qemu_policy = inputs["runtime_executor"]
         require(sha256_file(arguments.qemu) == qemu_policy["binary_sha256"], "QEMU digest mismatch")
         qemu_version_stdout, _ = run([arguments.qemu, "--version"])
         require(
             qemu_version_stdout.splitlines()
             and qemu_version_stdout.splitlines()[0].startswith(
-                "qemu-aarch64 version " + qemu_release["version"]
+                "qemu-aarch64 version " + qemu_policy["version"]
             ),
             "QEMU version mismatch",
         )
@@ -968,7 +1008,7 @@ def main():
         executor = {
             "kind": "explicit-qemu",
             "binary_sha256": qemu_policy["binary_sha256"],
-            "version": qemu_release["version"],
+            "version": qemu_policy["version"],
             "cpu": qemu_policy["cpu"],
             "uname_release": qemu_policy["uname_release"],
         }
@@ -1069,14 +1109,12 @@ def main():
     )
 
     result = {
-        "qualification_schema_version": 3,
         "report_kind": "crossforge-cpython-runtime",
         "target": arguments.target,
         "version": arguments.version,
         "adapter": contract["adapter"],
         "tier": arguments.tier,
         "status": "passed",
-        "release_sha256": release_sha256,
         "compile_report_sha256": compile_report_sha256,
         "python_sha256": compile_report["python_sha256"],
         "extension_sha256": compile_report["extension"]["sha256"],
@@ -1096,6 +1134,7 @@ def main():
         "probe": probe,
         "device_probe": device_probe,
     }
+    result.update(inputs["report_identity"])
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.output.with_name(arguments.output.name + ".tmp")
     temporary.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")

@@ -469,7 +469,9 @@ def main():
     parser.add_argument(
         "--profile", choices=("smoke", "full"), default="smoke"
     )
-    parser.add_argument("--release", type=Path, required=True)
+    policy_input = parser.add_mutually_exclusive_group(required=True)
+    policy_input.add_argument("--release", type=Path)
+    policy_input.add_argument("--components", type=Path)
     parser.add_argument("--plan", type=Path)
     parser.add_argument("--suite")
     parser.add_argument("--defer-observation", action="store_true")
@@ -507,13 +509,25 @@ def main():
                 raise ValidationError(
                     "qualification mode requires its release component identity"
                 )
-            release_contract = CONTRACT["validate_release_contract"](
-                arguments.release
-            )
-            release = release_contract["release"]
-            profile_contract = release_contract["profiles"][arguments.profile]
+            if arguments.components is not None:
+                expected_path = arguments.components / "toolchain/gcc-testsuite-qualification.json"
+                if arguments.qualification_component.resolve() != expected_path.resolve():
+                    raise ValidationError("GCC qualification component path differs from its policy closure")
+                arch = arguments.target.split("-", 1)[0]
+                scoped_contract = CONTRACT["validate_component_contract"](
+                    arguments.components, arch, arguments.qualification_component_sha256
+                )
+                profile_contract = scoped_contract["profiles"][arguments.profile]
+                executor = scoped_contract["policy"]["executor"]
+            else:
+                release_contract = CONTRACT["validate_release_contract"](arguments.release)
+                release = release_contract["release"]
+                profile_contract = release_contract["profiles"][arguments.profile]
+                executor = {"kind": "qemu", "binary_sha256": release["qemu"]["executor"]["binary_sha256"]}
             plan = profile_contract["plan"]
         else:
+            if arguments.components is not None:
+                raise ValidationError("observation mode requires the complete release input")
             if arguments.profile != "smoke":
                 raise ValidationError(
                     "observation mode reads its profile from the external plan"
@@ -537,6 +551,7 @@ def main():
             CONTRACT["validate_schema"](
                 release, REPOSITORY / "config/schemas/release.schema.json"
             )
+            executor = {"kind": "qemu", "binary_sha256": release["qemu"]["executor"]["binary_sha256"]}
             plan = CONTRACT["validate_plan"](
                 CONTRACT["load_json"](arguments.plan)
             )
@@ -607,9 +622,7 @@ def main():
                     "aarch64 GCC testsuite requires QEMU and a runtime root"
                 )
             qemu = require_file(arguments.qemu, "aarch64 QEMU executor")
-            if file_sha256(qemu) != release["qemu"]["executor"][
-                "binary_sha256"
-            ]:
+            if executor.get("kind") != "qemu" or file_sha256(qemu) != executor["binary_sha256"]:
                 raise ValidationError("aarch64 QEMU digest differs from release")
             if arguments.runtime_root.is_symlink() or not arguments.runtime_root.is_dir():
                 raise ValidationError("aarch64 runtime root is missing or invalid")

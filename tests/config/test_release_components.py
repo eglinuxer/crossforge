@@ -79,6 +79,11 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         cls.rows = tuple(RENDERER["IMPLEMENTED_ROWS"])
         cls.row_names = tuple(row["row"] for row in cls.rows)
 
+    def scoped_qualifications(self, rows=None, arches=("x86_64", "aarch64")):
+        rows = self.row_names if rows is None else rows
+        return {"python/%s%s-qualification" % (row, suffix)
+                for row in rows for suffix in ("",) + tuple("-" + arch for arch in arches)}
+
     def render_mutation(self, mutate, rows=None):
         release = copy.deepcopy(self.release)
         mutate(release)
@@ -535,7 +540,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "python/cp312-aarch64-build",
                 "python/qualification",
                 "product/sdk-qualification",
-            },
+            } | self.scoped_qualifications(rows=("cp312",)),
         )
 
     def test_cp39_append_preserves_existing_build_component_identities(self):
@@ -600,7 +605,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         support = RENDERER["render_component_documents"](release, self.rows)
         self.assertEqual(
             changed(self.components, support),
-            {"python/qualification", "product/sdk-qualification"},
+            {"python/qualification", "product/sdk-qualification"} | self.scoped_qualifications(rows=("cp312",)),
         )
         release = copy.deepcopy(self.release)
         release["python"]["versions"][3]["source"]["sigstore"][
@@ -613,7 +618,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "python/qualification",
                 "product/sdk-qualification",
                 "supply/evidence",
-            },
+            } | self.scoped_qualifications(rows=("cp312",)),
         )
         for documents in (support, sigstore):
             self.assertFalse(
@@ -749,6 +754,8 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 after = RENDERER["render_component_documents"](
                     release, self.rows
                 )
+                arches = tuple(arch for arch in ("x86_64", "aarch64") if name.startswith(arch + "-"))
+                expected = expected | self.scoped_qualifications(arches=arches or ("x86_64", "aarch64"))
                 observed = changed(self.components, after)
                 self.assertEqual(observed, expected)
                 self.assertFalse(
@@ -779,6 +786,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         expected.update(
             "python/%s-aarch64-build" % row for row in self.row_names
         )
+        expected.update(self.scoped_qualifications(arches=("aarch64",)))
         self.assertEqual(changed(self.components, after), expected)
 
     def test_x86_64_sysroot_has_exact_single_arch_impact(self):
@@ -805,6 +813,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
         expected.update(
             "python/%s-x86_64-build" % row for row in self.row_names
         )
+        expected.update(self.scoped_qualifications(arches=("x86_64",)))
         self.assertEqual(changed(self.components, after), expected)
 
     def test_qemu_cpu_changes_qualification_only(self):
@@ -823,7 +832,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 "vcpkg/upstream-tier3-qualification",
                 "packaging/qualification",
                 "product/sdk-qualification",
-            },
+            } | self.scoped_qualifications(arches=("aarch64",)),
         )
 
     def test_qemu_official_source_archive_changes_only_supply_identity(self):
@@ -858,6 +867,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                 }
             )
         expected.update(COMPLETE_SDK_CONSUMER)
+        expected.update(self.scoped_qualifications())
         self.assertEqual(changed(self.components, after), expected)
 
     def test_gcc_testsuite_policy_has_one_isolated_qualification_owner(self):
@@ -959,6 +969,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                     "python/%s-aarch64-build" % row,
                 }
             )
+        expected.update(self.scoped_qualifications())
         self.assertEqual(changed(self.components, after), expected)
 
     def test_vcpkg_source_pin_is_one_isolated_build_component(self):
@@ -1254,6 +1265,8 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             "python/cp314-native-build": {"zstd/host-build"},
             "python/cp314-x86_64-build": {"zstd/x86_64-build"},
             "python/cp314-aarch64-build": {"zstd/aarch64-build"},
+            "python/cp314-x86_64-qualification": {"zstd/host-build", "zstd/x86_64-build"},
+            "python/cp314-aarch64-qualification": {"zstd/host-build", "zstd/aarch64-build"},
         }
         for component, document in self.components.items():
             if not component.startswith("python/cp"):
@@ -1291,7 +1304,7 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
                     "python/cp314-aarch64-build",
                     "python/qualification",
                     "product/sdk-qualification",
-                },
+                } | self.scoped_qualifications(rows=("cp314",)),
             )
 
     def test_future_python_change_does_not_pollute_implemented_matrix(self):
@@ -1323,6 +1336,10 @@ class ReleaseComponentProjectionTests(unittest.TestCase):
             set(after) - set(before),
             {
                 "implementation/python-cp314-build-policy",
+                "implementation/python-cp314-qualification-policy",
+                "python/cp314-qualification",
+                "python/cp314-x86_64-qualification",
+                "python/cp314-aarch64-qualification",
                 "python/cp314-source",
                 "python/cp314-native-build",
                 "python/cp314-x86_64-build",

@@ -1,0 +1,174 @@
+{
+  "base_commit": "dced2c8c13e0aa5f39440a4429f69996500e8a81",
+  "checks": [
+    {
+      "command": [
+        "./scripts/validate-release.py",
+        "--require-locked"
+      ],
+      "seconds": 0.022
+    },
+    {
+      "command": [
+        "./scripts/validate-supply-chain-evidence.py"
+      ],
+      "seconds": 0.359
+    },
+    {
+      "command": [
+        "./scripts/validate-frozen-abi.py"
+      ],
+      "seconds": 0.312
+    },
+    {
+      "command": [
+        "./scripts/validate-python-runtime-providers.py"
+      ],
+      "seconds": 0.24
+    },
+    {
+      "command": [
+        "./scripts/render-release-components.py",
+        "--check"
+      ],
+      "seconds": 0.255
+    },
+    {
+      "command": [
+        "./scripts/render-vcpkg-integration.py",
+        "--check"
+      ],
+      "seconds": 0.179
+    },
+    {
+      "command": [
+        "./scripts/render-bake.py",
+        "--check"
+      ],
+      "seconds": 0.22
+    },
+    {
+      "command": [
+        "actionlint",
+        "-ignore",
+        "unexpected key \"queue\" for \"concurrency\" section"
+      ],
+      "seconds": 0.009
+    }
+  ],
+  "components": {
+    "existing_unchanged": 89,
+    "new_row_aggregates": 6,
+    "new_row_policies": 6,
+    "new_target_inputs": 12,
+    "total": 113
+  },
+  "config": {
+    "seconds": 191.202,
+    "skipped": 0,
+    "tests": 1258
+  },
+  "date": "2026-09-10",
+  "docker": {
+    "cpus": 4,
+    "docker_socket_mounted": false,
+    "image_id": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "network": "none",
+    "repository_read_only": true
+  },
+  "focused": {
+    "seconds": 14.126,
+    "skipped": 0,
+    "tests": 68
+  },
+  "initial_regression_results": [
+    "Legacy exact impact sets needed the newly introduced row/target nodes; updated without removing previous assertions",
+    "Initial full config run had one failure: Bake binding count still asserted 89 instead of 113; corrected and reran the full validation"
+  ],
+  "kind": "crossforge-python-row-policy-observation",
+  "limits": [
+    "No new image solve, compiler or runtime qualification execution",
+    "No production report-chain migration or cross-machine execution identity change",
+    "No GitHub event, signing, registry trust, recovery, candidate/native ARM or performance acceptance",
+    "Prior Docker socket auto-review rejection remains pending; not retried or bypassed",
+    "No main merge, remote push or publication"
+  ],
+  "material_comparison": {
+    "base_commit": "dced2c8c13e0aa5f39440a4429f69996500e8a81",
+    "execution_fixture": {
+      "buildkit_image": "moby/buildkit:v0.33.0@sha256:6c2fa84a6b61ccd72899dde4239f8d5717f05f9a8ca6f3cad185fb1a95a94de3"
+    },
+    "materials": {
+      "cpython-build-cp310-export": "13c00908f1b83a7572880bbfe9029ecb1053d829264ea5e9d2b5754f7551eed2",
+      "cpython-build-cp311-export": "b3e3cfcaaa69a04da20b0dce556f278cea4838e887b9a79f6ffdffee70ed1e8b",
+      "cpython-build-cp312-export": "15187d8330a637e4ff6326f4b8fba63bcf50ef6e2becd10a94dcbdc39f957c3b",
+      "cpython-build-cp313-export": "a404c9e1081dedca72d690cf29bf9ee19873abdfa8d09e8ca38d385121e6e9cf",
+      "cpython-build-cp314-export": "78486e44ee0896bff5a49c021d12f87e1ff363b707263f7f426f5d85df28d05b",
+      "cpython-build-cp39-export": "b134c5640eefe2e0e88383b721ba17b8943ac7c32c755174f1cb8f70cd6bc5fd",
+      "cpython-cp310-aarch64-test-context-export": "42d0d6a6b7f5beacf3ee9b76af31351de51911178c5ba0371469240e4a3acb3b",
+      "cpython-cp310-x86_64-test-context-export": "608813906bdd6d08d33858c04279d0f5b18f5d254a608025f4fda48a18738341",
+      "cpython-cp311-aarch64-test-context-export": "feb45be0742e23134cbcaaf91d1d2729d705d65bc7481fb170b3d6c2c294f041",
+      "cpython-cp311-x86_64-test-context-export": "dc2d4e573bc9ce4b8acd258d3ce0ad8179bfad591d1ab600c13476d0f9997b16",
+      "cpython-cp312-aarch64-test-context-export": "5d8d278688d0f827cc206b712ef844997ff5ca82044705541675bbb5157612ec",
+      "cpython-cp312-x86_64-test-context-export": "a9d3da6797323d2c526d3e8170b8c8a439d8a174d8a8a310c599b3cac50a0179",
+      "cpython-cp313-aarch64-test-context-export": "b430b8b951be5d07ab7de0d0d1a5e92b56973769a3404ee8618df2b918109223",
+      "cpython-cp313-x86_64-test-context-export": "f9a7d52e9e41b6703f5ece08b2d8b621ee9c0e4e7ff8a7c61645a58235ed1ca5",
+      "cpython-cp314-aarch64-test-context-export": "9d48d8a105eb82858d066afd9944aadd632385d0fdb4097e506e401bac17baca",
+      "cpython-cp314-x86_64-test-context-export": "ba2f1122a58799d8d231de5f5c8120d4364ed334a51957e0da1c197c3f422ecf",
+      "cpython-cp39-aarch64-test-context-export": "7643426697016dfc6c1b407038f1f41826ddc515c5ecd35cf978c731aed69d78",
+      "cpython-cp39-x86_64-test-context-export": "7362e7721c9cb6ca0c67bbe3a660480aefc7def7713b45da09e34d15de3bf2ec",
+      "cpython-cross-cp310-aarch64-export": "94e0216f3431b66449c5cb4175d347ce00eba3fb4d0a45df30b55b7dfabf3aa4",
+      "cpython-cross-cp310-x86_64-export": "9a99611a0734ebc8ffc3a37c8b0e93d110529dd885c8555d352a0a09a9eb1a9f",
+      "cpython-cross-cp311-aarch64-export": "1df71348a25290651a9683fb4d92a1d4492adeb008a1a8a5f03d98c4a23e0f7b",
+      "cpython-cross-cp311-x86_64-export": "c38e17b32156e2650dfadf10ad9034ddc8173e5bf80c07b8f973d08b05d593ac",
+      "cpython-cross-cp312-aarch64-export": "fcdb7be8b33399700a6dffc4e17063f0733c2ad501bba973f9b84f45aaf61fa3",
+      "cpython-cross-cp312-x86_64-export": "fc1986ecc881b694d0b613894e645d186100995cd91b7aeb1db6e7be3e5c1ad6",
+      "cpython-cross-cp313-aarch64-export": "abe40241278bffe70baccc782d8aa6c211fd9e1a28753093fbfd4cb0d6d48abd",
+      "cpython-cross-cp313-x86_64-export": "8d4a57c56e866be4beac0eb5b661682c46e2f7e88d6af55565f734b85cc6c622",
+      "cpython-cross-cp314-aarch64-export": "08d6e47bd1618cfa59bd479fecc882a7e25510ba49a8a53e2090b914137e65f5",
+      "cpython-cross-cp314-x86_64-export": "ca47d98930104791f14d455864eb7826ed0bc49cead7acab56a548eddc80bf9b",
+      "cpython-cross-cp39-aarch64-export": "713f09cdbaf88ed73aa0ee5fd6f9cf27c5c7aa5f50245082831d333178998d7b",
+      "cpython-cross-cp39-x86_64-export": "15d1b99310a872c4dc94d7b97e4fb00de36a8b28907116d0ef9464d4ebf494a6",
+      "gcc-aarch64-test-context-export": "6b4e79e866efd1d6f9ef8ed690909e02cbb784607baa3cf0bdeae62d56e27fd0",
+      "gcc-x86_64-test-context-export": "ad16aeaa4f6217924ff16917d10637e0a6b54cfe4a6e8a9479050d196af07c15",
+      "python-runtime-clean-aarch64": "757a5527fae832e85a259164a573103a9222c110d9e81f911755f0e4efd85382",
+      "python-runtime-clean-x86_64": "10ff256b9e94db3ee3b3e07f7d89dc14802812e9ac9b3472fb7d0d57300c5622",
+      "toolchain-aarch64-build-export": "0d036ff020e0d8a2c9d3f1295a9e6f8787489c65f8a98e68a237b1874fa60193",
+      "toolchain-x86_64-build-export": "f29a97f5a9f7ca1585cfb29438011a6140e5469c91cd953a1a838bf614d2fc2e"
+    },
+    "preexisting_component_documents_unchanged": 89,
+    "raw_component_closures_unchanged": 34,
+    "runtime_closures_unchanged": 2,
+    "scope": "Real Bake print and material capture over normalized immutable source snapshots; no new image solve, signature or execution qualification",
+    "status": "passed"
+  },
+  "packaging": {
+    "seconds": 1.236,
+    "skipped": 0,
+    "tests": 40
+  },
+  "qualification_receipt": false,
+  "rocky_platform_python": {
+    "compiled": [
+      "scripts/release-components-core.py",
+      "scripts/python_qualification_policy.py"
+    ],
+    "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+    "scope": "Policy and authentication regression fixtures in Rocky platform-python; no actual runtime execution",
+    "skipped": 0,
+    "status": "passed",
+    "tests": 10
+  },
+  "schema_version": 1,
+  "scope": "Additive row/target configuration contracts and cropped authenticated reader; production compile/runtime/final report schemas and Docker qualification inputs remain legacy",
+  "source_file_sha256": {
+    "config/generated/release-binding.json": "8dc251d9d3d3aa2b2847cee25d2d27833bd930adce8e1cf6261437d232cb7e33",
+    "scripts/python_qualification_policy.py": "88cc32335d0499dd630a5bf6943843d9c1f34f2e84d4cde21eee2201e65cdffe",
+    "scripts/release-components-core.py": "1bcd5286a76cb72f059d6627da2b7f9ded15b72a7bee845a3f2ae8500db70480",
+    "tests/config/test_python_qualification_policy.py": "fedabdcaf6df71fda3726fd14e09e9ae984a992a7fc8c9e1ecea56eacf2da374",
+    "tests/config/test_release_components.py": "bbe60ec8f0a26cc2efb351829ef2c501d9fc73d1ecba848f63ec61d1a8f10bb7",
+    "tests/config/test_render_bake.py": "53046ee6bbdfb95edadcdc0a6947020dd63e87b06b93d6b20430917e37a0bfe8"
+  },
+  "status": "local-contract-validation-passed"
+}

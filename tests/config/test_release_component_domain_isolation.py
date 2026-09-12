@@ -168,13 +168,15 @@ class ReleaseComponentDomainIsolationTests(unittest.TestCase):
         for stage, next_stage in (
             ("toolchain-x86_64-qualify-build", "toolchain-aarch64-qualify-build"),
             ("toolchain-aarch64-qualify-build", "runtime-smoke-aarch64"),
-            ("runtime-smoke-aarch64", "toolchain-aarch64-qualify"),
+            ("runtime-smoke-aarch64", "runtime-smoke-x86_64"),
         ):
             block = toolchain_dockerfile.split(" AS " + stage, 1)[1].split(
                 " AS " + next_stage, 1
             )[0]
             with self.subTest(stage=stage):
-                self.assertIn("scripts/release-components-core.py", block)
+                self.assertIn("scripts/toolchain_policy.py", block)
+                self.assertNotIn("scripts/release-components-core.py", block)
+                self.assertNotIn("/src/config/release.json", block)
                 self.assertNotIn("scripts/render-release-components.py", block)
                 self.assertNotIn("scripts/release-components-vcpkg.py", block)
                 self.assertNotIn("scripts/release-components-supply.py", block)

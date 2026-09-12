@@ -1,0 +1,27 @@
+{
+  "$schema": "https://crossforge.dev/schemas/release-component.schema.json",
+  "component": "python/cp311-qualification",
+  "dependencies": [
+    {
+      "canonical_sha256": "557bb7db872da683874661a92ffcdabc15f908acab5408a884274af2e927cef1",
+      "component": "python/cp311-aarch64-qualification"
+    },
+    {
+      "canonical_sha256": "4478e29bb31462b25f13753faafa0ca61693848392f98f6682547519eccdc15b",
+      "component": "python/cp311-x86_64-qualification"
+    }
+  ],
+  "kind": "crossforge-release-component",
+  "materials": [
+    {
+      "path": "/python/versions/2/adapter",
+      "value": "transition"
+    },
+    {
+      "path": "/python/versions/2/version",
+      "value": "3.11.16"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "qualification"
+}

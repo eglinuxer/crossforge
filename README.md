@@ -34,7 +34,7 @@ build-system-independent DEB/RPM packaging.
 > immutable evidence are implemented but still require their first public
 > execution. Repository protection settings and formal legal review remain
 > pre-release operating gates.
-> Checked-in Bake outputs remain cache-only; only the main-push or manually dispatched
+> Checked-in Bake outputs remain cache-only; only the explicitly dispatched
 > public-candidate workflow may emit a user-facing image.
 
 The accepted implementation contract is in
@@ -148,13 +148,17 @@ x86_64 full GCC gate is available separately:
 $ docker buildx bake gcc-testsuite-full-qualified
 ```
 
-PR CI runs fast checks and conservatively selects affected hosted build stages.
-Every main push performs one full qualification and publishes a candidate.
-Full qualification also runs daily and manually. Version tags request digest-only
+PR and main CI run fast checks and conservatively select affected hosted build stages.
+Manually dispatch `candidate.yml` on main when preparing a candidate or release;
+ordinary pushes do not publish images. Full qualification also runs daily and
+manually. Version tags request digest-only
 stable promotion of the exact commit's successful candidate, subject to production
 approval; see the Actions operating guide for tag timing and required credentials.
 Toolchains, Python rows, vcpkg and GCC use separate GitHub-hosted jobs with
-shared trusted registry caches. See [the Actions operating guide](docs/github-actions.md)
+shared trusted registry caches. The main SDK job consumes authenticated components
+and qualifies missing rows on its own worker before fresh final integration.
+Independent Python jobs remain during this transition; live CI validation and
+performance measurement are pending. See [the Actions operating guide](docs/github-actions.md)
 for stage selection, cold-build measurement, diagnostics and the required check.
 
 Qt checks run locally using the commands below. They are excluded from default
@@ -829,7 +833,7 @@ The separate `sdk-candidate` target is the only registry-export boundary. It
 inherits the complete SDK, revalidates the product identity, requires the full
 source commit, and adds OCI version/revision annotations. Its checked-in Bake
 output is still cache-only and has no tag, so local commands cannot publish it
-accidentally. The main-push (or manually dispatched) `public candidate` workflow supplies a
+accidentally. The manually dispatched `public candidate` workflow on main supplies a
 unique `candidate-v<version>-g<commit>-r<run>-a<attempt>` tag, pushes with max
 provenance and SBOM attestations, reconstructs `candidate.json` from the raw
 OCI index, builds and pushes the corresponding source archive under a paired
@@ -841,6 +845,19 @@ the SDK build budget, the workflow logs out, anonymously pulls the source image,
 streams the complete archive from its scratch filesystem, and verifies the
 archive SHA256; a manifest-only visibility check is not accepted as proof that
 downstream users can retrieve the corresponding source payload.
+Candidate prequalification selects the complete component gate set and centrally
+prepares missing raw toolchain/Python artifacts. SDK publication independently
+verifies these artifacts, replaces their exact Bake contexts and rejects any
+remaining GCC/CPython source compilation in its input graph. All existing
+qualification and final consumer checks remain. This candidate path does not
+join the periodic qualification cache-writer queue; its live GitHub execution
+and performance still require acceptance.
+Source publication, SDK publication and final anonymous consumer validation are
+separate jobs. Successful publishers save immutable, digest-checked metadata
+checkpoints; a failed downstream job can reuse the same published image and
+original producer identity on a partial rerun. The final consumer job has only
+package read permission. See the [candidate recovery boundaries](docs/github-actions.md#candidate-and-stable-delivery)
+for failures before checkpoint completion and the remaining live validation.
 The same anonymous boundary fetches each OCI attestation manifest and its raw
 blobs, recomputes descriptor sizes and digests, and requires exactly one
 in-toto SLSA v1 max-provenance statement plus one SPDX document for both the
@@ -907,7 +924,7 @@ bound source digest. Existing version tags are accepted only when they already
 resolve to the selected digest; a different version-tag digest fails closed.
 The mutable channels move only after both immutable version tags exist, and
 all four references are resolved anonymously again before strict
-`release-promotion.json` evidence is produced. Seventeen original evidence files
+`release-promotion.json` evidence is produced. Fourteen original evidence files
 are also placed in a deterministic USTAR with a strict per-file manifest and
 SHA256 sidecar. The workflow creates a draft GitHub Release, uploads the archive,
 sidecar, candidate identity and promotion identity, moves the OCI channels, and

@@ -502,6 +502,28 @@
       ],
       "target": "cpython-build"
     },
+    "cpython-build-cp310-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "legacy",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp310-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
+        "CPYTHON_MINOR": "3.10",
+        "CPYTHON_ROW": "cp310",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
+        "CPYTHON_VERSION": "3.10.21"
+      },
+      "contexts": {
+        "crossforge_cpython_build_output": "target:cpython-build-cp310"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-build-export"
+    },
     "cpython-build-cp311": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
@@ -525,6 +547,28 @@
         "type=cacheonly"
       ],
       "target": "cpython-build"
+    },
+    "cpython-build-cp311-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
+        "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
+        "CPYTHON_VERSION": "3.11.16"
+      },
+      "contexts": {
+        "crossforge_cpython_build_output": "target:cpython-build-cp311"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-build-export"
     },
     "cpython-build-cp312": {
       "args": {
@@ -550,6 +594,28 @@
       ],
       "target": "cpython-build"
     },
+    "cpython-build-cp312-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
+        "CPYTHON_VERSION": "3.12.14"
+      },
+      "contexts": {
+        "crossforge_cpython_build_output": "target:cpython-build-cp312"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-build-export"
+    },
     "cpython-build-cp313": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
@@ -573,6 +639,28 @@
         "type=cacheonly"
       ],
       "target": "cpython-build"
+    },
+    "cpython-build-cp313-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
+        "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
+        "CPYTHON_VERSION": "3.13.15"
+      },
+      "contexts": {
+        "crossforge_cpython_build_output": "target:cpython-build-cp313"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-build-export"
     },
     "cpython-build-cp314": {
       "args": {
@@ -598,6 +686,28 @@
       ],
       "target": "cpython-build"
     },
+    "cpython-build-cp314-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp314-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
+        "CPYTHON_MINOR": "3.14",
+        "CPYTHON_ROW": "cp314",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
+        "CPYTHON_VERSION": "3.14.7"
+      },
+      "contexts": {
+        "crossforge_cpython_build_output": "target:cpython-build-cp314"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-build-export"
+    },
     "cpython-build-cp39": {
       "args": {
         "CPYTHON_ADAPTER": "legacy",
@@ -622,12 +732,35 @@
       ],
       "target": "cpython-build"
     },
+    "cpython-build-cp39-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "legacy",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp39-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
+        "CPYTHON_MINOR": "3.9",
+        "CPYTHON_ROW": "cp39",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
+        "CPYTHON_VERSION": "3.9.25"
+      },
+      "contexts": {
+        "crossforge_cpython_build_output": "target:cpython-build-cp39"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-build-export"
+    },
     "cpython-cp310-aarch64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "legacy",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp310-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
         "CPYTHON_MINOR": "3.10",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "e92938a54da26289ebab4ca14020b8a01459f9bdba53119da47a66398f041257",
         "CPYTHON_ROW": "cp310",
         "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
@@ -656,17 +789,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp310-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
         "CPYTHON_MINOR": "3.10",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "e92938a54da26289ebab4ca14020b8a01459f9bdba53119da47a66398f041257",
         "CPYTHON_ROW": "cp310",
         "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
         "CPYTHON_VERSION": "3.10.21",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp310-aarch64"
+        "crossforge_cpython_build": "target:cpython-build-cp310-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp310-aarch64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp310-aarch64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-aarch64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -676,12 +812,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp310-aarch64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "legacy",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp310-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
+        "CPYTHON_MINOR": "3.10",
+        "CPYTHON_ROW": "cp310",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
+        "CPYTHON_VERSION": "3.10.21",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp310-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp310-x86_64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "legacy",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp310-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
         "CPYTHON_MINOR": "3.10",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "26a6e9443ef0334da11510d524baa0a6afe249c3e0db8ee7dbb546ca5266eac6",
         "CPYTHON_ROW": "cp310",
         "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
@@ -709,17 +870,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp310-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
         "CPYTHON_MINOR": "3.10",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "26a6e9443ef0334da11510d524baa0a6afe249c3e0db8ee7dbb546ca5266eac6",
         "CPYTHON_ROW": "cp310",
         "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
         "CPYTHON_VERSION": "3.10.21",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp310-x86_64"
+        "crossforge_cpython_build": "target:cpython-build-cp310-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp310-x86_64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp310-x86_64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-x86_64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -729,12 +893,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp310-x86_64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "legacy",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp310-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
+        "CPYTHON_MINOR": "3.10",
+        "CPYTHON_ROW": "cp310",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
+        "CPYTHON_VERSION": "3.10.21",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp310-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp311-aarch64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
         "CPYTHON_MINOR": "3.11",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "557bb7db872da683874661a92ffcdabc15f908acab5408a884274af2e927cef1",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -763,17 +952,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
         "CPYTHON_MINOR": "3.11",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "557bb7db872da683874661a92ffcdabc15f908acab5408a884274af2e927cef1",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp311-aarch64"
+        "crossforge_cpython_build": "target:cpython-build-cp311-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp311-aarch64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp311-aarch64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-aarch64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -783,12 +975,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp311-aarch64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
+        "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
+        "CPYTHON_VERSION": "3.11.16",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp311-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp311-x86_64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "transition",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
         "CPYTHON_MINOR": "3.11",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "4478e29bb31462b25f13753faafa0ca61693848392f98f6682547519eccdc15b",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
@@ -816,17 +1033,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
         "CPYTHON_MINOR": "3.11",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "4478e29bb31462b25f13753faafa0ca61693848392f98f6682547519eccdc15b",
         "CPYTHON_ROW": "cp311",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp311-x86_64"
+        "crossforge_cpython_build": "target:cpython-build-cp311-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp311-x86_64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp311-x86_64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-x86_64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -836,12 +1056,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp311-x86_64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
+        "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
+        "CPYTHON_VERSION": "3.11.16",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp311-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp312-aarch64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
         "CPYTHON_MINOR": "3.12",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "1ca8b5ea846e40873452fc4d6d0dc8077056f1de5398d5569520276e72a58b9d",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -870,17 +1115,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
         "CPYTHON_MINOR": "3.12",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "1ca8b5ea846e40873452fc4d6d0dc8077056f1de5398d5569520276e72a58b9d",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp312-aarch64"
+        "crossforge_cpython_build": "target:cpython-build-cp312-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp312-aarch64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp312-aarch64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-aarch64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -890,12 +1138,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp312-aarch64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
+        "CPYTHON_VERSION": "3.12.14",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp312-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp312-x86_64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
         "CPYTHON_MINOR": "3.12",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "20f9a0f3e01b8787c9d0ee062be04b6f3fdfeba3c8a4b033271589beeb1dd9bb",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
@@ -923,17 +1196,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
         "CPYTHON_MINOR": "3.12",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "20f9a0f3e01b8787c9d0ee062be04b6f3fdfeba3c8a4b033271589beeb1dd9bb",
         "CPYTHON_ROW": "cp312",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp312-x86_64"
+        "crossforge_cpython_build": "target:cpython-build-cp312-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp312-x86_64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp312-x86_64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-x86_64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -943,12 +1219,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp312-x86_64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
+        "CPYTHON_VERSION": "3.12.14",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp312-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp313-aarch64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
         "CPYTHON_MINOR": "3.13",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "e2d507932393b13956b90491c3e4d585f4db1cc2b908ea9dea83791079d8a230",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -977,17 +1278,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
         "CPYTHON_MINOR": "3.13",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "e2d507932393b13956b90491c3e4d585f4db1cc2b908ea9dea83791079d8a230",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp313-aarch64"
+        "crossforge_cpython_build": "target:cpython-build-cp313-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp313-aarch64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp313-aarch64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-aarch64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -997,12 +1301,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp313-aarch64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
+        "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
+        "CPYTHON_VERSION": "3.13.15",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp313-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp313-x86_64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
         "CPYTHON_MINOR": "3.13",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "3d75ce93d4bb3d7b693388fdd1a727fe354bc5caef2f5c3fdb047fc408a79aaa",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
@@ -1030,17 +1359,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
         "CPYTHON_MINOR": "3.13",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "3d75ce93d4bb3d7b693388fdd1a727fe354bc5caef2f5c3fdb047fc408a79aaa",
         "CPYTHON_ROW": "cp313",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp313-x86_64"
+        "crossforge_cpython_build": "target:cpython-build-cp313-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp313-x86_64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp313-x86_64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-x86_64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -1050,12 +1382,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp313-x86_64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
+        "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
+        "CPYTHON_VERSION": "3.13.15",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp313-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp314-aarch64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp314-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
         "CPYTHON_MINOR": "3.14",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "b668e8e0a24a513593546c1a3d93fae009d3bf81905230188f9f971538da86ea",
         "CPYTHON_ROW": "cp314",
         "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
@@ -1084,17 +1441,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp314-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
         "CPYTHON_MINOR": "3.14",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "b668e8e0a24a513593546c1a3d93fae009d3bf81905230188f9f971538da86ea",
         "CPYTHON_ROW": "cp314",
         "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
         "CPYTHON_VERSION": "3.14.7",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp314-aarch64"
+        "crossforge_cpython_build": "target:cpython-build-cp314-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp314-aarch64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp314-aarch64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-aarch64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -1104,12 +1464,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp314-aarch64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp314-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
+        "CPYTHON_MINOR": "3.14",
+        "CPYTHON_ROW": "cp314",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
+        "CPYTHON_VERSION": "3.14.7",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp314-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp314-x86_64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "modern",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp314-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
         "CPYTHON_MINOR": "3.14",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "66d955147fe39df244d27ecfed2822d51f5ee60df5256acf4fbcf1b5d087a44f",
         "CPYTHON_ROW": "cp314",
         "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
@@ -1137,17 +1522,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp314-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
         "CPYTHON_MINOR": "3.14",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "66d955147fe39df244d27ecfed2822d51f5ee60df5256acf4fbcf1b5d087a44f",
         "CPYTHON_ROW": "cp314",
         "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
         "CPYTHON_VERSION": "3.14.7",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp314-x86_64"
+        "crossforge_cpython_build": "target:cpython-build-cp314-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp314-x86_64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp314-x86_64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-x86_64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -1157,12 +1545,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp314-x86_64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp314-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
+        "CPYTHON_MINOR": "3.14",
+        "CPYTHON_ROW": "cp314",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
+        "CPYTHON_VERSION": "3.14.7",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp314-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp39-aarch64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "legacy",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp39-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
         "CPYTHON_MINOR": "3.9",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "c2d62d2a43b8f26dc3465a9e90180ecce9bec502f146e64b797d1aeb89553ca6",
         "CPYTHON_ROW": "cp39",
         "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
@@ -1191,17 +1604,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp39-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
         "CPYTHON_MINOR": "3.9",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "c2d62d2a43b8f26dc3465a9e90180ecce9bec502f146e64b797d1aeb89553ca6",
         "CPYTHON_ROW": "cp39",
         "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
         "CPYTHON_VERSION": "3.9.25",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "aarch64",
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp39-aarch64"
+        "crossforge_cpython_build": "target:cpython-build-cp39-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp39-aarch64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp39-aarch64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-aarch64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -1211,12 +1627,37 @@
       ],
       "target": "cpython-qualify-build"
     },
+    "cpython-cp39-aarch64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "legacy",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp39-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
+        "CPYTHON_MINOR": "3.9",
+        "CPYTHON_ROW": "cp39",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
+        "CPYTHON_VERSION": "3.9.25",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp39-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
+    },
     "cpython-cp39-x86_64-qualify": {
       "args": {
         "CPYTHON_ADAPTER": "legacy",
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp39-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
         "CPYTHON_MINOR": "3.9",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "8c260833b4603ad4f93fe20a422b90a0575a7b9d310cc8a87190119ed43cf778",
         "CPYTHON_ROW": "cp39",
         "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
@@ -1244,17 +1685,20 @@
         "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp39-build-policy",
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
         "CPYTHON_MINOR": "3.9",
+        "CPYTHON_QUALIFICATION_COMPONENT_SHA256": "8c260833b4603ad4f93fe20a422b90a0575a7b9d310cc8a87190119ed43cf778",
         "CPYTHON_ROW": "cp39",
         "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
         "CPYTHON_VERSION": "3.9.25",
-        "CROSSFORGE_COMPONENT_IMPLEMENTATION_PYTHON_QUALIFICATION_POLICY_SHA256": "e622706f8e28a435c276a7c2e582e3ca9fda578c101d7a7ca7f7c4f09df3e7b5",
-        "CROSSFORGE_COMPONENT_PYTHON_QUALIFICATION_SHA256": "4750d91fc316302e6e17b2934f5a095d69e8384c7f84ff8c0fd56eff28885981",
         "CROSSFORGE_TARGET_ARCH": "x86_64",
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_cross": "target:cpython-cross-cp39-x86_64"
+        "crossforge_cpython_build": "target:cpython-build-cp39-export",
+        "crossforge_cpython_install": "target:cpython-cross-cp39-x86_64-export",
+        "crossforge_cpython_test_context": "target:cpython-cp39-x86_64-test-context-export",
+        "crossforge_host_python": "target:host-python-build-locked",
+        "crossforge_toolchain": "target:toolchain-x86_64-build-export"
       },
       "inherits": [
         "_python_common"
@@ -1263,6 +1707,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-qualify-build"
+    },
+    "cpython-cp39-x86_64-test-context-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "legacy",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp39-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
+        "CPYTHON_MINOR": "3.9",
+        "CPYTHON_ROW": "cp39",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
+        "CPYTHON_VERSION": "3.9.25",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp39-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-test-context-export"
     },
     "cpython-cross-cp310-aarch64": {
       "args": {
@@ -1279,7 +1747,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp310",
+        "crossforge_cpython_build": "target:cpython-build-cp310-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp310",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-aarch64-build-export",
@@ -1292,6 +1760,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp310-aarch64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "legacy",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp310-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
+        "CPYTHON_MINOR": "3.10",
+        "CPYTHON_ROW": "cp310",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
+        "CPYTHON_VERSION": "3.10.21",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp310-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp310-x86_64": {
       "args": {
@@ -1308,7 +1800,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp310",
+        "crossforge_cpython_build": "target:cpython-build-cp310-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp310",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-x86_64-build-export",
@@ -1321,6 +1813,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp310-x86_64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "legacy",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp310-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
+        "CPYTHON_MINOR": "3.10",
+        "CPYTHON_ROW": "cp310",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
+        "CPYTHON_VERSION": "3.10.21",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp310-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp311-aarch64": {
       "args": {
@@ -1337,7 +1853,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp311",
+        "crossforge_cpython_build": "target:cpython-build-cp311-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp311",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-aarch64-build-export",
@@ -1350,6 +1866,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp311-aarch64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
+        "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
+        "CPYTHON_VERSION": "3.11.16",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp311-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp311-x86_64": {
       "args": {
@@ -1366,7 +1906,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp311",
+        "crossforge_cpython_build": "target:cpython-build-cp311-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp311",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-x86_64-build-export",
@@ -1379,6 +1919,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp311-x86_64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "transition",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp311-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
+        "CPYTHON_MINOR": "3.11",
+        "CPYTHON_ROW": "cp311",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
+        "CPYTHON_VERSION": "3.11.16",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp311-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp312-aarch64": {
       "args": {
@@ -1395,7 +1959,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp312",
+        "crossforge_cpython_build": "target:cpython-build-cp312-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp312",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-aarch64-build-export",
@@ -1408,6 +1972,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp312-aarch64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
+        "CPYTHON_VERSION": "3.12.14",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp312-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp312-x86_64": {
       "args": {
@@ -1424,7 +2012,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp312",
+        "crossforge_cpython_build": "target:cpython-build-cp312-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp312",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-x86_64-build-export",
@@ -1437,6 +2025,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp312-x86_64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp312-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
+        "CPYTHON_MINOR": "3.12",
+        "CPYTHON_ROW": "cp312",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
+        "CPYTHON_VERSION": "3.12.14",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp312-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp313-aarch64": {
       "args": {
@@ -1453,7 +2065,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp313",
+        "crossforge_cpython_build": "target:cpython-build-cp313-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp313",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-aarch64-build-export",
@@ -1466,6 +2078,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp313-aarch64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
+        "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
+        "CPYTHON_VERSION": "3.13.15",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp313-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp313-x86_64": {
       "args": {
@@ -1482,7 +2118,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp313",
+        "crossforge_cpython_build": "target:cpython-build-cp313-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp313",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-x86_64-build-export",
@@ -1495,6 +2131,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp313-x86_64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp313-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
+        "CPYTHON_MINOR": "3.13",
+        "CPYTHON_ROW": "cp313",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
+        "CPYTHON_VERSION": "3.13.15",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp313-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp314-aarch64": {
       "args": {
@@ -1511,7 +2171,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp314",
+        "crossforge_cpython_build": "target:cpython-build-cp314-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp314",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-aarch64-build-export",
@@ -1524,6 +2184,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp314-aarch64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp314-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
+        "CPYTHON_MINOR": "3.14",
+        "CPYTHON_ROW": "cp314",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
+        "CPYTHON_VERSION": "3.14.7",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp314-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp314-x86_64": {
       "args": {
@@ -1540,7 +2224,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp314",
+        "crossforge_cpython_build": "target:cpython-build-cp314-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp314",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-x86_64-build-export",
@@ -1553,6 +2237,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp314-x86_64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "modern",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp314-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
+        "CPYTHON_MINOR": "3.14",
+        "CPYTHON_ROW": "cp314",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
+        "CPYTHON_VERSION": "3.14.7",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp314-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp39-aarch64": {
       "args": {
@@ -1569,7 +2277,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp39",
+        "crossforge_cpython_build": "target:cpython-build-cp39-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp39",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-aarch64-build-export",
@@ -1582,6 +2290,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp39-aarch64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "legacy",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp39-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
+        "CPYTHON_MINOR": "3.9",
+        "CPYTHON_ROW": "cp39",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
+        "CPYTHON_VERSION": "3.9.25",
+        "CROSSFORGE_TARGET_ARCH": "aarch64",
+        "CROSSFORGE_TARGET_TRIPLE": "aarch64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp39-aarch64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-cross-cp39-x86_64": {
       "args": {
@@ -1598,7 +2330,7 @@
         "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
       },
       "contexts": {
-        "crossforge_cpython_build": "target:cpython-build-cp39",
+        "crossforge_cpython_build": "target:cpython-build-cp39-export",
         "crossforge_cpython_prepared": "target:cpython-prepared-cp39",
         "crossforge_host_python": "target:host-python-build-locked",
         "crossforge_toolchain": "target:toolchain-x86_64-build-export",
@@ -1611,6 +2343,30 @@
         "type=cacheonly"
       ],
       "target": "cpython-cross"
+    },
+    "cpython-cross-cp39-x86_64-export": {
+      "args": {
+        "CPYTHON_ADAPTER": "legacy",
+        "CPYTHON_BUILD_POLICY_COMPONENT": "implementation/python-cp39-build-policy",
+        "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
+        "CPYTHON_MINOR": "3.9",
+        "CPYTHON_ROW": "cp39",
+        "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
+        "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
+        "CPYTHON_VERSION": "3.9.25",
+        "CROSSFORGE_TARGET_ARCH": "x86_64",
+        "CROSSFORGE_TARGET_TRIPLE": "x86_64-unknown-linux-gnu"
+      },
+      "contexts": {
+        "crossforge_cpython_cross_output": "target:cpython-cross-cp39-x86_64"
+      },
+      "inherits": [
+        "_python_common"
+      ],
+      "output": [
+        "type=cacheonly"
+      ],
+      "target": "cpython-cross-export"
     },
     "cpython-empty-patches": {
       "contexts": {
@@ -2058,6 +2814,15 @@
         "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648"
       }
     },
+    "gcc-aarch64-test-context-export": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
+        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
+        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
+        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648"
+      }
+    },
     "gcc-prepared": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
@@ -2069,23 +2834,23 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
-        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd"
+        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "5251aa7fe706467b5854bfd70a05713f9e48ce3916cc9f69a048868d12193ae7"
       },
       "contexts": {
-        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
+        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705",
+        "crossforge_toolchain_aarch64_install": "target:toolchain-aarch64-build-export",
+        "crossforge_toolchain_aarch64_test_context": "target:gcc-aarch64-test-context-export"
       }
     },
     "gcc-testsuite-full-observation-evidence": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648"
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-testsuite-full-qualification-evidence": {
@@ -2093,10 +2858,11 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
-        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd"
+        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "5251aa7fe706467b5854bfd70a05713f9e48ce3916cc9f69a048868d12193ae7"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-testsuite-smoke-evidence": {
@@ -2104,24 +2870,25 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
-        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd"
+        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "5251aa7fe706467b5854bfd70a05713f9e48ce3916cc9f69a048868d12193ae7"
       },
       "contexts": {
-        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
+        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705",
+        "crossforge_toolchain_aarch64_install": "target:toolchain-aarch64-build-export",
+        "crossforge_toolchain_aarch64_test_context": "target:gcc-aarch64-test-context-export",
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-testsuite-x86_64-full-observe": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648"
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-testsuite-x86_64-full-qualified": {
@@ -2129,10 +2896,11 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
-        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd"
+        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "5251aa7fe706467b5854bfd70a05713f9e48ce3916cc9f69a048868d12193ae7"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-testsuite-x86_64-smoke": {
@@ -2140,13 +2908,23 @@
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_TEST_SHA256": "28de071754474b53c0ed117c2ebb57cc93d5073aca244a116c4d748ea1757d28",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
-        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd"
+        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "5251aa7fe706467b5854bfd70a05713f9e48ce3916cc9f69a048868d12193ae7"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export",
+        "crossforge_toolchain_x86_64_test_context": "target:gcc-x86_64-test-context-export"
       }
     },
     "gcc-x86_64": {
+      "args": {
+        "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
+        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
+        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
+        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
+        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648"
+      }
+    },
+    "gcc-x86_64-test-context-export": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
         "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
@@ -2309,6 +3087,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
         "CPYTHON_MINOR": "3.10",
         "CPYTHON_ROW": "cp310",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "feea6adce5bcea010ce631b67d38e78fde2d30b3e61600faab37bc44db8b6e04",
         "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
         "CPYTHON_VERSION": "3.10.21"
@@ -2332,6 +3111,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
         "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "3a6c8a5255d02182217cb7fe428d941ebcbdd320661a70c3735abe72c0d3416f",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16"
@@ -2355,6 +3135,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
         "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "3eecd052977d8e558eb2715ee910be9291b87421e3d563c955e448df49e97cb2",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14"
@@ -2378,6 +3159,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
         "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "78257e4f1b0e2f7a300e9f2c1db9025b52824bebefd4a2b1e6ea3294743b5c90",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15"
@@ -2401,6 +3183,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
         "CPYTHON_MINOR": "3.14",
         "CPYTHON_ROW": "cp314",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "eda45d8290f4fc2c028239176a2f9e1ae0d0b8f204719c4095381dbac31bb7cd",
         "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
         "CPYTHON_VERSION": "3.14.7"
@@ -2424,6 +3207,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
         "CPYTHON_MINOR": "3.9",
         "CPYTHON_ROW": "cp39",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "e212748859de87c5a7f183f535e7fbd205e1c09f3c322779c365b7a52799e62a",
         "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
         "CPYTHON_VERSION": "3.9.25"
@@ -2463,6 +3247,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
         "CPYTHON_MINOR": "3.10",
         "CPYTHON_ROW": "cp310",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "feea6adce5bcea010ce631b67d38e78fde2d30b3e61600faab37bc44db8b6e04",
         "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
         "CPYTHON_VERSION": "3.10.21"
@@ -2486,6 +3271,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
         "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "3a6c8a5255d02182217cb7fe428d941ebcbdd320661a70c3735abe72c0d3416f",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16"
@@ -2509,6 +3295,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
         "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "3eecd052977d8e558eb2715ee910be9291b87421e3d563c955e448df49e97cb2",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14"
@@ -2532,6 +3319,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
         "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "78257e4f1b0e2f7a300e9f2c1db9025b52824bebefd4a2b1e6ea3294743b5c90",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15"
@@ -2555,6 +3343,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
         "CPYTHON_MINOR": "3.14",
         "CPYTHON_ROW": "cp314",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "eda45d8290f4fc2c028239176a2f9e1ae0d0b8f204719c4095381dbac31bb7cd",
         "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
         "CPYTHON_VERSION": "3.14.7"
@@ -2578,6 +3367,7 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
         "CPYTHON_MINOR": "3.9",
         "CPYTHON_ROW": "cp39",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "e212748859de87c5a7f183f535e7fbd205e1c09f3c322779c365b7a52799e62a",
         "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
         "CPYTHON_VERSION": "3.9.25"
@@ -2697,13 +3487,14 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "d877da2f512e4f8c183726a2c572f08e1dab54bd0b93a01b5a5bcfd85f00da47",
         "CPYTHON_MINOR": "3.10",
         "CPYTHON_ROW": "cp310",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "feea6adce5bcea010ce631b67d38e78fde2d30b3e61600faab37bc44db8b6e04",
         "CPYTHON_SOURCE_COMPONENT": "python/cp310-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "bcea8016aec580dc07843fca4e0d8d40730e298eb5803fab442fcb376614b093",
         "CPYTHON_VERSION": "3.10.21"
       },
       "contexts": {
         "crossforge_cpython_aarch64": "target:cpython-cp310-aarch64-qualify",
-        "crossforge_cpython_build": "target:cpython-build-cp310",
+        "crossforge_cpython_build": "target:cpython-build-cp310-export",
         "crossforge_cpython_x86_64": "target:cpython-cp310-x86_64-qualify",
         "crossforge_host_python": "target:host-python-build-locked"
       },
@@ -2722,13 +3513,14 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "7d4d34401dab8c74b4d1f87e3704f0f66a4a199d317ef82e5a3e29f340e5f0b1",
         "CPYTHON_MINOR": "3.11",
         "CPYTHON_ROW": "cp311",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "3a6c8a5255d02182217cb7fe428d941ebcbdd320661a70c3735abe72c0d3416f",
         "CPYTHON_SOURCE_COMPONENT": "python/cp311-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b0484e934292f1239bae108756f41293f82e671603fa0aa5a1fef7b30ba012ce",
         "CPYTHON_VERSION": "3.11.16"
       },
       "contexts": {
         "crossforge_cpython_aarch64": "target:cpython-cp311-aarch64-qualify",
-        "crossforge_cpython_build": "target:cpython-build-cp311",
+        "crossforge_cpython_build": "target:cpython-build-cp311-export",
         "crossforge_cpython_x86_64": "target:cpython-cp311-x86_64-qualify",
         "crossforge_host_python": "target:host-python-build-locked"
       },
@@ -2747,13 +3539,14 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "c40ff777eff73d7e6bb3a3bf3f110cbed8e5cc287e3830ebe13b6f02c2fc7f23",
         "CPYTHON_MINOR": "3.12",
         "CPYTHON_ROW": "cp312",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "3eecd052977d8e558eb2715ee910be9291b87421e3d563c955e448df49e97cb2",
         "CPYTHON_SOURCE_COMPONENT": "python/cp312-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "22cef15279ae8c045f80d22ca5d7c96fb34e5313a4e51607f0261fd2c45fe651",
         "CPYTHON_VERSION": "3.12.14"
       },
       "contexts": {
         "crossforge_cpython_aarch64": "target:cpython-cp312-aarch64-qualify",
-        "crossforge_cpython_build": "target:cpython-build-cp312",
+        "crossforge_cpython_build": "target:cpython-build-cp312-export",
         "crossforge_cpython_x86_64": "target:cpython-cp312-x86_64-qualify",
         "crossforge_host_python": "target:host-python-build-locked"
       },
@@ -2772,13 +3565,14 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "5f42fcd5d6d207a68cf958a58673d31023cc54c36275269698db5a72bccda576",
         "CPYTHON_MINOR": "3.13",
         "CPYTHON_ROW": "cp313",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "78257e4f1b0e2f7a300e9f2c1db9025b52824bebefd4a2b1e6ea3294743b5c90",
         "CPYTHON_SOURCE_COMPONENT": "python/cp313-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "645286459f503ee163911bbeb6d6609c35885108021a1b442eb0e88ad3767652",
         "CPYTHON_VERSION": "3.13.15"
       },
       "contexts": {
         "crossforge_cpython_aarch64": "target:cpython-cp313-aarch64-qualify",
-        "crossforge_cpython_build": "target:cpython-build-cp313",
+        "crossforge_cpython_build": "target:cpython-build-cp313-export",
         "crossforge_cpython_x86_64": "target:cpython-cp313-x86_64-qualify",
         "crossforge_host_python": "target:host-python-build-locked"
       },
@@ -2797,13 +3591,14 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "8585593866ed19ab7203b188b6d91b6a4ad0d2257e4e2a502d352f4fd2f59906",
         "CPYTHON_MINOR": "3.14",
         "CPYTHON_ROW": "cp314",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "eda45d8290f4fc2c028239176a2f9e1ae0d0b8f204719c4095381dbac31bb7cd",
         "CPYTHON_SOURCE_COMPONENT": "python/cp314-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "b9d0c494516360089e8e61d4fb809d75c9d233d8c780f1a838c46489aea9034f",
         "CPYTHON_VERSION": "3.14.7"
       },
       "contexts": {
         "crossforge_cpython_aarch64": "target:cpython-cp314-aarch64-qualify",
-        "crossforge_cpython_build": "target:cpython-build-cp314",
+        "crossforge_cpython_build": "target:cpython-build-cp314-export",
         "crossforge_cpython_x86_64": "target:cpython-cp314-x86_64-qualify",
         "crossforge_host_python": "target:host-python-build-locked"
       },
@@ -2822,13 +3617,14 @@
         "CPYTHON_BUILD_POLICY_COMPONENT_SHA256": "216db081cccb52ca235d449352f29d09383bc901963621a16fdb8cab18c94755",
         "CPYTHON_MINOR": "3.9",
         "CPYTHON_ROW": "cp39",
+        "CPYTHON_ROW_QUALIFICATION_COMPONENT_SHA256": "e212748859de87c5a7f183f535e7fbd205e1c09f3c322779c365b7a52799e62a",
         "CPYTHON_SOURCE_COMPONENT": "python/cp39-source",
         "CPYTHON_SOURCE_COMPONENT_SHA256": "73ed9637552c9204cb14c6ef1ff176d7c0432c74af662fca5b8cf9744ee722b3",
         "CPYTHON_VERSION": "3.9.25"
       },
       "contexts": {
         "crossforge_cpython_aarch64": "target:cpython-cp39-aarch64-qualify",
-        "crossforge_cpython_build": "target:cpython-build-cp39",
+        "crossforge_cpython_build": "target:cpython-build-cp39-export",
         "crossforge_cpython_x86_64": "target:cpython-cp39-x86_64-qualify",
         "crossforge_host_python": "target:host-python-build-locked"
       },
@@ -3460,24 +4256,20 @@
     "runtime-smoke-aarch64": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3"
       },
       "contexts": {
-        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
+        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705",
+        "crossforge_toolchain_aarch64_install": "target:toolchain-aarch64-build-export"
       }
     },
     "runtime-smoke-x86_64": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export"
       }
     },
     "sbom-generator-source": {
@@ -3487,7 +4279,7 @@
     },
     "sdk-candidate": {
       "args": {
-        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "bc3f6724500d11ba3096e77acc2bc3f2147abbae2082af0fb18c9bed628508cd",
+        "CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256": "5251aa7fe706467b5854bfd70a05713f9e48ce3916cc9f69a048868d12193ae7",
         "CROSSFORGE_PRODUCT_IDENTITY_SHA256": "0187896b566f3b5141dc2a2528ad896a188c9f55f4c4d05dec28068633105e0a",
         "CROSSFORGE_PRODUCT_VERSION": "0.1.0"
       },
@@ -3527,6 +4319,8 @@
       "args": {
         "CMAKE_TOOL_COMPONENT_SHA256": "ca2efac648bb12795b3e8e047fed58203397d9109fefcb69096646ec93683325",
         "NINJA_TOOL_COMPONENT_SHA256": "d083d530430bac2b26d229f11083450f68405c9aa0c3b84a867983bd82b5b640",
+        "TOOLCHAIN_AARCH64_QUALIFICATION_COMPONENT_SHA256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3",
+        "TOOLCHAIN_X86_64_QUALIFICATION_COMPONENT_SHA256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c",
         "VCPKG_INTEGRATION_COMPONENT_SHA256": "9e79c71089e00c2fac15d4e8ecedd47b3405fe0d240baa9d964ab2aeffb5e411",
         "VCPKG_SDK_COMPONENT_SHA256": "fedf5f0bdedd9b1e4f2c9592bb7df69acc373a852111615fb052d89a34bff261",
         "VCPKG_SOURCE_COMPONENT_SHA256": "0721e60b7a62dceb9ff1eb6c57349d522293e5e0af6368227d0af12bca1c49ec"
@@ -3582,14 +4376,11 @@
     "toolchain-aarch64-dev": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_AARCH64_SHA256": "5a34fbead598f28861688d91aa72c06be63bbe2b08c033a4b391238cc525d4d4",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_AARCH64_QUALIFICATION_SHA256": "69f9adfa8b2bf70be6bdffe1f2bb152234fc23095d96af29df8ecfe9feabc3a3"
       },
       "contexts": {
-        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705"
+        "crossforge_qemu": "docker-image://docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:465d3fdd28d0f2b871ba4b4ec98bd183292e96167f00d9fd40bd249f8632d705",
+        "crossforge_toolchain_aarch64_install": "target:toolchain-aarch64-build-export"
       }
     },
     "toolchain-plan-aarch64": {
@@ -3628,11 +4419,10 @@
     "toolchain-x86_64-dev": {
       "args": {
         "CROSSFORGE_COMPONENT_RPM_HOST_BUILD_COMMON_SHA256": "fa2f3eb463731de9c0723cdfcfc49563ad8762a8165b471f24f67291728dd51d",
-        "CROSSFORGE_COMPONENT_RPM_HOST_GCC_BUILD_SHA256": "caa78bb8faea146a446dea4b69ba7406c2fd8709a50fec0ae7c2d29ab73161d9",
-        "CROSSFORGE_COMPONENT_RPM_SYSROOT_X86_64_SHA256": "316963ef38a843b13bd9656a73f8d1d3f7c6b6a167323a0ddf89144cb85cae89",
-        "CROSSFORGE_COMPONENT_SOURCES_BINUTILS_SHA256": "b60b77765cde195b4b912f8a533c89200185c3559b7bf482caace6170a4bc0f2",
-        "CROSSFORGE_COMPONENT_SOURCES_GCC_SHA256": "dc11cd02c41cfb6d7bf667b1e695c4e44c403c32262b68f660f58ee3dd812648",
         "CROSSFORGE_COMPONENT_TOOLCHAIN_X86_64_QUALIFICATION_SHA256": "b1b420e361b9fdd5cb0cc672ca6fe1bbe00055cdcc3a804463019a907c5f588c"
+      },
+      "contexts": {
+        "crossforge_toolchain_x86_64_install": "target:toolchain-x86_64-build-export"
       }
     },
     "vcpkg-contract-assets": {

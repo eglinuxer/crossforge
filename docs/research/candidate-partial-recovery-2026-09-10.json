@@ -1,0 +1,240 @@
+{
+  "artifacts": {
+    "/tmp/crossforge-candidate-recovery/final-check.json": "8901ec638332fd14c53283b8c3fb11e85a14a67d772f289b3acb3f02f5834c88",
+    "/tmp/crossforge-candidate-recovery/final-check.log": "682262d0e2bc82b0aed65301bd84646a1f30b17979f4c1bd2d07c19079299895",
+    "/tmp/crossforge-candidate-recovery/final-check.py": "98f35fc45284216df6ae420e7a8518cdced58076aca0c369cf32b0e1382fc057",
+    "/tmp/crossforge-candidate-recovery/focused.log": "66cd9520e27a2cc41a20bebf5ec4d3d3dd5d6fbb11bdf070a77b6c4dedeba395",
+    "/tmp/crossforge-candidate-recovery/full-final.log": "d6d391257206624c93c8ef2971032796691b90f1cc57a9a1ede76ccdea08cdef",
+    "/tmp/crossforge-candidate-recovery/full-result.json": "02e5644bfb0a98fe82862b18c30016a9bc3779dc10955ddbec2ff4df66ac707e",
+    "/tmp/crossforge-candidate-recovery/full.log": "ff360c9f23bf11ba081bd9fef51cba907b1f090ba4df331c414ab281a88ee8b2",
+    "/tmp/crossforge-candidate-recovery/full.py": "808675a7851310b88607d4ddc4452af7f406f8cdbf7ee0c4714eeeb65178234f",
+    "/tmp/crossforge-candidate-recovery/platform-final.log": "5fc0580ef542ed2641abdc7a8b0b9189939ce0ac1c18b4b6abeafd353484e472",
+    "/tmp/crossforge-candidate-recovery/platform-initial.log": "87ffced82992120ae27f968035fabce31f0a92a177bcc0a2927c88d2480eaa06",
+    "/tmp/crossforge-candidate-recovery/rocky-check.py": "f7aeaaa7548b6aa6cbedc210956cb55c8fad98f43c452f82be6c8df356c57077"
+  },
+  "base_commit": "36a5b1c4f4af2a5a40396a38128433b3658e1d76",
+  "boundaries": [
+    "Successful upstream outputs pass exact artifact IDs across partial retries; no mutable discovery or changed producer",
+    "Same repository, candidate workflow, source commit and run; publication/native/sign attempts must be ordered",
+    "Candidate manifest and original native report bytes are verified before external signing",
+    "Promotion checks original artifact metadata availability, exact IDs/names/run/source and repository relationship",
+    "Promotion schema 2 embeds original lineage; durable archive verifies original probe/report bytes",
+    "Legacy promotion schema 1 preserves its existing exact same-attempt artifact set",
+    "No compiler, ABI, source pin, native execution or public signature validation is replaced by a recovery record"
+  ],
+  "corrections": [
+    "Adjusted a new producer-summary step to hash the exact staged native report before artifact upload",
+    "Initial temporary platform.py shadowed the Python platform module and collected zero tests; that observation is invalid. Renamed the script, required exactly 11 tests, and reran successfully",
+    "Moved candidate/report lineage validation from after signing to before signing and repeated the entire final local suite",
+    "Corrected stale documentation and its matching assertion from seventeen durable payloads to the actual fourteen; Qt remains optional qualification-only"
+  ],
+  "date": "2026-09-10",
+  "docker": {
+    "cpus": 4,
+    "daemon_socket_mounted": false,
+    "image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "memory_gib": 16,
+    "network": "none"
+  },
+  "files": {
+    ".github/workflows/candidate.yml": {
+      "executable": false,
+      "sha256": "61728d5a13ca209f56174a300d3c5a06171d7db155315565a2b52dcf33af4fb7"
+    },
+    ".github/workflows/promote.yml": {
+      "executable": false,
+      "sha256": "06a189c069e25bb2e70680e7d86ab6dbe4b0cd17356d7cd47733148a8cbb1668"
+    },
+    "README.md": {
+      "executable": false,
+      "sha256": "2829507141bf864772b9bfe6a7a9539418fa1289002ddd363a83d7e30083f468"
+    },
+    "config/schemas/release-promotion.schema.json": {
+      "executable": false,
+      "sha256": "bd1c3bdbbbcc9a369d06a12d675393e1967bd8ede6b5be2c737d6bc2d7e8a46f"
+    },
+    "docs/architecture.md": {
+      "executable": false,
+      "sha256": "786be6482244898cd1a5f101a4689367b2c667da4b7a132f47b91b428ddbb70f"
+    },
+    "docs/github-actions.md": {
+      "executable": false,
+      "sha256": "0ce7670b5c6097872f1be1b85058c577e02d1306ea276d494efa736deaf68923"
+    },
+    "docs/research/ci-refactoring-progress.md": {
+      "executable": false,
+      "sha256": "fff2435cf3058f0350954c44097844511f77e948e4f8ae04989c9fc75f68e5c4"
+    },
+    "scripts/candidate-recovery.py": {
+      "executable": false,
+      "sha256": "349b9016919dce28595f85a45122822a71f513c61beb1dae9e5c2f20861d43c6"
+    },
+    "scripts/crossforge_internal/candidate_recovery.py": {
+      "executable": false,
+      "sha256": "aa0df924c0bd09b42f171bdcd8b2445dc59c9c22a709e43e50adf1dbeceef819"
+    },
+    "scripts/release_evidence.py": {
+      "executable": true,
+      "sha256": "93afd9bfb2718c2ab5b4081149e88df7a050c0da67dddf06b2b138f36c3a8896"
+    },
+    "scripts/release_promotion.py": {
+      "executable": true,
+      "sha256": "f168f4a05976c6f808a9a0519f794af5daa3af807c1ad4880b8e56cfb2d5d497"
+    },
+    "tests/config/test_candidate_recovery.py": {
+      "executable": false,
+      "sha256": "6b5f3846b923aaecc49d37f29121a44a80f04ed4a6d4f18e4486bc0650cc0ee2"
+    },
+    "tests/config/test_candidate_workflow.py": {
+      "executable": false,
+      "sha256": "a1afd1318f08fe2ffc66a1dd7d200d5f7cc3fd696b9808791165d4403cac2236"
+    },
+    "tests/config/test_release_evidence.py": {
+      "executable": false,
+      "sha256": "b26fcf6253578f4f9a2db0dbf2ea1d738a2e4a0a943daa5d90cbb1203cb7393d"
+    },
+    "tests/config/test_release_promotion.py": {
+      "executable": false,
+      "sha256": "0411c0fe1f48ccb599516f3c234ee4e5acc94c8a824003de1974ddae7cee03db"
+    }
+  },
+  "kind": "crossforge-local-candidate-recovery-observation",
+  "not_executed": [
+    "Real GitHub partial rerun, signing or original-artifact download acceptance",
+    "Fresh native AArch64 qualification or GCC Docker replay; the explicit host socket authorization remains pending",
+    "Publication source/SDK checkpoints for failures within the publish job, cross-run candidate recovery or component-backed candidate publication",
+    "Merge, push, registry image publication or remote workflow dispatch"
+  ],
+  "references": [
+    "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs?tool=cli",
+    "https://docs.github.com/en/rest/actions/artifacts",
+    "https://github.com/actions/download-artifact/blob/d3f86a106a0bac45b974a628896c90dbdf5c8093/README.md"
+  ],
+  "schema_version": 1,
+  "validation": {
+    "config": {
+      "seconds": 163.685,
+      "skipped": 0,
+      "tests": 1203
+    },
+    "focused_and_cli": {
+      "focused_tests": 44,
+      "promotion_cli": {
+        "artifact_names": [
+          "candidate-identity-123456-1",
+          "candidate-signature-123456-3",
+          "native-aarch64-evidence-123456-2",
+          "native-aarch64-probes-123456-1"
+        ],
+        "canonical_sha256": "30f82d4a569628751e3d723a25232d5ca45ba0ad6ae614573afd194e19d288b1",
+        "idempotent": true,
+        "schema_version": 2
+      },
+      "scope": "socketless Docker regressions and real promotion CLI on synthetic same-run retry identities; no GitHub or native ARM execution",
+      "skipped": 0,
+      "status": "passed"
+    },
+    "full_commands": {
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/config",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 165.349
+        },
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/packaging",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 1.283
+        },
+        {
+          "command": [
+            "./scripts/validate-release.py",
+            "--require-locked"
+          ],
+          "seconds": 0.026
+        },
+        {
+          "command": [
+            "./scripts/validate-supply-chain-evidence.py"
+          ],
+          "seconds": 0.376
+        },
+        {
+          "command": [
+            "./scripts/validate-frozen-abi.py"
+          ],
+          "seconds": 0.393
+        },
+        {
+          "command": [
+            "./scripts/validate-python-runtime-providers.py"
+          ],
+          "seconds": 0.238
+        },
+        {
+          "command": [
+            "./scripts/render-release-components.py",
+            "--check"
+          ],
+          "seconds": 0.141
+        },
+        {
+          "command": [
+            "./scripts/render-vcpkg-integration.py",
+            "--check"
+          ],
+          "seconds": 0.142
+        },
+        {
+          "command": [
+            "./scripts/render-bake.py",
+            "--check"
+          ],
+          "seconds": 0.278
+        },
+        {
+          "command": [
+            "actionlint",
+            "-ignore",
+            "unexpected key \"queue\" for \"concurrency\" section"
+          ],
+          "seconds": 0.009
+        }
+      ],
+      "status": "passed"
+    },
+    "packaging": {
+      "seconds": 1.22,
+      "skipped": 0,
+      "tests": 40
+    },
+    "platform": {
+      "compiled": [
+        "scripts/candidate-recovery.py",
+        "scripts/crossforge_internal/candidate_recovery.py",
+        "scripts/release_promotion.py",
+        "scripts/release_evidence.py"
+      ],
+      "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+      "scope": "socketless Rocky 8 Python 3.6 regression fixtures; no native AArch64 execution or GitHub verification",
+      "status": "passed",
+      "tests": 11
+    }
+  }
+}

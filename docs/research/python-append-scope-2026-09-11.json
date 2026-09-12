@@ -1,0 +1,900 @@
+{
+  "schema_version": 1,
+  "kind": "crossforge-python-append-scope-observation",
+  "observed_at": "2026-09-11T15:14:55Z",
+  "source_base_commit": "4a730cc420c2ea57274ef404318e17530a1fe9e6",
+  "status": "regressions checked; all six actual independent installations and both SDK integrations passed",
+  "source_sha256": {
+    "docker/python.Dockerfile": "df3421a429a12d570ec792329aea9a3435ae56e86a45f96683e3ec065938947d",
+    "docker-bake.override.json": "8228ed9a109f2d849d092427fa6424a8dbc25264544a8c172821934d5835258e",
+    "scripts/render-bake.py": "219bf72bb73f52205ef7170fd1156ad97d380711bf498fa22f944457f00eb5b3",
+    "tests/config/test_python_append_scope.py": "81988db4083b7fac594efe9ab6bd511c319ec9caf572eedd0326c325698a704a",
+    "tests/config/test_python_row_install.py": "561556a6db214d5f6b60c00cbf5bb91dd36b4889dd927ea741cbfe4d11b8c8ba",
+    "tests/config/test_python_row_policy.py": "23ed94794104a9441178c1bcf860b77683e24267968b9e7137c5543f834bb1c5",
+    "tests/config/test_python_build_component_wiring.py": "318a4fe00b48d78ce124e2ea787a1018e9c3244cb183ddc39cf1b9ae064cd75c",
+    "tests/config/test_render_bake.py": "11053549fe411bf02dd6e9ed5dfc36d4943d41179eb08df612826022fac0b008"
+  },
+  "defect": "A cp39 patch and its checked release pin selected all six independent rows because python-sdk-append still copied full release.json",
+  "behavior": [
+    "Append authenticates exactly this row's six source/build/qualification projections with rendered digest pins",
+    "Both original append RUNs retain duplicate-row checks, source manifest verification, installed-file/ABI finalization and byte-for-byte qualified row manifest comparison",
+    "Full release validation remains in quick/host and final SDK integration; source/qualification producer recipes and frozen baselines are unchanged"
+  ],
+  "selection_probe": {
+    "mutation": "cp39 patch description only, with matching release patch SHA256 and original renderer outputs; patch hunks unchanged",
+    "original": {
+      "plan": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-4a730cc/plan.json",
+        "sha256": "57f136d0e80121ce778fd079091dc6a5da35cdc65ce189c642b5f137f33e69f1"
+      },
+      "log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-4a730cc/prepare.log",
+        "sha256": "58c1f3d3315b75849b4ee774c98cd8466da1cc0ececc4fb2fdabf0fca0300a44"
+      },
+      "targets": {
+        "inputs": [
+          "platform-python-check",
+          "qemu-source-qualified",
+          "rpm-source-lock-validated",
+          "sigstore-sources-qualified",
+          "validate"
+        ],
+        "python-cp310": [
+          "python-cp310-dev"
+        ],
+        "python-cp311": [
+          "python-cp311-dev"
+        ],
+        "python-cp312": [
+          "python-cp312-dev"
+        ],
+        "python-cp313": [
+          "python-cp313-dev"
+        ],
+        "python-cp314": [
+          "python-cp314-dev"
+        ],
+        "python-cp39": [
+          "python-cp39-dev"
+        ],
+        "sdk": [
+          "python-dev",
+          "sdk-complete-dev"
+        ]
+      }
+    },
+    "fixed": {
+      "plan": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/plan.json",
+        "sha256": "de0c35e136b09d914026a649edd67816484a09c4d01c096bc8025bc13c3e8ed3"
+      },
+      "log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/prepare.log",
+        "sha256": "4426df0b5da226b30d10b2108ba715a9b099971c16a677a869eb4de549a3072e"
+      },
+      "before_inventory": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/before-inventory.json",
+        "sha256": "95073751b0997f8c353601de65863d558dc77e1e3cd7cba2ee0d182aec6b6986"
+      },
+      "after_inventory": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-fixed/after-inventory.json",
+        "sha256": "dea0df7b5129e61c14a02ecffe145f3f4bf5ef2e7b009049a808f6e48001164b"
+      },
+      "targets": {
+        "inputs": [
+          "platform-python-check",
+          "qemu-source-qualified",
+          "rpm-source-lock-validated",
+          "sigstore-sources-qualified",
+          "validate"
+        ],
+        "python-cp39": [
+          "python-cp39-dev"
+        ],
+        "sdk": [
+          "python-dev",
+          "sdk-complete-dev"
+        ]
+      },
+      "compiler_inputs_changed": [
+        "cpython-build-cp39",
+        "cpython-cross-cp39-aarch64",
+        "cpython-cross-cp39-x86_64"
+      ]
+    },
+    "scope": "Actual pinned Docker Bake source closure and renderer capture, not a source-build or GitHub performance result"
+  },
+  "validation": {
+    "tool_image": "sha256:1a36c51e0ec9f314f79f010e7546ca6bee1ef6b256fa1bef64b26888e662ed42",
+    "environment": "fixed offline Docker, no daemon socket; full suite and final checks use locked zstd/nFPM assets",
+    "initial_full_config": {
+      "tests": 1423,
+      "seconds": 525.094,
+      "skipped": 0,
+      "failure_observations": 14,
+      "failing_methods": [
+        "test_enabled_rows_take_exact_metadata_from_release",
+        "test_full_release_bridge_enters_only_at_late_boundaries",
+        "test_row_qualification_pins_enter_only_row_producers"
+      ],
+      "exit_code": 1,
+      "resolution": "Three assertions still required full-release append inputs or denied row pins on append targets. Only these test expectations changed after this full run; production bytes were unchanged. All affected modules then passed."
+    },
+    "focused": {
+      "tests": 75,
+      "seconds": 22.49,
+      "skipped": 0,
+      "status": "passed"
+    },
+    "packaging": {
+      "tests": 40,
+      "seconds": 1.89,
+      "skipped": 0,
+      "status": "passed"
+    },
+    "rocky": {
+      "status": "passed",
+      "tests": 23,
+      "skipped": 0,
+      "seconds": 20.988,
+      "python": "3.6.8 (default, Apr 24 2024, 21:55:04) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-22)]",
+      "scope": "Python 3.6, cropped append policy loader and renderer wiring; installer graph from actual pinned Docker print, original domain fixtures retained",
+      "image": "quay.io/rockylinux/rockylinux@sha256:f5529992e67440c1a4ae7788244d4381c6909159a88eacd95b7523ae47ced82e"
+    },
+    "final_checks": {
+      "commands": [
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/config",
+            "-p",
+            "test_python_build_component_wiring.py"
+          ],
+          "seconds": 0.406
+        },
+        {
+          "command": [
+            "/usr/bin/python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/packaging",
+            "-p",
+            "test_*.py"
+          ],
+          "seconds": 2.062
+        },
+        {
+          "command": [
+            "./scripts/validate-release.py",
+            "--require-locked"
+          ],
+          "seconds": 0.05
+        },
+        {
+          "command": [
+            "./scripts/validate-supply-chain-evidence.py"
+          ],
+          "seconds": 0.647
+        },
+        {
+          "command": [
+            "./scripts/validate-frozen-abi.py"
+          ],
+          "seconds": 0.696
+        },
+        {
+          "command": [
+            "./scripts/validate-python-runtime-providers.py"
+          ],
+          "seconds": 0.516
+        },
+        {
+          "command": [
+            "./scripts/render-release-components.py",
+            "--check"
+          ],
+          "seconds": 0.415
+        },
+        {
+          "command": [
+            "./scripts/render-vcpkg-integration.py",
+            "--check"
+          ],
+          "seconds": 0.421
+        },
+        {
+          "command": [
+            "./scripts/render-bake.py",
+            "--check"
+          ],
+          "seconds": 0.519
+        },
+        {
+          "command": [
+            "bash",
+            "-n",
+            "docker/run-python-qualification.sh"
+          ],
+          "seconds": 0.002
+        },
+        {
+          "command": [
+            "actionlint",
+            "-ignore",
+            "unexpected key \"queue\" for \"concurrency\" section",
+            ".github/workflows/candidate.yml",
+            ".github/workflows/ci.yml",
+            ".github/workflows/component-pilot.yml",
+            ".github/workflows/produce-python-row.yml",
+            ".github/workflows/produce-python.yml",
+            ".github/workflows/produce-toolchain.yml",
+            ".github/workflows/promote.yml",
+            ".github/workflows/qualification.yml",
+            ".github/workflows/release-control-plane.yml",
+            ".github/workflows/release-request.yml",
+            ".github/workflows/replay-qualification.yml",
+            ".github/workflows/replay-sources.yml",
+            ".github/workflows/rollback.yml",
+            ".github/workflows/verify-builds.yml",
+            ".github/workflows/verify-incremental.yml",
+            ".github/workflows/verify-main-builds.yml",
+            ".github/workflows/verify-main-incremental.yml",
+            ".github/workflows/verify-quick.yml"
+          ],
+          "seconds": 0.02
+        }
+      ],
+      "status": "passed"
+    },
+    "logs": {
+      "focused.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/focused.log",
+        "sha256": "e71def9a0135a03de9a145abfd0525185535ffb5ebb3eb26738747c93b77abad"
+      },
+      "full.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/full.log",
+        "sha256": "c11341634ad326c6f272758147daccb53414e03491624de6a744a2a2ff496b57"
+      },
+      "final-focused.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/final-focused.log",
+        "sha256": "c50717d950f2337489ddb38bb9a1d5f23e7c4802d6089d2b2af99650918dba0f"
+      },
+      "final-checks.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/final-checks.log",
+        "sha256": "29b63f405274b9e822daca4e2657caa4fc84b114d2e077987b85f0ec0af7bc69"
+      },
+      "final-checks-result.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/final-checks-result.json",
+        "sha256": "38b605391a97cb3c0dd3f14f3ecf12d8b74160f6bf3223a863f3e851ccb07c0b"
+      },
+      "rocky.log": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/rocky.log",
+        "sha256": "027ef2f1a24b068a362e850683b3cc578a4e627f2b58c24fd6603f8940ba215e"
+      },
+      "rocky-result.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/rocky-result.json",
+        "sha256": "e223b69434db8b11f1789e99d7ec360a73e04ed06674e7edb302abda4eadb2f8"
+      },
+      "independent-graph.json": {
+        "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/independent-graph.json",
+        "sha256": "449a07e8b2653e0b28fdc30f21e6896527c96fc93fc47f510eee094ed9210c24"
+      }
+    },
+    "notes": [
+      "No all-green full-suite rerun is asserted. Unchanged passing full-suite coverage and final affected-module checks are recorded separately.",
+      "New regression uses actual source copies, renderer and canonical Bake; domain OCI/BuildKit execution fixtures remain explicit in installer tests.",
+      "Rocky cropped append test loads its original finalizer and six policy projections without full-release helpers."
+    ]
+  },
+  "actual_acceptance": {
+    "status": "passed",
+    "manifest": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/acceptance-manifest.json",
+      "sha256": "1b0f9e5691e00b21dc4b21ca125c91a8560e563613aab3e24ea666f84581a41e"
+    },
+    "runner": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/run-acceptance.py",
+      "sha256": "572af8cef6f8dafd4b8749c78cfea72c92a4f59070c5034c158093e3ef440c1c"
+    },
+    "wrapper": {
+      "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/run-acceptance.sh",
+      "sha256": "1c903d3856d1eaf13077e91b4c4ec61980d2bf9d77b0f2e3abffc085dafa8d1d"
+    },
+    "source": "fixed normalized working snapshot based on 4a730cc, explicitly source_dirty=true; original a56bb29 row receipts and producers preserved",
+    "phases": [
+      "cp39",
+      "cp310",
+      "cp311",
+      "cp312",
+      "cp313",
+      "cp314",
+      "python-dev",
+      "sdk-complete-dev"
+    ],
+    "scope": "original production executors, new output directories, crossforge-ci-review only; not a new row qualification or GitHub/candidate assertion",
+    "completed": [
+      {
+        "phase": "cp39",
+        "status": "passed",
+        "seconds": 1304.503,
+        "source_dirty": true,
+        "fresh_runs": 2,
+        "inputs_sha256": "8c71245de2f20e13add0556a0ce652c90b8705aae163f2cc8d36419dbe734372",
+        "row_receipt_sha256": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+        },
+        "started_at": "2026-09-11T13:50:35Z",
+        "completed_at": "2026-09-11T13:52:00Z",
+        "full_release_in_inputs": false,
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp39/result.json",
+            "sha256": "81cbc23128e0a8235038e5e9f63d2246c21eef78693bec4a24f8ba30a9bf757d"
+          },
+          "installation/result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp39/installation/result.json",
+            "sha256": "cb49e1dfd85f55860bace97a9b6453e203eabe9c2657c3216f7c180cb91842a3"
+          },
+          "installation/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp39/installation/inputs.json",
+            "sha256": "9e4a24fec2f71f08cd17bfdacd2aa584f8c5892e2f41ddf3ed54ddf8e912bbef"
+          },
+          "installation/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp39/installation/execution.jsonl",
+            "sha256": "6f10e79861594580ce03e106057f179f7008e637933d0d5ca726b84ee10b697d"
+          },
+          "installation/payload/row.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp39/installation/payload/row.json",
+            "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-results.py",
+            "sha256": "dbb511b09318584ead0f53e2863daf605669f7b110f2451b9bb156f11e5f1ca2"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-cp39.log",
+            "sha256": "d26a05eb3691e9105ad6eac395258a82668e389aaf1052166d9aafb4123cfefc"
+          }
+        }
+      },
+      {
+        "phase": "cp310",
+        "status": "passed",
+        "seconds": 1232.19,
+        "source_dirty": true,
+        "fresh_runs": 2,
+        "inputs_sha256": "a287325950644ff7a13ccc8be08a6033191ecaae1c35ca9fe8b9f514bd184583",
+        "row_receipt_sha256": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+        },
+        "started_at": "2026-09-11T14:10:22Z",
+        "completed_at": "2026-09-11T14:12:33Z",
+        "full_release_in_inputs": false,
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp310/result.json",
+            "sha256": "62321457e19fda5609677dcc8c3873f98f3f6125d6abfb921817d1b6f2468618"
+          },
+          "installation/result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp310/installation/result.json",
+            "sha256": "1741decfc65f3c77a6953be329449e068748b0da584513656f6ea009e8ca7e77"
+          },
+          "installation/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp310/installation/inputs.json",
+            "sha256": "3350b8cfaabcce7a7f231a667fa4a8e8803adde0a36f2d96684278ae4e3b34c6"
+          },
+          "installation/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp310/installation/execution.jsonl",
+            "sha256": "b1a162719b532c02b88423a1415182e87ec8d918a8fee815487b604ff9113b7a"
+          },
+          "installation/payload/row.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp310/installation/payload/row.json",
+            "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-results.py",
+            "sha256": "dbb511b09318584ead0f53e2863daf605669f7b110f2451b9bb156f11e5f1ca2"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-cp310.log",
+            "sha256": "1b3f5ee8b6fe269fe6d068a46463070fb34d297059a4d1b6c3ed8166301f2033"
+          }
+        }
+      },
+      {
+        "phase": "cp311",
+        "status": "passed",
+        "seconds": 122.136,
+        "source_dirty": true,
+        "fresh_runs": 2,
+        "inputs_sha256": "58ea74c5301908e19dbf44dcba517772e38dc0027eece375fc3f4360e472198c",
+        "row_receipt_sha256": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+        },
+        "started_at": "2026-09-11T14:13:27Z",
+        "completed_at": "2026-09-11T14:14:35Z",
+        "full_release_in_inputs": false,
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp311/result.json",
+            "sha256": "0a6e43ee1380035042224b99a7617d96643b5cdabe7892a354bbdcc1064fb808"
+          },
+          "installation/result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp311/installation/result.json",
+            "sha256": "df05c8eb8c241115eabf080ca4c4891eb285522a25067696a2a545f209df9e71"
+          },
+          "installation/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp311/installation/inputs.json",
+            "sha256": "6f9d33751f601671fa2207bc5bcf8314fa15b0eaf050ab5b1b9dd33ead52edc3"
+          },
+          "installation/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp311/installation/execution.jsonl",
+            "sha256": "902df9aec8d2282740dd6f885baebaf9a4f80ed9c5e262fa4526e7a2a1f4ed7e"
+          },
+          "installation/payload/row.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp311/installation/payload/row.json",
+            "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-results.py",
+            "sha256": "dbb511b09318584ead0f53e2863daf605669f7b110f2451b9bb156f11e5f1ca2"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-cp311-cp312.log",
+            "sha256": "8c1589ba3311237a4a998a6a51cb693b138a207a08a3e0ab0304a77e4951b0a0"
+          }
+        }
+      },
+      {
+        "phase": "cp312",
+        "status": "passed",
+        "seconds": 485.849,
+        "source_dirty": true,
+        "fresh_runs": 2,
+        "inputs_sha256": "03c2d0da58d9766dbf82b6ea496e63786038be7083ee1c461ad86e14ba42cfa3",
+        "row_receipt_sha256": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+        },
+        "started_at": "2026-09-11T14:19:51Z",
+        "completed_at": "2026-09-11T14:22:42Z",
+        "full_release_in_inputs": false,
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp312/result.json",
+            "sha256": "99f0efd76081533ff137d5b7e778a5a5941094bb250720d39a6f7cbfb38741c1"
+          },
+          "installation/result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp312/installation/result.json",
+            "sha256": "8445198b39fc8faf49a571464cbeb1853e17366043d30b38eedb71a7e30cd382"
+          },
+          "installation/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp312/installation/inputs.json",
+            "sha256": "32d887884590d7a728476c1d49701e777e1de35d45ea2ac3a8ecafcfc7f09b1f"
+          },
+          "installation/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp312/installation/execution.jsonl",
+            "sha256": "2661561abaf44d47cdbdc681b2c7b79eb2da9ca39469044953a2478a1357eccb"
+          },
+          "installation/payload/row.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp312/installation/payload/row.json",
+            "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-results.py",
+            "sha256": "dbb511b09318584ead0f53e2863daf605669f7b110f2451b9bb156f11e5f1ca2"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-cp311-cp312.log",
+            "sha256": "8c1589ba3311237a4a998a6a51cb693b138a207a08a3e0ab0304a77e4951b0a0"
+          }
+        }
+      },
+      {
+        "phase": "cp313",
+        "status": "passed",
+        "seconds": 161.932,
+        "source_dirty": true,
+        "fresh_runs": 2,
+        "inputs_sha256": "4295ff31b637fef3e40da24c704659544a5b8ef4d6b7fab2007c6b0e99140fca",
+        "row_receipt_sha256": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+        },
+        "started_at": "2026-09-11T14:24:15Z",
+        "completed_at": "2026-09-11T14:25:25Z",
+        "full_release_in_inputs": false,
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp313/result.json",
+            "sha256": "b79ed53c74331101a8dfc651caa79deb12d10b336a7c8bc98873e52819492602"
+          },
+          "installation/result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp313/installation/result.json",
+            "sha256": "6d5d0e5c53efadc735b2c2bb09a9e38d92fd1e336943207453f16e432973456f"
+          },
+          "installation/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp313/installation/inputs.json",
+            "sha256": "0c724055709002d940df26f6e399de3b7afbf6f3632a59492b04545969bcd138"
+          },
+          "installation/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp313/installation/execution.jsonl",
+            "sha256": "b3f89f1706f4677fd10eaf59edd1769bfe9d8b51dbcfc9d5527c426094b4b55e"
+          },
+          "installation/payload/row.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp313/installation/payload/row.json",
+            "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-results.py",
+            "sha256": "dbb511b09318584ead0f53e2863daf605669f7b110f2451b9bb156f11e5f1ca2"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-cp313.log",
+            "sha256": "d708a5cdbb2c4cdf49e36e131608463aaa7b04d5c2831e2ddb6464bcbd6aade5"
+          }
+        }
+      },
+      {
+        "phase": "cp314",
+        "status": "passed",
+        "seconds": 148.816,
+        "source_dirty": true,
+        "fresh_runs": 2,
+        "inputs_sha256": "6dad6051a515dce930c51fc672ba92a20ed374f635f0df3d90b534e3d3f35207",
+        "row_receipt_sha256": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+        "report": {
+          "mode": "0644",
+          "path": "row.json",
+          "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+        },
+        "started_at": "2026-09-11T14:26:42Z",
+        "completed_at": "2026-09-11T14:27:54Z",
+        "full_release_in_inputs": false,
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp314/result.json",
+            "sha256": "813af2758dad3c230a17ae2cb9782ef68d18fdc758ff5cdaa521f34171066df3"
+          },
+          "installation/result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp314/installation/result.json",
+            "sha256": "8379531d8b40225d1711f2d1b7722380f1c7aec973eb425dfee0a31d59d2400f"
+          },
+          "installation/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp314/installation/inputs.json",
+            "sha256": "50038de4dc2406db110e95401f978f0f7e8f14813d10bfb33d708e393b7810a0"
+          },
+          "installation/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp314/installation/execution.jsonl",
+            "sha256": "cb4be6501a1779174de72d1195d39282bc49b11967dbb6e963b0b62f496c2265"
+          },
+          "installation/payload/row.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/cp314/installation/payload/row.json",
+            "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-results.py",
+            "sha256": "dbb511b09318584ead0f53e2863daf605669f7b110f2451b9bb156f11e5f1ca2"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-install-cp314.log",
+            "sha256": "ec2dc3626ccef4a442fa6dfc013f78ec3d3e2fe03ab0e0aa4ca7883995f4ffcc"
+          }
+        }
+      }
+    ],
+    "running_at_observation": null,
+    "timing_note": "Shared max-parallelism=1 builder also executes source replays; local elapsed includes queueing and is not an isolated performance baseline.",
+    "installation_matrix_status": "passed",
+    "pending": [],
+    "sdk_integrations": [
+      {
+        "phase": "python-dev",
+        "status": "passed",
+        "seconds": 988.473,
+        "source_dirty": true,
+        "inputs_sha256": "af7214081fdd219a3170c66c03eeeb89df2908e6353c61576c2024ea3b850d53",
+        "fresh_runs": 13,
+        "dependencies": [
+          {
+            "artifact_digest": "sha256:ff78bc0289382b9e14eeddacdc648aecb6a169a134dfacf514d10262155c20f3",
+            "component": "qualification/python-cp310",
+            "inputs_sha256": "c1c0b08cebbcae11f61c26e15f02e4c6ba9e9b4069ab8a1b7f6f6ad26bc30ab9"
+          },
+          {
+            "artifact_digest": "sha256:8df31c46fa79cbb02fd2d22e88bc310851891c02ad04e06172e6eea48566e52a",
+            "component": "qualification/python-cp311",
+            "inputs_sha256": "d7f7f74dc4804798dfa10e3e805814ba8e47f3b920109d313247e768bee1c284"
+          },
+          {
+            "artifact_digest": "sha256:196b96d97c7e86bb5d775b5f80b60d2bd42140f20d70c41ceff3be78c7771ffc",
+            "component": "qualification/python-cp312",
+            "inputs_sha256": "5dedc12c1e7f89594939f1181e34fcf9ea73507f594beeec4aba2c558659cd6c"
+          },
+          {
+            "artifact_digest": "sha256:ca9946741c45d6bb8b9a65bd90fd79d36a7bea3b0de0ebcf81ef95b9804b2a0a",
+            "component": "qualification/python-cp313",
+            "inputs_sha256": "e579fb379fc6769a5ba53b18faa90629ef99cb19963415850100cba2c196b215"
+          },
+          {
+            "artifact_digest": "sha256:f4ac4de00bf6027ffcd7b8f20e488ffea1c9829c4ddbd48f9b1e952ca388422a",
+            "component": "qualification/python-cp314",
+            "inputs_sha256": "3e8dcd7a59f38af637108d6de9c321e5a0fc6649dfafd9cc872960343bc4b935"
+          },
+          {
+            "artifact_digest": "sha256:e73e7fd9db8b4b76b8be190610b21f4102d096b94bce16adc132d717962c3a05",
+            "component": "qualification/python-cp39",
+            "inputs_sha256": "b8d58152a4d3fd5d6d9645a26d0fd3891164cea3b4e98f512fd30cd34a124735"
+          },
+          {
+            "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+            "component": "toolchain/aarch64-install",
+            "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+          },
+          {
+            "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+            "component": "toolchain/x86_64-install",
+            "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+          }
+        ],
+        "started_at": "2026-09-11T14:39:30Z",
+        "completed_at": "2026-09-11T14:44:24Z",
+        "reports": [
+          {
+            "mode": "0644",
+            "path": "reports/cp310.json",
+            "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp311.json",
+            "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp312.json",
+            "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp313.json",
+            "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp314.json",
+            "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp39.json",
+            "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/python-final-sdk.json",
+            "sha256": "6c8e196cd7870f53db8476bedad21a26e872aa374c2e340b2e189bdab0d4025f"
+          }
+        ],
+        "reused_row_receipts": {
+          "cp310": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+          "cp311": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+          "cp312": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+          "cp313": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+          "cp314": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+          "cp39": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3"
+        },
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/python-dev/result.json",
+            "sha256": "7bc89eb7df5d70d5b78cde737b198849f8ba45450c0572a01b8a8afc9ba7253e"
+          },
+          "integration/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/python-dev/integration/inputs.json",
+            "sha256": "cfb8ab893305be0fdcd2b55d2aa9e8a252ce35393e3c2758f2680ff1511a0173"
+          },
+          "integration/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/python-dev/integration/execution.jsonl",
+            "sha256": "74f01ae79350f2a569c3c0baf3ef852a355141e367f190ffc060d26a873a87b7"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-integrations.py",
+            "sha256": "8aff29f5952973f19c73b632cd04f50284996217f7fd9bcd5a654d0fed89a2c9"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-python-dev.log",
+            "sha256": "bd40f0b7fed759ed8bc4a7add79af196db9d0f8d8f8de194762181829ba6f765"
+          },
+          "scope": "Original thirteen fresh RUNs, eight dependencies, current material files, six original row reports/identities, all exported report bytes/modes and no GCC/CPython source compiler RUN in complete saved log"
+        }
+      },
+      {
+        "phase": "sdk-complete-dev",
+        "status": "passed",
+        "seconds": 1003.656,
+        "source_dirty": true,
+        "inputs_sha256": "dc337ec34c2e9f0fca12caf095f864d4216c7795be982753d2a7fc012a80640a",
+        "fresh_runs": 14,
+        "dependencies": [
+          {
+            "artifact_digest": "sha256:ff78bc0289382b9e14eeddacdc648aecb6a169a134dfacf514d10262155c20f3",
+            "component": "qualification/python-cp310",
+            "inputs_sha256": "c1c0b08cebbcae11f61c26e15f02e4c6ba9e9b4069ab8a1b7f6f6ad26bc30ab9"
+          },
+          {
+            "artifact_digest": "sha256:8df31c46fa79cbb02fd2d22e88bc310851891c02ad04e06172e6eea48566e52a",
+            "component": "qualification/python-cp311",
+            "inputs_sha256": "d7f7f74dc4804798dfa10e3e805814ba8e47f3b920109d313247e768bee1c284"
+          },
+          {
+            "artifact_digest": "sha256:196b96d97c7e86bb5d775b5f80b60d2bd42140f20d70c41ceff3be78c7771ffc",
+            "component": "qualification/python-cp312",
+            "inputs_sha256": "5dedc12c1e7f89594939f1181e34fcf9ea73507f594beeec4aba2c558659cd6c"
+          },
+          {
+            "artifact_digest": "sha256:ca9946741c45d6bb8b9a65bd90fd79d36a7bea3b0de0ebcf81ef95b9804b2a0a",
+            "component": "qualification/python-cp313",
+            "inputs_sha256": "e579fb379fc6769a5ba53b18faa90629ef99cb19963415850100cba2c196b215"
+          },
+          {
+            "artifact_digest": "sha256:f4ac4de00bf6027ffcd7b8f20e488ffea1c9829c4ddbd48f9b1e952ca388422a",
+            "component": "qualification/python-cp314",
+            "inputs_sha256": "3e8dcd7a59f38af637108d6de9c321e5a0fc6649dfafd9cc872960343bc4b935"
+          },
+          {
+            "artifact_digest": "sha256:e73e7fd9db8b4b76b8be190610b21f4102d096b94bce16adc132d717962c3a05",
+            "component": "qualification/python-cp39",
+            "inputs_sha256": "b8d58152a4d3fd5d6d9645a26d0fd3891164cea3b4e98f512fd30cd34a124735"
+          },
+          {
+            "artifact_digest": "sha256:46a4e85c4581a7cfb53982dfa56ddc320cd2a1b6e758874300b38ae6656cefe6",
+            "component": "toolchain/aarch64-install",
+            "inputs_sha256": "ccda80c33a83611c292cbc98a04a24323bb7b822c2e7fdd978b0383a8b7b6df4"
+          },
+          {
+            "artifact_digest": "sha256:2a71734c38ca5234de1c4784afe0c3c01786de718015bb59ce990a3499edbd1f",
+            "component": "toolchain/x86_64-install",
+            "inputs_sha256": "2de95e2c4b46c7d3f636f842ba186ef7c3ded344b7ae9dff269d0749c568ce4d"
+          }
+        ],
+        "started_at": "2026-09-11T14:51:08Z",
+        "completed_at": "2026-09-11T15:01:08Z",
+        "reports": [
+          {
+            "mode": "0644",
+            "path": "reports/complete-sdk.json",
+            "sha256": "4c2ff1ea9acac134be7b41f6a259b30caff6d28f4c28c1e9563245a825fb0e5d"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp310.json",
+            "sha256": "f8290c0d070e6adf36b967c6eb5dbd841b5d43662f7fefd5da73eacf3f8ee19d"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp311.json",
+            "sha256": "bf05848b8a190a23c72be8cea64da5912b2550560947f91b45c3837f3f4f5f6c"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp312.json",
+            "sha256": "3d022aa3e874f7a5a90db47f874f40de77ed143912e54fac8fc9035156854c87"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp313.json",
+            "sha256": "64b7c41980c32e1c22d2313960590fa43614a0882f3201b2e751d830c3488aec"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp314.json",
+            "sha256": "32873e0a17ae3f863a113aa45a5fa10a935e017bde5cf37c6534ac4132e1d045"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/cp39.json",
+            "sha256": "0294a80398aa1e2a088b542db759af5aecd8b0853367a536af88fa5128a36f99"
+          },
+          {
+            "mode": "0644",
+            "path": "reports/python-final-sdk.json",
+            "sha256": "6c8e196cd7870f53db8476bedad21a26e872aa374c2e340b2e189bdab0d4025f"
+          }
+        ],
+        "reused_row_receipts": {
+          "cp310": "1417a52363249b02e85e8ccb13546031427c8c7e44b59305b3a3ca2402d4b9dd",
+          "cp311": "f03590eeb63105efd69a6887af54da755af2b8756db460e8f1a46844da197641",
+          "cp312": "019fae134843200f9ee809d73885f13ab50a16fdbdf00c2f05695aa24ef74cb7",
+          "cp313": "eab91541f724781ee9719108b48ce9a95472492253db838463588f27d9bc922d",
+          "cp314": "e3fa1a115aba82afff87c027d9db2de3d27d9f0caee9a7f097fbb59656c5b8ae",
+          "cp39": "7ba29084437a4bc99e621e4d7a36ac7b36e723cfd4868e2fb9828aeefb74c0d3"
+        },
+        "files": {
+          "result.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/sdk-complete-dev/result.json",
+            "sha256": "db8cc1edf831e8c458cc9a52bc5b8bec48ac941fc04f1150aa34025fa23ae89c"
+          },
+          "integration/inputs.json": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/sdk-complete-dev/integration/inputs.json",
+            "sha256": "6359ef7ecb398d97ebba9f48af74518ba128de07b221097fe98fd84ff2a0900e"
+          },
+          "integration/execution.jsonl": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/runtime/sdk-complete-dev/integration/execution.jsonl",
+            "sha256": "c84bbfdd600b790f1015a73915da5d0bc4c8e772a0714ec3b68df1da2bcf977d"
+          }
+        },
+        "independent_recheck": {
+          "status": "passed",
+          "exit_code": 0,
+          "runner": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/cp39-affected-change-audited/verify-integrations.py",
+            "sha256": "8aff29f5952973f19c73b632cd04f50284996217f7fd9bcd5a654d0fed89a2c9"
+          },
+          "log": {
+            "path": "/home/eg/workspace/github/eglinux/crossforge/build/python-append-scope/verify-sdk-complete-dev.log",
+            "sha256": "d7c1dacc52dbd2a139071b2279d310a20d108318aa074942d64be749659c4c2f"
+          },
+          "scope": "Original fourteen fresh RUNs, eight dependencies, current material bytes/modes, six original qualified row identities, exported reports and absence of GCC/CPython source compiler RUNs throughout the saved log"
+        }
+      }
+    ],
+    "sdk_matrix_status": "passed"
+  },
+  "remaining": [
+    "Complete controlled changed cp39 SDK acceptance; failed concurrent batch retained and original executor retried serially",
+    "Real PR verification before main merge; main-only signing/candidate/native ARM after merge as explicitly authorized",
+    "Real GitHub events, trust/recovery, retention and three-run resource/performance acceptance"
+  ],
+  "merged_main": false,
+  "pushed": false,
+  "published": false,
+  "source_validation_revision": "eb3e50ef6a7d51e8703269212edff1dd19648d17",
+  "source_validation_note": "source_sha256 identifies the implementation and tests at this revision. The later affected-change fixture regression is recorded separately and does not relabel these earlier executions."
+}

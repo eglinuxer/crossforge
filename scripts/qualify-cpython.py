@@ -42,10 +42,8 @@ ROW_CONTRACT = runpy.run_path(
     str(Path(__file__).with_name("python_row_contract.py"))
 )
 ContractError = ROW_CONTRACT["ContractError"]
-RELEASE_COMPONENTS = runpy.run_path(
-    str(Path(__file__).with_name("release-components-core.py"))
-)
-ProjectionError = RELEASE_COMPONENTS["ProjectionError"]
+RELEASE_COMPONENTS = None
+POLICY = runpy.run_path(str(Path(__file__).with_name("python_qualification_policy.py")))
 ZSTD_EVIDENCE = runpy.run_path(
     str(Path(__file__).with_name("python_zstd_evidence.py"))
 )
@@ -98,6 +96,61 @@ PYTHON_PROVIDER_CATALOG_LOGICAL_PATH = (
 def require(condition, message):
     if not condition:
         raise QualificationError(message)
+
+
+def release_components():
+    """Full release support is only imported for the legacy CLI mode."""
+    global RELEASE_COMPONENTS
+    if RELEASE_COMPONENTS is None:
+        RELEASE_COMPONENTS = runpy.run_path(str(Path(__file__).with_name("release-components-core.py")))
+    return RELEASE_COMPONENTS
+
+
+def qualification_inputs(arguments):
+    """Authenticate inputs before accessing compiler or target artifacts."""
+    profile = TARGETS.get(arguments.target)
+    require(profile is not None, "unsupported CPython target")
+    component_mode = arguments.qualification_components is not None
+    require((arguments.release is not None) != component_mode,
+            "select exactly one full release or qualification component input mode")
+    try:
+        if component_mode:
+            require(arguments.qualification_policy_component_sha256 is None and arguments.source_manifest is not None,
+                    "component qualification needs its source manifest and cannot accept a legacy policy pin")
+            policy = POLICY["load"](arguments.qualification_components, arguments.version,
+                                    profile["arch"], arguments.qualification_component_sha256)
+            verifier_path = Path(__file__).with_name("verify-python-row.py")
+            if not verifier_path.is_file():
+                verifier_path = Path(__file__).resolve().parents[1] / "docker/verify-python-row.py"
+            verifier = runpy.run_path(str(verifier_path))
+            components = policy["source_components"]
+            source_contract = verifier["component_row_contract"](
+                policy["contract"]["row"], arguments.version, policy["contract"]["adapter"],
+                arguments.qualification_components / (components["source"]["component"] + ".json"),
+                components["source"]["canonical_sha256"],
+                arguments.qualification_components / (components["policy"]["component"] + ".json"),
+                components["policy"]["canonical_sha256"],
+            )
+            verifier["verify_source_manifest"](arguments.source_manifest, source_contract)
+            return {"release": None, "contract": policy["contract"], "source": policy["source"],
+                    "sysroot_sha256": policy["target"]["sysroot"]["canonical_sha256"],
+                    "abi": policy["abi"], "zstd_components": policy["zstd_components"],
+                    "report_identity": {"qualification_schema_version": 5, "input_binding": POLICY["binding"](policy)}}
+        require(arguments.qualification_policy_component_sha256 is not None and arguments.source_manifest is None,
+                "legacy qualification needs its policy pin and cannot accept component source inputs")
+        release = load_json(arguments.release)
+        components = release_components()["bind_python_qualification_components"](
+            release, arguments.qualification_policy_component_sha256, arguments.qualification_component_sha256)
+        binding = ROW_CONTRACT["bind_release"](release, version=arguments.version)
+        targets = [item for item in release["targets"] if item["triple"] == arguments.target]
+        require(len(targets) == 1, "release does not select one target")
+        return {"release": release, "contract": binding["contract"], "source": binding["entry"]["source"],
+                "sysroot_sha256": targets[0]["sysroot"]["canonical_sha256"],
+                "abi": abi_contract.release_abi_inputs(release, profile["arch"]), "zstd_components": None,
+                "report_identity": {"qualification_schema_version": 4, "release_sha256": canonical_sha256(release),
+                                    "qualification_components": components}}
+    except (RuntimeError, ValueError) as error:
+        raise QualificationError(str(error)) from error
 
 
 def require_abi_value(actual, expected, name):
@@ -530,6 +583,12 @@ def validate_release_abi_inputs(release, abi_inputs):
         expected = abi_contract.release_abi_inputs(release, arch)
     except abi_contract.AbiContractError as error:
         raise QualificationError(str(error)) from error
+    return validate_abi_inputs(expected, abi_inputs)
+
+
+def validate_abi_inputs(expected, abi_inputs):
+    """Match actual ABI documents to independently authenticated expectations."""
+    arch = abi_inputs["baseline"]["target"]["arch"]
     identities = abi_inputs["identities"]
     observed = {
         "provider_manifest": {
@@ -618,7 +677,7 @@ def expected_zstd_components(release, target_arch):
         return ZSTD_EVIDENCE["expected_components"](
             release,
             target_arch,
-            RELEASE_COMPONENTS["render_component_documents"],
+            release_components()["render_component_documents"],
         )
     except ZstdEvidenceError as error:
         raise QualificationError(str(error)) from error
@@ -730,6 +789,7 @@ def zstd_compile_evidence(
     readelf,
     nm,
     elf_audit,
+    components=None,
 ):
     module_matches = sorted(lib_dynload.glob("_zstd.*.so"))
     host_manifest_path = build_prefix / ".crossforge" / "zstd-build.json"
@@ -744,7 +804,8 @@ def zstd_compile_evidence(
         return {"policy": "absent", "module": None, "builds": None}
 
     require(len(module_matches) == 1, "CPython 3.14 _zstd module is not unique")
-    components = expected_zstd_components(release, profile["arch"])
+    if components is None:
+        components = expected_zstd_components(release, profile["arch"])
     host_prefix = "/opt/crossforge/deps/zstd/1.5.7/host"
     target_zstd_prefix = "/opt/crossforge/deps/zstd/1.5.7/%s" % target
     builds = {
@@ -796,7 +857,9 @@ def main():
     parser.add_argument("--version", required=True)
     parser.add_argument("--extension-source", type=Path, required=True)
     parser.add_argument("--work", type=Path, required=True)
-    parser.add_argument("--release", type=Path, required=True)
+    parser.add_argument("--release", type=Path)
+    parser.add_argument("--qualification-components", type=Path)
+    parser.add_argument("--source-manifest", type=Path)
     parser.add_argument("--abi-baseline", type=Path, required=True)
     parser.add_argument("--abi-provider-manifest", type=Path, required=True)
     parser.add_argument("--sysroot-abi-inventory", type=Path, required=True)
@@ -807,11 +870,13 @@ def main():
         "--python-provider-catalog", type=Path, required=True
     )
     parser.add_argument(
-        "--qualification-policy-component-sha256", required=True
+        "--qualification-policy-component-sha256"
     )
     parser.add_argument("--qualification-component-sha256", required=True)
     parser.add_argument("--report", type=Path, required=True)
     arguments = parser.parse_args()
+
+    inputs = qualification_inputs(arguments)
 
     profile = TARGETS.get(arguments.target)
     require(profile is not None, "unsupported CPython target")
@@ -855,36 +920,15 @@ def main():
         exec_audit, arguments.build_directory, arguments.prefix
     )
 
-    release = load_json(arguments.release)
-    release_sha256 = hashlib.sha256(canonical_bytes(release)).hexdigest()
-    qualification_components = RELEASE_COMPONENTS[
-        "bind_python_qualification_components"
-    ](
-        release,
-        arguments.qualification_policy_component_sha256,
-        arguments.qualification_component_sha256,
-    )
-    try:
-        binding = ROW_CONTRACT["bind_release"](
-            release,
-            version=arguments.version,
-            adapter=contract["adapter"],
-        )
-    except ContractError as error:
-        raise QualificationError(str(error)) from error
-    python_entry = binding["entry"]
-    source = python_entry["source"]
+    require(inputs["contract"] == contract, "CPython qualification implementation differs")
+    source = inputs["source"]
     require(source["status"] == "locked", "CPython source is not locked")
 
-    target_entries = [
-        item for item in release["targets"] if item["triple"] == arguments.target
-    ]
-    require(len(target_entries) == 1, "release does not select one target")
     sysroot_lock_path = arguments.sysroot / "usr/share/crossforge/sysroot-lock.json"
     sysroot_lock = load_json(sysroot_lock_path)
     sysroot_sha256 = hashlib.sha256(canonical_bytes(sysroot_lock)).hexdigest()
     require(
-        target_entries[0]["sysroot"]["canonical_sha256"] == sysroot_sha256,
+        inputs["sysroot_sha256"] == sysroot_sha256,
         "target sysroot differs from release",
     )
     sysroot_transaction_path = (
@@ -910,7 +954,7 @@ def main():
         profile["arch"],
         arguments.target,
     )
-    validate_release_abi_inputs(release, abi_inputs)
+    validate_abi_inputs(inputs["abi"], abi_inputs)
 
     build_version, _ = run(
         [
@@ -1072,7 +1116,7 @@ def main():
     require("PyInit__crossforge" in extension_symbols, "extension initializer is missing")
     zstd = zstd_compile_evidence(
         contract,
-        release,
+        inputs["release"],
         profile,
         arguments.target,
         expected_build_prefix,
@@ -1081,16 +1125,14 @@ def main():
         readelf,
         nm,
         elf_audit,
+        components=inputs["zstd_components"],
     )
 
     report = {
-        "qualification_schema_version": 4,
         "report_kind": "crossforge-cpython-compile",
         "target": arguments.target,
         "version": arguments.version,
         "adapter": contract["adapter"],
-        "release_sha256": release_sha256,
-        "qualification_components": qualification_components,
         "source": {
             "url": source["url"],
             "size": source["size"],
@@ -1143,6 +1185,7 @@ def main():
         ),
         "zstd": zstd,
     }
+    report.update(inputs["report_identity"])
     arguments.report.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.report.with_name(arguments.report.name + ".tmp")
     temporary.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -1157,7 +1200,6 @@ if __name__ == "__main__":
     except (
         QualificationError,
         SDKIdentityError,
-        ProjectionError,
         KeyError,
         OSError,
         TypeError,
