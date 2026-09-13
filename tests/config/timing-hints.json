@@ -2,6 +2,7 @@
   "schema_version": 1,
   "module_seconds": {
     "test_candidate_components": 6,
+    "test_candidate_rows": 25,
     "test_ci_sdk": 13,
     "test_frozen_abi": 6,
     "test_prepare_zstd_source": 8,
