@@ -11,6 +11,7 @@ import re
 import subprocess
 import sys
 import tarfile
+import time
 import urllib.request
 
 from . import oci_layout
@@ -90,6 +91,37 @@ def reference(value, loopback_http=False):
     return repository(repo, loopback_http), digest_value(digest, "registry artifact digest", oci=True)
 
 
+def _publish_command(arguments, digest, capture=False):
+    """Retry only the pinned client's exact missing-manifest publication error.
+
+    ORAS can finish a manifest PUT and then fail its progress callback's GET.
+    Copying the same sealed digest again is idempotent; a successful copy and
+    the final manifest-byte check are still required. This is not input-index
+    absence and must never enable a qualification or provenance fallback.
+    """
+    if capture:
+        remote = arguments[-1]
+        missing = ('Error response from registry: failed to fetch the content of "%s": %s: not found' %
+                   (remote, remote)).encode()
+    else:
+        missing = ("Error response from registry: %s: not found" % digest).encode()
+    for delay in (1, 2, None):
+        try:
+            result = subprocess.run(arguments, stdout=subprocess.PIPE if capture else sys.stderr,
+                                    stderr=subprocess.PIPE, check=True)
+        except subprocess.CalledProcessError as error:
+            detail = error.stderr or b""
+            sys.stderr.write(detail.decode("utf-8", errors="replace"))
+            if delay is None or error.returncode != 1 or detail.strip() != missing:
+                raise
+            print("Retrying OCI publication for %s after %d seconds" % (digest, delay), file=sys.stderr)
+            time.sleep(delay)
+        else:
+            if result.stderr:
+                sys.stderr.write(result.stderr.decode("utf-8", errors="replace"))
+            return result.stdout
+
+
 def publish(layout, digest, destination, binary, policy, registry_config=None, loopback_http=False):
     destination = repository(destination, loopback_http)
     observation = oci_layout.inspect(layout, digest)
@@ -100,14 +132,14 @@ def publish(layout, digest, destination, binary, policy, registry_config=None, l
         arguments += ["--to-registry-config", str(registry_config)]
     if loopback_http:
         arguments += ["--to-plain-http"]
-    subprocess.run(arguments + [str(Path(layout).resolve()) + "@" + digest, tag], stdout=sys.stderr, check=True)
+    _publish_command(arguments + [str(Path(layout).resolve()) + "@" + digest, tag], digest)
     remote = destination + "@" + digest
     arguments = command + ["manifest", "fetch"]
     if registry_config is not None:
         arguments += ["--registry-config", str(registry_config)]
     if loopback_http:
         arguments += ["--plain-http"]
-    actual = subprocess.check_output(arguments + [remote])
+    actual = _publish_command(arguments + [remote], digest, capture=True)
     # ORAS fetch writes the original manifest bytes; no Docker exporter rebuilds
     # or recompresses the already sealed artifact during transfer.
     require("sha256:" + hashlib.sha256(actual).hexdigest() == digest, "published manifest bytes differ")
