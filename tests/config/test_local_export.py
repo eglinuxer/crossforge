@@ -1,6 +1,7 @@
 """A stuck local transfer must not hang its consumer or supply partial files."""
 
 import copy
+import io
 import json
 import os
 from pathlib import Path
@@ -8,6 +9,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import tarfile
 import time
 import unittest
 from unittest import mock
@@ -29,6 +31,17 @@ class LocalExportTests(unittest.TestCase):
             "dockerfile-inline": "# syntax=fixed\nFROM scratch\nCOPY --from=artifact [\"/component/\", \"/component/\"]\n",
             "output": [{"type": "local", "dest": str(self.root / "files")}]}}}
 
+    def archive(self, path, entries):
+        with tarfile.open(str(path), 'w') as archive:
+            for member, data in entries:
+                archive.addfile(member, io.BytesIO(data) if data is not None else None)
+
+    def file(self, name, data=b'complete', mode=0o640):
+        member = tarfile.TarInfo(name)
+        member.mode = mode
+        member.size = len(data)
+        return member, data
+
     def test_timeout_retries_same_input_into_new_directory(self):
         original = copy.deepcopy(self.graph)
         attempts = []
@@ -37,20 +50,104 @@ class LocalExportTests(unittest.TestCase):
             attempts.append(recipe)
             dest = Path(recipe["target"]["extract"]["output"][0]["dest"])
             self.assertIn("--allow=fs.write=" + str(dest), command)
+            self.assertEqual(recipe["target"]["extract"]["output"][0]["type"], "tar")
             if len(attempts) == 1:
-                (dest / "incomplete").write_text("partial")
+                dest.write_bytes(b"partial tar stream")
                 raise subprocess.TimeoutExpired(command, 600)
-            self.assertFalse((dest / "incomplete").exists())
-            (dest / "complete").write_text("verified later by consumer")
+            self.assertFalse(dest.exists())
+            self.archive(dest, [self.file('complete')])
         with mock.patch.object(local_export, "execute", side_effect=transfer):
             result = local_export.extract(self.graph, "extract", self.root, ["docker", "buildx", "bake"])
         self.assertEqual(result, self.root / "files-attempt2")
-        self.assertTrue((self.root / "files/incomplete").is_file())
+        self.assertEqual((self.root / "export.tar").read_bytes(), b"partial tar stream")
+        self.assertFalse(any((self.root / 'files').iterdir()))
         self.assertTrue((result / "complete").is_file())
         self.assertTrue((self.root / "export-timeout-1.json").is_file())
         attempts[1]["target"]["extract"]["output"] = attempts[0]["target"]["extract"]["output"]
         self.assertEqual(attempts[0], attempts[1])
         self.assertEqual(self.graph, original)
+
+    def test_completed_transport_preserves_files_modes_and_links(self):
+        directory = tarfile.TarInfo('private')
+        directory.type, directory.mode = tarfile.DIRTYPE, 0o700
+        link = tarfile.TarInfo('link')
+        link.type, link.linkname = tarfile.SYMTYPE, 'private/data'
+        hardlink = tarfile.TarInfo('hardlink')
+        hardlink.type, hardlink.linkname, hardlink.mode = tarfile.LNKTYPE, 'private/data', 0o600
+        path = self.root / 'input.tar'
+        self.archive(path, [(link, None), (hardlink, None), (directory, None), self.file('private/data', mode=0o600)])
+        destination = self.root / 'unpacked'
+        destination.mkdir()
+        local_export.unpack(path, destination)
+        self.assertEqual((destination / 'private/data').read_bytes(), b'complete')
+        self.assertEqual((destination / 'private').stat().st_mode & 0o777, 0o700)
+        self.assertEqual((destination / 'private/data').stat().st_mode & 0o777, 0o600)
+        self.assertEqual(os.readlink(destination / 'link'), 'private/data')
+        self.assertEqual((destination / 'hardlink').stat().st_ino, (destination / 'private/data').stat().st_ino)
+
+    def test_unsafe_or_ambiguous_archives_fail_before_extracting_files(self):
+        for case in ('absolute', 'parent', 'duplicate', 'symlink-parent', 'hardlink-parent',
+                     'absolute-link', 'escaping-link', 'missing-hardlink', 'device'):
+            with self.subTest(case=case):
+                entries = [self.file('safe')]
+                if case in ('absolute', 'parent', 'duplicate'):
+                    entries.append(self.file({'absolute': '/outside', 'parent': '../outside', 'duplicate': './safe'}[case]))
+                else:
+                    member = tarfile.TarInfo('link')
+                    member.type = tarfile.SYMTYPE
+                    member.linkname = 'safe'
+                    if case == 'absolute-link':
+                        member.linkname = '/outside'
+                    elif case == 'escaping-link':
+                        member.linkname = '../outside'
+                    elif case == 'missing-hardlink':
+                        member.type, member.linkname = tarfile.LNKTYPE, 'missing'
+                    elif case == 'device':
+                        member.type = tarfile.CHRTYPE
+                    elif case == 'hardlink-parent':
+                        member.type = tarfile.LNKTYPE
+                    entries.append((member, None))
+                    if case.endswith('-parent'):
+                        entries.append(self.file('link/child'))
+                path = self.root / (case + '.tar')
+                self.archive(path, entries)
+                destination = self.root / case
+                destination.mkdir()
+                with self.assertRaises(IdentityError):
+                    local_export.unpack(path, destination)
+                self.assertFalse(any(destination.iterdir()))
+
+    def test_truncated_tar_is_not_retried_or_returned(self):
+        def transfer(command, directory):
+            recipe = json.loads(Path(command[command.index('-f') + 1]).read_text())
+            Path(recipe['target']['extract']['output'][0]['dest']).write_bytes(b'partial')
+        with mock.patch.object(local_export, 'execute', side_effect=transfer) as run:
+            with self.assertRaises(tarfile.ReadError):
+                local_export.extract(self.graph, 'extract', self.root, ['docker'])
+        self.assertEqual(run.call_count, 1)
+        self.assertFalse((self.root / 'files-attempt2').exists())
+
+    def test_symlink_chain_cannot_escape_after_all_links_exist(self):
+        directory = tarfile.TarInfo('outer')
+        directory.type = tarfile.DIRTYPE
+        first = tarfile.TarInfo('outer/sub')
+        first.type, first.linkname = tarfile.SYMTYPE, '../..'
+        second = tarfile.TarInfo('escape')
+        second.type, second.linkname = tarfile.SYMTYPE, 'outer/sub/../outside'
+        path = self.root / 'chain.tar'
+        self.archive(path, [(directory, None), (first, None), (second, None)])
+        destination = self.root / 'chain'
+        destination.mkdir()
+        with self.assertRaises((IdentityError, tarfile.TarError)):
+            local_export.unpack(path, destination)
+        self.assertFalse((self.root / 'outside').exists())
+
+    def test_existing_archive_cannot_be_overwritten(self):
+        (self.root / 'export.tar').symlink_to(self.root / 'outside')
+        with mock.patch.object(local_export, 'execute') as run:
+            with self.assertRaises(IdentityError):
+                local_export.extract(self.graph, 'extract', self.root, ['docker'])
+        run.assert_not_called()
 
     def test_second_timeout_fails_with_both_attempts_preserved(self):
         with mock.patch.object(local_export, "execute", side_effect=subprocess.TimeoutExpired([], 600)) as run:
