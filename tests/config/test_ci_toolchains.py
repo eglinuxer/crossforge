@@ -188,10 +188,16 @@ class ToolchainPreparationTests(unittest.TestCase):
                 source.assert_not_called()
 
     def test_plan_uses_selected_graph_edges_and_never_builds_for_no_work(self):
-        with mock.patch.object(component_ci, "source_graph") as graph:
-            result = ci.plan(ROOT, "", "none", STAGES, self.root / "graph", "builder")
-        graph.assert_not_called()
-        self.assertEqual(result["roles"], {arch: [] for arch in ci.ARCHITECTURES})
+        empty = {"schema_version": 1, "kind": "crossforge-ci-source-plan", "mode": "incremental", "targets": {}}
+        for selection, profile in (("", "none"), (json.dumps(empty), "full")):
+            with self.subTest(profile=profile), mock.patch.object(component_ci, "source_graph") as graph:
+                result = ci.plan(ROOT, selection, profile, STAGES, self.root / "graph", "")
+            graph.assert_not_called()
+            self.assertEqual(result["roles"], {arch: [] for arch in ci.ARCHITECTURES})
+            self.assertEqual(result["python_parts"], {})
+        with mock.patch.object(component_ci, "source_graph", side_effect=IdentityError("Buildx required")):
+            with self.assertRaisesRegex(IdentityError, "Buildx required"):
+                ci.plan(ROOT, "", "full", STAGES, self.root / "graph", "builder")
         selection = {"schema_version": 1, "kind": "crossforge-ci-source-plan", "mode": "incremental",
                      "targets": {"python-cp39": ["python-cp39-dev"]}}
         graph = {"target": {"python-cp39-dev": {"contexts": {"compiler": "target:toolchain-aarch64-build-export"}},
