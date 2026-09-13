@@ -19,6 +19,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "preserve-diagnostics":
+        parser = argparse.ArgumentParser(description="Preserve interrupted SDK row diagnostics", allow_abbrev=False)
+        parser.add_argument("--component-directory", type=Path, required=True)
+        parser.add_argument("--output", type=Path, required=True)
+        snapshot = parser.parse_args(argv[1:])
+        try:
+            result = ci_sdk.preserve_interrupted_rows(ROOT, snapshot.component_directory, snapshot.output)
+            print(json.dumps(result, sort_keys=True))
+            return 0 if result["status"] == "complete" else 1
+        except (IdentityError, ValueError, OSError) as error:
+            print("error: %s" % error, file=sys.stderr)
+            return 1
     if argv and argv[0] == "qualify-row":
         parser = argparse.ArgumentParser(description="Run one SDK row in an independent interpreter", allow_abbrev=False)
         parser.add_argument("--request", type=Path, required=True)
