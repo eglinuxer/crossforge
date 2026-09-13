@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 from . import ci_execution, component_build, component_ci, component_handoff, component_inputs, component_resolution
-from . import python_components, python_handoff, registry_transfer
+from . import python_components, python_handoff, registry_transfer, toolchain_qualification_plan
 from .identity import IdentityError, content_sha256, exact_fields, load_json, parse_json, require
 
 
@@ -49,6 +49,9 @@ def execution(selection_text, profile, stages, requirements_text):
         require(consumers[stage] == [stage + "-dev"], "Python row job must preserve its canonical independent root")
         qualified.append({"row": row})
     result["python-rows-matrix"] = json.dumps({"include": qualified or [{"row": "cp39"}]}, separators=(",", ":"))
+    for group in ("toolchains", "gcc"):
+        result[group + "-qualification-matrix"] = json.dumps(
+            toolchain_qualification_plan.matrix(consumers, stages, group), separators=(",", ":"))
     return result
 
 
@@ -64,7 +67,8 @@ def check_results(results, stages):
             "required Python producers did not succeed or unselected producers executed")
         ordinary = copy.deepcopy(results)
         del ordinary["python-components"]
-        for key in ("python-parts", "python-components", "python-components-matrix", "python-rows-matrix"):
+        for key in ("python-parts", "python-components", "python-components-matrix", "python-rows-matrix",
+                    "toolchains-qualification-matrix", "gcc-qualification-matrix"):
             del ordinary["plan"]["outputs"][key]
         return ci_execution.check_results(ordinary, stages)
     except (IdentityError, AttributeError, KeyError, TypeError, ValueError):
