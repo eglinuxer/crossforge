@@ -852,6 +852,12 @@ remaining GCC/CPython source compilation in its input graph. All existing
 qualification and final consumer checks remain. This candidate path does not
 join the periodic qualification cache-writer queue; its live GitHub execution
 and performance still require acceptance.
+Main toolchain and GCC gates also support authenticated qualification catalogs:
+matching reports retain their original execution identity, while missing input
+indexes trigger fresh qualification. The complete local quick suite and an actual
+x86_64 toolchain/GCC smoke exercise have passed; the new GitHub signer and reuse
+path still need acceptance. See the [component workflow contracts](docs/github-actions.md)
+for failure behavior and the separate vcpkg, final SDK and native ARM gates.
 Source publication, SDK publication and final anonymous consumer validation are
 separate jobs. Successful publishers save immutable, digest-checked metadata
 checkpoints; a failed downstream job can reuse the same published image and

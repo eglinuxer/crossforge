@@ -500,6 +500,8 @@ Rocky Linux 8.10 是基础镜像、host packages、sysroot 和 GTS SRPM 的单�
 
 最终 SDK 从当前完整 release 独立推导工具链策略，vcpkg SDK 则使用已认证组件策略；二者检查原报告、资格组件与 locked/clean runtime 成功状态。vcpkg 契约还要求工具链报告字节与已资格化 vcpkg SDK 记录的 SHA256 一致。无关 Python 变更可以保持工具链报告的原身份；组件 receipt 复用另外要求产物、完整实际资格材料、校验实现和执行环境严格匹配，并保留原 producer 与执行区间。任何新候选仍须执行最终镜像集成及原生 ARM 门禁。
 
+main 的独立工具链、双架构 GCC smoke 与 x86_64 GCC full 门禁通过 `produce-toolchain-qualification.yml` 取得资格报告。schema 5 catalog 只授权该工作流的精确 main 身份；消费方重新认证原始组件、当前资格输入及实际运行环境，下载资格 OCI 后验收完整报告与原执行记录。只有输入索引不存在才允许重新资格化；签名、传输或证据校验失败直接阻断。新报告经过原始组件交接、强制执行、摘要封装，再由分离的 producer、OIDC signer 和 registry writer 发布；复用保留原 producer，不记作新执行。此路径不改变最终 SDK 集成、候选原生 ARM 或显式强制重放要求；vcpkg 仍重新资格化。完整本地快速检查及真实 x86_64 工具链/GCC smoke 生产与封装后验收已通过，新目录的 GitHub 签名及跨运行复用尚待验收。
+
 共享 `toolchain_report.py` 提供直接消费已认证 toolchain policy 的入口；它要求 scoped 报告，不能把旧 release 报告改写成组件报告。完整 release 适配器保留旧格式及相同运行时校验。`vcpkg_policy.py` 认证 SDK build 根、两个独立工具链资格根，以及 CMake/Ninja 的来源输入；后续契约和 tier1–3 根逐层绑定 SDK、工具链与前序资格。每层 schema 2 报告使用自身输入 binding，后续阶段核对前序报告；SDK 与契约阶段仍重新验收实际工具链报告，tier2/3 还核对提供 patchelf 身份的契约报告。五个 Docker 阶段均只复制六个运行模块，不复制完整 release 或组件生成器，保留的投影位于 `/opt/crossforge/qualification/vcpkg/inputs`。
 
 原 vcpkg `--release` CLI 继续生成 schema 1 报告并绑定精确完整 release；其消费者可从完整 release 独立推导预期，验收新 scoped 前序报告。`packaging-sdk` 在自己的消费边界复制当前 release，供 launcher、分包和完整 SDK 使用。完整 SDK 在最终集成时也从完整 release 独立推导 vcpkg SDK 策略，验收新报告或精确匹配的旧报告，其 schema 2 集成报告记录 vcpkg 报告格式和文件 SHA256。产品版本或单行 Python 输入变化可以保留 vcpkg 资格配置身份，最终 SDK 集成仍须重新执行。这些配置与图检查不是新执行 receipt、跨 runner 资格复用授权或 CI 耗时证明。
