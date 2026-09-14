@@ -154,6 +154,46 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertIn("if-no-files-found: error", self.workflow)
         self.assertIn("retention-days: 90", self.workflow)
 
+    def test_publication_summaries_only_offer_a_shell_for_the_signed_sdk(self):
+        repository = "ghcr.io/eglinuxer/crossforge"
+        sdk_digest = "sha256:" + "1" * 64
+        source_digest = "sha256:" + "2" * 64
+        for name in ("Report source archive publication", "Report public candidate",
+                     "Report signed public candidate"):
+            with self.subTest(step=name), tempfile.TemporaryDirectory() as directory:
+                step = self.workflow.split("      - name: " + name + "\n", 1)[1]
+                step = step.split("      - name:", 1)[0]
+                script = step.split("        run: |\n", 1)[1]
+                script = "\n".join(line[10:] for line in script.splitlines()
+                                   if line.startswith("          "))
+                script = re.sub(r"\$\{\{ steps\.inputs\.outputs\.archive_[a-z0-9_]+ \}\}",
+                                "123", script)
+                summary = Path(directory) / "summary.md"
+                result = subprocess.run(["bash", "-c", script], cwd=REPOSITORY,
+                    env={**os.environ, "GITHUB_STEP_SUMMARY": str(summary),
+                         "CANDIDATE_REPOSITORY": repository, "CANDIDATE_DIGEST": sdk_digest,
+                         "SOURCE_DIGEST": source_digest, "PLATFORM_DIGEST": "sha256:" + "3" * 64,
+                         "CANDIDATE_REFERENCE": repository + ":candidate-fixture",
+                         "SOURCE_REFERENCE": repository + ":source-candidate-fixture"},
+                    text=True, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                rendered = summary.read_text(encoding="utf-8")
+                commands = [line for line in rendered.splitlines()
+                            if line.startswith("docker run ")]
+                if name == "Report signed public candidate":
+                    self.assertEqual(len(commands), 1)
+                    self.assertEqual(shlex.split(commands[0]), [
+                        "docker", "run", "--rm", "-it", "--platform", "linux/amd64",
+                        repository + "@" + sdk_digest, "bash"])
+                    self.assertNotIn("\\@", rendered)
+                else:
+                    self.assertEqual(commands, [])
+                    self.assertIn(repository + "@" + source_digest, rendered)
+                    self.assertIn("pending", rendered)
+                if name == "Report source archive publication":
+                    self.assertNotIn(sdk_digest, rendered)
+                    self.assertIn("no bash, sh or SDK binaries", rendered)
+
     def test_long_candidate_builds_emit_process_heartbeats(self):
         for label in (
             "source-bundle-publish",

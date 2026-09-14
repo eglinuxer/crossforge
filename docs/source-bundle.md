@@ -28,6 +28,11 @@ The SDK's `/opt/crossforge/SOURCES.json` names the public source OCI image by
 digest and records this archive's filename, SHA256 and byte size. Pull that OCI
 reference, copy the archive from the container root, and verify the recorded
 identity before extraction; the paired tag is only a convenience locator.
+The `source-*` OCI image is a scratch data artifact with no `bash`, `sh` or
+SDK binaries. Use `docker create` with a placeholder command followed by
+`docker cp`, without starting the container. The runnable SDK has its own
+`candidate-*` or release tag and a different digest. See
+[the source retrieval commands](https://github.com/eglinuxer/crossforge/blob/main/docs/getting-started.md#retrieve-source-and-release-evidence).
 
 QEMU 10.2.3 and CMake 4.4.0 have cryptographically valid upstream signatures
 made after the relevant OpenPGP key or signing subkey expired. The manifest and

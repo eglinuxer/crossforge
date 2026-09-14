@@ -183,6 +183,20 @@ jobs:
           path: ${{ runner.temp }}/source-publication-checkpoint/
           if-no-files-found: error
           retention-days: 90
+      - name: Report source archive publication
+        env:
+          SOURCE_DIGEST: ${{ steps.source.outputs.digest }}
+        run: |
+          set -Eeuo pipefail
+          {
+            echo '### Crossforge source archive published'
+            echo
+            printf -- '- Source archive OCI: `%s@%s`\n' "$CANDIDATE_REPOSITORY" "$SOURCE_DIGEST"
+            echo '- This scratch image contains only source files and checksums; it has no bash, sh or SDK binaries.'
+            echo '- SDK publication and qualification are still pending. Wait for this entire candidate run to succeed.'
+            echo '- Use the SDK digest and shell command from the final signed candidate summary.'
+            echo '- [Image selection and source retrieval](https://github.com/eglinuxer/crossforge/blob/main/docs/getting-started.md#choose-the-sdk-image)'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Export publication BuildKit diagnostics
         if: always()
         run: ./scripts/collect-buildkit-diagnostics.sh "$RUNNER_TEMP/candidate-build-diagnostics"
@@ -541,6 +555,7 @@ jobs:
           set -Eeuo pipefail
           image="$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST"
           test "$(docker run --rm --pull=always "$image" id -u)" = 1000
+          docker run --rm --platform linux/amd64 "$image" bash --version >/dev/null
           docker run --rm "$image" cat /opt/crossforge/SOURCES.json \
             > "$RUNNER_TEMP/candidate-sources.json"
           cmp "$RUNNER_TEMP/source-binding.json" \
@@ -716,13 +731,15 @@ jobs:
           {
             echo '### Public Crossforge candidate'
             echo
-            echo "- Tag: \`$CANDIDATE_REFERENCE\`"
-            echo "- OCI index: \`$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST\`"
+            echo "- SDK tag: \`$CANDIDATE_REFERENCE\`"
+            echo "- SDK OCI index: \`$CANDIDATE_REPOSITORY@$CANDIDATE_DIGEST\`"
             echo "- linux/amd64 manifest: \`$PLATFORM_DIGEST\`"
             echo "- Source tag: \`$SOURCE_REFERENCE\`"
             echo "- Source OCI index: \`$CANDIDATE_REPOSITORY@$SOURCE_DIGEST\`"
             echo "- Source archive SHA256: \`${{ steps.inputs.outputs.archive_sha256 }}\`"
             echo "- Source archive bytes: \`${{ steps.inputs.outputs.archive_size }}\`"
+            echo '- Source images contain only archives and checksums; they cannot run bash or SDK commands.'
+            echo '- Native qualification and signing are still pending; wait for the entire run to succeed before using the SDK.'
             echo '- Status: public candidate; no stable or SemVer tag was created'
           } >> "$GITHUB_STEP_SUMMARY"
       # Dockerfile frontend stderr goes to the BuildKit daemon, so the Bake
@@ -1029,4 +1046,11 @@ jobs:
             echo '- Source bundle: candidate manifest digest binding verified and signed'
             echo '- Identity: GitHub OIDC candidate workflow on `main`'
             echo '- Status: native-qualified and keyless-signed; no stable tag was created'
+            echo
+            echo 'Open a shell in the SDK (linux/amd64):'
+            echo '```sh'
+            printf 'docker run --rm -it --platform linux/amd64 "%s@%s" bash\n' "$CANDIDATE_REPOSITORY" "$CANDIDATE_DIGEST"
+            echo '```'
+            echo
+            echo 'The paired source-* image is an archive without a shell. Its digest cannot be used to run the SDK.'
           } >> "$GITHUB_STEP_SUMMARY"

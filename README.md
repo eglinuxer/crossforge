@@ -46,6 +46,11 @@ Downstream users should start with
 [`docs/getting-started.md`](docs/getting-started.md). It covers image identity,
 UID-safe mounts, real CMake/Ninja builds, Python and vcpkg selection, source
 retrieval, release-evidence verification and common failure modes.
+For an interactive shell, select the SDK `candidate-*` or release image.
+The paired `source-*` image is a scratch archive with no shell or build tools;
+it becomes visible before SDK publication and qualification finish. See
+[image selection](docs/getting-started.md#choose-the-sdk-image) for the exact
+SDK digest and source retrieval commands.
 Operational scope and update guarantees are in [`SUPPORT.md`](SUPPORT.md);
 undisclosed findings must follow [`SECURITY.md`](SECURITY.md), never a public
 issue.
