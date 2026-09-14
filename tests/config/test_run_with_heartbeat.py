@@ -4,7 +4,9 @@ import runpy
 import subprocess
 import tempfile
 import unittest
+from functools import partial
 from pathlib import Path
+from unittest import mock
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -137,6 +139,48 @@ class RunWithHeartbeatTests(unittest.TestCase):
                     True,
                 )
             ],
+        )
+
+    def test_cli_tracks_child_progress_while_preserving_command_output(self):
+        reports = []
+        clock = iter((0.0, 60.0, 120.0, 180.0))
+        event = b'{"status":"building"}\n'
+
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / "build.log"
+            progress = Path(temporary) / "candidate-execution.jsonl"
+
+            class BuildProcess(FakeProcess):
+                def wait(self, timeout):
+                    self.waits += 1
+                    if self.waits in (2, 3):
+                        with progress.open("ab") as stream:
+                            stream.write(event)
+                    if self.waits <= 3:
+                        raise subprocess.TimeoutExpired(["build"], timeout)
+                    return 7
+
+            def popen(command, **options):
+                options["stdout"].write(b"preparing build\n")
+                return BuildProcess()
+
+            execute = partial(
+                RUNNER["execute"], popen=popen, clock=lambda: next(clock),
+                reporter=lambda message, flush=False: reports.append(message),
+                install_signal_handlers=False,
+            )
+            with mock.patch.dict(RUNNER["main"].__globals__, execute=execute):
+                returncode = RUNNER["main"]([
+                    "--label", "sdk", "--log", str(log),
+                    "--progress-log", str(progress), "--", "build",
+                ])
+
+            self.assertEqual(returncode, 7)
+            self.assertEqual(log.read_bytes(), b"preparing build\n")
+            self.assertEqual(progress.read_bytes(), event * 2)
+        self.assertEqual(
+            [message.split("log_bytes=", 1)[1] for message in reports],
+            ["unavailable", str(len(event)), str(len(event) * 2)],
         )
 
     def test_script_remains_python36_syntax_compatible(self):

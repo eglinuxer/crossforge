@@ -105,6 +105,10 @@ def parse_arguments(argv=None):
     parser.add_argument("--label", required=True)
     parser.add_argument("--interval", type=positive_interval, default=60)
     parser.add_argument("--log", type=Path)
+    parser.add_argument(
+        "--progress-log", type=Path,
+        help="Report this file's size in heartbeats (defaults to --log)",
+    )
     parser.add_argument("command", nargs=argparse.REMAINDER)
     arguments = parser.parse_args(argv)
     if arguments.command and arguments.command[0] == "--":
@@ -125,7 +129,7 @@ def main(argv=None):
             arguments.label,
             arguments.interval,
             output=output,
-            log_path=arguments.log,
+            log_path=arguments.progress_log or arguments.log,
         )
     except OSError as error:
         print("error: cannot start command: %s" % error, file=sys.stderr)
