@@ -349,7 +349,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/candidate-build-diagnostics"
           python3 ./scripts/run-with-heartbeat.py \
             --label sdk-candidate-publish --interval 60 \
-            --log "$RUNNER_TEMP/candidate-build-diagnostics/build.log" -- \
+            --log "$RUNNER_TEMP/candidate-build-diagnostics/build.log" \
+            --progress-log "$RUNNER_TEMP/candidate-execution.jsonl" -- \
             python3 scripts/candidate-components.py build \
             --source-binding "$RUNNER_TEMP/source-binding.json" \
             --directory "$RUNNER_TEMP/candidate-components" \

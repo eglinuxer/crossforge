@@ -206,6 +206,12 @@ class CandidateWorkflowTests(unittest.TestCase):
         self.assertEqual(
             self.workflow.count("scripts/run-with-heartbeat.py"), 2
         )
+        sdk = self.workflow.split("\n  sdk-publication:", 1)[1].split(
+            "\n  publish:", 1
+        )[0]
+        self.assertIn(
+            '--progress-log "$RUNNER_TEMP/candidate-execution.jsonl" --', sdk
+        )
 
     def test_public_consumer_job_preserves_buildkit_diagnostics_after_failure(self):
         publish = self.workflow.split("\n  publish:", 1)[1].split(
