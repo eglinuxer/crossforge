@@ -41,6 +41,9 @@ jobs:
           esac
       - uses: ./.github/actions/setup-locked-buildx
         id: buildx
+        # The planner handles an explicit empty selection without Docker.
+        # Missing selections retain profile fallback; invalid input still fails.
+        if: ${{ inputs.selection == '' || toJSON(fromJSON(inputs.selection).targets) != '{}' }}
       - name: Find raw component boundaries in the selected canonical graph
         id: plan
         env:

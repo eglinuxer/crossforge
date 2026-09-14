@@ -28,12 +28,14 @@ EVENT = "workflow_dispatch"
 MAIN_WORKFLOW = ".github/workflows/produce-toolchain.yml"
 PYTHON_WORKFLOW = ".github/workflows/produce-python.yml"
 PYTHON_ROW_WORKFLOW = ".github/workflows/produce-python-row.yml"
+TOOLCHAIN_QUALIFICATION_WORKFLOW = ".github/workflows/produce-toolchain-qualification.yml"
 
 
 def signing_policy(value, version):
     """Untrusted documents select only an exact, consumer-owned allowlist pair."""
     exact_fields(value, ("workflow", "event"), "catalog signing policy")
-    require(value["workflow"] == {2: MAIN_WORKFLOW, 3: PYTHON_WORKFLOW, 4: PYTHON_ROW_WORKFLOW}[version] and
+    require(value["workflow"] == {2: MAIN_WORKFLOW, 3: PYTHON_WORKFLOW, 4: PYTHON_ROW_WORKFLOW,
+            5: TOOLCHAIN_QUALIFICATION_WORKFLOW}[version] and
             value["event"] in ("push", "workflow_dispatch"),
             "catalog signing workflow or event is not allowed")
     return value
@@ -48,10 +50,10 @@ def validate(value):
     require(type(value) is dict, "component catalog must be an object")
     version = value.get("schema_version")
     exact_fields(value, ("schema_version", "kind", "producer", "entries") +
-                 (("signing",) if type(version) is int and version in (2, 3, 4) else ()), "component catalog")
-    require(type(version) is int and version in (1, 2, 3, 4) and
+                 (("signing",) if type(version) is int and version in (2, 3, 4, 5) else ()), "component catalog")
+    require(type(version) is int and version in (1, 2, 3, 4, 5) and
             value["kind"] == "crossforge-component-catalog", "unsupported component catalog schema")
-    if version in (2, 3, 4):
+    if version in (2, 3, 4, 5):
         signing_policy(value["signing"], version)
     producer = component_artifacts.validate_producer(value["producer"])
     require(producer["kind"] == "github-actions" and producer["invocation"].startswith(
@@ -93,6 +95,28 @@ def validate(value):
                     "Python row catalog qualification settings differ")
             require([item["path"] for item in receipt["metadata"]] == python_qualification.metadata_paths(),
                     "Python row catalog evidence set differs")
+        elif version == 5:
+            from . import component_qualification
+            contract = receipt["contract"]
+            inputs = contract["inputs"]
+            settings = inputs["parameters"].get("qualification", {})
+            require(type(settings) is dict, "toolchain qualification settings must be an object")
+            expected = component_qualification.spec(settings.get("arch"), settings.get("profile"))
+            require(settings == expected and contract["role"] == "qualification" and
+                    inputs["component"] == expected["component"] and inputs["targets"] == [expected["triple"]],
+                    "toolchain qualification catalog role, profile or target differs")
+            # This bounds the signer's authority. Current-source capture and the
+            # domain verifier still determine the complete required reports.
+            copies = inputs["parameters"].get("report_copies")
+            require(type(copies) is dict and copies and
+                    all(type(src) is str and src.startswith("/work/qualification/") and
+                        type(dst) is str and dst.startswith("component/reports/")
+                        for src, dst in copies.items()) and len(set(copies.values())) == len(copies),
+                    "toolchain qualification report paths differ")
+            paths = sorted([component_artifacts.CONTRACT_PATH, component_qualification.RECORD_PATH,
+                            component_qualification.PROGRESS_PATH] + list(copies.values()))
+            require([item["path"] for item in receipt["metadata"]] == paths,
+                    "toolchain qualification catalog evidence set differs")
         digest_value(entry["receipt_sha256"], "catalog receipt SHA256")
         require(content_sha256(receipt) == entry["receipt_sha256"], "catalog receipt differs from its digest")
         require(receipt["contract"]["producer"] == producer, "catalog cannot relabel another producer's receipt")
@@ -105,7 +129,8 @@ def validate(value):
 
 def document(producer, entries, signing=None):
     # Validate before sorting so malformed input always fails at the boundary.
-    version = 1 if signing is None else {PYTHON_WORKFLOW: 3, PYTHON_ROW_WORKFLOW: 4}.get(
+    version = 1 if signing is None else {PYTHON_WORKFLOW: 3, PYTHON_ROW_WORKFLOW: 4,
+        TOOLCHAIN_QUALIFICATION_WORKFLOW: 5}.get(
         signing.get("workflow") if type(signing) is dict else None, 2)
     value = {"schema_version": version, "kind": "crossforge-component-catalog",
              "producer": copy.deepcopy(producer), "entries": copy.deepcopy(entries)}

@@ -256,7 +256,7 @@ class ReplayEvidenceTests(unittest.TestCase):
 
 
 class ReplayWorkflowTests(unittest.TestCase):
-    def test_main_selected_gates_route_through_fresh_replay_from_required_components(self):
+    def test_main_vcpkg_routes_through_fresh_replay_from_required_components(self):
         workflow = (ROOT / ".github/workflows/verify-main-builds.yml").read_text()
         action = (ROOT / ".github/actions/run-build-stage/action.yml").read_text()
         script = textwrap.dedent(action.split("    - name: Build and measure\n", 1)[1]
@@ -265,8 +265,7 @@ class ReplayWorkflowTests(unittest.TestCase):
             root = Path(temporary)
             (root / "scripts").mkdir()
             (root / "scripts/ci-build.py").write_text("import json, sys; print(json.dumps(sys.argv[1:]))\n")
-            for group, stages in (("toolchains", ("toolchain-x86_64", "toolchain-aarch64")),
-                                  ("gcc", ("gcc-smoke", "gcc-full")), ("vcpkg", ("vcpkg",))):
+            for group, stages in (("vcpkg", ("vcpkg",)),):
                 block = job(workflow, group)
                 # Read the actual workflow option, including the composite's
                 # default, so omitting the connection reproduces cached mode.

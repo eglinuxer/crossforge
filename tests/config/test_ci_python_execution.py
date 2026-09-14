@@ -57,8 +57,25 @@ class PythonExecutionTests(unittest.TestCase):
         with self.assertRaises(IdentityError):
             outputs({"sdk": ["sdk-complete-dev"]}, {"cp315": ["build"]})
 
+    def test_qualification_matrix_preserves_complete_architecture_and_profile_coverage(self):
+        actual = outputs({name: STAGES[name] for name in
+            ("toolchain-x86_64", "toolchain-aarch64", "gcc-smoke", "gcc-full")}, {})
+        self.assertEqual(json.loads(actual["toolchains-qualification-matrix"]), {"include": [
+            {"arch": "x86_64", "profile": "toolchain"}, {"arch": "aarch64", "profile": "toolchain"}]})
+        self.assertEqual(json.loads(actual["gcc-qualification-matrix"]), {"include": [
+            {"arch": "x86_64", "profile": "gcc-smoke"}, {"arch": "aarch64", "profile": "gcc-smoke"},
+            {"arch": "x86_64", "profile": "gcc-full"}]})
+        for alias, root in (("gcc-smoke", "gcc-testsuite-smoke-evidence"),
+                            ("gcc-full", "gcc-testsuite-full-qualification-evidence")):
+            self.assertEqual(outputs({alias: [root]}, {})["gcc-qualification-matrix"],
+                             outputs({alias: STAGES[alias]}, {})["gcc-qualification-matrix"])
+        for targets in (["gcc-testsuite-x86_64-smoke"], ["gcc-testsuite-smoke-evidence", "toolchain-x86_64-dev"]):
+            with self.subTest(targets=targets), self.assertRaises(IdentityError):
+                outputs({"gcc-smoke": targets}, {})
+
     def test_every_job_result_and_matrix_output_is_required_and_exact(self):
-        for targets, parts in (({}, {}), ({"python-cp39": STAGES["python-cp39"]}, {"cp39": ["build"]})):
+        for targets, parts in (({}, {}), ({"python-cp39": STAGES["python-cp39"]}, {"cp39": ["build"]}),
+                ({name: STAGES[name] for name in ("toolchain-x86_64", "toolchain-aarch64", "gcc-smoke", "gcc-full")}, {})):
             output = outputs(targets, parts)
             results = {name: {"result": "success" if output[name] == "true" else "skipped"}
                        for name in list(ci_execution.GROUPS) + ["python-components"]}
@@ -93,7 +110,7 @@ class PythonExecutionTests(unittest.TestCase):
             self.assertIn("permissions:\n      contents: read", block)
             self.assertNotIn("packages:", block)
             self.assertNotIn("id-token:", block)
-        for name in ("toolchains", "vcpkg", "gcc", "sdk"):
+        for name in ("vcpkg", "sdk"):
             block = job(workflow, name)
             self.assertIn("permissions:\n      contents: read\n      packages: read", block)
             self.assertNotIn(": write", block)
@@ -106,6 +123,15 @@ class PythonExecutionTests(unittest.TestCase):
             self.assertNotIn("python-components: true", block)
             needs = re.search(r"needs: \[(.+)\]", block).group(1).split(", ")
             self.assertEqual("python-components" in needs, name == "sdk")
+        for name in ("toolchains", "gcc"):
+            block = job(workflow, name)
+            self.assertIn("uses: ./.github/workflows/produce-toolchain-qualification.yml", block)
+            self.assertIn("matrix: ${{ fromJSON(needs.plan.outputs." + name + "-qualification-matrix) }}", block)
+            self.assertIn("arch: ${{ matrix.arch }}", block)
+            self.assertIn("profile: ${{ matrix.profile }}", block)
+            self.assertIn("packages: write", block)
+            self.assertIn("id-token: write", block)
+            self.assertNotIn("run-build-stage", block)
         qualified = job(workflow, "python")
         self.assertIn("uses: ./.github/workflows/produce-python-row.yml", qualified)
         self.assertIn("matrix: ${{ fromJSON(needs.plan.outputs.python-rows-matrix) }}", qualified)
@@ -129,7 +155,7 @@ class PythonExecutionTests(unittest.TestCase):
     def test_existing_gate_commands_match_readonly_except_explicit_binding_and_freshness(self):
         ordinary = (ROOT / ".github/workflows/verify-incremental.yml").read_text()
         main = (ROOT / ".github/workflows/verify-main-builds.yml").read_text()
-        for name in ("inputs", "toolchains", "vcpkg", "gcc", "sdk"):
+        for name in ("inputs", "vcpkg", "sdk"):
             before = job(ordinary, name)
             after = job(main, name)
             if name != "inputs":

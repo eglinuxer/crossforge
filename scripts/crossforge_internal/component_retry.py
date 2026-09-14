@@ -64,7 +64,7 @@ def catalog_metadata(directory, current, producer_invocation):
     bundle = component_catalog.regular_bytes(directory / "catalog.sigstore.json", 16 * 1024 * 1024)
     component_catalog.regular_bytes(directory / "authentication.json", 1024 * 1024)
     catalog = component_catalog.validate(parse_json(data))
-    require(catalog["schema_version"] in (2, 3, 4), "component retry supports main production catalogs only")
+    require(catalog["schema_version"] in (2, 3, 4, 5), "component retry supports main production catalogs only")
     require(data == canonical_bytes(catalog) + b"\n", "component retry catalog encoding differs")
     require(catalog["producer"]["source_commit"] == current["source_commit"] and
             catalog["producer"]["invocation"] == producer_invocation,

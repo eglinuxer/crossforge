@@ -77,7 +77,7 @@ grant actions:read for explicit same-run artifact-ID downloads; signer and packa
 writer permissions remain separate. This path requires successful predecessor job
 outputs and uploaded artifacts, and still needs live GitHub retry acceptance.
 
-After all planned producers finish, the wrapper explicitly reduces the actual
+After all planned producers finish, the wrapper explicitly reduces the ordinary
 consumer jobs to contents:read + packages:read. They capture current inputs,
 verify the signed catalog and OCI bytes, and substitute fixed component contexts
 in selected toolchain, vcpkg, GCC and SDK stages. These jobs require the
@@ -87,6 +87,33 @@ stop the stage. The main caller grants the maximum writer/OIDC permissions only
 to this wrapper; each leaf job receives the permissions for its own operation.
 PRs, forks and non-main dispatches use a separate contents:read-only caller and
 retain the complete source dependency graph without registry credentials.
+
+Selected main toolchain and GCC gates call `produce-toolchain-qualification.yml`.
+The matrix retains independent x86_64/aarch64 toolchain and GCC smoke coverage,
+plus x86_64 GCC full. Each gate first authenticates the required raw components,
+then captures the current qualification inputs and physical execution environment.
+A matching schema 5 catalog is accepted only from this dedicated main workflow;
+the consumer downloads the referenced OCI and verifies the original execution,
+complete report set and current domain policy. It preserves the original producer
+and records `verified-qualification`, without publishing or claiming a new run.
+
+Only an absent qualification input index permits fresh qualification. Invalid
+signatures, changed receipts, incomplete reports, transfer failures or an absent
+explicitly pinned recovery catalog fail the operation. Fresh qualification forces
+the selected qualification RUNs, consumes the raw component contexts and seals
+the reports in a digest-bound internal OCI. The producer publishes those bytes,
+an OIDC-only job signs the same-source handoff, and a separate registry writer
+rechecks the signature before storing the catalog. The existing same-run/attempt
+ordering checks apply to partial retries; no raw compiler is built as a fallback.
+
+The orchestration CLI is `scripts/ci-toolchain-qualification.py`, with explicit
+`--arch`, `--profile`, `--output`, `--builder`, `--oras` and `--cosign` arguments.
+It requires an authentic main workflow identity. Local Docker qualification uses the existing component
+qualification interface and retains an honest local producer. The implementation
+has passed the complete local quick suite and actual x86_64 toolchain/GCC smoke
+production plus sealed-report verification. New workflow signatures and reuse in
+a later GitHub run still require acceptance. Vcpkg continues fresh qualification;
+explicit `replay-qualification.yml` also retains its forced execution behavior.
 
 The SDK job now calls `run-component-sdk` and `scripts/ci-sdk.py`. It independently
 acquires two raw toolchains, thirty raw Python parts and six row qualifications.

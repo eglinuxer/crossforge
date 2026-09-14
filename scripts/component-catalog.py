@@ -28,6 +28,8 @@ def main(argv=None):
     modes.add_argument("--main-ci", action="store_true", help="sign only new raw toolchains from the exact main CI run")
     modes.add_argument("--python-ci", action="store_true", help="sign only new raw Python artifacts from the exact main CI run")
     modes.add_argument("--python-row-ci", action="store_true", help="sign only freshly qualified Python rows from the exact main CI run")
+    modes.add_argument("--toolchain-qualification-ci", action="store_true",
+        help="sign only freshly executed toolchain/GCC reports from the exact main CI run")
     for name in ("verify", "select"):
         command = commands.add_parser(name, allow_abbrev=False)
         command.add_argument("--catalog", type=Path, required=True)
@@ -55,14 +57,20 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command == "from-handoff":
-            main_ci = args.main_ci or args.python_ci or args.python_row_ci
+            main_ci = args.main_ci or args.python_ci or args.python_row_ci or args.toolchain_qualification_ci
             current = component_ci.checked_source(ROOT, "main" if main_ci else "pilot")
             invocation = current["invocation"]
             if args.producer_invocation is not None:
                 require(main_ci, "legacy pilot handoff requires the current attempt")
                 from crossforge_internal.component_retry import prior_invocation
                 invocation = prior_invocation(args.producer_invocation, current["invocation"])
-            if args.python_row_ci:
+            if args.toolchain_qualification_ci:
+                from crossforge_internal import toolchain_qualification_handoff
+                value = toolchain_qualification_handoff.verify(ROOT, load_json(args.handoff), args.handoff_sha256,
+                    current["source_commit"], invocation)
+                signing = {"workflow": component_catalog.TOOLCHAIN_QUALIFICATION_WORKFLOW,
+                           "event": os.environ["GITHUB_EVENT_NAME"]}
+            elif args.python_row_ci:
                 value = python_row_handoff.verify(ROOT, load_json(args.handoff), args.handoff_sha256,
                     current["source_commit"], invocation)
                 signing = {"workflow": component_catalog.PYTHON_ROW_WORKFLOW, "event": os.environ["GITHUB_EVENT_NAME"]}
@@ -75,7 +83,8 @@ def main(argv=None):
                     current["source_commit"], invocation)
                 require(value["schema_version"] == (2 if args.main_ci else 1), "handoff schema differs from signing entry point")
                 signing = {"workflow": component_catalog.MAIN_WORKFLOW, "event": os.environ["GITHUB_EVENT_NAME"]} if args.main_ci else None
-            catalog = component_catalog.document(value["producer"], list(value["components"].values()), signing)
+            entries = [value["entry"]] if args.toolchain_qualification_ci else list(value["components"].values())
+            catalog = component_catalog.document(value["producer"], entries, signing)
             require(not args.output.exists() and not args.output.is_symlink(), "catalog output must be new")
             with args.output.open("xb") as stream:
                 stream.write(canonical_bytes(catalog) + b"\n")
