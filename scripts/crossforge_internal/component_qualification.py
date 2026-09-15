@@ -32,7 +32,7 @@ def spec(arch, profile):
         stages = ["toolchain-%s-qualify-build" % arch, "runtime-smoke-%s" % arch]
     else:
         target = "gcc-testsuite-%s-%s" % (arch, "smoke" if profile == "gcc-smoke" else "full-qualified")
-        stages = ["gcc-testsuite-%s-base" % arch, target]
+        stages = [target]
         contexts["crossforge_toolchain_%s_test_context" % arch] = "gcc-test-context"
     return {"arch": arch, "profile": profile, "component": "qualification/%s-%s" % (arch, profile),
             "target": target, "stages": stages, "contexts": contexts, "triple": arch + "-unknown-linux-gnu"}

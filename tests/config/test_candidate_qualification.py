@@ -72,6 +72,13 @@ class CandidateQualificationGraphTests(unittest.TestCase):
         selected = qualification.plan(ROOT, ready["inputs"])
         self.assertIn("gcc-testsuite-smoke-evidence", selected["owners"])
         self.assertIn("gcc-testsuite-full-qualification-evidence", selected["owners"])
+        self.assertEqual(selected["owners"]["gcc-testsuite-smoke-evidence"], {
+            "gcc-testsuite-x86_64-smoke": {"runs": 1, "marker": None},
+            "gcc-testsuite-aarch64-smoke": {"runs": 2, "marker": None},
+        })
+        self.assertEqual(selected["owners"]["gcc-testsuite-full-qualification-evidence"], {
+            "gcc-testsuite-x86_64-full-qualified": {"runs": 1, "marker": None},
+        })
         self.assertEqual(set(selected["owners"]["sdk-candidate"]), {"sdk-complete-dev", "sdk-candidate"})
         for row in ("cp39", "cp310", "cp311", "cp312", "cp313", "cp314"):
             self.assertIn("python-row-" + row, selected["owners"])

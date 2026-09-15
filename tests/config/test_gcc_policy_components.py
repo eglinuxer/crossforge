@@ -169,7 +169,7 @@ class GccPolicyGraphTests(unittest.TestCase):
                     "config/gcc-testsuite-smoke.json", "config/gcc-testsuite-full.json",
                     "tests/gcc/baselines/full/x86_64-host-direct.json"} <= paths)
                 self.assertEqual(captured["parameters"]["required_runs"], {
-                    settings["stages"][0]: 1, settings["stages"][1]: 2 if settings["arch"] == "aarch64" else 1})
+                    settings["target"]: 2 if settings["arch"] == "aarch64" else 1})
 
 
 if __name__ == "__main__":
