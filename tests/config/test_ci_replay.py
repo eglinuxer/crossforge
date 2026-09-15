@@ -31,7 +31,7 @@ class ReplayGraphTests(unittest.TestCase):
 
     def test_all_replays_cover_canonical_gates_without_forcing_source_compilers(self):
         expected_counts = {"toolchain-x86_64": 2, "toolchain-aarch64": 5,
-            "gcc-smoke": 5, "gcc-full": 2, "vcpkg": 4, "sdk": 14}
+            "gcc-smoke": 3, "gcc-full": 1, "vcpkg": 4, "sdk": 14}
         expected_counts.update({"python-" + row: 9 for row in ci_replay.ROWS})
         for stage in ci_replay.STAGES:
             with self.subTest(stage=stage):

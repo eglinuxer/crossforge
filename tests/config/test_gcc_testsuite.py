@@ -2,6 +2,8 @@ import copy
 import contextlib
 import io
 import runpy
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -450,6 +452,131 @@ class GccTestsuiteContractTests(unittest.TestCase):
         self.assertIn('"GCOV_UNDER_TEST": str(gcov)', runner)
         self.assertIn('str(tool_prefix) + ":" + suite_environment["PATH"]', runner)
         self.assertIn('Path(resolved_gxx).resolve() != gxx.resolve()', runner)
+
+    def test_compiler_features_use_final_tools_and_per_run_outputs(self):
+        check = RUNNER["check_compiler_features"]
+        source = Path("/prepared/gcc")
+        tests = source / "gcc/testsuite/gcc.dg"
+        for arch in ("x86_64", "aarch64"):
+            prefix = Path("/toolchains") / arch
+            compiler = prefix / "bin/gcc"
+            gcov = prefix / "bin/gcov"
+            sysroot = Path("/sysroots") / arch
+            qemu = Path("/executors/qemu-aarch64") if arch == "aarch64" else None
+            for run in ("smoke", "full"):
+                with self.subTest(arch=arch, run=run):
+                    output = Path("/results") / arch / run
+                    trampoline = output / "gcc-heap-trampoline-probe"
+                    command = mock.Mock()
+                    with mock.patch.dict(check.__globals__, {"command": command}):
+                        check(compiler, gcov, source, output, sysroot, qemu)
+                    execution = [qemu, "-L", sysroot, trampoline] if qemu else [trampoline]
+                    self.assertEqual(command.call_args_list, [
+                        mock.call([
+                            compiler, "-O2", "-fgraphite-identity", tests / "graphite/id-1.c",
+                            "-S", "-o", output / "gcc-graphite-probe.s",
+                        ]),
+                        mock.call([
+                            compiler, "-O2", "-ftrampoline-impl=heap",
+                            tests / "heap-trampoline-1.c", "-o", trampoline,
+                        ]),
+                        mock.call(execution),
+                        mock.call([gcov, "--version"]),
+                    ])
+
+    def test_compiler_feature_probe_executes_from_current_output_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            compiler = root / "compiler"
+            compiler.write_text(
+                "#!%s\n"
+                "from pathlib import Path\n"
+                "import sys\n"
+                "if '-o' in sys.argv:\n"
+                "    output = Path(sys.argv[sys.argv.index('-o') + 1])\n"
+                "    output.write_text('#!/bin/sh\\nexit 0\\n')\n"
+                "    output.chmod(0o755)\n" % sys.executable,
+                encoding="utf-8",
+            )
+            compiler.chmod(0o755)
+            runner_script = (
+                "import runpy\n"
+                "import sys\n"
+                "from pathlib import Path\n"
+                "runner = runpy.run_path(sys.argv[1])\n"
+                "compiler = Path(sys.argv[2])\n"
+                "runner['check_compiler_features'](\n"
+                "    compiler, compiler, Path('.'), Path('.'), Path('.'))\n"
+            )
+            process = subprocess.run(
+                [sys.executable, "-c", runner_script,
+                 str(REPOSITORY / "scripts/run-gcc-testsuite.py"), str(compiler)],
+                cwd=str(root), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                universal_newlines=True,
+            )
+            self.assertEqual(process.returncode, 0, process.stderr)
+            self.assertTrue((root / "gcc-heap-trampoline-probe").is_file())
+
+    def test_compiler_feature_failures_stop_at_the_failed_command(self):
+        check = RUNNER["check_compiler_features"]
+        for index in range(4):
+            with self.subTest(command=index):
+                error = RUNNER["ValidationError"]("feature probe failed")
+                command = mock.Mock(side_effect=[""] * index + [error])
+                with mock.patch.dict(check.__globals__, {"command": command}):
+                    with self.assertRaises(RUNNER["ValidationError"]) as caught:
+                        check(Path("/gcc"), Path("/gcov"), Path("/source"),
+                              Path("/output"), Path("/sysroot"))
+                self.assertIs(caught.exception, error)
+                self.assertEqual(command.call_count, index + 1)
+
+    def test_feature_failure_blocks_dejagnu_and_qualification_report(self):
+        main = RUNNER["main"]
+        for profile in ("smoke", "full"):
+            with self.subTest(profile=profile), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                report = root / "report.json"
+                plan = self.plan if profile == "smoke" else self.full_plan
+                argv = [
+                    "run-gcc-testsuite.py", "--release", str(REPOSITORY / "config/release.json"),
+                    "--profile", profile, "--build", str(root / "build"),
+                    "--source", str(root / "source"), "--prefix", str(root / "prefix"),
+                    "--sysroot", str(root / "sysroot"), "--target", "x86_64-unknown-linux-gnu",
+                    "--runtime-tier", "host-direct", "--site", str(REPOSITORY / plan["site"]["file"]),
+                    "--host-marker", str(root / "host.json"),
+                    "--qualification-component", str(root / "component.json"),
+                    "--qualification-component-sha256", "0" * 64,
+                    "--output", str(root / "output"), "--report", str(report),
+                ]
+
+                def command(arguments):
+                    if "-fgraphite-identity" in arguments:
+                        raise RUNNER["ValidationError"]("Graphite probe failed")
+                    return {
+                        "-dumpmachine": "x86_64-unknown-linux-gnu",
+                        "-dumpfullversion": (
+                            self.full_plan["host_gcc_major"] + ".0.0"
+                            if arguments[0] == Path("/usr/bin/gcc") else self.plan["gcc_version"]
+                        ),
+                        "-print-sysroot": str(root / "sysroot"),
+                        "--version": "runtest 1.6.1", "-v": "expect 5.45.4",
+                    }[arguments[1]]
+
+                prepare = mock.Mock()
+                errors = io.StringIO()
+                with mock.patch.object(RUNNER["sys"], "argv", argv), mock.patch.dict(
+                    main.__globals__, {
+                        "require_file": lambda path, label: path,
+                        "file_sha256": lambda path: "0" * 64,
+                        "command": command,
+                        "prepare_tool_links": prepare,
+                    },
+                ), mock.patch.dict(RUNNER["COMPONENT"], {"load_component": mock.Mock()}), \
+                        contextlib.redirect_stderr(errors):
+                    self.assertEqual(main(), 1)
+                self.assertIn("Graphite probe failed", errors.getvalue())
+                prepare.assert_not_called()
+                self.assertFalse(report.exists())
 
     def test_ci_isolates_qemu_smoke_from_peak_build_fanout(self):
         stages = runpy.run_path(str(REPOSITORY / "scripts/ci-build.py"))["STAGES"]

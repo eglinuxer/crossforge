@@ -91,12 +91,11 @@ def override(graph, selected):
 
 
 def fresh_vertices(path, selected, started, completed):
-    """Verify each owning target; report genuinely shared BuildKit vertices once.
+    """Verify each owning target; report shared BuildKit vertices once.
 
-    GCC smoke/full share their prepared test base. Requiring each owner's fresh
-    events retains complete logical coverage, while the shared content digest
-    avoids claiming that the same physical RUN executed twice. The existing
-    verifier still rejects cached/failed aliases and incomplete/stale events.
+    Each owner supplies fresh events for its required RUNs. Owners sharing a
+    content digest contribute one physical execution record. Every alias must
+    satisfy the same freshness and completion checks.
     """
     version = selected.get("schema_version") if type(selected) is dict else None
     exact_fields(selected, ("schema_version", "kind", "owners") + (("reused_rows",) if version == 2 else ()),

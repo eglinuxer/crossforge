@@ -371,9 +371,10 @@ class DockerComponentWiringTests(unittest.TestCase):
                 block,
             )
             self.assertIn("run-gcc-testsuite.py", block)
-            self.assertIn("-fgraphite-identity", block)
-            self.assertIn("-ftrampoline-impl=heap", block)
-            self.assertIn("-gcov", block)
+            self.assertEqual(
+                set(re.findall(r"^([A-Z]+) ", self.stages[base], re.MULTILINE)),
+                {"FROM", "COPY"},
+            )
             self.assertIn("--network=none", block)
             self.assertIn("--prefix /opt/crossforge/targets/", block)
             self.assertIn("--host-marker /usr/share/crossforge/rpm-locks/host-gcc-test.json", block)

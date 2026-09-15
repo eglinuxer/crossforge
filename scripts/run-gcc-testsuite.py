@@ -43,6 +43,23 @@ def command(arguments, cwd=None, env=None):
     return process.stdout.strip()
 
 
+def check_compiler_features(compiler, gcov, source, output, sysroot, qemu=None):
+    """Check installed compiler features within each testsuite execution."""
+    tests = source / "gcc/testsuite/gcc.dg"
+    command([
+        compiler, "-O2", "-fgraphite-identity", tests / "graphite/id-1.c",
+        "-S", "-o", output / "gcc-graphite-probe.s",
+    ])
+    trampoline = output.resolve() / "gcc-heap-trampoline-probe"
+    command([
+        compiler, "-O2", "-ftrampoline-impl=heap",
+        tests / "heap-trampoline-1.c", "-o", trampoline,
+    ])
+    executor = [qemu, "-L", sysroot] if qemu else []
+    command(executor + [trampoline])
+    command([gcov, "--version"])
+
+
 def write_json(path, document):
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(
@@ -677,6 +694,10 @@ def main():
             }
 
         arguments.output.mkdir(parents=True, exist_ok=True)
+        check_compiler_features(
+            compiler, gcov, arguments.source, arguments.output,
+            arguments.sysroot, arguments.qemu,
+        )
         tool_prefix, target_tools = prepare_tool_links(
             arguments.output, arguments.prefix, compiler, gxx, gcc_ar, gcov
         )

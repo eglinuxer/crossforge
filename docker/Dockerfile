@@ -1586,9 +1586,9 @@ RUN --network=none /work/qualification/x86_64/hello \
     && /work/qualification/x86_64/catch \
     && printf '%s\n' 'passed' > /work/qualification/clean-rocky.ok
 
-# GCC test bases contain the source/build trees and test-only host closure, but
-# remain outside every SDK ancestry. Qualification and observation branch from
-# the same assembly so an observation can never inherit a passing smoke result.
+# GCC test bases assemble source/build trees and the test-only host closure.
+# Each qualification or observation RUN performs its own compiler feature probes
+# and DejaGNU tests. These stages remain outside every SDK ancestry.
 FROM host-gcc-test-locked AS gcc-testsuite-x86_64-base
 COPY --from=gcc-x86_64-test-input /work/prepared/gcc/ /work/prepared/gcc/
 COPY --from=gcc-x86_64-test-input /work/build/gcc-x86_64/ /work/build/gcc-x86_64/
@@ -1605,18 +1605,6 @@ COPY patches/gcc/ /work/patches/gcc/
 COPY tests/gcc/ /work/tests/gcc/
 COPY scripts/validate-release.py scripts/release_component.py scripts/gcc_testsuite_policy.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
-RUN --network=none \
-    /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc \
-      -O2 -fgraphite-identity \
-      /work/prepared/gcc/gcc/testsuite/gcc.dg/graphite/id-1.c \
-      -S -o /work/gcc-graphite-probe.s \
-    && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcc \
-      -O2 -ftrampoline-impl=heap \
-      /work/prepared/gcc/gcc/testsuite/gcc.dg/heap-trampoline-1.c \
-      -o /work/gcc-heap-trampoline-probe \
-    && /work/gcc-heap-trampoline-probe \
-    && /opt/crossforge/targets/x86_64-unknown-linux-gnu/bin/x86_64-unknown-linux-gnu-gcov \
-      --version
 
 # The DejaGNU smoke profile runs against the final installed hybrid compiler,
 # never a build-tree compiler, and remains the only locked qualification profile.
@@ -1777,20 +1765,6 @@ COPY patches/gcc/ /work/patches/gcc/
 COPY tests/gcc/ /work/tests/gcc/
 COPY scripts/validate-release.py scripts/release_component.py scripts/gcc_testsuite_policy.py \
   scripts/validate-gcc-testsuite.py scripts/run-gcc-testsuite.py /work/scripts/
-RUN --network=none \
-    /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc \
-      -O2 -fgraphite-identity \
-      /work/prepared/gcc/gcc/testsuite/gcc.dg/graphite/id-1.c \
-      -S -o /work/gcc-graphite-probe.s \
-    && /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcc \
-      -O2 -ftrampoline-impl=heap \
-      /work/prepared/gcc/gcc/testsuite/gcc.dg/heap-trampoline-1.c \
-      -o /work/gcc-heap-trampoline-probe \
-    && /usr/local/libexec/crossforge/qemu-aarch64 \
-      -L /opt/crossforge/sysroots/el8/aarch64 \
-      /work/gcc-heap-trampoline-probe \
-    && /opt/crossforge/targets/aarch64-unknown-linux-gnu/bin/aarch64-unknown-linux-gnu-gcov \
-      --version
 
 FROM gcc-testsuite-aarch64-base AS gcc-testsuite-aarch64-smoke
 ARG CROSSFORGE_COMPONENT_TOOLCHAIN_GCC_TESTSUITE_QUALIFICATION_SHA256
