@@ -15,6 +15,10 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 SCHEMA_ID = "https://crossforge.dev/schemas/image-attestations.schema.json"
+BUILD_TARGETS = {
+    "sdk-candidate": "sdk-candidate",
+    "source-bundle": "source-bundle-output",
+}
 INDEX_MEDIA_TYPES = {
     "application/vnd.oci.image.index.v1+json",
     "application/vnd.docker.distribution.manifest.list.v2+json",
@@ -185,7 +189,7 @@ def validate_spdx(statement, platform_digest):
 
 
 def create_report(arguments):
-    require(arguments.image_kind in ("sdk-candidate", "source-bundle"), "image kind differs")
+    require(arguments.image_kind in BUILD_TARGETS, "image kind differs")
     require(REPOSITORY_RE.match(arguments.repository or ""), "repository is invalid")
     require(COMMIT_RE.match(arguments.source_commit or ""), "source commit is invalid")
     require(DIGEST_RE.match(arguments.expected_index_digest or ""), "index digest is invalid")
@@ -290,7 +294,7 @@ def create_report(arguments):
                 statement,
                 arguments.platform_manifest_digest,
                 arguments.source_commit,
-                arguments.image_kind,
+                BUILD_TARGETS[arguments.image_kind],
             )
         else:
             validate_spdx(statement, arguments.platform_manifest_digest)
@@ -374,7 +378,7 @@ def parser():
     result.add_argument("--expected-index-digest", required=True)
     result.add_argument("--platform-manifest-digest", required=True)
     result.add_argument(
-        "--image-kind", choices=("sdk-candidate", "source-bundle"), required=True
+        "--image-kind", choices=BUILD_TARGETS, required=True
     )
     result.add_argument("--repository", required=True)
     result.add_argument("--source-commit", required=True)

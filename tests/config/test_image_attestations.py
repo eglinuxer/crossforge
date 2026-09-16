@@ -31,7 +31,7 @@ class ImageAttestationTests(unittest.TestCase):
             }
         return result
 
-    def fixture(self, directory, image_kind="sdk-candidate"):
+    def fixture(self, directory, image_kind="sdk-candidate", target="sdk-candidate"):
         root = Path(directory)
         commit = "1" * 40
         platform_digest = "sha256:" + "2" * 64
@@ -57,7 +57,7 @@ class ImageAttestationTests(unittest.TestCase):
                     "externalParameters": {
                         "request": {
                             "args": {
-                                "target": image_kind,
+                                "target": target,
                                 "build-arg:CROSSFORGE_SOURCE_COMMIT": commit,
                             }
                         }
@@ -198,6 +198,22 @@ class ImageAttestationTests(unittest.TestCase):
                     fixture["arguments"].output, report
                 )
             )
+
+    def test_source_bundle_requires_dockerfile_stage(self):
+        for target in ("source-bundle-output", "source-bundle"):
+            with self.subTest(target=target), tempfile.TemporaryDirectory() as temporary:
+                fixture = self.fixture(temporary, "source-bundle", target)
+                if target == "source-bundle-output":
+                    report = ATTESTATIONS["create_report"](fixture["arguments"])
+                    ATTESTATIONS["validate_schema"](
+                        report, fixture["arguments"].schema
+                    )
+                    self.assertEqual(report["image_kind"], "source-bundle")
+                else:
+                    with self.assertRaisesRegex(
+                        ATTESTATIONS["AttestationError"], "build target or source"
+                    ):
+                        ATTESTATIONS["create_report"](fixture["arguments"])
 
     def test_index_manifest_and_blob_drift_fail_closed(self):
         mutations = (
