@@ -372,10 +372,11 @@ class CandidateWorkflowTests(unittest.TestCase):
                           "qt-native-aarch64-runtime.json"):
             self.assertNotIn(forbidden, self.workflow)
 
-    def test_native_arm_probe_workspace_allows_execution(self):
+    def test_native_arm_probes_use_runner_identity_and_executable_workspace(self):
         native = self.workflow.split("\n  native-aarch64:\n", 1)[1].split(
             "\n  sign-candidate:\n", 1
         )[0]
+        self.assertIn('--user "$(id -u):$(id -g)"', native)
         self.assertIn("--tmpfs /tmp:rw,exec,mode=1777", native)
 
     def test_native_release_evidence_is_staged_under_one_artifact_root(self):

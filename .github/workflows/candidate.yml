@@ -808,6 +808,7 @@ jobs:
           install -d "$RUNNER_TEMP/native-aarch64-output"
           docker pull --platform linux/arm64 "$runtime_reference"
           docker run --rm --pull=never --platform linux/arm64 \
+            --user "$(id -u):$(id -g)" \
             --network none --read-only \
             --tmpfs /tmp:rw,exec,mode=1777 \
             --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/src,readonly" \
