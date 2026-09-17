@@ -1003,13 +1003,13 @@ jobs:
           jq -e --arg repository "$CANDIDATE_REPOSITORY" \
             --arg digest "$CANDIDATE_DIGEST" \
             'length >= 1 and all(.[];
-              .critical.identity."docker-reference" == $repository and
+              .critical.identity."docker-reference" == ($repository + "@" + $digest) and
               .critical.image."docker-manifest-digest" == $digest)' \
             "$RUNNER_TEMP/candidate-signature.json" >/dev/null
           jq -e --arg repository "$source_repository" \
             --arg digest "$source_digest" \
             'length >= 1 and all(.[];
-              .critical.identity."docker-reference" == $repository and
+              .critical.identity."docker-reference" == ($repository + "@" + $digest) and
               .critical.image."docker-manifest-digest" == $digest)' \
             "$RUNNER_TEMP/source-bundle-signature.json" >/dev/null
       - name: Stage candidate signature evidence

@@ -288,7 +288,7 @@ jobs:
             jq -e --arg repository "$CANDIDATE_REPOSITORY" \
               --arg digest "$candidate_digest" '
                 length >= 1 and all(.[];
-                  .critical.identity."docker-reference" == $repository and
+                  .critical.identity."docker-reference" == ($repository + "@" + $digest) and
                   .critical.image."docker-manifest-digest" == $digest)
               ' "$evidence" >/dev/null
           done
@@ -298,7 +298,7 @@ jobs:
             jq -e --arg repository "$source_repository" \
               --arg digest "$source_digest" '
                 length >= 1 and all(.[];
-                  .critical.identity."docker-reference" == $repository and
+                  .critical.identity."docker-reference" == ($repository + "@" + $digest) and
                   .critical.image."docker-manifest-digest" == $digest)
               ' "$evidence" >/dev/null
           done
