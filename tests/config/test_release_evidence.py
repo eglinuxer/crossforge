@@ -1,6 +1,8 @@
 import ast
 import base64
+import hashlib
 import json
+import os
 import re
 import runpy
 import subprocess
@@ -368,6 +370,29 @@ class ReleaseEvidenceTests(unittest.TestCase):
                             )
                 identity["docker-reference"] = expected
                 self.write_json(path, signature)
+
+    def test_workflows_decode_the_pinned_trusted_root(self):
+        release = json.loads((REPOSITORY / "config/release.json").read_text())
+        expected_sha256 = release["sigstore"]["trust"]["trusted_root_sha256"]
+        for workflow in ("candidate.yml", "promote.yml", "rollback.yml"):
+            with self.subTest(workflow=workflow), tempfile.TemporaryDirectory() as temporary:
+                text = (REPOSITORY / ".github/workflows" / workflow).read_text()
+                commands = re.findall(
+                    r"(?m)^\s*(openssl base64[^\n]*\\\n\s+-in [^\n]*\\\n\s+-out [^\n]*)",
+                    text,
+                )
+                self.assertEqual(len(commands), 1)
+                subprocess.run(
+                    ["bash", "-e", "-u", "-o", "pipefail", "-c", commands[0]],
+                    cwd=str(REPOSITORY), env=dict(os.environ, RUNNER_TEMP=temporary),
+                    check=True,
+                )
+                payload = (Path(temporary) / "trusted_root.json").read_bytes()
+                self.assertEqual(hashlib.sha256(payload).hexdigest(), expected_sha256)
+                self.assertEqual(
+                    json.loads(payload.decode("utf-8"))["mediaType"],
+                    "application/vnd.dev.sigstore.trustedroot+json;version=0.1",
+                )
 
     def test_workflow_signature_checks_accept_exact_cosign_references(self):
         repository = "ghcr.io/eglinuxer/crossforge"
