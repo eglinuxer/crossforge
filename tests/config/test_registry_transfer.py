@@ -1,11 +1,14 @@
 import hashlib
 import io
 from pathlib import Path
+import socket
+import ssl
 import sys
 import subprocess
 import tarfile
 import tempfile
 import unittest
+import urllib.error
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -72,6 +75,71 @@ class RegistryTransferTests(unittest.TestCase):
             transfer.validate_tool(dict(self.policy, schema_version=True))
         with self.assertRaises(IdentityError):
             transfer.validate_tool(dict(self.policy, url="https://untrusted.invalid/binary"))
+
+    def test_tool_download_recovers_from_transient_connection_and_http_errors(self):
+        data = self.archive().read_bytes()
+        errors = [urllib.error.URLError(ConnectionResetError(104, "Connection reset by peer")),
+                  ConnectionResetError(104, "Connection reset by peer"), TimeoutError("timed out"),
+                  urllib.error.URLError(TimeoutError("timed out")), socket.timeout("timed out"),
+                  urllib.error.URLError(socket.timeout("timed out"))]
+        errors.extend(urllib.error.HTTPError(self.policy["url"], code, "temporary failure", {}, None)
+                      for code in (408, 429, 500, 502, 503, 504))
+        for index, error in enumerate(errors):
+            with self.subTest(error=error), \
+                 mock.patch.object(transfer.urllib.request, "urlopen", side_effect=[error, io.BytesIO(data)]) as request, \
+                 mock.patch.object(transfer.time, "sleep") as sleep, \
+                 mock.patch.object(sys, "stderr", io.StringIO()) as log:
+                destination = transfer.install_tool(self.policy, self.root / ("installed-%d" % index))
+                self.assertEqual(destination.read_bytes(), self.binary.read_bytes())
+                self.assertEqual(request.call_args_list, [mock.call(self.policy["url"], timeout=60)] * 2)
+                sleep.assert_called_once_with(2)
+                self.assertIn("attempt 1/5", log.getvalue())
+
+    def test_tool_download_restarts_after_connection_reset_during_read(self):
+        data = self.archive().read_bytes()
+        response = mock.MagicMock()
+        response.__enter__.return_value.read.side_effect = ConnectionResetError(104, "Connection reset by peer")
+        with mock.patch.object(transfer.urllib.request, "urlopen", side_effect=[response, io.BytesIO(data)]) as request, \
+             mock.patch.object(transfer.time, "sleep"), mock.patch.object(sys, "stderr", io.StringIO()):
+            destination = transfer.install_tool(self.policy, self.root / "installed")
+        self.assertEqual(destination.read_bytes(), self.binary.read_bytes())
+        self.assertEqual(request.call_count, 2)
+        response.__exit__.assert_called_once()
+
+    def test_tool_download_stops_after_five_failed_attempts(self):
+        error = urllib.error.URLError(ConnectionResetError(104, "Connection reset by peer"))
+        with mock.patch.object(transfer.urllib.request, "urlopen", side_effect=error) as request, \
+             mock.patch.object(transfer.time, "sleep") as sleep, \
+             mock.patch.object(sys, "stderr", io.StringIO()), self.assertRaises(urllib.error.URLError) as raised:
+            transfer.install_tool(self.policy, self.root / "installed")
+        self.assertIs(raised.exception, error)
+        self.assertEqual(request.call_count, 5)
+        self.assertEqual(sleep.call_args_list, [mock.call(2)] * 4)
+        self.assertFalse((self.root / "installed").exists())
+
+    def test_tool_download_fails_immediately_for_permanent_errors(self):
+        errors = [urllib.error.URLError(ssl.SSLError("certificate verify failed"))]
+        errors.extend(urllib.error.HTTPError(self.policy["url"], code, "permanent failure", {}, None)
+                      for code in (401, 403, 404))
+        for error in errors:
+            with self.subTest(error=error), \
+                 mock.patch.object(transfer.urllib.request, "urlopen", side_effect=error) as request, \
+                 mock.patch.object(transfer.time, "sleep") as sleep, self.assertRaises(urllib.error.URLError):
+                transfer.install_tool(self.policy, self.root / "installed")
+            request.assert_called_once()
+            sleep.assert_not_called()
+            self.assertFalse((self.root / "installed").exists())
+
+    def test_downloaded_tool_hash_mismatch_fails_immediately(self):
+        data = self.archive().read_bytes()
+        for field in ("archive_sha256", "binary_sha256"):
+            with self.subTest(field=field), \
+                 mock.patch.object(transfer.urllib.request, "urlopen", return_value=io.BytesIO(data)) as request, \
+                 mock.patch.object(transfer.time, "sleep") as sleep, self.assertRaises(IdentityError):
+                transfer.install_tool(dict(self.policy, **{field: "0" * 64}), self.root / "installed")
+            request.assert_called_once()
+            sleep.assert_not_called()
+            self.assertFalse((self.root / "installed").exists())
 
     def test_registry_references_cannot_use_credentials_urls_tags_or_nonlocal_http(self):
         for value in ("https://ghcr.io/org/components", "user:secret@ghcr.io/org/components",

@@ -8,10 +8,12 @@ import hashlib
 import io
 from pathlib import Path
 import re
+import socket
 import subprocess
 import sys
 import tarfile
 import time
+import urllib.error
 import urllib.request
 
 from . import oci_layout
@@ -42,8 +44,23 @@ def install_tool(policy, directory, archive=None):
     directory = Path(directory).absolute()
     require(not directory.exists() and not directory.is_symlink(), "ORAS output directory must be new")
     if archive is None:
-        with urllib.request.urlopen(policy["url"], timeout=60) as response:
-            data = response.read(32 * 1024 * 1024 + 1)
+        for attempt in range(1, 6):
+            try:
+                with urllib.request.urlopen(policy["url"], timeout=60) as response:
+                    data = response.read(32 * 1024 * 1024 + 1)
+                break
+            except (urllib.error.URLError, ConnectionError, TimeoutError, socket.timeout) as error:
+                if isinstance(error, urllib.error.HTTPError):
+                    retryable = error.code in (408, 429, 500, 502, 503, 504)
+                else:
+                    reason = getattr(error, "reason", error)
+                    retryable = isinstance(reason, (ConnectionError, TimeoutError, socket.timeout))
+                if retryable and attempt < 5:
+                    print("ORAS download attempt %d/5 failed: %s; retrying in 2 seconds"
+                          % (attempt, error), file=sys.stderr)
+                    time.sleep(2)
+                else:
+                    raise
     else:
         with Path(archive).open("rb") as stream:
             data = stream.read(32 * 1024 * 1024 + 1)
