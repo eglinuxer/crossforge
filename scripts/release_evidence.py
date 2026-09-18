@@ -262,7 +262,7 @@ def validate_inputs(paths, release, schema):
                 and record.get("critical", {}).get("identity", {}).get(
                     "docker-reference"
                 )
-                == repository
+                == repository + "@" + digest
                 and record.get("critical", {}).get("image", {}).get(
                     "docker-manifest-digest"
                 )

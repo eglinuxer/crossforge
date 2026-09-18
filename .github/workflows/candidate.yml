@@ -808,8 +808,9 @@ jobs:
           install -d "$RUNNER_TEMP/native-aarch64-output"
           docker pull --platform linux/arm64 "$runtime_reference"
           docker run --rm --pull=never --platform linux/arm64 \
+            --user "$(id -u):$(id -g)" \
             --network none --read-only \
-            --tmpfs /tmp:rw,mode=1777 \
+            --tmpfs /tmp:rw,exec,mode=1777 \
             --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/src,readonly" \
             --mount "type=bind,src=$RUNNER_TEMP/native-aarch64-input,dst=/input,readonly" \
             --mount "type=bind,src=$RUNNER_TEMP/native-aarch64-output,dst=/output" \
@@ -1002,13 +1003,13 @@ jobs:
           jq -e --arg repository "$CANDIDATE_REPOSITORY" \
             --arg digest "$CANDIDATE_DIGEST" \
             'length >= 1 and all(.[];
-              .critical.identity."docker-reference" == $repository and
+              .critical.identity."docker-reference" == ($repository + "@" + $digest) and
               .critical.image."docker-manifest-digest" == $digest)' \
             "$RUNNER_TEMP/candidate-signature.json" >/dev/null
           jq -e --arg repository "$source_repository" \
             --arg digest "$source_digest" \
             'length >= 1 and all(.[];
-              .critical.identity."docker-reference" == $repository and
+              .critical.identity."docker-reference" == ($repository + "@" + $digest) and
               .critical.image."docker-manifest-digest" == $digest)' \
             "$RUNNER_TEMP/source-bundle-signature.json" >/dev/null
       - name: Stage candidate signature evidence

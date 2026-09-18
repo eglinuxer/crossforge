@@ -1,7 +1,9 @@
 import ast
 import base64
 import json
+import re
 import runpy
+import subprocess
 import tarfile
 import tempfile
 import unittest
@@ -245,7 +247,9 @@ class ReleaseEvidenceTests(unittest.TestCase):
             {
                 "critical": {
                     "identity": {
-                        "docker-reference": candidate["repository"]
+                        "docker-reference": (
+                            candidate["repository"] + "@" + candidate["digest"]
+                        )
                     },
                     "image": {
                         "docker-manifest-digest": candidate["digest"]
@@ -254,12 +258,11 @@ class ReleaseEvidenceTests(unittest.TestCase):
             }
         ]
         self.write_json(paths["candidate-signature.json"], signature)
-        signature[0]["critical"]["identity"]["docker-reference"] = candidate[
-            "source_bundle"
-        ]["repository"]
-        signature[0]["critical"]["image"]["docker-manifest-digest"] = candidate[
-            "source_bundle"
-        ]["digest"]
+        source = candidate["source_bundle"]
+        signature[0]["critical"]["identity"]["docker-reference"] = (
+            source["repository"] + "@" + source["digest"]
+        )
+        signature[0]["critical"]["image"]["docker-manifest-digest"] = source["digest"]
         self.write_json(paths["source-bundle-signature.json"], signature)
         paths["native-aarch64-probes.tar"].write_bytes(b"probe bundle\n")
         self.write_json(
@@ -338,6 +341,67 @@ class ReleaseEvidenceTests(unittest.TestCase):
             self.assertEqual(
                 observed["candidate"]["digest"], fixture["candidate"]["digest"]
             )
+
+    def test_signature_references_bind_repository_and_digest(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = self.fixture(temporary)
+            for name in ("candidate-signature.json", "source-bundle-signature.json"):
+                path = fixture["paths"][name]
+                signature = json.loads(path.read_text())
+                identity = signature[0]["critical"]["identity"]
+                expected = identity["docker-reference"]
+                repository, digest = expected.split("@")
+                for reference in (
+                    repository,
+                    repository + "@sha256:" + "0" * 64,
+                    "ghcr.io/other/image@" + digest,
+                ):
+                    with self.subTest(name=name, reference=reference), self.validators():
+                        identity["docker-reference"] = reference
+                        self.write_json(path, signature)
+                        with self.assertRaisesRegex(
+                            EVIDENCE["ReleaseEvidenceError"],
+                            re.escape(name) + " identity differs",
+                        ):
+                            EVIDENCE["validate_inputs"](
+                                fixture["paths"], fixture["release"], fixture["schema"]
+                            )
+                identity["docker-reference"] = expected
+                self.write_json(path, signature)
+
+    def test_workflow_signature_checks_accept_exact_cosign_references(self):
+        repository = "ghcr.io/eglinuxer/crossforge"
+        digest = "sha256:" + "2" * 64
+        reference = repository + "@" + digest
+        for workflow in ("candidate.yml", "promote.yml"):
+            text = (REPOSITORY / ".github/workflows" / workflow).read_text()
+            filters = re.findall(r"'([^']*docker-reference[^']*)'", text)
+            self.assertEqual(len(filters), 2)
+            for expression in filters:
+                for image_reference, image_digest, expected_status in (
+                    (reference, digest, 0),
+                    (repository, digest, 1),
+                    ("ghcr.io/other/image@" + digest, digest, 1),
+                    (repository + "@sha256:" + "0" * 64, digest, 1),
+                    (reference, "sha256:" + "0" * 64, 1),
+                ):
+                    with self.subTest(
+                        workflow=workflow, expression=expression,
+                        reference=image_reference, digest=image_digest,
+                    ):
+                        signature = [{
+                            "critical": {
+                                "identity": {"docker-reference": image_reference},
+                                "image": {"docker-manifest-digest": image_digest},
+                            }
+                        }]
+                        result = subprocess.run(
+                            ["jq", "-e", "--arg", "repository", repository,
+                             "--arg", "digest", digest, expression],
+                            input=json.dumps(signature), universal_newlines=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                        )
+                        self.assertEqual(result.returncode, expected_status, result.stderr)
 
     def test_signature_source_and_checksum_drift_fail_closed(self):
         with tempfile.TemporaryDirectory() as temporary:
