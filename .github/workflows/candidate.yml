@@ -987,7 +987,7 @@ jobs:
           docker logout ghcr.io
           logged_in=0
           trap - EXIT
-          openssl base64 -d -A \
+          openssl base64 -d \
             -in evidence/sigstore/tuf/trusted_root.json.b64 \
             -out "$RUNNER_TEMP/trusted_root.json"
           "$cosign" verify \

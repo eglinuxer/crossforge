@@ -266,7 +266,7 @@ jobs:
           test "$(./scripts/resolve_candidate_image.py platform-digest \
             --index "$RUNNER_TEMP/anonymous-source-index.json" \
             --expected-digest "$source_digest")" = "$source_platform"
-          openssl base64 -d -A \
+          openssl base64 -d \
             -in evidence/sigstore/tuf/trusted_root.json.b64 \
             -out "$RUNNER_TEMP/trusted_root.json"
           cosign="$RUNNER_TEMP/cosign-tool/cosign"

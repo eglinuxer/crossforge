@@ -257,7 +257,7 @@ jobs:
           SOURCE_DIGEST: ${{ steps.identity.outputs.source_digest }}
         run: |
           set -Eeuo pipefail
-          openssl base64 -d -A \
+          openssl base64 -d \
             -in evidence/sigstore/tuf/trusted_root.json.b64 \
             -out "$RUNNER_TEMP/trusted_root.json"
           identity=$(jq -r .sigstore.signing.identity config/release.json)
